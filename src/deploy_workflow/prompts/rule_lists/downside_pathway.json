@@ -42,6 +42,8 @@
    "statement": "",
    "checks": [
     "fn:deploy_workflow.owners.cp2a:_name_issues",
+    "fn:deploy_workflow.owners.cp2a:_pin_lines",
+    "fn:deploy_workflow.owners.cp2a:_prose_issues",
     "fn:deploy_workflow.owners.cp2a:_scenario_issues",
     "fn:deploy_workflow.owners.cp2a:_threshold_issues",
     "fn:deploy_workflow.owners.cp2a:break_points",

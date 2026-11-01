@@ -3,7 +3,8 @@
 A rule is ``{"id": "<step>.<n>", "statement": str, "checks": [...]}``. ``statement`` is the
 sentence the prompt must carry; ``checks`` name what enforces it, in three kinds (O6-P11):
 
-* ``fn:<module>:<qualname>``: a function of a validator core that holds issue sites;
+* ``fn:<module>:<qualname>``: a function that enforces the rule, either an issue site of a
+  validator or the prompt builder (``prompts.fence:*``);
 * ``oracle:<case>:<id>``: a refusal id of a frozen ``cases/<case>-owner/expected.json``;
 * ``code:cp1b:<site>``: one of CP-1B's code-defined refusals (it has no oracle).
 
@@ -43,7 +44,9 @@ __all__ = [
     "needed_checks",
     "oracle_ids",
     "oracle_path",
+    "refresh_sha256",
     "rule_ids",
+    "sha256_section",
     "step_ids",
 ]
 
@@ -81,9 +84,10 @@ class Rule:
     when: str | None = None  # compose rules: "inputs", "line_source" or "pins"
 
 
-def _rule(raw: Mapping[str, object]) -> Rule:
+def rule_from(raw: Mapping[str, object]) -> Rule:
     checks = raw["checks"]
-    assert isinstance(checks, list)
+    if not isinstance(checks, list):
+        raise TypeError(f"rule {raw.get('id')}: checks must be a list, not {type(checks).__name__}")
     return Rule(
         id=str(raw["id"]),
         statement=str(raw["statement"]),
@@ -96,7 +100,7 @@ def _rule(raw: Mapping[str, object]) -> Rule:
 def load_rules(name: str) -> tuple[Rule, ...]:
     """The committed rules of a step (or ``compose``), in file order."""
     document = json.loads((RULE_LISTS / f"{name}.json").read_text(encoding="utf-8"))
-    return tuple(_rule(raw) for raw in document["rules"])
+    return tuple(rule_from(raw) for raw in document["rules"])
 
 
 def step_ids() -> tuple[str, ...]:
@@ -222,6 +226,17 @@ ORACLES: Mapping[str, tuple[OracleSpec, ...]] = {
     "restructuring_fulcrum": (OracleSpec("cp4c"),),
 }
 
+# Oracles read nowhere above, and why (a case may name a part: ``<case>#<part>``).
+ORACLE_EXCLUSIONS: Mapping[str, str] = {
+    "cp2h-context": "refusals are composer_only: Python builds that context, no model writes it",
+    "cp4": "its semantic_gate lists markers and provenance, not refusal ids; the check source "
+    "is cp4_legal and owners.cp4.semantic_issues (ast)",
+    "context-attachments": "refusals of the attachment context loader, not of a step submission",
+    "valuation-context": "refusal_ids of the valuation context loader, not of a step submission",
+    "pins-context": "pinned lines are covered by compose.O6 (_pin_lines), not by oracle ids",
+    "cp3-context#cp3d": "cp3d refusals of the context file; Phase 3 T2 covers them",
+}
+
 # Containers of an oracle's ``expected.json`` that list content refusals. ``tamper_refusals`` and
 # the blocked cases test the journal, not what a model wrote, so they are not content refusals.
 _REFUSAL_KEYS = (
@@ -244,23 +259,53 @@ def file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-@cache
-def _oracle_groups(case: str) -> dict[str, tuple[str, ...]]:
-    """``{container: ids}`` for the content-refusal containers of one oracle, in file order."""
-    document = json.loads(oracle_path(case).read_text(encoding="utf-8"))
+def _list_ids(key: str, items: list[Any]) -> tuple[str, ...]:
+    """The ids of a refusal list; an item with no id is an error, never dropped."""
+    ids = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise TypeError(f"oracle container {key}: an item is not an object: {item!r}")
+        ident = item.get("id")
+        if ident is None:
+            raise ValueError(f"oracle container {key}: an item has no id: {item!r}")
+        if not isinstance(ident, str):
+            raise TypeError(f"oracle container {key}: id {ident!r} is not a string")
+        ids.append(ident)
+    return tuple(ids)
+
+
+def _nested_lists(node: Mapping[str, Any]) -> dict[str, list[Any]]:
+    return {k: v for k, v in node.items() if k in _REFUSAL_KEYS and isinstance(v, list)}
+
+
+def _dict_form(
+    key: str, node: Mapping[str, Any], document: Mapping[str, Any]
+) -> dict[str, tuple[str, ...]]:
+    """A dict container: nested refusal lists (cp5, cp3-cp6), else the dict keyed by name."""
+    inner = _nested_lists(node)
+    if not inner:
+        return {key: tuple(node)}
+    twice = sorted(set(inner) & {k for k in document if isinstance(document[k], list)})
+    if twice:
+        raise ValueError(f"oracle container {twice} is both nested in {key} and top-level")
+    return {sub: _list_ids(sub, items) for sub, items in inner.items()}
+
+
+def groups_of(document: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
+    """``{container: ids}`` for the content-refusal containers of one oracle document."""
     groups: dict[str, tuple[str, ...]] = {}
     for key in _REFUSAL_KEYS:
         node = document.get(key)
         if isinstance(node, list):
-            groups[key] = tuple(i["id"] for i in node if isinstance(i, dict) and "id" in i)
+            groups[key] = _list_ids(key, node)
         elif isinstance(node, dict):
-            inner = {k: v for k, v in node.items() if k in _REFUSAL_KEYS and isinstance(v, list)}
-            if inner:
-                for sub, items in inner.items():
-                    groups[sub] = tuple(i["id"] for i in items)
-            else:
-                groups[key] = tuple(node)
+            groups.update(_dict_form(key, node, document))
     return groups
+
+
+@cache
+def _oracle_groups(case: str) -> dict[str, tuple[str, ...]]:
+    return groups_of(json.loads(oracle_path(case).read_text(encoding="utf-8")))
 
 
 def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
@@ -273,6 +318,35 @@ def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
                 out[f"{spec.case}/{container}"] = kept
     return out
 
+
+# O6-P18: checks the model cannot repair. An upstream-binding check (a stale or blocked bound input,
+# a module that is not the bound one) is cured by a rerun, and the function takes no submission
+# (a test proves it); a "limitations" function writes Python's own limitation text and refuses
+# nothing. Both are subtracted from what a rule must carry. {check: reason}.
+UPSTREAM = "upstream binding: stale or blocked bound input; the remedy is a rerun, not a rewrite"
+OWN_TEXT = "Python's own limitation text, not a refusal of anything the model wrote"
+NON_CONTENT: Mapping[str, str] = {
+    "fn:deploy_vii.cp2_synthesis:_provenance_issues": UPSTREAM,
+    "fn:deploy_vii.cp2_synthesis:_stale_issues": UPSTREAM,
+    "fn:deploy_vii.cp3_relative_value:_provenance_issues": UPSTREAM,
+    "fn:deploy_vii.cp3_relative_value:_stale_issues": UPSTREAM,
+    "fn:deploy_vii.cp4_legal:stale_issues": UPSTREAM,
+    "fn:deploy_vii.cp6_committee:_provenance_issues": UPSTREAM,
+    "fn:deploy_vii.cp6_committee:_stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp1c:_provenance_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp1c:_stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp1d:_provenance_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp1d:_stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp2a:_stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp2d:_provenance_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp2d:_stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp2g:stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp2h:stale_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp3c:_provenance_issues": UPSTREAM,
+    "fn:deploy_workflow.owners.cp4c:stale_issues": UPSTREAM,
+    "fn:deploy_vii.cp3_relative_value:Upstream.limits": OWN_TEXT,
+    "fn:deploy_vii.cp3_relative_value:_evidence_limitations": OWN_TEXT,
+}
 
 # --- ast: issue sites reachable from the entry -----------------------------------------------
 
@@ -287,6 +361,14 @@ def module_path(module: str) -> Path:
 def _source(module: str) -> tuple[str, ast.Module]:
     text = module_path(module).read_text(encoding="utf-8")
     return text, ast.parse(text)
+
+
+def function_node(module: str, qualname: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
+    """The definition of ``qualname`` (``f`` or ``Class.method``) in ``module``."""
+    defs = _defs(_source(module)[1])
+    if qualname not in defs:
+        raise LookupError(f"{module}:{qualname} is not a function")
+    return defs[qualname]
 
 
 def core_sources(step_id: str) -> tuple[Path, ...]:
@@ -315,42 +397,102 @@ def _has_text(node: ast.AST) -> bool:
     )
 
 
-def _sites(function: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
-    count = 0
-    for node in ast.walk(function):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr in _ADDERS
+_SEQ = (ast.List, ast.Tuple, ast.ListComp, ast.GeneratorExp, ast.JoinedStr)
+_STR_SEQUENCE = re.compile(
+    r"^(tuple\[str, \.\.\.\]|list\[str\]|(Iterator|Iterable|Sequence|Generator)\[str.*\])$"
+)
+type _Function = ast.FunctionDef | ast.AsyncFunctionDef
+
+
+def _has_prose(node: ast.AST) -> bool:
+    """A sentence: an f-string or a string constant of two or more words (not a code or a key)."""
+    return any(
+        isinstance(n, ast.JoinedStr)
+        or (isinstance(n, ast.Constant) and isinstance(n.value, str) and len(n.value.split()) > 1)
+        for n in ast.walk(node)
+    )
+
+
+def _issue_like(function: _Function) -> bool:
+    """A function that returns issues: named ``*_issues`` or ``*_problems``, or annotated to
+    return a sequence or iterator of ``str``. A composer of other text is left out."""
+    note = ast.unparse(function.returns) if function.returns else ""
+    return function.name.endswith(("_issues", "_problems")) or bool(_STR_SEQUENCE.match(note))
+
+
+def _added(node: ast.AST) -> bool:
+    """An append, extend, add or ``+=`` of text to a collector."""
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        return (
+            node.func.attr in _ADDERS
             and ast.unparse(node.func.value) in _COLLECTORS
             and any(_has_text(a) for a in node.args)
-        ) or (
-            isinstance(node, ast.AugAssign)
-            and isinstance(node.op, ast.Add)
-            and ast.unparse(node.target) in _COLLECTORS
-            and _has_text(node.value)
-        ):
-            count += 1
-    return count
+        )
+    return (
+        isinstance(node, ast.AugAssign)
+        and isinstance(node.op, ast.Add)
+        and ast.unparse(node.target) in _COLLECTORS
+        and _has_text(node.value)
+    )
+
+
+def _returned(node: ast.AST) -> bool:
+    """A ``return`` or ``yield`` of a sequence or f-string that holds a sentence."""
+    if not isinstance(node, (ast.Return, ast.Yield)) or node.value is None:
+        return False
+    return any(isinstance(n, _SEQ) and _has_prose(n) for n in ast.walk(node.value))
+
+
+def _validation(node: ast.AST) -> bool:
+    """``StepValidation(issues=<a literal sentence>)``."""
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "StepValidation"
+        and any(k.arg == "issues" and _has_prose(k.value) for k in node.keywords)
+    )
+
+
+def _sites(function: _Function) -> int:
+    """Issue sites in one function. Coverage is per function: a new check inside a function a rule
+    already carries is not seen here, only by the sha256 pins of the golden file (L2)."""
+    returns = _issue_like(function)
+    return sum(
+        _added(n) or _validation(n) or (returns and _returned(n)) for n in ast.walk(function)
+    )
+
+
+def _name_edges(
+    node: ast.Name, defs: Mapping[str, _Function], classes: frozenset[str]
+) -> Iterator[str]:
+    if node.id in defs:
+        yield node.id
+    elif node.id in classes:
+        yield from (q for q in defs if q.startswith(node.id + "."))
+
+
+def _attribute_edges(
+    node: ast.Attribute, owner: str | None, defs: Mapping[str, _Function], classes: frozenset[str]
+) -> Iterator[str]:
+    if not isinstance(node.value, ast.Name):
+        return
+    holder = owner if node.value.id in ("self", "cls") else node.value.id
+    if holder in classes and f"{holder}.{node.attr}" in defs:
+        yield f"{holder}.{node.attr}"
 
 
 def _edges(
     qualname: str,
-    function: ast.FunctionDef | ast.AsyncFunctionDef,
-    defs: Mapping[str, ast.FunctionDef | ast.AsyncFunctionDef],
+    function: _Function,
+    defs: Mapping[str, _Function],
     classes: frozenset[str],
 ) -> Iterator[str]:
     owner = qualname.split(".")[0] if "." in qualname else None
     for node in ast.walk(function):
         if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
-            if node.id in defs:
-                yield node.id
-            elif node.id in classes:
-                yield from (q for q in defs if q.startswith(node.id + "."))
-        elif isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            holder = owner if node.value.id in ("self", "cls") else node.value.id
-            if holder in classes and f"{holder}.{node.attr}" in defs:
-                yield f"{holder}.{node.attr}"
+            yield from _name_edges(node, defs, classes)
+        elif isinstance(node, ast.Attribute):
+            yield from _attribute_edges(node, owner, defs, classes)
 
 
 def issue_functions(module: str, entry: str, source: str | None = None) -> dict[str, int]:
@@ -376,14 +518,14 @@ def issue_functions(module: str, entry: str, source: str | None = None) -> dict[
 
 
 def site_checks(step_id: str, sources: Mapping[str, str] | None = None) -> tuple[str, ...]:
-    """The ``fn:`` checks the step's validator needs: every reachable function with a site.
-    ``sources`` maps a module name to replacement text (the mutation probe)."""
+    """The ``fn:`` checks the step's validator needs: every reachable function with a site, less
+    the ``NON_CONTENT`` ones. ``sources`` maps a module name to replacement text (the mutation probe)."""
     out: list[str] = []
     for entry in ENTRIES[step_id]:
         module, qualname = entry.split(":")
         found = issue_functions(module, qualname, (sources or {}).get(module))
         out.extend(f"fn:{module}:{q}" for q in found)
-    return tuple(dict.fromkeys(out))
+    return tuple(c for c in dict.fromkeys(out) if c not in NON_CONTENT)
 
 
 # --- CP-1B's code-defined refusals (it has no oracle) -----------------------------------------
@@ -458,29 +600,58 @@ def _prose(step_id: str) -> str | None:
     return None
 
 
+def _fn_modules(names: tuple[str, ...]) -> set[Path]:
+    """The source file of every module any ``fn:`` check of these lists names."""
+    return {
+        module_path(check.split(":")[1])
+        for name in names
+        for rule in load_rules(name)
+        for check in rule.checks
+        if check.startswith("fn:")
+    }
+
+
+def sha256_section() -> dict[str, dict[str, str]]:
+    """The sha256 of every core (a step's entry modules, each owner module and each module an
+    ``fn:`` check names) and of every oracle file the checks read."""
+    names = (COMPOSE, *step_ids())
+    cores = (
+        {p for step in step_ids() for p in core_sources(step)}
+        | {module_path(m) for m in OWNER_MODULE.values()}
+        | _fn_modules(names)
+    )
+    oracles = {oracle_path(o.case) for specs in ORACLES.values() for o in specs}
+    return {
+        "cores": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in sorted(cores)},
+        "oracles": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in sorted(oracles)},
+    }
+
+
 def golden_document() -> dict[str, Any]:
     """The golden file: every rule (id, statement, checks) and the sha256 of every core and oracle
-    file the checks read. Written once with ``json.dumps(golden_document(), indent=1)`` into
-    ``tests/prompts/rule_lists.golden.json``; a removed or edited rule is then an explicit edit."""
-    names = (COMPOSE, *step_ids())
-    cores = sorted(
-        {p for step in step_ids() for p in core_sources(step)}
-        | {module_path(OWNER_MODULE[s]) for s in OWNER_MODULE}
-    )
-    oracles = sorted({oracle_path(o.case) for specs in ORACLES.values() for o in specs})
+    file the checks read. Written once with ``json.dumps(golden_document(), indent=1)``; a removed
+    or edited rule is then an explicit edit the review sees."""
     return {
         "rules": {
             name: [
                 {"id": r.id, "statement": r.statement, "checks": list(r.checks)}
                 for r in load_rules(name)
             ]
-            for name in names
+            for name in (COMPOSE, *step_ids())
         },
-        "sha256": {
-            "cores": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in cores},
-            "oracles": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in oracles},
-        },
+        "sha256": sha256_section(),
     }
+
+
+def refresh_sha256(path: Path) -> None:
+    """Rewrite only the ``sha256`` section of the golden file at ``path`` (O6-P20). The editing
+    lane runs this after it changes a core and re-runs the coverage tests, in its own commit:
+    ``python -c "from pathlib import Path; from deploy_workflow.prompts import rules;
+    rules.refresh_sha256(Path('tests/prompts/rule_lists.golden.json'))"``. A change to a rule
+    is not a refresh; it goes to the rule-list process."""
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["sha256"] = sha256_section()
+    path.write_text(json.dumps(document, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def extract_checks(step_id: str) -> dict[str, Any]:

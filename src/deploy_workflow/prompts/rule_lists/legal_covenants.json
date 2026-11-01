@@ -28,7 +28,8 @@
    "id": "legal_covenants.d",
    "statement": "d. `threshold_text` is copied from one of the covenant's own quotes and holds the one tested threshold. `threshold_value` is that number exactly as the quote writes it (null for `other` and `not stated`): Python reads the number out of the quote and rejects a value that differs. A `multiple` or `percent` threshold states its `comparison`; a maximum (`<=`, `<`) is rejected when the quote names only a floor, a minimum (`>=`, `>`) when it names only a cap.",
    "checks": [
-    "fn:deploy_vii.cp4_legal:_threshold_issues"
+    "fn:deploy_vii.cp4_legal:_threshold_issues",
+    "fn:deploy_vii.cp4_legal:_direction_issues"
    ]
   },
   {
@@ -51,6 +52,7 @@
    "statement": "g. Every text field is nonblank run text: labels only (period, filing and section labels); a CP-1 figure only as `{ref|unit}` from `cp1_facts` and a threshold only inside its quote; never a bare number. No instrument recommendation and no recovery conclusion; recovery prospects may appear as a mechanic.",
    "checks": [
     "fn:deploy_vii.cp4_legal:validate_covenant_interpretation",
+    "fn:deploy_vii.cp4_legal:prohibited_issues_cp4",
     "fn:deploy_vii.prose:issues"
    ]
   },

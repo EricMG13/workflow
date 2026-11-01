@@ -48,7 +48,8 @@
    "checks": [
     "fn:deploy_workflow.owners.pins:pin_issues",
     "fn:deploy_workflow.owners.cp2a:_pin_lines",
-    "fn:deploy_workflow.owners.cp2d:_pin_lines"
+    "fn:deploy_workflow.owners.cp2d:_pin_lines",
+    "fn:deploy_workflow.owners.cp2e:_pin_lines"
    ],
    "when": "pins"
   },

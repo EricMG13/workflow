@@ -28,7 +28,9 @@
    "id": "source_context.d",
    "statement": "d. Every `historical_duration` and `period_end` scope of a financial source states `currency` and `unit`, and `entity_perimeter` and `accounting_basis` too (none is null). All such scopes of one entity, across every financial source, carry the same four strings word for word: `entity_perimeter` names the consolidation perimeter, not how a year is presented, so a comparative year's scope repeats the current year's words. Forecast and unspecified scopes are not held to this.",
    "checks": [
-    "fn:deploy_vii.source_context:validate_source_context"
+    "fn:deploy_vii.source_context:validate_source_context",
+    "fn:deploy_vii.source_context:_lacks",
+    "fn:deploy_vii.source_context:_disagreements"
    ]
   }
  ]

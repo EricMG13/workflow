@@ -47,7 +47,8 @@
     "checks": [
      "fn:deploy_workflow.owners.pins:pin_issues",
      "fn:deploy_workflow.owners.cp2a:_pin_lines",
-     "fn:deploy_workflow.owners.cp2d:_pin_lines"
+     "fn:deploy_workflow.owners.cp2d:_pin_lines",
+     "fn:deploy_workflow.owners.cp2e:_pin_lines"
     ]
    },
    {
@@ -219,7 +220,8 @@
      "fn:deploy_workflow.owners.cpl10:_gap_issues",
      "fn:deploy_workflow.owners.cpl10:_item_rows",
      "fn:deploy_workflow.owners.cpl10:_overall_issues",
-     "fn:deploy_workflow.owners.cpl10:_text_issues"
+     "fn:deploy_workflow.owners.cpl10:_text_issues",
+     "fn:deploy_workflow.owners.cpl10:_validate_step"
     ]
    }
   ],
@@ -266,6 +268,7 @@
     "statement": "e. No ranking against external peers, no buy, sell or switch phrase and no trade terms (a target, entry or exit price or level, a position size) in any text field. An overweight, neutral or underweight action bias, a recommendation and a recovery conclusion are this module's output. The CONTEXT block is not a source and is never cited.",
     "checks": [
      "fn:deploy_vii.cp6_committee:_text_issues",
+     "fn:deploy_vii.cp6_committee:cp6_prohibited_issues",
      "oracle:cp3-cp6:cp6-trade-term"
     ]
    }
@@ -400,6 +403,7 @@
     "checks": [
      "fn:deploy_workflow.owners.cp8:_Checker._absence",
      "fn:deploy_workflow.owners.cp8:_Checker._attributions",
+     "fn:deploy_workflow.owners.cp8:_Checker._cite",
      "fn:deploy_workflow.owners.cp8:_Checker._confidence",
      "fn:deploy_workflow.owners.cp8:_Checker._decision",
      "fn:deploy_workflow.owners.cp8:_Checker._decision_text",
@@ -407,6 +411,8 @@
      "fn:deploy_workflow.owners.cp8:_Checker._flag",
      "fn:deploy_workflow.owners.cp8:_Checker._flag_size",
      "fn:deploy_workflow.owners.cp8:_Checker._lessons",
+     "fn:deploy_workflow.owners.cp8:_Checker._observation",
+     "fn:deploy_workflow.owners.cp8:_Checker._observation_source",
      "fn:deploy_workflow.owners.cp8:_Checker._observations",
      "fn:deploy_workflow.owners.cp8:_Checker._origin",
      "fn:deploy_workflow.owners.cp8:_Checker._outcome",
@@ -463,6 +469,8 @@
     "statement": "",
     "checks": [
      "fn:deploy_workflow.owners.cp2a:_name_issues",
+     "fn:deploy_workflow.owners.cp2a:_pin_lines",
+     "fn:deploy_workflow.owners.cp2a:_prose_issues",
      "fn:deploy_workflow.owners.cp2a:_scenario_issues",
      "fn:deploy_workflow.owners.cp2a:_threshold_issues",
      "fn:deploy_workflow.owners.cp2a:break_points",
@@ -528,10 +536,12 @@
     "statement": "",
     "checks": [
      "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
+     "fn:deploy_workflow.owners.cp1d:_blank_issues",
+     "fn:deploy_workflow.owners.cp1d:_bounded",
      "fn:deploy_workflow.owners.cp1d:_bridge_issues",
      "fn:deploy_workflow.owners.cp1d:_model_text_issues",
-     "fn:deploy_workflow.owners.cp1d:_provenance_issues",
      "fn:deploy_workflow.owners.cp1d:_rule_issues",
+     "fn:deploy_workflow.owners.cp1d:_structural_issues",
      "fn:deploy_workflow.owners.cp1d:validation_issues"
     ]
    }
@@ -670,6 +680,7 @@
     "checks": [
      "fn:deploy_workflow.owners.cp2g:_break_issues",
      "fn:deploy_workflow.owners.cp2g:_claims",
+     "fn:deploy_workflow.owners.cp2g:_limitation_issues",
      "fn:deploy_workflow.owners.cp2g:_own_limitations",
      "fn:deploy_workflow.owners.cp2g:_text_issues",
      "fn:deploy_workflow.owners.cp2g:content_issues"
@@ -750,7 +761,8 @@
     "id": "legal_covenants.d",
     "statement": "d. `threshold_text` is copied from one of the covenant's own quotes and holds the one tested threshold. `threshold_value` is that number exactly as the quote writes it (null for `other` and `not stated`): Python reads the number out of the quote and rejects a value that differs. A `multiple` or `percent` threshold states its `comparison`; a maximum (`<=`, `<`) is rejected when the quote names only a floor, a minimum (`>=`, `>`) when it names only a cap.",
     "checks": [
-     "fn:deploy_vii.cp4_legal:_threshold_issues"
+     "fn:deploy_vii.cp4_legal:_threshold_issues",
+     "fn:deploy_vii.cp4_legal:_direction_issues"
     ]
    },
    {
@@ -773,6 +785,7 @@
     "statement": "g. Every text field is nonblank run text: labels only (period, filing and section labels); a CP-1 figure only as `{ref|unit}` from `cp1_facts` and a threshold only inside its quote; never a bare number. No instrument recommendation and no recovery conclusion; recovery prospects may appear as a mechanic.",
     "checks": [
      "fn:deploy_vii.cp4_legal:validate_covenant_interpretation",
+     "fn:deploy_vii.cp4_legal:prohibited_issues_cp4",
      "fn:deploy_vii.prose:issues"
     ]
    },
@@ -811,7 +824,8 @@
     "checks": [
      "fn:deploy_workflow.owners.cp2d:_claims",
      "fn:deploy_workflow.owners.cp2d:_facility_limitations",
-     "fn:deploy_workflow.owners.cp2d:_limitations"
+     "fn:deploy_workflow.owners.cp2d:_limitations",
+     "fn:deploy_workflow.owners.cp2d:_pin_lines"
     ]
    }
   ],
@@ -884,6 +898,7 @@
      "fn:deploy_workflow.owners.cp2e:_check_text",
      "fn:deploy_workflow.owners.cp2e:_fx_claim",
      "fn:deploy_workflow.owners.cp2e:_hedge_claim",
+     "fn:deploy_workflow.owners.cp2e:_pin_lines",
      "fn:deploy_workflow.owners.cp2e:_rate_claims",
      "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
     ]
@@ -943,6 +958,7 @@
      "fn:deploy_workflow.owners.cp3d:_check_terms",
      "fn:deploy_workflow.owners.cp3d:_observation_date",
      "fn:deploy_workflow.owners.cp3d:_observation_level",
+     "fn:deploy_workflow.owners.cp3d:_single_dealer",
      "fn:deploy_workflow.owners.cp3d:absence_paths",
      "fn:deploy_workflow.owners.cp3d:own_limitations",
      "fn:deploy_workflow.owners.cp3d:submission_issues"
@@ -1033,11 +1049,11 @@
     "statement": "",
     "checks": [
      "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
+     "fn:deploy_workflow.owners.cp1c:_bounded",
      "fn:deploy_workflow.owners.cp1c:_citation_issues",
      "fn:deploy_workflow.owners.cp1c:_content_issues",
      "fn:deploy_workflow.owners.cp1c:_limitations",
      "fn:deploy_workflow.owners.cp1c:_model_text_issues",
-     "fn:deploy_workflow.owners.cp1c:_provenance_issues",
      "fn:deploy_workflow.owners.cp1c:calculation_issues"
     ]
    }
@@ -1121,8 +1137,10 @@
     "checks": [
      "fn:deploy_workflow.owners.cp2h:_claims",
      "fn:deploy_workflow.owners.cp2h:_gap_issues",
+     "fn:deploy_workflow.owners.cp2h:_limitation",
      "fn:deploy_workflow.owners.cp2h:_overall_issues",
      "fn:deploy_workflow.owners.cp2h:_own_limitations",
+     "fn:deploy_workflow.owners.cp2h:_prose",
      "fn:deploy_workflow.owners.cp2h:_view_issues",
      "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
     ]
@@ -1193,7 +1211,7 @@
     "id": "refinancing_risk.2",
     "statement": "",
     "checks": [
-     "fn:deploy_workflow.owners.cp3c:_provenance_issues",
+     "fn:deploy_workflow.owners.cp3c:_names",
      "fn:deploy_workflow.owners.cp3c:submission_issues"
     ]
    }
@@ -1358,6 +1376,7 @@
      "fn:deploy_workflow.owners.cp4c:_fulcrum_issues",
      "fn:deploy_workflow.owners.cp4c:_own_limitations",
      "fn:deploy_workflow.owners.cp4c:_plan_issues",
+     "fn:deploy_workflow.owners.cp4c:_source_row_issues",
      "fn:deploy_workflow.owners.cp4c:_text_fields",
      "fn:deploy_workflow.owners.cp4c:content_issues",
      "fn:deploy_workflow.owners.cp4c:guard_issues"
@@ -1393,7 +1412,9 @@
     "id": "source_context.d",
     "statement": "d. Every `historical_duration` and `period_end` scope of a financial source states `currency` and `unit`, and `entity_perimeter` and `accounting_basis` too (none is null). All such scopes of one entity, across every financial source, carry the same four strings word for word: `entity_perimeter` names the consolidation perimeter, not how a year is presented, so a comparative year's scope repeats the current year's words. Forecast and unspecified scopes are not held to this.",
     "checks": [
-     "fn:deploy_vii.source_context:validate_source_context"
+     "fn:deploy_vii.source_context:validate_source_context",
+     "fn:deploy_vii.source_context:_lacks",
+     "fn:deploy_vii.source_context:_disagreements"
     ]
    }
   ],
@@ -1471,13 +1492,17 @@
    "src/deploy_vii/cp5_integrity.py": "eb3a766f5ed1ff5bb856c64d0e5a477855d421ded57b91279d365c1fa03ea901",
    "src/deploy_vii/cp6_committee.py": "e97d5074292aa29dc93651dedce0dbc734e38d0373a34f769e0cfef65e2196ac",
    "src/deploy_vii/downstream_readiness.py": "29c71a90df07d1eed7df2903b30211377a77588fa7f564d09389d6d47c11dbdd",
+   "src/deploy_vii/financial_contracts.py": "5881b5287e8c871c078d7f64cb9c14bb191b107b556930308aa226a5d191d8a9",
    "src/deploy_vii/financial_validation.py": "91b5ef7d52ad8cb87c0627c5c794b1f6014ab8257bb3b7cd57ca22f8ff220c28",
+   "src/deploy_vii/live/tools.py": "a5451e47977f7f57d56c3563dfa7e1ef7f9eef24d59d668b90ea5295aaac3ece",
    "src/deploy_vii/narrative.py": "d766f0fae83bb40a5cf20b91bbce279c61137177752d9e3bf455544739972ebf",
+   "src/deploy_vii/prose.py": "8dcb2a51ba1865970fca7c17dba2fb8a8657e4a8bfae4679ffd5c7b6823cbbef",
    "src/deploy_vii/quality.py": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
    "src/deploy_vii/readiness.py": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
    "src/deploy_vii/source_context.py": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
    "src/deploy_vii/statement_validation.py": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
+   "src/deploy_workflow/owner_workflow.py": "0ed422743cc1fc2666deee63cf5ceefa354fa83beda49f8eaf9386323612359a",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",
@@ -1485,7 +1510,7 @@
    "src/deploy_workflow/owners/cp2.py": "902dea0e690a9054b06e064d1b3636367a6a8c02ff75d5ae9c746bf4fdf085e2",
    "src/deploy_workflow/owners/cp2a.py": "0bade27030c9c3e763de720c89761d5271133cb5e0e806946644ff6e1c8b1e1a",
    "src/deploy_workflow/owners/cp2d.py": "d3857ac7755cf4d45c90bebfcfef498eaa75eb1eed8e9b732fb1a80d65871147",
-   "src/deploy_workflow/owners/cp2e.py": "50f9055d1e374e4d6a16cfc9cd28daaa3d117a034b5c2748bc9919e81911d2d4",
+   "src/deploy_workflow/owners/cp2e.py": "59cf6c191a721080dbc351336defe7c2ef3d5623489988557d534ada7a5d6046",
    "src/deploy_workflow/owners/cp2g.py": "71c06be61716570408bfed1913c5f8853bb8010c5a96f61554b61f84923e4bdb",
    "src/deploy_workflow/owners/cp2h.py": "9fa9ebb713c063d046f6bc727f357b72be3a5963cb271e9495106eca30c81c1f",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
@@ -1497,7 +1522,9 @@
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
    "src/deploy_workflow/owners/cpdr.py": "844516fc229f72447f33d40481133f684c0340f87a480aaa69945aad560da2d9",
-   "src/deploy_workflow/owners/cpl10.py": "acc24b334a81727e95ee9eef9574c1ce43cc4433fb29d4e588a2a3967da1df50"
+   "src/deploy_workflow/owners/cpl10.py": "acc24b334a81727e95ee9eef9574c1ce43cc4433fb29d4e588a2a3967da1df50",
+   "src/deploy_workflow/owners/pins.py": "f48056fb0370c061bbc811b98bd7e23183c47db92c1f1c5b482b36f2d2cefb1f",
+   "src/deploy_workflow/prompts/fence.py": "92506b6585b3e3b11db86524fc0c7fe4e5b875b35a100097c98c63882f08e408"
   },
   "oracles": {
    "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",

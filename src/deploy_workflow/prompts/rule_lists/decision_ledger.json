@@ -90,6 +90,7 @@
    "checks": [
     "fn:deploy_workflow.owners.cp8:_Checker._absence",
     "fn:deploy_workflow.owners.cp8:_Checker._attributions",
+    "fn:deploy_workflow.owners.cp8:_Checker._cite",
     "fn:deploy_workflow.owners.cp8:_Checker._confidence",
     "fn:deploy_workflow.owners.cp8:_Checker._decision",
     "fn:deploy_workflow.owners.cp8:_Checker._decision_text",
@@ -97,6 +98,8 @@
     "fn:deploy_workflow.owners.cp8:_Checker._flag",
     "fn:deploy_workflow.owners.cp8:_Checker._flag_size",
     "fn:deploy_workflow.owners.cp8:_Checker._lessons",
+    "fn:deploy_workflow.owners.cp8:_Checker._observation",
+    "fn:deploy_workflow.owners.cp8:_Checker._observation_source",
     "fn:deploy_workflow.owners.cp8:_Checker._observations",
     "fn:deploy_workflow.owners.cp8:_Checker._origin",
     "fn:deploy_workflow.owners.cp8:_Checker._outcome",

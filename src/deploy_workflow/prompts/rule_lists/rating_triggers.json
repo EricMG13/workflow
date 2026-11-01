@@ -41,8 +41,10 @@
    "checks": [
     "fn:deploy_workflow.owners.cp2h:_claims",
     "fn:deploy_workflow.owners.cp2h:_gap_issues",
+    "fn:deploy_workflow.owners.cp2h:_limitation",
     "fn:deploy_workflow.owners.cp2h:_overall_issues",
     "fn:deploy_workflow.owners.cp2h:_own_limitations",
+    "fn:deploy_workflow.owners.cp2h:_prose",
     "fn:deploy_workflow.owners.cp2h:_view_issues",
     "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
    ]

@@ -42,7 +42,8 @@
     "fn:deploy_workflow.owners.cpl10:_gap_issues",
     "fn:deploy_workflow.owners.cpl10:_item_rows",
     "fn:deploy_workflow.owners.cpl10:_overall_issues",
-    "fn:deploy_workflow.owners.cpl10:_text_issues"
+    "fn:deploy_workflow.owners.cpl10:_text_issues",
+    "fn:deploy_workflow.owners.cpl10:_validate_step"
    ]
   }
  ]

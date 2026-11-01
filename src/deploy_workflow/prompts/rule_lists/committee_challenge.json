@@ -42,6 +42,7 @@
    "statement": "e. No ranking against external peers, no buy, sell or switch phrase and no trade terms (a target, entry or exit price or level, a position size) in any text field. An overweight, neutral or underweight action bias, a recommendation and a recovery conclusion are this module's output. The CONTEXT block is not a source and is never cited.",
    "checks": [
     "fn:deploy_vii.cp6_committee:_text_issues",
+    "fn:deploy_vii.cp6_committee:cp6_prohibited_issues",
     "oracle:cp3-cp6:cp6-trade-term"
    ]
   }

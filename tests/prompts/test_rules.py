@@ -14,6 +14,7 @@ import importlib
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 from prompt_support import EXISTING, request_for
@@ -31,20 +32,19 @@ NEW = tuple(s for s in STEPS if s not in EXISTING)
 # Issue sites and oracle ids that no rule covers yet, with the task that covers each. The test
 # fails for a step if a site listed here is already covered, so this list only shrinks.
 CP3_T4 = "Phase 3 T4 regenerates the 12 lists from STEP_CONTRACTS (its context rule, 072e0590)"
-# No contract rule states the stale-or-blocked upstream check of CP-2, CP-3, CP-4 and CP-6; it is
-# Python's binding of the inputs, not something the model writes. No task covers it yet: the owner
-# rules whether the model needs a statement of it (flagged in the Task 3 report).
-UPSTREAM = "no contract rule states the upstream binding check; owner to rule (no task yet)"
 PENDING: dict[str, dict[str, str]] = {
-    "credit_synthesis": {"fn:deploy_vii.cp2_synthesis:_provenance_issues": UPSTREAM},
-    "committee_challenge": {"fn:deploy_vii.cp6_committee:_provenance_issues": UPSTREAM},
-    "legal_covenants": {"fn:deploy_vii.cp4_legal:stale_issues": UPSTREAM},
     "relative_value": {
-        "fn:deploy_vii.cp3_relative_value:_provenance_issues": UPSTREAM,
-        "fn:deploy_vii.cp3_relative_value:_array_rows": CP3_T4,
-        "fn:deploy_vii.cp3_relative_value:_row_problems": CP3_T4,
-        "fn:deploy_vii.cp3_relative_value:_strings": CP3_T4,
-        "fn:deploy_vii.cp3_relative_value:_identity_problems": CP3_T4,
+        **{
+            f"fn:deploy_vii.cp3_relative_value:{name}": CP3_T4
+            for name in (
+                "_array_rows",
+                "_row_problems",
+                "_strings",
+                "_identity_problems",
+                "_date_problems",
+                "_figure_problems",
+            )
+        },
         **{
             f"oracle:cp3-context:{i}": CP3_T4
             for i in (
@@ -60,6 +60,24 @@ PENDING: dict[str, dict[str, str]] = {
         },
     },
 }
+
+# O6-P19: content checks of an existing step that no STEP_CONTRACTS line states. Each is an owner
+# item, because the statement needs a vii edit. The list may only shrink.
+OWNER = "owner item: no contract line states this check (a statement needs a vii edit)"
+OWNER_GAPS: dict[str, dict[str, str]] = {
+    "legal_covenants": {"fn:deploy_vii.cp4_legal:_shape_issues": OWNER},
+    "source_context": {"fn:deploy_vii.source_context:_blank_limitations": OWNER},
+    "financials": {"fn:deploy_vii.cp1_workflow:_validate_stage": OWNER},
+}
+
+
+def xfail_new(step_id: str, *, reason: str, raises: type[BaseException] | None = None) -> Any:
+    """The parameter for a step: plain for the 12 with a text, strict xfail for the 14 new ones.
+    ``{step}`` in ``reason`` is the step id."""
+    if step_id in EXISTING:
+        return step_id
+    mark = pytest.mark.xfail(strict=True, raises=raises, reason=reason.format(step=step_id))
+    return pytest.param(step_id, marks=mark)
 
 
 def covered_by(step_id: str) -> set[str]:
@@ -89,7 +107,8 @@ def test_every_content_refusal_is_covered(step_id: str) -> None:
     needed = rules.needed_checks(step_id)
     assert needed, f"{step_id}: the validator and oracle give no check"
     assert step_id in rules.step_ids(), f"{step_id} has no rule list"
-    uncovered, stale = gaps(step_id, covered_by(step_id), needed, PENDING.get(step_id, {}))
+    known = {**PENDING.get(step_id, {}), **OWNER_GAPS.get(step_id, {})}
+    uncovered, stale = gaps(step_id, covered_by(step_id), needed, known)
     assert not uncovered, f"{step_id}: no rule covers {uncovered}"
     assert not stale, f"{step_id}: PENDING entries are already covered, remove them: {stale}"
 
@@ -234,14 +253,7 @@ def test_every_rule_has_a_check(step_id: str) -> None:
 @pytest.mark.parametrize(
     "step_id",
     [
-        s
-        if s in EXISTING
-        else pytest.param(
-            s,
-            marks=pytest.mark.xfail(
-                strict=True, reason=f"M5: the statements of {s} wait for their separate writer"
-            ),
-        )
+        xfail_new(s, reason="M5: the statements of {step} wait for their separate writer")
         for s in STEPS
     ],
 )
@@ -301,17 +313,7 @@ def missing_rules(step_id: str, request: PromptRequest, system: str) -> list[str
 
 @pytest.mark.parametrize(
     "step_id",
-    [
-        s
-        if s in EXISTING
-        else pytest.param(
-            s,
-            marks=pytest.mark.xfail(
-                strict=True, raises=NoPrompt, reason=f"O6 Task 4: no text for {s} yet"
-            ),
-        )
-        for s in STEPS
-    ],
+    [xfail_new(s, raises=NoPrompt, reason="O6 Task 4: no text for {step} yet") for s in STEPS],
 )
 def test_prompt_names_every_rule(step_id: str, pack: PreparedPack) -> None:
     request = request_for(step_id, pack)
@@ -384,7 +386,10 @@ def test_rule_ids_are_unique_and_belong_to_their_list(name: str) -> None:
 def test_the_golden_file_pins_every_rule_id_check_and_statement() -> None:
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))["rules"]
     current = rules.golden_document()["rules"]
-    assert list(golden) == list(current)
+    assert list(golden) == list(current), (
+        "the set of rule lists changed: a list was added or removed, which is an explicit edit "
+        "of tests/prompts/rule_lists.golden.json (a rule-list change goes to the O6 rule-list process)"
+    )
     for name, expected in golden.items():
         assert [r["id"] for r in current[name]] == [r["id"] for r in expected], name
         assert current[name] == expected, f"{name} differs from the golden: edit the golden"
@@ -393,9 +398,11 @@ def test_the_golden_file_pins_every_rule_id_check_and_statement() -> None:
 def test_the_golden_file_pins_the_sha256_of_each_core_and_oracle() -> None:
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))["sha256"]
     current = rules.golden_document()["sha256"]
-    assert golden["oracles"] == current["oracles"]
+    assert golden["oracles"] == current["oracles"], "an oracle changed: see the cores message below"
     assert golden["cores"] == current["cores"], (
-        "a validator core changed: re-run the coverage tests and refresh the golden"
+        "a validator core or oracle changed: run the coverage tests (test 1); if only this test "
+        "fails, refresh the sha256 section with rules.refresh_sha256 in its own commit (O6-P20); "
+        "any other failure goes to the O6 rule-list process"
     )
 
 
@@ -405,3 +412,145 @@ def test_compose_rules_are_the_composers_own_text(pack: PreparedPack) -> None:
     for rule in rules.load_rules(rules.COMPOSE):
         if rule.when in (None, "inputs"):
             assert rule.statement in system, rule.id
+
+
+# --- fix round 1 -----------------------------------------------------------------------------------
+
+
+def _mutated(module: str, new_source: str, call: str, into: str) -> str:
+    """The module's text with ``new_source`` appended and ``call`` inserted into ``into``."""
+    tree = ast.parse(rules.module_path(module).read_text(encoding="utf-8"))
+    target = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == into)
+    target.body.insert(0, ast.parse(call).body[0])
+    tree.body.append(ast.parse(new_source).body[0])
+    return ast.unparse(ast.fix_missing_locations(tree))
+
+
+RETURNED = {
+    "list comprehension": (
+        "def _probe_issues(xs):\n    return [f'documents: {x} twice' for x in xs]",
+        "list(_probe_issues(()))",
+    ),
+    "yield": (
+        "def _probe_issues(xs):\n    for x in xs:\n        yield f'Financial scope lacks {x}'",
+        "list(_probe_issues(()))",
+    ),
+    "tuple": (
+        "def _probe_problems(x):\n    return ('a new refusal for the row',)",
+        "_probe_problems(0)",
+    ),
+    "annotated": (
+        "def _probe_rows(x) -> tuple[str, ...]:\n    return (f'a new refusal for {x}',)",
+        "_probe_rows(0)",
+    ),
+}
+
+
+@pytest.mark.parametrize("shape", sorted(RETURNED))
+def test_a_returned_or_yielded_issue_in_a_new_function_has_no_rule(shape: str) -> None:
+    new, call = RETURNED[shape]
+    module, step_id = "deploy_vii.cp4_legal", "legal_covenants"
+    mutated = _mutated(module, new, call, "validate_covenant_interpretation")
+    needed = rules.needed_checks(step_id, {module: mutated})
+    uncovered, _ = gaps(step_id, covered_by(step_id), needed, OWNER_GAPS[step_id])
+    name = new.split("(")[0].removeprefix("def ")
+    assert uncovered == [f"fn:{module}:{name}"]
+
+
+def test_a_function_that_returns_text_without_an_issue_name_or_annotation_is_not_a_site() -> None:
+    module, step_id = "deploy_vii.cp4_legal", "legal_covenants"
+    new, call = "def _helper(x):\n    return [f'label {x}']", "_helper(0)"
+    mutated = _mutated(module, new, call, "validate_covenant_interpretation")
+    assert rules.needed_checks(step_id, {module: mutated}) == rules.needed_checks(step_id)
+
+
+def test_step_validation_with_a_literal_issue_is_a_site() -> None:
+    module, step_id = "deploy_vii.cp4_legal", "legal_covenants"
+    new = "def _probe_issues(x):\n    return StepValidation(issues=(f'refused {x}',))"
+    mutated = _mutated(module, new, "_probe_issues(0)", "validate_covenant_interpretation")
+    needed = rules.needed_checks(step_id, {module: mutated})
+    assert f"fn:{module}:_probe_issues" in needed
+
+
+def test_non_content_checks_are_subtracted_and_never_in_a_list() -> None:
+    assert rules.NON_CONTENT
+    for step_id in STEPS:
+        assert not set(rules.NON_CONTENT) & rules.needed_checks(step_id), step_id
+        listed = {c for r in rules.load_rules(step_id) for c in r.checks}
+        assert not listed & set(rules.NON_CONTENT), f"{step_id} lists a non-content check"
+    assert "fn:deploy_vii.cp4_legal:stale_issues" in rules.NON_CONTENT
+    assert "fn:deploy_workflow.owners.cp1c:_provenance_issues" in rules.NON_CONTENT
+
+
+def test_a_non_content_function_takes_no_submission() -> None:
+    allowed = {"upstream", "pack", "inputs", "bound", "current", "evidence"}
+    for check in rules.NON_CONTENT:
+        module, _, qualname = check.removeprefix("fn:").rpartition(":")
+        function = rules.function_node(module, qualname)
+        for arg in function.args.args + function.args.kwonlyargs:
+            if arg.arg in ("self", "cls"):
+                continue
+            notes = ast.unparse(arg.annotation) if arg.annotation else ""
+            assert arg.arg in allowed, f"{check}: parameter {arg.arg} may hold a submission"
+            assert not re.search(r"Submission|Review|Report", notes), f"{check}: {notes}"
+
+
+def test_owner_gaps_may_only_shrink() -> None:
+    for step_id, entries in OWNER_GAPS.items():
+        assert set(entries) <= rules.needed_checks(step_id), f"{step_id}: stale owner gap"
+        assert not set(entries) & covered_by(step_id), f"{step_id}: covered, remove it"
+
+
+def test_golden_pins_every_module_named_by_an_fn_check() -> None:
+    golden = json.loads(GOLDEN.read_text(encoding="utf-8"))["sha256"]["cores"]
+    modules = {
+        rules.module_path(c.split(":")[1]).relative_to(rules.ROOT).as_posix()
+        for name in (rules.COMPOSE, *STEPS)
+        for r in rules.load_rules(name)
+        for c in r.checks
+        if c.startswith("fn:")
+    }
+    assert modules <= set(golden), sorted(modules - set(golden))
+
+
+def test_the_sha_refresh_rewrites_only_the_sha256_section(tmp_path: Path) -> None:
+    stale = json.loads(GOLDEN.read_text(encoding="utf-8"))
+    stale["sha256"]["cores"] = {k: "0" * 64 for k in stale["sha256"]["cores"]}
+    target = tmp_path / "golden.json"
+    target.write_text(json.dumps(stale), encoding="utf-8")
+    rules.refresh_sha256(target)
+    refreshed = json.loads(target.read_text(encoding="utf-8"))
+    assert refreshed["rules"] == stale["rules"]
+    assert refreshed["sha256"] == rules.golden_document()["sha256"]
+
+
+def test_the_oracle_exclusions_are_recorded_with_a_reason() -> None:
+    assert set(rules.ORACLE_EXCLUSIONS) >= {
+        "cp2h-context",
+        "cp4",
+        "context-attachments",
+        "valuation-context",
+        "pins-context",
+    }
+    for case, why in rules.ORACLE_EXCLUSIONS.items():
+        assert why.strip()
+        assert rules.oracle_path(case.split("#")[0]).exists(), case
+
+
+def test_an_oracle_item_with_no_id_is_refused_not_dropped() -> None:
+    with pytest.raises(ValueError, match="no id"):
+        rules.groups_of({"refusals": [{"id": "r01"}, {"class": "x"}]})
+
+
+def test_an_oracle_name_both_nested_and_top_level_is_refused() -> None:
+    document = {
+        "tool_use_refusals": [{"id": "dup"}],
+        "refusals": {"tool_use_refusals": [{"id": "dup"}], "note": "x"},
+    }
+    with pytest.raises(ValueError, match="both"):
+        rules.groups_of(document)
+
+
+def test_a_rule_whose_checks_are_not_a_list_is_a_type_error() -> None:
+    with pytest.raises(TypeError, match="checks"):
+        rules.rule_from({"id": "x.1", "statement": "s", "checks": "fn:a:b"})

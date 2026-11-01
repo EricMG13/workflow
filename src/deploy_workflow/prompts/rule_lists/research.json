@@ -1,0 +1,37 @@
+{
+ "rules": [
+  {
+   "id": "research.1",
+   "statement": "",
+   "checks": [
+    "oracle:cpdr:gap_unaddressed",
+    "oracle:cpdr:gap_with_five_questions",
+    "oracle:cpdr:unknown_gap",
+    "oracle:cpdr:gap_repeated",
+    "oracle:cpdr:question_id_repeated",
+    "oracle:cpdr:answered_without_citation",
+    "oracle:cpdr:not_found_with_answer",
+    "oracle:cpdr:not_found_without_limitation",
+    "oracle:cpdr:answered_with_limitation",
+    "oracle:cpdr:no_searched_source",
+    "oracle:cpdr:searched_source_not_in_pack",
+    "oracle:cpdr:searched_source_not_searched",
+    "oracle:cpdr:cited_page_not_read",
+    "oracle:cpdr:quote_not_verbatim",
+    "oracle:cpdr:citation_outside_pack",
+    "oracle:cpdr:digit_in_text",
+    "oracle:cpdr:prohibited_conclusion",
+    "oracle:cpdr:submission_against_empty_agenda"
+   ]
+  },
+  {
+   "id": "research.2",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cpdr:_model_text_issues",
+    "fn:deploy_workflow.owners.cpdr:_question_issues",
+    "fn:deploy_workflow.owners.cpdr:validate_research"
+   ]
+  }
+ ]
+}

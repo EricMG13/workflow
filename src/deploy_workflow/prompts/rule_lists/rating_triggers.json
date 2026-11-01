@@ -1,0 +1,51 @@
+{
+ "rules": [
+  {
+   "id": "rating_triggers.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp2h:r01",
+    "oracle:cp2h:r02",
+    "oracle:cp2h:r03",
+    "oracle:cp2h:r04",
+    "oracle:cp2h:r05",
+    "oracle:cp2h:r06",
+    "oracle:cp2h:r07",
+    "oracle:cp2h:r08",
+    "oracle:cp2h:r09",
+    "oracle:cp2h:v01",
+    "oracle:cp2h:v02",
+    "oracle:cp2h:v03",
+    "oracle:cp2h:v04",
+    "oracle:cp2h:v05",
+    "oracle:cp2h:v06",
+    "oracle:cp2h:v07",
+    "oracle:cp2h:v08",
+    "oracle:cp2h:v09",
+    "oracle:cp2h:v10",
+    "oracle:cp2h:v11",
+    "oracle:cp2h:v12",
+    "oracle:cp2h:v13",
+    "oracle:cp2h:v14",
+    "oracle:cp2h:v15",
+    "oracle:cp2h:v16",
+    "oracle:cp2h:v17",
+    "oracle:cp2h:v18",
+    "oracle:cp2h:s01",
+    "oracle:cp2h:s02"
+   ]
+  },
+  {
+   "id": "rating_triggers.2",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2h:_claims",
+    "fn:deploy_workflow.owners.cp2h:_gap_issues",
+    "fn:deploy_workflow.owners.cp2h:_overall_issues",
+    "fn:deploy_workflow.owners.cp2h:_own_limitations",
+    "fn:deploy_workflow.owners.cp2h:_view_issues",
+    "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
+   ]
+  }
+ ]
+}

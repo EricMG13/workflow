@@ -1,0 +1,57 @@
+{
+ "rules": [
+  {
+   "id": "forward_credit_model.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp2g:r01",
+    "oracle:cp2g:r02",
+    "oracle:cp2g:r03",
+    "oracle:cp2g:r04",
+    "oracle:cp2g:r05",
+    "oracle:cp2g:r06",
+    "oracle:cp2g:r07",
+    "oracle:cp2g:r08",
+    "oracle:cp2g:r09",
+    "oracle:cp2g:r10",
+    "oracle:cp2g:r11",
+    "oracle:cp2g:r12",
+    "oracle:cp2g:r13",
+    "oracle:cp2g:r14",
+    "oracle:cp2g:r15",
+    "oracle:cp2g:r16",
+    "oracle:cp2g:v01",
+    "oracle:cp2g:v02",
+    "oracle:cp2g:v03",
+    "oracle:cp2g:v04",
+    "oracle:cp2g:v05",
+    "oracle:cp2g:v06",
+    "oracle:cp2g:v07",
+    "oracle:cp2g:v08",
+    "oracle:cp2g:v09",
+    "oracle:cp2g:v10",
+    "oracle:cp2g:v11",
+    "oracle:cp2g:v12",
+    "oracle:cp2g:v13",
+    "oracle:cp2g:v14",
+    "oracle:cp2g:v15",
+    "oracle:cp2g:v16",
+    "oracle:cp2g:v17",
+    "oracle:cp2g:v18",
+    "oracle:cp2g:v19",
+    "oracle:cp2g:v20"
+   ]
+  },
+  {
+   "id": "forward_credit_model.2",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2g:_break_issues",
+    "fn:deploy_workflow.owners.cp2g:_claims",
+    "fn:deploy_workflow.owners.cp2g:_own_limitations",
+    "fn:deploy_workflow.owners.cp2g:_text_issues",
+    "fn:deploy_workflow.owners.cp2g:content_issues"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,49 @@
+{
+ "rules": [
+  {
+   "id": "committee_challenge.a",
+   "statement": "a. `thesis_challenges` holds at least one row. Each names in `thesis_ref` a ref listed under `cp2_rows` in the CONTEXT block whose `challengeable` is true (the thesis, a strength, a weakness or a key finding), each at most once. Every recommendation, challenge, recovery view and risk row cites at least one ref in its `basis`, written exactly: `cp2_refs` from `cp2_rows`, `cp3_refs` from `cp3_rows`, `cp5_refs` from `cp5_rows` or a CP-5 `finding_id`; or a `{ref|unit}` CP-1 figure in its text. An Insufficient Information recovery view needs none.",
+   "checks": [
+    "fn:deploy_vii.cp6_committee:_reference_issues",
+    "fn:deploy_vii.cp6_committee:_basis_issues",
+    "oracle:cp3-cp6:cp6-thesis-ref-not-challengeable",
+    "oracle:cp3-cp6:cp6-duplicate-challenge",
+    "oracle:cp3-cp6:cp6-unknown-cp3-row"
+   ]
+  },
+  {
+   "id": "committee_challenge.b",
+   "statement": "b. The recommendation's `action_bias` and `confidence` are Insufficient Information together, and then its `limitation` says why. While `insufficient_information` lists any reason, the action bias is Insufficient Information. A recovery view that is not Insufficient Information cites in `cp5_refs` a ref listed under `cp5_cp4_rows`; without one it is Insufficient Information and states its `limitation`.",
+   "checks": [
+    "fn:deploy_vii.cp6_committee:_recommendation_issues",
+    "oracle:cp3-cp6:cp6-gap-bias-despite-no-evidence",
+    "oracle:cp3-cp6:cp6-recovery-without-cp4",
+    "oracle:cp3-cp6:cp6-bias-confidence-mismatch"
+   ]
+  },
+  {
+   "id": "committee_challenge.c",
+   "statement": "c. While `confidence_caps` lists any cap, every confidence is below High, the recommendation's and each recovery view's. A recommendation that is not Insufficient Information cites in `cp2_refs` or `cp3_refs` at least one row whose `claim` is true and that `cp5_flagged_claims` does not list, or names a CP-1 figure in its rationale or conditions (its limitation does not count). Gap and limitation rows support nothing.",
+   "checks": [
+    "fn:deploy_vii.cp6_committee:_recommendation_issues",
+    "oracle:cp3-cp6:cp6-confidence-high"
+   ]
+  },
+  {
+   "id": "committee_challenge.d",
+   "statement": "d. Every text field is nonblank run text: digits only in period, filing and section labels and the issuer's name; a figure only as `{ref|unit}` with a `ref` and `unit` listed under `cp1_facts` (with none listed, write no figure). Never a bare number, never a `[ref]` chip, and never a table id or a row ref in text: refs belong in the `basis`.",
+   "checks": [
+    "fn:deploy_vii.cp6_committee:_text_issues",
+    "fn:deploy_vii.cp6_committee:_figures"
+   ]
+  },
+  {
+   "id": "committee_challenge.e",
+   "statement": "e. No ranking against external peers, no buy, sell or switch phrase and no trade terms (a target, entry or exit price or level, a position size) in any text field. An overweight, neutral or underweight action bias, a recommendation and a recovery conclusion are this module's output. The CONTEXT block is not a source and is never cited.",
+   "checks": [
+    "fn:deploy_vii.cp6_committee:_text_issues",
+    "oracle:cp3-cp6:cp6-trade-term"
+   ]
+  }
+ ]
+}

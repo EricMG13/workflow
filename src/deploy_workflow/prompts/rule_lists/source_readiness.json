@@ -1,0 +1,63 @@
+{
+ "rules": [
+  {
+   "id": "source_readiness.a",
+   "statement": "a. `sources`: exactly one assessment for each source_id listed under `sources` in the CONTEXT block, and no other. prepared-pack is the CONTEXT block, not a source.",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review"
+   ]
+  },
+  {
+   "id": "source_readiness.b",
+   "statement": "b. `consumers`: exactly one judgment for each module id listed under `consumers` in the CONTEXT block, and no other; its title and purpose there (module registry text) say what that consumer needs. CP-0 is this step, not a consumer.",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review"
+   ]
+  },
+  {
+   "id": "source_readiness.c",
+   "statement": "c. A consumer whose readiness is not READY lists at least one limitation; a CONDITIONAL consumer also names its missing_source. A READY or READY_WITH_LIMITATIONS consumer cites located evidence.",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review"
+   ]
+  },
+  {
+   "id": "source_readiness.d",
+   "statement": "d. A consumer's attached sources are exactly the sources its citations name, so cite every source the consumer relies on (and no source you would not attach).",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review"
+   ]
+  },
+  {
+   "id": "source_readiness.e",
+   "statement": "e. Each citation names a SOURCE block's id, copies one `locator=` value from that block exactly (for example page:1: no brackets, ranges or notes) and quotes a verbatim substring of that span's text. Runs of whitespace and line breaks may be written as one space and curly quotes or dashes in ASCII; every other character is copied exactly, and the quote must be in the span its locator names. Copy a run that is contiguous in the SOURCE block as printed; never reassemble a sentence across interleaved table text. Never continue a quote onto the next page.",
+   "checks": [
+    "fn:deploy_vii.readiness:citation_issues",
+    "fn:deploy_vii.readiness:validate_review",
+    "fn:deploy_workflow.financial_workflow:_evidence_issues"
+   ]
+  },
+  {
+   "id": "source_readiness.f",
+   "statement": "f. The CONTEXT block states each source's extraction coverage. Never call a page or locator absent when that coverage lists it.",
+   "checks": [
+    "fn:deploy_vii.readiness:absence_issues"
+   ]
+  },
+  {
+   "id": "source_readiness.g",
+   "statement": "g. A READY consumer attaches only verified sources without limitations and no gap names it; otherwise use READY_WITH_LIMITATIONS or lower. When issuer_confirmed is false, no consumer is READY or READY_WITH_LIMITATIONS. A source whose fidelity is not verified, or whose authority, entity or period is unknown, lists a limitation.",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review"
+   ]
+  },
+  {
+   "id": "source_readiness.h",
+   "statement": "h. `analysis`: at least one evidence-grounded read-through entry; an empty list is rejected. `analysis[].text` is run text: digits only in period labels (`FY2025`, `Q3 2025`, `LTM`), filing and section labels (`Items 7, 7A`, `page:12`, `pages 16-18`), SEC file numbers (`001-36629`) and coverage counts (`195 of 195 pages`); every other figure belongs in a citation's quote, not in the text (the validator rejects a bare figure).",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review",
+    "fn:deploy_vii.prose:issues"
+   ]
+  }
+ ]
+}

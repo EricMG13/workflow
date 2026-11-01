@@ -1,0 +1,62 @@
+{
+ "rules": [
+  {
+   "id": "market_implied.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp3d:level_not_in_quote",
+    "oracle:cp3d:level_not_numeric",
+    "oracle:cp3d:quote_off_page",
+    "oracle:cp3d:source_not_third_party",
+    "oracle:cp3d:duplicate_kind",
+    "oracle:cp3d:bid_level_is_the_offer",
+    "oracle:cp3d:talk_cites_bid_offer_sentence",
+    "oracle:cp3d:as_of_not_in_quote",
+    "oracle:cp3d:margin_not_in_quote",
+    "oracle:cp3d:recovery_out_of_range",
+    "oracle:cp3d:recovery_both",
+    "oracle:cp3d:reference_level_not_in_quote",
+    "oracle:cp3d:reference_rate_neither",
+    "oracle:cp3d:digit_in_text",
+    "oracle:cp3d:prohibited_conclusion",
+    "oracle:cp3d:insufficient_without_limitation",
+    "oracle:cp3d:observations_and_absence",
+    "oracle:cp3d:maturity_before_quotation",
+    "oracle:cp3d:amortisation_nonzero"
+   ]
+  },
+  {
+   "id": "market_implied.2",
+   "statement": "",
+   "checks": [
+    "oracle:cp3d:unread_market_page_1",
+    "oracle:cp3d:unread_financial_page_5",
+    "oracle:cp3d:unread_two_pages_sorted",
+    "oracle:cp3d:absence_without_search",
+    "oracle:cp3d:term_absence_without_search"
+   ]
+  },
+  {
+   "id": "market_implied.3",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp3d:_Composer.missing_inputs",
+    "fn:deploy_workflow.owners.cp3d:_Issues.analyst_text",
+    "fn:deploy_workflow.owners.cp3d:_Issues.conclusion_free",
+    "fn:deploy_workflow.owners.cp3d:_Issues.digit_free",
+    "fn:deploy_workflow.owners.cp3d:_Issues.on_page",
+    "fn:deploy_workflow.owners.cp3d:_check_maturity",
+    "fn:deploy_workflow.owners.cp3d:_check_observations",
+    "fn:deploy_workflow.owners.cp3d:_check_quoted_numeral",
+    "fn:deploy_workflow.owners.cp3d:_check_recovery",
+    "fn:deploy_workflow.owners.cp3d:_check_technicals",
+    "fn:deploy_workflow.owners.cp3d:_check_terms",
+    "fn:deploy_workflow.owners.cp3d:_observation_date",
+    "fn:deploy_workflow.owners.cp3d:_observation_level",
+    "fn:deploy_workflow.owners.cp3d:absence_paths",
+    "fn:deploy_workflow.owners.cp3d:own_limitations",
+    "fn:deploy_workflow.owners.cp3d:submission_issues"
+   ]
+  }
+ ]
+}

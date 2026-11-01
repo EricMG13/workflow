@@ -1,0 +1,35 @@
+{
+ "rules": [
+  {
+   "id": "refinancing_risk.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp3c:step_up_negative",
+    "oracle:cp3c:step_up_over_limit",
+    "oracle:cp3c:step_up_and_absence",
+    "oracle:cp3c:neither_step_up_nor_absence",
+    "oracle:cp3c:path_missing",
+    "oracle:cp3c:path_repeated",
+    "oracle:cp3c:digit_in_text",
+    "oracle:cp3c:digit_in_rationale",
+    "oracle:cp3c:prohibited_recommendation",
+    "oracle:cp3c:prohibited_recovery",
+    "oracle:cp3c:covenant_compliance_wording",
+    "oracle:cp3c:unknown_basis_ref",
+    "oracle:cp3c:feasibility_without_basis",
+    "oracle:cp3c:insufficient_without_limitation",
+    "oracle:cp3c:limitation_without_insufficient",
+    "oracle:cp3c:feasibility_category_mismatch",
+    "oracle:cp3c:lme_judged_without_capacity_evidence"
+   ]
+  },
+  {
+   "id": "refinancing_risk.2",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp3c:_provenance_issues",
+    "fn:deploy_workflow.owners.cp3c:submission_issues"
+   ]
+  }
+ ]
+}

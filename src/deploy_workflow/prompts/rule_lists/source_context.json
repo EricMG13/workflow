@@ -1,0 +1,35 @@
+{
+ "rules": [
+  {
+   "id": "source_context.a",
+   "statement": "a. `sources`: exactly one assessment for each source_id listed under `sources` in the CONTEXT block, and no other. prepared-pack is the CONTEXT block, not a source.",
+   "checks": [
+    "fn:deploy_vii.source_context:validate_source_context"
+   ]
+  },
+  {
+   "id": "source_context.b",
+   "statement": "b. Each citation names a SOURCE block's id, copies one `locator=` value from that block exactly (for example page:1: no brackets, ranges or notes) and quotes a verbatim substring of that span's text. Runs of whitespace and line breaks may be written as one space and curly quotes or dashes in ASCII; every other character is copied exactly, and the quote must be in the span its locator names. Copy a run that is contiguous in the SOURCE block as printed; never reassemble a sentence across interleaved table text. Never continue a quote onto the next page.",
+   "checks": [
+    "fn:deploy_vii.source_context:validate_source_context",
+    "fn:deploy_vii.readiness:citation_issues",
+    "fn:deploy_workflow.financial_workflow:_evidence_issues"
+   ]
+  },
+  {
+   "id": "source_context.c",
+   "statement": "c. The CONTEXT block states each source's extraction coverage. Never call a page or locator absent when that coverage lists it. This holds for every text field: limitations, explanations, rationales, scopes, entities and events.",
+   "checks": [
+    "fn:deploy_vii.readiness:absence_issues",
+    "fn:deploy_vii.source_context:validate_source_context"
+   ]
+  },
+  {
+   "id": "source_context.d",
+   "statement": "d. Every `historical_duration` and `period_end` scope of a financial source states `currency` and `unit`, and `entity_perimeter` and `accounting_basis` too (none is null). All such scopes of one entity, across every financial source, carry the same four strings word for word: `entity_perimeter` names the consolidation perimeter, not how a year is presented, so a comparative year's scope repeats the current year's words. Forecast and unspecified scopes are not held to this.",
+   "checks": [
+    "fn:deploy_vii.source_context:validate_source_context"
+   ]
+  }
+ ]
+}

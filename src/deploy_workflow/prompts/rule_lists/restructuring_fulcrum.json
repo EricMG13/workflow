@@ -1,0 +1,64 @@
+{
+ "rules": [
+  {
+   "id": "restructuring_fulcrum.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp4c:r01",
+    "oracle:cp4c:r02",
+    "oracle:cp4c:r03",
+    "oracle:cp4c:r04",
+    "oracle:cp4c:r05",
+    "oracle:cp4c:r06",
+    "oracle:cp4c:r07",
+    "oracle:cp4c:r08",
+    "oracle:cp4c:r09",
+    "oracle:cp4c:r10",
+    "oracle:cp4c:r11",
+    "oracle:cp4c:r12",
+    "oracle:cp4c:r13",
+    "oracle:cp4c:v01",
+    "oracle:cp4c:v02",
+    "oracle:cp4c:v03",
+    "oracle:cp4c:v04",
+    "oracle:cp4c:v05",
+    "oracle:cp4c:v06",
+    "oracle:cp4c:v07",
+    "oracle:cp4c:v08",
+    "oracle:cp4c:v09",
+    "oracle:cp4c:v10",
+    "oracle:cp4c:v11",
+    "oracle:cp4c:v12",
+    "oracle:cp4c:v13",
+    "oracle:cp4c:v14",
+    "oracle:cp4c:v15",
+    "oracle:cp4c:v16",
+    "oracle:cp4c:v17",
+    "oracle:cp4c:v18",
+    "oracle:cp4c:v19",
+    "oracle:cp4c:v20",
+    "oracle:cp4c:v21",
+    "oracle:cp4c:v22",
+    "oracle:cp4c:v23",
+    "oracle:cp4c:v24",
+    "oracle:cp4c:v25",
+    "oracle:cp4c:v26",
+    "oracle:cp4c:v27"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.2",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp4c:_claim_issues",
+    "fn:deploy_workflow.owners.cp4c:_claims",
+    "fn:deploy_workflow.owners.cp4c:_fulcrum_issues",
+    "fn:deploy_workflow.owners.cp4c:_own_limitations",
+    "fn:deploy_workflow.owners.cp4c:_plan_issues",
+    "fn:deploy_workflow.owners.cp4c:_text_fields",
+    "fn:deploy_workflow.owners.cp4c:content_issues",
+    "fn:deploy_workflow.owners.cp4c:guard_issues"
+   ]
+  }
+ ]
+}

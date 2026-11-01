@@ -1,0 +1,76 @@
+{
+ "rules": [
+  {
+   "id": "macro_fx.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp2e:reporting_code_not_in_quote",
+    "oracle:cp2e:source_outside_scope",
+    "oracle:cp2e:rate_exposure_and_absence",
+    "oracle:cp2e:balance_not_in_quote",
+    "oracle:cp2e:balance_not_labelled",
+    "oracle:cp2e:rate_type_contradicts_quote",
+    "oracle:cp2e:rate_type_not_stated",
+    "oracle:cp2e:reference_rate_not_in_quote",
+    "oracle:cp2e:floor_not_in_quote",
+    "oracle:cp2e:row_not_whole_line",
+    "oracle:cp2e:row_wrong_label",
+    "oracle:cp2e:row_value_not_last",
+    "oracle:cp2e:quote_off_page",
+    "oracle:cp2e:debt_currency_and_absence",
+    "oracle:cp2e:foreign_share_and_absence",
+    "oracle:cp2e:hedge_ratio_and_absence",
+    "oracle:cp2e:hedge_ratio_out_of_range",
+    "oracle:cp2e:rate_shock_zero",
+    "oracle:cp2e:rate_shocks_not_increasing",
+    "oracle:cp2e:too_many_rate_shocks",
+    "oracle:cp2e:fx_shock_too_large",
+    "oracle:cp2e:digit_in_text",
+    "oracle:cp2e:prohibited_conclusion",
+    "oracle:cp2e:insufficient_without_limitation",
+    "oracle:cp2e:documentary_without_basis",
+    "oracle:cp2e:section_missing",
+    "oracle:cp2e:section_repeated"
+   ]
+  },
+  {
+   "id": "macro_fx.2",
+   "statement": "",
+   "checks": [
+    "oracle:cp2e:unread_financial_page_3",
+    "oracle:cp2e:unread_financial_page_5",
+    "oracle:cp2e:absence_without_search"
+   ]
+  },
+  {
+   "id": "macro_fx.3",
+   "statement": "",
+   "checks": [
+    "oracle:cp2e:balance_exceeds_total_debt"
+   ]
+  },
+  {
+   "id": "macro_fx.4",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2e:_Check.code",
+    "fn:deploy_workflow.owners.cp2e:_Check.digit_free",
+    "fn:deploy_workflow.owners.cp2e:_Check.empty",
+    "fn:deploy_workflow.owners.cp2e:_Check.exactly_one",
+    "fn:deploy_workflow.owners.cp2e:_Check.labelled",
+    "fn:deploy_workflow.owners.cp2e:_Check.on_page",
+    "fn:deploy_workflow.owners.cp2e:_Check.row",
+    "fn:deploy_workflow.owners.cp2e:_Check.run_text",
+    "fn:deploy_workflow.owners.cp2e:_Check.shocks",
+    "fn:deploy_workflow.owners.cp2e:_check_fx",
+    "fn:deploy_workflow.owners.cp2e:_check_hedge",
+    "fn:deploy_workflow.owners.cp2e:_check_rate_exposure",
+    "fn:deploy_workflow.owners.cp2e:_check_text",
+    "fn:deploy_workflow.owners.cp2e:_fx_claim",
+    "fn:deploy_workflow.owners.cp2e:_hedge_claim",
+    "fn:deploy_workflow.owners.cp2e:_rate_claims",
+    "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
+   ]
+  }
+ ]
+}

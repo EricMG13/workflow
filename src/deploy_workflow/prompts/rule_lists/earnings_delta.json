@@ -1,0 +1,20 @@
+{
+ "rules": [
+  {
+   "id": "earnings_delta.1",
+   "statement": "",
+   "checks": [
+    "code:cp1b:shape",
+    "code:cp1b:period:ambiguous_coordinate",
+    "code:cp1b:period:incompatible_dimensions",
+    "code:cp1b:period:incompatible_periods",
+    "code:cp1b:period:incomplete_register",
+    "code:cp1b:period:invalid_fact",
+    "code:cp1b:period:invalid_source_view",
+    "code:cp1b:unsupported_pair",
+    "code:cp1b:comparison_assessment",
+    "code:cp1b:owner_error"
+   ]
+  }
+ ]
+}

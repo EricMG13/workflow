@@ -1,0 +1,52 @@
+{
+ "rules": [
+  {
+   "id": "peer_benchmark.1",
+   "statement": "",
+   "checks": [],
+   "from_code": "{\"inclusion\": \"Comparable and Partly comparable peers are included; a Not comparable peer is shown but kept out of every statistic\", \"minimum_included_peers\": 3, \"outlier_fraction\": \"0.5\", \"position\": \"1 + the number of entities strictly better than the issuer among the included peers with a value and the issuer; ties share a position\"}"
+  },
+  {
+   "id": "peer_benchmark.2",
+   "statement": "",
+   "checks": [
+    "oracle:cp1c:r01",
+    "oracle:cp1c:r02",
+    "oracle:cp1c:r03",
+    "oracle:cp1c:r04",
+    "oracle:cp1c:r05",
+    "oracle:cp1c:r06",
+    "oracle:cp1c:r07",
+    "oracle:cp1c:r08",
+    "oracle:cp1c:r09",
+    "oracle:cp1c:r10",
+    "oracle:cp1c:r11",
+    "oracle:cp1c:r12",
+    "oracle:cp1c:r13",
+    "oracle:cp1c:r14"
+   ]
+  },
+  {
+   "id": "peer_benchmark.3",
+   "statement": "",
+   "checks": [
+    "oracle:cp1c:t01",
+    "oracle:cp1c:t02",
+    "oracle:cp1c:t03"
+   ]
+  },
+  {
+   "id": "peer_benchmark.4",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
+    "fn:deploy_workflow.owners.cp1c:_citation_issues",
+    "fn:deploy_workflow.owners.cp1c:_content_issues",
+    "fn:deploy_workflow.owners.cp1c:_limitations",
+    "fn:deploy_workflow.owners.cp1c:_model_text_issues",
+    "fn:deploy_workflow.owners.cp1c:_provenance_issues",
+    "fn:deploy_workflow.owners.cp1c:calculation_issues"
+   ]
+  }
+ ]
+}

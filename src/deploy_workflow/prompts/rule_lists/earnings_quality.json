@@ -1,0 +1,50 @@
+{
+ "rules": [
+  {
+   "id": "earnings_quality.1",
+   "statement": "",
+   "checks": [
+    "oracle:cp1d:r01",
+    "oracle:cp1d:r02",
+    "oracle:cp1d:r03",
+    "oracle:cp1d:r04",
+    "oracle:cp1d:r05",
+    "oracle:cp1d:r06",
+    "oracle:cp1d:r07",
+    "oracle:cp1d:r08",
+    "oracle:cp1d:r09",
+    "oracle:cp1d:r10",
+    "oracle:cp1d:r11",
+    "oracle:cp1d:r12",
+    "oracle:cp1d:r13",
+    "oracle:cp1d:r14",
+    "oracle:cp1d:r15",
+    "oracle:cp1d:r16",
+    "oracle:cp1d:r17",
+    "oracle:cp1d:r18",
+    "oracle:cp1d:r19"
+   ]
+  },
+  {
+   "id": "earnings_quality.2",
+   "statement": "",
+   "checks": [
+    "oracle:cp1d:t01",
+    "oracle:cp1d:t02",
+    "oracle:cp1d:t03"
+   ]
+  },
+  {
+   "id": "earnings_quality.3",
+   "statement": "",
+   "checks": [
+    "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
+    "fn:deploy_workflow.owners.cp1d:_bridge_issues",
+    "fn:deploy_workflow.owners.cp1d:_model_text_issues",
+    "fn:deploy_workflow.owners.cp1d:_provenance_issues",
+    "fn:deploy_workflow.owners.cp1d:_rule_issues",
+    "fn:deploy_workflow.owners.cp1d:validation_issues"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "rules": [
+  {
+   "id": "credit_synthesis.a",
+   "statement": "a. Every row but a `gaps` row has a basis unless it is Insufficient Information: the refs it lists in `cp1a_refs` (only refs listed under `cp1a_rows` in the CONTEXT block, written exactly) or a `{ref|unit}` CP-1 figure from `cp1_facts` in its text. An Insufficient Information category, or an Insufficient Information assessment `confidence`, states its `limitation`.",
+   "checks": [
+    "fn:deploy_vii.cp2_synthesis:_basis_issues",
+    "fn:deploy_vii.cp2_synthesis:validate_credit_synthesis"
+   ]
+  },
+  {
+   "id": "credit_synthesis.b",
+   "statement": "b. While the CONTEXT block lists any `cp1a_signals`, or CP-1A is blocked, the assessment's `confidence` is below High. Each signal whose `restate` is true is restated: its ref is in the `cp1a_refs` of a `gaps` row.",
+   "checks": [
+    "fn:deploy_vii.cp2_synthesis:_propagation_issues"
+   ]
+  },
+  {
+   "id": "credit_synthesis.c",
+   "statement": "c. Every text field is nonblank run text: digits only in period, filing and section labels and the issuer's name; a figure only as `{ref|unit}` with a `ref` and `unit` listed under `cp1_facts` (with none listed, write no figure). Never a bare number, never a `[ref]` chip, and never a table id or a CP-1A ref in text: refs belong in `cp1a_refs`.",
+   "checks": [
+    "fn:deploy_vii.cp2_synthesis:validate_credit_synthesis",
+    "fn:deploy_vii.cp2_synthesis:_figures"
+   ]
+  },
+  {
+   "id": "credit_synthesis.d",
+   "statement": "d. No peer ranking, no instrument recommendation and no recovery conclusion in any text field (for example: ranks above peers, we recommend, the notes would recover): relative value belongs to CP-3 and the action bias to CP-6; recovery prospects may appear as a credit mechanic.",
+   "checks": [
+    "fn:deploy_vii.cp2_synthesis:validate_credit_synthesis"
+   ]
+  },
+  {
+   "id": "credit_synthesis.e",
+   "statement": "e. `key_findings` holds at least one finding. The CONTEXT block is not a source and is never cited.",
+   "checks": [
+    "fn:deploy_vii.cp2_synthesis:validate_credit_synthesis"
+   ]
+  }
+ ]
+}

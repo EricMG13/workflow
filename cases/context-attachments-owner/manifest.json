@@ -55,7 +55,7 @@
       "role": "bridge source bytes (M2: not covered by PINS PATTERNS)"
     },
     "cases/context-attachments-owner/legal-draft.txt": {
-      "sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
+      "sha256": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
       "role": "preparer-written draft legal source: positive legal pages joined by U+000C, only the page:1 title line and execution-attestation sentence replaced (M2: not covered by PINS PATTERNS)"
     }
   },
@@ -682,7 +682,7 @@
           "source_id": "legal-draft",
           "name": "Synthetic draft Northbridge Term Loan covenant terms",
           "status": "ready",
-          "sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
+          "sha256": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
           "limitation": "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
           "origin": "preparer-written: cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source pages with only the page:1 title line and the execution-attestation sentence replaced (no frozen byte edited)",
           "file": "cases/context-attachments-owner/legal-draft.txt",
@@ -743,7 +743,7 @@
           "source_id": "legal-draft",
           "name": "Synthetic draft Northbridge Term Loan covenant terms",
           "status": "ready",
-          "sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
+          "sha256": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
           "limitation": "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
           "origin": "preparer-written: cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source pages with only the page:1 title line and the execution-attestation sentence replaced (no frozen byte edited)",
           "file": "cases/context-attachments-owner/legal-draft.txt",
@@ -803,7 +803,7 @@
           "source_id": "legal-draft",
           "name": "Synthetic draft Northbridge Term Loan covenant terms",
           "status": "ready",
-          "sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
+          "sha256": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
           "limitation": "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
           "origin": "preparer-written: cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source pages with only the page:1 title line and the execution-attestation sentence replaced (no frozen byte edited)",
           "file": "cases/context-attachments-owner/legal-draft.txt",
@@ -855,7 +855,7 @@
           "source_id": "legal-draft",
           "name": "Synthetic draft Northbridge Term Loan covenant terms",
           "status": "ready",
-          "sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
+          "sha256": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
           "limitation": "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
           "origin": "preparer-written: cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source pages with only the page:1 title line and the execution-attestation sentence replaced (no frozen byte edited)",
           "file": "cases/context-attachments-owner/legal-draft.txt",
@@ -925,7 +925,7 @@
           "source_id": "legal-draft",
           "name": "Synthetic draft Northbridge Term Loan covenant terms",
           "status": "ready",
-          "sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
+          "sha256": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
           "limitation": "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
           "origin": "preparer-written: cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source pages with only the page:1 title line and the execution-attestation sentence replaced (no frozen byte edited)",
           "file": "cases/context-attachments-owner/legal-draft.txt",
@@ -1027,8 +1027,8 @@
     "context-mismatch.json": "98a6edffbb6cdc0c902dfb1131cb01c49908defd359de312aca8b45230f36fa3",
     "context-none.json": "3e18a4d9115d85718b68d0c93ad9ba68e89c5b6a6b9e13bf58e2f456bc263d49",
     "expected.json": "e9802e51d8479f842445109a4e198e0b2db1b3df898b1aacc012768878dcd90f",
-    "legal-draft.txt": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
-    "submissions.json": "66c645dcb7f37cbb22cedbd0199ebe7900b6d02ace9e5d0a628f59747d2d8f1c"
+    "legal-draft.txt": "cdbe0de656d957909f1ddc7b3b78747c0fbdca1191d06bf5fd0759d5bbea7993",
+    "submissions.json": "24873f0bf20ec6bfdae68974fbeddb8e27454d02bc0593f82d9105d35f353437"
   },
   "files_sha256_note": "every output except manifest.json; builder/build.py is pinned by cases/pins.py at the freeze step"
 }

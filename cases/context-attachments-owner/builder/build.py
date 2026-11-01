@@ -202,7 +202,16 @@ DRAFT_ATTEST = (
 )
 _p1 = _POS_PAGES[0]["text"]
 assert _p1.count(_OLD_TITLE) == 1 and _p1.count(_OLD_ATTEST) == 1
-_POS_PAGES[0]["text"] = _p1.replace(_OLD_TITLE, _NEW_TITLE).replace(_OLD_ATTEST, DRAFT_ATTEST)
+_SUP_OLD = "All earlier versions of these selected terms are superseded."
+_SUP_NEW = "All earlier versions of these selected terms would be superseded on signing."
+_p3 = _POS_PAGES[2]["text"]
+_LIM_OLD = "These are selected current executed terms, not a complete legal package."
+DRAFT_SRC_LIM = "These are selected draft terms, not a complete legal package."
+assert _p1.count(_SUP_OLD) == 1 and _p3.count(_LIM_OLD) == 1
+_POS_PAGES[0]["text"] = (
+    _p1.replace(_OLD_TITLE, _NEW_TITLE).replace(_OLD_ATTEST, DRAFT_ATTEST).replace(_SUP_OLD, _SUP_NEW)
+)
+_POS_PAGES[2]["text"] = _p3.replace(_LIM_OLD, DRAFT_SRC_LIM)
 DRAFT_PAGES = _POS_PAGES  # page:1 changed in two places; page:2 and page:3 byte-identical to the frozen source
 DRAFT_BYTES = "\f".join(p["text"] for p in DRAFT_PAGES).encode("utf-8")  # U+000C joins pages (cp4-owner raw_rule)
 DRAFT_SHA = sha(DRAFT_BYTES)
@@ -242,7 +251,9 @@ for sid in ("identity", "financial"):
 assert page_sha(leg_case["legal-current-matching-definition"]["legal_source"]["pages"]) == SHA["legal-covenants"]
 assert page_sha(DRAFT_PAGES) == SHA["legal-draft"]
 for _loc in ("page:2", "page:3"):
-    assert PAGES["legal-draft"][_loc] == PAGES["legal-covenants"][_loc]
+    pass  # page:2 byte-identical; page:3 differs only in the source-limitation sentence (asserted below)
+assert PAGES["legal-draft"]["page:2"] == PAGES["legal-covenants"]["page:2"]
+assert PAGES["legal-draft"]["page:3"] == PAGES["legal-covenants"]["page:3"].replace(_LIM_OLD, DRAFT_SRC_LIM)
 
 LIMIT_FIN = BASE["financial"]["limitation"]
 LEGAL_LIM = BASE["legal-covenants"]["limitation"]
@@ -626,6 +637,10 @@ CP4_DRAFT["documents"][0].update(
         "limitation": "Selected draft terms only; security, guarantee, default, cure and voting terms are omitted",
     }
 )
+_ps = CP4_DRAFT["protection_score"]["citations"]
+_hit = [c for c in _ps if "selected current executed terms" in c["quote"]]
+assert len(_hit) == 1
+_hit[0]["quote"] = _hit[0]["quote"].replace(_LIM_OLD, DRAFT_SRC_LIM)
 _DOC_TEXT = " ".join(str(CP4_DRAFT["documents"][0][k]) for k in ("document_family", "date_or_amendment", "limitation"))
 assert "xecuted" not in _DOC_TEXT
 

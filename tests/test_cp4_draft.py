@@ -178,3 +178,45 @@ def test_t4d1_row_of_the_draft_source_reads_draft_and_eligible() -> None:
     want = _t4d1("draft-ok")
     got = {row.label: [text[f] for f in row.fact_ids[:3]] for row in table.rows}
     assert got == {label: list(cells.values()) for label, cells in want.items()}
+
+
+# --- Task 2 Lows: what triggers the limitation (mutants M7 and M5) -------------------------------
+
+
+def _limitations_of_positive(
+    upstream_of: Any,
+) -> list[str]:
+    inputs = tm.make_inputs_object("positive")
+    upstream = upstream_of(inputs.upstream)
+    report = cp4_legal.covenant_interpretation(
+        inputs.pack, inputs.submission, upstream, inputs.inputs
+    )
+    return list(report.limitations)
+
+
+def test_a_filed_source_adds_no_draft_limitation() -> None:
+    """L1: only `draft` triggers the limitation; `positive`'s legal source relabelled `filed`
+    leaves `cases/cp4-owner/expected.json#positive/CP-4/own_limitations` exactly."""
+
+    def relabel(up: cp4_legal.Upstream) -> cp4_legal.Upstream:
+        assert up.legal_sources
+        authority = {k: ("filed" if k in up.legal_sources else v) for k, v in up.authority.items()}
+        return dataclasses.replace(up, authority=authority)
+
+    got = _limitations_of_positive(relabel)
+    assert got == tm.EXPECTED["positive"]["CP-4"]["own_limitations"]
+    assert DRAFT_LIMITATION not in got
+
+
+def test_a_draft_assessment_that_is_not_eligible_adds_no_limitation() -> None:
+    """L2: eligibility triggers the limitation, not CP-0's assessment alone (oracle
+    `draft-uncited/M/CP-4/rule`). A source CP-0 assesses `draft` that is not a legal source of
+    the upstream (not ready) leaves the executed-only limitations."""
+
+    def assessed_only(up: cp4_legal.Upstream) -> cp4_legal.Upstream:
+        assert "legal-draft" not in up.legal_sources
+        return dataclasses.replace(up, authority={**up.authority, "legal-draft": "draft"})
+
+    got = _limitations_of_positive(assessed_only)
+    assert got == tm.EXPECTED["positive"]["CP-4"]["own_limitations"]
+    assert DRAFT_LIMITATION not in got

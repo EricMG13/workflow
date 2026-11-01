@@ -178,6 +178,18 @@ def test_module_named_only_in_string_literal(repo: pathlib.Path) -> None:
     assert select(repo, {"src/pkg/lazy.py": "Z = 2\n"}) == ["tests/test_lazy.py"]
 
 
+def test_split_path_literal_of_one_level_file(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "cases/PINS.json": "{}\n",
+            "tests/test_split.py": "P = ROOT / 'cases' / 'PINS.json'\n",
+            "tests/test_full.py": "Q = 'cases/PINS.json'\n",
+        },
+    )
+    assert "tests/test_split.py" in select(repo, {"cases/PINS.json": '{"a": 1}\n'})
+
+
 def test_non_ascii_path_is_not_quoted(repo: pathlib.Path) -> None:
     add_base(
         repo,

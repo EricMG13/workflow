@@ -1,0 +1,13 @@
+SYNTHETIC LOAN MARKET DESK
+Secondary loan quotation sheet
+Published January 10, 2026. Quotations are as of the close on January 9, 2026.
+This invented case is test data, not evidence about a real issuer.
+Instrument: Northbridge Term Loan, the senior secured term loan of Northbridge Synthetic Group, with final maturity on December 31, 2029.
+Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par.
+The quotation comes from one dealer. No trade in the instrument was reported in the 30 days to January 9, 2026.
+SYNTHETIC LOAN MARKET DESK
+Dealer commentary
+Published January 10, 2026.
+Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75. This is talk and not a quotation or a trade.
+The commentary does not describe the security package, guarantees or covenants of the instrument.
+No rating agency has assigned a rating to the instrument.

@@ -1,0 +1,678 @@
+{
+ "schema_version": "cp2h-context-owner-cases/1",
+ "scope": "Phase 4: CP-2H builds its rating register from the context file's `ratings` rows (S&P, Moody's, Fitch) on a fixed combined scale; trigger terms from an attached `ratings` source",
+ "status": "DRAFT 1 prepared by the cp2h-context-owner Task 0 preparer, 2026-11-01; review pending; not frozen, not pinned",
+ "roles": {
+  "preparer": "Task 0 preparer (this builder)",
+  "reviewer": null,
+  "builder": null
+ },
+ "raw_rule": "ratings pages: literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (as cases/cp2h-owner). context files: the bytes the form writes (JSON.stringify(o, null, 2) + LF; context-minified.json: JSON.stringify(o) + LF), sha256 of the file bytes, spans line:N via splitlines",
+ "inputs_pinned": {
+  "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+  "cases/context/research-minimal.json": "c09646df4743d845f6b972558bb92c288f0335c1d4959ddd0fb2a1bf39bfbcca",
+  "cases/cp2h-owner/manifest.json": "ff74170b7e69824be7e323789f244773465b7ad12eadff237aba7c3563877587",
+  "cases/cp2h-owner/submissions.json": "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e",
+  "cases/cp2h-owner/expected.json": "d0d0310087cfed3bc1ca9c90d1bcd4b54960f0da3b29b449997e80459c14fae6",
+  "cases/cp2h-owner/cp2h-view-tree.json": "3fb8cf29e73431ac2be72f168d26f72d830c475d42590032a49d5a466b5e0728"
+ },
+ "financial_baseline": {
+  "path": "cases/financial/manifest.json",
+  "sources": [
+   {
+    "source_id": "identity",
+    "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   },
+   {
+    "source_id": "financial",
+    "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"
+   }
+  ]
+ },
+ "upstream": "CP-0, CP-1, CP-2A, CP-2G closed chain as cases/cp2h-owner/manifest.json cases.positive (and gap for the gap case): every CP-2G metric and CP-1 ratio is the already frozen value",
+ "ratings_sources": {
+  "source_id": "ratings",
+  "name": "Credit rating summary (fictional agencies)",
+  "status": "ready",
+  "media_type": "text/plain",
+  "extractor": "supplied-representation",
+  "extraction_status": "complete",
+  "pack_limitation_positive": "Synthetic agency summary naming fictional agencies; not evidence about a real issuer.",
+  "pack_limitation_gap": "Synthetic agency summary naming fictional agencies; one threshold is not stated and one rating is withdrawn.",
+  "note": "pages 1-2 are the frozen cp2h-owner pages (fictional agencies, fictional scale, scale positions 11/12) and are present and ignored by the context path; page 3 is the frozen page 3 with Alder Ratings -> S&P and Brook Credit -> Moody's (fitch_terms: S&P rows plus one Fitch row)",
+  "positive": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nCredit rating summary\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer. Alder Ratings and Brook Credit are fictional agencies.\nRatings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale.\nAgency  Instrument  Rating  Outlook  Date\nAlder Ratings  Issuer rating  BB  Negative  2025-11-14\nBrook Credit  Issuer rating  Ba3  Stable  2025-10-02"
+    },
+    {
+     "locator": "page:2",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nRating scale equivalence\nPublished January 10, 2026.\nA lower position number is a higher rating. Each position is one notch.\nPosition  Alder Ratings  Brook Credit\n9  BBB-  Baa3\n10  BB+  Ba1\n11  BB  Ba2\n12  BB-  Ba3\n13  B+  B1\n14  B  B2\n15  B-  B3"
+    },
+    {
+     "locator": "page:3",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nPublished rating trigger terms\nPublished January 10, 2026.\nEach agency states the terms below as conditions it would treat as a trigger for a rating review. Terms are tested at each fiscal year end on the Group's reported figures: total debt as reported in the statements, EBITDA as reported EBITDA, cash interest as cash interest paid, net debt as total debt less cash and cash equivalents, and free cash flow as levered free cash flow.\nAgency  Direction  Metric  Comparison  Threshold\nS&P  Downgrade  Total debt to EBITDA  Above  2.75x\nS&P  Downgrade  EBITDA to cash interest  Below  3.50x\nS&P  Downgrade  Free cash flow to total debt  Below  10.0%\nMoody's  Downgrade  Net debt to EBITDA  Above  2.25x\nMoody's  Upgrade  Net debt to EBITDA  Below  0.50x"
+    }
+   ],
+   "sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666"
+  },
+  "gap": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nCredit rating summary\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer. Alder Ratings and Brook Credit are fictional agencies.\nRatings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale.\nAgency  Instrument  Rating  Outlook  Date\nAlder Ratings  Issuer rating  BB  Negative  2025-11-14\nBrook Credit  Issuer rating  Withdrawn  Not applicable  2025-12-05\nBrook Credit withdrew its issuer rating on 2025-12-05 and no longer publishes trigger terms."
+    },
+    {
+     "locator": "page:2",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nRating scale equivalence\nPublished January 10, 2026.\nA lower position number is a higher rating. Each position is one notch.\nPosition  Alder Ratings  Brook Credit\n9  BBB-  Baa3\n10  BB+  Ba1\n11  BB  Ba2\n12  BB-  Ba3\n13  B+  B1\n14  B  B2\n15  B-  B3"
+    },
+    {
+     "locator": "page:3",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nPublished rating trigger terms\nPublished January 10, 2026.\nEach agency states the terms below as conditions it would treat as a trigger for a rating review. Terms are tested at each fiscal year end on the Group's reported figures: total debt as reported in the statements, EBITDA as reported EBITDA, cash interest as cash interest paid, net debt as total debt less cash and cash equivalents, and free cash flow as levered free cash flow.\nAgency  Direction  Metric  Comparison  Threshold\nS&P  Downgrade  Total debt to EBITDA  Above  2.75x\nS&P  Downgrade  EBITDA to cash interest  Below  3.50x\nS&P  Downgrade  Free cash flow to total debt  Below  Not stated"
+    }
+   ],
+   "sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51"
+  },
+  "fitch_terms": {
+   "pages": [
+    {
+     "locator": "page:1",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nCredit rating summary\nPublished January 10, 2026.\nThis invented case is test data, not evidence about a real issuer. Alder Ratings and Brook Credit are fictional agencies.\nRatings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale.\nAgency  Instrument  Rating  Outlook  Date\nAlder Ratings  Issuer rating  BB  Negative  2025-11-14\nBrook Credit  Issuer rating  Ba3  Stable  2025-10-02"
+    },
+    {
+     "locator": "page:2",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nRating scale equivalence\nPublished January 10, 2026.\nA lower position number is a higher rating. Each position is one notch.\nPosition  Alder Ratings  Brook Credit\n9  BBB-  Baa3\n10  BB+  Ba1\n11  BB  Ba2\n12  BB-  Ba3\n13  B+  B1\n14  B  B2\n15  B-  B3"
+    },
+    {
+     "locator": "page:3",
+     "text": "NORTHBRIDGE SYNTHETIC GROUP\nPublished rating trigger terms\nPublished January 10, 2026.\nEach agency states the terms below as conditions it would treat as a trigger for a rating review. Terms are tested at each fiscal year end on the Group's reported figures: total debt as reported in the statements, EBITDA as reported EBITDA, cash interest as cash interest paid, net debt as total debt less cash and cash equivalents, and free cash flow as levered free cash flow.\nAgency  Direction  Metric  Comparison  Threshold\nS&P  Downgrade  Total debt to EBITDA  Above  2.75x\nS&P  Downgrade  EBITDA to cash interest  Below  3.50x\nS&P  Downgrade  Free cash flow to total debt  Below  10.0%\nFitch  Downgrade  Net debt to EBITDA  Above  2.25x"
+    }
+   ],
+   "sha256": "cc667dd8f24b2d0cf843d350c4bc9fc99f68a41d8f4b94d1e2976c95e512c627"
+  }
+ },
+ "context_files": {
+  "context-positive.json": {
+   "sha256": "1211fc0a6dcb5b90c56ea8df1a6ccb483ff3078e1295f3b6fbe2ca69de9521d5",
+   "lines": 77,
+   "bytes": 1576
+  },
+  "context-gap.json": {
+   "sha256": "0786d5e035dbcd08c6b2927258210bc7526080942c44407cb7c00b5f58491d0d",
+   "lines": 77,
+   "bytes": 1572
+  },
+  "context-outlook-unstated.json": {
+   "sha256": "e37416755a372f5078db549afb5cf34943907230ba9803fef2635dcc3f18be5b",
+   "lines": 77,
+   "bytes": 1568
+  },
+  "context-no-ratings.json": {
+   "sha256": "adb19749473b7e51af9c60ea5b46fb0f129836d22c7fb58ee3f985c2275b8fb7",
+   "lines": 62,
+   "bytes": 1291
+  },
+  "context-off-scale.json": {
+   "sha256": "45eec73c651da159538c7a66e4ac87ecd0c4d564f2c29b7644466e5f4f4967e0",
+   "lines": 70,
+   "bytes": 1432
+  },
+  "context-duplicate-agency.json": {
+   "sha256": "356646827a3b8898b2608135afd817d23f1e47eac2970f61606b2dba86749325",
+   "lines": 77,
+   "bytes": 1576
+  },
+  "context-terms-agency-unrated.json": {
+   "sha256": "6cb6163e433e74d51972a2f2026d6df56719cf3e08849aeb652fd0a0f3c7f1e1",
+   "lines": 70,
+   "bytes": 1433
+  },
+  "context-mismatch.json": {
+   "sha256": "331c792f575e1236ab0dda6b819cfc7b1a7bf2e446ec63736b4b662faaeacab0",
+   "lines": 77,
+   "bytes": 1576
+  },
+  "context-minified.json": {
+   "sha256": "f8caaf2324e232f9a2327f560ceb459b4d02d1d516d1276fddbbb0ffc08bd259",
+   "lines": 1,
+   "bytes": 1131
+  },
+  "context-uncitable.json": {
+   "sha256": "5594814e89bd0f17e0c07447448f31b4ee7a438c811b9655fbdc907e0e053823",
+   "lines": 79,
+   "bytes": 1592
+  }
+ },
+ "context_source": {
+  "source_id": "context",
+  "status": "ready",
+  "media_type": "text/plain",
+  "spans": "line:N per splitlines of the file",
+  "base": "cases/context/research-minimal.json with run.pathway distressed_restructuring, case_kind synthetic, as_of 2026-01-10, identity Northbridge Synthetic Group / northbridge-synthetic and the case's ratings rows",
+  "run_type": "research (a primary run requires a deal_terms row)"
+ },
+ "combined_scale": {
+  "rows": [
+   {
+    "position": 1,
+    "sp": "AAA",
+    "fitch": "AAA",
+    "moodys": "Aaa"
+   },
+   {
+    "position": 2,
+    "sp": "AA+",
+    "fitch": "AA+",
+    "moodys": "Aa1"
+   },
+   {
+    "position": 3,
+    "sp": "AA",
+    "fitch": "AA",
+    "moodys": "Aa2"
+   },
+   {
+    "position": 4,
+    "sp": "AA-",
+    "fitch": "AA-",
+    "moodys": "Aa3"
+   },
+   {
+    "position": 5,
+    "sp": "A+",
+    "fitch": "A+",
+    "moodys": "A1"
+   },
+   {
+    "position": 6,
+    "sp": "A",
+    "fitch": "A",
+    "moodys": "A2"
+   },
+   {
+    "position": 7,
+    "sp": "A-",
+    "fitch": "A-",
+    "moodys": "A3"
+   },
+   {
+    "position": 8,
+    "sp": "BBB+",
+    "fitch": "BBB+",
+    "moodys": "Baa1"
+   },
+   {
+    "position": 9,
+    "sp": "BBB",
+    "fitch": "BBB",
+    "moodys": "Baa2"
+   },
+   {
+    "position": 10,
+    "sp": "BBB-",
+    "fitch": "BBB-",
+    "moodys": "Baa3"
+   },
+   {
+    "position": 11,
+    "sp": "BB+",
+    "fitch": "BB+",
+    "moodys": "Ba1"
+   },
+   {
+    "position": 12,
+    "sp": "BB",
+    "fitch": "BB",
+    "moodys": "Ba2"
+   },
+   {
+    "position": 13,
+    "sp": "BB-",
+    "fitch": "BB-",
+    "moodys": "Ba3"
+   },
+   {
+    "position": 14,
+    "sp": "B+",
+    "fitch": "B+",
+    "moodys": "B1"
+   },
+   {
+    "position": 15,
+    "sp": "B",
+    "fitch": "B",
+    "moodys": "B2"
+   },
+   {
+    "position": 16,
+    "sp": "B-",
+    "fitch": "B-",
+    "moodys": "B3"
+   },
+   {
+    "position": 17,
+    "sp": "CCC+",
+    "fitch": "CCC+",
+    "moodys": "Caa1"
+   },
+   {
+    "position": 18,
+    "sp": "CCC",
+    "fitch": "CCC",
+    "moodys": "Caa2"
+   },
+   {
+    "position": 19,
+    "sp": "CCC-",
+    "fitch": "CCC-",
+    "moodys": "Caa3"
+   },
+   {
+    "position": 20,
+    "sp": "CC",
+    "fitch": "CC",
+    "moodys": "Ca"
+   },
+   {
+    "position": 21,
+    "sp": "C",
+    "fitch": "C",
+    "moodys": "C"
+   },
+   {
+    "position": 22,
+    "sp": "SD",
+    "fitch": "RD",
+    "moodys": null
+   },
+   {
+    "position": 23,
+    "sp": "D",
+    "fitch": "D",
+    "moodys": null
+   }
+  ],
+  "by_agency": {
+   "S&P": {
+    "AAA": 1,
+    "AA+": 2,
+    "AA": 3,
+    "AA-": 4,
+    "A+": 5,
+    "A": 6,
+    "A-": 7,
+    "BBB+": 8,
+    "BBB": 9,
+    "BBB-": 10,
+    "BB+": 11,
+    "BB": 12,
+    "BB-": 13,
+    "B+": 14,
+    "B": 15,
+    "B-": 16,
+    "CCC+": 17,
+    "CCC": 18,
+    "CCC-": 19,
+    "CC": 20,
+    "C": 21,
+    "SD": 22,
+    "D": 23
+   },
+   "Fitch": {
+    "AAA": 1,
+    "AA+": 2,
+    "AA": 3,
+    "AA-": 4,
+    "A+": 5,
+    "A": 6,
+    "A-": 7,
+    "BBB+": 8,
+    "BBB": 9,
+    "BBB-": 10,
+    "BB+": 11,
+    "BB": 12,
+    "BB-": 13,
+    "B+": 14,
+    "B": 15,
+    "B-": 16,
+    "CCC+": 17,
+    "CCC": 18,
+    "CCC-": 19,
+    "CC": 20,
+    "C": 21,
+    "RD": 22,
+    "D": 23
+   },
+   "Moody's": {
+    "Aaa": 1,
+    "Aa1": 2,
+    "Aa2": 3,
+    "Aa3": 4,
+    "A1": 5,
+    "A2": 6,
+    "A3": 7,
+    "Baa1": 8,
+    "Baa2": 9,
+    "Baa3": 10,
+    "Ba1": 11,
+    "Ba2": 12,
+    "Ba3": 13,
+    "B1": 14,
+    "B2": 15,
+    "B3": 16,
+    "Caa1": 17,
+    "Caa2": 18,
+    "Caa3": 19,
+    "Ca": 20,
+    "C": 21
+   }
+  },
+  "no_position": [
+   "Withdrawn",
+   "Not rated"
+  ],
+  "note": "S&P and Fitch share the letter symbols; position 22 is S&P SD and Fitch RD, 23 is D for S&P and Fitch; Moody's has neither"
+ },
+ "cases": {
+  "positive": {
+   "run": {
+    "run_id": "cp2h-context-owner-positive",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-positive.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "closed run: CP-0, CP-1, CP-2A, CP-2G as cases/cp2h-owner cases.positive/gap (same chain, same figures), CP-2H",
+   "submission": "submissions.json cases.positive",
+   "expected": "expected.json cases.positive"
+  },
+  "gap": {
+   "run": {
+    "run_id": "cp2h-context-owner-gap",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-gap.json",
+   "ratings_source": "gap",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "closed run: CP-0, CP-1, CP-2A, CP-2G as cases/cp2h-owner cases.positive/gap (same chain, same figures), CP-2H",
+   "submission": "submissions.json cases.gap",
+   "expected": "expected.json cases.gap"
+  },
+  "outlook_unstated": {
+   "run": {
+    "run_id": "cp2h-context-owner-outlook-unstated",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-outlook-unstated.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "closed run: CP-0, CP-1, CP-2A, CP-2G as cases/cp2h-owner cases.positive/gap (same chain, same figures), CP-2H",
+   "submission": "submissions.json cases.outlook_unstated",
+   "expected": "expected.json cases.outlook_unstated"
+  },
+  "minified": {
+   "run": {
+    "run_id": "cp2h-context-owner-minified",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-minified.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "closed run: CP-0, CP-1, CP-2A, CP-2G as cases/cp2h-owner cases.positive/gap (same chain, same figures), CP-2H",
+   "submission": "submissions.json cases.minified",
+   "expected": "expected.json cases.minified"
+  },
+  "view": {
+   "run": {
+    "run_id": "cp2h-context-owner-view",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-positive.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "closed run: CP-0, CP-1, CP-2A, CP-2G as cases/cp2h-owner cases.positive/gap (same chain, same figures), CP-2H",
+   "submission": "submissions.json cases.positive",
+   "expected": "expected.json view"
+  },
+  "no_ratings": {
+   "run": {
+    "run_id": "cp2h-context-owner-no-ratings",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-no-ratings.json",
+   "ratings_source": null,
+   "pack": [
+    "identity",
+    "financial",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[no_ratings]"
+  },
+  "no_terms": {
+   "run": {
+    "run_id": "cp2h-context-owner-no-terms",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-positive.json",
+   "ratings_source": null,
+   "pack": [
+    "identity",
+    "financial",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[no_terms]"
+  },
+  "off_scale": {
+   "run": {
+    "run_id": "cp2h-context-owner-off-scale",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-off-scale.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[off_scale]"
+  },
+  "duplicate_agency": {
+   "run": {
+    "run_id": "cp2h-context-owner-duplicate-agency",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-duplicate-agency.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[duplicate_agency]"
+  },
+  "terms_agency_unrated": {
+   "run": {
+    "run_id": "cp2h-context-owner-terms-agency-unrated",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-terms-agency-unrated.json",
+   "ratings_source": "fitch_terms",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[terms_agency_unrated]"
+  },
+  "context_mismatch": {
+   "run": {
+    "run_id": "cp2h-context-owner-context-mismatch",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-mismatch.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[context_mismatch]"
+  },
+  "uncitable_row": {
+   "run": {
+    "run_id": "cp2h-context-owner-uncitable-row",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "distressed_restructuring",
+    "requested_modules": [
+     "CP-2H"
+    ]
+   },
+   "context": "context-uncitable.json",
+   "ratings_source": "positive",
+   "pack": [
+    "identity",
+    "financial",
+    "ratings",
+    "context"
+   ],
+   "execution": "composer only (validate / register build on the pack); no run",
+   "expected": "expected.json refusals[uncitable_row]"
+  }
+ },
+ "run_time_bindings": "as cases/cp2h-owner/manifest.json run_time_bindings: pack hash, {{FIG:..}}, {{EVID:..}}, {{INPUTS_SHA256}} and ticket ids are bound at run time",
+ "outputs": {
+  "expected.json": "fc83997b6bce58d2ea8cf0f9d4fbd4ff778ae53929e13af57c41f61d4b4f5e39",
+  "submissions.json": "52339f9986fba7504ffeccad9e2618e0fdf992d4bc81db3249ecaed85e37cd21",
+  "cp2h-context-view-tree.json": "145c9ad05ce4cd838a846135fb4c4275ad9f775a19a3270e6964c077e4bcfa4a"
+ }
+}

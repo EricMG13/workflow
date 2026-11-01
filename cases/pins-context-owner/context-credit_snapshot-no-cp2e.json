@@ -1,0 +1,95 @@
+{
+  "schema": "context/1",
+  "run": {
+    "run_type": "research",
+    "pathway": "credit_snapshot",
+    "case_kind": "synthetic",
+    "as_of": "2026-01-10",
+    "current_period": "",
+    "prior_period": "",
+    "reporting_currency": "USD"
+  },
+  "identity": {
+    "issuer_name": "Northbridge Synthetic Group",
+    "issuer_id": "northbridge-synthetic",
+    "borrower_name": "",
+    "parent_name": "",
+    "guarantors": [],
+    "aliases": [],
+    "listed_equity": false,
+    "ticker": "",
+    "sector": "",
+    "country": "",
+    "sponsor": ""
+  },
+  "deal_terms": [],
+  "quotes": [],
+  "ratings": [],
+  "valuation": {
+    "peer_source": "cp_dr_public",
+    "basis": "auto",
+    "issuer_market": {
+      "market_cap_m": "",
+      "net_debt_m": "",
+      "ev_m": "",
+      "ebitda_basis": "LTM",
+      "as_of": "",
+      "source": ""
+    },
+    "peers": [],
+    "precedents": [],
+    "user_multiple": {
+      "value": "",
+      "basis": "LTM",
+      "rationale": ""
+    }
+  },
+  "assumptions": {
+    "cp2a": {
+      "scenarios": [
+        {
+          "ebitda_decline_pct": "20",
+          "interest_increase_pct": "0"
+        },
+        {
+          "ebitda_decline_pct": "40",
+          "interest_increase_pct": "0"
+        },
+        {
+          "ebitda_decline_pct": "40",
+          "interest_increase_pct": "20"
+        },
+        {
+          "ebitda_decline_pct": "100",
+          "interest_increase_pct": "0"
+        }
+      ],
+      "rationale": "Lender downside and severe cases."
+    },
+    "cp2d": {
+      "horizon_months": "24",
+      "minimum_cash_m": "10",
+      "rationale": "Treasury policy horizon and cushion."
+    },
+    "cp2e": null,
+    "cp3c": {
+      "repricing_bps": "400",
+      "rationale": "Recent repricings in the sector."
+    },
+    "cp3d": {
+      "recovery_pct": "70",
+      "rationale": "First-lien recovery convention."
+    },
+    "cp4c": {
+      "ev_multiple": "4",
+      "rationale": "Mid-cycle multiple for the stress waterfall."
+    }
+  },
+  "attachments": {
+    "portfolio_workbook": false,
+    "prior_case": false,
+    "management_bridge": false,
+    "legal_documents": "executed"
+  },
+  "research_questions": []
+}

@@ -995,8 +995,8 @@ def test_schema_source_follows_the_producer_module(monkeypatch: pytest.MonkeyPat
     """F1: `STEPS` for a live-contract module's own step; the registered core's `SCHEMAS` for an
     owner-only module with that single step id; otherwise `not_permitted`, never `KeyError`."""
     assert _schema_source("CP-1A", "business_context") == "BusinessContextSubmission"
-    # CP-1B is live but its step has no shared-live schema; no H1 row (round 10 item 2).
-    assert _schema_source("CP-1B", "earnings_delta") == "SourceError not_permitted"
+    # CP-1B's chain is not shared-live, so it is owner-only: its registered core's schema (O1 G1c).
+    assert _schema_source("CP-1B", "earnings_delta") == "EarningsDeltaOwnerReview"
     # A live module claiming another module's step.
     assert _schema_source("CP-1A", "credit_synthesis") == "SourceError not_permitted"
     # An owner-only module without a registered core (CP-3D's real core is registered since its

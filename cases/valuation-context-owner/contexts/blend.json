@@ -1,0 +1,136 @@
+{
+  "schema": "context/1",
+  "run": {
+    "run_type": "research",
+    "pathway": "distressed_restructuring",
+    "case_kind": "synthetic",
+    "as_of": "2026-01-10",
+    "current_period": "",
+    "prior_period": "",
+    "reporting_currency": "USD"
+  },
+  "identity": {
+    "issuer_name": "Northbridge Synthetic Group",
+    "issuer_id": "northbridge-synthetic",
+    "borrower_name": "",
+    "parent_name": "",
+    "guarantors": [],
+    "aliases": [],
+    "listed_equity": false,
+    "ticker": "",
+    "sector": "",
+    "country": "",
+    "sponsor": ""
+  },
+  "deal_terms": [],
+  "quotes": [],
+  "ratings": [],
+  "valuation": {
+    "peer_source": "user_comps",
+    "basis": "blend",
+    "issuer_market": {
+      "market_cap_m": "",
+      "net_debt_m": "",
+      "ev_m": "",
+      "ebitda_basis": "LTM",
+      "as_of": "",
+      "source": ""
+    },
+    "peers": [
+      {
+        "name": "Synthetic Peer A (invented)",
+        "ticker": "",
+        "ev_m": "540",
+        "ebitda_m": "60",
+        "as_of": "2025-11-30",
+        "source": "Synthetic comps desk, invented data"
+      },
+      {
+        "name": "Synthetic Peer B (invented)",
+        "ticker": "",
+        "ev_m": "330",
+        "ebitda_m": "55",
+        "as_of": "2025-09-30",
+        "source": "Synthetic comps desk, invented data"
+      },
+      {
+        "name": "Synthetic Peer C (invented)",
+        "ticker": "",
+        "ev_m": "700",
+        "ebitda_m": "100",
+        "as_of": "2025-12-31",
+        "source": "Synthetic comps desk, invented data"
+      }
+    ],
+    "precedents": [
+      {
+        "target": "Synthetic Target P1 (invented)",
+        "acquirer": "Synthetic Acquirer P1",
+        "date": "2024-06-30",
+        "ev_m": "900",
+        "ebitda_m": "100",
+        "source": "Synthetic deals desk, invented data"
+      },
+      {
+        "target": "Synthetic Target P2 (invented)",
+        "acquirer": "Synthetic Acquirer P2",
+        "date": "2023-09-15",
+        "ev_m": "1250",
+        "ebitda_m": "125",
+        "source": "Synthetic deals desk, invented data"
+      },
+      {
+        "target": "Synthetic Target P3 (invented)",
+        "acquirer": "Synthetic Acquirer P3",
+        "date": "2022-12-31",
+        "ev_m": "800",
+        "ebitda_m": "100",
+        "source": "Synthetic deals desk, invented data"
+      },
+      {
+        "target": "Synthetic Target P4 (invented)",
+        "acquirer": "Synthetic Acquirer P4",
+        "date": "2025-03-31",
+        "ev_m": "1000",
+        "ebitda_m": "80",
+        "source": "Synthetic deals desk, invented data"
+      },
+      {
+        "target": "Synthetic Target P5 (invented)",
+        "acquirer": "Synthetic Acquirer P5",
+        "date": "2024-01-31",
+        "ev_m": "600",
+        "ebitda_m": "100",
+        "source": "Synthetic deals desk, invented data"
+      },
+      {
+        "target": "Synthetic Target P6 (invented)",
+        "acquirer": "Synthetic Acquirer P6",
+        "date": "",
+        "ev_m": "700",
+        "ebitda_m": "100",
+        "source": "Synthetic deals desk, invented data"
+      }
+    ],
+    "user_multiple": {
+      "value": "",
+      "basis": "LTM",
+      "rationale": ""
+    }
+  },
+  "assumptions": {
+    "cp2a": null,
+    "cp2d": null,
+    "cp2e": null,
+    "cp3c": null,
+    "cp3d": null,
+    "cp4c": null
+  },
+  "attachments": {
+    "portfolio_workbook": false,
+    "prior_case": false,
+    "management_bridge": false,
+    "legal_documents": "executed"
+  },
+  "research_questions": []
+}

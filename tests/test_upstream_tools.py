@@ -2278,7 +2278,7 @@ def test_integrity_v2_final_recheck_discards_body_and_cursor(tmp_path, monkeypat
     assert session.receipts[-1]["body"] is None
 
 
-def test_integrity_v2_dynamic_model_is_mandatory_and_not_pooled(tmp_path):
+def test_integrity_v2_cp5_fan_in_excludes_cp_model_b1(tmp_path):
     extra = Module(
         run_id="integrity-component",
         issuer_id="component",
@@ -2298,16 +2298,16 @@ def test_integrity_v2_dynamic_model_is_mandatory_and_not_pooled(tmp_path):
     )
     store, attempt, _, _ = _integrity_execution(tmp_path, extras=(extra,))
     session = _integrity_session(store, attempt)
-    assert session.integrity_manifest["evaluated_count"] == 3
+    # User ruling B1: CP-MODEL is a stop in the owner walk, not a CP-5 input, so the CP-5 fan-in
+    # is CP-1 and CP-1B only and the requested CP-MODEL head is not a producer.
+    from deploy_vii.registry import dependencies
+
+    assert "CP-MODEL" not in dependencies(("CP-1B", "CP-5", "CP-MODEL"))["CP-5"]
+    assert session.integrity_manifest["evaluated_count"] == 2
     producers, _ = _integrity_pages(session, "producers")
-    assert {p["producer"]["module_id"] for p in producers} == {"CP-1", "CP-1B", "CP-MODEL"}
+    assert {p["producer"]["module_id"] for p in producers} == {"CP-1", "CP-1B"}
     groups, _ = _integrity_pages(session, "identity_groups")
-    assert len(groups) == 1
-    assert {r["producer_module_id"] for r in groups[0]["members"]} == {"CP-1", "CP-MODEL"}
-    grant = _integrity_grant(store, attempt)
-    grant["producers"] = [p for p in grant["producers"] if p["module_id"] != "CP-MODEL"]
-    with pytest.raises(ValueError, match="^not_permitted$"):
-        _integrity_session(store, attempt, grant)
+    assert groups == []
 
 
 def test_integrity_v2_unicode_maximal_prefix_and_oversize_atomic(tmp_path):

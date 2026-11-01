@@ -311,3 +311,8 @@ CP-6 half is frozen below.
 Frozen after `work/lead/cp6-freeze/review-precise-cp6-freeze-1.md` (F1-F9, Q2/Q5/Q7/Q11 and the exact restatements, as ruled by LEAD). Oracle hashes
 (manifest, submissions, expected, builder): see the "Frozen by LEAD 2026-10-28 (CP-6 half)" paragraph at the top of this file. Scratch rebuilds of
 `cases` and `src` from two fresh copies were byte-identical to the tree. The CP-6 half builds after the CP-5 lease frozen and its Stage 2 connection merged (`docs/CP5-OWNER-LEASE.md`, the D3 scope lease; the connection is not merged yet: the lane has no CP-5 `OWNER_SPECS` row).
+
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/manifest.json 893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b → 7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/submissions.json eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b → 9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/expected.json 7428c9340cae7221157657bdc628e43717b3f61716c86d6b6775c5b46b162a3e → 8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f
+- 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/builder/build.py b89348028edc0de91309c7177c71f4eae0cad7efb82050a55225bf86ce96c0ec → 33ff9e2eb30be29c9e31416d7cb833f5e2181b931e074ed49d93dcb75b5f3d79

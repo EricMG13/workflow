@@ -1,0 +1,7 @@
+NORTHBRIDGE SYNTHETIC GROUP
+Issuer identity and reporting scope note
+Published January 10, 2026.
+Northbridge Synthetic Group is the issuer and consolidated group.
+Fiscal year end: December 31.
+This invented case is test data, not evidence about a real issuer.
+No borrower, guarantor or restricted-group perimeter is established by this source set.

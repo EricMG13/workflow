@@ -282,7 +282,10 @@ assert EVIDENCE[1]["published"] == CUTOFF  # B: equal to the cutoff, accepted (b
 rejected.sort(key=lambda r: r["locator"])
 REJECTED_JSON = [{k: r[k] for k in ("locator", "family", "published", "reason")} for r in rejected]
 for _e in accepted:
-    TEXT[(_e["item_id"], "page:1")] = _e["text"]
+    for _ln, _line in enumerate(
+        _e["text"].split("\n"), 1
+    ):  # prepared text/plain source: spans line:1..line:N
+        TEXT[(_e["item_id"], f"line:{_ln}")] = _line
     SHA[_e["item_id"]] = _e["page_join_sha256"]
 ITEM = {e["item_id"]: e for e in accepted}
 PACK_SOURCES = ["identity", "financial"] + [e["item_id"] for e in accepted]
@@ -293,7 +296,29 @@ FAMILY = {e["item_id"]: e["family"] for e in accepted}
 assert FAMILY["ev-1"] == FAMILY["ev-2"] != FAMILY["ev-3"]
 
 
+def line_of(item, quote):
+    """The one line:<n> of an ev-* item that holds the quote (lines counted with text.split('\\n'))."""
+    found = [
+        n for (sid, loc), t in TEXT.items() if sid == item and quote in t for n in [int(loc[5:])]
+    ]
+    assert len(found) == 1, (item, quote, found)
+    return f"line:{found[0]}"
+
+
+INJECTION_LOCATOR = (
+    "line:%d"
+    % [
+        n
+        for (sid, loc), t in TEXT.items()
+        if sid == "ev-3" and INJECTION in t
+        for n in [int(loc[5:])]
+    ][0]
+)
+
+
 def find_quote(source, locator, quote):
+    if source.startswith("ev-"):
+        locator = line_of(source, quote)  # ev-* locators are line:<n>, never page:1
     assert quote in TEXT[(source, locator)], (source, locator, quote)
     assert "\n" not in quote
     return {"source_id": source, "source_sha256": SHA[source], "locator": locator, "quote": quote}
@@ -372,10 +397,7 @@ DEFAULTS = [  # (question_id, kind, text): the Codex order, Q5 ids
     (
         "valuation-context",
         "default_3",
-        (
-            "What context do the supplied items give on how the sector is valued, such "
-            "as trading levels or spreads?"
-        ),
+        ("What trading level or spread figure do the supplied items state for the sector?"),
     ),
     (
         "market-demand",
@@ -571,6 +593,17 @@ def answered(qid, claims, contrary, uncertainty):
     }
 
 
+def partly(qid, claims, contrary, uncertainty, limitation):
+    return {
+        "question_id": qid,
+        "answer_state": "partly",
+        "claims": claims,
+        "contrary": contrary,
+        "uncertainty": no_digit(uncertainty),
+        "limitation": no_digit(limitation),
+    }
+
+
 def not_found(qid, limitation):
     return {
         "question_id": qid,
@@ -583,7 +616,7 @@ def not_found(qid, limitation):
     }
 
 
-C_SHIP = cite("ev-3", "page:1", L["c_ship"])
+C_SHIP = cite("ev-3", "line", L["c_ship"])
 ANSWERS_V1 = [
     answered(
         "ctx-1",
@@ -593,7 +626,7 @@ ANSWERS_V1 = [
                 1,
                 "Calder Vale Group is the peer named in the supplied notes as reporting "
                 "adjusted EBITDA after lease costs.",
-                [cite("ev-2", "page:1", L["b_after"])],
+                [cite("ev-2", "line", L["b_after"])],
             )
         ],
         [none_found()],
@@ -607,7 +640,7 @@ ANSWERS_V1 = [
                 1,
                 "The desk expects input cost pressure on producers to ease through the "
                 "first half of the year.",
-                [cite("ev-1", "page:1", L["a_costs"])],
+                [cite("ev-1", "line", L["a_costs"])],
             )
         ],
         [none_found()],
@@ -622,7 +655,7 @@ ANSWERS_V1 = [
                 "Supply is concentrated in Alder Ridge Holdings and Brookmere "
                 "Industries, which a desk note and a registry filing both "
                 "place at the top of capacity and regional supply.",
-                [cite("ev-1", "page:1", L["a_supply"]), cite("ev-3", "page:1", L["c_share"])],
+                [cite("ev-1", "line", L["a_supply"]), cite("ev-3", "line", L["c_share"])],
                 ["ev-1", "ev-3"],
             )
         ],
@@ -638,7 +671,7 @@ ANSWERS_V1 = [
                 "Several sector producers add restructuring costs "
                 "back to adjusted EBITDA, and the add-backs "
                 "differ from producer to producer.",
-                [cite("ev-2", "page:1", L["b_addbacks"])],
+                [cite("ev-2", "line", L["b_addbacks"])],
             )
         ],
         [none_found()],
@@ -646,8 +679,9 @@ ANSWERS_V1 = [
     ),
     not_found(
         "valuation-context",
-        "The searched items give no trading level or spread for the sector; the only "
-        "valuation remark is qualitative and was not treated as an answer.",
+        "The searched items state no trading level or spread figure for the sector; the "
+        "desk note only remarks, without a level, that the sector trades at a discount to "
+        "its own history.",
     ),
     answered(
         "market-demand",
@@ -657,7 +691,7 @@ ANSWERS_V1 = [
                 1,
                 "Demand for industrial products held steady through the "
                 "year, supported by maintenance spending at customers.",
-                [cite("ev-1", "page:1", L["a_demand"])],
+                [cite("ev-1", "line", L["a_demand"])],
             )
         ],
         [
@@ -681,7 +715,7 @@ ANSWERS_V1 = [
                 "industry-structure",
                 1,
                 "Mid-tier producers are numerous, regional and focused on a single product line.",
-                [cite("ev-1", "page:1", L["a_midtier"])],
+                [cite("ev-1", "line", L["a_midtier"])],
             )
         ],
         [none_found()],
@@ -694,7 +728,7 @@ ANSWERS_V1 = [
                 "regulation",
                 1,
                 "A licensing renewal rule for plant operators takes effect later this year.",
-                [cite("ev-3", "page:1", L["c_rule"])],
+                [cite("ev-3", "line", L["c_rule"])],
             )
         ],
         [none_found()],
@@ -704,18 +738,19 @@ ANSWERS_V1 = [
 ANSWERS_V2 = copy.deepcopy(ANSWERS_V1)  # Q14: exactly one question changes
 _vi = QIDS.index("valuation-context")
 assert ANSWERS_V2[_vi]["question_id"] == "valuation-context"
-ANSWERS_V2[_vi] = answered(
+ANSWERS_V2[_vi] = partly(
     "valuation-context",
     [
         claim(
             "valuation-context",
             1,
             "The desk describes the sector as trading at a discount to its own history.",
-            [cite("ev-1", "page:1", L["a_value"])],
+            [cite("ev-1", "line", L["a_value"])],
         )
     ],
     [none_found()],
-    "No trading level or spread is stated, so the size of the discount is unknown.",
+    "The remark is qualitative and the size of the discount is unknown.",
+    "No trading level or spread figure is stated; the answer is the desk's qualitative remark only.",
 )
 
 SUBMISSION_V1 = {"run_id": RUN_V1, "answers": ANSWERS_V1}
@@ -801,9 +836,9 @@ assert STATES_V1 == [
 READINESS_V1, READINESS_V2 = ladder(STATES_V1), ladder(STATES_V2)
 assert READINESS_V1 == READINESS_V2 == "RESEARCH_READY_WITH_LIMITATIONS"
 assert (
-    STATES_V2.count("supported") == 7
+    STATES_V2.count("supported") == 6
     and STATES_V2.count("contrary") == 1
-    and "missing" not in STATES_V2
+    and STATES_V2.count("missing") == 1
 )
 
 # --- TDR.1-3 cells -----------------------------------------------------------------------------------------------------------
@@ -1014,17 +1049,20 @@ def build_tables(answers):
         ("questions_total", "answered", "partly", "not_found", "contrary_items"), 0
     )
     per_receiver = {"CP-1C": [0, 0], "CP-2": [0, 0]}  # [questions received, of which answered]
-    contrary_ids, missing_ids = [], []
+    contrary_ids, missing_ids, partly_ids = [], [], []
+    claimed = sum(1 for a in answers if a["claims"])
     for a in answers:
         r = a["question_id"]
         q = by_q[r]
-        is_ans = a["answer_state"] == "answered"
+        state_a = a["answer_state"]
+        is_ans = state_a == "answered"
+        has_claim = bool(a["claims"])
         n_contrary = sum(1 for c in a["contrary"] if c["kind"] == "cited")
         counts = {
             "questions_total": 1,
             "answered": int(is_ans),
-            "partly": 0,
-            "not_found": int(not is_ans),
+            "partly": int(state_a == "partly"),
+            "not_found": int(state_a == "not_found"),
             "contrary_items": n_contrary,
         }
         for k, v in counts.items():
@@ -1038,7 +1076,11 @@ def build_tables(answers):
             + {
                 "supported": ": passed as answered",
                 "contrary": ": passed as answered with the contrary item flagged",
-                "missing": ": passed as a gap, not filled",
+                "missing": (
+                    ": passed as partly answered with its limitation"
+                    if state_a == "partly"
+                    else ": passed as a gap, not filled"
+                ),
             }[state]
         )
         cells = {
@@ -1051,7 +1093,7 @@ def build_tables(answers):
                 formula=FORMULA_STATE,
             )
         }
-        if is_ans:
+        if has_claim:
             ctext = "; ".join(contrary_text(c) for c in a["contrary"])
             cl = [c["limitation"] for c in a["contrary"] if c["limitation"]]
             cells["answer"] = t3.text(
@@ -1060,6 +1102,7 @@ def build_tables(answers):
                 " ".join(c["text"] for c in a["claims"]),
                 "analyst_judgment",
                 citations=[x for c in a["claims"] for x in c["citations"]],
+                limitation=a["limitation"] if state_a == "partly" else None,
             )
             cells["contrary"] = t3.text(
                 r,
@@ -1070,8 +1113,9 @@ def build_tables(answers):
                 citations=[c["citation"] for c in a["contrary"] if c["kind"] == "cited"] or None,
             )
             cells["uncertainty"] = t3.text(r, "uncertainty", a["uncertainty"], "analyst_judgment")
-            if n_contrary:
-                contrary_ids.append(r)
+            contrary_ids += [c["item"] for c in a["contrary"] if c["kind"] == "cited"]
+            if state_a == "partly":
+                partly_ids.append(r)
         else:
             missing_ids.append(r)
             for f in ("answer", "contrary", "uncertainty"):
@@ -1096,15 +1140,23 @@ def build_tables(answers):
     # total row: every column filled (counts known; text columns Python-composed facts)
     total = {
         "answer_state": f"answered {sums['answered']}; partly {sums['partly']}; not found {sums['not_found']}",
-        "answer": f"{sums['answered']} of {sums['questions_total']} questions carry a located claim",
+        "answer": f"{claimed} of {sums['questions_total']} questions carry a located claim",
         "contrary": (f"{sums['contrary_items']} contrary item cited: " + ", ".join(contrary_ids))
         if contrary_ids
         else "no contrary item cited",
-        "uncertainty": (
-            f"{sums['not_found']} question has no located answer: " + ", ".join(missing_ids)
+        "uncertainty": "; ".join(
+            (
+                [f"{sums['not_found']} question has no located answer: " + ", ".join(missing_ids)]
+                if missing_ids
+                else []
+            )
+            + (
+                [f"{sums['partly']} question is partly answered: " + ", ".join(partly_ids)]
+                if partly_ids
+                else []
+            )
         )
-        if missing_ids
-        else "every question has a located answer",
+        or "every question has a located answer",
         "downstream_use": "; ".join(
             f"{rcv} receives {v[1]} of {v[0]} answered questions" for rcv, v in per_receiver.items()
         ),
@@ -1128,10 +1180,7 @@ def build_tables(answers):
 
 
 def cell_md(cell):
-    if cell["state"] == "gap":
-        s = "missing: " + cell["limitation"]
-    else:
-        s = cell["shown"]
+    s = cell["shown"]  # Q10/L1: the shown string, a gap cell included
     assert "|" not in s and "\n" not in s, s
     return s
 
@@ -1170,6 +1219,17 @@ def render_dossier(tables, readiness):
             [t.row_header] + t.columns,
             [[rid] + [cell_md(cells[f]) for f in t.columns] for rid, cells in t.rows],
         )
+        if (
+            t.table_id == "TDR.3"
+        ):  # L1: the gap limitation text is listed where the TDR.3 limitations are
+            seen = []
+            for f in t.facts:
+                if f.get("limitation") and (f["status"] != "known" or f["field"] == "answer"):
+                    entry = f"- {f['row_id']}: {f['limitation']}"
+                    if entry not in seen:
+                        seen.append(entry)
+            if seen:
+                lines += ["", "### TDR.3 limitations", ""] + seen
     lines += ["", "## Rejected items", ""]
     lines += md(
         ["locator", "family", "published", "reason"],
@@ -1188,7 +1248,12 @@ TABLES_V2, SUMS_V2 = build_tables(ANSWERS_V2)
 DOSSIER_V1 = render_dossier(TABLES_V1, READINESS_V1)
 DOSSIER_V2 = render_dossier(TABLES_V2, READINESS_V2)
 assert (SUMS_V1["answered"], SUMS_V1["not_found"], SUMS_V1["contrary_items"]) == (7, 1, 1)
-assert (SUMS_V2["answered"], SUMS_V2["not_found"], SUMS_V2["contrary_items"]) == (8, 0, 1)
+assert (
+    SUMS_V2["answered"],
+    SUMS_V2["partly"],
+    SUMS_V2["not_found"],
+    SUMS_V2["contrary_items"],
+) == (7, 1, 0, 1)
 for _t in (
     TABLES_V1 + TABLES_V2
 ):  # one fact per column; no fact repeated; ids follow <table>.<row>.<field>
@@ -1235,7 +1300,7 @@ EV_ENTITY = {
 
 
 def ev_cite(i):
-    return find_quote(i, "page:1", EV_COVER[i])
+    return find_quote(i, "line", EV_COVER[i])
 
 
 cp0 = copy.deepcopy(POS["readiness_review"])
@@ -1395,8 +1460,8 @@ _bad = copy.deepcopy(ANSWERS_V1)
 _ci = QIDS.index("competition")
 assert _bad[_ci]["question_id"] == "competition"
 _bad[_ci]["claims"][0]["citations"] = [
-    cite("ev-1", "page:1", L["a_supply"]),
-    cite("ev-2", "page:1", L["b_capacity"]),
+    cite("ev-1", "line", L["a_supply"]),
+    cite("ev-2", "line", L["b_capacity"]),
 ]
 _bad[_ci]["claims"][0]["independent_items"] = ["ev-1", "ev-2"]
 INDEPENDENCE_REFUSAL_INPUT = {"run_id": RUN_V1, "answers": _bad}
@@ -1443,7 +1508,7 @@ LOCK_REFUSAL = {
 }
 
 # --- tool use (read before cite; the not_found claim is backed by searches) --------------------------------------------------
-QUERY_VALUE = "valuation trading multiple spread level"
+QUERY_VALUE = "trading level spread"
 
 
 def spans_matching(query, source):
@@ -1456,12 +1521,25 @@ def spans_matching(query, source):
 
 
 RESEARCH_CALLS = [{"tool": "read_inputs", "arguments": None}]
+CITED_LINES = {
+    i: set() for i in ITEMS_SEARCHED
+}  # every line:<n> cited in v1 or v2 (claims and contrary entries)
+for _a in ANSWERS_V1 + ANSWERS_V2:
+    _cits = [x for c in _a["claims"] for x in c["citations"]]
+    _cits += [c["citation"] for c in _a["contrary"] if c["kind"] == "cited"]
+    for _c in _cits:
+        CITED_LINES[_c["source_id"]].add(int(_c["locator"][5:]))
 for _i in ITEMS_SEARCHED:
+    # read_pages over a line source takes line numbers as first_page/last_page (live/tools.py:428-431), at most 5 per call
+    _first, _last = min(CITED_LINES[_i]), max(CITED_LINES[_i])
+    assert _last - _first + 1 <= 5, _i
     RESEARCH_CALLS.append(
         {
             "tool": "read_pages",
-            "arguments": {"source_id": _i, "first_page": 1, "last_page": 1},
-            "expect_spans": [{"source_id": _i, "locator": "page:1"}],
+            "arguments": {"source_id": _i, "first_page": _first, "last_page": _last},
+            "expect_spans": [
+                {"source_id": _i, "locator": f"line:{n}"} for n in range(_first, _last + 1)
+            ],
         }
     )
 for _i in ITEMS_SEARCHED:
@@ -1478,7 +1556,7 @@ assert [len(spans_matching(QUERY_VALUE, i)) for i in ITEMS_SEARCHED] == [
     1,
     0,
     0,
-]  # only ev-1 holds a term ('trading', 'level')
+]  # only ev-1's line:9 holds a term ('trading', 'level'); the limitation names the item searched
 
 # --- manifest ----------------------------------------------------------------------------------------------------------------------
 RUN_TIME_MARKERS = {
@@ -1604,7 +1682,7 @@ manifest = {
             "locator": e["locator"],
             "tag": "research",
             "role": e["role"],
-            "pages": [{"locator": "page:1", "text": e["text"]}],
+            "pages": [{"locator": "file", "text": e["text"]}],
             "page_join_sha256": e["page_join_sha256"],
         }
         for e in EVIDENCE
@@ -1612,7 +1690,7 @@ manifest = {
     "fence_terminator_item": {
         **{k: TERMINATOR_ITEM[k] for k in ("path", "family", "published", "locator")},
         "tag": "research",
-        "pages": [{"locator": "page:1", "text": TERMINATOR_ITEM["text"]}],
+        "pages": [{"locator": "file", "text": TERMINATOR_ITEM["text"]}],
         "page_join_sha256": TERMINATOR_ITEM["page_join_sha256"],
         "role": "refused body holding the fence terminator; not a sixth manifest item",
     },
@@ -1692,6 +1770,7 @@ submissions = {
         "injection_line": L["c_inject"],
         "injection_phrase": INJECTION,
         "in_item": "ev-3",
+        "locator": INJECTION_LOCATOR,
         "terminator_body_item": "manifest.json fence_terminator_item",
     },
     "rule_vector_not_a_case_value": {
@@ -1772,9 +1851,9 @@ for _tag, _run, _tables, _sub, _answers, _states, _readiness, _sums in (
 cases["v2"]["differs_from_positive"] = {
     "answers_changed": ["valuation-context"],
     "tdr_rows_differing": V2_ROWS_DIFFERING,
-    "change": "the v1 not_found valuation-context question becomes answered from ev-1 with a 'none found in ev-1, ev-2, "
-    "ev-3' contrary entry (Q14)",
-    "readiness_relation": "unchanged: RESEARCH_READY_WITH_LIMITATIONS; the market-demand contrary item (ev-3) remains",
+    "change": "the v1 not_found valuation-context question is re-judged on the same evidence as partly: it cites "
+    "ev-1's remark and carries a limitation that no level or spread figure is stated (Q14 re-ruled, section 12)",
+    "readiness_relation": "unchanged: RESEARCH_READY_WITH_LIMITATIONS; the market-demand contrary item (ev-3) remains and the partly question counts as missing",
     "evidence_list_identical": True,
     "brief_questions_identical": True,
     "brief_sha256_relation": "DIFFERS from v1 by the O7-P8 rule: run_id (and the replayed anchors) are inside the hashed body "
@@ -1830,7 +1909,7 @@ expected = {
         "injection_phrase": INJECTION,
         "item": "ev-3",
         "prompt": "the phrase appears in the recorded research prompt only inside the item's UNTRUSTED_EVIDENCE block",
-        "read_pages": "the read_pages result for ev-3 page:1 carries the phrase only inside the fence",
+        "read_pages": f"the read_pages result for ev-3 {INJECTION_LOCATOR} carries the phrase only inside the fence",
         "connector_calls": 0,
         "header_field_rule": "every locator matches [A-Za-z0-9][A-Za-z0-9._:+/-]* (asserted by the builder; fence.py:35)",
         "terminator": FENCE_REFUSAL,
@@ -1912,7 +1991,7 @@ expected = {
         },
     },
     "tool_use": {
-        "research": "read_inputs once; read_pages for every cited page (ev-1, ev-2, ev-3 page:1); search_pack "
+        "research": "read_inputs once; read_pages over line:<n> for every cited line (ranges in tool_calls.research); search_pack "
         "over each searched item backs the not_found claim; headers follow the documented rule "
         "(a span matches when it holds any query term, case-insensitive substring)",
         "calls": "submissions.json tool_calls.research",

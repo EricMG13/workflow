@@ -13,3 +13,5 @@ UTC time | run | command | exit | counts | agent fix-rounds gates-first-pass
 2026-11-01 16:10 UTC | t3 fix2 | RED 455c8917 1 failed/14 passed; ruff, format, mypy 0; pytest tests/test_prove_affected.py; YAML parse; key rows 3-5; N1 probe | 0 | 15 passed; rows 3-5 PASS | agent=mx-feature
 2026-11-01 16:10 UTC | t3 close | mx-precise scoped re-review PASS with notes (Q1 Low kept as documented limit); merged at 922bb227 | - | - | agent=mx-feature fix-rounds=2 gates-first-pass=n
 2026-11-01 16:20 UTC | user ruling | one draft PR with an 800-line cap exception (1458 changed lines; code+tests+workflows 884) | - | - | -
+2026-11-01 17:02 UTC | m1 (t3 round 3, mx-autonomous plan) | RED a9970789 5 failed/29 passed; ruff, format, mypy 0; pytest test_prove_affected+scope; scope self-check; key rows 1,3-5; pins --check | 0 | 34 passed; KEY MATCH; rows PASS | agent=mx-feature (fresh) fix-rounds=3 gates-first-pass=y
+2026-11-01 17:02 UTC | t1 fix2 (branch review M2, I1) | docs | n/a | - | agent=mx-scaffold fix-rounds=2 gates-first-pass=n/a

@@ -1300,7 +1300,8 @@ def _tail(
     """What the journal holds past the last retained transition (F4).
 
     Nothing: the audit is whole. One begin with no `BeginRecord` (window (b), between
-    `store.begin` and the begins retain): rebuilt, retained and returned. One pending step with
+    `store.begin` and the begins retain): rebuilt and returned (`_resume` retains it once the
+    closed records are checked). One pending step with
     its binding retained and no `submissions` record (window (a), during validation): returned for
     the step to be rebound and its payload resubmitted. A publisher attempt with no `publications`
     record (window (c), between `publish` and its retain), a stray binding, or any other gap is
@@ -1321,7 +1322,6 @@ def _tail(
     if len(tail) == 1 and not stray:
         record = _begin_between(before, tail[0], analytical)
         if record is not None:
-            _retain(store, "begins", record)
             return record
     pending = _pending_between(before, tail[0]) if len(tail) == 1 else None
     if pending is None or not stray:
@@ -1391,6 +1391,10 @@ class OwnerWorkflow:
         self._spec: StepSpec
         self._binding: OwnerBinding
         self._current_sha256 = ""
+        # What `open()` got back from resubmitting window (a)'s retained payload: the very object
+        # `submit_review` returned, or None when nothing was resubmitted (R12). The orchestrator
+        # takes the issues of its repair prompt from it.
+        self.resumed_submission: dict[str, Any] | None = None
         # Replayed call id -> retained call id, for a session `open()` rebuilt (see `open`).
         self._alias: dict[str, str] = {}
 
@@ -1446,7 +1450,10 @@ class OwnerWorkflow:
 
         Single writer: exactly one instance may write a run directory at a time. `open()` takes
         no lock and the audit has no lock file; two live instances over one directory are not
-        detected (`run_pathway` resume holds the run directory's `flock` for the whole run, 3b).
+        detected (`run_pathway` holds the run directory's `flock` for the whole run, 3b).
+        # ponytail: the single-writer rule is a documented precondition at this level, because
+        # the kill tests abandon the first object instead of closing it. Upgrade path: a flock
+        # held by the instance on the store directory, released by `write_receipt` or `close()`.
 
         Calls: a kill with unsubmitted `invoke` calls is resumed in the same epoch. A rebuilt
         `SourceSession` starts at sequence 0 with new call ids, so the retained epoch is replayed
@@ -1498,7 +1505,7 @@ class OwnerWorkflow:
         )
         tail = _tail(store, chain, cursor, got, frozenset(self._analytical), deterministic)
         if isinstance(tail, BeginRecord):
-            got.begins.append(tail)
+            got.begins.append(tail)  # retained below, once the closed records have been checked
         self._rebuild_lists(got, position)
         snapshot = chain[-1]
         self._current_sha256 = snapshot.content_hash()
@@ -1507,13 +1514,44 @@ class OwnerWorkflow:
             raise _torn(store, "journal", snapshot.content_hash())
         if deterministic is not None:
             self._rebuild_publication(snapshot, deterministic)
-        if (store.directory / AUDIT / "receipt.sha256").exists():
+        sealed = (store.directory / AUDIT / "receipt.sha256").exists()
+        resubmit = tail if isinstance(tail, _Resubmit) else None
+        active = self._reactivate(sealed, pending, resubmit)
+        # L2: the closed records are checked before open() writes (the begin it rebuilt, the
+        # pending step it resubmits, the module it begins), so a forged one is refused first.
+        self._check_closed(active)
+        if isinstance(tail, BeginRecord):
+            _retain(store, "begins", tail)
+        if not sealed:
+            self._carry_on(pending, resubmit, snapshot, deterministic)
+
+    def _reactivate(
+        self, sealed: bool, pending: Sequence[Attempt], resubmit: _Resubmit | None
+    ) -> OwnerBinding | None:
+        """Seal, or re-activate the one pending attempt; the binding it left active, if any."""
+        if sealed:
             self._sealed, self._phase = True, "complete"
         elif pending:
-            self._resume_pending(pending[0], tail if isinstance(tail, _Resubmit) else None, got)
-        else:
-            self._continue_walk(snapshot, deterministic)
-        self._check_closed()
+            self._resume_pending(pending[0], resubmit)
+            return self._binding if self._phase == "analytical" else None
+        return None
+
+    def _carry_on(
+        self,
+        pending: Sequence[Attempt],
+        resubmit: _Resubmit | None,
+        snapshot: ExecutionSnapshot,
+        publisher: str | None,
+    ) -> None:
+        """What `open()` does once the audit has been checked: finish window (a)'s validation, or
+        continue the walk when no attempt is pending."""
+        if resubmit is not None:
+            # Window (a), R5: finish the validation the kill interrupted, with the payload the
+            # audit retained, so that no caller ever holds the pending binding. A validator that
+            # raises again raises out of `open()`; the next `open()` finds window (a) as before.
+            self.resumed_submission = self.submit_review(resubmit.payload)
+        elif not pending:
+            self._continue_walk(snapshot, publisher)
 
     def _rebuild_lists(self, got: _Retained, position: Mapping[str, int]) -> None:
         """The receipt's lists, their order and the counters, from the retained records."""
@@ -1594,19 +1632,19 @@ class OwnerWorkflow:
             if read.sequence != taken[key]:
                 raise _torn(self._store, "input-reads", read.content_hash())
 
-    def _check_closed(self) -> None:
+    def _check_closed(self, active: OwnerBinding | None) -> None:
         """What `open()` can check without a model: a call neither listed by a submission nor in
         the open epoch is torn; the calls of every closed binding replay to the retained
         receipts; each submission's journal step and issues are the ones it records. The verifier
         repeats these (and more) at `write_receipt`; here they stop a forged record from being
-        adopted into the rebuilt lists."""
+        adopted into the rebuilt lists. `active` is the binding of the step `open()` re-activated,
+        None when no step is."""
         store = self._store
         listed = {i for s in self._submissions for i in s.binding.call_ids}
         epoch = {c.call_id for c in self._epoch_calls}
         for call in self._calls:
             if call.call_id not in listed and call.call_id not in epoch:
                 raise _torn(store, "calls", call.content_hash())
-        active = self._binding if self._phase == "analytical" else None
         groups: dict[str, list[OwnerCall]] = {}
         for call in self._calls:
             groups.setdefault(call.binding.content_hash(), []).append(call)
@@ -1615,6 +1653,22 @@ class OwnerWorkflow:
                 self._replay_closed(group)
         for submission in self._submissions:
             self._check_submission(submission)
+        for read in self._reads:
+            self._check_read(read)
+
+    def _check_read(self, read: OwnerInputRead) -> None:
+        """A retained read is what `read_inputs` returns at its binding, recomputed from the
+        journal as the verifier does (L1): none at a step whose inputs are `none`, and the same
+        digest and body otherwise."""
+        try:
+            spec = _step(self._specs, read.binding.module_id, read.binding.step_id)
+            sound = spec.inputs != "none" and (read.inputs_sha256, read.body) == _inputs(
+                self._store, read.binding, spec
+            )
+        except (OSError, ValueError):
+            sound = False
+        if not sound:
+            raise _torn(self._store, "input-reads", read.content_hash())
 
     def _replay_closed(self, group: list[OwnerCall]) -> None:
         """Replay one closed binding's calls on a session pinned to its snapshot, as the verifier
@@ -1703,9 +1757,10 @@ class OwnerWorkflow:
             or (self._publication_directory is not None and self._publication_directory.exists())
         )
 
-    def _resume_pending(self, attempt: Attempt, resubmit: _Resubmit | None, got: _Retained) -> None:
+    def _resume_pending(self, attempt: Attempt, resubmit: _Resubmit | None) -> None:
         """Re-activate the journal's one pending attempt at its next step, as `submit_review` does
-        after a valid or an invalid step; its epoch is restored from the retained calls."""
+        after a valid or an invalid step; its epoch is restored from the retained calls. Window
+        (a)'s payload is resubmitted by the caller, after the closed records are checked."""
         if attempt.module_id not in self._analytical:
             # A publisher attempt whose interruption failed: `publish` left the phase failed.
             if attempt.ticket_id in {p.ticket_id for p in self._publications}:
@@ -1722,11 +1777,6 @@ class OwnerWorkflow:
         else:
             self._activate(resubmit.attempt, resubmit.step_id, at=resubmit.before)
         self._restore_epoch()
-        if resubmit is not None:
-            # Window (a), R5: finish the validation the kill interrupted, with the payload the
-            # audit retained, so that no caller ever holds the pending binding. A validator that
-            # raises again raises out of `open()`; the next `open()` finds window (a) as before.
-            self.submit_review(resubmit.payload)
 
     def _restore_epoch(self) -> None:
         """The active binding's retained calls are the open epoch, in sequence order. A source

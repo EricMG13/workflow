@@ -940,12 +940,13 @@ def test_a_published_record_without_a_publisher_head_is_torn(
     assert _torn_kind(tmp_path) == "publications"
 
 
-def _forged_failed(workflow: Any, *, finished: bool) -> None:
+def _forged_failed(workflow: Any, *, finished: bool, tag: object = "") -> None:
     """A `failed` publication as `publish` records it (a patched publisher cannot begin CP-MODEL
-    over a blocked CP-1): the journal gains a CP-MODEL attempt, pending or interrupted."""
+    over a blocked CP-1): the journal gains a CP-MODEL attempt, pending or interrupted. `tag`
+    varies the reason, so that each call yields a record with its own digest (L4)."""
     store = workflow._store
     before = store.read()
-    reason = "Publication did not complete: probe"
+    reason = f"Publication did not complete: probe {tag}".rstrip()
     extra: dict[str, Any] = {
         "status": "finished",
         "interruption": reason,
@@ -1012,7 +1013,7 @@ def test_publications_keep_their_order_in_the_journal_not_by_digest(
             ticket_id=None,
             files={},
         )
-        _forged_failed(workflow, finished=True)
+        _forged_failed(workflow, finished=True, tag=n)
         (failed,) = state_tests._retained(tmp_path / "store", "publications", owner.PublicationCall)
         if refused.content_hash() > failed.content_hash():
             break
@@ -1447,3 +1448,283 @@ def test_kill_between_publish_and_the_publications_retain_is_torn(
     with pytest.raises(owner.TornAudit):
         owner.OwnerWorkflow.open(tmp_path / "store", publication_directory=tmp_path / "model")
     assert _faults(tmp_path)[0].kind == "publications"
+
+
+# --- 3a re-review Lows (L1 to L4) and I3 --------------------------------------------------------
+
+
+def _store_tree(root: Path) -> dict[str, bytes]:
+    """The store's files but the `faults/` records, which a refused `open()` writes by design."""
+    return {
+        k: v for k, v in g1x._tree(root / "store").items() if f"/{owner.AUDIT}/faults/" not in k
+    }
+
+
+def test_p18_gap_in_a_session_less_open_epoch_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a viewed")
+    assert workflow.state().step_id == g1x.VIEWED and workflow._session is None
+    page = {"source_id": "financial", "first_page": 1, "last_page": 1}
+    first = workflow.invoke("read_pages", page)
+    workflow.invoke("read_pages", page)
+    del workflow
+    (
+        tmp_path
+        / "store"
+        / owner.AUDIT
+        / "calls"
+        / owner._parse(owner.OwnerCall, first).content_hash()
+    ).unlink()
+    with pytest.raises(owner.TornAudit) as caught:
+        _open(tmp_path)
+    assert caught.value.kind == "calls"
+
+
+def _forge_cp0_call(root: Path) -> None:
+    store = Execution(root / "store")
+    calls = [
+        c for c in owner._load(store, "calls", owner.OwnerCall) if c.binding.module_id == "CP-0"
+    ]
+    call = next(c for c in calls if c.status == "ok")
+    _swap(store, "calls", call, call.model_copy(update={"body": "forged body"}))
+
+
+def test_p19a_window_a_open_refuses_a_forged_closed_call_before_resubmitting(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L2: the closed-record checks run before the resubmit, so a refused `open()` writes nothing
+    but its fault record (the store tree, `faults/` aside, is equal before and after)."""
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    real = g1x._validate
+    calls = {"n": 0}
+
+    def once(*args: Any, **kwargs: Any) -> Any:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("probe: killed during validation")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(g1x, "_validate", once)
+    assert actions[_until_it_raises(workflow, actions, RuntimeError)][0] == "a sourced"
+    del workflow
+    _forge_cp0_call(tmp_path)
+    before = _store_tree(tmp_path)
+    with pytest.raises(owner.TornAudit):
+        _open(tmp_path)
+    assert _store_tree(tmp_path) == before
+
+
+def test_p19b_continue_walk_open_refuses_a_forged_closed_call_before_beginning(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    actions[0][1](workflow)  # sources
+
+    def begin(self: Any, module_id: str) -> Any:
+        raise _Kill()
+
+    monkeypatch.setattr(Execution, "begin", begin)
+    with pytest.raises(_Kill):
+        actions[1][1](workflow)  # cp0: submission retained, CP-1 begin killed
+    monkeypatch.undo()
+    del workflow
+    _forge_cp0_call(tmp_path)
+    before = _store_tree(tmp_path)
+    with pytest.raises(owner.TornAudit):
+        _open(tmp_path)
+    assert _store_tree(tmp_path) == before
+
+
+def test_p20_changed_body_of_a_closed_read_is_torn_at_open(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a viewed")
+    read = next(r for r in workflow._reads if r.binding.step_id == g1x.SOURCED)
+    del workflow
+    _swap(
+        Execution(tmp_path / "store"),
+        "input-reads",
+        read,
+        read.model_copy(update={"body": read.body + " "}),
+    )
+    assert _torn_kind(tmp_path) == "input-reads"
+
+
+def test_p20b_injected_open_epoch_read_with_a_wrong_body_is_torn_at_open(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """A first read at the active step with a body `read_inputs` never returns would mark the
+    inputs read and pass the submit precondition; `open()` refuses it."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "a inputs")
+    assert workflow.state().inputs_required and not workflow.state().inputs_read
+    binding = workflow._binding
+    del workflow
+    forged = owner.OwnerInputRead(
+        binding=binding, sequence=1, inputs_sha256="0" * 64, body="forged"
+    )
+    owner._retain(Execution(tmp_path / "store"), "input-reads", forged)
+    assert _torn_kind(tmp_path) == "input-reads"
+
+
+def test_a_read_at_a_step_whose_inputs_are_none_is_torn_at_open(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    assert workflow._spec.inputs == "none"
+    binding = workflow._binding
+    del workflow
+    forged = owner.OwnerInputRead(binding=binding, sequence=1, inputs_sha256="0" * 64, body="x")
+    owner._retain(Execution(tmp_path / "store"), "input-reads", forged)
+    assert _torn_kind(tmp_path) == "input-reads"
+
+
+def test_x03_a_gap_in_a_steps_reads_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a page")
+    workflow.read_inputs()  # a second read of the sourced step
+    first = next(r for r in workflow._reads if r.binding.step_id == g1x.SOURCED and r.sequence == 1)
+    del workflow
+    (tmp_path / "store" / owner.AUDIT / "input-reads" / first.content_hash()).unlink()
+    assert _torn_kind(tmp_path) == "input-reads"
+
+
+def test_x08_a_gap_in_the_publish_calls_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(owner, "_terminal", lambda heads, run, publisher: False)
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    workflow.publish()
+    workflow.publish()
+    del workflow
+    store = tmp_path / "store" / owner.AUDIT / "publish-calls"
+    calls = [owner.PublishCall.model_validate_json(p.read_bytes()) for p in store.iterdir()]
+    first = next(c for c in calls if c.sequence == 1)
+    (store / first.content_hash()).unlink()
+    assert _torn_kind(tmp_path) == "publish-calls"
+
+
+def test_x09_a_refused_submission_whose_payload_passes_the_gate_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a sourced")
+    assert workflow.submit_review(g1x._sourced(g1x.GATE_MARK))["status"] == "refused"
+    refused = next(s for s in workflow._submissions if s.disposition == "refused")
+    store = workflow._store
+    passing = owner._fill(store, workflow._binding, g1x._sourced())[0]
+    owner._put(owner._audit(store, "payloads", owner._hash(passing.encode())), passing.encode())
+    del workflow
+    _swap(
+        store,
+        "submissions",
+        refused,
+        refused.model_copy(
+            update={"stored_payload_sha256": owner._hash(passing.encode()), "issues": ()}
+        ),
+    )
+    assert _torn_kind(tmp_path) == "submissions"
+
+
+def test_x11_call_ids_out_of_order_are_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    submission = workflow._submissions[0]  # CP-0, two or more listed calls
+    ids = submission.binding.call_ids
+    assert len(ids) >= 2
+    del workflow
+    swapped = submission.binding.model_copy(update={"call_ids": (ids[1], ids[0], *ids[2:])})
+    _swap(
+        Execution(tmp_path / "store"),
+        "submissions",
+        submission,
+        submission.model_copy(update={"binding": swapped}),
+    )
+    (tmp_path / "store" / owner.AUDIT / "bindings" / submission.binding.content_hash()).unlink()
+    owner._retain(Execution(tmp_path / "store"), "bindings", swapped)
+    assert _torn_kind(tmp_path) == "submissions"
+
+
+def test_x12_a_changed_step_output_of_a_submission_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    submission = workflow._submissions[0]
+    del workflow
+    _swap(
+        Execution(tmp_path / "store"),
+        "submissions",
+        submission,
+        submission.model_copy(update={"step_output_sha256": "0" * 64}),
+    )
+    assert _torn_kind(tmp_path) == "submissions"
+
+
+def test_x13_changed_issues_of_an_invalid_submission_are_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    invalid = next(s for s in workflow._submissions if s.disposition == "invalid")
+    del workflow
+    _swap(
+        Execution(tmp_path / "store"),
+        "submissions",
+        invalid,
+        invalid.model_copy(update={"issues": ("forged issue",)}),
+    )
+    assert _torn_kind(tmp_path) == "submissions"
+
+
+def test_x02_a_changed_error_code_of_a_closed_session_less_call_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, actions, stop = _prefix(cp3, tmp_path, "a viewed")
+    assert workflow._session is None
+    call = owner._parse(
+        owner.OwnerCall,
+        workflow.invoke("read_pages", {"source_id": "financial", "first_page": 1, "last_page": 1}),
+    )
+    actions[stop][1](workflow)  # the viewed submit closes the binding (it lists the call)
+    del workflow
+    _swap(
+        Execution(tmp_path / "store"),
+        "calls",
+        call,
+        call.model_copy(update={"error_code": "bad_arguments"}),
+    )
+    assert _torn_kind(tmp_path) == "calls"
+
+
+def test_a_resubmit_that_is_valid_is_kept_as_resumed_submission(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """I3 (R12): window (a)'s resubmit result is on the instance, the object `submit_review`
+    returned; an `open()` that resubmitted nothing holds `None`."""
+    _window_a(cp3, tmp_path, monkeypatch)
+    resumed = _open(tmp_path)
+    outcome = resumed.resumed_submission
+    assert outcome is not None and outcome["status"] == "valid" and outcome["issues"] == []
+    assert outcome["step_id"] == "source_readiness"
+    assert _open(tmp_path).resumed_submission is None  # nothing pending now
+
+
+def test_a_resubmit_that_is_invalid_keeps_its_issues_for_the_repair_prompt(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    stop = [label for label, _ in actions].index("a sourced")
+    for _, act in actions[:stop]:
+        act(workflow)
+    real = g1x._validate
+    calls = {"n": 0}
+
+    def once(*args: Any, **kwargs: Any) -> Any:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("probe: killed during validation")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(g1x, "_validate", once)
+    with pytest.raises(RuntimeError):
+        workflow.submit_review(g1x._sourced(g1x.INVALID_MARK))
+    del workflow
+    resumed = _open(tmp_path)
+    outcome = resumed.resumed_submission
+    assert outcome is not None and outcome["status"] == "invalid"
+    assert outcome["issues"] == [g1x.VALIDATOR_ISSUE]
+    assert resumed.state().step_id == g1x.SOURCED  # the same step is re-activated for the repair

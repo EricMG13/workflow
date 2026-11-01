@@ -363,3 +363,11 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
   - RED-first;
   - only controller-run checks count as evidence;
   - phase and whole-branch reviews.
+
+## B34. CP-3's preference line in cp3.md names the context-row basis (applied recommendation, B31a; 19:58 UTC 2026-11-01)
+
+- **What changes.** B30's review found M1, which predates B29. `src/deploy_vii/methods/cp3.md` ~:47-48 ("What to return") says a preference's basis is "at least one market evidence quote unless the confidence is Insufficient Information". That disagrees with rule e and with `_preference_issues`. The fix is wording only: add "or a context row named in `basis.context_rows`", in the same form as B30.
+- **Process.** It gets a D12 record, a strip re-freeze and an `mx-adversary` review, and ships in the B29/B30 release (B32).
+- **D12 review ids.** The same dispatch fills in the D12 `review` ids for B29 (mx-adversary ac70b2b7) and B30 (mx-adversary a3f74bdc), which were B30 L1 and B29 I3.
+- **What does not change.** The refusal messages, for the reason in B30.
+- **Cost if wrong:** one wording revert.

@@ -39,9 +39,8 @@ def _independent(workflow: Any) -> Any:
     repair); `inputs_read` is a retained read of that ticket and step on the journal's current
     snapshot. `phase` and `plan` are the instance's (they are not on disk), and `stale` is False.
 
-    The one path it cannot see: a submit refused before any record (an unread inputs step) is
-    counted by `state().submits_used` (the per-step budget, R1) but retains nothing; that test
-    asserts `state()` directly."""
+    A submit refused before the required read (R1a) is charged and written nowhere, so the
+    oracle sees everything `state()` counts."""
     root = workflow._store.directory
     snapshot = Execution(root).read()
     heads = []
@@ -270,9 +269,9 @@ def test_state_on_a_sealed_workflow_returns_and_matches_the_receipt(
     assert state == _independent(workflow)
 
 
-def test_submit_before_the_required_read_is_refused_and_counted(tmp_path: Path) -> None:
-    """R1: `submits_used` is the per-step budget from `_limits`, so a submit refused for an unread
-    inputs step counts although it retains no record (`_independent` cannot see it)."""
+def test_submit_before_the_required_read_is_refused_and_not_counted(tmp_path: Path) -> None:
+    """R1a (amends R1): a submit before the required read is a precondition refusal. It is not
+    charged to the submit cap and writes nothing, so `state()` and the disk oracle agree."""
     workflow, pack = runs.start("positive", tmp_path)
     runs.drive_cp0(workflow, pack, "positive")
     context = runs.literal("positive", "cp1_source_context", pack)
@@ -287,8 +286,8 @@ def test_submit_before_the_required_read_is_refused_and_counted(tmp_path: Path) 
     with pytest.raises(WorkflowError, match="not_permitted"):
         workflow.submit_review("{}")
     state = workflow.state()
-    assert state.submits_used == 1 and state.inputs_read is False
-    assert _independent(workflow).submits_used == 0  # the one path the oracle cannot see
+    assert state.submits_used == 0 and state.inputs_read is False
+    assert state == _independent(workflow)
 
 
 def test_stale_flag_when_another_writer_interrupts_the_ticket(tmp_path: Path) -> None:

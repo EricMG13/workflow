@@ -22,7 +22,7 @@ import tempfile
 from collections import Counter
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from threading import Lock
 from types import MappingProxyType, ModuleType
@@ -705,13 +705,21 @@ class RefusedBegin(Contract):
         return data
 
 
-class UnreadSubmit(Contract):
-    """A submit refused because the step's inputs were not read. It changes nothing and is no part
-    of the receipt (the verifier compares the seven kinds it lists and ignores this one), but it
-    counts against the step's submit cap, so it is retained for `open()` to rebuild the count."""
+class PublishCall(Contract):
+    """One `publish` call, retained beside its `publications` record (kind `publish-calls`, no part
+    of the receipt). Two refused calls at one snapshot with one reason produce one identical
+    `publications` record, so only this record counts the calls the cap of two applies to."""
 
-    binding: OwnerBinding
     sequence: int
+    publication_sha256: Hash
+
+
+class TransportMarker(Contract):
+    """Retained by `serve_json_lines` (kind `transport`): a run served over JSON-lines is not
+    resumed, as its participant and transport are held in memory only."""
+
+    participant: str
+    transport: Literal["bounded-json-lines/1"] = "bounded-json-lines/1"
 
 
 class OwnerFault(Contract):
@@ -1135,8 +1143,8 @@ class _Retained:
     reads: list[OwnerInputRead]
     submissions: list[OwnerSubmission]
     bindings: list[OwnerSubmissionBinding]
-    unread: list[UnreadSubmit]
     publications: list[PublicationCall]
+    publish_calls: list[PublishCall]
 
 
 @dataclass(frozen=True)
@@ -1147,6 +1155,7 @@ class _Resubmit:
     before: ExecutionSnapshot
     attempt: Attempt
     step_id: str
+    payload: str = ""
 
 
 def _load[T: Contract](store: Execution, kind: str, model: type[T]) -> list[T]:
@@ -1155,6 +1164,10 @@ def _load[T: Contract](store: Execution, kind: str, model: type[T]) -> list[T]:
     directory = store.directory / AUDIT / kind
     found: list[T] = []
     for path in sorted(directory.iterdir()) if directory.is_dir() else ():
+        if path.name.startswith("."):  # Finder's .DS_Store and the like: never a record
+            continue
+        if not path.is_file() or len(path.name) != 64:
+            raise _torn(store, kind, path.name[:160])
         raw = path.read_bytes()
         try:
             value = model.model_validate_json(raw)
@@ -1174,8 +1187,8 @@ def _retained_audit(store: Execution) -> _Retained:
         reads=_load(store, "input-reads", OwnerInputRead),
         submissions=_load(store, "submissions", OwnerSubmission),
         bindings=_load(store, "bindings", OwnerSubmissionBinding),
-        unread=_load(store, "unread-submits", UnreadSubmit),
         publications=_load(store, "publications", PublicationCall),
+        publish_calls=_load(store, "publish-calls", PublishCall),
     )
 
 
@@ -1220,7 +1233,6 @@ def _covered(store: Execution, got: _Retained, position: Mapping[str, int]) -> i
     ]
     placed += [("input-reads", r, r.binding.snapshot_sha256) for r in got.reads]
     placed += [("refused-begin", r, r.snapshot_sha256) for r in got.refusals]
-    placed += [("unread-submits", u, u.binding.snapshot_sha256) for u in got.unread]
     for kind, record, digest in placed:
         if digest not in position:
             raise _torn(store, kind, record.content_hash())
@@ -1324,12 +1336,13 @@ def _tail(
         raise _torn(store, "bindings", binding.content_hash())
     new = next(a for a in tail[0].attempts if a.ticket_id == pending.attempt.ticket_id)
     try:
-        stored = _fill(store, binding.binding, _raw(store, binding.payload_sha256))[0]
+        payload = _raw(store, binding.payload_sha256)
+        stored = _fill(store, binding.binding, payload)[0]
     except (OSError, ValueError):
         raise _torn(store, "payloads", binding.payload_sha256) from None
     if _hash(stored.encode()) != new.steps[-1].payload_sha256:
         raise _torn(store, "bindings", binding.content_hash())
-    return pending
+    return replace(pending, payload=payload)
 
 
 class OwnerWorkflow:
@@ -1371,6 +1384,7 @@ class OwnerWorkflow:
         # The publisher the walk is stopped at, until its publication settles (G1a).
         self._resume_after: str | None = None
         self._publisher_done = False
+        self._publish_calls = 0  # `publish` calls so far; the cap of two applies to this
         self._sealed = False
         self._epoch_calls: list[OwnerCall] = []
         self._session: SourceSession | None = None
@@ -1420,7 +1434,19 @@ class OwnerWorkflow:
         caller resubmits the same payload, which continues validation; (b) between `store.begin`
         and the begins retain: the `BeginRecord` is rebuilt from the two snapshots and retained;
         (c) between `publish` and the publications retain, a stray binding, a step already
-        validated but unrecorded, and any other gap are torn.
+        validated but unrecorded, and any other gap are torn; (c) is detected before the
+        output-exists refusal, so an output a real `publish` left behind does not hide it.
+        Window (a) is completed here (R5): the retained payload is resubmitted through
+        `submit_review` before `open()` returns, so no caller holds the pending binding; a
+        validator that raises again raises out of `open()` and a later `open()` finds window (a).
+        The calls of each closed binding are taken from the submission that lists them; a call
+        listed by none and outside the open epoch is torn, the closed calls are replayed and each
+        submission's journal step is checked (a forged record is refused here, not first at
+        `write_receipt`). A submit before `read_inputs` writes nothing and is not charged.
+
+        Single writer: exactly one instance may write a run directory at a time. `open()` takes
+        no lock and the audit has no lock file; two live instances over one directory are not
+        detected (`run_pathway` resume holds the run directory's `flock` for the whole run, 3b).
 
         Calls: a kill with unsubmitted `invoke` calls is resumed in the same epoch. A rebuilt
         `SourceSession` starts at sequence 0 with new call ids, so the retained epoch is replayed
@@ -1429,23 +1455,31 @@ class OwnerWorkflow:
         `submit_review` (`_alias`). A call killed before its retain is lost, so `invokes_used`
         can be one less than before the kill.
 
-        Known limits: a second identical refused `publish` leaves one record (the two have one
-        digest), so a resume counts one publication; a submit that raised after `_limits` was
-        incremented, other than the unread-inputs refusal, is not counted; a JSON-lines run is not
-        resumed (it resumes as `trusted-python`); `phase` `failed` is rebuilt from the last
-        publication being `failed` with a publisher head, a pending publisher attempt or the
-        output directory still present."""
+        Known limits: a call killed between its increment and its retain is not counted; a submit
+        that raised after `_limits` was incremented is not counted; a run served over JSON-lines
+        (`transport` marker) is refused `not_permitted`; `phase` `failed` is rebuilt from the
+        last publication being `failed` with a publisher head, a pending publisher attempt or the
+        output directory still present; a run whose `receipt.sha256` exists is sealed (the
+        receipt file is written before the seal)."""
         if not (directory / "current").is_file():
             raise WorkflowError("not_permitted")
         store = Execution(directory)
         recorded = directory / AUDIT / "publications"
+        publishers = {m for m, spec in OWNER_SPECS.items() if spec.kind == "deterministic"}
+        # R8: the output directory may exist once a publication is recorded, and also when the
+        # journal holds a publisher attempt with no record (window (c)): `_tail` then raises
+        # `TornAudit` instead of the output-exists refusal hiding it.
         planned = _check_specs(
             store.pack(),
             specs,
             publication_directory,
             directory,
-            published=recorded.is_dir() and any(recorded.iterdir()),
+            published=(recorded.is_dir() and any(recorded.iterdir()))
+            or any(a.module_id in publishers for a in store.read().attempts),
         )
+        marker = directory / AUDIT / "transport"
+        if marker.is_dir() and any(marker.iterdir()):
+            raise WorkflowError("not_permitted")  # served over JSON-lines: not resumed
         if not any(OWNER_SPECS[m].kind == "analytical" for m in planned):
             raise WorkflowError("not_permitted")
         workflow = cls.__new__(cls)
@@ -1479,6 +1513,7 @@ class OwnerWorkflow:
             self._resume_pending(pending[0], tail if isinstance(tail, _Resubmit) else None, got)
         else:
             self._continue_walk(snapshot, deterministic)
+        self._check_closed()
 
     def _rebuild_lists(self, got: _Retained, position: Mapping[str, int]) -> None:
         """The receipt's lists, their order and the counters, from the retained records."""
@@ -1487,8 +1522,11 @@ class OwnerWorkflow:
             for item in items:
                 if item.module_id not in self._analytical:
                     raise _torn(store, kind, item.content_hash())
-        if len({r.module_id for r in got.refusals}) != len(got.refusals):
-            raise _torn(store, "refused-begin", got.refusals[0].content_hash())
+        seen: set[str] = set()
+        for refusal in got.refusals:  # a module is refused at most once; the second is the fault
+            if refusal.module_id in seen:
+                raise _torn(store, "refused-begin", refusal.content_hash())
+            seen.add(refusal.module_id)
         self._begins = sorted(got.begins, key=lambda b: position[b.snapshot_before_sha256])
         self._refusals = sorted(got.refusals, key=lambda r: self._plan.index(r.module_id))
         self._submissions = sorted(got.submissions, key=lambda s: s.sequence)
@@ -1501,10 +1539,8 @@ class OwnerWorkflow:
         self._reads = sorted(
             got.reads, key=lambda r: (position[r.binding.snapshot_sha256], r.sequence)
         )
-        self._publications = sorted(
-            got.publications,
-            key=lambda p: (position[p.snapshot_before_sha256], position[p.snapshot_after_sha256]),
-        )
+        self._rebuild_publications(got, position)
+        self._check_listed()
         if self._refusals:  # the first refusal names the submit outcome (L2)
             self._refusal_kind = (
                 "not_authorized" if self._refusals[0].missing_commands else "blocked"
@@ -1517,9 +1553,125 @@ class OwnerWorkflow:
         for submission in self._submissions:
             bound = submission.binding.binding
             limits[(bound.ticket_id, bound.step_id, "submit_review")] += 1
-        for unread in got.unread:  # a submit refused before any submission record
-            limits[(unread.binding.ticket_id, unread.binding.step_id, "submit_review")] += 1
         self._limits = limits
+
+    def _rebuild_publications(self, got: _Retained, position: Mapping[str, int]) -> None:
+        """The receipt's publications in call order and the count the cap of two applies to.
+
+        Each `publish` call retains a `publish-calls` record naming its `publications` record
+        (written first), because two refused calls at one snapshot with one reason leave one
+        record. A record no call names (a run from before the call records) follows in journal
+        order; a call whose record never reached the audit still counts."""
+        store = self._store
+        by_hash = {p.content_hash(): p for p in got.publications}
+        calls = sorted(got.publish_calls, key=lambda c: c.sequence)
+        for expected, call in enumerate(calls, 1):
+            if call.sequence != expected:
+                raise _torn(store, "publish-calls", call.content_hash())
+        named = {c.publication_sha256 for c in calls}
+        rest = sorted(
+            (p for digest, p in by_hash.items() if digest not in named),
+            key=lambda p: (position[p.snapshot_before_sha256], position[p.snapshot_after_sha256]),
+        )
+        self._publications = [
+            by_hash[c.publication_sha256] for c in calls if c.publication_sha256 in by_hash
+        ] + rest
+        self._publish_calls = max(len(calls), len(self._publications))
+
+    def _check_listed(self) -> None:
+        """Each submission's `call_ids` are exactly the first calls of its binding (R6), and the
+        reads of a step are numbered from 1 without a gap (a submission does not list reads)."""
+        by_id = {c.call_id: c for c in self._calls}
+        for submission in self._submissions:
+            for n, call_id in enumerate(submission.binding.call_ids, 1):
+                call = by_id.get(call_id)
+                if call is None or call.binding != submission.binding.binding or call.sequence != n:
+                    raise _torn(self._store, "submissions", submission.content_hash())
+        taken: Counter[tuple[str, str]] = Counter()
+        for read in self._reads:
+            key = (read.binding.ticket_id, read.binding.step_id)
+            taken[key] += 1
+            if read.sequence != taken[key]:
+                raise _torn(self._store, "input-reads", read.content_hash())
+
+    def _check_closed(self) -> None:
+        """What `open()` can check without a model: a call neither listed by a submission nor in
+        the open epoch is torn; the calls of every closed binding replay to the retained
+        receipts; each submission's journal step and issues are the ones it records. The verifier
+        repeats these (and more) at `write_receipt`; here they stop a forged record from being
+        adopted into the rebuilt lists."""
+        store = self._store
+        listed = {i for s in self._submissions for i in s.binding.call_ids}
+        epoch = {c.call_id for c in self._epoch_calls}
+        for call in self._calls:
+            if call.call_id not in listed and call.call_id not in epoch:
+                raise _torn(store, "calls", call.content_hash())
+        active = self._binding if self._phase == "analytical" else None
+        groups: dict[str, list[OwnerCall]] = {}
+        for call in self._calls:
+            groups.setdefault(call.binding.content_hash(), []).append(call)
+        for group in groups.values():
+            if group[0].binding != active:
+                self._replay_closed(group)
+        for submission in self._submissions:
+            self._check_submission(submission)
+
+    def _replay_closed(self, group: list[OwnerCall]) -> None:
+        """Replay one closed binding's calls on a session pinned to its snapshot, as the verifier
+        does, and require each to equal the retained call but for its id."""
+        binding = group[0].binding
+        try:
+            spec = _step(self._specs, binding.module_id, binding.step_id)
+            if spec.sources:
+                session = SourceSession.from_execution(
+                    _hist(self._store, binding), binding.ticket_id, binding.step_id
+                )
+                replayed = [_parse(OwnerCall, session.invoke(c.tool, c.arguments)) for c in group]
+            else:  # no source tool is offered: every call was refused
+                replayed = [c.model_copy(update={"status": "refused"}) for c in group]
+        except (OSError, ValueError):
+            raise _torn(self._store, "calls", group[0].content_hash()) from None
+        for call, again in zip(group, replayed, strict=True):
+            if again.model_copy(update={"call_id": call.call_id}) != call or (
+                not spec.sources and (call.error_code != "not_permitted" or call.body is not None)
+            ):
+                raise _torn(self._store, "calls", call.content_hash())
+
+    def _check_submission(self, submission: OwnerSubmission) -> None:
+        """The journal step a submission names is the one it records (its payload, output and
+        issues), and a refused one is what the gate refuses again."""
+        store, bound = self._store, submission.binding
+        try:
+            historical = _hist(store, bound.binding)
+            spec = _step(self._specs, bound.binding.module_id, bound.binding.step_id)
+            stored = _raw(store, submission.stored_payload_sha256)
+            issues = _gate(historical, bound.binding, spec, stored, bound.source_evidence)
+            after = _attempt_of(
+                _snapshot(store, submission.snapshot_after_sha256), bound.binding.ticket_id
+            )
+            before = _attempt_of(historical.read(), bound.binding.ticket_id)
+        except (OSError, ValueError):
+            raise _torn(store, "submissions", submission.content_hash()) from None
+        if submission.disposition == "refused":
+            sound = issues == submission.issues and bool(issues)
+        else:
+            candidates = (
+                after.steps
+                if len(after.steps) > len(before.steps)
+                else after.step_repairs[len(before.step_repairs) :]
+            )
+            steps = [s for s in candidates[-1:] if s.content_hash() == submission.step_sha256]
+            sound = (
+                not issues
+                and len(steps) == 1
+                and steps[0].payload_sha256 == submission.stored_payload_sha256
+                and steps[0].output_sha256 == submission.step_output_sha256
+                and (steps[0].status == "valid") == (submission.disposition == "valid")
+                and (submission.disposition == "valid" or steps[0].issues == submission.issues)
+                and (submission.disposition != "valid" or not submission.issues)
+            )
+        if not sound:
+            raise _torn(store, "submissions", submission.content_hash())
 
     def _rebuild_publication(self, snapshot: ExecutionSnapshot, publisher: str) -> None:
         """`_model` and `_publisher_done`, as `publish` leaves them: the walk resumes after a
@@ -1570,6 +1722,11 @@ class OwnerWorkflow:
         else:
             self._activate(resubmit.attempt, resubmit.step_id, at=resubmit.before)
         self._restore_epoch()
+        if resubmit is not None:
+            # Window (a), R5: finish the validation the kill interrupted, with the payload the
+            # audit retained, so that no caller ever holds the pending binding. A validator that
+            # raises again raises out of `open()`; the next `open()` finds window (a) as before.
+            self.submit_review(resubmit.payload)
 
     def _restore_epoch(self) -> None:
         """The active binding's retained calls are the open epoch, in sequence order. A source
@@ -1577,8 +1734,9 @@ class OwnerWorkflow:
         epoch = sorted(
             (c for c in self._calls if c.binding == self._binding), key=lambda c: c.sequence
         )
-        if [c.sequence for c in epoch] != list(range(1, len(epoch) + 1)):
-            raise _torn(self._store, "calls", epoch[0].content_hash())
+        for expected, call in enumerate(epoch, 1):
+            if call.sequence != expected:  # a gap: the first call after it is the fault
+                raise _torn(self._store, "calls", call.content_hash())
         if self._session is not None:
             for call in epoch:
                 replayed = _parse(OwnerCall, self._session.invoke(call.tool, call.arguments))
@@ -1802,8 +1960,10 @@ class OwnerWorkflow:
     def invoke(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         with self._locked():
             self._current()
+            if self._phase != "analytical":  # no module is active: there is no binding to read
+                raise WorkflowError("not_permitted")
             key = (self._binding.ticket_id, self._binding.step_id, "invoke")
-            if self._phase != "analytical" or self._limits[key] >= MAX_CALLS:
+            if self._limits[key] >= MAX_CALLS:
                 raise WorkflowError("not_permitted")
             self._limits[key] += 1
             if self._session is None:
@@ -1832,12 +1992,10 @@ class OwnerWorkflow:
     def read_inputs(self) -> dict[str, Any]:
         with self._locked():
             self._current()
+            if self._phase != "analytical":
+                raise WorkflowError("not_permitted")
             key = (self._binding.ticket_id, self._binding.step_id, "read_inputs")
-            if (
-                self._phase != "analytical"
-                or self._spec.inputs == "none"
-                or self._limits[key] >= MAX_CALLS
-            ):
+            if self._spec.inputs == "none" or self._limits[key] >= MAX_CALLS:
                 raise WorkflowError("not_permitted")
             digest, body = _inputs(self._store, self._binding, self._spec)
             self._limits[key] += 1
@@ -1861,19 +2019,14 @@ class OwnerWorkflow:
             key = (self._binding.ticket_id, self._binding.step_id, "submit_review")
             if self._limits[key] >= MAX_CALLS:
                 raise WorkflowError("not_permitted")
-            self._limits[key] += 1
             spec = self._spec
             # G1-X §3: a step whose inputs are not "none" (every session-less step, and a step
-            # with pack sources that also has a view) is read on its own binding first.
+            # with pack sources that also has a view) is read on its own binding first. A
+            # precondition refusal (R1a): not charged to the submit cap, nothing written (the
+            # CP-1D lease), so a resume has nothing to rebuild.
             if spec.inputs != "none" and not any(r.binding == self._binding for r in self._reads):
-                # The refusal counts against the submit cap (above) and changes nothing else:
-                # retained so that a resume rebuilds the count (Task 2 review Q1).
-                _retain(
-                    self._store,
-                    "unread-submits",
-                    UnreadSubmit(binding=self._binding, sequence=self._limits[key]),
-                )
                 raise WorkflowError("not_permitted")
+            self._limits[key] += 1
             evidence = (
                 self._epoch_calls[-1].source_evidence if self._epoch_calls else SourceEvidence()
             )
@@ -2031,7 +2184,7 @@ class OwnerWorkflow:
             )
             if (
                 self._phase != "walked"
-                or len(self._publications) >= 2
+                or self._publish_calls >= 2
                 or publisher is None
                 or publisher.publish is None
                 or self._publication_directory is None
@@ -2102,8 +2255,16 @@ class OwnerWorkflow:
                 ticket_id=ticket,
                 files=files,
             )
+            _retain(
+                self._store,
+                "publish-calls",
+                PublishCall(
+                    sequence=self._publish_calls + 1, publication_sha256=record.content_hash()
+                ),
+            )
             _retain(self._store, "publications", record)
             self._publications.append(record)
+            self._publish_calls += 1
             self._current_sha256 = after.content_hash()
             outcome = {
                 "status": "ok" if status == "published" else "refused",
@@ -2155,8 +2316,10 @@ class OwnerWorkflow:
                 sealed=False,
             )
             self._current()
-            _put(self._store.directory / AUDIT / "receipt.sha256", receipt.content_hash().encode())
+            # The receipt file first, the seal last: a kill between them leaves a run `open()` does
+            # not treat as sealed, so `write_receipt` can rebuild it (equal bytes are accepted).
             _put(destination, receipt.model_dump_json().encode())
+            _put(self._store.directory / AUDIT / "receipt.sha256", receipt.content_hash().encode())
             self._current()
             self._sealed = True
             return receipt
@@ -2175,7 +2338,11 @@ def _verify_audit(store: Execution, receipt: OwnerRunReceipt) -> None:
     for kind, values in collections.items():
         expected = {v.content_hash(): v.model_dump_json().encode() for v in values}
         directory = store.directory / AUDIT / kind
-        actual = {p.name for p in directory.iterdir()} if directory.exists() else set()
+        actual = (
+            {p.name for p in directory.iterdir() if not p.name.startswith(".")}
+            if directory.exists()
+            else set()
+        )
         if actual != set(expected) or any(
             _audit(store, kind, digest).read_bytes() != raw for digest, raw in expected.items()
         ):
@@ -2585,6 +2752,12 @@ def _verify_calls_reads(
     store: Execution, receipt: OwnerRunReceipt, specs: Mapping[str, OwnerSpec]
 ) -> None:
     replayed: dict[str, SourceSession] = {}
+    # R6: a sealed run has no open epoch, so every call is one a submission at its binding lists.
+    listed = {
+        (s.binding.binding, call_id) for s in receipt.submissions for call_id in s.binding.call_ids
+    }
+    if any((call.binding, call.call_id) not in listed for call in receipt.calls):
+        raise WorkflowError("identity_mismatch")
     for call in receipt.calls:
         historical = _hist(store, call.binding)
         key = call.binding.content_hash()
@@ -3218,6 +3391,7 @@ def serve_json_lines(
     if workflow._calls or workflow._submissions or workflow._reads:
         raise WorkflowError("not_permitted")
     workflow._participant, workflow._transport = participant, "bounded-json-lines/1"
+    _retain(workflow._store, "transport", TransportMarker(participant=participant))
     for _ in range(MAX_MESSAGES):
         line = reader.readline(MAX_LINE + 1)
         if not line:

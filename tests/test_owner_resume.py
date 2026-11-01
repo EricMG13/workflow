@@ -13,6 +13,8 @@ differ too. `_normal` renames every uuid and every 64-hex digest by order of fir
 """
 
 import importlib
+import io
+import json
 import os
 import re
 from collections.abc import Callable
@@ -162,10 +164,8 @@ def _kill_and_resume(
     del killed  # abandoned: never used again
     resumed = _open(root)
     assert _view(resumed) == before, label
-    if resumed.phase == "analytical":  # the disk oracle cannot see a submit refused unread
-        oracle = state_tests._independent(resumed)
-        assert resumed.state().submits_used >= oracle.submits_used
-        assert resumed.state().model_copy(update={"submits_used": oracle.submits_used}) == oracle
+    if resumed.phase == "analytical":
+        assert resumed.state() == state_tests._independent(resumed)
     for _, act in actions[kill:]:
         act(resumed)
     receipt = resumed.write_receipt(root / "receipt.json")
@@ -248,22 +248,25 @@ def test_open_twice_rebuilds_the_same_instance(cp3: SimpleNamespace, tmp_path: P
     assert _view(_open(tmp_path)) == _view(_open(tmp_path)) == _view(workflow)
 
 
-def test_submit_refused_for_an_unread_step_still_counts_after_open(
+def test_submit_before_read_inputs_is_uncharged_and_writes_nothing(
     cp3: SimpleNamespace, tmp_path: Path
 ) -> None:
-    """Task 2 review Q1: that refusal wrote no record, so a resume undercounted `submits_used`. It
-    is retained now (kind `unread-submits`, outside the receipt) and rebuilt."""
+    """R1a (adversary H1): a submit before `read_inputs` is a precondition refusal. It is not
+    charged to the submit cap and writes nothing (CP-1D lease: "nothing written"), so a resume
+    has nothing to rebuild and the disk oracle agrees with `state()`."""
     workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
     for _, act in actions:
         if act is _unread_submit:
             break
         act(workflow)
+    before = g1x._tree(tmp_path / "store")
     _unread_submit(workflow)
     _unread_submit(workflow)
-    assert workflow.state().submits_used == 2
+    assert g1x._tree(tmp_path / "store") == before
+    assert workflow.state().submits_used == 0
     resumed = _open(tmp_path)
-    assert resumed.state().submits_used == 2
-    assert state_tests._independent(resumed).submits_used == 0  # the disk oracle does not see it
+    assert resumed.state().submits_used == 0
+    assert resumed.state() == state_tests._independent(resumed)
 
 
 def test_per_step_caps_still_bind_after_open(tmp_path: Path) -> None:
@@ -463,19 +466,100 @@ def test_kill_between_store_begin_and_the_begins_retain_rebuilds_the_record(
     assert _normal(receipt) == _normal(control)
 
 
-def test_kill_during_validation_resumes_by_resubmitting_the_same_payload(
-    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """F4 (a): the validator raises after `submit_step` wrote the pending step. The journal holds
-    a pending step and the audit its payload and binding but no `submissions` record. `open()`
-    rebinds the step at the snapshot before the pending write and the same payload continues; the
-    receipt equals the control. The CP-0 reads were made on the killed instance, so the resumed
-    submit also needs the rebuilt session to bind them."""
-    control = _control(cp3, tmp_path / "control", REFUSAL_ORDER, False)
-    root = tmp_path / "run"
-    workflow, actions = _build(cp3, root, REFUSAL_ORDER, False)
+def _window_a(
+    fake: SimpleNamespace, root: Path, monkeypatch: pytest.MonkeyPatch, *, times: int = 1
+) -> tuple[list[Action], int, dict[str, int]]:
+    """CP-0's validator raises on its first `times` calls: the first inside `submit_review` (the
+    kill), any further ones inside a later `open()`."""
+    workflow, actions = _build(fake, root, REFUSAL_ORDER, False)
     cp0: Any = importlib.import_module("deploy_vii.cp0_workflow")
     real = cp0._validate_review
+    calls = {"n": 0}
+
+    def flaky(*args: Any, **kwargs: Any) -> Any:
+        calls["n"] += 1
+        if calls["n"] <= times:
+            raise RuntimeError("probe: killed during validation")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(cp0, "_validate_review", flaky)
+    killed = _until_it_raises(workflow, actions, RuntimeError)
+    assert actions[killed][0] == "cp0"
+    return actions, killed, calls
+
+
+def test_kill_during_validation_is_completed_by_open_itself(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F4 (a), R5: the validator raises after `submit_step` wrote the pending step. The journal
+    holds a pending step, the audit its payload and binding but no `submissions` record. `open()`
+    rebinds the step, replays the epoch and resubmits the retained payload itself: validation is
+    finished when it returns, no caller sees the pending binding, and the receipt equals the
+    control."""
+    control = _control(cp3, tmp_path / "control", REFUSAL_ORDER, False)
+    root = tmp_path / "run"
+    actions, killed, _ = _window_a(cp3, root, monkeypatch)
+    assert state_tests._retained(root / "store", "submissions", owner.OwnerSubmission) == []
+    resumed = _open(root)
+    assert resumed.state().stale is False
+    assert [h.module_id for h in resumed.state().settled] == ["CP-0"]
+    assert len(resumed._submissions) == 1 and resumed.state().module_id == "CP-1"
+    assert not [
+        a for a in resumed._store.read().attempts if a.steps and a.steps[0].status == "pending"
+    ]
+    for _, act in actions[killed + 1 :]:
+        act(resumed)
+    receipt = resumed.write_receipt(root / "receipt.json")
+    assert _normal(receipt) == _normal(control)
+
+
+def test_open_raises_when_validation_raises_again_and_a_later_open_resumes(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "run"
+    actions, killed, calls = _window_a(cp3, root, monkeypatch, times=2)
+    with pytest.raises(RuntimeError):  # the second raise, inside open()
+        _open(root)
+    assert calls["n"] == 2
+    resumed = _open(root)  # window (a) is still found; the third validation succeeds
+    assert [h.module_id for h in resumed.state().settled] == ["CP-0"]
+    for _, act in actions[killed + 1 :]:
+        act(resumed)
+    owner.verify_owner_run_receipt(
+        Execution(root / "store"), resumed.write_receipt(root / "receipt.json")
+    )
+
+
+def test_actions_after_a_window_a_open_are_those_of_an_uninterrupted_run(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R5 (adversary P3/P4, review P6): an extra `invoke` and a different payload after `open()`
+    are accepted or refused as on an uninterrupted instance, a later `open()` still works, and the
+    run seals."""
+    root = tmp_path / "run"
+    actions, _killed, _ = _window_a(cp3, root, monkeypatch)
+    resumed = _open(root)
+    page = {"source_id": "identity", "first_page": 1, "last_page": 1}
+    assert resumed.invoke("read_pages", page)["status"] == "ok"
+    assert resumed.submit_review("{}")["status"] == "invalid"  # CP-1's first invalid try
+    again = _open(root)
+    assert _view(again) == _view(resumed)
+    for _, act in actions[[n for n, _ in actions].index("cp1 pages 1") :]:
+        act(again)
+    owner.verify_owner_run_receipt(
+        Execution(root / "store"), again.write_receipt(root / "receipt.json")
+    )
+
+
+def test_a_gate_refused_submit_after_a_window_a_open_leaves_the_run_resumable(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The fake module's sourced step: the validator raises once after the pending write. After
+    `open()` completed it, the viewed step takes a submit its precheck gate refuses (recorded as a
+    refused submission), and a later `open()` resumes and seals."""
+    root = tmp_path / "run"
+    workflow, actions = _build(cp3, root, REFUSAL_ORDER, False)
+    real = g1x._validate
     calls = {"n": 0}
 
     def once(*args: Any, **kwargs: Any) -> Any:
@@ -484,22 +568,21 @@ def test_kill_during_validation_resumes_by_resubmitting_the_same_payload(
             raise RuntimeError("probe: killed during validation")
         return real(*args, **kwargs)
 
-    monkeypatch.setattr(cp0, "_validate_review", once)
+    monkeypatch.setattr(g1x, "_validate", once)
     killed = _until_it_raises(workflow, actions, RuntimeError)
-    assert actions[killed][0] == "cp0"
-    (attempt,) = [a for a in workflow._store.read().attempts if a.status == "pending"]
-    assert [s.status for s in attempt.steps] == ["pending"]
-    assert state_tests._retained(root / "store", "submissions", owner.OwnerSubmission) == []
-    epoch = list(workflow._epoch_calls)
+    assert actions[killed][0] == "a sourced"
     del workflow
     resumed = _open(root)
-    assert resumed.state().stale is False
-    assert list(resumed._epoch_calls) == epoch
-    assert resumed._binding.snapshot_sha256 != resumed._store.read().content_hash()
-    for _, act in actions[killed:]:  # resubmits the same payload, then goes on
-        act(resumed)
-    receipt = resumed.write_receipt(root / "receipt.json")
-    assert _normal(receipt) == _normal(control)
+    assert resumed.state().step_id == g1x.VIEWED
+    resumed.read_inputs()
+    assert resumed.submit_review(g1x._viewed(g1x.GATE_MARK))["status"] == "refused"
+    again = _open(root)
+    assert again.state().submits_used == 1
+    for _, act in actions[killed + 2 :]:
+        act(again)
+    owner.verify_owner_run_receipt(
+        Execution(root / "store"), again.write_receipt(root / "receipt.json")
+    )
 
 
 def test_a_pending_step_with_no_retained_binding_is_torn(
@@ -547,10 +630,709 @@ def test_publisher_attempt_with_no_publication_record_is_torn(
             update={"parent": snapshot.content_hash(), "attempts": (*snapshot.attempts, forged)}
         )
     )
+    # R8: a real `publish` has written its output before the retain fails
+    (tmp_path / "model").mkdir()
+    (tmp_path / "model" / "model.html").write_text("published")
     with pytest.raises(owner.TornAudit) as caught:
         _open(tmp_path)
     assert caught.value.code == "identity_mismatch"
     assert _faults(tmp_path)[0].kind == "publications"
+
+
+# --- fix round 1: R6 epoch-bound rebuild, R7 publish cap, R10 ---------------------------------
+
+
+def _prefix(
+    fake: SimpleNamespace,
+    root: Path,
+    upto: str,
+    order: tuple[str, ...] = REFUSAL_ORDER,
+    publish: bool = False,
+) -> tuple[Any, list[Action], int]:
+    workflow, actions = _build(fake, root, order, publish)
+    stop = [label for label, _ in actions].index(upto)
+    for _, act in actions[:stop]:
+        act(workflow)
+    return workflow, actions, stop
+
+
+def _swap(store: Execution, kind: str, old: Any, new: Any) -> None:
+    (store.directory / owner.AUDIT / kind / old.content_hash()).unlink()
+    owner._retain(store, kind, new)
+
+
+def _torn_kind(root: Path) -> str:
+    with pytest.raises(owner.TornAudit) as caught:
+        _open(root)
+    assert caught.value.code == "identity_mismatch"
+    (fault,) = _faults(root)
+    assert fault.kind == caught.value.kind and fault.digest == caught.value.digest
+    return str(fault.kind)
+
+
+def test_a_call_injected_at_a_closed_binding_is_torn_at_open(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """R6 (adversary P8/P9): CP-0's binding is closed by its submission, which lists its calls. A
+    self-consistent extra call at that binding is listed by nothing and is not in the open epoch."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    last = [c for c in workflow._calls if c.binding.module_id == "CP-0"][-1]
+    extra = last.model_copy(
+        update={"call_id": "9" * 8 + "-0000-4000-8000-" + "0" * 12, "sequence": last.sequence + 1}
+    )
+    owner._retain(workflow._store, "calls", extra)
+    del workflow
+    assert _torn_kind(tmp_path) == "calls"
+    assert _faults(tmp_path)[0].digest == extra.content_hash()
+
+
+def test_a_changed_call_body_at_a_closed_binding_is_torn_at_open(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    call = next(c for c in workflow._calls if c.binding.module_id == "CP-0" and c.status == "ok")
+    forged = call.model_copy(update={"body": "forged body"})
+    _swap(workflow._store, "calls", call, forged)
+    del workflow
+    assert _torn_kind(tmp_path) == "calls"
+    assert _faults(tmp_path)[0].digest == forged.content_hash()
+
+
+def test_changed_issues_of_a_closed_submission_are_torn_at_open(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    submission = workflow._submissions[0]
+    forged = submission.model_copy(update={"issues": ("forged",)})
+    _swap(workflow._store, "submissions", submission, forged)
+    del workflow
+    assert _torn_kind(tmp_path) == "submissions"
+
+
+def test_the_verifier_refuses_a_call_no_submission_lists(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """R6: `_verify_calls_reads` replays a call at a closed binding without asking a submission to
+    list it, so a self-consistent extra call (the replay reproduces its body) was accepted."""
+    receipt = _control(cp3, tmp_path, REFUSAL_ORDER, False)
+    last = [c for c in receipt.calls if c.binding.module_id == "CP-0"][-1]
+    extra = last.model_copy(
+        update={"call_id": "8" * 8 + "-0000-4000-8000-" + "0" * 12, "sequence": last.sequence + 1}
+    )
+    owner._retain(Execution(tmp_path / "store"), "calls", extra)
+    forged = receipt.model_copy(update={"calls": (*receipt.calls, extra)})
+    g1x._reseal(tmp_path, forged)
+    assert g1x._verdict(tmp_path, forged) == "identity_mismatch"
+    assert g1x._verdict(tmp_path, receipt) in ("identity_mismatch", "accepted")  # not under test
+
+
+def test_a_gap_in_the_open_epoch_names_the_call_after_the_gap(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """I7: the fault names the offending record, not the epoch's first call."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 invalid 0")
+    ordered = sorted(workflow._epoch_calls, key=lambda c: c.sequence)
+    assert len(ordered) >= 3
+    (tmp_path / "store" / owner.AUDIT / "calls" / ordered[1].content_hash()).unlink()
+    del workflow
+    assert _torn_kind(tmp_path) == "calls"
+    assert _faults(tmp_path)[0].digest == ordered[2].content_hash()
+
+
+def test_a_second_refusal_of_one_module_names_the_duplicate(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a inputs")
+    (kept,) = workflow._refusals
+    twin = kept.model_copy(update={"reason": kept.reason + " (again)"})
+    owner._retain(workflow._store, "refused-begin", twin)
+    later = max(kept.content_hash(), twin.content_hash())
+    del workflow
+    assert _torn_kind(tmp_path) == "refused-begin"
+    assert _faults(tmp_path)[0].digest == later
+
+
+def test_a_refusal_of_a_module_outside_the_walk_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a inputs")
+    (kept,) = workflow._refusals
+    owner._retain(
+        workflow._store, "refused-begin", kept.model_copy(update={"module_id": "CP-MODEL"})
+    )
+    del workflow
+    assert _torn_kind(tmp_path) == "refused-begin"
+
+
+def test_a_record_that_is_not_canonical_json_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    """Named by its digest and parsing, but not the bytes `_retain` writes (the verifier compares
+    bytes): torn at open."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    begin = workflow._begins[0]
+    path = tmp_path / "store" / owner.AUDIT / "begins" / begin.content_hash()
+    path.write_bytes(begin.model_dump_json(indent=2).encode())
+    del workflow
+    assert _torn_kind(tmp_path) == "begins"
+
+
+def test_a_span_that_runs_backwards_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    begin = workflow._begins[1]
+    backwards = begin.model_copy(
+        update={
+            "snapshot_before_sha256": begin.snapshot_after_sha256,
+            "snapshot_after_sha256": begin.snapshot_before_sha256,
+        }
+    )
+    owner._retain(workflow._store, "begins", backwards)
+    del workflow
+    assert _torn_kind(tmp_path) == "begins"
+
+
+def test_a_call_naming_no_snapshot_of_the_chain_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    call = workflow._calls[0]
+    foreign = call.model_copy(
+        update={
+            "call_id": "7" * 8 + "-0000-4000-8000-" + "0" * 12,
+            "binding": call.binding.model_copy(update={"snapshot_sha256": "5" * 64}),
+        }
+    )
+    owner._retain(workflow._store, "calls", foreign)
+    del workflow
+    assert _torn_kind(tmp_path) == "calls"
+
+
+def test_a_missing_snapshot_file_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    parent = workflow._store.read().parent
+    assert parent is not None
+    (tmp_path / "store" / "snapshots" / (parent + ".json")).unlink()
+    del workflow
+    assert _torn_kind(tmp_path) == "snapshots"
+
+
+def test_two_pending_attempts_are_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    store = workflow._store
+    before = store.read()
+    other = Attempt(
+        ticket_id="00000000-0000-4000-8000-0000000000aa", module_id=A, inputs=(), number=0
+    )
+    after = before.model_copy(
+        update={"parent": before.content_hash(), "attempts": (*before.attempts, other)}
+    )
+    store._write(after)
+    owner._retain(
+        store,
+        "begins",
+        owner.BeginRecord(
+            module_id=A,
+            ticket_id=other.ticket_id,
+            attempt=0,
+            snapshot_before_sha256=before.content_hash(),
+            snapshot_after_sha256=after.content_hash(),
+        ),
+    )
+    del workflow
+    assert _torn_kind(tmp_path) == "journal"
+
+
+def test_a_begin_tail_beside_a_stray_binding_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Window (b) with a stray binding in the audit: not rebuilt, torn."""
+    workflow, actions, _ = _prefix(cp3, tmp_path, "cp1 invalid 1")
+    real = owner._retain
+
+    def failing(store: Any, kind: str, value: Any) -> None:
+        if kind == "begins" and value.module_id == "CP-1" and value.attempt == 1:
+            raise OSError("probe")
+        real(store, kind, value)
+
+    monkeypatch.setattr(owner, "_retain", failing)
+    with pytest.raises(OSError):
+        actions[[n for n, _ in actions].index("cp1 invalid 1")][1](workflow)
+    monkeypatch.setattr(owner, "_retain", real)
+    sub = workflow._submissions[0].binding
+    real(workflow._store, "bindings", sub.model_copy(update={"payload_sha256": "4" * 64}))
+    del workflow
+    assert _torn_kind(tmp_path) == "journal"
+
+
+def _window_a_with_stray(fake: SimpleNamespace, root: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    workflow, actions = _build(fake, root, REFUSAL_ORDER, False)
+    cp0: Any = importlib.import_module("deploy_vii.cp0_workflow")
+
+    def boom(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("probe: killed during validation")
+
+    monkeypatch.setattr(cp0, "_validate_review", boom)
+    _until_it_raises(workflow, actions, RuntimeError)
+    return workflow
+
+
+def _stray(root: Path) -> Any:
+    (found,) = state_tests._retained(root / "store", "bindings", owner.OwnerSubmissionBinding)
+    return found
+
+
+@pytest.mark.parametrize("mutation", ["snapshot", "payload", "second"])
+def test_a_window_a_binding_that_does_not_match_the_pending_step_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mutation: str
+) -> None:
+    workflow = _window_a_with_stray(cp3, tmp_path, monkeypatch)
+    store = workflow._store
+    stray = _stray(tmp_path)
+    parent = workflow._begins[0].snapshot_before_sha256  # the created snapshot, not the step's
+    if mutation == "snapshot":
+        other = stray.model_copy(
+            update={"binding": stray.binding.model_copy(update={"snapshot_sha256": parent})}
+        )
+        _swap(store, "bindings", stray, other)
+    elif mutation == "payload":
+        raw = b"{}"
+        owner._put(tmp_path / "store" / owner.AUDIT / "payloads" / owner._hash(raw), raw)
+        _swap(
+            store, "bindings", stray, stray.model_copy(update={"payload_sha256": owner._hash(raw)})
+        )
+    else:
+        owner._retain(store, "bindings", stray.model_copy(update={"payload_sha256": "6" * 64}))
+    del workflow
+    assert _torn_kind(tmp_path) == "bindings"
+
+
+def test_a_pending_step_with_another_change_is_not_window_a(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _window_a_with_stray(cp3, tmp_path, monkeypatch)
+    store = workflow._store
+    pending = store.read()
+    attempts = tuple(
+        a.model_copy(update={"issues": ("forged",)}) if a.status == "pending" else a
+        for a in pending.attempts
+    )
+    store._write(pending.model_copy(update={"attempts": attempts}))  # same parent: a sibling tail
+    del workflow
+    assert _torn_kind(tmp_path) == "journal"
+
+
+def test_a_published_record_without_a_publisher_head_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    cursor = workflow._store.read().content_hash()
+    owner._retain(
+        workflow._store,
+        "publications",
+        owner.PublicationCall(
+            snapshot_before_sha256=cursor,
+            snapshot_after_sha256=cursor,
+            status="published",
+            reason=None,
+            ticket_id=None,
+            files={},
+        ),
+    )
+    del workflow
+    assert _torn_kind(tmp_path) == "publications"
+
+
+def _forged_failed(workflow: Any, *, finished: bool) -> None:
+    """A `failed` publication as `publish` records it (a patched publisher cannot begin CP-MODEL
+    over a blocked CP-1): the journal gains a CP-MODEL attempt, pending or interrupted."""
+    store = workflow._store
+    before = store.read()
+    reason = "Publication did not complete: probe"
+    extra: dict[str, Any] = {
+        "status": "finished",
+        "interruption": reason,
+        "issues": ("Interrupted: probe",),
+    }
+    attempt = Attempt(
+        ticket_id="00000000-0000-4000-8000-0000000000bb",
+        module_id="CP-MODEL",
+        inputs=(),
+        number=0,
+        **(extra if finished else {}),
+    )
+    after = before.model_copy(
+        update={"parent": before.content_hash(), "attempts": (*before.attempts, attempt)}
+    )
+    store._write(after)
+    owner._retain(
+        store,
+        "publications",
+        owner.PublicationCall(
+            snapshot_before_sha256=before.content_hash(),
+            snapshot_after_sha256=after.content_hash(),
+            status="failed",
+            reason=reason,
+            ticket_id=attempt.ticket_id,
+            files={},
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("finished", "output", "phase"),
+    [(False, False, "failed"), (True, True, "failed"), (True, False, "walked")],
+)
+def test_a_failed_publication_is_rebuilt_with_its_phase(
+    cp3: SimpleNamespace, tmp_path: Path, finished: bool, output: bool, phase: str
+) -> None:
+    """`publish` leaves the phase `failed` when its cleanup did not finish: a pending publisher
+    attempt, or the output directory still present; otherwise the stop stays retryable."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    _forged_failed(workflow, finished=finished)
+    if output:
+        (tmp_path / "model").mkdir()
+    del workflow
+    resumed = _open(tmp_path)
+    assert resumed.phase == phase
+    assert resumed._resume_after == "CP-MODEL"
+    assert [p.status for p in resumed._publications] == ["failed"]
+    assert resumed._publisher_done is False
+
+
+def test_publications_keep_their_order_in_the_journal_not_by_digest(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    store = workflow._store
+    cursor = store.read().content_hash()
+    for n in range(100):  # a refused record whose digest sorts after the failed one's
+        refused = owner.PublicationCall(
+            snapshot_before_sha256=cursor,
+            snapshot_after_sha256=cursor,
+            status="refused",
+            reason=f"Output {n} already exists; publish into a new directory",
+            ticket_id=None,
+            files={},
+        )
+        _forged_failed(workflow, finished=True)
+        (failed,) = state_tests._retained(tmp_path / "store", "publications", owner.PublicationCall)
+        if refused.content_hash() > failed.content_hash():
+            break
+        (tmp_path / "store" / owner.AUDIT / "publications" / failed.content_hash()).unlink()
+        # undo the forged tail: point the journal back
+        (tmp_path / "store" / "current").write_text(cursor + "\n")
+    else:
+        pytest.fail("no ordering found")
+    owner._retain(store, "publications", refused)
+    del workflow
+    resumed = _open(tmp_path)
+    assert [p.status for p in resumed._publications] == ["refused", "failed"]
+
+
+def test_a_kill_between_the_publish_call_record_and_the_publications_retain_still_counts(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The call record is retained first, so a call killed before its `publications` retain is
+    still one of the two the cap allows."""
+    monkeypatch.setattr(owner, "_terminal", lambda heads, run, publisher: False)
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    assert workflow.publish()["status"] == "refused"
+    real = owner._retain
+
+    def failing(store: Any, kind: str, value: Any) -> None:
+        if kind == "publications":
+            raise OSError("probe: killed before the publications retain")
+        real(store, kind, value)
+
+    monkeypatch.setattr(owner, "_retain", failing)
+    with pytest.raises(OSError):
+        workflow.publish()
+    monkeypatch.setattr(owner, "_retain", real)
+    del workflow
+    resumed = _open(tmp_path)
+    assert len(resumed._publications) == 2  # both calls name the one identical record
+    with pytest.raises(WorkflowError) as caught:
+        resumed.publish()
+    assert caught.value.code == "not_permitted"
+
+
+def test_publish_cap_binds_after_resume_over_identical_refusals(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R7 (both reviews' M3): two refused `publish` calls at one snapshot with one reason leave one
+    `publications` file. A per-call sibling record (`publish-calls`) keeps the count, so the
+    receipt lists both and a third `publish` is refused after a resume."""
+    monkeypatch.setattr(owner, "_terminal", lambda heads, run, publisher: False)
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    assert workflow.publish()["status"] == workflow.publish()["status"] == "refused"
+    assert len(list((tmp_path / "store" / owner.AUDIT / "publications").iterdir())) == 1
+    calls = state_tests._retained(tmp_path / "store", "publish-calls", owner.PublishCall)
+    assert sorted(c.sequence for c in calls) == [1, 2]
+    with pytest.raises(WorkflowError):
+        workflow.publish()
+    before = _view(workflow)
+    del workflow
+    resumed = _open(tmp_path)
+    assert _view(resumed) == before
+    assert len(resumed._publications) == 2
+    with pytest.raises(WorkflowError) as caught:
+        resumed.publish()
+    assert caught.value.code == "not_permitted"
+
+
+def test_publish_attempts_stay_bounded_over_repeated_resumes(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(owner, "_terminal", lambda heads, run, publisher: False)
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    accepted = 0
+    for _ in range(5):
+        for _ in range(3):
+            try:
+                workflow.publish()
+                accepted += 1
+            except WorkflowError:
+                break
+        workflow = _open(tmp_path)
+    assert accepted <= 2
+
+
+class _Kill(BaseException):
+    pass
+
+
+@pytest.mark.parametrize("where", ["receipt", "seal"])
+def test_a_kill_inside_write_receipt_can_be_finished_after_open(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, where: str
+) -> None:
+    """R10 (adversary L1): the receipt file is written before the seal, so a kill between them
+    leaves a run `open()` does not treat as sealed, and a rebuilt receipt is written and sealed."""
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    for _, act in actions:
+        act(workflow)
+    destination = tmp_path / "receipt.json"
+    real = owner._put
+
+    def put(path: Path, raw: bytes) -> None:
+        if path.name == ("receipt.json" if where == "receipt" else "receipt.sha256"):
+            raise _Kill()
+        real(path, raw)
+
+    monkeypatch.setattr(owner, "_put", put)
+    with pytest.raises(_Kill):
+        workflow.write_receipt(destination)
+    monkeypatch.setattr(owner, "_put", real)
+    del workflow
+    resumed = _open(tmp_path)
+    assert resumed.phase == "complete" and resumed._sealed is False
+    receipt = resumed.write_receipt(destination)
+    owner.verify_owner_run_receipt(Execution(tmp_path / "store"), receipt)
+    assert _open(tmp_path)._sealed is True
+
+
+def test_open_refuses_a_json_lines_run(tmp_path: Path) -> None:
+    """R10 (both reviews' L2): `serve_json_lines` retains its transport and participant, and a run
+    served over JSON-lines is not resumed (it would be relabelled `trusted-python`)."""
+    workflow, _ = runs.start("positive", tmp_path)
+    request = {
+        "operation": "invoke",
+        "tool": "read_pages",
+        "arguments": {"source_id": "identity", "first_page": 1, "last_page": 1},
+    }
+    out = io.StringIO()
+    owner.serve_json_lines(
+        workflow,
+        io.StringIO(json.dumps(request) + "\n"),
+        out,
+        destination=tmp_path / "receipt.json",
+        participant="external-model",
+    )
+    assert json.loads(out.getvalue())["status"] == "ok"
+    del workflow
+    with pytest.raises(WorkflowError) as caught:
+        owner.OwnerWorkflow.open(tmp_path / "store", publication_directory=tmp_path / "model")
+    assert caught.value.code == "not_permitted"
+
+
+def test_a_resumed_walked_instance_refuses_like_the_live_one(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """R10 (adversary L3): `invoke` and `read_inputs` check the phase before they read the
+    binding, which an instance with no module active does not have."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    assert workflow.phase == "walked"
+    page = {"source_id": "financial", "first_page": 1, "last_page": 1}
+
+    def outcome(call: Callable[[], Any]) -> str:
+        try:
+            call()
+        except WorkflowError as error:
+            return f"WorkflowError({error.code})"
+        return "accepted"
+
+    def refusals_of(w: Any) -> list[str]:
+        return [
+            outcome(lambda: w.invoke("read_pages", page)),
+            outcome(w.read_inputs),
+            outcome(lambda: w.submit_review("{}")),
+        ]
+
+    live = refusals_of(workflow)
+    del workflow
+    assert refusals_of(_open(tmp_path)) == live == ["WorkflowError(not_permitted)"] * 3
+
+
+@pytest.mark.parametrize("entry", ["x" * 200, "subdir/", "z" * 64])
+def test_a_foreign_entry_in_an_audit_kind_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path, entry: str
+) -> None:
+    """I1: a subdirectory, an over-long name or a file that is not a record is `TornAudit`, never a
+    raw `ValidationError` or `IsADirectoryError`."""
+    _prefix(cp3, tmp_path, "cp1 pages 1")
+    calls = tmp_path / "store" / owner.AUDIT / "calls"
+    if entry.endswith("/"):
+        (calls / entry.rstrip("/")).mkdir()
+    else:
+        (calls / entry).write_bytes(b"\x00junk")
+    assert _torn_kind(tmp_path) == "calls"
+
+
+def test_a_dot_name_in_an_audit_kind_is_ignored_and_never_adopted(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """I1: Finder's `.DS_Store` beside the records is not adopted by `open()` and does not stop the
+    receipt from verifying."""
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    for _, act in actions[:8]:
+        act(workflow)
+    for kind in ("calls", "begins", "submissions", "bindings", "input-reads"):
+        directory = tmp_path / "store" / owner.AUDIT / kind
+        directory.mkdir(exist_ok=True)
+        (directory / ".DS_Store").write_bytes(b"\x00junk")
+    resumed = _open(tmp_path)
+    assert len(resumed._calls) == len(workflow._calls)
+    for _, act in actions[8:]:
+        act(resumed)
+    owner.verify_owner_run_receipt(
+        Execution(tmp_path / "store"), resumed.write_receipt(tmp_path / "receipt.json")
+    )
+
+
+# --- fix round 1: the survivors of the first mutant run (adversary M5, P17) --------------------
+
+
+def test_m24_a_tampered_open_epoch_call_is_torn(tmp_path: Path) -> None:
+    """Replay equality: a self-consistent call record whose body was changed is refused."""
+    workflow, pack = runs.start("positive", tmp_path)
+    runs.read_cited(workflow, runs.literal("positive", "readiness_review", pack))
+    call = next(c for c in workflow._epoch_calls if c.status == "ok")
+    del workflow
+    _swap(Execution(tmp_path / "store"), "calls", call, call.model_copy(update={"body": "forged"}))
+    with pytest.raises(owner.TornAudit) as caught:
+        owner.OwnerWorkflow.open(tmp_path / "store", publication_directory=tmp_path / "model")
+    assert caught.value.kind == "calls"
+
+
+def test_m15_a_deleted_refused_submission_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    """A gate-refused submission changes no snapshot (width 0), so the span walk cannot see it
+    deleted; only the sequence check does."""
+    workflow = g1x._start(tmp_path)
+    workflow.read_inputs()
+    g1x._read_page(workflow)
+    for _ in range(2):
+        assert workflow.submit_review(g1x._sourced(g1x.GATE_MARK))["status"] == "refused"
+    assert workflow.state().submits_used == 2
+    first = next(s for s in workflow._submissions if s.disposition == "refused")
+    del workflow
+    (tmp_path / "store" / owner.AUDIT / "submissions" / first.content_hash()).unlink()
+    with pytest.raises(owner.TornAudit) as caught:
+        owner.OwnerWorkflow.open(tmp_path / "store", specs=owner.OWNER_SPECS)
+    assert caught.value.kind == "submissions"
+
+
+def test_m25_kill_before_the_repair_begin_resumes_with_the_repair(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Killed after CP-1 attempt 0 settled invalid and its submission was retained, before
+    `store.begin` of the repair: `open()` begins the repair, as the live walk would."""
+    control = _control(cp3, tmp_path / "control", REFUSAL_ORDER, False)
+    root = tmp_path / "run"
+    workflow, actions = _build(cp3, root, REFUSAL_ORDER, False)
+    index = [n for n, _ in actions].index("cp1 invalid 1")
+    for _, act in actions[:index]:
+        act(workflow)
+
+    def begin(self: Any, module_id: str) -> Any:
+        raise _Kill()
+
+    real = Execution.begin
+    monkeypatch.setattr(Execution, "begin", begin)
+    with pytest.raises(_Kill):
+        actions[index][1](workflow)
+    monkeypatch.setattr(Execution, "begin", real)
+    assert not any(a.status == "pending" for a in Execution(root / "store").read().attempts)
+    del workflow
+    resumed = _open(root)
+    assert (resumed.state().module_id, resumed.state().attempt) == ("CP-1", 1)
+    for _, act in actions[index + 1 :]:
+        act(resumed)
+    assert _normal(resumed.write_receipt(root / "receipt.json")) == _normal(control)
+
+
+def test_m39_kill_between_create_and_the_first_begin_begins_cp0(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def killed(self: Any, module_id: str) -> bool:
+        raise _Kill()
+
+    with monkeypatch.context() as patch:
+        patch.setattr(owner.OwnerWorkflow, "_begin", killed)
+        with pytest.raises(_Kill):
+            owner.OwnerWorkflow.create(
+                tmp_path / "store",
+                runs.make_pack("positive"),
+                publication_directory=tmp_path / "model",
+            )
+    assert Execution(tmp_path / "store").read().attempts == ()
+    resumed = owner.OwnerWorkflow.open(tmp_path / "store", publication_directory=tmp_path / "model")
+    state = resumed.state()
+    assert (state.phase, state.module_id, state.attempt) == ("analytical", "CP-0", 0)
+
+
+def test_m11_a_forged_begin_tail_is_torn_and_retains_nothing(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """At the CP-MODEL stop a snapshot that adds an attempt `begin` would not produce (wrong
+    inputs) is not window (b): torn, and no `BeginRecord` is written."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    store = workflow._store
+    snapshot = store.read()
+    forged = Attempt(
+        ticket_id="00000000-0000-4000-8000-0000000000cc", module_id=A, inputs=(), number=0
+    )
+    store._write(
+        snapshot.model_copy(
+            update={"parent": snapshot.content_hash(), "attempts": (*snapshot.attempts, forged)}
+        )
+    )
+    names = sorted(p.name for p in (tmp_path / "store" / owner.AUDIT / "begins").iterdir())
+    del workflow
+    assert _torn_kind(tmp_path) == "journal"
+    assert sorted(p.name for p in (tmp_path / "store" / owner.AUDIT / "begins").iterdir()) == names
+
+
+@pytest.mark.parametrize("run", range(4))
+def test_m16_m36_two_refusals_at_one_snapshot_rebuild_kind_and_order(
+    cp3: SimpleNamespace, tmp_path: Path, run: int
+) -> None:
+    """A not authorised (first), then B blocked, both at one snapshot: `open()` keeps the first
+    refusal's kind and the plan order (ties in snapshot position are broken by digest, random per
+    run)."""
+    order = ("CP-0", "CP-1", refusals.A, refusals.B)
+    workflow = refusals._walk(cp3, tmp_path, order, refusals.A)
+    live = (workflow._refusal_kind, workflow._refusal_code(), tuple(workflow._refusals))
+    assert live[0] == "not_authorized"
+    del workflow
+    resumed = _open(tmp_path)
+    assert (resumed._refusal_kind, resumed._refusal_code(), tuple(resumed._refusals)) == live
 
 
 promotion = pytest.mark.skipif(

@@ -1609,16 +1609,21 @@ def _gap_issues(
     sub: TriggerSubmission, bound: Mapping[str, Fact], names: Sequence[str]
 ) -> list[str]:
     issues: list[str] = []
+    gaps = {r for r, f in bound.items() if f.status != "known"}
     for i, g in enumerate(sub.gaps):
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
-            found = _prose(f"gaps[{i}].{name}", getattr(g, name), bound, names)
-            issues += found
-            if name == "gap" and not found:  # becomes a limitation, which `compute` spells
-                issues += (
-                    f"gaps[{i}].gap: reference {run.text} names a fact that is not settled"
-                    for run in prose.tokenize(g.gap)
-                    if run.kind != "text" and bound[run.text].status != "known"
-                )
+            issues += _prose(f"gaps[{i}].{name}", getattr(g, name), bound, names)
+            if name != "gap":
+                continue
+            try:  # the gap becomes a limitation, which `compute` spells
+                runs = prose.tokenize(g.gap, gaps=gaps)
+            except ValueError:
+                continue  # malformed syntax is already reported by `_prose` above
+            issues += (
+                f"gaps[{i}].gap: reference {run.text} names a fact that is not settled"
+                for run in runs
+                if run.kind != "text" and run.text in bound and run.text in gaps
+            )
     return issues
 
 

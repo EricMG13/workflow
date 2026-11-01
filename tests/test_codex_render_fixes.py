@@ -115,3 +115,35 @@ def test_h06_gap_limitation_spells_a_chip_naming_a_settled_fact() -> None:
     severity = payload["gaps"][0]["severity"]
     expected = f"Gap ({severity}): Coverage of {fact.text} is noted."
     assert expected in cp2h.compute(inputs).own_limitations
+
+
+def _gap_validate(text: str) -> tuple[str, ...]:
+    payload = copy.deepcopy(m2h.raw_payload("gap"))
+    payload["gaps"][0]["gap"] = text
+    return cp2h.validate(m2h.inputs("gap", payload))
+
+
+def _unsettled_ref() -> str:
+    return next(k for k, f in sorted(_bound_of("gap").items()) if f.status != "known")
+
+
+def test_gap_text_reports_an_unsettled_reference_beside_a_prohibited_conclusion() -> None:
+    ref = _unsettled_ref()
+    issues = _gap_validate(f"Our rating is weak [{ref}].")
+    assert f"gaps[0].gap: reference {ref} names a fact that is not settled" in issues
+    assert any("prohibited conclusion" in x for x in issues)
+
+
+def test_gap_text_with_an_unterminated_brace_returns_issues_without_raising() -> None:
+    # Guard (passes at HEAD): the syntax error is `_prose`'s to report; the settled check must not raise.
+    ref = _unsettled_ref()
+    issues = _gap_validate(f"Coverage [{ref}] is missing {{")
+    assert issues
+    assert not any("is not settled" in x for x in issues)
+
+
+def test_gap_text_reports_an_unsettled_reference_beside_an_unbound_one() -> None:
+    ref = _unsettled_ref()
+    issues = _gap_validate(f"Coverage is missing [{ref}] and [T2R.2.zz.nope].")
+    assert f"gaps[0].gap: reference {ref} names a fact that is not settled" in issues
+    assert any("T2R.2.zz.nope" in x for x in issues)

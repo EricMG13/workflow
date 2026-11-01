@@ -18,6 +18,7 @@ from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_tex
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
+from deploy_workflow.context import load_context
 from deploy_workflow.prompts import NoPrompt, compose
 
 compose_module: Any = importlib.import_module("deploy_workflow.prompts.compose")
@@ -258,6 +259,23 @@ def test_the_p5t6_changes_are_the_only_change_to_the_frozen_message(
         ]
     )
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_P5T6_FROZEN[step]
+
+
+def test_cp0_shows_legal_documents_on_a_repair_turn(pack: PreparedPack) -> None:
+    """Phase 5 Task 6 L1: a repair turn is not frozen; CP-0's run-context block still declares the mode."""
+    path = Path(__file__).resolve().parents[2] / "cases" / "context-attachments-owner"
+    path = path / "context-draft.json"
+    key = json.loads(path.read_text(encoding="utf-8"))["attachments"]["legal_documents"]
+    request = request_for(
+        "source_readiness",
+        pack,
+        context=load_context(path.read_bytes()),
+        issues=("the first reply cited a source that is not in the pack",),
+    )
+    user = compose(request)[1].text
+    block = re.search(r'"attachments": \{[^}]*\}', user)
+    assert block is not None
+    assert json.loads("{" + block.group(0) + "}")["attachments"]["legal_documents"] == key
 
 
 # source_readiness and legal_covenants were re-frozen by Phase 5 Task 6 (CP-0's run-context block

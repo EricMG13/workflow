@@ -35,6 +35,7 @@ from deploy_vii.contracts import (
     Hash,
     Input,
     Module,
+    ModuleView,
     ReportTable,
     Run,
     TableColumn,
@@ -60,7 +61,8 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, status_display
-from deploy_workflow.context import context_facts
+from deploy_workflow import earnings
+from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.context_periods import quarters_ending_at, resolve
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
@@ -315,18 +317,40 @@ def _quarter_of(period: str, row: Mapping[str, Fact]) -> Quarter:
     )
 
 
+class ContextPeriodNotQuarter(UpstreamError):
+    """The context's current period is not a quarter: the read offers no quarter list."""
+
+
+def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
+    """The CP-1 T4.14 rows by row id, read with the earnings reader (a duplicated coordinate or a
+    row without a `period_id` refuses). The view only carries `facts` through that reader."""
+    held = tuple(facts)
+    view = ModuleView(
+        module_id="CP-1",
+        title="CP-1 model period register",
+        aliases=(),
+        status="candidate",
+        artifact_sha256=hashlib.sha256("\n".join(f.fact_id for f in held).encode()).hexdigest(),
+        facts=held,
+    )
+    try:
+        rows = earnings._rows(view, "T4.14")
+    except ValueError as error:
+        raise UpstreamError(f"CP-1 T4.14 register is unusable: {error}") from error
+    if any("period_id" not in row for row in rows):
+        raise UpstreamError("CP-1 T4.14 register is unusable: incomplete_register")
+    return {row["period_id"].row_id: row for row in rows}
+
+
 def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarter, ...]:
     """The four quarters ending at the context's `current_period`, dated from the CP-1 T4.14 rows
     in `facts` (the period register, not T4.10). A quarter with no single T4.14 period refuses; a
-    `current_period` that is not a quarter refuses `context_period_not_quarter`."""
+    `current_period` that is not a quarter raises `ContextPeriodNotQuarter`."""
     try:
         wanted = quarters_ending_at(current_period)
     except ValueError as error:
-        raise UpstreamError("context_period_not_quarter") from error
-    rows: dict[str, dict[str, Fact]] = {}
-    for fact in facts:
-        if fact.table_id == "T4.14":
-            rows.setdefault(fact.row_id, {})[fact.field] = fact
+        raise ContextPeriodNotQuarter("context_period_not_quarter") from error
+    rows = _period_register(facts)
     quarters = []
     for period in wanted:
         key = resolve(period, rows)
@@ -367,6 +391,7 @@ class Upstream:
     cp1_facts: Mapping[str, Fact]  # '<column> · <metric>' -> CP-1 T4.10 fact
     inherited_limitations: tuple[str, ...] = ()  # CP-0 then CP-1 head limitations (the view)
     quarters: tuple[Quarter, ...] = QUARTERS  # the four offered quarters, oldest first
+    context_issue: str | None = None  # a context fact that leaves no quarters to offer
 
     @property
     def periods(self) -> tuple[str, ...]:
@@ -524,6 +549,8 @@ class PairScreen:
 
 def view_topics(upstream: Upstream, *, gap_ref: str) -> tuple[ViewTopic, ...]:
     """The four quarter values of each topic as the ``read_inputs`` view shows them."""
+    if not upstream.quarters:  # a context with no quarter offers none
+        return ()
     out = []
     for topic in TOPICS:
         unit_class: UnitClass = "amount" if topic.unit == "MILLIONS" else "multiple"
@@ -1282,10 +1309,18 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
     refuse) and the limitations the settled module will inherit."""
     snapshot = store.read()
     cp0, cp1 = (_bound(store, attempt, m) for m in (CP0, CP1))
-    # A run context fixes the offered quarters (ruling 6); a refused context is not caught here.
-    context = context_facts(store.pack(snapshot))
+    # A run context fixes the offered quarters (ruling 6). A refused context refuses the read;
+    # a current period that is no quarter leaves a view with no quarter list (oracle ctx-fy-l10).
+    try:
+        context = context_facts(store.pack(snapshot))
+    except ContextRefused as error:
+        raise UpstreamError(f"Context refused: {error}") from error
     current = "" if context is None else context.run.current_period
-    quarters = context_quarters(current, cp1[1].facts) if current else QUARTERS
+    context_issue = None
+    try:
+        quarters = context_quarters(current, cp1[1].facts) if current else QUARTERS
+    except ContextPeriodNotQuarter as error:
+        quarters, context_issue = (), str(error)
     own = (*OWN_LIMITATIONS, *((_SYNTHETIC,) if snapshot.run.case_kind == "synthetic" else ()))
     return Upstream(
         issuer_name=snapshot.run.issuer_name,
@@ -1297,6 +1332,7 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
         cp1_facts=bind_operands(cp1[1].facts, quarters),
         inherited_limitations=inherited_limitations(snapshot, attempt, own, store.head_module),
         quarters=quarters,
+        context_issue=context_issue,
     )
 
 
@@ -1328,7 +1364,7 @@ def context_block(*, upstream: Upstream) -> dict[str, object]:
         }
         for t in view_topics(upstream, gap_ref=_VIEW_GAP)
     ]
-    return {
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": CP0, "status": upstream.cp0_status_word},
             {"module_id": CP1, "status": upstream.cp1_status_word},
@@ -1346,6 +1382,9 @@ def context_block(*, upstream: Upstream) -> dict[str, object]:
         "rules": SCREEN_RULES,
         "inherited_limitations": list(upstream.inherited_limitations),
     }
+    if upstream.context_issue is not None:
+        block["context_issue"] = upstream.context_issue
+    return block
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
@@ -1425,6 +1464,8 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
         upstream = cpl10_upstream(store, attempt)
     except UpstreamError as error:  # an integrity failure of the store is not caught here
         return StepValidation(issues=(f"CP-L10: {error}",))
+    if upstream.context_issue is not None:
+        return StepValidation(issues=(f"CP-L10: {upstream.context_issue}",))
     issues = validate_screen(submission=payload, upstream=upstream)
     if issues:
         return StepValidation(issues=issues)

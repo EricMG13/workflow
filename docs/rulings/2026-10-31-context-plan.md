@@ -87,3 +87,29 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   union of those node ids plus `ruff`/`mypy`, not the full suite. Promotion-gated tests, the long files and
   the full suite are not run in this session; each hand-off lists them under `Not verified:` for the PR
   Manager / CI. Cost: a regression outside the touched tests is found later, at CI.
+- **B17 Recommendations applied (user, 2026-11-01: "apply your recommendations for all").** Each item the
+  controller had held for the user, decided by its recommended option. The `src/deploy_vii` edits below are
+  approved by this ruling, each with a D12 record (B14 shape where repo-authored) and the review named.
+  1. B10 (one retry after a 5xx, narrowing spec §7.2): kept.
+  2. A refused module leaves CP-5 (and CP-6) refused and the run unrendered (O3(a), B13): kept, fail
+     closed; no `execution.py:244-246` change, no partial rendering.
+  3. Phase 3: the `relative_value` contract text in `src/deploy_vii/live/prompts.py` is edited (wording
+     only) so basis entries refer to Python's context rows by id and never copy their figures; built in
+     Phase 3 Task 4 with the O6 follow-through; `mx-adversary`; prompt-set hash re-pinned.
+  4. Phase 5: "executed or filed" wording in `src/deploy_vii/methods/cp4.md`, `live/prompts.py:547`,
+     `live/context.py:33` becomes "executed, filed or, on a draft-documents run, draft"; wording only;
+     `methods/cp4.md` `mx-feature` review, the two model-facing texts `mx-adversary`.
+  5. Phase 5: no CP-3 confidence cap for draft-only legal inputs (CP-4's draft limitation carries it).
+  6. Phase 5: `readiness.py` refuses `executed`, `filed` or `draft` authority on the `context` source itself
+     (D2: the context is `unknown`); built in Phase 5 Task 1 (B7's file).
+  7. Phase 7: wording edits to `src/deploy_vii/methods/cp1c.md` and `methods/cp4c.md` for the EV tables and
+     the CP-4C binding (B9 extended to Phase 7; `mx-feature` review).
+  8. Phase 7: every CP-4C valuation case, the stress case included, carries the selected multiple (no free
+     stress multiple); CP-2's optional CP-1C edge is kept, its distressed-run effects stated (Design 12).
+  9. Phase 8: CP-1B row labels in `src/deploy_vii/bindings/cp1b.py` and the label check at
+     `report_view.py:2353-2356` take the run's money unit (USD runs byte-identical); replaces the
+     `cp1b_currency_label_fixed` refusal; `mx-adversary`.
+  10. Phase 8: `US$`/IFRS labels outside the Phase 8 modules stay out of scope (follow-up list).
+  11. O1 G1b: the frozen R6 oracle (`cases/cp3-cp6-owner`) is amended as the root-cause investigation
+      recommends (CP-MODEL CP-1A judgment row, builder self-check fixed, rebuild, re-pins), by a separate
+      preparer with an independent `mx-precise` review.

@@ -113,3 +113,9 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   11. O1 G1b: the frozen R6 oracle (`cases/cp3-cp6-owner`) is amended as the root-cause investigation
       recommends (CP-MODEL CP-1A judgment row, builder self-check fixed, rebuild, re-pins), by a separate
       preparer with an independent `mx-precise` review.
+- **B18 (controller, applied recommendation, 2026-11-01).** B17 item 9 covers `report_view.py:2298`
+  (`_cp1b_fact_shape`, the same CP-1B layout validator, called at :2385): every CP-1B money fact takes
+  `("MILLIONS", C, 1e6)` with C the currency of `revenue:current`, required non-None; no US$ fallback for
+  gaps; USD runs byte-identical; `mx-adversary`. Without it the label change cannot settle a non-USD run
+  (review `work/context-plan/reviews/b17-amendments-review.md` finding 1). Cost if wrong: one line reverted
+  and non-USD runs return to the `cp1b_currency_label_fixed` refusal.

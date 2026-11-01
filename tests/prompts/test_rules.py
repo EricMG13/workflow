@@ -514,7 +514,12 @@ def test_golden_pins_every_module_named_by_an_fn_check() -> None:
     assert modules <= set(golden), sorted(modules - set(golden))
 
 
-def test_the_sha_refresh_rewrites_only_the_sha256_section(tmp_path: Path) -> None:
+def test_the_sha_refresh_rewrites_only_the_sha256_section(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        rules, "dirty_paths", lambda paths, root=rules.ROOT: []
+    )  # no git in an archive
     stale = json.loads(GOLDEN.read_text(encoding="utf-8"))
     stale["sha256"]["cores"] = {k: "0" * 64 for k in stale["sha256"]["cores"]}
     target = tmp_path / "golden.json"

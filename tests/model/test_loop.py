@@ -29,6 +29,7 @@ from _pack import (
 )
 
 from deploy_vii.execution import Execution
+from deploy_workflow.model import adapter as adapter_module
 from deploy_workflow.model import loop as loop_module
 from deploy_workflow.model.adapter import AdapterReply, recorded_adapter
 from deploy_workflow.model.budget import RunStopped
@@ -39,8 +40,14 @@ from deploy_workflow.model.loop import (
     read_inputs_tool,
     repair_prompt,
 )
-from deploy_workflow.model.record import arguments_sha256
+from deploy_workflow.model.record import (
+    LOOP_STOPS,
+    ExportMismatch,
+    arguments_sha256,
+    export_recording,
+)
 from deploy_workflow.model.redact import Redactor
+from deploy_workflow.model.transport import Response
 from deploy_workflow.model.turn import ModelSpec, Usage, dump_json
 
 CONFIG = SPEC.config_id
@@ -361,11 +368,12 @@ def test_raw_is_archived_before_the_workflow_validates(tmp_path: Path) -> None:
         [ok(read_identity(), gap_submit())],
         fail_submit=RuntimeError("the workflow broke"),
     )
-    assert _stop(rig).reason == "RuntimeError"
+    assert _stop(rig).reason == "WorkflowError"
     (record,) = rig.records()
     digest = rig.adapter.sent[0].digest
     assert (rig.run_dir / "raw" / f"{digest}-0.json").is_file()
-    assert record["error_class"] == "RuntimeError" and record["cost_status"] == "computed"
+    assert record["error_class"] == "WorkflowError" and "RuntimeError" in record["error"]
+    assert record["cost_status"] == "computed"
     assert record["settled_usd"] is not None  # the reply was received: its charge is settled
     assert [c["name"] for c in record["tool_calls"]] == ["read_pages", "submit_source_readiness"]
 
@@ -378,11 +386,11 @@ def test_a_failing_turn_redaction_dispatches_nothing_and_still_settles(
 
     rig = make_rig(tmp_path, [ok(read_identity(), gap_submit())], taped=True)
     monkeypatch.setattr(loop_module, "redacted_turn", broken)
-    assert _stop(rig).reason == "ValueError"
+    assert _stop(rig).reason == "BadTurn"
     assert "workflow.invoke" not in rig.tape and "workflow.submit_review" not in rig.tape
     assert rig.tape[-2:] == ["settle", "append"]
     (record,) = rig.records()
-    assert record["error_class"] == "ValueError" and record["cost_status"] == "computed"
+    assert record["error_class"] == "BadTurn" and record["cost_status"] == "computed"
     assert Decimal(record["settled_usd"]) == Decimal("0.004") and record["tool_calls"] == []
 
 
@@ -684,10 +692,10 @@ def test_an_empty_call_id_stops_before_any_dispatch(tmp_path: Path) -> None:
     call = read_identity()
     bad = type(call)("", call.name, call.arguments)
     rig = make_rig(tmp_path, [ok(bad, gap_submit())], taped=True)
-    assert _stop(rig).reason == "ValueError"
+    assert _stop(rig).reason == "BadTurn"
     assert "workflow.invoke" not in rig.tape and "workflow.submit_review" not in rig.tape
     (record,) = rig.records()
-    assert record["error_class"] == "ValueError" and record["settled_usd"] is not None
+    assert record["error_class"] == "BadTurn" and record["settled_usd"] is not None
 
 
 def test_calls_after_a_submit_that_moved_the_step_are_not_executed(tmp_path: Path) -> None:
@@ -736,3 +744,165 @@ def test_only_a_5xx_status_is_retried(tmp_path: Path, status: int) -> None:
         [failed("sent_unknown", "UnexpectedStatus", status), ok(read_identity(), gap_submit())],
     )
     assert _stop(rig).reason == "UnexpectedStatus" and len(rig.adapter.sent) == 1
+
+
+# ---------------------------------------------------------------- fix round 2: stops on an ok reply export
+
+
+def _body(*calls: tuple[str, dict[str, Any]], text: str = "") -> bytes:
+    output: list[dict[str, Any]] = [
+        {"type": "function_call", "call_id": f"c{i}", "name": name, "arguments": json.dumps(args)}
+        for i, (name, args) in enumerate(calls)
+    ]
+    if text:
+        output.append({"type": "message", "content": [{"type": "output_text", "text": text}]})
+    return json.dumps(
+        {
+            "id": "resp_1",
+            "model": "gpt-6.1-sol",
+            "status": "completed",
+            "output": output,
+            "usage": {"input_tokens": 900, "output_tokens": 20},
+        }
+    ).encode()
+
+
+def _live(root: Path, monkeypatch: pytest.MonkeyPatch, bodies: list[bytes], **kwargs: Any) -> Any:
+    """A real LiveAdapter over a fake transport (no network, a temporary ruling)."""
+    rulings = root / "rulings"
+    rulings.mkdir(parents=True)
+    ruling = rulings / "lift.md"
+    ruling.write_text(
+        f"lifts: live-provider-pause\nby: user\ndate: 2026-11-01\nconfigs: {CONFIG}\n"
+    )
+    monkeypatch.setattr(adapter_module, "LIVE_RULINGS_ROOT", rulings)
+    queue = list(bodies)
+    live = adapter_module.LiveAdapter(
+        SPEC,
+        ruling,
+        transport=lambda request: Response(200, queue.pop(0), {}),
+        environ={"OPENAI_API_KEY": "sk-proj-OPAQUETESTKEY0000000000"},
+    )
+    return make_rig(root / "run", [], adapter=live, **kwargs)
+
+
+def _export(rig: Any, out: Path) -> int:
+    return export_recording(rig.run_dir, out, Redactor())
+
+
+def _reads(count: int) -> list[tuple[str, dict[str, Any]]]:
+    return [("search_pack", {"query": "identity"}) for _ in range(count)]
+
+
+def test_a_no_submit_stop_exports_as_the_ok_turn(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = _live(tmp_path, monkeypatch, [_body(text="prose only")])
+    assert _stop(rig).reason == "NoSubmit"
+    (record,) = rig.records()
+    assert record["error_class"] == "NoSubmit" and record["error_class"] in LOOP_STOPS
+    assert _export(rig, tmp_path / "out.jsonl") == 1
+    line = json.loads((tmp_path / "out.jsonl").read_text())
+    assert line["response"]["text"] == "prose only" and "kind" not in line["response"]
+
+
+def test_a_call_limit_stop_exports_with_the_calls_it_reached(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = _live(tmp_path, monkeypatch, [_body(*_reads(18))])
+    assert _stop(rig).reason == "CallLimit"
+    (record,) = rig.records()
+    assert record["error_class"] == "CallLimit" and len(record["tool_calls"]) == 17
+    assert _export(rig, tmp_path / "out.jsonl") == 1
+    line = json.loads((tmp_path / "out.jsonl").read_text())
+    assert len(line["response"]["tool_calls"]) == 18  # the whole turn, as the provider sent it
+
+
+def test_a_workflow_exception_stop_exports_with_the_calls_it_reached(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    body = _body(
+        ("read_pages", {"source_id": "identity", "first_page": 1, "last_page": 1}),
+        ("submit_source_readiness", {}),
+        *_reads(1),
+    )
+    rig = _live(tmp_path, monkeypatch, [body], fail_submit=RuntimeError("the workflow broke"))
+    assert _stop(rig).reason == "WorkflowError"
+    (record,) = rig.records()
+    assert record["error_class"] == "WorkflowError" and "RuntimeError" in record["error"]
+    assert len(record["tool_calls"]) == 2  # the search after the failing submit never ran
+    assert _export(rig, tmp_path / "out.jsonl") == 1
+
+
+def test_a_bad_turn_stop_exports(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(redactor: Redactor, value: Any) -> Any:
+        raise ValueError("the redactor broke")
+
+    rig = _live(tmp_path, monkeypatch, [_body(*_reads(1))])
+    monkeypatch.setattr(loop_module, "redacted_turn", broken)
+    assert _stop(rig).reason == "BadTurn"
+    (record,) = rig.records()
+    assert record["error_class"] == "BadTurn" and "ValueError" in record["error"]
+    assert _export(rig, tmp_path / "out.jsonl") == 1
+
+
+def test_every_stop_written_after_an_ok_reply_is_a_loop_stop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert LOOP_STOPS == {"NoSubmit", "CallLimit", "WorkflowError", "BadTurn"}
+    seen: set[str] = set()
+    for number, script in enumerate(
+        [
+            ok(text="prose"),
+            ok(*[tool_call("search_pack", query="x") for _ in range(17)]),
+            ok(tool_call("search_pack", query="x"), submit("source_readiness", "{}")),
+            ok(type(read_identity())("", "read_pages", {})),
+        ]
+    ):
+        rig = make_rig(
+            tmp_path / str(number),
+            [script],
+            fail_submit=RuntimeError("x") if number == 2 else None,
+        )
+        _stop(rig)
+        seen |= {r["error_class"] for r in rig.records()}
+    assert seen == {"NoSubmit", "CallLimit", "WorkflowError", "BadTurn"} <= LOOP_STOPS
+
+
+def test_a_stop_record_with_a_longer_call_list_than_the_turn_does_not_export(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = _live(tmp_path, monkeypatch, [_body(*_reads(18))])
+    _stop(rig)
+    lines = rig.log._calls.read_text().splitlines()
+    record = json.loads(lines[0])
+    record["tool_calls"].append(dict(record["tool_calls"][0]))
+    record["tool_calls"].append(dict(record["tool_calls"][0]))  # 19 calls recorded, 18 sent
+    rig.log._calls.write_text(json.dumps(record) + "\n")
+    with pytest.raises(ExportMismatch):
+        _export(rig, tmp_path / "out.jsonl")
+
+
+@pytest.mark.parametrize(
+    "bodies",
+    [[_body(text="prose only")], [_body(*_reads(18))]],
+    ids=["no-submit", "call-limit"],
+)
+def test_replaying_the_export_reproduces_the_records_and_the_stop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bodies: list[bytes]
+) -> None:
+    first = _live(tmp_path / "a", monkeypatch, list(bodies))
+    stopped = _stop(first)
+    recordings = tmp_path / "recordings"
+    recordings.mkdir()
+    _export(first, recordings / "run.jsonl")
+    second = make_rig(tmp_path / "b", [], adapter=recorded_adapter(SPEC, recordings))
+    replayed = _stop(second)
+    assert replayed.reason == stopped.reason
+    keys = ("call_index", "invocation_digest", "error_class", "tool_calls", "input_tokens",
+            "output_tokens", "settled_usd", "cost_status", "http_status")  # fmt: skip
+
+    def pick(rig: Any) -> list[dict[str, Any]]:
+        return [{k: r[k] for k in keys} for r in rig.records()]
+
+    assert pick(second) == pick(first)

@@ -492,11 +492,12 @@ class ToolLoop:
         error_class: str | None = None,
         error: str | None = None,
     ) -> None:
+        shown = turn if turn is not None else (None if reply is None else reply.turn)
         values: dict[str, Any] = {
             **self._identity(ctx, index),
             "schema_version": "model-call/1",
-            "reported_model": None if turn is None else turn.reported_model,
-            "request_id": None if turn is None else turn.request_id,
+            "reported_model": None if shown is None else shown.reported_model,
+            "request_id": None if shown is None else shown.request_id,
             "http_status": None if reply is None else reply.http_status,
             "started_at": _dt(
                 started if reply is None or reply.started_at is None else reply.started_at
@@ -550,8 +551,10 @@ class ToolLoop:
         usage = reply.usage if reply.usage is not None or reply.turn is None else reply.turn.usage
         settled, status, retryable, overrun = self._settle(call_id, reply, usage)
         if failure is not None:  # the raw write or the handling itself failed: settled, recorded
-            error_class, message = type(failure).__name__, self._redactor.exception(failure)
-            stop = (error_class, self._redactor.text(str(failure)))
+            # After an ok reply this is a loop stop (record.LOOP_STOPS) so the run still exports.
+            error_class = "BadTurn" if reply.kind == "ok" else type(failure).__name__
+            message = self._redactor.exception(failure)
+            stop = (error_class, self._named(failure))
         elif stop is not None:
             error_class, message = stop
         self._append(
@@ -689,13 +692,10 @@ class ToolLoop:
                     self._counts[key] += 1
                 result, failure, returned = (refused, "not_permitted", None), None, False
             if failure is not None or result is None:
-                name = (
-                    "WorkflowError"
-                    if isinstance(failure, WorkflowError)
-                    else type(failure).__name__
-                )
-                record["refusal_code"] = name
-                out.stop = (name, self._redactor.text(str(failure)))
+                # Whatever the workflow raised is one loop stop (record.LOOP_STOPS); the original
+                # type name and the redacted message go in the detail.
+                record["refusal_code"] = "WorkflowError"
+                out.stop = ("WorkflowError", self._named(failure))
                 return out
             content, refusal, outcome = result
             if returned:
@@ -708,6 +708,10 @@ class ToolLoop:
                 out.outcome = outcome
                 stepped = outcome is not None and outcome["status"] != "refused"
         return out
+
+    def _named(self, failure: BaseException | None) -> str:
+        """The original exception type and its redacted message."""
+        return f"{type(failure).__name__}: {self._redactor.text(str(failure))}"
 
     def _kind(self, name: str, binding: OwnerBinding) -> str:
         if name == READ_INPUTS:

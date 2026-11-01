@@ -479,6 +479,10 @@ def retain_preimage(store: _Store, preimage: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------- recordings
 
 
+# The closed set of stop classes the tool loop writes into the record of a reply that was ok:
+# the reply parsed as a turn, then the loop stopped on it. Such a record exports as the ok turn.
+LOOP_STOPS: frozenset[str] = frozenset({"NoSubmit", "CallLimit", "WorkflowError", "BadTurn"})
+
 _TRANSPORT_CLASSES = frozenset(
     {"ConnectTimeout", "IdleTimeout", "OverallTimeout", "TransportError"}
 )
@@ -555,8 +559,12 @@ def _archived_body(path: Path, rec: CallRecord) -> bytes:
     return body
 
 
-def _ok_response(run: Path, rec: CallRecord, redactor: Redactor) -> dict[str, Any]:
-    """Re-parse the archived body; it must be a turn that says what the record says."""
+def _ok_response(
+    run: Path, rec: CallRecord, redactor: Redactor, *, prefix: bool = False
+) -> dict[str, Any]:
+    """Re-parse the archived body; it must be a turn that says what the record says. With
+    ``prefix`` (the loop stopped on this ok reply) the record lists only the tool calls it
+    reached: the first ones of the turn."""
     digest, index = rec.invocation_digest, rec.call_index
     path = run / "raw" / f"{digest}-{index}.json"
     if not path.is_file() or path.stat().st_size == 0:
@@ -577,7 +585,8 @@ def _ok_response(run: Path, rec: CallRecord, redactor: Redactor) -> dict[str, An
     if rec.reported_model != outcome.reported_model:
         raise ExportMismatch(digest, index, "reported_model")
     seen = [(c.name, c.arguments_sha256) for c in rec.tool_calls]
-    if seen != [(c.name, arguments_sha256(c.arguments)) for c in outcome.tool_calls]:
+    sent = [(c.name, arguments_sha256(c.arguments)) for c in outcome.tool_calls]
+    if seen != (sent[: len(seen)] if prefix else sent):
         raise ExportMismatch(digest, index, "tool_calls")
     return turn_to_json(outcome)
 
@@ -586,7 +595,9 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
     """Rebuild a recording file (the ``RecordedAdapter`` line format) from ``calls.jsonl`` plus
     ``raw/``. Returns the number of lines written.
 
-    An error record (``error_class`` set) exports from its own fields and is never re-parsed. An
+    A record whose ``error_class`` is a ``LOOP_STOPS`` class with a 2xx status is an ok reply the
+    loop stopped on: it exports as the ok turn, its tool calls a prefix of the turn's. Any other
+    error record (``error_class`` set) exports from its own fields and is never re-parsed. An
     ok record re-parses its archived body with the provider mapper and must agree with it, else
     ``ExportMismatch``; a missing or empty body is ``RawMissing``. A null-status record's kind
     comes from its ``error_class`` and must agree with ``cost_status``. The ``redactor`` is the
@@ -599,8 +610,13 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
         except ValidationError as error:
             raise _invalid(error) from None
         key = (rec.invocation_digest, rec.call_index)
-        if rec.error_class is None:
-            response = _ok_response(run, rec, redactor)
+        stopped_ok = (
+            rec.error_class in LOOP_STOPS
+            and rec.http_status is not None
+            and 200 <= rec.http_status < 300
+        )
+        if rec.error_class is None or stopped_ok:
+            response = _ok_response(run, rec, redactor, prefix=stopped_ok)
         else:
             _refuse_forged_error(run, rec, redactor)
             response = _error_response(rec, rec.error_class)
@@ -626,6 +642,7 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
 
 
 __all__ = [
+    "LOOP_STOPS",
     "AuditCorrupt",
     "CallLog",
     "CallRecord",

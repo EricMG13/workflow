@@ -25,7 +25,7 @@ from typing import cast
 from deploy_vii.contracts import Citation, Source
 from deploy_vii.readiness import citation_issues
 
-CITED_ARRAYS: tuple[str, ...] = ("quotes", "deal_terms")  # Phase 4 appends "ratings"
+CITED_ARRAYS: tuple[str, ...] = ("quotes", "deal_terms", "ratings")
 STALE_DAYS = 30  # a quote more than this many whole days before the run as-of is stale
 UNREADABLE = "context source unreadable: "
 

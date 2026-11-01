@@ -25,6 +25,7 @@ then `_adapted`) for submit, probe and view, the step validator, `RULES`, the ex
 import hashlib
 import json
 import re
+import unicodedata
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -78,7 +79,14 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.context import Rating
+from deploy_workflow.context import (
+    CONTEXT_SOURCE_ID,
+    ContextRefused,
+    Rating,
+    RunContext,
+    context_facts,
+)
+from deploy_workflow.context_cites import ContextTextError, cite_all, context_text
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2g import cp2g_reader
@@ -152,13 +160,6 @@ class SourceIssue(ValueError):
     round 7 items 2, 3, 6, 8 and (h))."""
 
 
-class ContextCitationsNotWired(ValueError):
-    """A context-sourced register row reached the cell builder before its citations exist."""
-
-
-CONTEXT_CITATIONS_NOT_WIRED = (
-    "Context register rows have no citations here: they come from register_source (Phase 4 Task 3)"
-)
 REGISTER_NOT_FOUND = "Rating register not found"
 SCALE_NOT_FOUND = "Rating scale not found"
 TERMS_NOT_FOUND = "Trigger terms not found"
@@ -230,9 +231,11 @@ class RegisterRow:
     position: int | None  # None: Withdrawn or Not rated (no position on the scale)
     line: str  # the page:1 register line
     scale_line: str | None  # the page:2 scale line that states the position
-    # Where the row came from. A "context" row has no page lines: `line` is its row index and
-    # `scale_line` is None. Branch on this field, never on `scale_line is None`.
+    # Where the row came from. A "context" row has no page lines: `line` is its row index (its
+    # citations come from `register_source`) and `scale_line` is None. An unrated "ratings" row
+    # also has a None `scale_line`, so branch on this field to choose the citations.
     source: Literal["ratings", "context"] = "ratings"
+    scope: str | None = None  # the context row's rating scope; None for a page row
 
 
 @dataclass(frozen=True)
@@ -392,6 +395,26 @@ def possessive(name: str) -> str:
     return name if name.endswith("'s") else name + "'s"
 
 
+def _stated(text: str) -> str:
+    """A context field's text, or `Not stated` when it is empty or only white space."""
+    return text if text.strip() else NOT_STATED
+
+
+def _escaped(char: str) -> str:
+    kind = unicodedata.category(char)
+    if kind[0] != "C" and kind not in ("Zl", "Zp"):
+        return char
+    return f"\\u{ord(char):04x}" if ord(char) <= 0xFFFF else f"\\U{ord(char):08x}"
+
+
+def _plain(text: str) -> str:
+    """`text` with each character of a Unicode `C*` category (control, format, surrogate,
+    private use, unassigned) and each line or paragraph separator spelled as its `\\uXXXX`
+    escape, so a context value quoted in a refusal cannot carry a line break into the repair
+    prompt."""
+    return "".join(map(_escaped, text))
+
+
 def _context_row(i: int, r: Rating) -> RegisterRow:
     """One register row; the agency has a scale and the rating is unrated or on it (checked)."""
     scale = COMBINED_SCALE[r.agency]
@@ -399,14 +422,14 @@ def _context_row(i: int, r: Rating) -> RegisterRow:
         agency=r.agency,
         instrument=NOT_STATED,  # the context has no instrument field
         rating=r.rating,
-        outlook=r.outlook or NOT_STATED,
-        date=r.as_of or NOT_STATED,
+        outlook=_stated(r.outlook),
+        date=_stated(r.as_of),
         position=None if r.rating in UNRATED else scale[r.rating],
-        # the row index: nothing resolves it inside `_compose`; `register_source` (Task 3)
-        # returns the per-row citations
+        # the row index: `register_source` returns the row's citations; nothing resolves it here
         line=str(i),
         scale_line=None,
         source="context",
+        scope=r.scope,
     )
 
 
@@ -423,7 +446,9 @@ def context_register(ratings: Sequence[Rating]) -> tuple[RegisterRow, ...]:
     for r in ratings:
         scale = COMBINED_SCALE.get(r.agency)
         if scale is None or (r.rating not in UNRATED and r.rating not in scale):
-            raise SourceIssue(clipped(("Rating not on the scale: ", r.agency, " ", r.rating)))
+            raise SourceIssue(
+                clipped(("Rating not on the scale: ", _plain(r.agency), " ", _plain(r.rating)))
+            )
     return tuple(_context_row(i, r) for i, r in enumerate(ratings))
 
 
@@ -645,10 +670,14 @@ class TriggerUpstream:
 @dataclass(frozen=True)
 class PackScope:
     """The part of the prepared pack the Method reads: the host-scope sources (the agency source
-    has id `ratings`) and the issuer name (its digits are not figures)."""
+    has id `ratings`, the context file `context`), the issuer name (its digits are not figures),
+    the typed context when the pack carries a readable one, and the refusal text when it carries
+    one that cannot be read (`Context refused: ...`; then `context` is None)."""
 
     sources: tuple[Source, ...]
     names: tuple[str, ...]
+    context: RunContext | None = None
+    context_refusal: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1017,15 +1046,65 @@ def _upstream_register(b: _Book, up: TriggerUpstream) -> None:
         b.row("T2R.1", row, values[0], names)
 
 
-def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
-    """T2R.2 source facts; the row id of each agency."""
+# The context fields a register row cites; `position` cites its rating (it has no scale line).
+_CITED_ROW = ("agency", "instrument", "rating", "outlook", "date", "position")
+RowCitations = Mapping[str, Citation]
+
+
+def _row_citations(
+    b: _Book, r: RegisterRow, context: RowCitations | None
+) -> Mapping[str, tuple[Citation, ...]]:
+    """The citations of one register row's cells, by field. A page row cites its page:1 line (and
+    page:2 for its position); a context row cites the context lines `register_source` found."""
+    if context is not None:
+        return {name: (context[name],) for name in _CITED_ROW}
+    line = (b.cite("page:1", r.line),)
+    scale = () if r.scale_line is None else (b.cite("page:2", r.scale_line),)
+    return {name: line for name in _CITED_ROW[:-1]} | {"position": scale}
+
+
+def _position(b: _Book, r: RegisterRow, row: str, cited: Sequence[Citation]) -> None:
+    at, label = ("T2R.2", row, "position"), "Position on the combined scale"
+    period = "Rating date not stated" if r.date == NOT_STATED else f"Rating dated {r.date}"
+    if r.position is None or (r.source == "ratings" and r.scale_line is None):
+        reason = (
+            f"{possessive(r.agency)} rating is {r.rating.lower()}, "
+            "so it has no position on the scale"
+        )
+        b.unsettled(at, label, POSITION_UNIT, reason, period=period, status="not_applicable")
+    elif r.source == "context":  # calculated from its rating on the module's fixed scale
+        b.number(
+            at,
+            label,
+            Decimal(r.position),
+            POSITION_UNIT,
+            "position of the rating on the fixed combined scale",
+            period=period,
+            derives=(f"T2R.2.{row}.rating",),
+        )
+    else:
+        b.number(
+            at,
+            label,
+            Decimal(r.position),
+            POSITION_UNIT,
+            "scale position stated in the source mapping",
+            period=period,
+            source=True,
+            citations=cited,
+        )
+
+
+def _agency_register(
+    b: _Book, source: RatingsSource, citations: Sequence[RowCitations] = ()
+) -> dict[str, str]:
+    """T2R.2 source facts; the row id of each agency. `citations` are the context rows' (one per
+    register row, from `register_source`); a page row cites its page lines."""
     rows: dict[str, str] = {}
     for n, r in enumerate(source.register, 1):
-        if r.source != "ratings":
-            raise ContextCitationsNotWired(CONTEXT_CITATIONS_NOT_WIRED)
         row = f"r{n:02d}"
         rows[r.agency] = row
-        line = (b.cite("page:1", r.line),)
+        cited = _row_citations(b, r, citations[n - 1] if r.source == "context" else None)
         for name, label, value in (
             ("agency", "Agency", r.agency),
             ("instrument", "Instrument", r.instrument),
@@ -1033,29 +1112,8 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
             ("outlook", "Outlook", r.outlook),
             ("date", "Rating date", r.date),
         ):
-            b.text(("T2R.2", row, name), label, value, value_class="source", citations=line)
-        at, label, period = (
-            ("T2R.2", row, "position"),
-            "Position on the combined scale",
-            f"Rating dated {r.date}",
-        )
-        if r.position is None or r.scale_line is None:  # ratings rows only (context rows raised)
-            reason = (
-                f"{possessive(r.agency)} rating is {r.rating.lower()}, "
-                "so it has no position on the scale"
-            )
-            b.unsettled(at, label, POSITION_UNIT, reason, period=period, status="not_applicable")
-        else:
-            b.number(
-                at,
-                label,
-                Decimal(r.position),
-                POSITION_UNIT,
-                "scale position stated in the source mapping",
-                period=period,
-                source=True,
-                citations=(b.cite("page:2", r.scale_line),),
-            )
+            b.text(("T2R.2", row, name), label, value, value_class="source", citations=cited[name])
+        _position(b, r, row, cited["position"])
         b.row(
             "T2R.2",
             row,
@@ -1331,6 +1389,28 @@ def _timing(
     b.row("T2R.6", row, desc, ("trigger", "base_first", "down_first"))
 
 
+def _outlook_match(
+    b: _Book, at: tuple[str, str], pair: tuple[RegisterRow, RegisterRow], ids: tuple[str, str]
+) -> None:
+    """T2R.8's outlook cell for two rated agencies. A context row with no outlook is `Not stated`
+    and cannot be compared: the cell is not applicable and names the first such agency."""
+    unstated = next((x for x in pair if x.source == "context" and x.outlook == NOT_STATED), None)
+    if unstated is not None:
+        b.missing_text(
+            (*at, "outlook_match"),
+            "Outlooks",
+            f"An outlook is not stated for {unstated.agency}",
+            status="not_applicable",
+        )
+        return
+    b.text(
+        (*at, "outlook_match"),
+        "Outlooks",
+        "Same" if pair[0].outlook == pair[1].outlook else "Different",
+        derives=(f"T2R.2.{ids[0]}.outlook", f"T2R.2.{ids[1]}.outlook"),
+    )
+
+
 def _divergence(b: _Book, source: RatingsSource, rows: Mapping[str, str]) -> list[str]:
     """T2R.8: every pair of register agencies (none for a one-agency register, round 7 item 4);
     the pair row ids."""
@@ -1388,12 +1468,7 @@ def _divergence(b: _Book, source: RatingsSource, rows: Mapping[str, str]) -> lis
                 lower,
                 derives=(*positions, f"T2R.2.{ia}.agency", f"T2R.2.{ib}.agency"),
             )
-            b.text(
-                (*at, "outlook_match"),
-                "Outlooks",
-                "Same" if ra.outlook == rb.outlook else "Different",
-                derives=(f"T2R.2.{ia}.outlook", f"T2R.2.{ib}.outlook"),
-            )
+            _outlook_match(b, at, (ra, rb), (ia, ib))
         b.row(
             "T2R.8",
             row,
@@ -1530,14 +1605,17 @@ def _compose(
     source: RatingsSource,
     up: TriggerUpstream,
     submission: TriggerSubmission | None,
+    citations: Sequence[RowCitations] = (),
 ) -> tuple[_Book, _Mechanics]:
     """All tables in fact order (T2R.1-T2R.3, then T2R.4-T2R.6 per trigger, T2R.7-T2R.10).
-    Without a submission the analyst tables T2R.7 and T2R.10 are left out (validation)."""
+    Without a submission the analyst tables T2R.7 and T2R.10 are left out (validation).
+    `ratings` is the agency source (its page:3 terms); `citations` are the context rows' (from
+    `register_source`), empty for a page register."""
     if ratings.sha256 is None:
         raise ValueError("CP-2H: the ratings source has no sha256")
     b = _Book(ratings.sha256)
     _upstream_register(b, up)
-    agency_rows = _agency_register(b, source)
+    agency_rows = _agency_register(b, source, citations)
     tests = tuple(_Test(row, t, METRICS[t.metric]) for row, t in _trigger_terms(b, source))
     outcomes: dict[str, TriggerOutcome] = {}
     for test in tests:
@@ -1759,6 +1837,76 @@ def source_pages(source: Source) -> tuple[str, str, str]:
     return (spans.get("page:1", ""), spans.get("page:2", ""), spans.get("page:3", ""))
 
 
+def has_context_register(pack: PackScope) -> bool:
+    """The register comes from the context file: it has ratings rows and was not refused. A
+    refused context never falls back to the agency source's page:1 register."""
+    return pack.context_refusal is None and pack.context is not None and bool(pack.context.ratings)
+
+
+def _context_source(pack: PackScope) -> Source:
+    found = [s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID]
+    if len(found) != 1:
+        raise ValueError("CP-2H: the pack scope holds a context with ratings but not its source")
+    return found[0]
+
+
+def _row_paths(i: int, r: Rating) -> dict[str, str]:
+    """The context path each cell of row `i` cites (the oracle's `citation_rules.fields`): the
+    agency, outlook and date by their own values, everything else (the instrument `Not stated`,
+    the rating, the position, a `Not stated` outlook or date) by the rating value."""
+    p = f"ratings[{i}]"
+    return {
+        "agency": f"{p}.agency",
+        "instrument": f"{p}.rating",
+        "rating": f"{p}.rating",
+        "outlook": f"{p}.outlook" if r.outlook.strip() else f"{p}.rating",
+        "date": f"{p}.as_of" if r.as_of.strip() else f"{p}.rating",
+        "position": f"{p}.rating",
+    }
+
+
+def _context_citations(source: Source, ratings: Sequence[Rating]) -> tuple[RowCitations, ...]:
+    """Every register row's citations by cell field. A row with any field that cannot be cited as
+    one unique span refuses the register (named; never dropped, never guessed). A context source
+    that cannot be read by line refuses as the context does (`Context refused: ...`)."""
+    out: list[RowCitations] = []
+    for i, r in enumerate(ratings):
+        paths = _row_paths(i, r)
+        try:
+            found = cite_all(source, list(dict.fromkeys(paths.values())))
+        except ContextTextError as error:
+            raise SourceIssue(clipped(("Context refused: ", str(error)))) from error
+        if found is None:
+            # the agency is on the scale here (the register was checked), so it is plain text
+            raise SourceIssue(
+                f"Context rating row {i + 1} ({r.agency}) cannot be cited as one unique span; "
+                "ratings not used"
+            )
+        by_path = dict(zip(dict.fromkeys(paths.values()), found, strict=True))
+        out.append({name: by_path[path] for name, path in paths.items()})
+    return tuple(out)
+
+
+def register_source(pack: PackScope) -> tuple[Source, RatingsSource, tuple[RowCitations, ...]]:
+    """The agency source, its parse and the register rows' context citations (empty for a page
+    register). The context path (rows and no refusal) refuses in this order, one issue each:
+    the context refusal, then the register (none, duplicate, off-scale), then an uncitable row,
+    then the trigger terms (`Trigger terms not found` for no ready `ratings` source). Without
+    context rows the page register is read as before."""
+    if pack.context_refusal is not None:
+        raise SourceIssue(pack.context_refusal)
+    if pack.context is None or not pack.context.ratings:
+        ratings = ratings_source(pack)
+        return ratings, parse_ratings(source_pages(ratings)), ()
+    register = context_register(pack.context.ratings)
+    citations = _context_citations(_context_source(pack), pack.context.ratings)
+    try:
+        ratings = ratings_source(pack)
+    except SourceIssue:  # the rows are fine; the terms have nowhere to be read
+        raise SourceIssue(TERMS_NOT_FOUND) from None
+    return ratings, context_ratings(register, source_pages(ratings)), citations
+
+
 def _bound(book: _Book, up: TriggerUpstream) -> dict[str, Fact]:
     """What prose may reference: the module's own non-analyst facts and CP-1's reported ratios
     (analyst cells are not bound, ruling P2)."""
@@ -1779,11 +1927,10 @@ def validate(inputs: TriggerInputs) -> tuple[str, ...]:
     if stale:
         return stale
     try:
-        ratings = ratings_source(inputs.pack)
-        source = parse_ratings(source_pages(ratings))
+        ratings, source, citations = register_source(inputs.pack)
     except SourceIssue as issue:
         return (str(issue),)
-    book, _ = _compose(ratings, source, up, None)
+    book, _ = _compose(ratings, source, up, None, citations)
     bound = _bound(book, up)
     names = inputs.pack.names
     issues = [
@@ -1935,6 +2082,18 @@ CP1D_BOUND_LINE = (  # round 7 item 1 (the G-6 frame): replaces _FIXED_LIMITATIO
     "CP-1D (earnings quality) is bound but not read in this version, so no earnings-quality "
     "adjustment is applied to the reported ratios."
 )
+CONTEXT_AGENCY_LINE = (  # replaces _FIXED_LIMITATIONS[0] on a context run
+    "Agency ratings and outlooks are user-supplied in the context file; trigger terms are read "
+    "from the attached agency source."
+)
+CONTEXT_SCALE_LINE = (  # replaces _FIXED_LIMITATIONS[6] on a context run
+    "The notch difference is measured on the module's fixed combined scale; outlook weighting and "
+    "sub-notch differences are not modelled."
+)
+FIXED_TABLE_LINE = (
+    "Scale positions come from a fixed combined-scale table in the module, not from an agency "
+    "source."
+)
 NOT_CALCULABLE_LINE = (
     "A trigger whose metric is not calculable in a forecast year is missing, with the reason, "
     "when no earlier year has reached it."
@@ -1957,6 +2116,27 @@ def _spelled_gap(text: str, bound: Mapping[str, Fact]) -> str:
     return "".join(parts)
 
 
+def _fixed_lines(source: RatingsSource, up: TriggerUpstream) -> list[str]:
+    """The eight fixed lines: CP-1D's replaced when it is bound. On a context run the agency and
+    scale lines are replaced in place, then follow the fixed-table line, one line per undated row
+    and one rating-scope line per row (row order), before every other line."""
+    lines = list(_FIXED_LIMITATIONS)
+    if up.cp1d_status is not None:
+        lines[7] = CP1D_BOUND_LINE
+    if any(r.source == "context" for r in source.register):
+        lines[0], lines[6] = CONTEXT_AGENCY_LINE, CONTEXT_SCALE_LINE
+        lines += [
+            FIXED_TABLE_LINE,
+            *(
+                f"The rating date is not stated for {r.agency}."
+                for r in source.register
+                if r.date == NOT_STATED
+            ),
+            *(f"Rating scope: {r.scope} ({r.agency})." for r in source.register),
+        ]
+    return lines
+
+
 def _own_limitations(
     source: RatingsSource,
     up: TriggerUpstream,
@@ -1964,9 +2144,7 @@ def _own_limitations(
     gaps: Sequence[SynthesisGap],
     bound: Mapping[str, Fact],
 ) -> tuple[str, ...]:
-    out = list(_FIXED_LIMITATIONS)
-    if up.cp1d_status is not None:
-        out[7] = CP1D_BOUND_LINE
+    out = _fixed_lines(source, up)
     out += (
         f"The trigger threshold is not stated for {_trigger_label(t)}: its headroom and timing are "
         "Not calculable."
@@ -2000,9 +2178,8 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
     up, sub = inputs.upstream, inputs.submission
-    ratings = ratings_source(inputs.pack)
-    source = parse_ratings(source_pages(ratings))
-    book, mechanics = _compose(ratings, source, up, sub)
+    ratings, source, citations = register_source(inputs.pack)
+    book, mechanics = _compose(ratings, source, up, sub, citations)
     views = _register_order(sub.views, source)
     cp1_ids = tuple(f.fact_id for f in select_cp1(up.cp1_facts).values())
     texts = [
@@ -2037,8 +2214,9 @@ QUALIFICATION = Qualification(implementation="implemented")
 SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: TriggerSubmission}
 SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
 # The fixed H1 mapping (`host._OWNER_SCOPES[("CP-2H", "rating_triggers")]`, lease :36): identity,
-# financial and ratings; a held source stays in scope in pack order.
-SCOPE = frozenset({"identity", "financial", RATINGS_SOURCE_ID})
+# financial, ratings and context; a held source stays in scope in pack order. The model reads the
+# context only through `read_inputs` and its `line:N` citations; Python reads its figures.
+SCOPE = frozenset({"identity", "financial", RATINGS_SOURCE_ID, CONTEXT_SOURCE_ID})
 CP1, CP2G = "CP-1", "CP-2G"
 
 
@@ -2096,15 +2274,32 @@ def cp2h_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
     )
 
 
+def _context_of(pack: PreparedPack) -> tuple[RunContext | None, str | None]:
+    """The pack's typed context, or the refusal text (`Context refused: ...`, never swallowed):
+    a ready context source is first read by line, then loaded and checked against the run."""
+    try:
+        for source in pack.sources:
+            if source.source_id == CONTEXT_SOURCE_ID and source.status == "ready":
+                context_text(source)
+        return context_facts(pack), None
+    except ContextTextError as error:
+        return None, clipped(("Context refused: ", str(error)))
+    except ContextRefused as refused:
+        return None, clipped(("Context refused: ", "; ".join(refused.problems)))
+
+
 def _adapted(pack: PreparedPack, upstream: Upstream) -> tuple[PackScope, TriggerUpstream]:
     """The one store adapter: the host-scope sources in pack order and the issuer name, and the
     bound inputs, the CP-1 head's four selected reported ratios (`select_cp1`, in the head's
     order) and the CP-2G metrics, as the Stage 1 types the core reads. Submit, probe and view
     reach the core only through this."""
     chosen = {f.fact_id for f in select_cp1(upstream.cp1).values()}
+    context, refusal = _context_of(pack)
     scope = PackScope(
         sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
         names=(pack.run.issuer_name,),
+        context=context,
+        context_refusal=refusal,
     )
     trigger = TriggerUpstream(
         bound=upstream.bound,
@@ -2264,17 +2459,44 @@ def cp2h_module(report: RatingTriggersReport, *, inputs: Sequence[Input], attemp
 # --- the exact `read_inputs` view (lease Tool use; manifest.json tool_use.view_tree_draft) -----
 
 
-def _parsed_source(scope: PackScope) -> tuple[Source | None, RatingsSource | None]:
-    """The ready agency source and its parse; None for an absent or unready source, and a parse
-    of None for a source the parse rule refuses (the validator reports either)."""
+@dataclass(frozen=True)
+class _RegisterView:
+    """What `read_inputs` shows of the register: the source it came from (`context` or the agency
+    source, None when there is none), the agency source whose terms and pages are read, the
+    parse (None when refused) and the context rows' citations."""
+
+    source_id: str | None
+    ratings: Source | None
+    source: RatingsSource | None
+    citations: tuple[RowCitations, ...] = ()
+
+
+def _context_view(scope: PackScope) -> _RegisterView:
+    try:
+        return _RegisterView(CONTEXT_SOURCE_ID, *register_source(scope))
+    except SourceIssue:  # the validator reports why
+        return _RegisterView(CONTEXT_SOURCE_ID, None, None)
+
+
+def _page_view(scope: PackScope) -> _RegisterView:
     try:
         ratings = ratings_source(scope)
     except SourceIssue:
-        return None, None
+        return _RegisterView(None, None, None)
     try:
-        return ratings, parse_ratings(source_pages(ratings))
+        return _RegisterView(ratings.source_id, ratings, parse_ratings(source_pages(ratings)))
     except SourceIssue:
-        return ratings, None
+        return _RegisterView(ratings.source_id, ratings, None)
+
+
+def _parsed_source(scope: PackScope) -> _RegisterView:
+    """The register as the view shows it. A context with rows is `context` whether or not its
+    register parses; a refused context shows no register at all, never the agency source's page:1
+    one. Otherwise the ready agency source and its parse (None for a source the parse rule
+    refuses)."""
+    if scope.context_refusal is not None:
+        return _RegisterView(None, None, None)
+    return _context_view(scope) if has_context_register(scope) else _page_view(scope)
 
 
 def _metric_cell(fact: Fact) -> dict[str, object]:
@@ -2294,10 +2516,11 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     CP-2G metrics, the CP-1 reported ratios a reference may name and the limitations settlement
     will inherit. No quote, citation or record key at any depth."""
     scope, trigger = _adapted(pack, upstream)
-    ratings, source = _parsed_source(scope)
+    shown = _parsed_source(scope)
+    ratings, source = shown.ratings, shown.source
     thresholds: dict[str, Cell] = {}
     if ratings is not None and source is not None:
-        book, _ = _compose(ratings, source, trigger, None)
+        book, _ = _compose(ratings, source, trigger, None, shown.citations)
         thresholds = {
             c.fact.row_id: c
             for c in book.cells
@@ -2323,9 +2546,13 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
             if item.input_id.startswith("CP-")
         ],
         "register": {
-            "state": "absent" if ratings is None else "present",
-            "source_id": None if ratings is None else ratings.source_id,
-            "pages": [] if ratings is None else [span.locator for span in ratings.spans],
+            "state": "absent" if shown.source_id is None else "present",
+            "source_id": shown.source_id,
+            "pages": (
+                [span.locator for span in ratings.spans]
+                if ratings is not None and shown.source_id == RATINGS_SOURCE_ID
+                else []
+            ),
             "agencies": [
                 {
                     "row": f"r{n:02d}",

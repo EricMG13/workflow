@@ -457,7 +457,7 @@ def _row_session_checks(
 _LEASED_ROWS: dict[tuple[str, str], tuple[str, ...]] = {
     ("CP-1C", "peer_benchmark"): ("identity", "financial", "peers"),
     ("CP-2E", "macro_fx"): ("financial",),
-    ("CP-2H", "rating_triggers"): ("identity", "financial", "ratings"),
+    ("CP-2H", "rating_triggers"): ("identity", "financial", "ratings", "context"),
     ("CP-4C", "restructuring_fulcrum"): ("financial", "legal-covenants"),
     ("CP-8", "decision_ledger"): ("prior_case", "update", "market_update"),
 }
@@ -494,7 +494,7 @@ def test_cp2e_macro_fx_scope() -> None:
 
 
 def test_cp2h_rating_triggers_scope() -> None:
-    """CP-2H lease :36: identity, financial and ratings."""
+    """CP-2H lease :36, :46: identity, financial, ratings and, when held, context."""
     _leased_row_checks("CP-2H", "rating_triggers")
 
 

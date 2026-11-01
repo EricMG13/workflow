@@ -99,8 +99,9 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
             # docs/CP2E-OWNER-LEASE.md:40: the financial source only, never identity.
             ("CP-2E", "macro_fx"): _held("financial"),
-            # docs/CP2H-OWNER-LEASE.md:36: identity, financial and ratings.
-            ("CP-2H", "rating_triggers"): _held("identity", "financial", "ratings"),
+            # docs/CP2H-OWNER-LEASE.md:36, :46: identity, financial, ratings and, when the pack
+            # holds it, the context file (the register's ratings rows; Python reads them).
+            ("CP-2H", "rating_triggers"): _held("identity", "financial", "ratings", "context"),
             # docs/CP4C-OWNER-LEASE.md:46, :85: financial and legal-covenants, never identity.
             ("CP-4C", "restructuring_fulcrum"): _held("financial", "legal-covenants"),
             # docs/CP8-OWNER-LEASE.md:35: prior_case, update and market_update.

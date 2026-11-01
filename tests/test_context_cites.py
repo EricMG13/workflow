@@ -51,7 +51,7 @@ def raw_source(
 
 
 def test_constants() -> None:
-    assert cites.CITED_ARRAYS == ("quotes", "deal_terms")
+    assert cites.CITED_ARRAYS == ("quotes", "deal_terms", "ratings")
     assert cites.STALE_DAYS == 30
     assert engine.STALE_DAYS == cites.STALE_DAYS
     assert engine.CONTEXT_NUM == context_module.NUM
@@ -249,6 +249,46 @@ def test_cite_minified_anchors_on_the_row_object() -> None:
     assert citation is not None and citation.locator == "line:1"
     assert citation.quote.startswith('{"facility_id":"term-loan","kind":"observed","bid"')
     assert citation.quote.endswith('"bid":"98.50"')
+
+
+RATINGS = ROOT / "cases/cp2h-context-owner"
+
+
+def ratings_source_of(name: str) -> Source:
+    request = SourceRequest(
+        source_id="context",
+        path=f"cases/cp2h-context-owner/{name}.json",
+        media_type="text/plain",
+    )
+    return prepare_source(request, (RATINGS / f"{name}.json").read_bytes())
+
+
+def test_cite_ratings_rows_form_and_minified() -> None:
+    """Phase 4 adds `ratings` to the cited arrays: a row field alone on its line cites by
+    `"key": "value"`; a minified file by the object text from its `{` through the value."""
+    form = ratings_source_of("context-positive")
+    for path, line, quote in (
+        ("ratings[0].agency", "line:29", '"agency": "S&P"'),
+        ("ratings[0].rating", "line:31", '"rating": "BB"'),
+        ("ratings[0].outlook", "line:32", '"outlook": "Negative"'),
+        ("ratings[0].as_of", "line:33", '"as_of": "2025-11-14"'),
+        ("ratings[1].agency", "line:36", '"agency": "Moody\'s"'),
+    ):
+        citation = cites.cite(form, path)
+        assert citation is not None and (citation.locator, citation.quote) == (line, quote), path
+    minified = cites.cite(ratings_source_of("context-minified"), "ratings[0].rating")
+    assert minified is not None
+    assert (minified.locator, minified.quote) == (
+        "line:1",
+        '{"agency":"S&P","scope":"issuer","rating":"BB"',
+    )
+
+
+def test_cite_ratings_row_spread_over_lines_is_not_cited() -> None:
+    """The oracle's uncitable context: row 2's values sit apart from their keys."""
+    source = ratings_source_of("context-uncitable")
+    assert cites.cite(source, "ratings[0].rating") is not None
+    assert cites.cite(source, "ratings[1].rating") is None
 
 
 def test_cite_returns_none_when_the_anchor_is_not_unique() -> None:

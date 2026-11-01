@@ -171,3 +171,42 @@ def test_decision_amendment_states_two_anchors() -> None:
     assert text.startswith("amends: 0007 standalone mode\nanchors: CP-0, CP-1\n\n")
     assert "amends: 0007 standalone mode" in text
     assert "anchors: CP-0, CP-1" in text
+
+
+@pytest.mark.parametrize("sid", ["EV-1", "Ev-1", "PEERS", "Peers", "CP-DR-DOSSIER"])
+def test_reserved_ids_case_folded(sid: str) -> None:
+    with pytest.raises(c.ReservedSourceId):
+        c.refuse_reserved(sid)
+
+
+def test_build_validates_dict_inputs_before_hashing() -> None:
+    b = c.ResearchBrief.build(
+        issuer_id="i",
+        run_id="r",
+        as_of=date(2026, 11, 1),
+        cutoff=date(2026, 11, 1),
+        questions=({"question_id": "q1", "text": "t", "kind": "custom", "receivers": ("CP-2",)},),
+        anchor={"cp0_sha256": H0, "cp1_sha256": H1},
+        peer_pack=False,
+    )
+    assert b.brief_sha256 == b.expected_sha256()
+
+
+def test_duplicate_question_ids_refused() -> None:
+    with pytest.raises(c.BriefInvalid):
+        brief(1, questions=(question(1), question(1, text="other")))
+
+
+def test_focus_module_only_on_context_questions() -> None:
+    with pytest.raises(c.BriefInvalid):
+        question(kind="custom", focus_module="CP-4")
+
+
+def test_duplicate_receivers_refused() -> None:
+    with pytest.raises(c.BriefInvalid):
+        question(receivers=("CP-1C", "CP-1C"))
+
+
+def test_context_receivers_compared_as_set() -> None:
+    q = question(kind="context", receivers=("CP-2", "CP-1C"), focus_module="CP-DR")
+    assert set(q.receivers) == {"CP-1C", "CP-2"}

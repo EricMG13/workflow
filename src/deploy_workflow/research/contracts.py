@@ -76,7 +76,8 @@ class ReservedSourceId(ResearchError):
 
 def refuse_reserved(source_id: str) -> None:
     """Refuse a research-manifest source id that CP-DR reserves for itself."""
-    if source_id in RESERVED_IDS or source_id.startswith(RESERVED_PREFIX):
+    folded = source_id.casefold()
+    if folded in RESERVED_IDS or folded.startswith(RESERVED_PREFIX):
         raise ReservedSourceId(f"source id {source_id!r} is reserved by CP-DR")
 
 
@@ -127,11 +128,16 @@ class ResearchQuestion(Contract):
     def _receivers_consistent(self) -> Self:
         if not self.receivers:
             raise BriefInvalid(f"question {self.question_id} has no receivers")
-        if self.kind == "context":
-            if self.focus_module is None:
-                raise BriefInvalid(f"context question {self.question_id} has no focus_module")
-            if self.receivers != receivers_for_focus(self.focus_module):
-                raise BriefInvalid(f"question {self.question_id} receivers do not match focus")
+        if len(set(self.receivers)) != len(self.receivers):
+            raise BriefInvalid(f"question {self.question_id} repeats a receiver")
+        if self.kind != "context":
+            if self.focus_module is not None:
+                raise BriefInvalid(f"question {self.question_id} is not context but has a focus")
+            return self
+        if self.focus_module is None:
+            raise BriefInvalid(f"context question {self.question_id} has no focus_module")
+        if set(self.receivers) != set(receivers_for_focus(self.focus_module)):
+            raise BriefInvalid(f"question {self.question_id} receivers do not match focus")
         return self
 
     @classmethod
@@ -170,6 +176,9 @@ class ResearchBrief(Contract):
     def _checked(self) -> Self:
         if not MIN_QUESTIONS <= len(self.questions) <= MAX_QUESTIONS:
             raise BriefInvalid(f"a brief holds {MIN_QUESTIONS}-{MAX_QUESTIONS} questions")
+        ids = [q.question_id for q in self.questions]
+        if len(set(ids)) != len(ids):
+            raise BriefInvalid("a brief repeats a question_id")
         if self.cutoff > self.as_of:
             raise BriefInvalid("cutoff is after as_of")
         if self.brief_sha256 != self.expected_sha256():
@@ -182,6 +191,12 @@ class ResearchBrief(Contract):
     @classmethod
     def build(cls, **fields: Any) -> Self:
         """Construct a brief and compute its hash; all validation runs on the result."""
+        if "questions" in fields:
+            fields["questions"] = tuple(
+                ResearchQuestion.model_validate(q) for q in fields["questions"]
+            )
+        if "anchor" in fields:
+            fields["anchor"] = Anchor.model_validate(fields["anchor"])
         draft = cls.model_construct(brief_sha256="0" * 64, **fields)
         digest = _canonical_sha256(draft.model_dump(mode="json", exclude={"brief_sha256"}))
         return cls(**fields, brief_sha256=digest)

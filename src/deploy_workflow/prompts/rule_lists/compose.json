@@ -50,7 +50,8 @@
     "fn:deploy_workflow.owners.cp2a:_pin_lines",
     "fn:deploy_workflow.owners.cp2d:_pin_lines",
     "fn:deploy_workflow.owners.cp2e:_pin_lines",
-    "fn:deploy_workflow.owners.cp3c:_pin_lines"
+    "fn:deploy_workflow.owners.cp3c:_pin_lines",
+    "fn:deploy_workflow.owners.cp4c:_pin_lines"
    ],
    "when": "pins"
   },

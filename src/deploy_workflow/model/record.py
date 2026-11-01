@@ -50,7 +50,14 @@ AUDIT = "owner-run-audit"  # owner_workflow.AUDIT
 INVOCATIONS = "invocations"
 METHOD_VERSION = "deploy-v-r14"
 _DIGEST = re.compile(r"[0-9a-f]{64}")
-_MAPPER_SHAPE_ERRORS = (TypeError, AttributeError, KeyError, IndexError, ValueError)
+_MAPPER_SHAPE_ERRORS = (
+    TypeError,
+    AttributeError,
+    KeyError,
+    IndexError,
+    ValueError,
+    ArithmeticError,
+)
 _PROVIDERS: tuple[Any, ...] = ("openai", "anthropic", "openrouter")
 _PREIMAGE_KEYS = frozenset(
     {

@@ -21,7 +21,6 @@ from deploy_workflow.model.transport import Request, Response
 from deploy_workflow.model.turn import (
     CONFIG_MODELS,
     CONFIG_PROVIDERS,
-    MODEL_EFFORTS,
     Message,
     ModelSpec,
     Provider,
@@ -38,7 +37,7 @@ GOOD = (
 def spec_for(config_id: str) -> ModelSpec:
     model = CONFIG_MODELS[config_id]
     provider = cast(Provider, CONFIG_PROVIDERS[config_id])
-    return ModelSpec(config_id, provider, model, min(MODEL_EFFORTS[model]))
+    return ModelSpec(config_id, provider, model, config_id.rsplit("-", 1)[1])
 
 
 def sol_high() -> ModelSpec:

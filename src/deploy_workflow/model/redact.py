@@ -18,7 +18,7 @@ REPLACEMENT = "[redacted]"
 KEY_ENV_NAMES = ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY")
 KEY_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
 _KEY_PATTERN_BYTES = re.compile(KEY_PATTERN.pattern.encode("ascii"))
-_TRAILING_KEY_RUN = re.compile(r"[A-Za-z0-9_-]*$")
+_KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
 
 
 def _suffixed(key: Any, n: int) -> Any:
@@ -93,21 +93,17 @@ class Redactor:
         """Index from which ``text`` might still be the start of a key: the trailing run of
         key characters, or a tail that is a prefix of an exact value. A complete match that
         crosses the cut pulls the cut back to the match start, so no match is split."""
-        run = _TRAILING_KEY_RUN.search(text)
-        hold = run.start() if run else len(text)
+        hold = len(text.rstrip(_KEY_CHARS))
         for value in self._values:
             for n in range(min(len(value), len(text)), 0, -1):
                 if text.endswith(value[:n]):
                     hold = min(hold, len(text) - n)
                     break
-        spans = self._spans(text)
-        moved = True
-        while moved:
-            moved = False
-            for start, end in spans:
-                if start < hold < end:
-                    hold = start
-                    moved = True
+        # One pass in descending start order reaches the fixed point: a move to ``start``
+        # can only be crossed by a span that starts earlier, and those come later.
+        for start, end in sorted(self._spans(text), reverse=True):
+            if start < hold < end:
+                hold = start
         return hold
 
     def _key(self, key: Any) -> Any:

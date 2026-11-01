@@ -238,3 +238,14 @@ def test_write_after_close_raises() -> None:
 def test_json_value_redacts_bytearray() -> None:
     out = Redactor(["abc123XYZ"]).json_value({"b": bytearray(b"k abc123XYZ")})
     assert bytes(out["b"]) == b"k [redacted]"
+
+
+def test_flush_cost_stays_linear_in_held_text() -> None:
+    import time
+
+    for values, text in ((["a.a"], "a." * 8000), ([], "a" * 40000 + ".")):
+        stream = Redactor(values).redact_stream(io.StringIO())
+        stream.write(text)
+        started = time.perf_counter()
+        stream.flush()
+        assert time.perf_counter() - started < 1.0

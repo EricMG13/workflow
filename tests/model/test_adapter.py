@@ -688,3 +688,27 @@ def test_live_clean_sse_keeps_its_raw(live_ruling: Path) -> None:
     body = _sse(events)
     reply = _anthropic_reply(live_ruling, Response(200, body))
     assert reply.kind == "ok" and reply.raw == body
+
+
+def test_live_anthropic_cut_after_usage_keeps_the_stream_status(live_ruling: Path) -> None:
+    tool = {"type": "tool_use", "id": "t0", "name": "n", "input": {}}
+    cut = [
+        _SSE_START[0],
+        {"type": "content_block_start", "index": 0, "content_block": tool},
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "input_json_delta", "partial_json": '{"a":'},
+        },
+        _SSE_USAGE,
+    ]
+    reply = _anthropic_reply(live_ruling, IdleTimeout("idle", _sse(cut)))
+    assert reply.kind == "sent_usage" and reply.error_class == "StreamCut"
+    assert reply.http_status == 200  # the stream's status, though the transport gave none
+
+
+def test_recorded_duplicates_with_reordered_keys_do_not_conflict(tmp_path: Path) -> None:
+    first = {"kind": "sent_known", "error_class": "ProviderRejected", "http_status": 400}
+    second = {"http_status": 400, "error_class": "ProviderRejected", "kind": "sent_known"}
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, first), line(DIGEST, 0, second))
+    assert complete(recorded_adapter(SPEC, tmp_path)).kind == "sent_known"

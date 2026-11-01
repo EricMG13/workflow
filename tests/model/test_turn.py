@@ -183,3 +183,15 @@ def test_spec_accepts_the_section_7_1_pairs() -> None:
 def test_load_json_maps_deep_nesting_to_turn_error() -> None:
     with pytest.raises(TurnError):
         load_json("[" * 100_000)
+
+
+def test_spec_refuses_a_config_id_outside_the_four() -> None:
+    with pytest.raises(TurnError, match="not one of"):
+        ModelSpec("x", "openai", "gpt-6.1-sol", "medium")
+
+
+def test_spec_refuses_effort_that_disagrees_with_the_config_name() -> None:
+    with pytest.raises(TurnError, match="effort"):
+        ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "high")
+    with pytest.raises(TurnError, match="effort"):
+        ModelSpec("sol-high", "openai", "gpt-6.1-sol", "medium")

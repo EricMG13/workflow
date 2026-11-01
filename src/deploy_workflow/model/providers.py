@@ -589,12 +589,14 @@ def _parse_openai(status: int, text: str, seen: list[Any]) -> Turn | ProviderErr
     texts: list[str] = []
     try:
         data = _object(text)
-        return _openai_outcome(status, data, texts)
+        return _openai_outcome(status, data, texts, seen)
     finally:
         seen.extend([data, "".join(texts)])
 
 
-def _openai_outcome(status: int, data: dict[str, Any], texts: list[str]) -> Turn | ProviderError:
+def _openai_outcome(
+    status: int, data: dict[str, Any], texts: list[str], seen: list[Any]
+) -> Turn | ProviderError:
     raw_usage = _sub(data, "usage")
     in_details = _sub(raw_usage, "input_tokens_details")
     out_details = _sub(raw_usage, "output_tokens_details")
@@ -625,11 +627,17 @@ def _openai_outcome(status: int, data: dict[str, Any], texts: list[str]) -> Turn
             call_id, name = _id(item, "call_id"), _id(item, "name")
             try:
                 args = _arguments(item.get("arguments"))
+                seen.append(args)
             except _BadArguments:
                 return _malformed(status, usage, model, rid)
             calls.append(ToolCall(call_id, name, args))
         elif kind == "message":
-            for part in item.get("content") or []:
+            content = item.get("content")
+            if content is None:
+                content = []
+            if not isinstance(content, list):
+                raise _BadReply("message content is not a list")
+            for part in content:
                 if isinstance(part, dict) and part.get("type") == "refusal":
                     return _usage_error("Refusal", "the model refused", status, usage, model, rid)
                 if isinstance(part, dict) and part.get("type") == "output_text":
@@ -827,7 +835,7 @@ def _parse_anthropic(
     cut: str | None = None
     try:
         cut = _sse_events(text, events, after)
-        return _anthropic_outcome(status, events, cut, blocks, partial, redactor)
+        return _anthropic_outcome(status, events, cut, blocks, partial, redactor, seen)
     finally:
         seen.extend([events, after, _joined_deltas([*events, *after]), blocks, partial, cut])
         seen.append(_anthropic_text(blocks))
@@ -843,6 +851,7 @@ def _anthropic_outcome(
     blocks: dict[int, dict[str, Any]],
     partial: dict[int, str],
     redactor: Redactor,
+    seen: list[Any],
 ) -> Turn | ProviderError:
     if not events and cut is None:
         raise _BadReply("no events in the stream")
@@ -925,6 +934,7 @@ def _anthropic_outcome(
             call_id, name = _id(block, "id"), _id(block, "name")
             try:
                 args = _arguments(block.get("input_json", "{}"))
+                seen.append(args)
             except _BadArguments:
                 return _malformed(status, usage, model, rid)
             calls.append(ToolCall(call_id, name, args))
@@ -995,6 +1005,7 @@ def _parse_openrouter(status: int, text: str, seen: list[Any]) -> Turn | Provide
         call_id, name = _id(item, "id"), _id(fn, "name")
         try:
             args = _arguments(fn.get("arguments"))
+            seen.append(args)
         except _BadArguments:
             return _malformed(status, usage, model, rid, billed)
         calls.append(ToolCall(call_id, name, args))

@@ -36,14 +36,14 @@ from deploy_workflow.model.providers import (
 from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.transport import Request, Response, TransportError, https_transport
 from deploy_workflow.model.turn import (
-    _USAGE_KEYS,
+    USAGE_KEYS,
     ModelSpec,
     Turn,
     TurnError,
     TurnRequest,
     Usage,
-    _exact_keys,
     dump_json,
+    exact_keys,
     load_json,
     turn_from_json,
 )
@@ -200,7 +200,7 @@ def _reply_from_error_json(obj: object) -> AdapterReply:
     keys = {"kind", "error_class", "http_status"}
     if isinstance(obj, Mapping):
         keys |= set(obj) & {"usage", "billed_usd"}
-    data = _exact_keys("error response", obj, frozenset(keys))
+    data = exact_keys("error response", obj, frozenset(keys))
     kind, error_class, status = data["kind"], data["error_class"], data["http_status"]
     if kind not in _ERROR_KINDS:
         raise TurnError(f"unknown error kind {kind!r}")
@@ -215,8 +215,8 @@ def _reply_from_error_json(obj: object) -> AdapterReply:
         raise TurnError("sent_known needs an http_status in 400..499")
     usage: Usage | None = None
     if "usage" in data:
-        usage_obj = _exact_keys("usage", data["usage"], _USAGE_KEYS)
-        usage = Usage(**{k: usage_obj[k] for k in _USAGE_KEYS})
+        usage_obj = exact_keys("usage", data["usage"], USAGE_KEYS)
+        usage = Usage(**{k: usage_obj[k] for k in USAGE_KEYS})
     if (kind == "sent_usage") != (usage is not None):
         raise TurnError("usage is present exactly when kind is sent_usage")
     billed: Decimal | None = None
@@ -309,7 +309,7 @@ def recorded_adapter(model: ModelSpec, recordings: Path) -> RecordedAdapter:
                 continue
             where = f"{path.name} line {number}"
             try:
-                envelope = _exact_keys(
+                envelope = exact_keys(
                     "recording", load_json(text, _no_duplicate_keys), _ENVELOPE_KEYS
                 )
                 digest, index = envelope["invocation_digest"], envelope["call_index"]

@@ -17,8 +17,8 @@ charges plus the full holds of unknown-charge calls. The cap check is
 
 Stops: an unknown charge or an overrun stops the run (``RunStopped``). The one exception is a
 single ``retry_of`` reserve naming an unknown hold that the caller marked ``retryable`` (5xx or
-cut stream); that retry lifts the stop of the hold it names, the hold itself stays counted. An
-overrun is never retryable.
+cut stream); the hold itself stays counted, and the stop lifts only after that retry settles
+with a number (below). An overrun is never retryable.
 
 The stop for an unknown charge ``c`` lifts only when the retry naming it (``retry_of == c``) has
 settled with a number (not unknown, not an overrun). A retry is used once it is reserved. A retry
@@ -82,6 +82,14 @@ class RetryUsed(BudgetError):
 
 class DuplicateCall(BudgetError):
     """A reservation or settlement for this call id already exists."""
+
+
+def _add(left: Decimal, right: Decimal) -> Decimal:
+    """Exact sum; a sum too wide for the context is a BudgetError, never a rounded number."""
+    try:
+        return _EXACT.add(left, right)
+    except Inexact:
+        raise BudgetError("money sum not exact") from None
 
 
 @dataclass(frozen=True)
@@ -249,7 +257,7 @@ class Budget:
     def _sum(values: Iterable[Decimal]) -> Decimal:
         total = Decimal(0)
         for value in values:
-            total = _EXACT.add(total, value)
+            total = _add(total, value)
         return total
 
     def _retried(self) -> set[str]:
@@ -300,7 +308,7 @@ class Budget:
                     raise RunStopped(f"the run is stopped: {reason}")
             else:
                 self._check_retry(_call_id(retry_of))
-            committed = _EXACT.add(_EXACT.add(self._reserved(), self._spent()), amount)
+            committed = _add(_add(self._reserved(), self._spent()), amount)
             if committed > self._cap:
                 raise BudgetExhausted(
                     f"reserving {money_text(amount)} passes the cap {money_text(self._cap)}"

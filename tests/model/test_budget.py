@@ -386,3 +386,11 @@ def test_settled_marker_with_an_unknown_status_fails_closed(tmp_path: Path) -> N
     )
     with pytest.raises(BudgetError):
         Budget(D("1"), tmp_path)
+
+
+def test_a_sum_wider_than_the_context_is_a_budget_error_and_writes_nothing(tmp_path: Path) -> None:
+    b = Budget(D("2"), tmp_path)
+    _reserve(b, "a", "1E-130")
+    with pytest.raises(BudgetError, match="money sum not exact"):
+        _reserve(b, "b", "1")
+    assert not (_marker_dir(tmp_path) / "b").exists()

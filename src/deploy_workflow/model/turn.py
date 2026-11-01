@@ -115,7 +115,9 @@ class ModelSpec:
 
     def __post_init__(self) -> None:
         expected = CONFIG_PROVIDERS.get(self.config_id)
-        if expected is not None and expected != self.provider:
+        if expected is None:
+            raise TurnError(f"config {self.config_id!r} is not one of the spec §7.1 configs")
+        if expected != self.provider:
             raise TurnError(
                 f"config {self.config_id!r} belongs to {expected!r}, not {self.provider!r}"
             )
@@ -125,6 +127,9 @@ class ModelSpec:
             raise TurnError(f"config {self.config_id!r} runs {CONFIG_MODELS[self.config_id]!r}")
         if self.effort not in MODEL_EFFORTS.get(self.model, frozenset()):
             raise TurnError(f"({self.model!r}, {self.effort!r}) is outside the spec §7.1 table")
+        named = self.config_id.rsplit("-", 1)[1]
+        if self.effort != named:
+            raise TurnError(f"config {self.config_id!r} runs effort {named!r}, not {self.effort!r}")
 
 
 @dataclass(frozen=True)
@@ -221,7 +226,7 @@ _TURN_KEYS = frozenset(
         "provider_blocks",
     }
 )
-_USAGE_KEYS = frozenset(f.name for f in fields(Usage))
+USAGE_KEYS = frozenset(f.name for f in fields(Usage))
 _BLOCK_KEYS = frozenset({"provider", "data"})
 _CALL_KEYS = frozenset({"call_id", "name", "arguments"})
 
@@ -243,7 +248,7 @@ def turn_to_json(turn: Turn) -> dict[str, Any]:
     }
 
 
-def _exact_keys(name: str, obj: object, keys: frozenset[str]) -> Mapping[str, Any]:
+def exact_keys(name: str, obj: object, keys: frozenset[str]) -> Mapping[str, Any]:
     if not isinstance(obj, Mapping):
         raise TurnError(f"{name} must be an object")
     unknown = sorted(set(obj) - keys)
@@ -262,7 +267,7 @@ def _optional_str(name: str, value: object) -> str | None:
 
 
 def turn_from_json(obj: object) -> Turn:
-    data = _exact_keys("turn", obj, _TURN_KEYS)
+    data = exact_keys("turn", obj, _TURN_KEYS)
     text = data["text"]
     if not isinstance(text, str):
         raise TurnError("text must be a string")
@@ -271,7 +276,7 @@ def turn_from_json(obj: object) -> Turn:
         raise TurnError("tool_calls must be a list")
     calls: list[ToolCall] = []
     for raw in raw_calls:
-        item = _exact_keys("tool call", raw, _CALL_KEYS)
+        item = exact_keys("tool call", raw, _CALL_KEYS)
         if not (
             isinstance(item["call_id"], str)
             and isinstance(item["name"], str)
@@ -284,12 +289,12 @@ def turn_from_json(obj: object) -> Turn:
         raise TurnError("provider_blocks must be a list")
     blocks: list[ProviderBlock] = []
     for raw in raw_blocks:
-        entry = _exact_keys("provider block", raw, _BLOCK_KEYS)
+        entry = exact_keys("provider block", raw, _BLOCK_KEYS)
         if not (isinstance(entry["provider"], str) and isinstance(entry["data"], dict)):
             raise TurnError("provider block fields have the wrong types")
         blocks.append(ProviderBlock(entry["provider"], entry["data"]))
-    usage_obj = _exact_keys("usage", data["usage"], _USAGE_KEYS)
-    usage = Usage(**{k: usage_obj[k] for k in _USAGE_KEYS})
+    usage_obj = exact_keys("usage", data["usage"], USAGE_KEYS)
+    usage = Usage(**{k: usage_obj[k] for k in USAGE_KEYS})
     billed_raw = data["billed_usd"]
     billed: Decimal | None = None
     if billed_raw is not None:

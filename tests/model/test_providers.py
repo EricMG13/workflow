@@ -1012,3 +1012,64 @@ def test_clean_streams_still_parse_and_keep_their_class() -> None:
     assert isinstance(turn, Turn) and turn.text == "hellocafé"
     err = parse("anthropic", 200, _sse(START, _ERROR_EVENT, stop=False), {}, Redactor([KEY]))
     assert isinstance(err, ProviderError) and err.error_class == "overloaded_error"
+
+
+def test_openai_message_content_that_is_not_a_list_is_an_unparsable_reply() -> None:
+    for content in (5, "text", {"type": "output_text"}):
+        reply = _openai_reply(output=[{"type": "message", "content": content}])
+        result = parse("openai", 200, reply, {}, Redactor())
+        assert isinstance(result, ProviderError) and result.error_class == "UnparsableReply"
+    reply = _openai_reply(output=[{"type": "message", "content": None}])
+    assert isinstance(parse("openai", 200, reply, {}, Redactor()), Turn)
+
+
+def _escaped_args() -> str:
+    return '{"q":"\\u0073' + KEY[1:] + '"}'  # whole key only after the arguments decode
+
+
+def _sse_tool(index: int, partial: str) -> str:
+    def event(data: dict[str, Any]) -> str:
+        return f"event: x\ndata: {json.dumps(data)}\n\n"
+
+    start = {"type": "tool_use", "id": f"t{index}", "name": "n", "input": {}}
+    delta = {"type": "input_json_delta", "partial_json": partial}
+    return (
+        event({"type": "content_block_start", "index": index, "content_block": start})
+        + event({"type": "content_block_delta", "index": index, "delta": delta})
+        + event({"type": "content_block_stop", "index": index})
+    )
+
+
+@pytest.mark.parametrize("provider", ["openai", "openrouter", "anthropic"])
+def test_decoded_tool_arguments_are_guarded_when_a_later_item_exits_early(provider: str) -> None:
+    esc = _escaped_args()
+    if provider == "openai":
+        call = {"type": "function_call", "call_id": "c1", "name": "n", "arguments": esc}
+        bad = {**call, "call_id": "c2", "arguments": "{bad"}
+        body = _openai_reply(output=[call, bad])
+    elif provider == "openrouter":
+
+        def fn(args: str) -> dict[str, Any]:
+            return {"id": "t", "type": "function", "function": {"name": "n", "arguments": args}}
+
+        message = {"role": "assistant", "content": None, "tool_calls": [fn(esc), fn("{bad")]}
+        body = json.dumps(
+            {
+                "id": "g",
+                "model": "m",
+                "choices": [{"finish_reason": "tool_calls", "message": message}],
+                "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+            }
+        ).encode()
+    else:
+        start = {"type": "message_start", "message": {"id": "m", "model": "x", "usage": {}}}
+        stop = {"type": "message_delta", "delta": {"stop_reason": "tool_use"}, "usage": {}}
+        body = (
+            f"event: x\ndata: {json.dumps(start)}\n\n"
+            + _sse_tool(0, esc)
+            + _sse_tool(1, "{bad")
+            + f"event: x\ndata: {json.dumps(stop)}\n\n"
+            + 'event: x\ndata: {"type": "message_stop"}\n\n'
+        ).encode()
+    result = parse(cast(Provider, provider), 200, body, {}, Redactor())
+    assert isinstance(result, ProviderError) and result.error_class == "KeyReflected"

@@ -942,7 +942,8 @@ def test_ok_turn_billed_cost_must_equal_the_records_settled_usd(tmp_path: Path) 
 
 
 def test_a_mapper_crash_withholds_the_body_fail_closed(tmp_path: Path) -> None:
-    body = json.dumps({"output": [{"type": "message", "content": 5}]}).encode()
+    # a JSON number past Decimal's range makes the mapper raise InvalidOperation (ArithmeticError)
+    body = b'{"error": {"message": "bad", "type": "invalid_request_error"}, "n": 1e9999999999999999999}'
     path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body, error_class="ProviderRejected")
     assert archived(path) == f"[withheld: MapperError; {len(body)} bytes]"
 

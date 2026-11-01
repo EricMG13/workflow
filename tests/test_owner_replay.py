@@ -19,7 +19,7 @@ from collections.abc import Callable
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, NoReturn, cast
 
 import o2_case
 import pytest
@@ -30,6 +30,7 @@ from deploy_vii.execution import Execution
 from deploy_vii.preparation import load_pack
 from deploy_workflow import replay
 from deploy_workflow import run_pathway as rp
+from deploy_workflow.financial_workflow import _filled
 from deploy_workflow.model import transport as transport_module
 from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.owner_workflow import (
@@ -1218,3 +1219,75 @@ def test_rerun_replays_upstream_and_runs_the_repaired_module_live(tmp_path: Path
     assert outcome.spent_usd == spent_by_records(records)
     assert outcome.spent_usd < authored.outcome.spent_usd
     assert tree_hash(earlier) == before
+
+
+class OrderRecorder:
+    """The rerun's real workflow, reporting that its step has inputs; only ``spec`` and
+    ``read_inputs`` are replaced, ``invoke`` and ``submit_review`` are the real ones."""
+
+    def __init__(self, real: OwnerWorkflow) -> None:
+        self.real = real
+        self.order: list[str] = []
+
+    @property
+    def binding(self) -> Any:
+        return self.real.binding
+
+    @property
+    def phase(self) -> str:
+        return self.real.phase
+
+    @property
+    def spec(self) -> Any:
+        return dataclasses.replace(self.real.spec, inputs="projection")
+
+    def read_inputs(self) -> dict[str, Any]:
+        self.order.append("read")
+        return {}
+
+    def invoke(self, tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        self.order.append("invoke")
+        return self.real.invoke(tool, arguments)
+
+    def submit_review(self, payload: str) -> dict[str, Any]:
+        self.order.append("submit")
+        return self.real.submit_review(payload)
+
+
+def test_replay_reads_the_inputs_first_when_the_step_has_inputs(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    real, run_dir = new_workflow(tmp_path / "rerun")
+    wrapped = OrderRecorder(real)
+    retained = replay._Earlier(earlier_run)
+    attempt = replay._settled_attempt(retained.snapshot, "CP-0")
+    assert attempt is not None
+    replay._replay_step(cast(OwnerWorkflow, wrapped), retained, attempt, run_dir / "execution")
+    assert wrapped.order == ["read", "invoke", "invoke", "submit"], wrapped.order
+    assert {h.module_id for h in Execution(run_dir / "execution").read().heads} == {"CP-0"}
+
+
+def test_the_raw_payload_check_fills_at_the_submissions_own_snapshot(
+    tmp_path: Path, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The receipt verifier fills at the binding's historical snapshot; replay does the same, so
+    a later journal state cannot change what the check accepts. The earlier store's current
+    snapshot (CP-0 settled, CP-1 begun) is not the one CP-0's submission was bound at."""
+    seen: list[str] = []
+    real_filled = _filled
+
+    def spy(store: Execution, binding: Any, payload: str) -> Any:
+        seen.append(store.read().content_hash())
+        return real_filled(store, binding, payload)
+
+    monkeypatch.setattr("deploy_workflow.owner_workflow._filled", spy)
+    retained = replay._Earlier(earlier_run)
+    attempt = replay._settled_attempt(retained.snapshot, "CP-0")
+    assert attempt is not None
+    chosen = retained.bound_submission(attempt, "source_readiness")
+    assert chosen is not None
+    bound_at = chosen.binding.binding.snapshot_sha256
+    assert bound_at != retained.snapshot.content_hash()  # the two states do differ
+    seen.clear()
+    retained._check_raw_payload(chosen, chosen.stored_payload_sha256, "CP-0")
+    assert seen == [bound_at]

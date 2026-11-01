@@ -39,7 +39,7 @@ from deploy_workflow.owner_workflow import (
     OwnerFault,
     OwnerSubmission,
     OwnerWorkflow,
-    _fill,
+    fill_at_binding,
 )
 from deploy_workflow.run_inputs import (
     CheckedRun,
@@ -237,7 +237,7 @@ class _Earlier:
         except ReplayRejected:
             return
         try:
-            stored = _fill(self.store, binding, raw)[0]
+            stored = fill_at_binding(self.store, binding, raw)[0]
         except (ValueError, WorkflowError):
             raise ReplayRefused(
                 f"{where}: the retained payload cannot be filled as the journal did"

@@ -903,6 +903,15 @@ def _fill(
     return normal, resolved, (), ()
 
 
+def fill_at_binding(
+    store: Execution, binding: OwnerBinding, payload: str
+) -> tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """`_fill` at the binding's own historical snapshot, as the receipt verifier fills: what the
+    journal retained for `payload` when it was submitted at `binding`, whatever the journal holds
+    now. Raises `ValueError` or `WorkflowError` when the binding or the payload cannot be filled."""
+    return _fill(_hist(store, binding), binding, payload)
+
+
 def _journaled_issues(
     module_id: str, step_id: str, payload: str, evidence: SourceEvidence
 ) -> tuple[str, ...]:

@@ -194,3 +194,24 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
 
   Not chosen: leaving the five deliveries broken, and narrowing G3 (contract amendment 2). Cost if wrong: one
   renderer rule and six oracle re-cuts to revert. The Modules session owns these oracles and is told.
+- **B23a (controller, applied recommendation, 2026-11-01): the scope of the B23 re-cut and freeze.** Oracle review
+  mx-precise ab59ccee approved the seven re-cuts of 02f2fb93 (cp1c, cp1d, cp2a, cp2g, cp2h, cp4c, cpl10). It found
+  that cpos-owner `s1a_refused_cp1a` was missed: `cases/cpos-owner/expected.json:2861-2862` and
+  `builder/build.py:440-443` say "the walk stops". Under G3 the walk refuses CP-2 (`missing_inputs` [CP-1A]) and
+  stops at CP-MODEL.
+  1. cpos joins the B23 re-cut. S1a lease Q3(b) ("keep G1's stop rule", `docs/S1A-OWNER-RUN-LEASE.md:190,235`)
+     is superseded by G3, the approved O3 plan. The lease text is left as history.
+  2. The freeze is pin-only and mechanical: regenerated digests, no change to any claim. It is done by
+     `mx-scaffold`, and it covers:
+     - the downstream builder pin literals (cp2g, cp2h, cp4c, cp2h-context, context-identity-periods,
+       pins-context, valuation-context, periods-currency);
+     - the chart oracles that embed these digests (`cases/charts/dr2`, `dr345`, `dr6`, `rv3`);
+     - `cases/PINS.json`.
+
+     Modules owns the chart oracles and is told.
+  3. The cp4c builder's cp3c-manifest pin was already stale (owner list). It stays as it is, and the freeze
+     regenerates cp4c with only that one assert skipped.
+  4. Each module test is adapted to its frozen oracle, including the slow `tests/test_owner_s1a.py:898`. That
+     test is not run here (B16), so it goes to CI.
+
+  Cost if wrong: digest re-pins to revert.

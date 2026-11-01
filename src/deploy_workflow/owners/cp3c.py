@@ -65,11 +65,13 @@ from deploy_vii.live.submission import Submitted
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners import cp2d
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2d import Cp2dHead
 from deploy_workflow.owners.cp2g import stale_issues
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-3C"
 BPS_BOUNDS = (0, 1000)
@@ -387,6 +389,10 @@ class Cp3cInputs:
     cp2d: Cp2dOperands
     submission: RefinancingRiskSubmission
     offered: Mapping[str, str]  # view ref -> binding name
+    # The context file pins the margin step-up, so the limitations state it is user-supplied. The
+    # pin itself is checked by `_pin_lines`, not the method; `refinancing_risk` sets this once the
+    # context is accepted.
+    pinned: bool = False
 
 
 # --- values that are known or carry the reason they are not (rulings C-2, C-6) ----------------
@@ -1739,6 +1745,9 @@ def _limitations(c: _Context) -> tuple[tuple[str, str, str], ...]:
         limitation = _path(s, kind).limitation
         if limitation:
             paths.append((KIND_LABEL[kind], "Gap", limitation))
+    pinned = (
+        [("Pinned assumptions", "Limitation", pinned_line(MODULE_ID))] if c.inputs.pinned else []
+    )
     return (
         _RUN_RATE,
         _RESOURCES,
@@ -1748,6 +1757,7 @@ def _limitations(c: _Context) -> tuple[tuple[str, str, str], ...]:
         *_FIXED_TAIL,
         *_facility_lines(c),
         *paths,
+        *pinned,
     )
 
 
@@ -2525,6 +2535,31 @@ def validate_refinancing(
     return submission_issues(submission=submission, offered=offered)
 
 
+def _pin_lines(pack: PreparedPack, submission: RefinancingRiskSubmission) -> tuple[str, ...]:
+    """The line where the submitted repricing basis points differ from the context pin, as typed
+    (`str` of the integer: the JSON reader refuses an integer past 4300 digits as a shape failure,
+    which gets no pin line, so `str` cannot raise here); a context the run
+    refuses is the single line `Context refused: ...` and no pin line. Empty, and nothing
+    mapped, when nothing is pinned."""
+    try:
+        if pins_of(MODULE_ID, pack) is None:
+            return ()
+        repricing = submission.repricing
+        submitted = {"repricing.bps": None if repricing is None else str(repricing.bps)}
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
+
+
+def _issues(
+    pack: PreparedPack, submission: RefinancingRiskSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """The content issues, then the pin lines (also after the stale-only and provenance-only
+    returns): the one issue set of the step validator and the composer gate."""
+    content = validate_refinancing(submission=submission, upstream=upstream)
+    return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
+
+
 # --- the composed module ----------------------------------------------------------------------
 
 
@@ -2660,11 +2695,13 @@ def refinancing_risk(
 ) -> RefinancingRiskReport:
     """The composed CP-3C tables, facts, claims and own limitations of a valid submission;
     raises ValueError on any validation issue."""
-    issues = validate_refinancing(submission=submission, upstream=upstream)
+    issues = _issues(pack, submission, upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
     selection = select(upstream)
-    result = compute(_inputs_from(upstream, selection, submission))
+    # `_issues` raised on a refused context, so `pins_of` cannot raise here.
+    pinned = pins_of(MODULE_ID, pack) is not None
+    result = compute(replace(_inputs_from(upstream, selection, submission), pinned=pinned))
     facts = [_cell_fact(c, selection) for t in result.tables for r in t.rows for c in r.cells]
     tables = [_report_table(t) for t in result.tables]
     for text in (result.judgments, result.gaps_ledger, result.trace):
@@ -2777,7 +2814,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     upstream = cp3c_upstream(store=store, attempt=attempt)
-    issues = validate_refinancing(submission=submission, upstream=upstream)
+    issues = _issues(pack, submission, upstream)
     if issues:
         return StepValidation(issues=issues)
     report = refinancing_risk(pack=pack, submission=submission, upstream=upstream)

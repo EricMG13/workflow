@@ -2149,7 +2149,7 @@
       "project_commit": "4a5adf9f82c3c7b40e2245c6a6bd71eceb5f5589",
       "sha256": "025d1f2ee7002ebb95d7c45459e3e20d7b266956409de01198d55195674eadda",
       "reason": "B7 (draft authority, user-approved): LEGAL_AUTHORITIES also admits 'draft', so a source CP-0 assesses draft is a CP-4 legal source as filed is; DRAFT_LIMITATION (the frozen cases/context-attachments-owner expected.json draft_limitation) is appended once to the module limitations, after the gap and blocked-CP-1 limitations, whenever a legal source is draft. The Q2 refusal wording ('is not an executed or filed source') is unchanged.",
-      "review": "mx-adversary (Phase 5 Task 2 review; id supplied by the controller)"
+      "review": "mx-adversary a8ea080a, mx-precise ac10a05d"
     },
     {
       "destination": "src/deploy_vii/methods/cp4.md",
@@ -2158,7 +2158,7 @@
       "project_commit": "a2243308037a6bc6b86536ce5c801b0c73f01271",
       "sha256": "493f57fd0f4176c757cc310fcaa8809433c7aa6f0c3bee73519edc44effc1118",
       "reason": "B17 item 4 (user-approved), Phase 5 Task 6: wording-only: the sources paragraph (cp4.md :15-16) and the Sources bullet (:119) say CP-0 classes the cited sources executed, filed or, on a draft-documents run, draft, where they said executed or filed. No other sentence changes.",
-      "review": "mx-adversary (Phase 5 Task 6 review; id supplied by the controller)"
+      "review": "mx-adversary ac773829, mx-precise affb28ba"
     },
     {
       "destination": "src/deploy_vii/live/context.py",
@@ -2167,7 +2167,7 @@
       "project_commit": "a2243308037a6bc6b86536ce5c801b0c73f01271",
       "sha256": "346a46375d182cedf003da002379908072e85decc2f4b05d46db197856ea65b5",
       "reason": "B17 item 4 (user-approved), Phase 5 Task 6: wording-only edit to the module docstring (:33, sent to no model): CP-4 is sent the ready sources CP-0 classes executed, filed or, on a draft-documents run, draft. No code changes.",
-      "review": "mx-adversary (Phase 5 Task 6 review; id supplied by the controller)"
+      "review": "mx-adversary ac773829, mx-precise affb28ba"
     },
     {
       "destination": "src/deploy_vii/cp4_legal.py",
@@ -2176,7 +2176,7 @@
       "project_commit": "a2243308037a6bc6b86536ce5c801b0c73f01271",
       "sha256": "d7c78ba0bdb6cae78053e76dfce08e35f6c545ae53cfdcb1da01861b32c54233",
       "reason": "P5T6-R2 (applied recommendation, B31a), Phase 5 Task 6: comment and docstring wording only: the Upstream.legal_sources comment, the fail-closed comment in the citation check and the context_block docstring say executed, filed or draft, where they said executed or filed. No code and no frozen text changes; the Q2 refusal wording is byte-identical.",
-      "review": "mx-adversary (Phase 5 Task 6 review; id supplied by the controller)"
+      "review": "mx-adversary ac773829, mx-precise affb28ba"
     }
   ],
   "local_patch_lineage": [

@@ -212,7 +212,7 @@ _POS_PAGES[0]["text"] = (
     _p1.replace(_OLD_TITLE, _NEW_TITLE).replace(_OLD_ATTEST, DRAFT_ATTEST).replace(_SUP_OLD, _SUP_NEW)
 )
 _POS_PAGES[2]["text"] = _p3.replace(_LIM_OLD, DRAFT_SRC_LIM)
-DRAFT_PAGES = _POS_PAGES  # page:1 changed in two places; page:2 and page:3 byte-identical to the frozen source
+DRAFT_PAGES = _POS_PAGES  # page:1 changed in three places (title, attestation, superseded sentence); page:2 byte-identical; page:3 differs only in the one replaced source-limitation sentence
 DRAFT_BYTES = "\f".join(p["text"] for p in DRAFT_PAGES).encode("utf-8")  # U+000C joins pages (cp4-owner raw_rule)
 DRAFT_SHA = sha(DRAFT_BYTES)
 assert DRAFT_SHA == page_sha(DRAFT_PAGES)

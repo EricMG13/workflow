@@ -85,8 +85,15 @@ CP0 = "CP-0"
 CP1 = "CP-1"
 PACK_INPUT = "prepared-pack"
 SUBMISSION_INPUT = "covenant-interpretation-submission"
-# Ruling 1: the step cites only the sources CP-0 classes as executed or filed.
-LEGAL_AUTHORITIES = frozenset({"executed", "filed"})
+# Ruling 1 and B7: the step cites only the sources CP-0 classes as executed, filed or draft. A
+# draft source reaches the CP-0 head only when its readiness review admitted it for a context that
+# declares draft legal documents, so this module reads no context.
+LEGAL_AUTHORITIES = frozenset({"executed", "filed", "draft"})
+# Stated once on the module whenever any legal source is a draft (frozen: the Phase 5 oracle).
+DRAFT_LIMITATION = (
+    "One or more legal documents in this run are drafts, not executed or filed instruments; "
+    "their covenant terms may change before signing."
+)
 # The CP-1 registers whose figures the step may reference: the KPI dashboard and the EBITDA bridge.
 FIGURE_TABLES = ("T4.10", "T4.17")
 FACILITY_TABLE = "T4.18"
@@ -1442,6 +1449,8 @@ def covenant_interpretation(
     out.limitations.extend(f"Gap ({g.severity}): {out.text(g.gap)}" for g in submission.gaps)
     if upstream.blocked:
         out.limitations.append(CP1_BLOCKED)
+    if any(upstream.authority.get(s) == "draft" for s in upstream.legal_sources):
+        out.limitations.append(DRAFT_LIMITATION)
     _document_tables(submission, upstream, out)
     _covenant_tables(submission, upstream, out)
     _judgment_tables(submission, out)

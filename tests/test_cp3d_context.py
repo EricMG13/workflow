@@ -722,3 +722,17 @@ def test_a_sheet_only_submission_on_a_stale_context_gets_no_stale_line() -> None
         "2026-01-10 (limit 30)"
     )
     assert [x for x in stale if x.startswith("Stale")] == [want]
+
+
+def test_a_market_context_cannot_be_built_without_the_quote_rows() -> None:
+    """Info F2: an absent `context_quote_rows` once defaulted to empty and silently skipped the
+    bid/offer pairing check; it fails closed now, so every construction passes it."""
+    ctx = base._context("positive")
+    with pytest.raises(TypeError, match="context_quote_rows"):
+        cast(Any, cp3d.MarketContext)(
+            pages=ctx.pages,
+            names=ctx.names,
+            third_party=ctx.third_party,
+            published=ctx.published,
+            run_as_of=ctx.run_as_of,
+        )

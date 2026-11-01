@@ -230,6 +230,28 @@ def test_observed_and_talk_rows() -> None:
     assert facts["T3.3.c01.source"].value_class is None
 
 
+def test_no_quotes_report_equals_r3_positive() -> None:
+    _, result = run_case("no-quotes")
+    assert_equals_r3_positive(result)
+
+
+def test_high_cap_reasons_keep_design_6_order() -> None:
+    """Upstream caps, then talk-only, then the stale-context reason (Design 6): a talk-only
+    context whose one row is 40 days before the run as-of, with preference High."""
+    document = json.loads(context_bytes("talk-only"))
+    document["quotes"][0]["as_of"] = "2025-12-01"
+    raw = json.dumps(document, indent=2).encode()
+    literal = apply_edits(SUBS["cases"]["talk-only"], [["set", "preference.confidence", "High"]])
+    keep = PACK_OF["talk-only"] != "S1+context"
+    pack = pack_for("talk-only", context_source("talk-only", raw), keep_market=keep)
+    result = compute(inputs_for("talk-only", pack, literal, keep_market=keep))
+    expected = (
+        "preference.confidence: capped below High because CP-2 is restricted; the market "
+        "evidence is indicative talk only; a context quote is more than 30 days old"
+    )
+    assert list(result.issues) == [expected]
+
+
 def test_talk_only_issue_string() -> None:
     refusal = next(r for r in EXP["model_side_refusals"] if r["id"] == "ctx-talk-only-high")
     literal = apply_edits(SUBS["cases"]["talk-only"], refusal["edits"])
@@ -342,11 +364,21 @@ def test_unreadable_source_status_is_an_issue() -> None:
     assert any(i.startswith("context source unreadable: ") for i in result.issues)
 
 
+def assert_equals_r3_positive(result: CP3Result) -> None:
+    """The oracle's `report_equals_r3_positive`: no usable context row changes nothing in the
+    report's tables, facts, claims or submission hash."""
+    plain = compute(m3.make_inputs("positive")).report
+    assert plain is not None and result.report is not None
+    for field in ("tables", "facts", "claims", "submission_sha256"):
+        assert getattr(result.report, field) == getattr(plain, field), field
+
+
 def test_unciteable_quote_is_a_gap() -> None:
     _, result = run_case("unciteable")
     assert result.report is not None
     for text in CP3["unciteable"]["gap_limitations"]:
         assert text in result.report.limitations
+    assert_equals_r3_positive(result)
     assert not any(f.fact_id.startswith("T3.3.c") for f in result.report.facts)
 
 
@@ -355,6 +387,7 @@ def test_unciteable_deal_terms_is_a_gap() -> None:
     assert result.report is not None
     for text in CP3["unciteable-deal"]["gap_limitations"]:
         assert text in result.report.limitations
+    assert_equals_r3_positive(result)
     assert not any(f.fact_id.startswith("T3.3.c") for f in result.report.facts)
 
 

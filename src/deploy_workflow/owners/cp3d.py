@@ -188,13 +188,14 @@ class MarketContext:
     # (source_id, locator) -> the `Published <date>` the page itself states
     published: Mapping[tuple[str, str], date]
     run_as_of: date
+    # row id -> the index of the `quotes[i]` it came from: a bid and an offer pair only within one.
+    # No default: a context built without it would silently skip the pairing check (fail closed).
+    context_quote_rows: Mapping[str, int]
     # The context file's quotes as Python-built observations (B6, Design 9), by row id (`o01`..):
     # the listed observation, its CP-1 facility, its quote date. Empty with no context file.
     context_observations: Mapping[str, Observation] = field(default_factory=dict)
     context_facilities: Mapping[str, str] = field(default_factory=dict)
     context_dates: Mapping[str, date] = field(default_factory=dict)
-    # row id -> the index of the `quotes[i]` it came from: a bid and an offer pair only within one
-    context_quote_rows: Mapping[str, int] = field(default_factory=dict)
     # One `context source unreadable: <reason>` per reason the file cannot be used, in order.
     context_errors: tuple[str, ...] = ()
 

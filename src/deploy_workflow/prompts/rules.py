@@ -359,7 +359,15 @@ NOT_ISSUE_SITES: Mapping[str, str] = {
     "fn:deploy_workflow.owners.cp1c:_bounded": "truncates an issue list (listed_issues)",
     "fn:deploy_workflow.owners.cp1d:_bounded": "truncates an issue list (listed_issues)",
     "fn:deploy_workflow.owners.cp3c:_names": "builds bound reference names",
-    "fn:deploy_workflow.owners.cp3d:_single_dealer": "Python's own limitation text",
+    "fn:deploy_workflow.owners.cp3d:_single_dealer": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp8:_Composer._limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp2g:_own_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp2d:_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp2d:_facility_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp3d:own_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp1c:_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp2h:_own_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp4c:_own_limitations": OWN_TEXT,
 }
 
 # --- ast: issue sites reachable from the entry -----------------------------------------------

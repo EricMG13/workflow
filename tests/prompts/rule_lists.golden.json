@@ -422,7 +422,6 @@
      "fn:deploy_workflow.owners.cp8:_Checker._sizes",
      "fn:deploy_workflow.owners.cp8:_Checker._text",
      "fn:deploy_workflow.owners.cp8:_Checker._thesis",
-     "fn:deploy_workflow.owners.cp8:_Composer._limitations",
      "fn:deploy_workflow.owners.cp8:_Composer._resolved"
     ]
    }
@@ -680,7 +679,6 @@
      "fn:deploy_workflow.owners.cp2g:_break_issues",
      "fn:deploy_workflow.owners.cp2g:_claims",
      "fn:deploy_workflow.owners.cp2g:_limitation_issues",
-     "fn:deploy_workflow.owners.cp2g:_own_limitations",
      "fn:deploy_workflow.owners.cp2g:_run_text_issues",
      "fn:deploy_workflow.owners.cp2g:_text_issues",
      "fn:deploy_workflow.owners.cp2g:content_issues"
@@ -822,9 +820,7 @@
     "id": "liquidity_bridge.2",
     "statement": "",
     "checks": [
-     "fn:deploy_workflow.owners.cp2d:_claims",
-     "fn:deploy_workflow.owners.cp2d:_facility_limitations",
-     "fn:deploy_workflow.owners.cp2d:_limitations"
+     "fn:deploy_workflow.owners.cp2d:_claims"
     ]
    }
   ],
@@ -959,7 +955,6 @@
      "fn:deploy_workflow.owners.cp3d:_observation_level",
      "fn:deploy_workflow.owners.cp3d:_resolved",
      "fn:deploy_workflow.owners.cp3d:absence_paths",
-     "fn:deploy_workflow.owners.cp3d:own_limitations",
      "fn:deploy_workflow.owners.cp3d:submission_issues"
     ]
    }
@@ -1050,7 +1045,6 @@
      "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
      "fn:deploy_workflow.owners.cp1c:_citation_issues",
      "fn:deploy_workflow.owners.cp1c:_content_issues",
-     "fn:deploy_workflow.owners.cp1c:_limitations",
      "fn:deploy_workflow.owners.cp1c:_model_text_issues",
      "fn:deploy_workflow.owners.cp1c:calculation_issues"
     ]
@@ -1137,7 +1131,6 @@
      "fn:deploy_workflow.owners.cp2h:_gap_issues",
      "fn:deploy_workflow.owners.cp2h:_limitation",
      "fn:deploy_workflow.owners.cp2h:_overall_issues",
-     "fn:deploy_workflow.owners.cp2h:_own_limitations",
      "fn:deploy_workflow.owners.cp2h:_prose",
      "fn:deploy_workflow.owners.cp2h:_run_text_issues",
      "fn:deploy_workflow.owners.cp2h:_view_issues",
@@ -1373,7 +1366,6 @@
      "fn:deploy_workflow.owners.cp4c:_claim_issues",
      "fn:deploy_workflow.owners.cp4c:_claims",
      "fn:deploy_workflow.owners.cp4c:_fulcrum_issues",
-     "fn:deploy_workflow.owners.cp4c:_own_limitations",
      "fn:deploy_workflow.owners.cp4c:_plan_issues",
      "fn:deploy_workflow.owners.cp4c:_run_text_issues",
      "fn:deploy_workflow.owners.cp4c:_source_row_issues",
@@ -1502,7 +1494,7 @@
    "src/deploy_vii/source_context.py": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
    "src/deploy_vii/statement_validation.py": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "0ed422743cc1fc2666deee63cf5ceefa354fa83beda49f8eaf9386323612359a",
+   "src/deploy_workflow/owner_workflow.py": "7a61f8e8a0a1ccf507ad1bec915d07b8480a58dab2215a2bf2e46ea2a621cdb5",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",

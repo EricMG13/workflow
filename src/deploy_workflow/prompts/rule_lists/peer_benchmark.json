@@ -42,7 +42,6 @@
     "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
     "fn:deploy_workflow.owners.cp1c:_citation_issues",
     "fn:deploy_workflow.owners.cp1c:_content_issues",
-    "fn:deploy_workflow.owners.cp1c:_limitations",
     "fn:deploy_workflow.owners.cp1c:_model_text_issues",
     "fn:deploy_workflow.owners.cp1c:calculation_issues"
    ]

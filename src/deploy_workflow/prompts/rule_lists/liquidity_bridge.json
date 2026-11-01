@@ -23,9 +23,7 @@
    "id": "liquidity_bridge.2",
    "statement": "",
    "checks": [
-    "fn:deploy_workflow.owners.cp2d:_claims",
-    "fn:deploy_workflow.owners.cp2d:_facility_limitations",
-    "fn:deploy_workflow.owners.cp2d:_limitations"
+    "fn:deploy_workflow.owners.cp2d:_claims"
    ]
   }
  ]

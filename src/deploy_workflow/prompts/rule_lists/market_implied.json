@@ -56,7 +56,6 @@
     "fn:deploy_workflow.owners.cp3d:_observation_level",
     "fn:deploy_workflow.owners.cp3d:_resolved",
     "fn:deploy_workflow.owners.cp3d:absence_paths",
-    "fn:deploy_workflow.owners.cp3d:own_limitations",
     "fn:deploy_workflow.owners.cp3d:submission_issues"
    ]
   }

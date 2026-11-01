@@ -571,6 +571,14 @@ LIMITS = {
     "fn:deploy_workflow.owners.cp1d:_bounded",
     "fn:deploy_workflow.owners.cp3c:_names",
     "fn:deploy_workflow.owners.cp3d:_single_dealer",
+    "fn:deploy_workflow.owners.cp8:_Composer._limitations",
+    "fn:deploy_workflow.owners.cp2g:_own_limitations",
+    "fn:deploy_workflow.owners.cp2d:_limitations",
+    "fn:deploy_workflow.owners.cp2d:_facility_limitations",
+    "fn:deploy_workflow.owners.cp3d:own_limitations",
+    "fn:deploy_workflow.owners.cp1c:_limitations",
+    "fn:deploy_workflow.owners.cp2h:_own_limitations",
+    "fn:deploy_workflow.owners.cp4c:_own_limitations",
 }
 
 

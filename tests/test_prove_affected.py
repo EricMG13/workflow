@@ -105,3 +105,82 @@ def test_bad_ref_exits_2(repo: pathlib.Path) -> None:
     done = run_script(repo, "fast", "nosuch")
     assert done.returncode == 2
     assert done.stdout == ""
+
+
+def add_base(repo: pathlib.Path, files: dict[str, str]) -> None:
+    """Add files to the base commit and move the `base` tag onto it."""
+    write(repo, files)
+    run_git(repo, "add", "-A")
+    run_git(repo, "commit", "-q", "-m", "base2")
+    run_git(repo, "tag", "-f", "base")
+
+
+def test_path_loaded_py_under_cases(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "cases/tool/check.py": "A = 1\n",
+            "tests/test_loader.py": (
+                "import importlib.util\nP = ROOT / 'cases' / 'tool' / 'check.py'\n"
+                "S = importlib.util.spec_from_file_location('c', P)\n"
+            ),
+        },
+    )
+    assert select(repo, {"cases/tool/check.py": "A = 2\n"}) == ["tests/test_loader.py"]
+
+
+def test_py_pinned_by_hash_literal(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "cases/y-owner/builder/build.py": "B = 1\n",
+            "tests/test_pin.py": "PINNED = {'cases/y-owner/builder/build.py': 'abc'}\n",
+        },
+    )
+    assert select(repo, {"cases/y-owner/builder/build.py": "B = 2\n"}) == ["tests/test_pin.py"]
+
+
+def test_docs_file_read_by_test(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {"docs/DATA.csv": "a\n", "tests/test_docs.py": "P = ROOT / 'docs/DATA.csv'\n"},
+    )
+    assert select(repo, {"docs/DATA.csv": "b\n"}) == ["tests/test_docs.py"]
+
+
+def test_md_under_src_read_via_path_parts(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "src/pkg/methods/m.md": "m\n",
+            "tests/test_md.py": "P = ROOT / 'src' / 'pkg' / 'methods' / 'm.md'\n",
+        },
+    )
+    assert select(repo, {"src/pkg/methods/m.md": "n\n"}) == ["tests/test_md.py"]
+
+
+def test_fixture_md_read_via_path_parts(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "tests/fixtures/rep/expected.md": "e\n",
+            "tests/test_fix.py": "P = HERE / 'fixtures' / 'rep' / 'expected.md'\n",
+        },
+    )
+    assert select(repo, {"tests/fixtures/rep/expected.md": "f\n"}) == ["tests/test_fix.py"]
+
+
+def test_module_named_only_in_string_literal(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {"src/pkg/lazy.py": "Z = 1\n", "tests/test_lazy.py": "MODS = ('pkg.lazy',)\n"},
+    )
+    assert select(repo, {"src/pkg/lazy.py": "Z = 2\n"}) == ["tests/test_lazy.py"]
+
+
+def test_non_ascii_path_is_not_quoted(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {"docs/é.csv": "a\n", "tests/test_uni.py": "P = ROOT / 'docs/é.csv'\n"},
+    )
+    assert select(repo, {"docs/é.csv": "b\n"}) == ["tests/test_uni.py"]

@@ -38,7 +38,8 @@ and builder are three different agents (CLAUDE.md, Verifier gate).
    `.claude/skills/prove-<surface>/SKILL.md` naming when to run it and its exact argv.
    `mx-precise` reviews it.
 7. **Smoke.** A planter agent (`mx-feature`) plants one bug the comparison must catch, uncommitted; the controller confirms exit 1; the planter reverts it.
-8. **Record.** Fill the plan's Comparison column with the argv. A comparison over 5 minutes
-   goes into `HEAVY` in `cases/prove/affected_tests.py`.
+8. **Record.** Fill the plan's Comparison column with the argv. A test-file comparison over 5
+   minutes goes into `HEAVY` in `cases/prove/affected_tests.py` (PR CI runs it under the
+   `heavy-tests` label); a `cases/prove/` script is run by the controller, never by PR CI.
 
 Failure lines go into the builder's next fix brief; the key file is never pasted there.

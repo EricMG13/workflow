@@ -387,13 +387,6 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="analytical",
             publish=None,
         ),
-        "CP-6": OwnerSpec(
-            module_id="CP-6",
-            steps=(step("committee_challenge", CommitteeSubmission, inputs="module_context"),),
-            entry="model_payload",
-            kind="analytical",
-            publish=None,
-        ),
         "CP-MODEL": OwnerSpec(
             module_id="CP-MODEL",
             steps=(),
@@ -596,6 +589,13 @@ def _default_specs() -> dict[str, OwnerSpec]:
             module_id="CP-1B",
             steps=(step("earnings_delta", cp1b.EarningsDeltaOwnerReview, inputs="module_context"),),
             entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-6": OwnerSpec(
+            module_id="CP-6",
+            steps=(step("committee_challenge", CommitteeSubmission, inputs="module_context"),),
+            entry="model_payload",
             kind="analytical",
             publish=None,
         ),

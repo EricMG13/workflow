@@ -965,6 +965,41 @@ def test_period_words_must_match_the_register_rows() -> None:
     _compose_pair(producer, "q1-2027", "q2-2027")
 
 
+def _retyped(module: Module, period: str, kind: str, quarter: str | None) -> Module:
+    """`module` with the T4.14 row of `period` of another `kind` (the quarter and the T4.10 basis
+    column that kind needs), so the delta core accepts the row and only the composer's register
+    check can refuse it."""
+    was = "FY" if kind == "QUARTER" else "QUARTER"
+    facts = []
+    for f in module.facts:
+        if f.field == _basis_of(period, was):
+            f = f.model_copy(update={"field": _basis_of(period, kind)})
+        if f.period == period and f.field == "period_type":
+            f = f.model_copy(update={"text": kind})
+        elif f.period == period and f.field == "fiscal_quarter":
+            f = (
+                f.model_copy(update={"text": quarter, "status": "known", "limitation": None})
+                if quarter
+                else f.model_copy(
+                    update={"text": None, "status": "not_applicable", "limitation": "FY"}
+                )
+            )
+        facts.append(f)
+    return module.model_copy(update={"facts": tuple(facts)})
+
+
+def test_period_type_must_match_the_register_rows() -> None:
+    """The period words are read from the row's type as well (4a adversary L1): a quarter id on an
+    FY-typed row and an FY id on a QUARTER-typed row are `unsupported_pair`, not the core's
+    `invalid_fact`."""
+    quarters = _flat_producer_at("q1-2027", "q2-2027")
+    both = _retyped(_retyped(quarters, "q1-2027", "FY", None), "q2-2027", "FY", None)
+    _refused(both, "q1-2027", "q2-2027")
+    gap = _with_opening(_producer())
+    _compose_pair(gap, "fy-2024", "fy-2025")
+    _refused(_retyped(gap, "fy-2025", "QUARTER", "4"), "fy-2024", "fy-2025")
+
+
 def test_a_flat_fy_pair_cannot_deny_its_own_prior_year() -> None:
     """fy-2026 -> fy-2027: the prior is the FY the prose would call absent, so it is refused."""
     producer = _flat_producer_at("q1-2027", "q2-2027")

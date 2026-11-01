@@ -2699,7 +2699,8 @@ def refinancing_risk(
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
     selection = select(upstream)
-    # `_lines` raised on a refused context, so `pins_of` cannot raise here.
+    # `_lines` returned no line, and a refused context is one of its lines, so `pins_of` cannot
+    # raise here. (`_lines` returns the lines; this composer gate is what raises.)
     pinned = pins_of(MODULE_ID, pack) is not None
     result = compute(replace(_inputs_from(upstream, selection, submission), pinned=pinned))
     facts = [_cell_fact(c, selection) for t in result.tables for r in t.rows for c in r.cells]

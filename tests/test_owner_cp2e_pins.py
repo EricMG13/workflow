@@ -201,6 +201,14 @@ def test_a_matching_submission_is_labelled_user_supplied(
         assert report.limitations[-1] == row == recomputed["pinned_line"]
         assert _tables(report) == recomputed["module_tables"]
         assert [c.claim_id for c in report.claims] == [c["claim_id"] for c in recomputed["claims"]]
+        assert [c.text for c in report.claims] == [c["text"] for c in recomputed["claims"]]
+        want_facts = [
+            (f["fact_id"], f["text"])
+            for t in recomputed["tables"]
+            for r in t["rows"]
+            for f in r["facts"]
+        ]
+        assert [(f.fact_id, f.text) for f in report.facts] == want_facts
     last = next(t for t in report.tables if t.table_id == "T2F.9").rows[-1]
     assert (last.row_id, last.label, last.fact_ids) == ("r08", "Limitation 8", ("T2F.9.r08.text",))
 
@@ -372,3 +380,41 @@ def test_nothing_is_mapped_when_no_context_pins_the_module(
         (tmp_path / case).mkdir()
         pack = _pack(tmp_path / case, CASES[case]["context"])
         assert _validate(pack, _payload(case)).issues == ()
+
+
+# --- the rate-shock list is compared and shown as typed (T5 L1/I1: mutants M29, M30, M32, M46) ---
+RATE = "assumptions.cp2e.rate_shocks_bps: pinned 100, 200; submitted "
+
+
+def _rate_issues(tmp_path: Path, rate: list[str]) -> tuple[str, ...]:
+    payload = _payload("differs")
+    payload["rate_shocks_bp"] = rate
+    out = _validate(_pack(tmp_path, "context-credit_snapshot.json"), payload)
+    assert out.output is None
+    return out.issues
+
+
+def test_an_extra_rate_shock_is_refused_by_the_pin_alone(tmp_path: Path) -> None:
+    """M30: a content-valid third shock (100, 200, 300 against pins 100, 200)."""
+    assert _rate_issues(tmp_path, ["100", "200", "300"]) == (RATE + "100, 200, 300",)
+
+
+def test_a_duplicate_rate_shock_is_shown_as_typed(tmp_path: Path) -> None:
+    """M29."""
+    assert _rate_issues(tmp_path, ["100", "100", "200"])[-1] == RATE + "100, 100, 200"
+
+
+def test_a_padded_rate_shock_is_shown_as_typed(tmp_path: Path) -> None:
+    """M32."""
+    assert _rate_issues(tmp_path, [" 100", "200"])[-1] == RATE + " 100, 200"
+
+
+def test_two_pin_lines_join_with_a_semicolon_and_a_space(tmp_path: Path) -> None:
+    """M46: the composer gate's message is the exact joined text."""
+    payload = _payload("differs_hedge")
+    payload["rate_shocks_bp"] = ["101", "200"]
+    with pytest.raises(ValueError) as caught:
+        cp2e.macro_fx(pack=_pack(tmp_path, HEDGE60), submission=_submission(payload))
+    assert str(caught.value) == (
+        RATE + "101, 200; assumptions.cp2e.hedge_ratio_pct: pinned 60; submitted 61"
+    )

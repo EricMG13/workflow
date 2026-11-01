@@ -14,6 +14,7 @@ pure.
 """
 
 import re
+import unicodedata
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
@@ -1074,13 +1075,25 @@ def _check_technicals(sub: MarketImpliedSubmission, out: _Issues) -> None:
 PIN_LABEL_FORGED = "the user-supplied pin line is Python's; do not write it"
 
 
+def _normalised(text: str) -> str:
+    """NFKC, no format characters (category Cf), whitespace runs as one space, case folded, the
+    ends trimmed and one trailing full stop dropped: what a reader would take for the same text."""
+    kept = "".join(
+        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
+    )
+    folded = " ".join(kept.split()).casefold()
+    return folded.removesuffix(".").strip()
+
+
 def _check_pin_label(sub: MarketImpliedSubmission, out: _Issues) -> None:
-    """Refuse a `technicals[i].limitation` that contains Python's pinned-recovery sentence: the
-    own limitations copy that text verbatim, so a model-written copy would state a pin that does
-    not exist or push the real label out of last place."""
-    label = pinned_line(MODULE_ID)
+    """Refuse a `technicals[i].limitation` that contains Python's pinned-recovery sentence, or a
+    near copy of it that differs only in case, spacing, format characters, compatibility forms or
+    the full stop (both sides normalised by `_normalised`; a homoglyph from another script is
+    not folded). The own limitations copy that text verbatim, so a model-written copy would state
+    a pin that does not exist or push the real label out of last place."""
+    label = _normalised(pinned_line(MODULE_ID))
     for i, x in enumerate(sub.technicals):
-        if x.limitation and label in x.limitation:
+        if x.limitation and label in _normalised(x.limitation):
             out.add(f"technicals[{i}].limitation: {PIN_LABEL_FORGED}")
 
 
@@ -2468,7 +2481,8 @@ def market_implied(
     if issues := _issues(pack, submission, upstream):
         raise ValueError("; ".join(issues))
     # A context the pins reader refuses is also refused by the offers reader, so its
-    # `context_errors` give content lines and `_issues` raised above; `pins_of` cannot raise here.
+    # `context_errors` give content lines; `market_implied` raises on the lines `_issues` returns,
+    # so `pins_of` cannot raise here.
     pinned = pins_of(MODULE_ID, pack) is not None
     result = market_implied_result(submission=submission, context=upstream.context, pinned=pinned)
     tables: list[ReportTable] = []

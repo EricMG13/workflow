@@ -401,3 +401,86 @@ def test_no_cp2d_pinned_line_when_the_context_does_not_pin_cp2d(
     module = _settled_module(store, attempt)
     assert _carried(module, CP2D_PINNED) == 0 and _carried(module, PINNED) == 1
     assert _rows(module, "T3D.7") == _base()["T3D.7_rows"]
+
+
+# --- the label with a facility line, the clipped refusal and the dedupe (T6 L1, L2, I1) -------------
+def _not_stated(inputs: cp3c.Cp3cInputs, name: str) -> cp3c.Cp3cInputs:
+    (terms,) = inputs.cp1.facilities
+    terms = replace(terms, **{name: replace(getattr(terms, name), text="NOT_STATED")})
+    return replace(inputs, cp1=replace(inputs.cp1, facilities=(terms,)))
+
+
+FACILITY_VARIANTS = {
+    "seniority_missing": lambda i: connect._with_term(i, "cp1", "seniority", "missing"),
+    "secured_not_stated": lambda i: _not_stated(i, "secured_status"),
+    "amortisation_missing": lambda i: connect._with_term(
+        i, "cp1", "annual_amortisation", "missing"
+    ),
+    "principal_missing": lambda i: connect._with_term(i, "cp2d", "principal", "missing"),
+    "maturity_missing": lambda i: connect._with_term(i, "cp2d", "maturity_date", "missing"),
+}
+
+
+@pytest.mark.parametrize("case", tm.PACK_CASES)
+@pytest.mark.parametrize("variant", list(FACILITY_VARIANTS))
+def test_k13_the_label_is_last_with_facility_lines(case: str, variant: str) -> None:
+    inputs = FACILITY_VARIANTS[variant](tm._inputs(case))
+    base = cp3c.compute(inputs)
+    pinned = cp3c.compute(replace(inputs, pinned=True))
+    base_rows = [list(r) for r in base.gaps_ledger.rows]
+    assert [r for r in base_rows if r[0].startswith("Facility ")], "a facility line is composed"
+    assert PINNED not in base.own_limitations
+    assert pinned.own_limitations == (*base.own_limitations, PINNED)
+    assert [list(r) for r in pinned.gaps_ledger.rows] == [*base_rows, LABEL]
+
+
+def test_k13_journal_with_a_facility_line(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    pack = _pack(tmp_path / "ctx", CONTEXT)
+    monkeypatch.setattr(connect, "make_pack", lambda **_: pack)
+    module = connect.cp1_module(pack.run, terms={"seniority": "NOT_STATED"})
+    store, _, attempt = connect.seed(tmp_path / "run", "positive", cp1=module)
+    connect._submit(store, attempt, json.dumps(_payload(store, attempt, "match")))
+    done = connect.finished(store, attempt)
+    settled = _settled_module(store, attempt)
+    rows = _rows(settled, "T3D.8")
+    assert any(r[0].startswith("Facility ") for r in rows)
+    own = [x for x in settled.limitations if x != SYNTHETIC]
+    assert own[-1] == PINNED and own.count(PINNED) == 1 and rows[-1] == LABEL
+    cp3c.probe(store, store.read(), done)
+
+
+def test_k39_the_refusal_line_is_clipped_before_the_journal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`_pin_lines` itself returns one line of at most MAX_ISSUE_CHARS for a long refusal."""
+    store, pack, attempt = _seed(tmp_path, monkeypatch, CONTEXT, "positive")
+    sub = _submission(store, attempt, "match")
+    problems = [f"problem {i}: " + "x" * 120 for i in range(8)]
+
+    def refuse(*_: object, **__: object) -> tuple[str, ...]:
+        raise ContextRefused(problems)
+
+    monkeypatch.setattr(cp3c, "pin_issues", refuse)
+    got = cp3c._pin_lines(pack, sub)
+    assert len(got) == 1 and got[0].startswith("Context refused: problem 0: ")
+    assert len(got[0]) <= MAX_ISSUE_CHARS
+
+
+DUP_LINE = "paths[repay_from_resources].basis_refs: names a fact the view does not offer"
+
+
+@pytest.mark.parametrize("context", (CONTEXT, None))
+def test_k47_the_step_issues_are_deduplicated(
+    context: str | None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two unoffered basis_refs on one path give their line once in the journaled step, then the
+    pin line (bps 401 under the context)."""
+    store, _, attempt = _seed(tmp_path, monkeypatch, context, "positive")
+    body = _payload(store, attempt, "match")
+    body["repricing"]["bps"] = 401
+    path = next(p for p in body["paths"] if p["kind"] == "repay_from_resources")
+    path["basis_refs"] = [*path["basis_refs"], "nope-1", "nope-2"]
+    connect._submit(store, attempt, json.dumps(body))
+    step = list(connect.finished(store, attempt).steps[0].issues)
+    pin = ["assumptions.cp3c.repricing_bps: pinned 400; submitted 401"] if context else []
+    assert step == [DUP_LINE, *pin]

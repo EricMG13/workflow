@@ -593,3 +593,44 @@ def test_a_content_line_equal_to_a_pin_line_is_listed_once(
     line = "assumptions.cp3d.recovery_pct: pinned 70; submitted 71"
     monkeypatch.setattr(cp3d, "validate_market_implied", lambda **_: (line,))
     assert cp3d._issues(pack, _submission(payload), up) == (line,)
+
+
+# --- near copies of the label are refused too (T7 N-L1, ruling P6-P13) ---------------------------
+NEAR_COPIES = {
+    "zwsp appended": PINNED + "\u200b",
+    "zwsp inside a word": PINNED.replace("recovery", "reco\u200bvery", 1),
+    "no-break space": PINNED.replace("rate is", "rate\u00a0is", 1),
+    "trailing space": PINNED + " ",
+    "doubled space": PINNED.replace("rate is", "rate  is", 1),
+    "no full stop": PINNED.rstrip("."),
+    "lower case": PINNED.lower(),
+    "upper case": PINNED.upper(),
+    "embedded and shouting": "Before. " + PINNED.upper() + " After.",
+    "fullwidth letters": PINNED.replace("rate", "\uff52\uff41\uff54\uff45", 1),
+}
+
+
+def _limitation_issues(limitation: str) -> tuple[str, ...]:
+    payload = _payload("match")
+    _rating(payload)["limitation"] = limitation
+    sub = _submission(payload)
+    return tuple(cp3d.submission_issues(submission=sub, context=base._context("positive")))
+
+
+@pytest.mark.parametrize("name", list(NEAR_COPIES))
+def test_a_near_copy_of_the_pinned_label_is_refused(name: str) -> None:
+    assert NEAR_COPIES[name] != PINNED
+    index = _payload("match")["technicals"].index(_rating(_payload("match")))
+    assert f"technicals[{index}].limitation: {FORGED}" in _limitation_issues(NEAR_COPIES[name])
+
+
+def test_a_homoglyph_copy_is_a_known_limit_of_the_normalised_check() -> None:
+    """Known limit (ruling P6-P13): NFKC does not fold a Cyrillic lookalike, so this copy is
+    accepted; the exact label Python appends is still the only one in the settled head."""
+    text = PINNED.replace("The recovery", "The r\u0435covery", 1)  # Cyrillic small e
+    assert text != PINNED
+    assert not [i for i in _limitation_issues(text) if FORGED in i]
+
+
+def test_an_unrelated_limitation_is_not_taken_for_the_label() -> None:
+    assert not [i for i in _limitation_issues("The recovery rate is not disclosed") if FORGED in i]

@@ -406,9 +406,10 @@ class MacroFxInputs:
     assessments: tuple[Assessment, ...]
     summary: str
     source_names: Mapping[str, str]
-    # The context file pins the shocks (and, when it states one, the hedge ratio), so the
-    # limitations state they are user-supplied. The pins themselves are checked by `_pin_lines`,
-    # not the method; `macro_fx` sets these once the context is accepted.
+    # `macro_fx` sets `pinned` when a context pins this module and `hedge_pinned` when that
+    # context also states a hedge ratio; the last own limitation then says the shocks (and the
+    # hedge ratio) are user-supplied. `compute` only reads the flags: `_pin_lines` compares the
+    # submitted values with the pins before `macro_fx` composes anything.
     pinned: bool = False
     hedge_pinned: bool = False
 

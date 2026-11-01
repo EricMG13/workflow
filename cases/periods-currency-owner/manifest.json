@@ -1061,7 +1061,7 @@
   },
   "t414_file": {
     "path": "t414.json",
-    "sha256": "bf855781b3f0d3d41f1056d306677740219f815d1b7572ab19a9c2bd09b87c8e",
+    "sha256": "fad5588776a6862925ad736d05c9a5d3820a9d9b8d8043f875d7d65281b8bc5f",
     "rule": "P8-R1: pin-only; the shifted pack's CP-1 T4.14 rows behind period_basis/USD and period_basis/EUR; no expected.json value depends on it"
   },
   "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",

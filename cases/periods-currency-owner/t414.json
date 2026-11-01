@@ -1,88 +1,399 @@
 {
-  "schema_version": "periods-currency-owner-t414/1",
-  "derivation": "Pin-only fixture (ruling P8-R1): the CP-1 T4.14 period register of the shifted pack, for the contexts behind expected.json#period_basis/USD (submissions.json#contexts/R1, fy-2026, USD) and #period_basis/EUR (#contexts/R2, q4-2026, EUR). No CP-1 promotion was run. Rows come from the frozen `periods` list of cases/financial/manifest.json (the period scopes the CP-1 source context is built from) under the four mapping rules, so ids are opening-2025, q1-2026..q4-2026, fy-2026. Per row: period_type is the frozen type (QUARTER, FY, PERIOD_END); fiscal_year is the shifted year as text; fiscal_quarter is '1'..'4' for a quarter, '' otherwise; start_date/end_date are the shifted ISO dates ('' when the frozen start is null), checked against the shifted statements (page:1 states 90/91/92/92/365 days, page:4 header carries each end date); day_count is the stated count; currency is the run currency read from the pack's own 'Currency: <ccy>; amounts in millions' clause (page:1) and unit MILLIONS, accounting_basis IFRS, entity_perimeter consolidated group from page:2-4 headers. The FY row is the 2026 fiscal year; the Q4 row ends on the FY end date; exactly one FY row and one QUARTER row with quarter 4.",
+  "schema_version": "periods-currency-owner-t414/2",
+  "derivation": "Pin-only fixture (rulings P8-R1, P8-R1c): the CP-1 T4.14 period register of the shifted pack, for the contexts behind expected.json#period_basis/USD (submissions.json#contexts/R1, fy-2026, USD) and #period_basis/EUR (#contexts/R2, q4-2026, EUR). No CP-1 promotion was run. Rows come from the frozen `periods` list of cases/financial/manifest.json (the period scopes the CP-1 source context is built from) under the four mapping rules: ids opening-2025, q1-2026..q4-2026, fy-2026. Every row has the 15 T4.14 columns in schema order (model_interface.py:33-42) and every cell is {text, status} as _Tables.row emits it (model_interface.py:254-277): a known value is its text (dates ISO, fiscal_year/fiscal_quarter/day_count decimal text); a None value is text null with status `missing` (:254-255, :259-263), except a column named in the row's references, which is `not_applicable` (:256-258; references = component_period_ids always and fiscal_quarter when period_type is not QUARTER, :339-344). So fiscal_quarter is '1'..'4' on QUARTER rows and null/not_applicable on opening-2025 and fy-2026; the opening row's start_date and day_count are null/missing (a point in time, frozen start null); component_period_ids is null/not_applicable on every row (the frozen register lists none). audit_status 'unaudited' is the CP-1 promotion literal (tests/test_financial_workflow.py:443); source_id 'financial' and source_locator 'page:1' come from the period's first citation (same file :69, 444; model_interface.py:214-223). currency is the run currency read from the pack's 'Currency: <ccy>; amounts in millions' clause (page:1); unit MILLIONS, accounting_basis IFRS, entity_perimeter consolidated group (page:2-4 headers). Day counts 90/91/92/92/365 and end dates are checked against the shifted statements (page:1, page:4).",
+  "columns": [
+    "period_id",
+    "fiscal_year",
+    "fiscal_quarter",
+    "period_type",
+    "start_date",
+    "end_date",
+    "day_count",
+    "audit_status",
+    "currency",
+    "unit",
+    "accounting_basis",
+    "entity_perimeter",
+    "source_id",
+    "source_locator",
+    "component_period_ids"
+  ],
   "contexts": {
     "R1": {
       "context": "submissions.json#contexts/R1",
       "period_basis": "expected.json#period_basis/USD",
       "rows": [
         {
-          "period_id": "opening-2025",
-          "period_type": "PERIOD_END",
-          "fiscal_year": "2025",
-          "fiscal_quarter": "",
-          "start_date": "",
-          "end_date": "2025-12-31",
-          "day_count": null,
-          "currency": "USD",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "opening-2025",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2025",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": null,
+            "status": "not_applicable"
+          },
+          "period_type": {
+            "text": "PERIOD_END",
+            "status": "known"
+          },
+          "start_date": {
+            "text": null,
+            "status": "missing"
+          },
+          "end_date": {
+            "text": "2025-12-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": null,
+            "status": "missing"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "USD",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q1-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "1",
-          "start_date": "2026-01-01",
-          "end_date": "2026-03-31",
-          "day_count": 90,
-          "currency": "USD",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q1-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "1",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-01-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-03-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "90",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "USD",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q2-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "2",
-          "start_date": "2026-04-01",
-          "end_date": "2026-06-30",
-          "day_count": 91,
-          "currency": "USD",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q2-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "2",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-04-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-06-30",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "91",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "USD",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q3-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "3",
-          "start_date": "2026-07-01",
-          "end_date": "2026-09-30",
-          "day_count": 92,
-          "currency": "USD",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q3-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "3",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-07-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-09-30",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "92",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "USD",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q4-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "4",
-          "start_date": "2026-10-01",
-          "end_date": "2026-12-31",
-          "day_count": 92,
-          "currency": "USD",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q4-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "4",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-10-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-12-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "92",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "USD",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "fy-2026",
-          "period_type": "FY",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "",
-          "start_date": "2026-01-01",
-          "end_date": "2026-12-31",
-          "day_count": 365,
-          "currency": "USD",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "fy-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": null,
+            "status": "not_applicable"
+          },
+          "period_type": {
+            "text": "FY",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-01-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-12-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "365",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "USD",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         }
       ]
     },
@@ -91,82 +402,376 @@
       "period_basis": "expected.json#period_basis/EUR",
       "rows": [
         {
-          "period_id": "opening-2025",
-          "period_type": "PERIOD_END",
-          "fiscal_year": "2025",
-          "fiscal_quarter": "",
-          "start_date": "",
-          "end_date": "2025-12-31",
-          "day_count": null,
-          "currency": "EUR",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "opening-2025",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2025",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": null,
+            "status": "not_applicable"
+          },
+          "period_type": {
+            "text": "PERIOD_END",
+            "status": "known"
+          },
+          "start_date": {
+            "text": null,
+            "status": "missing"
+          },
+          "end_date": {
+            "text": "2025-12-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": null,
+            "status": "missing"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "EUR",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q1-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "1",
-          "start_date": "2026-01-01",
-          "end_date": "2026-03-31",
-          "day_count": 90,
-          "currency": "EUR",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q1-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "1",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-01-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-03-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "90",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "EUR",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q2-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "2",
-          "start_date": "2026-04-01",
-          "end_date": "2026-06-30",
-          "day_count": 91,
-          "currency": "EUR",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q2-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "2",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-04-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-06-30",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "91",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "EUR",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q3-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "3",
-          "start_date": "2026-07-01",
-          "end_date": "2026-09-30",
-          "day_count": 92,
-          "currency": "EUR",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q3-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "3",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-07-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-09-30",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "92",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "EUR",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "q4-2026",
-          "period_type": "QUARTER",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "4",
-          "start_date": "2026-10-01",
-          "end_date": "2026-12-31",
-          "day_count": 92,
-          "currency": "EUR",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "q4-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": "4",
+            "status": "known"
+          },
+          "period_type": {
+            "text": "QUARTER",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-10-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-12-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "92",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "EUR",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         },
         {
-          "period_id": "fy-2026",
-          "period_type": "FY",
-          "fiscal_year": "2026",
-          "fiscal_quarter": "",
-          "start_date": "2026-01-01",
-          "end_date": "2026-12-31",
-          "day_count": 365,
-          "currency": "EUR",
-          "unit": "MILLIONS",
-          "accounting_basis": "IFRS",
-          "entity_perimeter": "consolidated group"
+          "period_id": {
+            "text": "fy-2026",
+            "status": "known"
+          },
+          "fiscal_year": {
+            "text": "2026",
+            "status": "known"
+          },
+          "fiscal_quarter": {
+            "text": null,
+            "status": "not_applicable"
+          },
+          "period_type": {
+            "text": "FY",
+            "status": "known"
+          },
+          "start_date": {
+            "text": "2026-01-01",
+            "status": "known"
+          },
+          "end_date": {
+            "text": "2026-12-31",
+            "status": "known"
+          },
+          "day_count": {
+            "text": "365",
+            "status": "known"
+          },
+          "audit_status": {
+            "text": "unaudited",
+            "status": "known"
+          },
+          "currency": {
+            "text": "EUR",
+            "status": "known"
+          },
+          "unit": {
+            "text": "MILLIONS",
+            "status": "known"
+          },
+          "accounting_basis": {
+            "text": "IFRS",
+            "status": "known"
+          },
+          "entity_perimeter": {
+            "text": "consolidated group",
+            "status": "known"
+          },
+          "source_id": {
+            "text": "financial",
+            "status": "known"
+          },
+          "source_locator": {
+            "text": "page:1",
+            "status": "known"
+          },
+          "component_period_ids": {
+            "text": null,
+            "status": "not_applicable"
+          }
         }
       ]
     }

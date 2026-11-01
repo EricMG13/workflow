@@ -298,51 +298,78 @@ for _c in ("USD", "EUR"):
 # --- 3b. the CP-1 T4.14 rows of the shifted pack (pin-only, ruling P8-R1) ----------------------------------------------
 
 
+T414_COLUMNS = "period_id fiscal_year fiscal_quarter period_type start_date end_date day_count audit_status currency unit accounting_basis entity_perimeter source_id source_locator component_period_ids".split()  # model_interface.py:33-42
+
+
+def _cell(text, status="known"):
+    return {"text": text, "status": status}
+
+
 def t414_rows(ccy):
-    """T4.14 rows for the shifted pack: the frozen `periods` register of cases/financial/manifest.json (the rows the CP-1
-    promotion is fed from: tests/test_financial_workflow.py `context`) under the four-rule mapping, spelled as CP-1 emits
-    them (T4.14 columns, model_interface.py SCHEMAS): fiscal_year text, fiscal_quarter "1".."4" or "", dates ISO or ""."""
+    """T4.14 rows of the shifted pack, every cell {"text","status"} as _Tables.row (model_interface.py:254-277) writes it:
+    a value None is text None with status `missing`, or `not_applicable` when the column is in the row's references
+    (component_period_ids, and fiscal_quarter on a non-QUARTER row, :339-344); dates are ISO text, numbers decimal text."""
+    t = TX[ccy]
     rows = []
     for per in FIN["periods"]:
-        t = TX[ccy]
-        pid = t.text(per["period_id"])
-        row = {
-            "period_id": pid,
-            "period_type": per["period_type"],
+        quarter = per["period_type"] == "QUARTER"
+        refs = {"component_period_ids"} | (set() if quarter else {"fiscal_quarter"})
+        raw = {
+            "period_id": t.text(per["period_id"]),
             "fiscal_year": t.text(per["fiscal_year"]),
-            "fiscal_quarter": "" if per["fiscal_quarter"] is None else str(per["fiscal_quarter"]),
-            "start_date": t.text(per["start_date"]) if per["start_date"] else "",
+            "fiscal_quarter": None if per["fiscal_quarter"] is None else str(per["fiscal_quarter"]),
+            "period_type": per["period_type"],
+            "start_date": t.text(per["start_date"]) if per["start_date"] else None,
             "end_date": t.text(per["end_date"]),
-            "day_count": per.get("day_count"),
+            "day_count": None if per.get("day_count") is None else str(per["day_count"]),
+            "audit_status": "unaudited",  # tests/test_financial_workflow.py:443, the CP-1 promotion literal
             "currency": ccy,
             "unit": "MILLIONS",
             "accounting_basis": "IFRS",
             "entity_perimeter": "consolidated group",
+            "source_id": "financial",  # first citation of the period: FINANCIAL = page:1 (same file :69)
+            "source_locator": "page:1",
+            "component_period_ids": ";".join(per.get("component_period_ids") or []) or None,
         }
+        assert list(raw) == T414_COLUMNS
+        row = {}
+        for name in T414_COLUMNS:
+            v = raw[name]
+            row[name] = _cell(v) if v is not None else _cell(None, "not_applicable" if name in refs else "missing")
         # the row agrees with the shifted statements: dates give the day count, the balance-sheet header names the end date
-        if row["start_date"]:
-            d0, d1 = dt.date.fromisoformat(row["start_date"]), dt.date.fromisoformat(row["end_date"])
-            assert (d1 - d0).days + 1 == row["day_count"]
-            assert row["end_date"] in FIN_P[ccy]["page:4"], pid
+        if raw["start_date"]:
+            d0, d1 = dt.date.fromisoformat(raw["start_date"]), dt.date.fromisoformat(raw["end_date"])
+            assert str((d1 - d0).days + 1) == raw["day_count"]
+        assert raw["end_date"] in FIN_P[ccy]["page:4"], raw["period_id"]
         assert f"Currency: {ccy}; amounts in millions" in FIN_P[ccy]["page:1"]
         rows.append(row)
     return rows
 
 
+def _txt(row, name):
+    return row[name]["text"]
+
+
 T414 = {
-    "schema_version": "periods-currency-owner-t414/1",
+    "schema_version": "periods-currency-owner-t414/2",
     "derivation": (
-        "Pin-only fixture (ruling P8-R1): the CP-1 T4.14 period register of the shifted pack, for the contexts behind "
+        "Pin-only fixture (rulings P8-R1, P8-R1c): the CP-1 T4.14 period register of the shifted pack, for the contexts behind "
         "expected.json#period_basis/USD (submissions.json#contexts/R1, fy-2026, USD) and #period_basis/EUR (#contexts/R2, q4-2026, EUR). "
         "No CP-1 promotion was run. Rows come from the frozen `periods` list of cases/financial/manifest.json (the period scopes the CP-1 "
-        "source context is built from) under the four mapping rules, so ids are opening-2025, q1-2026..q4-2026, fy-2026. Per row: "
-        "period_type is the frozen type (QUARTER, FY, PERIOD_END); fiscal_year is the shifted year as text; fiscal_quarter is '1'..'4' for a "
-        "quarter, '' otherwise; start_date/end_date are the shifted ISO dates ('' when the frozen start is null), checked against the "
-        "shifted statements (page:1 states 90/91/92/92/365 days, page:4 header carries each end date); day_count is the stated count; "
-        "currency is the run currency read from the pack's own 'Currency: <ccy>; amounts in millions' clause (page:1) and unit MILLIONS, "
-        "accounting_basis IFRS, entity_perimeter consolidated group from page:2-4 headers. The FY row is the 2026 fiscal year; the Q4 row "
-        "ends on the FY end date; exactly one FY row and one QUARTER row with quarter 4."
+        "source context is built from) under the four mapping rules: ids opening-2025, q1-2026..q4-2026, fy-2026. Every row has the 15 "
+        "T4.14 columns in schema order (model_interface.py:33-42) and every cell is {text, status} as _Tables.row emits it "
+        "(model_interface.py:254-277): a known value is its text (dates ISO, fiscal_year/fiscal_quarter/day_count decimal text); a None value "
+        "is text null with status `missing` (:254-255, :259-263), except a column named in the row's references, which is `not_applicable` "
+        "(:256-258; references = component_period_ids always and fiscal_quarter when period_type is not QUARTER, :339-344). So fiscal_quarter is "
+        "'1'..'4' on QUARTER rows and null/not_applicable on opening-2025 and fy-2026; the opening row's start_date and day_count are "
+        "null/missing (a point in time, frozen start null); component_period_ids is null/not_applicable on every row (the frozen register "
+        "lists none). audit_status 'unaudited' is the CP-1 promotion literal (tests/test_financial_workflow.py:443); source_id 'financial' and "
+        "source_locator 'page:1' come from the period's first citation (same file :69, 444; model_interface.py:214-223). currency is the run "
+        "currency read from the pack's 'Currency: <ccy>; amounts in millions' clause (page:1); unit MILLIONS, accounting_basis IFRS, "
+        "entity_perimeter consolidated group (page:2-4 headers). Day counts 90/91/92/92/365 and end dates are checked against the shifted "
+        "statements (page:1, page:4)."
     ),
+    "columns": T414_COLUMNS,
     "contexts": {
         "R1": {"context": "submissions.json#contexts/R1", "period_basis": "expected.json#period_basis/USD", "rows": t414_rows("USD")},
         "R2": {"context": "submissions.json#contexts/R2", "period_basis": "expected.json#period_basis/EUR", "rows": t414_rows("EUR")},
@@ -350,12 +377,13 @@ T414 = {
 }
 for _k, _c in (("R1", "USD"), ("R2", "EUR")):
     _rows = T414["contexts"][_k]["rows"]
-    _fy = [r for r in _rows if r["period_type"] == "FY"]
-    _q4 = [r for r in _rows if r["period_type"] == "QUARTER" and r["fiscal_quarter"] == "4"]
-    assert len(_fy) == 1 and len(_q4) == 1 and _q4[0]["end_date"] == _fy[0]["end_date"]
-    assert _fy[0]["start_date"] == BASIS[_c]["ltm_start"] and _fy[0]["end_date"] == BASIS[_c]["ltm_end"] and _q4[0]["start_date"] == BASIS[_c]["q4_start"]
-    assert _q4[0]["period_id"] == BASIS[_c]["schedule_period"] and _fy[0]["fiscal_year"] == str(BASIS[_c]["base_year"])
-    assert {r["currency"] for r in _rows} == {_c}
+    _fy = [r for r in _rows if _txt(r, "period_type") == "FY"]
+    _q4 = [r for r in _rows if _txt(r, "period_type") == "QUARTER" and _txt(r, "fiscal_quarter") == "4"]
+    assert len(_fy) == 1 and len(_q4) == 1 and _txt(_q4[0], "end_date") == _txt(_fy[0], "end_date")
+    assert _txt(_fy[0], "start_date") == BASIS[_c]["ltm_start"] and _txt(_fy[0], "end_date") == BASIS[_c]["ltm_end"] and _txt(_q4[0], "start_date") == BASIS[_c]["q4_start"]
+    assert _txt(_q4[0], "period_id") == BASIS[_c]["schedule_period"] and _txt(_fy[0], "fiscal_year") == str(BASIS[_c]["base_year"])
+    assert {_txt(r, "currency") for r in _rows} == {_c}
+    assert _fy[0]["fiscal_quarter"] == _cell(None, "not_applicable") and _rows[0]["start_date"] == _cell(None, "missing")
 
 # --- 4. day counts and the 29 February 2028 check ----------------------------------------------------------
 

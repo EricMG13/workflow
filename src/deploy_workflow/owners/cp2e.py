@@ -51,8 +51,10 @@ from deploy_vii.prose import tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-2E"
@@ -404,6 +406,11 @@ class MacroFxInputs:
     assessments: tuple[Assessment, ...]
     summary: str
     source_names: Mapping[str, str]
+    # The context file pins the shocks (and, when it states one, the hedge ratio), so the
+    # limitations state they are user-supplied. The pins themselves are checked by `_pin_lines`,
+    # not the method; `macro_fx` sets these once the context is accepted.
+    pinned: bool = False
+    hedge_pinned: bool = False
 
     def __post_init__(self) -> None:
         pairs = (
@@ -1485,6 +1492,8 @@ def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
     if i.debt_currency is not None:
         out.append(_LIM_DEBT_CCY)
     out.append(_LIM_MACRO)
+    if i.pinned:
+        out.append(pinned_line(MODULE_ID, hedge_pinned=i.hedge_pinned))
     return tuple(out)
 
 
@@ -1824,10 +1833,44 @@ def _inputs(pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxInputs:
     )
 
 
+_HEDGE_PIN = "assumptions.cp2e.hedge_ratio_pct"
+
+
+def _pin_lines(pack: PreparedPack, submission: MacroFxSubmission) -> tuple[str, ...]:
+    """The lines where the submitted shocks or hedge ratio differ from the context pins, as typed
+    (the submission keeps the model's text, so no number is formatted); a context the run refuses
+    is the single line `Context refused: ...` and no pin line. Empty, and nothing mapped, when
+    nothing is pinned. The one pin issue set of the step validator and the composer gate."""
+    try:
+        if pins_of(MODULE_ID, pack) is None:
+            return ()
+        hedge = submission.hedge_ratio
+        submitted = {
+            "rate_shocks_bp": list(submission.rate_shocks_bp),
+            "fx_shocks_percent": list(submission.fx_shocks_percent),
+            "hedge_ratio.percent_text": None if hedge is None else hedge.percent_text,
+        }
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
+
+
 # --- the report: Stage 1 cells with their quotes ----------------------------------------------------
 def macro_fx(*, pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxReport:
-    """The composed records of a submission that ``validate_macro_fx`` accepted."""
-    result = compute(_inputs(pack, submission))
+    """The composed records of a submission that ``validate_macro_fx`` accepted. It raises
+    ValueError when the submission differs from the context pins (the content checks are not
+    re-run: ``validate_macro_fx`` has no pack and is the step validator's job)."""
+    issues = _pin_lines(pack, submission)
+    if issues:
+        raise ValueError("; ".join(issues))
+    # `_pin_lines` found no refusal, so `pins_of` cannot raise here.
+    pins = pins_of(MODULE_ID, pack)
+    inputs = replace(
+        _inputs(pack, submission),
+        pinned=pins is not None,
+        hedge_pinned=pins is not None and _HEDGE_PIN in pins,
+    )
+    result = compute(inputs)
     hashes = {source.source_id: source.sha256 for source in pack.sources}
 
     def cite(refs: Iterable[Cite]) -> tuple[Citation, ...]:
@@ -1898,7 +1941,10 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     submission, shape = _parsed(store.payload(attempt.steps[0].payload_sha256))
     if submission is None:
         return StepValidation(issues=shape)
-    issues = validate_macro_fx(submission=submission.model_dump(mode="json"), pages=_pages_of(pack))
+    content = validate_macro_fx(
+        submission=submission.model_dump(mode="json"), pages=_pages_of(pack)
+    )
+    issues = tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
     if issues:
         return StepValidation(issues=issues)
     return StepValidation(output=macro_fx(pack=pack, submission=submission).model_dump_json())

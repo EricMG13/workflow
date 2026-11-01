@@ -327,9 +327,9 @@ cents = st.integers(min_value=1, max_value=999_999).map(lambda n: D(n) / 100)
 multiples = st.lists(cents, min_size=3, max_size=12)
 
 
-def records(ms: Sequence[D]) -> list[vb.AdmittedRecord]:
+def records(ms: Sequence[D], kind: str = "peer") -> list[vb.AdmittedRecord]:
     return [
-        vb.AdmittedRecord("user_comps", "peer", f"P{i}", date(2025, 11, 30), "s", m, D(1))
+        vb.AdmittedRecord("user_comps", kind, f"P{i}", date(2025, 11, 30), "s", m, D(1))
         for i, m in enumerate(ms)
     ]
 
@@ -342,14 +342,28 @@ def test_property_min_median_max(ms: list[D]) -> None:
     assert s.n_admitted == len(ms)
 
 
-@given(st.lists(cents, min_size=0, max_size=8), st.sampled_from(["auto", "public_comps", "blend"]))
-def test_property_no_multiple_below_three(ms: list[D], requested: str) -> None:
-    pub = vb.admit(records(ms), AS_OF, 12)
-    sel = vb.select_basis(requested, pub, (), None, None, D(30))
-    if len(ms) < 3:
-        assert sel.multiple is None and sel.implied_ev is None
-    else:
-        assert requested == "blend" or sel.multiple is not None or sel.reason
+in_range = st.integers(min_value=1, max_value=9999).map(lambda n: D(n) / 100)
+some = st.lists(in_range, min_size=0, max_size=6)
+
+
+@given(some, some, st.sampled_from(["auto", "public_comps", "precedents", "blend"]))
+def test_property_no_multiple_below_three(
+    pub_ms: list[D], prec_ms: list[D], requested: str
+) -> None:
+    pub = vb.admit(records(pub_ms), AS_OF, 12)
+    prec = vb.admit(records(prec_ms, "precedent"), AS_OF, 36)
+    sel = vb.select_basis(requested, pub, prec, None, None, D(30))
+    enough = {
+        "auto": len(pub_ms) >= 3 or len(prec_ms) >= 3,
+        "public_comps": len(pub_ms) >= 3,
+        "precedents": len(prec_ms) >= 3,
+        "blend": len(pub_ms) >= 3 and len(prec_ms) >= 3,
+    }[requested]
+    # a multiple is returned exactly when the chosen set (both sets for blend) has >= 3 admitted
+    assert (sel.multiple is not None) is enough
+    assert (sel.implied_ev is not None) is enough
+    if requested == "auto" and len(pub_ms) < 3 <= len(prec_ms):
+        assert sel.selected_basis == "precedents"
 
 
 @given(multiples, st.randoms())
@@ -369,3 +383,141 @@ def test_property_outlier_count_matches_flags(ms: list[D]) -> None:
     med = cp1c.median(ms)
     flags = [cp1c.outlier(m, med) for m in ms]
     assert s.outliers == sum(1 for f in flags if f is not None and f[1] == "Outlier")
+
+
+# --- fix round 1: tests that kill the review mutants ----------------------------------------------
+
+
+def test_negative_ev_is_refused_with_its_own_reason() -> None:
+    (a,) = vb.admit([peer("n", "-5", "2")], AS_OF, 12)
+    assert not a.included and a.multiple is None
+    assert a.reason == "Excluded: enterprise value is negative"
+
+
+def test_stats_min_max_cover_admitted_records_only() -> None:
+    rows = vb.admit(
+        mult_peers("6", "7", "9")
+        + [peer("old", "1", "1", date(2024, 1, 1)), peer("big", "50", "1", date(2024, 1, 1))],
+        AS_OF,
+        12,
+    )
+    s = vb.stats(rows)
+    assert (s.n_total, s.n_admitted) == (5, 3)
+    assert (s.minimum, s.maximum) == (
+        D(6),
+        D(9),
+    )  # stale 1x and 50x are shown in the table, not in the range
+
+
+def test_implied_ev_zero_or_negative_ebitda_is_gap() -> None:
+    for e in ("0", "-1"):
+        sel = select("public_comps", admitted("7", "7", "7"), ebitda=e)
+        assert sel.multiple == D("7.00") and sel.implied_ev is None
+        assert sel.reason.endswith(
+            "implied EV not calculable: CP-1 LTM adjusted EBITDA is not a known positive amount"
+        )
+
+
+def test_user_multiple_zero_negative_and_rounding() -> None:
+    for v in ("0", "0.00", "-8.5"):
+        sel = select("user_multiple", usr=user(value=v))
+        assert sel.multiple is None and sel.implied_ev is None, v
+        assert sel.reason == "the user multiple is not above zero"
+    assert select("user_multiple", usr=user(value="8.505")).multiple == D("8.50")  # half-even
+    assert select("user_multiple", usr=user(value="8.515")).multiple == D("8.52")
+
+
+def test_implied_ev_uses_the_rounded_multiple() -> None:
+    sel = select("public_comps", admitted("7.125", "7.125", "7.125"))
+    assert sel.multiple == D("7.12") and sel.implied_ev == D("213.60")  # not 7.125 x 30.0 = 213.75
+
+
+def test_blend_averages_exact_medians_not_rounded_ones() -> None:
+    pub = vb.admit(mult_peers("7.004", "7.004", "7.004"), AS_OF, 12)
+    prec = vb.admit(mult_peers("7.007", "7.007", "7.007", kind="precedent"), AS_OF, 36)
+    sel = select("blend", pub, prec)
+    assert sel.multiple == D(
+        "7.01"
+    )  # (7.004 + 7.007) / 2 = 7.0055; the rounded 7.00 + 7.01 would give 7.00
+
+
+def test_blend_reason_states_medians_half_up() -> None:
+    pub = admitted("6", "7.125", "8.25")
+    prec = vb.admit(mult_peers("9", "9.5", "10", kind="precedent"), AS_OF, 36)
+    sel = select("blend", pub, prec)
+    assert sel.multiple == D("8.31")  # (7.125 + 9.5) / 2 = 8.3125
+    assert sel.reason == (
+        "blend: plain average of the public comps median 7.13 and the precedents median 9.50"
+    )
+
+
+def test_limit_is_tested_on_the_rounded_multiple() -> None:
+    assert select("public_comps", admitted("99.994", "99.994", "99.994")).multiple == D("99.99")
+    over = select("public_comps", admitted("99.995", "99.995", "99.995"))  # half-even gives 100.00
+    assert over.multiple is None and "100.00" in over.reason
+
+
+def test_issuer_reason_ev_is_half_up_at_one_dp() -> None:
+    sel = select("issuer_trading", iss=issuer(cap="", debt="", ev="270.25"))
+    assert "enterprise value 270.3 (stated, as of 2026-01-05)" in sel.reason
+    assert sel.multiple == D("9.01")
+
+
+def test_multiple_below_one_cent_is_gap() -> None:  # P7T2-R1
+    sel = select(
+        "public_comps", [a for a in vb.admit(mult_peers("0.002", "0.002", "0.002"), AS_OF, 12)]
+    )
+    assert sel.multiple is None and sel.implied_ev is None
+    assert "0.01" in sel.reason and "0.00" in sel.reason
+    assert select("user_multiple", usr=user(value="0.004")).multiple is None
+    assert (
+        select("public_comps", admitted("0.005", "0.005", "0.005")).multiple is None
+    )  # half-even 0.00
+    assert select("public_comps", admitted("0.015", "0.015", "0.015")).multiple == D("0.02")
+    assert select("public_comps", admitted("0.01", "0.01", "0.01")).multiple == D("0.01")
+
+
+def test_huge_inputs_give_the_over_limit_gap_never_an_exception() -> None:  # P7T2-R2
+    huge = "1" + "0" * 36
+    sel = select("public_comps", vb.admit([peer(f"h{i}", huge, "1") for i in range(3)], AS_OF, 12))
+    assert sel.multiple is None and sel.implied_ev is None and "99.99" in sel.reason
+    sel = select("issuer_trading", iss=issuer(cap="", debt="", ev="1" + "0" * 27), ebitda="1")
+    assert sel.multiple is None and "99.99" in sel.reason
+    sel = select("user_multiple", usr=user(value="1" + "0" * 40))
+    assert sel.multiple is None and "99.99" in sel.reason
+    big = select(
+        "issuer_trading", iss=issuer(cap="", debt="", ev="1" + "0" * 37), ebitda="1" + "0" * 36
+    )
+    assert big.multiple == D("10.00")  # a huge EV over an equally huge EBITDA is a normal multiple
+    pub = vb.admit(mult_peers(huge, huge, huge), AS_OF, 12)
+    prec = vb.admit(mult_peers("7", "7", "7", kind="precedent"), AS_OF, 36)
+    assert select("blend", pub, prec).multiple is None
+
+
+def test_non_finite_figures_are_refused() -> None:  # P7T2-R4
+    rows = vb.admit(
+        [
+            vb.AdmittedRecord(
+                "user_comps", "peer", "i", date(2025, 11, 30), "s", D("Infinity"), D(1)
+            ),
+            vb.AdmittedRecord("user_comps", "peer", "n", date(2025, 11, 30), "s", D(5), D("NaN")),
+            vb.AdmittedRecord("user_comps", "peer", "q", date(2025, 11, 30), "s", D("NaN"), D(1)),
+            vb.AdmittedRecord(
+                "user_comps", "peer", "j", date(2025, 11, 30), "s", D(5), D("-Infinity")
+            ),
+        ],
+        AS_OF,
+        12,
+    )
+    for a in rows:
+        assert not a.included and a.multiple is None
+        assert a.reason == "Excluded: enterprise value or EBITDA is not a finite number"
+
+
+def test_user_ntm_multiple_gives_an_implied_ev_reason() -> None:  # P7T2-R5
+    sel = select("user_multiple", usr=user(basis="NTM"))
+    assert sel.multiple == D("8.50") and sel.implied_ev is None
+    assert sel.reason == (
+        "user-supplied (NTM basis); rationale: Mid-point of sector LBO range; "
+        "implied EV not calculable: an NTM multiple is not applied to LTM EBITDA"
+    )

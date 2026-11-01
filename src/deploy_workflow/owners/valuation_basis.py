@@ -9,7 +9,7 @@ import calendar
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_UP, Decimal, localcontext
 
 from deploy_workflow.context import IssuerMarket, UserMultiple
 from deploy_workflow.owners import cp1c
@@ -20,6 +20,9 @@ PEER_MONTHS = 12
 PRECEDENT_MONTHS = 36
 # CP-4C's multiple field allows two digits and two decimals (`cp4c.py` MULTIPLE_PATTERN).
 MAX_MULTIPLE = Decimal("99.99")
+MIN_MULTIPLE = Decimal("0.01")
+# Above this a value cannot be rounded to 2 dp inside the 38-digit context; it is over the limit anyway.
+UNROUNDABLE = Decimal(10) ** 30
 CENTS = Decimal("0.01")
 TENTHS = Decimal("0.1")
 
@@ -30,7 +33,9 @@ NTM_GAP = "NTM needs a forecast EBITDA that CP-1C does not read"
 EBITDA_GAP = "CP-1 LTM adjusted EBITDA is not a known positive amount"
 EV_ZERO = "Excluded: enterprise value is zero"
 EV_NEGATIVE = "Excluded: enterprise value is negative"
+NOT_FINITE = "Excluded: enterprise value or EBITDA is not a finite number"
 EBITDA_NOT_POSITIVE = "Excluded: EBITDA is not above zero"
+NTM_NOT_APPLIED = "an NTM multiple is not applied to LTM EBITDA"
 NO_DATE = "Excluded: no deal date, the window cannot be checked"
 
 PUBLIC, PRECEDENTS, BLEND = "public_comps", "precedents", "blend"
@@ -89,6 +94,8 @@ def window_start(as_of: date, months: int) -> date:
 
 
 def _value_refusal(record: AdmittedRecord) -> str | None:
+    if not (record.ev.is_finite() and record.ebitda.is_finite()):
+        return NOT_FINITE
     if record.ev == 0:
         return EV_ZERO
     if record.ev < 0:
@@ -153,7 +160,26 @@ def _two_dp(value: Decimal) -> Decimal:
 
 
 def _one_dp(value: Decimal) -> str:
-    return str(value.quantize(TENTHS, rounding=ROUND_HALF_UP))
+    """Display rule (half-up, 1 dp), computed in CTX. Too large to round: shown unrounded."""
+    if value.copy_abs() >= UNROUNDABLE:
+        return format(value, "f")
+    with localcontext(CTX):
+        return str(value.quantize(TENTHS, rounding=ROUND_HALF_UP))
+
+
+def _shown_two_dp(value: Decimal) -> str:
+    """Display rule (half-up, 2 dp) as T1C.10 shows a multiple; the selection itself is half-even."""
+    if value.copy_abs() >= UNROUNDABLE:
+        return format(value, "f")
+    with localcontext(CTX):
+        return str(value.quantize(CENTS, rounding=ROUND_HALF_UP))
+
+
+def _limit_gap(
+    requested: str, basis: str, shown: str, edge: str, limit: Decimal, ebitda_basis: str
+) -> Selection:
+    reason = f"the selected multiple {shown} is {edge} the {limit} limit of the CP-4C field; no multiple is selected"
+    return _gap(requested, basis, reason, ebitda_basis)
 
 
 def _gap(
@@ -171,15 +197,13 @@ def _chosen(
     ebitda_basis: str = NOT_STATED,
 ) -> Selection:
     """A selected multiple (rounded half-even to 2 dp) and its implied EV; never clamped."""
+    if value >= UNROUNDABLE:  # cannot be rounded in CTX, and is far over the limit
+        return _limit_gap(requested, basis, str(value), "above", MAX_MULTIPLE, ebitda_basis)
     multiple = _two_dp(value)
     if multiple > MAX_MULTIPLE:
-        return _gap(
-            requested,
-            basis,
-            f"the selected multiple {multiple} is above the {MAX_MULTIPLE} limit of the CP-4C field; "
-            "no multiple is selected",
-            ebitda_basis,
-        )
+        return _limit_gap(requested, basis, str(multiple), "above", MAX_MULTIPLE, ebitda_basis)
+    if multiple < MIN_MULTIPLE:  # rounds to 0.00: CP-4C refuses a zero multiple
+        return _limit_gap(requested, basis, str(multiple), "below", MIN_MULTIPLE, ebitda_basis)
     if ebitda_basis == "NTM":  # an NTM multiple is not applied to LTM EBITDA
         return Selection(requested, basis, multiple, reason, ebitda_basis, None)
     if issuer_ebitda is None or issuer_ebitda <= 0:
@@ -231,8 +255,8 @@ def _blend(pub: SetStats, prec: SetStats, ebitda: Decimal | None) -> Selection:
         return _gap(BLEND, None, f"requested blend, {', '.join(short)}; no fallback")
     average = CTX.divide(CTX.add(pub.median, prec.median), Decimal(2))
     reason = (
-        f"blend: plain average of the public comps median {_two_dp(pub.median)} "
-        f"and the precedents median {_two_dp(prec.median)}"
+        f"blend: plain average of the public comps median {_shown_two_dp(pub.median)} "
+        f"and the precedents median {_shown_two_dp(prec.median)}"
     )
     return _chosen(BLEND, BLEND, average, reason, ebitda)
 
@@ -273,6 +297,8 @@ def _user(user: UserMultiple | None, ebitda: Decimal | None) -> Selection:
     reason = f"user-supplied ({user.basis} basis)"
     if user.rationale:
         reason += f"; rationale: {user.rationale}"
+    if user.basis == "NTM":
+        reason += f"; implied EV not calculable: {NTM_NOT_APPLIED}"
     return _chosen(USER, USER, value, reason, ebitda, user.basis)
 
 

@@ -321,7 +321,7 @@
           "readiness": "BLOCKED",
           "evidence_demand": "A dated decision record is required; none is in the pack",
           "source_ids": [],
-          "rationale": "Outcome sources exist, but there is no decision record to attribute them to, and the thesis must not be reconstructed.",
+          "rationale": "The pack holds no prior decision record and no outcome source, and the CP-8 oracle was frozen on other run fields (as_of 2026-04-30), so CP-8 is not covered by this case.",
           "citations": [],
           "missing_source": "prior_case",
           "limitations": [

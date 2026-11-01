@@ -168,9 +168,13 @@ def compose(
     # CP-8 is in the portfolio_decision plan, so CP-0 must assess it. The CP-8 oracle ran on
     # other run fields and sources; its own "no Prior Case record" row and gap are the one CP-8
     # fact that holds here (the pack has no Prior Case record), minus its outcome-source
-    # attachments, which are not in this pack.
+    # attachments and its rationale about outcome sources, which are not in this pack.
     row = copy.deepcopy(next(c for c in cp8["consumers"] if c["module_id"] == "CP-8"))
     row["source_ids"], row["citations"] = [], []
+    row["rationale"] = (
+        "The pack holds no prior decision record and no outcome source, and the CP-8 oracle was "
+        "frozen on other run fields (as_of 2026-04-30), so CP-8 is not covered by this case."
+    )
     gap = copy.deepcopy(cp8["gaps"][0])
     readiness["consumers"].append(row)
     readiness["gaps"].append(gap)
@@ -342,7 +346,7 @@ def build(out_dir: Path) -> None:
             "pack_sha256 placeholder bound to the pack hash above",
             "readiness_review: added source row for `context` (own cited line)",
             "cp1_source_context: added source row for `context` (own cited line), required by validate_source_context (every prepared source assessed once)",
-            "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack",
+            "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied and the rationale rewritten to what this pack holds: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack",
         ],
         "dropped_modules": {
             "CP-8": "oracle frozen on other run fields (cases/cp8-owner/manifest.json, as_of 2026-04-30, a different pack); no CP-8 submission here. The preset still plans CP-8, so the run stops at CP-8 (BLOCKED row above)",

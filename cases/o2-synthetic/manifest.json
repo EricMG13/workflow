@@ -81,7 +81,7 @@
     "pack_sha256 placeholder bound to the pack hash above",
     "readiness_review: added source row for `context` (own cited line)",
     "cp1_source_context: added source row for `context` (own cited line), required by validate_source_context (every prepared source assessed once)",
-    "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack"
+    "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied and the rationale rewritten to what this pack holds: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack"
   ],
   "dropped_modules": {
     "CP-8": "oracle frozen on other run fields (cases/cp8-owner/manifest.json, as_of 2026-04-30, a different pack); no CP-8 submission here. The preset still plans CP-8, so the run stops at CP-8 (BLOCKED row above)",
@@ -110,6 +110,6 @@
     "financial.txt": "7f981c9ed026e33cd7553c929ef8c9f40782c5d2b05ce842e4b0a84c1520d405",
     "business.txt": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
     "market.txt": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
-    "submissions.json": "cd8c39345950cb20bd17a736a31a6f4c9c591651c5d991399bf50ae51ed7378a"
+    "submissions.json": "9e41f088ff10aa048d36076727a88ab61b6ced997f9e2f2226263f0b79511092"
   }
 }

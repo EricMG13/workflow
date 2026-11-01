@@ -17,14 +17,26 @@ whole-string ASCII ``NUM`` match; anything else is reported as typed and never e
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from decimal import Context, Decimal
+from typing import Any
 
 from pydantic import JsonValue
 
 from deploy_vii.execution import clipped
 from deploy_vii.preparation import PreparedPack
-from deploy_workflow.context import NUM, RunContext, context_facts
+from deploy_workflow.context import (
+    NUM,
+    Cp2aPins,
+    Cp2aScenario,
+    Cp2dPins,
+    Cp2ePins,
+    Cp3cPins,
+    Cp3dPins,
+    Cp4cPins,
+    RunContext,
+    context_facts,
+)
 
 Pin = Decimal | tuple[Decimal, ...] | tuple[tuple[Decimal, Decimal], ...]
 Submitted = str | None | Sequence[str | None] | Sequence[Mapping[str, str | None]]
@@ -65,17 +77,81 @@ def _slice_name(module_id: str) -> str:
 
 
 def _plain(value: Decimal) -> str:
-    """``value`` without exponent or trailing zeros: ``100`` stays ``100``, ``10.50`` is ``10.5``."""
-    if value == 0:
-        return "0"
-    return format(value.normalize(), "f")
+    """``value`` as plain digits, no exponent, no trailing zeros: ``100``, ``10.5``, ``0``.
+
+    Exact at any precision and under any caller ``localcontext``: ``format(value, "f")`` and a
+    text strip never round (``normalize()`` would, at the context precision).
+    """
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text if text not in ("", "-0") else "0"
 
 
 def _fraction(percent: str) -> Decimal:
     return _PERCENT.divide(Decimal(percent), _HUNDRED)
 
 
+def _plural(count: int, noun: str) -> str:
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+# The module's slice of ``assumptions`` and its context path root, once per call.
+def _slice_of(module_id: str, ctx: RunContext) -> tuple[Any, str] | None:
+    name = _slice_name(module_id)
+    piece = getattr(ctx.assumptions, name)
+    return None if piece is None else (piece, f"assumptions.{name}")
+
+
 # -- the pins ------------------------------------------------------------------------------
+
+
+def _pins_cp2a(piece: Cp2aPins, root: str) -> dict[str, Pin]:
+    return {
+        f"{root}.scenarios": tuple(
+            (_fraction(s.ebitda_decline_pct), _fraction(s.interest_increase_pct))
+            for s in piece.scenarios
+        )
+    }
+
+
+def _pins_cp2d(piece: Cp2dPins, root: str) -> dict[str, Pin]:
+    return {
+        f"{root}.horizon_months": Decimal(piece.horizon_months),
+        f"{root}.minimum_cash_m": Decimal(piece.minimum_cash_m),
+    }
+
+
+def _pins_cp2e(piece: Cp2ePins, root: str) -> dict[str, Pin]:
+    pins: dict[str, Pin] = {
+        f"{root}.rate_shocks_bps": tuple(Decimal(x) for x in piece.rate_shocks_bps),
+        f"{root}.fx_shocks_pct": tuple(Decimal(x) for x in piece.fx_shocks_pct),
+    }
+    if piece.hedge_ratio_pct != "":
+        pins[f"{root}.hedge_ratio_pct"] = Decimal(piece.hedge_ratio_pct)
+    return pins
+
+
+def _pins_cp3c(piece: Cp3cPins, root: str) -> dict[str, Pin]:
+    return {f"{root}.repricing_bps": Decimal(piece.repricing_bps)}
+
+
+def _pins_cp3d(piece: Cp3dPins, root: str) -> dict[str, Pin]:
+    return {f"{root}.recovery_pct": Decimal(piece.recovery_pct)}
+
+
+def _pins_cp4c(piece: Cp4cPins, root: str) -> dict[str, Pin]:
+    return {f"{root}.ev_multiple": Decimal(piece.ev_multiple)}
+
+
+_PINNERS: dict[str, Callable[[Any, str], dict[str, Pin]]] = {
+    "CP-2A": _pins_cp2a,
+    "CP-2D": _pins_cp2d,
+    "CP-2E": _pins_cp2e,
+    "CP-3C": _pins_cp3c,
+    "CP-3D": _pins_cp3d,
+    "CP-4C": _pins_cp4c,
+}
 
 
 def pins_from_context(module_id: str, ctx: RunContext) -> Mapping[str, Pin] | None:
@@ -84,40 +160,8 @@ def pins_from_context(module_id: str, ctx: RunContext) -> Mapping[str, Pin] | No
     CP-2A scenarios are ``(decline, interest)`` fraction pairs (the submission's units); a blank
     CP-2E hedge ratio has no key. Every other value is the typed number, unchanged.
     """
-    name = _slice_name(module_id)
-    a = ctx.assumptions
-    root = f"assumptions.{name}"
-    if module_id == "CP-2A":
-        if a.cp2a is None:
-            return None
-        return {
-            f"{root}.scenarios": tuple(
-                (_fraction(s.ebitda_decline_pct), _fraction(s.interest_increase_pct))
-                for s in a.cp2a.scenarios
-            )
-        }
-    if module_id == "CP-2D":
-        if a.cp2d is None:
-            return None
-        return {
-            f"{root}.horizon_months": Decimal(a.cp2d.horizon_months),
-            f"{root}.minimum_cash_m": Decimal(a.cp2d.minimum_cash_m),
-        }
-    if module_id == "CP-2E":
-        if a.cp2e is None:
-            return None
-        pins: dict[str, Pin] = {
-            f"{root}.rate_shocks_bps": tuple(Decimal(x) for x in a.cp2e.rate_shocks_bps),
-            f"{root}.fx_shocks_pct": tuple(Decimal(x) for x in a.cp2e.fx_shocks_pct),
-        }
-        if a.cp2e.hedge_ratio_pct != "":
-            pins[f"{root}.hedge_ratio_pct"] = Decimal(a.cp2e.hedge_ratio_pct)
-        return pins
-    if module_id == "CP-3C":
-        return None if a.cp3c is None else {f"{root}.repricing_bps": Decimal(a.cp3c.repricing_bps)}
-    if module_id == "CP-3D":
-        return None if a.cp3d is None else {f"{root}.recovery_pct": Decimal(a.cp3d.recovery_pct)}
-    return None if a.cp4c is None else {f"{root}.ev_multiple": Decimal(a.cp4c.ev_multiple)}
+    found = _slice_of(module_id, ctx)
+    return None if found is None else _PINNERS[module_id](*found)
 
 
 def pins_of(module_id: str, pack: PreparedPack) -> Mapping[str, Pin] | None:
@@ -134,52 +178,6 @@ def pins_of(module_id: str, pack: PreparedPack) -> Mapping[str, Pin] | None:
 # -- the submission form ---------------------------------------------------------------------
 
 
-def form_from_context(module_id: str, ctx: RunContext) -> Mapping[str, JsonValue] | None:
-    """What a submission that honours the pins carries, keyed by submission path.
-
-    Values are normalised strings (``_plain``); nothing is rounded. ``None`` when not pinned.
-    """
-    pins = pins_from_context(module_id, ctx)
-    if pins is None:
-        return None
-    root = f"assumptions.{_SLICES[module_id]}"
-    if module_id == "CP-2A":
-        scenarios = pins[f"{root}.scenarios"]
-        assert isinstance(scenarios, tuple)
-        return {
-            "scenarios": [
-                {"ebitda_decline": _plain(pair[0]), "interest_increase": _plain(pair[1])}
-                for pair in scenarios
-                if isinstance(pair, tuple)
-            ]
-        }
-    if module_id == "CP-2D":
-        return {
-            "horizon_months": _scalar(pins, f"{root}.horizon_months"),
-            "minimum_cash.amount": _scalar(pins, f"{root}.minimum_cash_m"),
-        }
-    if module_id == "CP-2E":
-        form: dict[str, JsonValue] = {
-            "rate_shocks_bp": _series(pins, f"{root}.rate_shocks_bps"),
-            "fx_shocks_percent": _series(pins, f"{root}.fx_shocks_pct"),
-        }
-        if f"{root}.hedge_ratio_pct" in pins:
-            form["hedge_ratio.percent_text"] = _scalar(pins, f"{root}.hedge_ratio_pct")
-        return form
-    if module_id == "CP-3C":
-        return {"repricing.bps": _scalar(pins, f"{root}.repricing_bps")}
-    if module_id == "CP-3D":
-        return {"recovery.percent_text": _scalar(pins, f"{root}.recovery_pct")}
-    return {"valuation[*].multiple": _scalar(pins, f"{root}.ev_multiple")}
-
-
-def submission_form(module_id: str, pack: PreparedPack) -> Mapping[str, JsonValue] | None:
-    """``form_from_context`` for the pack's frozen context; ``None`` when there is no pin."""
-    _slice_name(module_id)
-    ctx = context_facts(pack)
-    return None if ctx is None else form_from_context(module_id, ctx)
-
-
 def _scalar(pins: Mapping[str, Pin], key: str) -> str:
     value = pins[key]
     if not isinstance(value, Decimal):
@@ -192,6 +190,78 @@ def _series(pins: Mapping[str, Pin], key: str) -> list[JsonValue]:
     if not isinstance(value, tuple):
         raise TypeError(f"{key} is not a list of numbers")
     return [_plain(x) for x in value if isinstance(x, Decimal)]
+
+
+def _form_cp2a(pins: Mapping[str, Pin], root: str) -> dict[str, JsonValue]:
+    scenarios = pins[f"{root}.scenarios"]
+    if not isinstance(scenarios, tuple):
+        raise TypeError(f"{root}.scenarios is not a list")
+    return {
+        "scenarios": [
+            {"ebitda_decline": _plain(pair[0]), "interest_increase": _plain(pair[1])}
+            for pair in scenarios
+            if isinstance(pair, tuple)
+        ]
+    }
+
+
+def _form_cp2d(pins: Mapping[str, Pin], root: str) -> dict[str, JsonValue]:
+    return {
+        "horizon_months": _scalar(pins, f"{root}.horizon_months"),
+        "minimum_cash.amount": _scalar(pins, f"{root}.minimum_cash_m"),
+    }
+
+
+def _form_cp2e(pins: Mapping[str, Pin], root: str) -> dict[str, JsonValue]:
+    form: dict[str, JsonValue] = {
+        "rate_shocks_bp": _series(pins, f"{root}.rate_shocks_bps"),
+        "fx_shocks_percent": _series(pins, f"{root}.fx_shocks_pct"),
+    }
+    if f"{root}.hedge_ratio_pct" in pins:
+        form["hedge_ratio.percent_text"] = _scalar(pins, f"{root}.hedge_ratio_pct")
+    return form
+
+
+def _form_cp3c(pins: Mapping[str, Pin], root: str) -> dict[str, JsonValue]:
+    return {"repricing.bps": _scalar(pins, f"{root}.repricing_bps")}
+
+
+def _form_cp3d(pins: Mapping[str, Pin], root: str) -> dict[str, JsonValue]:
+    return {"recovery.percent_text": _scalar(pins, f"{root}.recovery_pct")}
+
+
+def _form_cp4c(pins: Mapping[str, Pin], root: str) -> dict[str, JsonValue]:
+    return {"valuation[*].multiple": _scalar(pins, f"{root}.ev_multiple")}
+
+
+_FORMS: dict[str, Callable[[Mapping[str, Pin], str], dict[str, JsonValue]]] = {
+    "CP-2A": _form_cp2a,
+    "CP-2D": _form_cp2d,
+    "CP-2E": _form_cp2e,
+    "CP-3C": _form_cp3c,
+    "CP-3D": _form_cp3d,
+    "CP-4C": _form_cp4c,
+}
+
+
+def form_from_context(module_id: str, ctx: RunContext) -> Mapping[str, JsonValue] | None:
+    """What a submission that honours the pins carries, keyed by submission path.
+
+    Values are normalised strings (``_plain``); nothing is rounded. ``None`` when not pinned.
+    """
+    found = _slice_of(module_id, ctx)
+    if found is None:
+        return None
+    pins = pins_from_context(module_id, ctx)
+    assert pins is not None
+    return _FORMS[module_id](pins, found[1])
+
+
+def submission_form(module_id: str, pack: PreparedPack) -> Mapping[str, JsonValue] | None:
+    """``form_from_context`` for the pack's frozen context; ``None`` when there is no pin."""
+    _slice_name(module_id)
+    ctx = context_facts(pack)
+    return None if ctx is None else form_from_context(module_id, ctx)
 
 
 # -- the comparison --------------------------------------------------------------------------
@@ -249,6 +319,153 @@ def _joined(items: Sequence[str | None]) -> str | None:
     return ", ".join("absence" if item is None else item for item in items)
 
 
+def _pin_decimal(pins: Mapping[str, Pin], path: str) -> Decimal:
+    pin = pins[path]
+    if not isinstance(pin, Decimal):
+        raise TypeError(f"{path} is not a single number")
+    return pin
+
+
+def _scalar_lines(
+    submitted: Mapping[str, Submitted], pins: Mapping[str, Pin], path: str, key: str, typed: str
+) -> list[str]:
+    sent = _text(submitted.get(key), key)
+    return [] if _same(_pin_decimal(pins, path), sent) else [mismatch(path, typed, sent)]
+
+
+def _series_lines(
+    submitted: Mapping[str, Submitted],
+    pins: Mapping[str, Pin],
+    path: str,
+    key: str,
+    typed: tuple[str, ...],
+) -> list[str]:
+    sent = _texts(submitted.get(key), key)
+    pin = pins[path]
+    if not isinstance(pin, tuple):
+        raise TypeError(f"{path} is not a list of numbers")
+    numbers = tuple(p for p in pin if isinstance(p, Decimal))
+    if _same_list(numbers, sent):
+        return []
+    return [mismatch(path, ", ".join(typed), _joined(sent))]
+
+
+def _rows(raw: Submitted) -> list[Mapping[str, str | None]]:
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        raise TypeError("scenarios must be a list")
+    rows: list[Mapping[str, str | None]] = []
+    for row in raw:
+        if not isinstance(row, Mapping):
+            raise TypeError("scenarios must be a list of objects")
+        rows.append(row)
+    return rows
+
+
+def _scenario_lines(
+    root: str, i: int, row: Mapping[str, str | None], typed: Cp2aScenario, pair: object
+) -> list[str]:
+    if not isinstance(pair, tuple):
+        raise TypeError(f"{root}.scenarios[{i}] is not a pair")
+    fields = (
+        ("ebitda_decline_pct", "ebitda_decline", typed.ebitda_decline_pct, pair[0]),
+        ("interest_increase_pct", "interest_increase", typed.interest_increase_pct, pair[1]),
+    )
+    lines: list[str] = []
+    for field, key, pin_text, pin in fields:
+        sent = _text(row.get(key), f"scenarios[{i}].{key}")
+        if not _same(pin, sent):
+            shown = f"{_plain(pin)} ({pin_text}%)"
+            lines.append(mismatch(f"{root}.scenarios[{i}].{field}", shown, sent))
+    return lines
+
+
+def _issues_cp2a(
+    piece: Cp2aPins, pins: Mapping[str, Pin], root: str, submitted: Mapping[str, Submitted]
+) -> list[str]:
+    rows = _rows(submitted.get("scenarios"))
+    count = len(piece.scenarios)
+    if len(rows) != count:
+        return [mismatch(f"{root}.scenarios", _plural(count, "scenario"), str(len(rows)))]
+    pairs = pins[f"{root}.scenarios"]
+    if not isinstance(pairs, tuple):
+        raise TypeError(f"{root}.scenarios is not a list")
+    lines: list[str] = []
+    for i, (row, typed, pair) in enumerate(zip(rows, piece.scenarios, pairs, strict=True)):
+        lines.extend(_scenario_lines(root, i, row, typed, pair))
+    return lines
+
+
+def _issues_cp2d(
+    piece: Cp2dPins, pins: Mapping[str, Pin], root: str, submitted: Mapping[str, Submitted]
+) -> list[str]:
+    horizon, cash = f"{root}.horizon_months", f"{root}.minimum_cash_m"
+    return [
+        *_scalar_lines(submitted, pins, horizon, "horizon_months", piece.horizon_months),
+        *_scalar_lines(submitted, pins, cash, "minimum_cash.amount", piece.minimum_cash_m),
+    ]
+
+
+def _issues_cp2e(
+    piece: Cp2ePins, pins: Mapping[str, Pin], root: str, submitted: Mapping[str, Submitted]
+) -> list[str]:
+    lines = [
+        *_series_lines(
+            submitted, pins, f"{root}.rate_shocks_bps", "rate_shocks_bp", piece.rate_shocks_bps
+        ),
+        *_series_lines(
+            submitted, pins, f"{root}.fx_shocks_pct", "fx_shocks_percent", piece.fx_shocks_pct
+        ),
+    ]
+    hedge = f"{root}.hedge_ratio_pct"
+    if hedge in pins:
+        key = "hedge_ratio.percent_text"
+        lines.extend(_scalar_lines(submitted, pins, hedge, key, piece.hedge_ratio_pct))
+    return lines
+
+
+def _issues_cp3c(
+    piece: Cp3cPins, pins: Mapping[str, Pin], root: str, submitted: Mapping[str, Submitted]
+) -> list[str]:
+    path = f"{root}.repricing_bps"
+    return _scalar_lines(submitted, pins, path, "repricing.bps", piece.repricing_bps)
+
+
+def _issues_cp3d(
+    piece: Cp3dPins, pins: Mapping[str, Pin], root: str, submitted: Mapping[str, Submitted]
+) -> list[str]:
+    path = f"{root}.recovery_pct"
+    return _scalar_lines(submitted, pins, path, "recovery.percent_text", piece.recovery_pct)
+
+
+def _issues_cp4c(
+    piece: Cp4cPins, pins: Mapping[str, Pin], root: str, submitted: Mapping[str, Submitted]
+) -> list[str]:
+    """One line per submitted multiple that differs; one absence line when none is submitted."""
+    path = f"{root}.ev_multiple"
+    pin = _pin_decimal(pins, path)
+    key = "valuation[*].multiple"
+    sent = _texts(submitted.get(key), key)
+    if not sent:
+        return [mismatch(path, piece.ev_multiple, None)]
+    return [
+        mismatch(path, piece.ev_multiple, text, at=f"valuation[{i}].multiple")
+        for i, text in enumerate(sent)
+        if not _same(pin, text)
+    ]
+
+
+_CHECKS: dict[str, Callable[[Any, Mapping[str, Pin], str, Mapping[str, Submitted]], list[str]]] = {
+    "CP-2A": _issues_cp2a,
+    "CP-2D": _issues_cp2d,
+    "CP-2E": _issues_cp2e,
+    "CP-3C": _issues_cp3c,
+    "CP-3D": _issues_cp3d,
+    "CP-4C": _issues_cp4c,
+}
+
+
 def pin_issues_from_context(
     module_id: str, ctx: RunContext | None, submitted: Mapping[str, Submitted]
 ) -> tuple[str, ...]:
@@ -256,106 +473,18 @@ def pin_issues_from_context(
 
     ``submitted`` is keyed like ``form_from_context``; CP-4C's ``valuation[*].multiple`` is the
     list of the submitted multiples, one per valuation case, in case order. A missing key is
-    absence. Nothing is returned when ``ctx`` is ``None`` or the module is not pinned.
+    absence (CP-4C: one absence line when no multiple is submitted at all). Nothing is returned
+    when ``ctx`` is ``None`` or the module is not pinned.
     """
     _slice_name(module_id)
     if ctx is None:
         return ()
-    pins = pins_from_context(module_id, ctx)
-    if pins is None:
+    found = _slice_of(module_id, ctx)
+    if found is None:
         return ()
-    root = f"assumptions.{_SLICES[module_id]}"
-    a = ctx.assumptions
-    lines: list[str] = []
-
-    def scalar(path: str, key: str, typed: str) -> None:
-        sent = _text(submitted.get(key), key)
-        pin = pins[path]
-        assert isinstance(pin, Decimal)
-        if not _same(pin, sent):
-            lines.append(mismatch(path, typed, sent))
-
-    def series(path: str, key: str, typed: tuple[str, ...]) -> None:
-        sent = _texts(submitted.get(key), key)
-        pin = pins[path]
-        assert isinstance(pin, tuple)
-        if not _same_list(tuple(p for p in pin if isinstance(p, Decimal)), sent):
-            lines.append(mismatch(path, ", ".join(typed), _joined(sent)))
-
-    if module_id == "CP-2A":
-        assert a.cp2a is not None
-        raw = submitted.get("scenarios")
-        if raw is None:
-            rows: list[Mapping[str, str | None]] = []
-        elif isinstance(raw, str):
-            raise TypeError("scenarios must be a list")
-        else:
-            rows = []
-            for row in raw:
-                if not isinstance(row, Mapping):
-                    raise TypeError("scenarios must be a list of objects")
-                rows.append(row)
-        typed_rows = a.cp2a.scenarios
-        if len(rows) != len(typed_rows):
-            lines.append(
-                mismatch(f"{root}.scenarios", f"{len(typed_rows)} scenarios", str(len(rows)))
-            )
-        else:
-            pairs = pins[f"{root}.scenarios"]
-            assert isinstance(pairs, tuple)
-            for i, (row, typed, pair) in enumerate(zip(rows, typed_rows, pairs, strict=True)):
-                assert isinstance(pair, tuple)
-                for field, key, pin_text, pin in (
-                    ("ebitda_decline_pct", "ebitda_decline", typed.ebitda_decline_pct, pair[0]),
-                    (
-                        "interest_increase_pct",
-                        "interest_increase",
-                        typed.interest_increase_pct,
-                        pair[1],
-                    ),
-                ):
-                    sent = _text(row.get(key), f"scenarios[{i}].{key}")
-                    assert isinstance(pin, Decimal)
-                    if not _same(pin, sent):
-                        lines.append(
-                            mismatch(
-                                f"{root}.scenarios[{i}].{field}",
-                                f"{_plain(pin)} ({pin_text}%)",
-                                sent,
-                            )
-                        )
-    elif module_id == "CP-2D":
-        assert a.cp2d is not None
-        scalar(f"{root}.horizon_months", "horizon_months", a.cp2d.horizon_months)
-        scalar(f"{root}.minimum_cash_m", "minimum_cash.amount", a.cp2d.minimum_cash_m)
-    elif module_id == "CP-2E":
-        assert a.cp2e is not None
-        series(f"{root}.rate_shocks_bps", "rate_shocks_bp", a.cp2e.rate_shocks_bps)
-        series(f"{root}.fx_shocks_pct", "fx_shocks_percent", a.cp2e.fx_shocks_pct)
-        if f"{root}.hedge_ratio_pct" in pins:
-            scalar(f"{root}.hedge_ratio_pct", "hedge_ratio.percent_text", a.cp2e.hedge_ratio_pct)
-    elif module_id == "CP-3C":
-        assert a.cp3c is not None
-        scalar(f"{root}.repricing_bps", "repricing.bps", a.cp3c.repricing_bps)
-    elif module_id == "CP-3D":
-        assert a.cp3d is not None
-        scalar(f"{root}.recovery_pct", "recovery.percent_text", a.cp3d.recovery_pct)
-    else:
-        assert a.cp4c is not None
-        pin = pins[f"{root}.ev_multiple"]
-        assert isinstance(pin, Decimal)
-        key = "valuation[*].multiple"
-        for i, sent in enumerate(_texts(submitted.get(key), key)):
-            if not _same(pin, sent):
-                lines.append(
-                    mismatch(
-                        f"{root}.ev_multiple",
-                        a.cp4c.ev_multiple,
-                        sent,
-                        at=f"valuation[{i}].multiple",
-                    )
-                )
-    return tuple(lines)
+    piece, root = found
+    pins = _PINNERS[module_id](piece, root)
+    return tuple(_CHECKS[module_id](piece, pins, root, submitted))
 
 
 def pin_issues(

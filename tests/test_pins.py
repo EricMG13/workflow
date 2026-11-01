@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 
 import pytest
@@ -23,6 +23,7 @@ from deploy_workflow.context import (
     preparation_request,
 )
 from deploy_workflow.owners.pins import (
+    _plain,
     form_from_context,
     mismatch,
     pin_issues,
@@ -291,6 +292,75 @@ def test_a_scalar_pin_given_a_list_is_a_caller_error(tmp_path: Path) -> None:
     pack = _pack(tmp_path, FULL)
     with pytest.raises(TypeError, match="repricing.bps"):
         pin_issues("CP-3C", pack, {"repricing.bps": ["50"]})
+
+
+def test_cp4c_fails_closed_without_submitted_multiples(tmp_path: Path) -> None:
+    pack = _pack(tmp_path, FULL)
+    absence = ("assumptions.cp4c.ev_multiple: pinned 8.5; submitted absence",)
+    assert pin_issues("CP-4C", pack, {}) == absence
+    assert pin_issues("CP-4C", pack, {"valuation[*].multiple": []}) == absence
+    assert pin_issues("CP-4C", pack, {"valuation.multiple": ["8.5"]}) == absence
+
+
+def test_one_scenario_pin_is_singular(tmp_path: Path) -> None:
+    doc = json.loads(FULL)
+    doc["assumptions"]["cp2a"]["scenarios"] = doc["assumptions"]["cp2a"]["scenarios"][:1]
+    pack = _pack(tmp_path, json.dumps(doc).encode("utf-8"))
+    assert pin_issues("CP-2A", pack, {"scenarios": []}) == (
+        "assumptions.cp2a.scenarios: pinned 1 scenario; submitted 0",
+    )
+
+
+def test_more_scenarios_than_pinned_is_a_count_line(tmp_path: Path) -> None:
+    pack = _pack(tmp_path, FULL)
+    row: dict[str, str | None] = {"ebitda_decline": "0.2", "interest_increase": "0.1"}
+    rows = [row, row, row]
+    assert pin_issues("CP-2A", pack, {"scenarios": rows}) == (
+        "assumptions.cp2a.scenarios: pinned 2 scenarios; submitted 3",
+    )
+
+
+def test_empty_shock_list_is_absence(tmp_path: Path) -> None:
+    pack = _pack(tmp_path, FULL)
+    assert pin_issues(
+        "CP-2E",
+        pack,
+        {"rate_shocks_bp": [], "fx_shocks_percent": ["10"], "hedge_ratio.percent_text": "60"},
+    ) == ("assumptions.cp2e.rate_shocks_bps: pinned 100, 200; submitted absence",)
+
+
+# the form rounds nothing, whatever the caller's decimal context ------------------------------
+
+BIG = "123456789012345678901234567890.5"
+
+
+def test_form_keeps_more_than_28_digits_and_ignores_caller_precision(tmp_path: Path) -> None:
+    doc = json.loads(FULL)
+    doc["assumptions"]["cp2d"]["minimum_cash_m"] = BIG
+    pack = _pack(tmp_path, json.dumps(doc).encode("utf-8"))
+    for prec in (4, 28, 100):
+        with localcontext() as ctx:
+            ctx.prec = prec
+            form = submission_form("CP-2D", pack)
+            assert form is not None
+            assert form["minimum_cash.amount"] == BIG
+            assert (
+                pin_issues("CP-2D", pack, {"horizon_months": "18", "minimum_cash.amount": BIG})
+                == ()
+            )
+
+
+def test_plain_is_exact_for_tiny_and_trailing_zero_values() -> None:
+    with localcontext() as ctx:
+        ctx.prec = 4
+        assert _plain(Decimal("1E-29")) == "0." + "0" * 28 + "1"
+        assert (
+            _plain(Decimal("1.2300000000000000000000000000000E+31"))
+            == "12300000000000000000000000000000"
+        )
+        assert _plain(Decimal("10.500")) == "10.5"
+        assert _plain(Decimal(100)) == "100"
+        assert _plain(Decimal("0.00")) == "0"
 
 
 # (4c) the pinned sentence ----------------------------------------------------------------

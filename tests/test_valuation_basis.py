@@ -4,13 +4,13 @@ The inputs below are written from the frozen oracle `cases/valuation-context-own
 (rules, hand_derived, cases.*.cp1c.selection) and the plan's Task 0 tables, not from the module.
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import date
 from decimal import Decimal as D
 from random import Random
 from typing import Any
 
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from deploy_workflow.context import IssuerMarket, UserMultiple
@@ -346,7 +346,22 @@ in_range = st.integers(min_value=1, max_value=9999).map(lambda n: D(n) / 100)
 some = st.lists(in_range, min_size=0, max_size=6)
 
 
-@given(some, some, st.sampled_from(["auto", "public_comps", "precedents", "blend"]))
+BASES = ("public_comps", "precedents", "blend", "auto")
+# Boundary sizes (admitted public, admitted precedents) Hypothesis reaches only by chance: pinned.
+EDGE_SIZES = ((3, 2), (2, 3), (2, 2), (3, 0), (0, 3))
+
+
+def edge_examples(test: Callable[..., None]) -> Callable[..., None]:
+    for n_pub, n_prec in EDGE_SIZES:
+        for basis in BASES:
+            pub_ms = [D(5 + i) for i in range(n_pub)]
+            prec_ms = [D(8 + i) for i in range(n_prec)]
+            test = example(pub_ms, prec_ms, basis)(test)
+    return test
+
+
+@given(some, some, st.sampled_from(BASES))
+@edge_examples
 def test_property_no_multiple_below_three(
     pub_ms: list[D], prec_ms: list[D], requested: str
 ) -> None:

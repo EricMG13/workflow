@@ -488,9 +488,9 @@
       "ctx-research": []
     },
     "cp0_row": "issuer Northbridge Synthetic Group and the identity gate word `confirmed` printed beside the borrower and alias rows, unchanged",
-    "cp1_row": "ctx-b-match, ctx-b-punct: `match`; ctx-b-mismatch: the gap text below; ctx-research: no row (not_supplied)",
+    "cp1_row": "ctx-b-match, ctx-b-punct: `match`; ctx-b-mismatch: the gap text below; ctx-research: the compare result `not_supplied` (fixed text `not_supplied`, no gap)",
     "ctx-b-mismatch_gap_text": "borrower_name_mismatch: context names \"Southbridge Holdings LLC\", CP-1 locates \"Northbridge Holdings LLC\"",
-    "ctx-research": "section holds none of the four optional rows; the preparer-fixed rule is that a section with no rows is omitted entirely (page bytes equal today's) because ctx-research supplies no field to show",
+    "ctx-research": "a context source always produces the section (plan :258-261): the CP-0 group holds the issuer name and the identity_gate word `confirmed`; the CP-1 group holds the compare result `not_supplied`; no borrower, aliases, sector or sponsor rows",
     "sponsor_vs_business_source": "ctx-b-match shows sponsor 'Fictional Partners' as user-supplied although the business source says it identifies no financial sponsor; no gap is raised",
     "no_context_source": "page bytes equal today's delivery bytes",
     "html_escaping": {
@@ -589,7 +589,7 @@
     "snapshot_expected_json_hash_hits_to_substitute": 2
   },
   "inherited_gaps": [
-    "Plan table says ctx-research has identity 'as ctx-match' while the Expected-values text says 'empty optional fields': frozen here as EMPTY optional fields (borrower, aliases, sector, sponsor), which serves both the omitted-rows and borrower-not_supplied expectations.",
+    "Plan table says ctx-research has identity 'as ctx-match' while the Expected-values text says 'empty optional fields': frozen here as EMPTY optional fields (borrower, aliases, sector, sponsor), which serves both the omitted-optional-rows and borrower-not_supplied expectations (the section itself is still rendered).",
     "Pack B's frozen financial_pack_limitation and the CP-1 entity/review limitations still read 'borrower, guarantor and restricted perimeters unavailable' (a statement about the financial source's perimeters, pinned in cases/financial); beside the new identity borrower line it reads as stale but is left byte-identical.",
     "The snapshot `business` source says it identifies no financial sponsor; a context sponsor on pack B is user-supplied with no gap (plan ruling).",
     "Plan 'scope-mapped' is read as: the borrower entity maps to one `unspecified` scope on the identity assessment (not to financial scopes). If the controller means a financial scope, T4.2 and the facts would change and this case needs a ruling.",

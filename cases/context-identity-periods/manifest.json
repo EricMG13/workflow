@@ -325,7 +325,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "fcef73b943d4e5c77f0cf42ab66250ec57a3f970c8eefeed23b9b7303cfb2706",
+    "sha256": "4543dba7604ab0888840d5004377b965a8ad535bf5192525d0506127f82f29e2",
     "run": "python3 -I cases/context-identity-periods/builder/build.py"
   },
   "files_sha256": {
@@ -343,10 +343,10 @@
     "contexts/ctx-q2031.json": "569f239c0a79ec52c910937a625de2e3ecf41baa4a7b131de26ad468e248ac6b",
     "contexts/ctx-q3.json": "3533c6af5ce729a2674e0de75b990b2bd947d62b2d6166d43050b73b02cf2521",
     "contexts/ctx-research.json": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
-    "expected.json": "4de40906ba5a4403e3a47096f11049ae68d27ce1be3f6b95493f751363efac49",
+    "expected.json": "a443c9f739c66e0048f664e0860f133be394fd81be9673ff2d116a8f8f5f3781",
     "overlays.json": "fd454ec9a19225bc4869d36c04fce78e1e45de5fe34312a2348d2e089ece47e1",
     "sources/identity-b.json": "010c83577f92a14f2e108caa9909dabd375d3cf9765f424122f2d1047be92a14",
-    "submissions-b.json": "723df90fc118a7fc26e2d3ec20b399ffca41a3876f515df2aa8ef4530dbbcd2f"
+    "submissions-b.json": "edeba5b70dea36ded727ff5b3d1031f23e59a7a3c55fb4585738604ba6408371"
   },
   "files_sha256_note": "every output except manifest.json and README.md (README is hand-written)"
 }

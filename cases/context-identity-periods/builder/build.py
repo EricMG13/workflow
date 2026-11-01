@@ -77,7 +77,7 @@ IDENTITY_B = {
 }
 
 # --- 2. pack B submissions: every identity citation re-cut -----------------------------------------
-recut = {"citations": 0, "sha_rewritten": 0, "quote_rewritten": 0, "prose_rewritten": 0}
+recut = {"citations": 0, "sha_rewritten": 0, "quote_rewritten": 0, "prose_rewritten": 0, "borrower_citations_added": 0}
 PROSE = {
     "Confirms the issuer identity and that no borrower, guarantor or restricted-group perimeter is established": (
         "Confirms the issuer identity, the borrower name and that no guarantor or "
@@ -94,6 +94,17 @@ def recut_walk(obj):
         out = {}
         for key, value in obj.items():
             out[key] = recut_walk(value)
+        if (
+            out.get("source_id") == "identity"
+            and "use" in out
+            and "the borrower name" in out["use"]
+            and isinstance(out.get("citations"), list)
+        ):
+            out["citations"] = [
+                *out["citations"],
+                {"source_id": "identity", "locator": "page:1", "quote": NEW_BORROWER},
+            ]
+            recut["borrower_citations_added"] += 1
         if out.get("source_id") == "identity" and "quote" in out:
             recut["citations"] += 1
             if out.get("source_sha256") == OLD_ID_SHA:
@@ -119,7 +130,7 @@ SUBMISSIONS_B["note"] = (
     "cases/snapshot/submissions.json with every identity citation re-cut against the pack-B "
     "identity source (new source_sha256; the borrower-denying quote replaced by the guarantor/"
     "restricted-group sentence; two prose strings (each in positive and gap) that said no borrower is established "
-    "edited to match). Nothing else changed. " + SNAP_S["note"]
+    "edited to match; the business_context identity source whose `use` names the borrower gains the citation of the borrower line (page:1 of identity-b)). Nothing else changed. " + SNAP_S["note"]
 )
 text_old = json.dumps(SNAP_S)
 assert OLD_ID_SHA in text_old
@@ -525,9 +536,9 @@ EXPECTED = {
         "alias_separator": "; ",
         "rows": {cid: B_ROWS[cid] for cid in B_ROWS},
         "cp0_row": f"issuer {ISSUER_NAME} and the identity gate word `confirmed` printed beside the borrower and alias rows, unchanged",
-        "cp1_row": "ctx-b-match, ctx-b-punct: `match`; ctx-b-mismatch: the gap text below; ctx-research: no row (not_supplied)",
+        "cp1_row": "ctx-b-match, ctx-b-punct: `match`; ctx-b-mismatch: the gap text below; ctx-research: the compare result `not_supplied` (fixed text `not_supplied`, no gap)",
         "ctx-b-mismatch_gap_text": IDENTITY_CHECK["ctx-b-mismatch@B"]["gaps"][0],
-        "ctx-research": "section holds none of the four optional rows; the preparer-fixed rule is that a section with no rows is omitted entirely (page bytes equal today's) because ctx-research supplies no field to show",
+        "ctx-research": "a context source always produces the section (plan :258-261): the CP-0 group holds the issuer name and the identity_gate word `confirmed`; the CP-1 group holds the compare result `not_supplied`; no borrower, aliases, sector or sponsor rows",
         "sponsor_vs_business_source": "ctx-b-match shows sponsor 'Fictional Partners' as user-supplied although the business source says it identifies no financial sponsor; no gap is raised",
         "no_context_source": "page bytes equal today's delivery bytes",
         "html_escaping": {"input_name": "<b>", "escaped": "&lt;b&gt;"},
@@ -570,7 +581,7 @@ EXPECTED = {
         "snapshot_expected_json_hash_hits_to_substitute": SNAP_EXPECTED_HASH_HITS,
     },
     "inherited_gaps": [
-        "Plan table says ctx-research has identity 'as ctx-match' while the Expected-values text says 'empty optional fields': frozen here as EMPTY optional fields (borrower, aliases, sector, sponsor), which serves both the omitted-rows and borrower-not_supplied expectations.",
+        "Plan table says ctx-research has identity 'as ctx-match' while the Expected-values text says 'empty optional fields': frozen here as EMPTY optional fields (borrower, aliases, sector, sponsor), which serves both the omitted-optional-rows and borrower-not_supplied expectations (the section itself is still rendered).",
         "Pack B's frozen financial_pack_limitation and the CP-1 entity/review limitations still read 'borrower, guarantor and restricted perimeters unavailable' (a statement about the financial source's perimeters, pinned in cases/financial); beside the new identity borrower line it reads as stale but is left byte-identical.",
         "The snapshot `business` source says it identifies no financial sponsor; a context sponsor on pack B is user-supplied with no gap (plan ruling).",
         "Plan 'scope-mapped' is read as: the borrower entity maps to one `unspecified` scope on the identity assessment (not to financial scopes). If the controller means a financial scope, T4.2 and the facts would change and this case needs a ruling.",

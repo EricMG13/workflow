@@ -498,9 +498,23 @@ class _Rules:
             elif not _match(PERIOD, value):
                 self.bad(f"run.{name}", "use q1-2026, h2-2026 or fy-2025 (lowercase).")
         a, b = _period_key(run.current_period), _period_key(run.prior_period)
+        if earnings:
+            self.earnings_periods(a, b)
         if a and b and a[0] == b[0] and (b[2] > a[2] or (b[2] == a[2] and b[1] >= a[1])):
             self.bad("run.prior_period", "must be earlier than the current period.")
         self.currency("run.reporting_currency", run.reporting_currency, req=True)
+
+    def earnings_periods(
+        self, current: tuple[str, int, int] | None, prior: tuple[str, int, int] | None
+    ) -> None:
+        """Earnings runs compare quarters or fiscal years: no h period, and one kind for both."""
+        halves = False
+        for name, key in (("current_period", current), ("prior_period", prior)):
+            if key is not None and key[0] == "h":
+                halves = True
+                self.bad(f"run.{name}", "earnings runs compare quarters or fiscal years only.")
+        if current and prior and not halves and current[0] != prior[0]:
+            self.bad("run.prior_period", "must be the same kind as the current period.")
 
     def identity_section(self) -> None:
         ident = self.ctx.identity

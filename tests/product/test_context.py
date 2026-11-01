@@ -718,6 +718,8 @@ def test_form_messages_present() -> None:
     html = FORM.read_text()
     assert "use at most ' + r.dp + ' decimal places." in html
     assert "values must increase." in html
+    assert "earnings runs compare quarters or fiscal years only." in html
+    assert "must be the same kind as the current period." in html
 
 
 def test_limits_table_covers_every_pin_field() -> None:
@@ -801,3 +803,70 @@ def test_shock_lists_honour_every_field_of_their_limits_row(
     row = dataclasses.replace(ASSUMPTION_LIMITS[key], **change)
     monkeypatch.setitem(ASSUMPTION_LIMITS, key, row)
     assert bool(_rate_problems(rate)) is refused
+
+
+IDP = REPO / "cases/context-identity-periods"
+IDP_EXPECTED = json.loads((IDP / "expected.json").read_text())
+
+
+def _idp_refusal(name: str) -> tuple[str, ...]:
+    with pytest.raises(ContextRefused) as caught:
+        load_context((IDP / "contexts" / f"{name}.json").read_bytes())
+    return caught.value.problems
+
+
+def test_earnings_h_period_refused() -> None:
+    assert list(_idp_refusal("ctx-h")) == IDP_EXPECTED["reader"]["refused"]["ctx-h"]["problems"]
+
+
+def test_earnings_mixed_kinds_refused() -> None:
+    expected = IDP_EXPECTED["reader"]["refused"]["ctx-mixed"]["problems"]
+    assert list(_idp_refusal("ctx-mixed")) == expected
+
+
+def test_research_h_period_still_loads() -> None:
+    ctx = load_context((IDP / "contexts/ctx-h-research.json").read_bytes())
+    assert (ctx.run.run_type, ctx.run.current_period, ctx.run.prior_period) == (
+        "research",
+        "h2-2025",
+        "h1-2025",
+    )
+
+
+def test_every_oracle_context_that_should_load_loads() -> None:
+    for name in IDP_EXPECTED["reader"]["loads"]["all_others"]:
+        load_context((IDP / "contexts" / f"{name}.json").read_bytes())
+
+
+def test_form_list_fields_one_per_line() -> None:
+    html = FORM.read_text()
+    assert re.search(r'<textarea[^>]*id="s2-aliases"', html)
+    assert re.search(r'<textarea[^>]*id="s2-guarantors"', html)
+    assert "fld(s2, 'aliases', {t:'lines'})" in html
+    assert "fld(s2, 'guarantors', {t:'lines'})" in html
+    assert "r.t === 'lines'" in html
+    assert "split(/\\r?\\n/)" in html
+    assert html.count("{t:'list'") >= 1 and "Comma-separated names" not in html
+
+
+def test_form_rejoin_uses_newline() -> None:
+    html = FORM.read_text()
+    for k in ("guarantors", "aliases"):
+        assert f"setV(s2, '{k}', id.{k}.map(txt).join('\\n')" in html
+
+
+def test_form_mirrors_period_rules() -> None:
+    html = FORM.read_text()
+    for problem in IDP_EXPECTED["reader"]["refused"]["ctx-h"]["problems"][:1]:
+        assert problem.split(": ", 1)[1] in html
+    assert "must be the same kind as the current period." in html
+
+
+def test_comma_name_round_trips() -> None:
+    raw = (IDP / "contexts/ctx-comma.json").read_bytes()
+    ctx = load_context(raw)
+    form = IDP_EXPECTED["form"]["ctx-comma"]
+    assert ctx.identity.borrower_name == form["reader_borrower_name"]
+    assert list(ctx.identity.aliases) == form["reader_aliases"]
+    assert list(ctx.identity.guarantors) == form["reader_guarantors"]
+    assert {"schema": SCHEMA, **ctx.model_dump(mode="json")} == json.loads(raw)

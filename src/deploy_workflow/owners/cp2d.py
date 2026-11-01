@@ -52,6 +52,7 @@ from deploy_vii.execution import (
     Head,
     Qualification,
     StepValidation,
+    clipped,
     current_inputs,
     inherited_limitations,
     text_sha256,
@@ -62,8 +63,10 @@ from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import figure_unit
+from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2D"
 HORIZON_BOUNDS = (1, 60)
@@ -207,6 +210,10 @@ class Cp2dInputs:
     offered_refs: frozenset[str]
     # Of those, the T4.18 maturity_date fact ids (ruling D-5).
     maturity_date_refs: frozenset[str]
+    # The context file pins the horizon and minimum cash, so the limitations state they are
+    # user-supplied. The pins themselves are checked by `validate_liquidity_bridge`, not the core;
+    # `liquidity_bridge` sets this once that validator has accepted the context.
+    pinned: bool = False
 
 
 # --- values that are known or carry the reason they are not ------------------------------------
@@ -932,7 +939,9 @@ def _facility_limitations(f: Facility, balance_date: date) -> list[tuple[str, st
     return out
 
 
-def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str, str], ...]:
+def _limitations(
+    *, operands: Operands, bridge: Bridge, pinned: bool = False
+) -> tuple[tuple[str, str, str], ...]:
     """(T2E.7 label, kind, text) for each own limitation, in a fixed order."""
     out = [
         (
@@ -985,6 +994,8 @@ def _limitations(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, str,
         else:
             text = FUNDING_GAP_ON_CASH_ALONE
         out.append(("Funding gap on cash alone", "Limitation", text))
+    if pinned:
+        out.append(("Pinned assumptions", "Limitation", pinned_line(MODULE_ID)))
     return tuple(out)
 
 
@@ -1001,8 +1012,10 @@ def revolver_state(undrawn: Num) -> tuple[str, str] | None:
     return None
 
 
-def own_limitations(*, operands: Operands, bridge: Bridge) -> tuple[str, ...]:
-    return tuple(text for _, _, text in _limitations(operands=operands, bridge=bridge))
+def own_limitations(*, operands: Operands, bridge: Bridge, pinned: bool = False) -> tuple[str, ...]:
+    return tuple(
+        text for _, _, text in _limitations(operands=operands, bridge=bridge, pinned=pinned)
+    )
 
 
 # --- result types -----------------------------------------------------------------------------
@@ -1690,7 +1703,7 @@ def compute(inputs: Cp2dInputs) -> Cp2dResult:
     if issues:
         raise ValueError("; ".join(issues))
     bridge = bridge_of(inputs)
-    limitations = _limitations(operands=o, bridge=bridge)
+    limitations = _limitations(operands=o, bridge=bridge, pinned=inputs.pinned)
     tables = (
         _sources_and_uses(o, bridge),
         _position(o, bridge),
@@ -2223,11 +2236,29 @@ def _provenance_issues(upstream: Upstream) -> list[str]:
     return []
 
 
+def _pin_lines(pack: PreparedPack, submission: LiquidityBridgeSubmission) -> tuple[str, ...]:
+    """The lines where the submitted horizon or minimum cash differ from the context pins, as
+    typed: the integer horizon through `str` (`format(25, "f")` is `25.000000`), the Decimal amount
+    through `format(v, "f")` (`str(Decimal("1E+1"))` is not a plain number); a context the run
+    refuses is the single line `Context refused: ...` and no pin line. Empty when nothing is
+    pinned."""
+    cash = submission.minimum_cash
+    submitted = {
+        "horizon_months": str(submission.horizon_months),
+        "minimum_cash.amount": None if cash is None else format(cash.amount, "f"),
+    }
+    try:
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
+
+
 def validate_liquidity_bridge(
-    *, submission: LiquidityBridgeSubmission, upstream: Upstream
+    *, pack: PreparedPack, submission: LiquidityBridgeSubmission, upstream: Upstream
 ) -> tuple[str, ...]:
-    """Staleness, provenance, then the calculation-level issues of `submission_issues` over the
-    facts the bound CP-1 head offers. Empty when the submission can be composed."""
+    """Staleness, provenance, the calculation-level issues of `submission_issues` over the
+    facts the bound CP-1 head offers, then the pin lines. Empty when the submission can be
+    composed. The one issue set of the step validator and the composer gate."""
     issues = [*_stale_issues(upstream), *_provenance_issues(upstream)]
     selection = select_cp1(upstream.cp1)
     issues += submission_issues(
@@ -2235,6 +2266,7 @@ def validate_liquidity_bridge(
         offered_refs=frozenset(o.fact.fact_id for o in selection.offered),
         maturity_date_refs=selection.maturity_date_refs,
     )
+    issues += _pin_lines(pack, submission)
     return tuple(dict.fromkeys(issues))
 
 
@@ -2521,11 +2553,13 @@ def liquidity_bridge(
 ) -> LiquidityBridgeReport:
     """The composed CP-2D tables, facts, claims and own limitations of a valid submission; raises
     ValueError on any validation issue."""
-    issues = validate_liquidity_bridge(submission=submission, upstream=upstream)
+    issues = validate_liquidity_bridge(pack=pack, submission=submission, upstream=upstream)
     if issues:
         raise ValueError("; ".join(issues))
     selection = select_cp1(upstream.cp1)
-    result = compute(_inputs_from(upstream, submission))
+    # `validate_liquidity_bridge` raised on a refused context, so `pins_of` cannot raise here.
+    pinned = pins_of(MODULE_ID, pack) is not None
+    result = compute(replace(_inputs_from(upstream, submission), pinned=pinned))
     out = _Composer(selection, result)
     for table in result.tables:
         out.table(table)
@@ -2639,7 +2673,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     upstream = cp2d_upstream(store=store, attempt=attempt)
-    issues = validate_liquidity_bridge(submission=submission, upstream=upstream)
+    issues = validate_liquidity_bridge(pack=pack, submission=submission, upstream=upstream)
     if issues:
         return StepValidation(issues=issues)
     report = liquidity_bridge(pack=pack, submission=submission, upstream=upstream)

@@ -726,7 +726,7 @@ def test_validate_accepts_the_oracle_literals(tmp_path: Path, case: str) -> None
     store, attempt = make_upstream(tmp_path, case)
     submission = cp2d.LiquidityBridgeSubmission.model_validate_json(_literal(case))
     issues = cp2d.validate_liquidity_bridge(
-        submission=submission, upstream=_upstream_of(store, attempt)
+        pack=store.pack(), submission=submission, upstream=_upstream_of(store, attempt)
     )
     assert issues == ()
 
@@ -741,7 +741,7 @@ def test_validate_reproduces_the_oracle_refusals(
         json.dumps(tm._bind(entry["payload"]))
     )
     issues = cp2d.validate_liquidity_bridge(
-        submission=submission, upstream=_upstream_of(store, attempt)
+        pack=store.pack(), submission=submission, upstream=_upstream_of(store, attempt)
     )
     assert issues == (tm.EXPECTED["refusals"][name],)
 
@@ -752,17 +752,20 @@ def test_validate_reports_a_stale_input_set(tmp_path: Path) -> None:
     submission = cp2d.LiquidityBridgeSubmission.model_validate_json(_literal("positive"))
     refused = "Required upstream is unrun, stale or blocked"
     issues = cp2d.validate_liquidity_bridge(
-        submission=submission, upstream=replace(good, current=refused)
+        pack=store.pack(), submission=submission, upstream=replace(good, current=refused)
     )
     assert issues == (f"Stale inputs: {refused}",)
     moved = tuple(
         i.model_copy(update={"sha256": "0" * 64}) if i.input_id == "CP-2" else i for i in good.bound
     )
     issues = cp2d.validate_liquidity_bridge(
-        submission=submission, upstream=replace(good, current=moved)
+        pack=store.pack(), submission=submission, upstream=replace(good, current=moved)
     )
     assert len(issues) == 1 and issues[0].startswith("Stale input CP-2: bound ")
-    assert cp2d.validate_liquidity_bridge(submission=submission, upstream=good) == ()
+    assert (
+        cp2d.validate_liquidity_bridge(pack=store.pack(), submission=submission, upstream=good)
+        == ()
+    )
 
 
 def test_validate_refuses_a_cp1_that_is_not_the_bound_input(tmp_path: Path) -> None:
@@ -771,7 +774,9 @@ def test_validate_refuses_a_cp1_that_is_not_the_bound_input(tmp_path: Path) -> N
     other = good.cp1.model_copy(update={"limitations": ("another",)})
     forged = replace(good, cp1=other)
     submission = cp2d.LiquidityBridgeSubmission.model_validate_json(_literal("positive"))
-    issues = cp2d.validate_liquidity_bridge(submission=submission, upstream=forged)
+    issues = cp2d.validate_liquidity_bridge(
+        pack=store.pack(), submission=submission, upstream=forged
+    )
     assert "Upstream CP-1: the supplied module is not the bound input" in issues
 
 

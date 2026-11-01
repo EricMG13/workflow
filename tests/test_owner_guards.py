@@ -14,7 +14,10 @@ frozen answers up to `narrative`.
 
 import hashlib
 import importlib
+import io
 import json
+import logging
+import os
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -29,8 +32,9 @@ from deploy_workflow import owner_workflow as owner
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.financial_workflow import MAX_CALLS, MAX_LINE
 from deploy_workflow.model.record import LOOP_STOPS
-from deploy_workflow.owner_workflow import AUDIT, MAX_INPUT_BYTES, OwnerFault
+from deploy_workflow.owner_workflow import AUDIT, MAX_INPUT_BYTES, MAX_JSON_DEPTH, OwnerFault
 from deploy_workflow.run_inputs import stage_sources
+from deploy_workflow.tools.source import SourceError, SourceTools
 from deploy_workflow.workflow import WorkflowError
 
 financial: Any = importlib.import_module("test_financial_workflow")
@@ -423,3 +427,280 @@ def test_a_stopped_run_with_an_inputs_too_large_fault_still_replays_its_earlier_
     assert outcome.stopped_reason.startswith("RecordingMissing")  # CP-1 is live, CP-0 replayed
     assert {r.module_id for r in replays.replay_records(outcome.run_dir)} == {"CP-0"}
     assert len(list((earlier / "execution" / AUDIT / "faults").iterdir())) == 1
+
+
+# ------------------------------------------------- G7: errors reach the journal (log and re-raise)
+
+
+def _internal_faults(workflow: Any) -> list[OwnerFault]:
+    return [f for f in _faults(workflow) if f.code == "InternalError"]
+
+
+def _boom(*args: Any, **kwargs: Any) -> Any:
+    raise RuntimeError("boom")
+
+
+def _read_world(root: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    return _narrative_world(root)
+
+
+def test_read_inputs_logs_an_internal_error_then_reraises_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+    monkeypatch.setattr(owner, "_inputs", _boom)
+    with pytest.raises(RuntimeError, match="^boom$"):
+        workflow.read_inputs()
+    (fault,) = _faults(workflow)
+    assert (fault.code, fault.operation, fault.error_type, fault.detail) == (
+        "InternalError",
+        "read_inputs",
+        "RuntimeError",
+        "boom",
+    )
+    assert workflow.state().reads_used == 0  # the lock was released: state() answers
+
+
+def test_submit_review_logs_an_internal_error_then_reraises_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+    read = workflow.read_inputs()
+    monkeypatch.setattr(owner, "submit_model_payload", _boom)
+    with pytest.raises(RuntimeError, match="^boom$"):
+        workflow.submit_review(json.dumps(financial.narrative(read)))
+    (fault,) = _internal_faults(workflow)
+    assert (fault.operation, fault.error_type, fault.detail) == (
+        "submit_review",
+        "RuntimeError",
+        "boom",
+    )
+    assert workflow.state().phase == "analytical"
+
+
+def test_invoke_logs_an_internal_error_then_reraises_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow = _source_context_world(tmp_path)
+    monkeypatch.setattr(workflow._session, "invoke", _boom)
+    with pytest.raises(RuntimeError, match="^boom$"):
+        workflow.invoke("search_pack", {"query": "x", "source_id": "financial"})
+    (fault,) = _internal_faults(workflow)
+    assert (fault.operation, fault.error_type, fault.detail) == ("invoke", "RuntimeError", "boom")
+    workflow.state()
+
+
+def test_write_receipt_logs_an_internal_error_then_reraises_it(
+    cp3: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = refusals._walk(cp3, tmp_path, refusals.ORDER)
+    g1x._drive(workflow)
+    assert workflow.phase == "complete"
+    monkeypatch.setattr(owner, "_verify", _boom)
+    with pytest.raises(RuntimeError, match="^boom$"):
+        workflow.write_receipt(tmp_path / "receipt.json")
+    (fault,) = _internal_faults(workflow)
+    assert (fault.operation, fault.error_type, fault.detail) == (
+        "write_receipt",
+        "RuntimeError",
+        "boom",
+    )
+    assert workflow.state().phase == "complete"
+
+
+def test_the_fault_detail_is_bounded_and_control_characters_are_escaped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+
+    def noisy(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("a\nb\x00c\x1b[0m" + "z" * 1000)
+
+    monkeypatch.setattr(owner, "_inputs", noisy)
+    with pytest.raises(RuntimeError):
+        workflow.read_inputs()
+    (fault,) = _internal_faults(workflow)
+    assert fault.detail is not None and len(fault.detail) == 500
+    assert fault.detail.startswith("a\\x0ab\\x00c\\x1b[0mz")
+    assert all(ord(c) >= 32 and ord(c) != 127 for c in fault.detail)
+
+
+def test_a_workflow_refusal_and_a_source_error_keep_their_codes_and_write_no_fault(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+    with pytest.raises(WorkflowError) as refused:
+        workflow.submit_review("{}")  # not read yet: a precondition refusal
+    assert refused.value.code == "not_permitted"
+
+    def refuse(*args: Any, **kwargs: Any) -> Any:
+        raise SourceError("bad_arguments")
+
+    monkeypatch.setattr(owner, "_inputs", refuse)
+    with pytest.raises(SourceError) as source:
+        workflow.read_inputs()
+    assert source.value.code == "bad_arguments"
+    assert _faults(workflow) == []
+
+
+def test_a_failed_fault_write_leaves_the_original_error_and_chains_the_write_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+    monkeypatch.setattr(owner, "_inputs", _boom)
+    audit = workflow._store.directory / AUDIT
+    (audit / "faults").mkdir(exist_ok=True)
+    os.chmod(audit / "faults", 0o500)  # read-only: the fault cannot be written
+    try:
+        with (
+            caplog.at_level(logging.ERROR, logger=owner.__name__),
+            pytest.raises(RuntimeError, match="^boom$") as caught,
+        ):
+            workflow.read_inputs()
+    finally:
+        os.chmod(audit / "faults", 0o700)
+    assert isinstance(caught.value.__context__, OSError)
+    assert _faults(workflow) == []
+    assert any("InternalError" in record.getMessage() for record in caplog.records)
+
+
+def test_an_internal_value_error_in_the_gate_propagates_and_is_not_relabelled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, pack = financial.start(tmp_path)
+    financial.read_sources(workflow)
+
+    def gate(*args: Any, **kwargs: Any) -> Any:
+        raise ValueError("x")
+
+    monkeypatch.setattr(owner, "_gate", gate)
+    with pytest.raises(ValueError, match="^x$"):
+        workflow.submit_review(financial.readiness(pack))
+    (fault,) = _internal_faults(workflow)
+    assert (fault.operation, fault.error_type, fault.detail) == ("submit_review", "ValueError", "x")
+
+
+def test_the_transport_ends_on_an_internal_error_with_no_answer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, pack = financial.start(tmp_path)
+
+    def gate(*args: Any, **kwargs: Any) -> Any:
+        raise ValueError("x")
+
+    monkeypatch.setattr(owner, "_gate", gate)
+    request = json.dumps({"operation": "submit_review", "payload": financial.readiness(pack)})
+    out = io.StringIO()
+    with pytest.raises(ValueError, match="^x$"):
+        owner.serve_json_lines(
+            workflow,
+            io.StringIO(request + "\n" + request + "\n"),
+            out,
+            destination=tmp_path / "receipt.json",
+            participant="external-model",
+        )
+    assert out.getvalue() == ""  # the participant sees end of stream, not a label
+    assert [f.operation for f in _internal_faults(workflow)] == ["submit_review"]
+
+
+def test_a_source_session_internal_error_receipt_is_unchanged_and_journals_a_fault(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F9: `SourceSession.invoke` returns an `internal_error` receipt; the owner retains a fault."""
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow = _source_context_world(tmp_path)
+    monkeypatch.setattr(SourceTools, "stage", _boom)
+    receipt = workflow.invoke("search_pack", {"query": "x", "source_id": "financial"})
+    assert (receipt["status"], receipt["error_code"]) == ("error", "internal_error")
+    assert receipt["body"] is None
+    (fault,) = _internal_faults(workflow)
+    assert (fault.operation, fault.error_type) == ("invoke", None)
+    assert workflow.state().invokes_used == 1
+
+
+# -------------------------------------------------------- the transport's request-shape table
+
+
+def _nested(depth: int) -> str:
+    """JSON text of an invoke request whose total nesting depth is `depth` (the request is 1)."""
+    inner = "[" * (depth - 2) + "]" * (depth - 2)
+    return (
+        '{"operation":"invoke","tool":"no_such_tool","arguments":{"k":' + inner + "}}"
+        if depth > 2
+        else '{"operation":"invoke","tool":"no_such_tool","arguments":{}}'
+    )
+
+
+def _serve_lines(workflow: Any, root: Path, text: str) -> list[dict[str, Any]]:
+    out = io.StringIO()
+    owner.serve_json_lines(
+        workflow,
+        io.StringIO(text),
+        out,
+        destination=root / "receipt.json",
+        participant="external-model",
+    )
+    return [json.loads(line) for line in out.getvalue().splitlines()]
+
+
+SHAPES = {
+    "invalid json": "{not json",
+    "a json list": "[]",
+    "a json scalar": "3",
+    "tool not a str": '{"operation":"invoke","tool":3,"arguments":{}}',
+    "arguments a list": '{"operation":"invoke","tool":"read_pages","arguments":[]}',
+    "payload not a str": '{"operation":"submit_review","payload":3}',
+    "NaN": '{"operation":"invoke","tool":"read_pages","arguments":{"value":NaN}}',
+    "an overflowing float": '{"operation":"invoke","tool":"read_pages","arguments":{"v":1e999}}',
+    "a lone-surrogate payload": '{"operation":"submit_review","payload":"\\ud800"}',
+    "a lone-surrogate tool": '{"operation":"invoke","tool":"\\ud800","arguments":{}}',
+    "an unknown extra key": '{"operation":"read_inputs","extra":1}',
+    "a missing key": '{"operation":"invoke","tool":"read_pages"}',
+    "nested past the bound": _nested(MAX_JSON_DEPTH + 1),
+    "nested far past the bound": "[" * 100_000,
+    "an over-length line": "x" * (MAX_LINE + 2),
+}
+
+
+@pytest.mark.parametrize("name", sorted(SHAPES))
+def test_a_malformed_request_is_bad_arguments_in_the_transport_and_writes_no_fault(
+    name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path)
+    answers = _serve_lines(workflow, tmp_path, SHAPES[name] + "\n")
+    assert answers == [{"status": "refused", "error_code": "bad_arguments"}]
+    assert _faults(workflow) == []
+
+
+def test_the_transport_answers_the_next_line_after_a_malformed_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path)
+    answers = _serve_lines(workflow, tmp_path, "[]\n" + '{"operation":"read_inputs"}\n')
+    assert [a["error_code"] for a in answers] == ["bad_arguments", "not_permitted"]
+
+
+def test_an_unknown_operation_is_still_not_permitted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path)
+    answers = _serve_lines(workflow, tmp_path, '{"operation":"nope"}\n')
+    assert answers == [{"status": "refused", "error_code": "not_permitted"}]
+
+
+def test_the_depth_bound_is_exact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path / "at")
+    (at_bound,) = _serve_lines(workflow, tmp_path, _nested(MAX_JSON_DEPTH) + "\n")
+    assert at_bound["status"] == "refused" and at_bound["error_code"] == "not_permitted"  # reached
+    past_workflow, _ = financial.start(tmp_path / "past")
+    (past,) = _serve_lines(past_workflow, tmp_path, _nested(MAX_JSON_DEPTH + 1) + "\n")
+    assert past == {"status": "refused", "error_code": "bad_arguments"}
+    assert _faults(workflow) == [] and _faults(past_workflow) == []

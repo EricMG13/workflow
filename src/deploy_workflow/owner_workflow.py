@@ -13,10 +13,20 @@ precheck gate (`_PRECHECKS`), and every module with a `_VIEWS` entry may be read
 `module_context` or `step_context`. `OwnerWorkflow.open` resumes a killed run from the retained
 audit (G5b); its docstring says how the journal and the audit are reconciled and what it cannot
 resume.
+
+Errors (G7): `invoke`, `read_inputs`, `submit_review`, `publish` and `write_receipt` retain an
+exception that is not a `WorkflowError` or `SourceError` as an `InternalError` fault under
+`faults/` and raise it again unchanged. `serve_json_lines` no longer converts internal errors to
+`bad_arguments` or `internal_error`: it answers only malformed requests (`bad_arguments`) and
+expected refusals, and an internal error ends the stream. A run that ended on an internal error
+therefore has a `faults/` record and, as only a loop run writes a `run.json`, none from the
+transport; the loop (O5) ends such a run `stopped` with a `run.json`.
 """
 
 import argparse
 import json
+import logging
+import math
 import sys
 import tempfile
 from collections import Counter
@@ -271,6 +281,21 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
 # G6: the bytes a `read_inputs` body may take: the bound a submitted payload already obeys.
 MAX_INPUT_BYTES: int = MAX_LINE
+# G7: the deepest JSON nesting `serve_json_lines` accepts in a request (the request object is
+# depth 1). Deeper text is `bad_arguments`, decided before dispatch, never a `RecursionError`.
+MAX_JSON_DEPTH: int = 32
+# G7: the characters of an error's text an `InternalError` fault keeps.
+MAX_FAULT_DETAIL: int = 500
+_OPTIONAL_FAULT_FIELDS = (
+    "binding",
+    "size",
+    "cap",
+    "call_kind",
+    "operation",
+    "error_type",
+    "detail",
+)
+_LOG = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -729,7 +754,9 @@ class OwnerFault(Contract):
     raised. `kind` names the audit kind (or `journal`) and `digest` the record it concerns.
     `InputsTooLarge` (a `read_inputs` body over `MAX_INPUT_BYTES`) and `CallLimit` (a call refused
     at `MAX_CALLS`) name the step's `binding`, and the former its `size` and `cap`; neither holds
-    the body. A faults record is outside the receipt's compared set and replay's call bodies."""
+    the body. `InternalError` (G7) is an exception that escaped a workflow method, or an
+    `internal_error` receipt of a source session: the `operation`, the exception's class and a
+    bounded, escaped `detail`; never a payload. A faults record is outside the receipt's compared set and replay's call bodies."""
 
     schema_version: Literal["owner-fault/1"] = "owner-fault/1"
     code: str
@@ -740,13 +767,17 @@ class OwnerFault(Contract):
     size: int | None = Field(default=None, ge=0)
     cap: int | None = Field(default=None, ge=0)
     call_kind: Literal["invoke", "read_inputs", "submit_review"] | None = None
+    # G7: an `InternalError` record. `detail` is `_bounded_detail` of the error text.
+    operation: str | None = Field(default=None, max_length=64)
+    error_type: str | None = Field(default=None, max_length=160)
+    detail: str | None = Field(default=None, max_length=MAX_FAULT_DETAIL)
 
     @model_serializer(mode="wrap")
-    def _omit_unset_g6_fields(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        """The four G6 fields are omitted from the JSON while `None`, so a fault of an older kind
+    def _omit_unset_fields(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """The optional fields are omitted from the JSON while `None`, so a fault of an older kind
         keeps its bytes and digest under the same `owner-fault/1`."""
         data: dict[str, Any] = handler(self)
-        for name in ("binding", "size", "cap", "call_kind"):
+        for name in _OPTIONAL_FAULT_FIELDS:
             if data.get(name) is None:
                 data.pop(name, None)
         return data
@@ -998,6 +1029,58 @@ def _audit(store: Execution, kind: str, digest: str) -> Path:
 
 def _retain(store: Execution, kind: str, value: Contract) -> None:
     _put(_audit(store, kind, value.content_hash()), value.model_dump_json().encode())
+
+
+def _bounded_detail(error: BaseException) -> str:
+    """The first `MAX_FAULT_DETAIL` characters of the error's text with control characters (and
+    lone surrogates, which cannot be written as UTF-8) escaped, so a record holds one line."""
+    text = "".join(
+        f"\\x{ord(c):02x}"
+        if ord(c) < 32 or ord(c) == 127
+        else f"\\u{ord(c):04x}"
+        if 0xD800 <= ord(c) <= 0xDFFF
+        else c
+        for c in str(error)[:MAX_FAULT_DETAIL]
+    )
+    return text[:MAX_FAULT_DETAIL]
+
+
+def _retain_internal_error(
+    store: Execution, operation: str, error_type: str | None, detail: str | None
+) -> None:
+    _retain(
+        store,
+        "faults",
+        OwnerFault(code="InternalError", operation=operation, error_type=error_type, detail=detail),
+    )
+
+
+@contextmanager
+def _journaled_errors(workflow: "OwnerWorkflow", operation: str) -> Iterator[None]:
+    """G7, log and re-raise: an exception that is not an expected refusal (`WorkflowError`,
+    `SourceError`) is retained as an `InternalError` fault, then raised again unchanged. If the
+    fault cannot be written, the original exception still propagates, the write error is chained
+    as its `__context__` and logged (the one documented fail-open: the record is lost, the error
+    is not)."""
+    try:
+        yield
+    except (WorkflowError, SourceError):
+        raise
+    except Exception as error:
+        try:
+            _retain_internal_error(
+                workflow._store, operation, type(error).__name__, _bounded_detail(error)
+            )
+        except Exception as write_error:  # noqa: BLE001 - logged and chained; the original is raised
+            _LOG.error(
+                "InternalError fault for %s not written (%s)",
+                operation,
+                type(write_error).__name__,
+                exc_info=write_error,
+            )
+            write_error.__context__ = error.__context__
+            error.__context__ = write_error
+        raise
 
 
 def _torn(store: Execution, kind: str, digest: str | None) -> TornAudit:
@@ -2053,7 +2136,7 @@ class OwnerWorkflow:
         raise WorkflowError("not_permitted")
 
     def invoke(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        with self._locked():
+        with self._locked(), _journaled_errors(self, "invoke"):
             self._current()
             if self._phase != "analytical":  # no module is active: there is no binding to read
                 raise WorkflowError("not_permitted")
@@ -2082,10 +2165,16 @@ class OwnerWorkflow:
             _retain(self._store, "calls", call)
             self._epoch_calls.append(call)
             self._calls.append(call)
+            if call.status == "error" and call.error_code == "internal_error":
+                # F9: the source session swallowed an exception into this receipt (unchanged);
+                # the journal still records that one happened.
+                _retain_internal_error(
+                    self._store, "invoke", None, "the source session returned an internal_error"
+                )
             return call.model_dump(mode="json")
 
     def read_inputs(self) -> dict[str, Any]:
-        with self._locked():
+        with self._locked(), _journaled_errors(self, "read_inputs"):
             self._current()
             if self._phase != "analytical":
                 raise WorkflowError("not_permitted")
@@ -2119,7 +2208,7 @@ class OwnerWorkflow:
             return record.model_dump(mode="json")
 
     def submit_review(self, payload: str) -> dict[str, Any]:
-        with self._locked():
+        with self._locked(), _journaled_errors(self, "submit_review"):
             self._current()
             if (
                 self._phase != "analytical"
@@ -2287,7 +2376,7 @@ class OwnerWorkflow:
         return f"{module}_{self._refusal_kind}"
 
     def publish(self) -> dict[str, Any]:
-        with self._locked():
+        with self._locked(), _journaled_errors(self, "publish"):
             before = self._current()
             publisher = next(
                 (self._specs[m] for m in self._plan if self._specs[m].kind == "deterministic"),
@@ -2400,7 +2489,7 @@ class OwnerWorkflow:
             }
 
     def write_receipt(self, destination: Path) -> OwnerRunReceipt:
-        with self._locked():
+        with self._locked(), _journaled_errors(self, "write_receipt"):
             snapshot = self._current()
             if self._phase != "complete":
                 raise WorkflowError("not_permitted")
@@ -3491,6 +3580,68 @@ def verify_owner_run_receipt(
         raise WorkflowError("identity_mismatch") from None
 
 
+def _depth_of(value: Any) -> int:
+    """The nesting depth of parsed JSON (a scalar is 0, the request object 1), iteratively, so
+    that no input can make the measure itself recurse."""
+    deepest = 0
+    pending: list[tuple[Any, int]] = [(value, 0)]
+    while pending:
+        item, depth = pending.pop()
+        if type(item) is dict:
+            children: Sequence[Any] = list(item.values())
+        elif type(item) is list:
+            children = item
+        else:
+            continue
+        deepest = max(deepest, depth + 1)
+        pending.extend((child, depth + 1) for child in children)
+    return deepest
+
+
+def _finite_float(text: str) -> float:
+    value = float(text)
+    if not math.isfinite(value):
+        raise ValueError("Non-finite JSON number")
+    return value
+
+
+def _request_of(line: str) -> dict[str, Any]:
+    """The request a JSON-lines message carries, or `bad_arguments`: every error in the text of
+    the message is decided here, before dispatch (G7). Not valid JSON, a non-finite number,
+    nesting past `MAX_JSON_DEPTH`, a non-object and a string that cannot be written as UTF-8
+    (a lone surrogate) are the participant's malformed input. Nothing else is caught."""
+    try:
+        request = json.loads(line, parse_constant=_nonfinite_json, parse_float=_finite_float)
+        deep = _depth_of(request) > MAX_JSON_DEPTH
+        json.dumps(request, ensure_ascii=False, allow_nan=False).encode()
+    except (ValueError, RecursionError):  # JSONDecodeError, UnicodeEncodeError, non-finite
+        raise WorkflowError("bad_arguments") from None
+    if deep or type(request) is not dict:
+        raise WorkflowError("bad_arguments")
+    return request
+
+
+def _checked(request: dict[str, Any]) -> dict[str, Any]:
+    """The request's operation and arguments are of the right types, or `bad_arguments`. An
+    unknown operation is left to the dispatch (`not_permitted`)."""
+    shapes: dict[str, dict[str, type]] = {
+        "invoke": {"tool": str, "arguments": dict},
+        "submit_review": {"payload": str},
+        "read_inputs": {},
+        "publish": {},
+        "write_receipt": {},
+    }
+    operation = request.get("operation")
+    shape = shapes.get(operation) if isinstance(operation, str) else None
+    if shape is None:
+        return request
+    if set(request) != {"operation", *shape} or any(
+        type(request[key]) is not kind for key, kind in shape.items()
+    ):
+        raise WorkflowError("bad_arguments")
+    return request
+
+
 def serve_json_lines(
     workflow: OwnerWorkflow,
     reader: TextIO,
@@ -3499,6 +3650,12 @@ def serve_json_lines(
     destination: Path,
     participant: str,
 ) -> None:
+    """Serve one participant over bounded JSON lines. A malformed request (`_request_of`,
+    `_checked`) answers `bad_arguments` and a `WorkflowError` or `SourceError` its own code. The
+    transport no longer converts internal errors (G7, Q7): an exception from a workflow method is
+    retained as an `InternalError` fault by that method and propagates, ending the stream; the
+    participant sees end of stream, not a label. Such a run has a `faults/` record and, with no
+    `run.json` (only a loop run writes one), is recovered by a rerun."""
     if workflow._calls or workflow._submissions or workflow._reads:
         raise WorkflowError("not_permitted")
     workflow._participant, workflow._transport = participant, "bounded-json-lines/1"
@@ -3512,19 +3669,17 @@ def serve_json_lines(
                 while line and not line.endswith("\n"):
                     line = reader.readline(MAX_LINE + 1)
                 raise WorkflowError("bad_arguments")
-            request = json.loads(line, parse_constant=_nonfinite_json)
-            if type(request) is not dict:
-                raise WorkflowError("bad_arguments")
+            request = _checked(_request_of(line))
             operation = request.get("operation")
-            if operation == "invoke" and set(request) == {"operation", "tool", "arguments"}:
+            if operation == "invoke":
                 result = workflow.invoke(request["tool"], request["arguments"])
-            elif operation == "submit_review" and set(request) == {"operation", "payload"}:
+            elif operation == "submit_review":
                 result = workflow.submit_review(request["payload"])
-            elif operation == "read_inputs" and set(request) == {"operation"}:
+            elif operation == "read_inputs":
                 result = workflow.read_inputs()
-            elif operation == "publish" and set(request) == {"operation"}:
+            elif operation == "publish":
                 result = workflow.publish()
-            elif operation == "write_receipt" and set(request) == {"operation"}:
+            elif operation == "write_receipt":
                 receipt = workflow.write_receipt(destination)
                 result = {
                     "status": "ok",
@@ -3535,10 +3690,6 @@ def serve_json_lines(
                 raise WorkflowError("not_permitted")
         except (WorkflowError, SourceError) as error:
             result = {"status": "refused", "error_code": error.code}
-        except (ValueError, TypeError, KeyError, UnicodeError):
-            result = {"status": "refused", "error_code": "bad_arguments"}
-        except Exception:  # noqa: BLE001 - sanitized bounded analytical transport (as the financial slice)
-            result = {"status": "error", "error_code": "internal_error"}
         writer.write(json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n")
         writer.flush()
 

@@ -350,8 +350,11 @@ def test_open_on_a_sealed_directory_is_complete_and_refuses_to_write(
 
 
 def _faults(root: Path) -> list[Any]:
+    """The `torn_audit` and replay faults. A simulated kill raised inside a workflow method is an
+    internal error, which G7 journals as an `InternalError` fault; those are not what these tests
+    count, so they are left out here (and asserted on in `test_owner_guards.py`)."""
     found: list[Any] = state_tests._retained(root / "store", "faults", owner.OwnerFault)
-    return found
+    return [f for f in found if f.code != "InternalError"]
 
 
 def test_a_torn_audit_is_a_named_error_with_a_fault_record(tmp_path: Path) -> None:

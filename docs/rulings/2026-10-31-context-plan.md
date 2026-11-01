@@ -329,3 +329,13 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
 - **Records and review.** Each file gets its D12 record. Review is by `mx-adversary`.
 - **Why:** B29's review found M1, which predates B29. In a context-only run, a model that reads "cites a market quote" literally writes "none" and Insufficient Information. The validator accepts that output, even though it is weaker than `cases/cp3-context-owner/expected.json#cp3/context-only`.
 - **Controller timing ruling:** B30 ships as its own release after B29. B29, O3 Task 6 and B30 share one golden refresh. Cost if wrong: one wording revert and a re-freeze.
+
+## B31. Apply the controller's recommendations (user, 2026-11-01: "Apply your recommendations for decisions from now on")
+
+- **What it covers.** From now on, wherever a rule would send a decision to the user, the controller takes the option it recommends and carries on. Examples are a third fix round, a deferral, a scope edge, a release cut's contents or a finding's severity. Each decision is recorded here as "applied recommendation (B31)", logged in the ledger, and named in the controller's next message, so that the user can overrule it.
+- **What still needs the user's own word in this session:**
+  - any `src/deploy_vii` change outside B1, B6/B6a, B7-B9, B17.3, B22, B29 and B30 (user, 2026-10-30, "direct check");
+  - permanent changes: a new dependency, a permission or config change, or memory that widens authority;
+  - pushes and merges: release requests still go to MANAGER and PR Manager;
+  - live or paid provider calls, which stay paused;
+  - prohibited actions.

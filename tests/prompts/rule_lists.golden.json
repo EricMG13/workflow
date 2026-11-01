@@ -1852,6 +1852,13 @@
     ]
    },
    {
+    "id": "source_readiness.p5",
+    "statement": "Assess a source as draft only when the run's context declares draft legal documents (`legal_documents: draft`). The `context` source is never assessed as executed, filed or draft.",
+    "checks": [
+     "fn:deploy_vii.readiness:context_authority_issues"
+    ]
+   },
+   {
     "id": "source_readiness.g8",
     "statement": "Write one consumer judgment for each. Python writes \"Run <id>\" for READY or READY_WITH_LIMITATIONS; any lower readiness refuses that module in this run, and every planned module that depends on it.",
     "checks": [
@@ -1878,7 +1885,7 @@
    "src/deploy_vii/narrative.py": "d766f0fae83bb40a5cf20b91bbce279c61137177752d9e3bf455544739972ebf",
    "src/deploy_vii/prose.py": "8dcb2a51ba1865970fca7c17dba2fb8a8657e4a8bfae4679ffd5c7b6823cbbef",
    "src/deploy_vii/quality.py": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
-   "src/deploy_vii/readiness.py": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
+   "src/deploy_vii/readiness.py": "475d9976caa7d7bcb2aea5e66a840fe027820bb0028c58bb562ace9ef8b34072",
    "src/deploy_vii/source_context.py": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
    "src/deploy_vii/statement_validation.py": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",

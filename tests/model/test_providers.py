@@ -866,3 +866,149 @@ def test_key_split_across_deltas_or_escaped_is_flagged() -> None:
     )
     err = parse("anthropic", 200, think, {}, red)
     assert isinstance(err, ProviderError) and err.error_class == "KeyReflected"
+
+
+# ------------------------------------------------------------ fix 3: every exit guards what it decoded
+
+ANT = "sk-ant-" + "W" * 40  # test-only
+_TEXT_START = {"type": "content_block_start", "index": 0, "content_block": {"type": "text"}}
+_SIG_START = {
+    "type": "content_block_start",
+    "index": 0,
+    "content_block": {"type": "thinking", "thinking": "", "signature": ""},
+}
+_ERROR_EVENT = {"type": "error", "error": {"type": "overloaded_error", "message": "busy"}}
+_END_DELTA = {
+    "type": "message_delta",
+    "delta": {"stop_reason": "end_turn"},
+    "usage": {"output_tokens": 3},
+}
+_STOP_0 = {"type": "content_block_stop", "index": 0}
+
+
+def _delta(kind: str, field: str, value: str) -> dict[str, Any]:
+    return {"type": "content_block_delta", "index": 0, "delta": {"type": kind, field: value}}
+
+
+def _text_split(key: str = KEY, at: int = 4) -> list[dict[str, Any]]:
+    return [
+        START,
+        _TEXT_START,
+        _delta("text_delta", "text", key[:at]),
+        _delta("text_delta", "text", key[at:]),
+    ]
+
+
+def _keyreflected(body: bytes, red: Redactor, provider: Provider = "anthropic") -> ProviderError:
+    err = parse(provider, 200, body, {}, red)
+    assert isinstance(err, ProviderError), err
+    assert err.error_class == "KeyReflected", err
+    assert KEY not in repr(err) and ANT not in repr(err)
+    return err
+
+
+def test_split_key_then_error_event_is_key_reflected() -> None:
+    _keyreflected(_sse(*_text_split(), _ERROR_EVENT, stop=False), Redactor([KEY]))
+
+
+def test_split_key_then_stream_cut_is_key_reflected() -> None:
+    _keyreflected(_sse(*_text_split(), _STOP_0), Redactor([KEY]))
+
+
+def test_split_key_then_refusal_keeps_kind_and_usage() -> None:
+    refusal = {**_END_DELTA, "delta": {"stop_reason": "refusal"}}
+    err = _keyreflected(_sse(*_text_split(), _STOP_0, refusal), Redactor([KEY]))
+    assert err.kind is ErrorKind.SENT_CHARGE_USAGE
+    assert err.usage is not None and err.usage.output_tokens == 3
+
+
+def test_split_signature_then_error_event_is_key_reflected() -> None:
+    events: list[dict[str, Any]] = [
+        START,
+        _SIG_START,
+        _delta("signature_delta", "signature", KEY[:5]),
+        _delta("signature_delta", "signature", KEY[5:]),
+        _ERROR_EVENT,
+    ]
+    _keyreflected(_sse(*events, stop=False), Redactor([KEY]))
+
+
+def test_split_key_with_w_in_the_second_fragment_then_error_event() -> None:
+    events = [*_text_split(ANT, 5), _ERROR_EVENT]
+    _keyreflected(_sse(*events, stop=False), Redactor())
+
+
+def test_escaped_key_in_one_delta_then_error_event() -> None:
+    body = _sse(START, _TEXT_START, _delta("text_delta", "text", ANT), _ERROR_EVENT, stop=False)
+    escaped = body.replace(b"sk-ant", b"\\u0073k-ant")
+    assert ANT.encode() not in escaped
+    _keyreflected(escaped, Redactor())
+
+
+def test_key_cut_mid_event_is_joined_with_the_open_string() -> None:
+    head = _sse(START, _TEXT_START, _delta("text_delta", "text", ANT[:5]), stop=False)
+    tail = (
+        b"event: content_block_delta\n"
+        b'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"'
+        + ANT[5:].encode()
+    )
+    _keyreflected(head + tail, Redactor())
+
+
+def test_key_split_across_events_after_message_stop() -> None:
+    events: list[dict[str, Any]] = [
+        START,
+        _TEXT_START,
+        _STOP_0,
+        _END_DELTA,
+        {"type": "message_stop"},
+        _delta("text_delta", "text", ANT[:5]),
+        _delta("text_delta", "text", ANT[5:]),
+    ]
+    _keyreflected(_sse(*events, stop=False), Redactor())
+
+
+def test_openai_split_output_text_then_refusal_keeps_kind_and_usage() -> None:
+    def message(*parts: dict[str, Any]) -> dict[str, Any]:
+        return {"type": "message", "content": list(parts)}
+
+    reply = _openai_reply(
+        output=[
+            message(
+                {"type": "output_text", "text": KEY[:5]},
+                {"type": "output_text", "text": KEY[5:]},
+                {"type": "refusal", "refusal": "no"},
+            )
+        ]
+    )
+    err = _keyreflected(reply, Redactor([KEY]), "openai")
+    assert err.kind is ErrorKind.SENT_CHARGE_USAGE and err.usage is not None
+
+
+@pytest.mark.parametrize("settled", [False, True], ids=["before-usage", "after-usage"])
+def test_idle_partial_with_a_split_key_is_key_reflected(settled: bool) -> None:
+    events = [*_text_split(), _STOP_0, *([_END_DELTA] if settled else [])]
+    cut = IdleTimeout("idle", _sse(*events, stop=False))
+    err = error_from_transport("anthropic", cut, Redactor([KEY]))
+    assert isinstance(err, ProviderError) and err.error_class == "KeyReflected"
+    assert KEY not in repr(err)
+
+
+def test_clean_streams_still_parse_and_keep_their_class() -> None:
+    clean = _sse(
+        START,
+        _TEXT_START,
+        _delta("text_delta", "text", "hel"),
+        _delta("text_delta", "text", "lo"),
+        _delta("text_delta", "text", "café"),
+        _STOP_0,
+        _SIG_START | {"index": 1},
+        {**_delta("signature_delta", "signature", "abcDEF"), "index": 1},
+        {**_delta("signature_delta", "signature", "123=="), "index": 1},
+        {"type": "content_block_stop", "index": 1},
+        _END_DELTA,
+    )
+    turn = parse("anthropic", 200, clean, {}, Redactor([KEY]))
+    assert isinstance(turn, Turn) and turn.text == "hellocafé"
+    err = parse("anthropic", 200, _sse(START, _ERROR_EVENT, stop=False), {}, Redactor([KEY]))
+    assert isinstance(err, ProviderError) and err.error_class == "overloaded_error"

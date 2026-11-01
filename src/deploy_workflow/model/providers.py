@@ -406,7 +406,11 @@ def error_from_transport(
     )
     if provider == "anthropic" and exc.partial:
         cut = parse(provider, 200, exc.partial, {}, redactor)
-        if isinstance(cut, Turn) or cut.kind is ErrorKind.SENT_CHARGE_USAGE:
+        if (
+            isinstance(cut, Turn)
+            or cut.kind is ErrorKind.SENT_CHARGE_USAGE
+            or cut.error_class == "KeyReflected"
+        ):
             return cut
     return ProviderError(ErrorKind.SENT_CHARGE_UNKNOWN, error_class, _snippet(redactor, str(exc)))
 
@@ -435,27 +439,35 @@ def parse(
         )
     if not 200 <= status < 300:
         return _http_error(redactor, status, body, text)
+    seen: list[Any] = []  # every string a mapper decoded or joined, whatever way it exits
     try:
         if provider == "openai":
-            result = _parse_openai(status, text)
+            result = _parse_openai(status, text, seen)
         elif provider == "anthropic":
-            result = _parse_anthropic(status, text, redactor)
+            result = _parse_anthropic(status, text, redactor, seen)
         else:
-            result = _parse_openrouter(status, text)
-        return _guard_decoded(result, status, redactor)
+            result = _parse_openrouter(status, text, seen)
     except (_BadReply, RecursionError) as error:
         detail = "reply is nested too deeply" if isinstance(error, RecursionError) else str(error)
-        return ProviderError(
+        result = ProviderError(
             ErrorKind.SENT_CHARGE_UNKNOWN, "UnparsableReply", _snippet(redactor, detail), status
         )
+    return _guard_decoded(result, status, redactor, seen)
 
 
 def _guard_decoded(
-    result: Turn | ProviderError, status: int, redactor: Redactor
+    result: Turn | ProviderError, status: int, redactor: Redactor, seen: list[Any]
 ) -> Turn | ProviderError:
-    """Run the redactor over the decoded payload: a key can be whole only here."""
+    """Run the redactor over what the mapper decoded and over the outcome: a key can be whole
+    only here, and a mapper's early exit must not drop the strings it had already joined."""
+    try:
+        reflected = redactor.json_value(seen) != seen
+    except RecursionError:
+        # fail closed: data too deep for the redactor cannot be shown clean, so it counts as
+        # reflected (the reply is withheld, never passed on unchecked).
+        reflected = True
     if isinstance(result, ProviderError):
-        if any(
+        if reflected or any(
             redactor.text(v) != v
             for v in (result.message, result.reported_model, result.request_id)
             if v
@@ -472,7 +484,7 @@ def _guard_decoded(
     blocks = [{"provider": b.provider, "data": b.data} for b in result.provider_blocks]
     calls = [{"id": c.call_id, "name": c.name, "args": c.arguments} for c in result.tool_calls]
     payload = [result.text, result.reported_model, result.request_id, blocks, calls]
-    if redactor.json_value(payload) != payload:
+    if reflected or redactor.json_value(payload) != payload:
         return ProviderError(
             ErrorKind.SENT_CHARGE_UNKNOWN,
             "KeyReflected",
@@ -572,8 +584,17 @@ def _malformed(
 # OpenAI Responses
 
 
-def _parse_openai(status: int, text: str) -> Turn | ProviderError:
-    data = _object(text)
+def _parse_openai(status: int, text: str, seen: list[Any]) -> Turn | ProviderError:
+    data: dict[str, Any] = {}
+    texts: list[str] = []
+    try:
+        data = _object(text)
+        return _openai_outcome(status, data, texts)
+    finally:
+        seen.extend([data, "".join(texts)])
+
+
+def _openai_outcome(status: int, data: dict[str, Any], texts: list[str]) -> Turn | ProviderError:
     raw_usage = _sub(data, "usage")
     in_details = _sub(raw_usage, "input_tokens_details")
     out_details = _sub(raw_usage, "output_tokens_details")
@@ -597,7 +618,6 @@ def _parse_openai(status: int, text: str) -> Turn | ProviderError:
     output = data.get("output")
     if not isinstance(output, list):
         raise _BadReply("output is not a list")
-    texts: list[str] = []
     calls: list[ToolCall] = []
     for item in output:
         kind = item.get("type") if isinstance(item, dict) else None
@@ -634,33 +654,111 @@ _LINE_BREAK = re.compile(r"\r\n|\r|\n")  # SSE lines end at LF, CR or CRLF only
 _ERROR_TYPE = re.compile(r"[A-Za-z0-9_]{1,64}")
 
 
-def _sse_events(text: str) -> list[dict[str, Any]]:
-    events: list[dict[str, Any]] = []
+_TERMINAL_EVENTS = ("message_stop", "error")
+_SIMPLE_ESCAPES = {
+    '"': '"',
+    "\\": "\\",
+    "/": "/",
+    "b": "\b",
+    "f": "\f",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+}
+
+
+def _open_string(data: str) -> str:
+    """The decoded content of the JSON string left open at the end of ``data`` (a stream cut
+    inside an event), without a partial escape; "" when no string is open. Field-agnostic."""
+    start, i = -1, 0
+    while i < len(data):
+        if data[i] == "\\" and start >= 0:
+            i += 6 if data[i + 1 : i + 2] == "u" else 2
+            continue
+        if data[i] == '"':
+            start = -1 if start >= 0 else i + 1
+        i += 1
+    if start < 0:
+        return ""
+    raw, out, i = data[start:], [], 0
+    while i < len(raw):
+        if raw[i] != "\\":
+            out.append(raw[i])
+            i += 1
+        elif raw[i + 1 : i + 2] in _SIMPLE_ESCAPES:
+            out.append(_SIMPLE_ESCAPES[raw[i + 1]])
+            i += 2
+        elif raw[i + 1 : i + 2] == "u" and len(raw) >= i + 6 and _is_hex(raw[i + 2 : i + 6]):
+            out.append(chr(int(raw[i + 2 : i + 6], 16)))
+            i += 6
+        elif i + 1 >= len(raw) or (raw[i + 1] == "u" and len(raw) < i + 6):
+            break  # an escape cut in half: nothing of it is decoded
+        else:
+            out.append(raw[i])  # not a JSON escape: keep the text, a reader may still see it
+            i += 1
+    return "".join(out)
+
+
+def _is_hex(text: str) -> bool:
+    return len(text) == 4 and all(c in "0123456789abcdefABCDEF" for c in text)
+
+
+def _sse_events(text: str, events: list[dict[str, Any]], after: list[Any]) -> str | None:
+    """Decode the stream into ``events`` (up to and including the terminal event) and ``after``
+    (everything decoded past it, kept only so it can be checked for a key). The caller passes
+    the lists in, so events decoded before a ``_BadReply`` survive it. Returns None for a
+    stream that ends on an event boundary, else the open string of the event the stream was
+    cut inside (``after`` takes that one when it lies past the terminal event)."""
     data: list[str] = []
 
-    def flush() -> None:
+    def flush(final: bool) -> str | None:
         if not data:
-            return
-        try:
-            event = load_json("\n".join(data))
-        except TurnError:
-            raise _BadReply("an event's data is not JSON") from None
+            return None
+        joined = "\n".join(data)
         data.clear()
+        terminal = bool(events) and events[-1].get("type") in _TERMINAL_EVENTS
+        try:
+            event = load_json(joined)
+        except TurnError:
+            if final:
+                return _open_string(joined)
+            if terminal:
+                return None  # past the terminal event nothing is meaning, only text to check
+            raise _BadReply("an event's data is not JSON") from None
         if not isinstance(event, dict):
+            if terminal:
+                after.append(event)
+                return None
             raise _BadReply("an event's data is not a JSON object")
-        events.append(event)
+        (after if terminal else events).append(event)
+        return None
 
     for line in _LINE_BREAK.split(text):
         if not line:
-            flush()
-            if events and events[-1].get("type") in ("message_stop", "error"):
-                break
+            flush(final=False)
             continue
         name, _, value = line.partition(":")
         if name == "data":
             data.append(value.removeprefix(" "))
-    flush()  # a cut stream may end inside an event
-    return events
+    cut = flush(final=True)  # a cut stream may end inside an event
+    if cut is not None and events and events[-1].get("type") in _TERMINAL_EVENTS:
+        after.append(cut)
+        return None
+    return cut
+
+
+def _joined_deltas(events: list[Any]) -> list[str]:
+    """Each delta field joined in order per content block: a key split across events past the
+    terminal event, which no block holds, is still whole here."""
+    joined: dict[str, str] = {}
+    for event in events:
+        delta = event.get("delta") if isinstance(event, dict) else None
+        if isinstance(delta, dict):
+            for field, value in delta.items():
+                if field != "type" and isinstance(value, str):
+                    slot = f"{event.get('index')!r}/{delta.get('type')!r}/{field}"
+                    joined[slot] = joined.get(slot, "") + value
+    return list(joined.values())
 
 
 _ANTHROPIC_STOP: Mapping[str, StopReason] = {
@@ -711,13 +809,44 @@ def _in_stream_error(
     )
 
 
-def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | ProviderError:
-    events = _sse_events(text)
-    if not events:
+def _anthropic_text(blocks: Mapping[int, Mapping[str, Any]]) -> str:
+    return "".join(
+        str(blocks[index].get("text", ""))
+        for index in sorted(blocks)
+        if blocks[index].get("type") == "text"
+    )
+
+
+def _parse_anthropic(
+    status: int, text: str, redactor: Redactor, seen: list[Any]
+) -> Turn | ProviderError:
+    events: list[dict[str, Any]] = []
+    after: list[Any] = []
+    blocks: dict[int, dict[str, Any]] = {}
+    partial: dict[int, str] = {}
+    cut: str | None = None
+    try:
+        cut = _sse_events(text, events, after)
+        return _anthropic_outcome(status, events, cut, blocks, partial, redactor)
+    finally:
+        seen.extend([events, after, _joined_deltas([*events, *after]), blocks, partial, cut])
+        seen.append(_anthropic_text(blocks))
+        if cut is not None:  # the open string of the cut event continues every string so far
+            strings = [v for b in blocks.values() for v in b.values() if isinstance(v, str)]
+            seen.extend(s + cut for s in [*strings, *partial.values()])
+
+
+def _anthropic_outcome(
+    status: int,
+    events: list[dict[str, Any]],
+    cut: str | None,
+    blocks: dict[int, dict[str, Any]],
+    partial: dict[int, str],
+    redactor: Redactor,
+) -> Turn | ProviderError:
+    if not events and cut is None:
         raise _BadReply("no events in the stream")
     message: dict[str, Any] = {}
-    blocks: dict[int, dict[str, Any]] = {}
-    partial: dict[int, list[str]] = {}
     usage_raw: dict[str, Any] = {}
     stop_reason: str | None = None
     saw_delta = False
@@ -734,14 +863,14 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
                 raise _BadReply(f"content block {index} starts twice or without a block")
             blocks[index] = dict(block)
             if block.get("type") == "tool_use":
-                partial[index] = []
+                partial[index] = ""
         elif kind == "content_block_delta" and isinstance(index, int):
             delta = event.get("delta")
             if index not in blocks or not isinstance(delta, dict):
                 raise _BadReply(f"delta for content block {index}, which has not started")
             dtype = delta.get("type")
             if dtype == "input_json_delta" and index in partial:
-                partial[index].append(str(delta.get("partial_json", "")))
+                partial[index] += str(delta.get("partial_json", ""))
             elif dtype in ("text_delta", "thinking_delta", "signature_delta"):
                 field = {"text_delta": "text", "thinking_delta": "thinking"}.get(
                     str(dtype), "signature"
@@ -753,13 +882,15 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
             if index not in blocks:
                 raise _BadReply(f"stop for content block {index}, which has not started")
             if index in partial:
-                blocks[index]["input_json"] = "".join(partial.pop(index)) or "{}"
+                blocks[index]["input_json"] = partial.pop(index) or "{}"
         elif kind == "message_delta":
             delta = event.get("delta")
             if isinstance(delta, dict):
                 stop_reason = _str_or_none(delta.get("stop_reason")) or stop_reason
             usage_raw.update(_sub(event, "usage") or {})  # cumulative
             saw_delta = True
+    if cut is not None:
+        raise _BadReply("an event's data is not JSON")
     model, rid = _str_or_none(message.get("model")), _str_or_none(message.get("id"))
     if not saw_delta:
         return ProviderError(
@@ -784,14 +915,11 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
             model,
             rid,
         )
-    texts: list[str] = []
     calls: list[ToolCall] = []
     provider_blocks: list[ProviderBlock] = []
     for index in sorted(blocks):
         block = blocks[index]
-        if block.get("type") == "text":
-            texts.append(str(block.get("text", "")))
-        elif block.get("type") in _THINKING_TYPES:
+        if block.get("type") in _THINKING_TYPES:
             provider_blocks.append(ProviderBlock("anthropic", dict(block)))
         elif block.get("type") == "tool_use":
             call_id, name = _id(block, "id"), _id(block, "name")
@@ -802,7 +930,15 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
             calls.append(ToolCall(call_id, name, args))
     stop: StopReason = _ANTHROPIC_STOP.get(stop_reason or "", "other")
     return Turn(
-        "".join(texts), tuple(calls), usage, stop, model, rid, status, None, tuple(provider_blocks)
+        _anthropic_text(blocks),
+        tuple(calls),
+        usage,
+        stop,
+        model,
+        rid,
+        status,
+        None,
+        tuple(provider_blocks),
     )
 
 
@@ -815,8 +951,9 @@ _OPENROUTER_STOP: Mapping[str, StopReason] = {
 }
 
 
-def _parse_openrouter(status: int, text: str) -> Turn | ProviderError:
+def _parse_openrouter(status: int, text: str, seen: list[Any]) -> Turn | ProviderError:
     data = _object(text)
+    seen.append(data)  # nothing below changes it; the guard checks the whole decoded reply
     model, rid = _str_or_none(data.get("model")), _str_or_none(data.get("id"))
     if data.get("error"):
         return ProviderError(

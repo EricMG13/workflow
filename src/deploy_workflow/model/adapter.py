@@ -64,6 +64,7 @@ KEY_VARIABLES: Mapping[str, str] = {
 }
 LIVE_RULINGS_ROOT = Path(__file__).resolve().parents[3] / "docs" / "rulings"
 _REFLECTED_RAW = b'"[redacted]"'
+_UNPARSABLE_RAW = b'"[withheld: UnparsableReply]"'
 _PAUSE_LIFT = "live-provider-pause"
 _RULING_KEYS = ("lifts", "by", "date", "configs")
 _RULING_LINE = re.compile(r"^[ \t]*(lifts|by|date|configs):[ \t]*(.*?)[ \t]*$", re.MULTILINE)
@@ -401,31 +402,29 @@ class LiveAdapter:
             outcome = error_from_transport(self._model.provider, exc, redactor)
             raw = redactor.bytes_(exc.partial) or None
             status = None
+            # What arrived before the failure is judged as a reply: a cut or reflecting body
+            # is not archived, whichever provider sent it.
+            judged = parse(self._model.provider, 200, exc.partial, {}, redactor) if raw else None
         else:
             headers = response.headers
-            outcome = parse(self._model.provider, response.status, response.body, headers, redactor)
+            outcome = judged = parse(
+                self._model.provider, response.status, response.body, headers, redactor
+            )
             raw = redactor.bytes_(response.body)
             status = response.status
         finished = self._clock()
-        if (
-            isinstance(outcome, ProviderError) and outcome.error_class == "KeyReflected"
-        ) or _rejoined_key(raw, redactor):
+        if isinstance(judged, ProviderError) and judged.error_class == "KeyReflected":
             raw = _REFLECTED_RAW  # a key decodable from the body: no part of it is kept
+        elif isinstance(judged, ProviderError) and judged.error_class == "UnparsableReply":
+            # fail closed: a body that does not parse cannot be shown free of an escaped or
+            # split key, so none of it is kept (the record still exports from its own fields).
+            raw = _UNPARSABLE_RAW
         if isinstance(outcome, Turn):
             return AdapterReply(
                 "ok", outcome, raw, outcome.http_status, None, None, started, finished,
                 outcome.usage, outcome.billed_usd,
             )  # fmt: skip
         return _reply_from_error(outcome, raw, status, headers, started, finished)
-
-
-_DELTA_TEXT = re.compile(rb'"(?:text|thinking|partial_json)":\s*"((?:[^"\\]|\\.)*)')
-
-
-def _rejoined_key(raw: bytes | None, redactor: Redactor) -> bool:
-    """Delta strings joined in order, a cut tail included: a key split across them is whole."""
-    joined = "".join(m.decode("utf-8", "replace") for m in _DELTA_TEXT.findall(raw or b""))
-    return redactor.text(joined) != joined
 
 
 def _reply_from_error(

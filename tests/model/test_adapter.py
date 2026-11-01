@@ -22,6 +22,7 @@ from deploy_workflow.model.adapter import (
 from deploy_workflow.model.transport import (
     IdleTimeout,
     InsecureUrl,
+    OverallTimeout,
     Request,
     Response,
     TransportError,
@@ -563,6 +564,26 @@ _SSE_USAGE = {
 }
 
 
+_ERROR_EVENT = {"type": "error", "error": {"type": "overloaded_error", "message": "busy"}}
+
+
+def _signature_start() -> list[dict[str, Any]]:
+    def delta(value: str) -> dict[str, Any]:
+        return {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "signature_delta", "signature": value},
+        }
+
+    block = {"type": "thinking", "thinking": "", "signature": ""}
+    return [
+        _SSE_START[0],
+        {"type": "content_block_start", "index": 0, "content_block": block},
+        delta(SPLIT_KEY[:5]),
+        delta(SPLIT_KEY[5:]),
+    ]
+
+
 def _sse(events: list[dict[str, Any]]) -> bytes:
     return "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
 
@@ -583,7 +604,15 @@ def _anthropic_reply(live_ruling: Path, outcome: Response | TransportError) -> A
 
 @pytest.mark.parametrize(
     "label",
-    ["error_event", "stream_cut", "refusal", "idle_before_usage", "idle_after_usage"],
+    [
+        "error_event",
+        "stream_cut",
+        "refusal",
+        "idle_before_usage",
+        "idle_after_usage",
+        "signature_error",
+        "escaped_error",
+    ],
 )
 def test_live_split_key_absent_from_raw_on_every_reply_path(live_ruling: Path, label: str) -> None:
     outcomes: dict[str, Response | TransportError] = {
@@ -608,6 +637,18 @@ def test_live_split_key_absent_from_raw_on_every_reply_path(live_ruling: Path, l
         ),
         "idle_before_usage": IdleTimeout("idle", _sse(_SSE_START)),
         "idle_after_usage": IdleTimeout("idle", _sse(_SSE_START + [_SSE_STOP, _SSE_USAGE])),
+        "signature_error": Response(200, _sse(_signature_start() + [_ERROR_EVENT])),
+        "escaped_error": Response(
+            200,
+            _sse(
+                [
+                    _SSE_START[0],
+                    _SSE_START[1],
+                    {**_SSE_START[2], "delta": {"type": "text_delta", "text": SPLIT_KEY}},
+                    _ERROR_EVENT,
+                ]
+            ).replace(b"sk-ant", b"\\u0073k-ant"),
+        ),
     }
     reply = _anthropic_reply(live_ruling, outcomes[label])
     raw = (reply.raw or b"").decode()
@@ -615,6 +656,23 @@ def test_live_split_key_absent_from_raw_on_every_reply_path(live_ruling: Path, l
     joined = "".join(e.get("delta", {}).get("text", "") for e in texts)
     assert SPLIT_KEY not in joined and SPLIT_KEY[5:] not in raw
     assert reply.kind != "ok"
+
+
+def test_live_openai_body_cut_mid_json_withholds_raw(live_ruling: Path) -> None:
+    partial = (
+        b'{"id":"r","output":[{"type":"message","content":[{"type":"output_text",'
+        b'"text":"\\u0073k-or-v1-TESTONLYabcdef0123456789 and then'
+    )
+    assert FAKE_KEY.encode() not in partial
+    adapter = live_adapter(
+        SPEC,
+        live_ruling,
+        transport=FakeTransport(error=OverallTimeout("deadline", partial)),
+        environ={"OPENAI_API_KEY": FAKE_KEY},
+    )
+    reply = complete(adapter)
+    assert reply.kind != "ok"
+    assert reply.raw is not None and b"TESTONLY" not in reply.raw
 
 
 def test_live_clean_sse_keeps_its_raw(live_ruling: Path) -> None:

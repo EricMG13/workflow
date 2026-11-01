@@ -945,3 +945,24 @@ def test_a_mapper_crash_withholds_the_body_fail_closed(tmp_path: Path) -> None:
     body = json.dumps({"output": [{"type": "message", "content": 5}]}).encode()
     path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body, error_class="ProviderRejected")
     assert archived(path) == f"[withheld: MapperError; {len(body)} bytes]"
+
+
+def test_withheld_names_a_split_key_that_ends_in_an_error_event(tmp_path: Path) -> None:
+    key = "sk-ant-" + "W" * 40  # test-only
+    events: list[dict[str, Any]] = [
+        {"type": "message_start", "message": {"id": "m1", "model": "x", "usage": {}}},
+        {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": key[:5]},
+        },
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": key[5:]},
+        },
+        {"type": "error", "error": {"type": "overloaded_error", "message": "busy"}},
+    ]
+    body = "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
+    assert CallLog(tmp_path, Redactor())._withheld(body, None) == "KeyReflected"

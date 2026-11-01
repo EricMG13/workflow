@@ -725,6 +725,23 @@
             }
           ],
           "limitation": "Single dealer; no traded price"
+        },
+        {
+          "source_id": "context",
+          "source_class": "unknown",
+          "quality": "Low",
+          "period": "As of January 10, 2026",
+          "entity_covered": "Northbridge Synthetic Group",
+          "data_supplied": "Run settings: pathway, case kind, as-of date and issuer identity",
+          "use": "Run settings supplied with the pack; not issuer evidence",
+          "citations": [
+            {
+              "source_id": "context",
+              "locator": "line:13",
+              "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+            }
+          ],
+          "limitation": "Run settings supplied by the analyst; not issuer evidence."
         }
       ],
       "company": [

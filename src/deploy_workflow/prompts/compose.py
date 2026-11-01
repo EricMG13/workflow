@@ -16,6 +16,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import JsonValue
+
 from deploy_vii.business_context import STEP_ID as BUSINESS_CONTEXT
 from deploy_vii.business_context import context_block
 from deploy_vii.contracts import Fact
@@ -33,10 +35,11 @@ from deploy_vii.live.tools import EXTRACT, READ, SEARCH
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import extraction_coverage, live_consumers
 from deploy_vii.registry import modules
-from deploy_workflow.context import RunContext
+from deploy_workflow.context import ContextRefused, RunContext
 from deploy_workflow.financial_workflow import MAX_CALLS
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import StepSpec
+from deploy_workflow.owners import pins as owner_pins
 from deploy_workflow.owners.cp3d import context_offers
 from deploy_workflow.prompts.fence import (
     UntrustedItem,
@@ -49,6 +52,7 @@ from deploy_workflow.prompts.tools import model_schema, offered_schema, tool_nam
 
 __all__ = [
     "PINS_ENABLED",
+    "JsonValue",
     "NoPrompt",
     "PromptRequest",
     "RunContextRefused",
@@ -56,9 +60,8 @@ __all__ = [
     "has_prompt",
     "pin_enabled",
     "pinned_assumptions_block",
+    "request_pin_form",
 ]
-
-type JsonValue = str | list[JsonValue] | dict[str, JsonValue]
 
 
 class NoPrompt(Exception):
@@ -175,6 +178,23 @@ def pinned_assumptions_block(module_id: str, form: Mapping[str, JsonValue] | Non
     if not pin_enabled(module_id) or form is None:
         return None
     return data_block("CONTEXT", PINS_ID, json.dumps(dict(form), sort_keys=True))
+
+
+def request_pin_form(request: PromptRequest) -> Mapping[str, JsonValue] | None:
+    """The form the step's own module pins, for the pinned-assumptions block: ``request.pins`` when
+    the caller supplied one, else what the owner reads from the pack's frozen context
+    (``pins.submission_form``, the form the owner's validator compares a submission with). ``None``
+    while the module is not enabled, has no pin slice, or the context pins nothing. A context the
+    run cannot read is refused, as the factory refuses it."""
+    if request.pins is not None:
+        return request.pins
+    # Only a module with a pin slice has an owner pin; an id outside it pins nothing.
+    if not pin_enabled(request.module_id) or request.module_id not in owner_pins._SLICES:
+        return None
+    try:
+        return owner_pins.submission_form(request.module_id, request.pack)
+    except ContextRefused as error:
+        raise RunContextRefused(str(error)) from error
 
 
 def _is_line_source(pack: PreparedPack) -> bool:
@@ -408,7 +428,7 @@ def compose(request: PromptRequest) -> tuple[Message, ...]:
     """The system and user messages for one request; ``NoPrompt`` for a step with no text,
     ``PromptError`` (``FenceError`` for a text that breaks its fence) when it cannot be built."""
     contract = _check(request)
-    pins = pinned_assumptions_block(request.module_id, request.pins)
+    pins = pinned_assumptions_block(request.module_id, request_pin_form(request))
     blocks = [
         data_block(
             "CONTEXT", PACK_BLOCK_ID, _pack_facts(request), sha256=request.pack.content_hash()

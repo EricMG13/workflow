@@ -401,6 +401,7 @@ def _module_oracle(module, ccy):
     top = {"/".join(p): t.obj(dig(UP[case]["expected"], list(p)), DROP) for p in exp_top}
     return {
         "frozen_case": f"cases/{case}-owner (case {frozen_case})",
+        **({"comparison_excludes": ["run", "pack_sources"], "comparison_excludes_note": "the frozen run block (slice-cp2e-positive, credit_snapshot) and its pack_sources are not mapped to R2 and are excluded from comparison against R2"} if module == "CP-2E" else {}),
         "currency": ccy,
         "money_unit": BASIS[ccy]["money_unit"],
         "submission": sub,
@@ -603,9 +604,67 @@ def refused_entry(module, text, exact=None):
     return e
 
 
-STALE = {  # literals that a still-hard-coded owner would emit on a 2026 pack (brief table, "Frozen (2025)" column)
-    "period_literals": ["LTM Q4 25", "q4-2025 · 2025-10-01 to 2025-12-31", "Q4 2025: 2025-12-31", "Q4 2025-12-31", "2025-01-01 to 2025-12-31", "Basis: FY2025 (January 1-December 31, 2025)", "Not reached by FY2028", "31 December 2025", "Run as of 2026-01-10"],
-}
+# Stale literals are DERIVED, not listed. A candidate is a period-bearing phrase of a frozen source oracle (a year or two-digit
+# period label with up to two words before it and up to one after; amounts never match). It is kept as a forbidden literal only
+# if no shifted oracle or submission of any module/currency carries it, then reduced to the minimal set (a phrase containing
+# another kept phrase is dropped). Anything a correct owner legitimately emits on the 2026 pack is therefore never forbidden.
+_W = r"(?:[A-Za-z]+ ){0,2}"
+_PHRASE = [
+    re.compile(_W + r"(?:LTM )?(?:Q[1-4] |FY ?|q[1-4]-|fy-)?(?:19|20)\d\d(?:-\d\d-\d\d)?(?: to (?:19|20)\d\d-\d\d-\d\d)?(?: [A-Za-z]+)?"),
+    re.compile(r"(?:LTM )?(?:Q[1-4] |FY)\d\d(?: \(\d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d\))?"),
+]
+
+
+def _strings(x, out):
+    if isinstance(x, dict):
+        for k, v in x.items():
+            out.append(k)
+            _strings(v, out)
+    elif isinstance(x, list):
+        for v in x:
+            _strings(v, out)
+    elif isinstance(x, str):
+        out.append(x)
+    return out
+
+
+def derive_stale():
+    ident = Tx("USD", {})
+    ident.text = lambda s: s
+    frozen = []
+    for module, (case, _fc, _sp, exp_cases, exp_top) in SPECS.items():
+        _strings(ident.obj(dig(UP[case]["expected"], list(exp_cases[0])), EXPECTED_KEEP_DROP), frozen)
+    _strings(ident.obj(EARN["positive"]["points"]), frozen)
+    _strings(ident.obj(EARN_OWNER["assessments"]["E-QOQ-FLAT"], DROP), frozen)
+    cands = set()
+    for string in frozen:
+        for rx in _PHRASE:
+            for m in rx.finditer(string):
+                cands.add(m.group(0).strip())
+                cands.add(re.sub(r" [A-Za-z]+$", "", m.group(0)).strip())  # also without the trailing word
+    shifted = []
+    for ccy, mods in NEEDED.items():
+        for m in mods:
+            o = module_oracle(m, ccy)
+            _strings(o["expected"], shifted)
+            _strings(o["submission"], shifted)
+    for ccy in ("USD", "EUR"):
+        o = cp1b_oracle(ccy)
+        _strings(o, shifted)
+    blob = "\n".join(shifted)
+    kept = sorted(c for c in cands if re.search(r"\d\d", c) and c not in blob and not re.fullmatch(r"[\d-]+", c))
+    minimal = [c for c in kept if not any(o != c and o in c for o in kept)]
+    return minimal
+
+
+_STALE_CACHE = []
+
+
+def stale_literals():
+    if not _STALE_CACHE:
+        _STALE_CACHE.append(derive_stale())
+        assert len(_STALE_CACHE[0]) > 5
+    return _STALE_CACHE[0]
 
 
 def run_record(spec):
@@ -718,11 +777,10 @@ def build_expected_runs():
             mods["CP-2A"] = module_entry("CP-2A", "USD", {"offering": "unchanged: period-agnostic; a q3 base is not a refusal for a currency-only module (M3)"})
             mods["CP-1B"] = {"outcome": "refused", "layer": "build_earnings_delta", "error": "incompatible_periods", "issue_contains": "incompatible_periods", "figures_produced": False, "is_period_refused": False, "ruling": "controller: freeze today's refusal; earnings.py:316-318 compares period lengths in raw days (prior q2-2026 = 91, current q3-2026 = 92); a pre-existing defect reported to the owner; if the owner fixes it this case is re-cut"}
             quarters = ["q4-2025", "q1-2026", "q2-2026", "q3-2026"]
-            assert "q4-2025" not in {f"q{n}-2026" for n in range(1, 5)} and quarters[0] == "q4-2025"
             mods["CP-L10"] = {"outcome": "refused", "layer": "offering", "issue_contains": "unbound CP-1 operand: q4-2025 (no CP-1 T4.14 period)", "missing_quarter_id": "q4-2025", "quarters_needed": quarters, "figures_produced": False, "is_period_refused": False, "ruling": "controller: Phase 2 plan :114 (q3-2025 current -> q4-2024 missing) shifted one year; the shifted pack holds T4.14 periods q1-2026..q4-2026 only"}
         mods_clean = mods
         rec["modules"] = mods_clean
-        rec["stale_period_literals_forbidden_in_emitted_period_strings"] = STALE["period_literals"] if rid in ("R1", "R2", "R3", "R6") else []
+        rec["stale_period_literals_forbidden_in_emitted_period_strings"] = stale_literals() if rid in ("R1", "R2", "R3", "R6") else []
         out[rid] = rec
     return out
 
@@ -804,6 +862,8 @@ def main():
         "old_to_new_source_sha256": OLD2NEW,
         "runs": runs_manifest,
         "default_period_literals_mapped": FROZEN_DEFAULT,
+        "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",
+        "dependencies": "R3's CP-1B settling on q3-2026 -> q4-2026 depends on Phase 2 Task 4 generalising the CP-1B prose (ruling B19); until then the owner path refuses unsupported_pair.",
     }
     submissions = {
         "schema_version": "periods-currency-owner-submissions/1",

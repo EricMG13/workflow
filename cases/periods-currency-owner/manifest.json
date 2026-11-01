@@ -1058,5 +1058,7 @@
     "bs_period": "Q4 2025: 2025-12-31",
     "bs_column": "Q4 2025-12-31",
     "bridge_basis_line": "Basis: FY2025 (January 1-December 31, 2025)"
-  }
+  },
+  "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",
+  "dependencies": "R3's CP-1B settling on q3-2026 -> q4-2026 depends on Phase 2 Task 4 generalising the CP-1B prose (ruling B19); until then the owner path refuses unsupported_pair."
 }

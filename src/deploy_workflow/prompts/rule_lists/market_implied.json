@@ -7,7 +7,8 @@
     "oracle:cp3d:observations_and_absence",
     "oracle:cp3d:duplicate_kind",
     "fn:deploy_workflow.owners.cp3d:_check_observations",
-    "fn:deploy_workflow.owners.cp3d:submission_issues"
+    "fn:deploy_workflow.owners.cp3d:submission_issues",
+    "fn:deploy_workflow.owners.cp3d:_issues"
    ]
   },
   {

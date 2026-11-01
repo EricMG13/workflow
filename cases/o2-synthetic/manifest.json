@@ -1,7 +1,7 @@
 {
   "schema_version": "o2-synthetic-manifest/1",
   "scope": "Synthetic end-to-end oracle for the portfolio_decision preset: S1 (CP-0, CP-1, CP-1A, CP-2), CP-3, CP-5 and CP-6 submissions re-cut to a prepared pack",
-  "status": "prepared; not reviewed, not frozen",
+  "status": "S1, CP-3, CP-5, CP-6 submissions, sources and context frozen (9de132e7, cases/PINS.json); cp1-financials.json prepared (cp1_tool_loop), not reviewed, not frozen",
   "roles": {
     "preparer": "oracle preparer (this builder script)",
     "reviewer": null,
@@ -111,5 +111,16 @@
     "business.txt": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
     "market.txt": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
     "submissions.json": "9e41f088ff10aa048d36076727a88ab61b6ced997f9e2f2226263f0b79511092"
+  },
+  "cp1_tool_loop": {
+    "file": "cp1-financials.json",
+    "sha256": "96c9f7691a7b45a531e9cb6f8d5885cab158e67a1693daf9511137b4c794b9eb",
+    "source_function": "tests/test_financial_workflow.py financials(pack); reads: financial_reads(workflow)",
+    "mapping_rule": "financials(o2 pack) with each citation's page:N replaced by the line:K of the prepared pack whose span holds the quote (quotes.quoted), searched only inside the lines of that page of the frozen source (cases/financial/manifest.json), exactly one match required; source_sha256 replaced by the pack's file-bytes hash; no value, id, status or number changed",
+    "tool_calls": "o2 image of financial_reads: extract_statements over the derived statement units, read_pages over the lines of source pages 1 and 5, the same search_pack",
+    "not_re_cut": "narrative, readiness and quality: computed from the run's read inputs as tests/s1a_runs.py drive_cp1 does",
+    "citations_recut": 636,
+    "ambiguous_line_matches": [],
+    "script": "cases/o2-synthetic/builder/cp1_financials.py"
   }
 }

@@ -209,7 +209,7 @@ class Upstream:
     cp1_sha256: str
     cp1_status: InputStatus
     authority: Mapping[str, str]  # pack source id -> CP-0 authority class
-    legal_sources: tuple[str, ...]  # ready pack sources CP-0 classes executed or filed
+    legal_sources: tuple[str, ...]  # ready pack sources CP-0 classes executed, filed or draft
     facilities: Mapping[str, str | None]  # T4.18 facility id -> facility name
     facts: tuple[Fact, ...]  # the referencable CP-1 figures offered (none when CP-1 is blocked)
     rows: Mapping[tuple[str, str], str]  # (table, row) -> the CP-1 row label of an offered fact
@@ -475,8 +475,8 @@ def _row_issues(path: str, row: BaseModel, upstream: Upstream) -> list[str]:
     """Evidence rules of one row: what each kind of row quotes, from which sources."""
     issues: list[str] = []
     legal = set(upstream.legal_sources)
-    # Fix round 1: fail closed. A source is citable only when CP-0 classes it executed or filed
-    # and the pack holds it ready; no T3 authority row is no authority, never a pass.
+    # Fix round 1: fail closed. A source is citable only when CP-0 classes it executed, filed or
+    # draft and the pack holds it ready; no T3 authority row is no authority, never a pass.
     for source_id in dict.fromkeys(quote.source_id for quote in _quotes(row)):
         if source_id not in legal:
             issues.append(
@@ -1559,8 +1559,8 @@ def submit_cp4_step(store: Execution, ticket_id: str, step_id: str, payload: str
 
 
 def context_block(pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
-    """What the `legal_covenants` CONTEXT block adds to the pack facts: the citable (executed or
-    filed) sources, the CP-1 status and the gaps it carries, the T4.18 facility list and the CP-1
+    """What the `legal_covenants` CONTEXT block adds to the pack facts: the citable (executed, filed
+    or draft) sources, the CP-1 status and the gaps it carries, the T4.18 facility list and the CP-1
     figures a reference or a test may name, or the statement that none is offered."""
     names = {source.source_id: source for source in pack.sources}
     return {

@@ -12,8 +12,8 @@ Role: senior leveraged-finance legal and credit analyst, creditor perspective. R
 which provisions protect creditors, what do the documents permit the issuer to do, and how
 close is the issuer to each test?
 
-Sources. Cite only the sources CONTEXT lists under `legal_sources` (CP-0 classes them executed
-or filed); `other_sources` (management, sponsor, third-party or unknown material) are never
+Sources. Cite only the sources CONTEXT lists under `legal_sources` (CP-0 classes them executed,
+filed or, on a draft-documents run, draft); `other_sources` (management, sponsor, third-party or unknown material) are never
 cited. Quote the governing text verbatim. A document row registers one governing source: its
 family (indenture, credit agreement, supplemental indenture...), governing entity, date and
 amendments, quoting that source only.
@@ -116,8 +116,8 @@ and are re-mapped when the SKILL.md is pinned.
 - Degradation: the `CP-1 -> CP-4` edge is `restricted` (decision 0007): a blocked CP-1 is bound
   with status blocked, formulas are still extracted, every headroom and capacity is "not
   calculable", and the journal settles CP-4 `restricted` with the inherited limitation.
-- Sources: only executed and filed sources are cited, whole documents as the pack holds them
-  (ruling 1). CP-1D is not read in M8 (ruling 5).
+- Sources: only executed, filed or, on a draft-documents run, draft sources are cited, whole documents
+  as the pack holds them (ruling 1). CP-1D is not read in M8 (ruling 5).
 - Compliance and headroom language is reserved to Python's cells and refused in model text (a
   phrase guard, not a semantic review).
 - Basket capacity amounts are not computed in M8: shown unsettled with one module limitation.

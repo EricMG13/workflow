@@ -13,6 +13,7 @@ from b30_strip import B30_SPANS, undo_b30
 from b34_strip import B34_SPANS, undo_b34
 from merge_strip import undo_merged_contract
 from p5_strip import undo_p5
+from p5t6_strip import undo_p5t6_context, undo_p5t6_wording
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
@@ -229,23 +230,52 @@ def test_the_p5_line_is_the_only_change_to_the_frozen_message(
 ) -> None:
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
-    body = json.dumps([[system.role, undo_p5(step, system.text)], [user.role, user.text]])
+    # Phase 5 Task 6 (P5T6-R3): undo CP-0's `attachments` key first, then the P5 line.
+    user_text = undo_p5t6_context(step, user.text)
+    body = json.dumps([[system.role, undo_p5(step, system.text)], [user.role, user_text]])
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_P5T1_FROZEN[step]
 
 
+# The answer key (Phase 5 Task 6, P5T6-R1 and R3): the digests of these two steps before CP-0's
+# run-context block gained `attachments` and CP-4's method text named draft sources (the FROZEN
+# values after Phase 5 Task 1 for source_readiness and after B30 for legal_covenants). Never edited.
+PRE_P5T6_FROZEN: dict[str, str] = {
+    "legal_covenants": "d274462457744ea7fbc7b91bcd8ad38e9f3b2310671f8b39090daa8680477a44",
+    "source_readiness": "cf819db26dab80a34951dde352cb95f10bb38fb1ce01684e293bd856d3ccb743",
+}
+
+
+@pytest.mark.parametrize("step", sorted(PRE_P5T6_FROZEN))
+def test_the_p5t6_changes_are_the_only_change_to_the_frozen_message(
+    pack: PreparedPack, step: str
+) -> None:
+    messages = compose(request_for(step, pack))
+    system, user = messages[0], messages[1]
+    body = json.dumps(
+        [
+            [system.role, undo_p5t6_wording(step, system.text)],
+            [user.role, undo_p5t6_context(step, user.text)],
+        ]
+    )
+    assert hashlib.sha256(body.encode()).hexdigest() == PRE_P5T6_FROZEN[step]
+
+
+# source_readiness and legal_covenants were re-frozen by Phase 5 Task 6 (CP-0's run-context block
+# shows `attachments`; CP-4's method text names draft sources); PRE_P5T6_FROZEN keeps the digests
+# before, and test_the_p5t6_changes_are_the_only_change_to_the_frozen_message undoes exactly them.
 FROZEN: dict[str, str] = {
     "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
     "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
     "credit_synthesis": ("209914c5b5b6662bd897f2b92d9dc3ae90286be0f30153aa5f54ec235fa2320c"),
     "financials": ("8d196274b78c7f5444f3a9e130618be05b74d5d800a703654abbc445926dd315"),
     "integrity_review": ("1b71ce3d77e672011f2234c363def35ecd38e3f7a0bf2322a6ec38c876b2ffcf"),
-    "legal_covenants": ("d274462457744ea7fbc7b91bcd8ad38e9f3b2310671f8b39090daa8680477a44"),
+    "legal_covenants": ("22e7630bb28415fcd27aa005767f5767060fcfecff5dc1cde036a5e4401c7d39"),
     "narrative": ("3e8d87b8f6e5085f539e94e7184db2e89feb7cc45b4e03e897925dca24d819f7"),
     "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
     "relative_value": ("d9202926890f8f011bcbf97fc40334e2b576fd57959f460d75c27b204262cba0"),
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
-    "source_readiness": ("cf819db26dab80a34951dde352cb95f10bb38fb1ce01684e293bd856d3ccb743"),
+    "source_readiness": ("bc8cd4d8611fe907bfad6bd8754b458730d1551cca98aec8822277f440d4658b"),
 }
 
 

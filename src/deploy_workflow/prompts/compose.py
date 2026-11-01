@@ -48,6 +48,7 @@ from deploy_workflow.owners.cp3d import (
 )
 from deploy_workflow.prompts.fence import (
     UntrustedItem,
+    cp0_run_context_block,
     data_block,
     run_context_block,
     untrusted_evidence_block,
@@ -480,7 +481,11 @@ def compose(request: PromptRequest) -> tuple[Message, ...]:
         )
     ]
     if request.context is not None:
-        blocks.append(run_context_block(request.context))
+        # P5T1-R9: only CP-0 also reads the declared mode of the legal documents.
+        make_block = (
+            cp0_run_context_block if request.step_id == "source_readiness" else run_context_block
+        )
+        blocks.append(make_block(request.context))
     if pins is not None:
         blocks.append(pins)
     if (evidence := _evidence_block(request)) is not None:

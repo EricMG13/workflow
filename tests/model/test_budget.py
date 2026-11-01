@@ -131,6 +131,7 @@ def test_new_budget_recomputes_from_markers(tmp_path: Path) -> None:
     again = Budget(D("1"), tmp_path)
     assert (again.reserved, again.spent) == (D("0.25"), D("0.1"))
     assert again.unsettled == ("a",)
+    again.release("a")
     with pytest.raises(DuplicateCall):
         _reserve(again, "a", "0.1")
 
@@ -143,6 +144,7 @@ def test_unknown_stop_survives_a_restart(tmp_path: Path) -> None:
     with pytest.raises(RunStopped):
         _reserve(again, "b", "0.1")
     _reserve(again, "r", "0.1", retry_of="a")
+    again.settle("r", D("0.1"))
     with pytest.raises(RetryUsed):
         _reserve(Budget(D("1"), tmp_path), "r2", "0.1", retry_of="a")
 
@@ -197,3 +199,26 @@ def test_marker_is_fsynced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr(os, "fsync", recording_fsync)
     _reserve(Budget(D("1"), tmp_path), "a", "0.1")
     assert len(synced) == 2  # the file and its directory
+
+
+def test_crash_left_unsettled_marker_stops_the_run(tmp_path: Path) -> None:
+    first = Budget(D("1"), tmp_path)
+    _reserve(first, "a", "0.1")
+    _reserve(first, "ok", "0.1")
+    first.settle("ok", None, retryable=True)
+    again = Budget(D("1"), tmp_path)  # "a" has no .settled marker: it may have been sent
+    assert again.unsettled == ("a",) and again.reserved == D("0.1")
+    with pytest.raises(RunStopped):
+        _reserve(again, "b", "0.1")
+    with pytest.raises(RunStopped):
+        _reserve(again, "b", "0.1", retry_of="a")
+    with pytest.raises(RunStopped):  # a legitimate retryable hold does not lift the crash stop
+        _reserve(again, "b", "0.1", retry_of="ok")
+    again.release("a")  # the operator clears it
+    _reserve(again, "b", "0.1", retry_of="ok")
+
+
+def test_in_flight_reservation_does_not_stop_the_same_run(tmp_path: Path) -> None:
+    b = Budget(D("1"), tmp_path)
+    _reserve(b, "a", "0.1")
+    _reserve(b, "b", "0.1")

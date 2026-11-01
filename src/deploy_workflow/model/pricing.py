@@ -17,6 +17,9 @@ Offline (a recorded call) is always priced from the recording's ``Usage`` with `
 Live, a turn that carries ``billed_usd`` is ``billed``; otherwise it is ``computed``, and an
 OpenRouter call without ``usage.cost`` has an unknown charge.
 
+Offline deepseek token pricing treats prompt tokens as including cached reads (OpenAI-style),
+because OpenRouter's usage schema is OpenAI-compatible; this is not verified against a live reply.
+
 A ``None`` count that the provider documents as reported makes the charge unknown, never a
 partial charge.
 """

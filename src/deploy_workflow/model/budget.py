@@ -7,8 +7,9 @@ Layout, under the run's Execution directory (``owner_workflow.AUDIT``):
 
 A reservation marker is written (``O_CREAT|O_EXCL``, ``fsync``) before ``reserve`` returns, so a
 crash after a send leaves evidence. A new ``Budget`` over the same directory recomputes its
-state from the markers. A reservation with no ``.settled`` marker is still held; it is reported by
-``unsettled`` and not stopped on (the caller decides how a resumed run treats it).
+state from the markers. A reservation with no ``.settled`` marker at load is a crash-left unknown
+charge: it stays held, is listed by ``unsettled``, and stops the run until settled or released
+(an operator step); no ``retry_of`` may name it.
 
 Meaning of the numbers: ``reserved`` is the sum of unsettled holds; ``spent`` is the actual
 charges plus the full holds of unknown-charge calls. The cap check is
@@ -152,6 +153,7 @@ class Budget:
         self._lock = threading.Lock()
         self._holds: dict[str, _Hold] = {}
         self._settled: dict[str, _Settlement] = {}
+        self._crash_left: set[str] = set()
         self._dir.mkdir(parents=True, exist_ok=True)
         self._load()
 
@@ -185,6 +187,9 @@ class Budget:
                 str(status), _decimal_text("usd", raw.get("usd")), retryable
             )
 
+        # A reservation with no .settled marker at load time may have been sent: unknown charge.
+        self._crash_left = {c for c in self._holds if c not in self._settled}
+
     # -- state ------------------------------------------------------------------------
 
     @property
@@ -217,7 +222,7 @@ class Budget:
 
     def _stopped(self) -> bool:
         retried = self._retried()
-        return any(
+        return bool(self._crash_left) or any(
             s.status == "overrun" or (s.status == "unknown" and c not in retried)
             for c, s in self._settled.items()
         )
@@ -248,6 +253,8 @@ class Budget:
             self._holds[call_id] = _Hold(amount, config_id, retry_of)
 
     def _check_retry(self, retry_of: str) -> None:
+        if self._crash_left:
+            raise RunStopped("a reservation left unsettled by a crash stopped the run")
         if self._retried():
             raise RetryUsed("the run's one retry was already taken")
         settlement = self._settled.get(retry_of)
@@ -297,3 +304,4 @@ class Budget:
             },
         )
         self._settled[call_id] = settlement
+        self._crash_left.discard(call_id)

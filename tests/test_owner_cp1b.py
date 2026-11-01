@@ -18,7 +18,7 @@ import pytest
 import test_earnings as a1
 from pydantic import ValidationError
 
-from deploy_vii.contracts import Input, Module, Run
+from deploy_vii.contracts import Fact, Input, Module, Run
 from deploy_vii.execution import Attempt, StepSubmission
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow import earnings_workflow as ew
@@ -124,7 +124,7 @@ def test_submission_shape_is_two_period_ids_and_three_literals() -> None:
 
 
 def test_cp1b_pair_rule_accepts_what_the_delta_core_accepts() -> None:
-    module = a1.fixture()
+    module = _register()
     flat = cp1b.compute(module, review("q3-2025", "q4-2025"))
     assert flat.issues == () and flat.report is not None
     assert tuple(p.measure_id for p in flat.report.points) == a1.MEASURES
@@ -138,7 +138,7 @@ def test_cp1b_pair_rule_accepts_what_the_delta_core_accepts() -> None:
 
 
 def test_cp1b_assessment_must_be_the_one_python_derives() -> None:
-    module = a1.fixture()
+    module = _register()
     wrong_flat = cp1b.compute(module, review("fy-2024", "fy-2025", "flat_sequential"))
     assert wrong_flat.report is None and "comparative_not_supplied" in wrong_flat.issues[0]
     wrong_gap = cp1b.compute(module, review("q3-2025", "q4-2025", "comparative_not_supplied"))
@@ -283,7 +283,7 @@ def test_cp1b_prior_year_period_in_the_register_falsifies_the_limits() -> None:
 
 
 def test_cp1b_comparison_label_is_derived_from_the_deltas() -> None:
-    module = a1.fixture()
+    module = _register()
     flat = cp1b.compute(module, review("q3-2025", "q4-2025")).report
     gap = cp1b.compute(module, review("fy-2024", "fy-2025", "comparative_not_supplied")).report
     assert flat is not None and gap is not None
@@ -309,6 +309,110 @@ def test_cp1b_owner_limits_state_nothing_the_path_cannot_know() -> None:
         assert not any("Owner checkpoint" in x for x in owned.limitations)
 
 
+# --- the guards follow the real E-* register (fix 2) ---------------------------------------------
+
+_OPENING = {
+    "period_id": "opening-2024",
+    "fiscal_year": "2024",
+    "fiscal_quarter": None,
+    "period_type": "PERIOD_END",
+    "start_date": None,
+    "end_date": "2024-12-31",
+    "day_count": None,
+    "audit_status": "unaudited",
+    "currency": "USD",
+    "unit": "MILLIONS",
+    "accounting_basis": "IFRS",
+    "entity_perimeter": "consolidated group",
+    "source_id": "financial",
+    "source_locator": "page:1",
+    "component_period_ids": None,
+}
+
+
+def _with_opening(module: Any) -> Any:
+    """The literal register plus the `opening-2024` PERIOD_END row the real E-* CP-1 holds
+    (tests/test_earnings.py `test_canonical_opening_period_end_is_indexed_...`)."""
+    citation = module.facts[0].citations
+    rows = tuple(
+        Fact(
+            fact_id=f"opening-2024.{field}",
+            label=field,
+            table_id="T4.14",
+            row_id="opening-2024",
+            field=field,
+            text=value,
+            status="known"
+            if value is not None
+            else "not_applicable"
+            if field in {"fiscal_quarter", "component_period_ids"}
+            else "missing",
+            limitation=None if value is not None else "Source does not supply this field",
+            period="opening-2024",
+            basis="IFRS · consolidated group",
+            citations=citation,
+        )
+        for field, value in _OPENING.items()
+    )
+    return module.model_copy(update={"facts": (*module.facts, *rows)})
+
+
+def _register() -> Any:
+    """The literal A1 register with the real E-* register's opening-2024 row."""
+    return _with_opening(a1.fixture())
+
+
+def _compute_pair(module: Any, prior: str, current: str, comparison: str) -> Any:
+    return cp1b.compute(module, review(prior, current, comparison))
+
+
+def test_cp1b_both_pairs_settle_on_the_real_register_shape() -> None:
+    module = _with_opening(a1.fixture())
+    assert _compute_pair(module, "q3-2025", "q4-2025", "flat_sequential").issues == ()
+    gap = _compute_pair(module, "fy-2024", "fy-2025", "comparative_not_supplied")
+    assert gap.issues == () and gap.report is not None
+
+
+def test_cp1b_gap_pair_needs_the_opening_2024_row_its_limit_names() -> None:
+    """ "Opening-2024 balance data exists" must be true wherever the gap pair settles."""
+    found = _compute_pair(a1.fixture(), "fy-2024", "fy-2025", "comparative_not_supplied")
+    assert found.report is None and found.issues == ("unsupported_pair",)
+
+
+def test_cp1b_gap_pair_needs_known_fy_leverage() -> None:
+    module = _with_opening(a1.fixture())
+    lost = module.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"amount": None, "status": "missing", "limitation": "x"})
+                if f.fact_id == "value.total_leverage_reported.fy-2025"
+                else f
+                for f in module.facts
+            )
+        }
+    )
+    found = _compute_pair(lost, "fy-2024", "fy-2025", "comparative_not_supplied")
+    assert found.report is None and found.issues == ("unsupported_pair",)
+
+
+def test_cp1b_flat_pair_needs_the_four_quarter_reason_for_missing_q3_leverage() -> None:
+    module = a1.fixture()
+    other = module.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"limitation": "Source does not supply it"})
+                if f.fact_id.startswith("value.")
+                and f.fact_id.endswith(".q3-2025")
+                and f.status == "missing"
+                else f
+                for f in module.facts
+            )
+        }
+    )
+    found = _compute_pair(other, "q3-2025", "q4-2025", "flat_sequential")
+    assert found.report is None and found.issues == ("unsupported_pair",)
+
+
 # --- the split composer keeps the receipt path's bytes ----------------------------------------
 
 # sha256 of `EarningsWorkflow._compose(...).model_dump_json()` on the literal register, taken at
@@ -322,7 +426,7 @@ PRE_SPLIT_COMPOSED = {
 
 @pytest.mark.parametrize("pair", sorted(PRE_SPLIT_COMPOSED))
 def test_split_composer_keeps_the_pre_split_bytes(pair: tuple[str, str]) -> None:
-    producer = _producer()
+    producer = _producer(opening=False)  # the register the pins were taken on
     attempt = _attempt(producer)
     prior, current = pair
     report = build_earnings_delta(cp1b.cp1_view(producer), prior, current)
@@ -396,8 +500,8 @@ class _Store:
         return self._payload
 
 
-def _producer() -> Module:
-    source = a1.fixture()
+def _producer(opening: bool = False) -> Module:
+    source = _register() if opening else a1.fixture()
     return Module(
         run_id="slice-cp1b-flat-v1",
         issuer_id="northbridge",
@@ -432,10 +536,15 @@ def _run() -> Run:
 
 
 def test_cp1b_view_offers_periods_and_the_accepted_pairs() -> None:
-    producer = _producer()
+    producer = _producer(opening=True)
     sha, text = cp1b.view(_Store(producer, ""), _attempt(producer))  # type: ignore[arg-type]
     body = json.loads(text)
-    assert [p["period_id"] for p in body["periods"]] == ["q3-2025", "q4-2025", "fy-2025"]
+    assert [p["period_id"] for p in body["periods"]] == [
+        "q3-2025",
+        "q4-2025",
+        "fy-2025",
+        "opening-2024",
+    ]
     assert [(p["prior_period_id"], p["current_period_id"]) for p in body["pairs"]] == [
         ("q3-2025", "q4-2025"),
         ("fy-2024", "fy-2025"),
@@ -449,7 +558,7 @@ def test_cp1b_view_offers_periods_and_the_accepted_pairs() -> None:
 
 
 def _validate(payload: str) -> Any:
-    producer = _producer()
+    producer = _producer(opening=True)
     step = StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
     attempt = _attempt(producer, step)
     pack = PreparedPack(run=_run(), sources=())
@@ -596,9 +705,10 @@ def test_cp1b_period_pairs(
     submitted = cp1b.submit(
         store, attempt.ticket_id, "earnings_delta", _payload(prior, current, comparison), None
     )
-    assert submitted.journal.status == "finished"
+    assert submitted.journal.status == "finished" and not submitted.journal.issues
     snapshot = store.read()
-    head = next(h for h in snapshot.heads if h.module_id == "CP-1B")
+    head = next((h for h in snapshot.heads if h.module_id == "CP-1B"), None)
+    assert head is not None and head.status in ("accepted", "restricted")
     settled = store.head_module(head)
     owned = {f.fact_id: f for f in settled.facts}
     if case_id == "E-QOQ-FLAT":

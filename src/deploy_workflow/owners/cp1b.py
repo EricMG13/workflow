@@ -85,6 +85,8 @@ class Computation:
 UNSUPPORTED = "unsupported_pair"
 FLAT_PAIR = ("q3-2025", "q4-2025")
 GAP_PAIR = ("fy-2024", "fy-2025")
+OPENING_2024 = "opening-2024"
+FOUR_QUARTERS = "Four complete contiguous quarters"
 _EARNINGS = (
     "revenue",
     "ebitda",
@@ -120,9 +122,8 @@ def expected_comparison(report: EarningsDeltaReport) -> str:
 def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
     """Whether the composer's fixed prose (and the Northbridge limitation lines) is true of this
     report (ruling B19): the flat q3-2025 -> q4-2025 pair or the missing-prior
-    fy-2024 -> fy-2025 pair, with every current value known, no 2024 period in the register
-    (the limitations say no FY2024 or prior-year series is supplied) and, for the flat pair,
-    no known Q3 leverage (the prose says the trailing comparison is unavailable)."""
+    fy-2024 -> fy-2025 pair, with every current value known, no 2024 duration period in the register and, for the gap pair, the opening-2024 balance row
+    and known FY2025 leverage; for the flat pair, Q3 leverage missing for the four-quarter reason."""
     pair = (report.prior_period_id, report.current_period_id)
     points = {p.measure_id: p for p in report.points}
     if pair not in (FLAT_PAIR, GAP_PAIR) or any(
@@ -130,15 +131,31 @@ def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
     ):
         return False
     rows = _periods(view)
+    # The limitations say no FY2024 or prior-year series is supplied: no 2024 duration period.
+    # The `opening-2024` PERIOD_END row the real E-* register holds is a balance date, not a series.
     if any(
-        "2024" in (r["start_date"].text or "") + (r["end_date"].text or "") for r in rows.values()
+        r["period_type"].text in ("QUARTER", "FY")
+        and "2024" in (r["start_date"].text or "") + (r["end_date"].text or "")
+        for r in rows.values()
     ):
         return False
     if pair == GAP_PAIR:
-        return report.prior_basis_id is None
+        # The table limitation "Opening-2024 balance data exists" must be true; the claim
+        # "current FY2025 leverage remains valid" needs known FY2025 leverage.
+        opening = rows.get(OPENING_2024)
+        return (
+            report.prior_basis_id is None
+            and opening is not None
+            and opening["period_type"].text == "PERIOD_END"
+            and all(points[m].current_status == "known" for m in _LEVERAGE)
+        )
+    # The prose says "Four complete contiguous quarters are unavailable for Q3 trailing leverage".
     return (
         _flat(report)
-        and all(points[m].prior_status == "missing" for m in _LEVERAGE)
+        and all(
+            points[m].prior_status == "missing" and FOUR_QUARTERS in (points[m].reason or "")
+            for m in _LEVERAGE
+        )
         and all(points[m].current_status == "known" for m in _LEVERAGE)
     )
 

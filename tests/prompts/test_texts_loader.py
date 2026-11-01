@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from merge_strip import undo_merged_contract
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
-from test_g8 import undo_merged_contract
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack

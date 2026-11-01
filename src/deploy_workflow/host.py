@@ -939,6 +939,13 @@ def _execution_state(
         raise SourceError("identity_mismatch") from None
 
 
+def session_sources(store: Execution, ticket_id: str, step_id: str) -> tuple[str, ...]:
+    """The pack sources a source session for this step reads (O6-P14): the list the prompt names
+    in rule 5, so the model is never told to search sources the session would refuse. Raises
+    ``SourceError`` where no session may be opened for the step."""
+    return _execution_state(store, ticket_id, step_id)[3]
+
+
 # The owner and financial layers re-parse every call receipt with pydantic
 # `model_validate_json`, whose JSON parser (jiter) refuses nesting deeper than 200.
 # The receipt wraps `arguments` in further levels (call object, record wrappers), so

@@ -1,17 +1,22 @@
 """O6 Task 1: the inventory of steps that need an owner-path prompt, and the prompt-set contract.
 
 The inventory is the 26 steps of ``OWNER_SPECS``. The ``compose`` cases are strict xfail until
-Tasks 2-4 give each step a prompt; each marker comes off when its step gets one (the strict flag
-turns an unexpected pass into a failure, so the marker cannot be forgotten).
+a step has a prompt; each marker comes off when its step gets one (the strict flag turns an
+unexpected pass into a failure, so the marker cannot be forgotten). Task 2 gave the 12 steps that
+already have a ``STEP_CONTRACTS`` text their prompt; the 14 new steps wait for Task 4's texts.
 """
 
+import dataclasses
+
 import pytest
+from prompt_support import EXISTING, request_for
 
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import plan
 from deploy_workflow import prompts
 from deploy_workflow.owner_workflow import OWNER_SPECS
-from deploy_workflow.prompts import NoPrompt, PromptRequest, compose, inventory
+from deploy_workflow.prompts import NoPrompt, compose, inventory
 
 EXPECTED = (
     "business_context",
@@ -75,9 +80,10 @@ def test_no_prompt_is_a_distinct_exception_carrying_the_step() -> None:
     assert not issubclass(NoPrompt, (KeyError, ValueError, LookupError))
 
 
-def test_compose_raises_no_prompt_for_a_step_outside_the_inventory() -> None:
+def test_compose_raises_no_prompt_for_a_step_outside_the_inventory(pack: PreparedPack) -> None:
+    request = dataclasses.replace(request_for("narrative", pack), step_id="no_such_step")
     with pytest.raises(NoPrompt) as caught:
-        compose(PromptRequest("no_such_step"))
+        compose(request)
     assert caught.value.step_id == "no_such_step"
 
 
@@ -90,16 +96,18 @@ def test_the_public_names_are_the_ruled_ones() -> None:
 @pytest.mark.parametrize(
     "step_id",
     [
-        pytest.param(
+        s
+        if s in EXISTING
+        else pytest.param(
             s,
             marks=pytest.mark.xfail(
-                strict=True, raises=NoPrompt, reason=f"O6 Tasks 2-4: no prompt for {s} yet"
+                strict=True, raises=NoPrompt, reason=f"O6 Task 4: no text for {s} yet"
             ),
         )
         for s in EXPECTED
     ],
 )
-def test_compose_returns_messages_for_each_inventory_step(step_id: str) -> None:
-    messages = compose(PromptRequest(step_id))  # NoPrompt names the missing step
+def test_compose_returns_messages_for_each_inventory_step(step_id: str, pack: PreparedPack) -> None:
+    messages = compose(request_for(step_id, pack))  # NoPrompt names the missing step
     assert messages
     assert messages[0].role == "system"

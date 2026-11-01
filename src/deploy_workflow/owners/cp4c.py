@@ -27,7 +27,7 @@ import math
 import re
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal, Inexact, localcontext
 from fractions import Fraction
 from typing import Annotated, Literal, get_args
@@ -80,9 +80,11 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-4C"
 STEP_ID = "restructuring_fulcrum"
@@ -540,6 +542,10 @@ class Cp4cContext:
 class Cp4cInputs:
     context: Cp4cContext
     submission: RestructuringSubmission
+    # The context file pins the EV multiple, so the limitations state it is user-supplied. The pin
+    # itself is checked by `_pin_lines`, not the core; `restructuring` sets this once the context
+    # is accepted.
+    pinned: bool = False
 
 
 # --- source rows (lease: claims are read from the cited balance-sheet row) --------------------
@@ -1386,6 +1392,7 @@ class _Run:
     falls: Mapping[str, Waterfall]
     scenario_row: str
     upstream: Mapping[str, Fact]
+    pinned: bool = False
 
 
 _PINNED_COLUMN = "Q4 2025-12-31"  # the column BS_PERIOD and the balance-date limitation state
@@ -1459,6 +1466,7 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
         falls=falls,
         scenario_row=_scenario_row(ctx.cp2g),
         upstream=_upstream_map(ctx, cp1),
+        pinned=inputs.pinned,
     )
 
 
@@ -2409,6 +2417,8 @@ def _own_limitations(run: _Run) -> tuple[str, ...]:
                 "analyst names none."
             )
     out += [f"Gap ({g.severity}): {g.gap}" for g in run.sub.gaps]
+    if run.pinned:
+        out.append(pinned_line(MODULE_ID))
     return tuple(out)
 
 
@@ -2719,6 +2729,33 @@ def validate_restructuring(
     return content_issues(_inputs(pack, submission, upstream))
 
 
+def _pin_lines(pack: PreparedPack, submission: RestructuringSubmission) -> tuple[str, ...]:
+    """The lines where a submitted EV multiple differs from the context pin, each as typed (the
+    schema bounds the text: `MULTIPLE_PATTERN`), in case order; a context the run refuses is the
+    single line `Context refused: ...` and no pin line. Empty, and nothing mapped, when nothing
+    is pinned.
+
+    Precedence (controller ruling, Phase 7 Q4): when the pin is set it wins over any multiple
+    CP-1C selected. The check runs on the submitted multiples whatever the prompt or view
+    offered, so a multiple that equals an offer but not the pin is still refused."""
+    try:
+        if pins_of(MODULE_ID, pack) is None:
+            return ()
+        submitted = {"valuation[*].multiple": [v.multiple for v in submission.valuation]}
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
+
+
+def _lines(
+    pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """The content issues, then the pin lines (also after the stale-only return): the one issue
+    set of the step validator and the composer gate."""
+    content = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
+    return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
+
+
 class RestructuringReport(Contract):
     """The retained step output: the composed content bound to the pack and the submission."""
 
@@ -2780,10 +2817,12 @@ def restructuring(
     *, pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
 ) -> RestructuringReport:
     """The composed report of a valid submission; raises ValueError on any issue."""
-    issues = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
+    issues = _lines(pack, submission, upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
-    result = compute(_inputs(pack, submission, upstream))
+    # `_lines` raised on a refused context, so `pins_of` cannot raise here.
+    pinned = pins_of(MODULE_ID, pack) is not None
+    result = compute(replace(_inputs(pack, submission, upstream), pinned=pinned))
     cells = {c.fact.fact_id: c.fact for c in result.cells}
     return RestructuringReport(
         run=pack.run,
@@ -2947,7 +2986,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     upstream = cp4c_upstream(store=store, attempt=attempt)
-    issues = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
+    issues = _lines(pack, submission, upstream)
     if issues:
         return StepValidation(issues=issues)
     report = restructuring(pack=pack, submission=submission, upstream=upstream)

@@ -471,34 +471,40 @@ def test_end_to_end_offline(full_walk: tuple[o2_case.Authored, RunOutcome]) -> N
 def test_receipt_rejects_model_in_cp5_inputs(
     full_walk: tuple[o2_case.Authored, RunOutcome],
 ) -> None:
-    """B1/B21: CP-MODEL is no input of CP-5. A sealed receipt whose CP-5 submissions list it as an
-    input is rejected by ``verify_owner_run_receipt`` (``identity_mismatch``)."""
+    """B1/B21: CP-MODEL is no input of CP-5. The B21 proof is the assertion on the untampered
+    receipt that ``"CP-MODEL" not in`` CP-5's inputs. The tamper half shows only that a sealed
+    receipt is tamper-evident: a control tamper with a different, non-CP-MODEL input id is rejected
+    with the same ``identity_mismatch``."""
     _, replayed = full_walk
     run_dir = replayed.run_dir
     receipt = receipt_of(run_dir)
     assert receipt.model is not None
-    model_input = Input(input_id="CP-MODEL", sha256=receipt.model.result_sha256, status="accepted")
-    submissions = []
-    for item in receipt.submissions:
-        if item.binding.binding.module_id == "CP-5":
-            bound = item.binding.binding
-            assert "CP-MODEL" not in [i.input_id for i in bound.inputs]
-            wrapped = item.binding.model_copy(
-                update={
-                    "binding": bound.model_copy(update={"inputs": (*bound.inputs, model_input)})
-                }
+    model_sha = receipt.model.result_sha256
+
+    def tamper(input_id: str) -> None:
+        extra = Input(input_id=input_id, sha256=model_sha, status="accepted")
+        submissions = []
+        for item in receipt.submissions:
+            if item.binding.binding.module_id == "CP-5":
+                bound = item.binding.binding
+                assert "CP-MODEL" not in [i.input_id for i in bound.inputs]
+                wrapped = item.binding.model_copy(
+                    update={"binding": bound.model_copy(update={"inputs": (*bound.inputs, extra)})}
+                )
+                item = item.model_copy(update={"binding": wrapped})
+            submissions.append(item)
+        tampered = receipt.model_copy(update={"submissions": tuple(submissions)})
+        assert tampered != receipt
+        with pytest.raises(WorkflowError) as rejected:
+            verify_owner_run_receipt(
+                Execution(run_dir / "execution"),
+                tampered,
+                publication_directory=run_dir / "publication",
             )
-            item = item.model_copy(update={"binding": wrapped})
-        submissions.append(item)
-    tampered = receipt.model_copy(update={"submissions": tuple(submissions)})
-    assert tampered != receipt
-    with pytest.raises(WorkflowError) as rejected:
-        verify_owner_run_receipt(
-            Execution(run_dir / "execution"),
-            tampered,
-            publication_directory=run_dir / "publication",
-        )
-    assert rejected.value.code == "identity_mismatch"
+        assert rejected.value.code == "identity_mismatch"
+
+    tamper("CP-MODEL")
+    tamper("CP-CONTROL")
 
 
 class TrapMapping(Mapping[str, str]):

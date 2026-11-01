@@ -65,10 +65,9 @@ CAP = Decimal(100)
 USAGE = Usage(input_tokens=1000, cached_read_tokens=0, cache_write_tokens=0, output_tokens=200)
 STARTED, FINISHED = 1_000.0, 1_001.0
 SOURCE_IDS = ("identity", "financial", "business", "market")
-# Step id -> the key of the frozen payload under ``positive``. Only a step whose frozen payload
-# needs no run-time binding is listed: ``credit_synthesis`` carries ``{{FIG:name}}`` references that
-# need the settled CP-1 facts, and CP-1's later steps (financials, narrative, readiness, quality)
-# have no payload in this oracle at all.
+# Step id -> the key of the frozen payload under ``positive``. ``relative_value``,
+# ``integrity_review`` and ``committee_challenge`` carry ``{{FIG:}}`` markers bound at run time.
+# CP-1 financials has a frozen payload in ``cases/o2-synthetic/cp1-financials.json``.
 FROZEN_STEP = {
     "source_readiness": "readiness_review",
     "source_context": "cp1_source_context",
@@ -229,9 +228,14 @@ class ScriptAdapter:
             bound = _figure_bindings(Execution(self._execution), text)
             if step_id == "credit_synthesis":  # cross-checked against the step's own read body
                 cp2 = {e["ref"]: e for e in json.loads(reads[0])["cp1_facts"]}
+                figures = frozen_submissions()["figures"]
                 for name, (fact_id, unit) in bound.items():
                     entry = cp2.get(fact_id)
-                    if entry is None or entry["unit"] != unit:
+                    if (
+                        entry is None
+                        or entry["unit"] != unit
+                        or entry["shown"] != figures[name]["spelled"]
+                    ):
                         raise RuntimeError(f"FIG {name}: {fact_id} is not offered with {unit}")
             text = bind_text(text, bound)
         return [(submit, load_arguments(text))]

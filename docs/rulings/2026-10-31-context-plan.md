@@ -134,3 +134,9 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   `context deal terms for facility <facility_id> cannot be cited as one unique span; not used`; on a residual
   key collision the later row (higher index) is dropped. CP-3D unreadable context: one issue per problem,
   `context source unreadable: <problem>`. Cost if wrong: one oracle re-cut and the helper's branch order.
+- **B20a (controller, 2026-11-01, amends B20).** An object-anchored quote runs from the object's `{`, so a collision on
+  a shared figure makes every colliding row's quote non-unique: every row whose cited figure is not unique in its
+  span is dropped (not only the later row); Phase 3 ruled decision 3 (:274) reads the same. The gap names the
+  row (1-based): `context quote row <n> for facility <facility_id> cannot be cited as one unique span; not used`
+  and `context deal terms row <n> for facility <facility_id> cannot be cited as one unique span; not used`
+  (Phase 3 oracle re-review: a quote matching two objects is a guessed span, Design 3 :66-68).

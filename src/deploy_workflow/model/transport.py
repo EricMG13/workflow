@@ -8,6 +8,9 @@ can settle a cut stream from a usage event that already arrived.
 from __future__ import annotations
 
 import http.client
+import io
+import socket
+import threading
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -81,11 +84,84 @@ class _Connection(Protocol):
     def close(self) -> None: ...
 
 
+class _Timer(Protocol):
+    def start(self) -> None: ...
+    def cancel(self) -> None: ...
+
+
 ConnectionFactory = Callable[[str, int, float], _Connection]
+TimerFactory = Callable[[float, Callable[[], None]], _Timer]
 
 
 def _default_connection(host: str, port: int, timeout: float) -> _Connection:
     return cast(_Connection, http.client.HTTPSConnection(host, port, timeout=timeout))
+
+
+def _default_timer(interval: float, function: Callable[[], None]) -> _Timer:
+    timer = threading.Timer(interval, function)
+    timer.daemon = True
+    return timer
+
+
+class _Deadline:
+    """Shared state of one call: the wall-clock deadline and the watchdog's verdict."""
+
+    def __init__(self, request: Request, clock: Callable[[], float]) -> None:
+        self.request = request
+        self.clock = clock
+        self.at = clock() + request.overall_s
+        self.expired = threading.Event()
+
+    def remaining(self) -> float:
+        return self.at - self.clock()
+
+    def per_read(self) -> float:
+        """The socket timeout for the next read: idle (streaming) capped by what is left."""
+        left = max(self.remaining(), 0.001)
+        return min(self.request.idle_s, left) if self.request.stream else left
+
+    def overall_timeout(self, partial: bytes = b"") -> OverallTimeout:
+        return OverallTimeout(
+            f"wall-clock deadline of {self.request.overall_s} s exceeded", partial
+        )
+
+
+class _BoundedRaw(io.RawIOBase):
+    """Raw reader over the socket's own file: before every socket read it refuses past the
+    deadline and sets the timeout to what is left, so a header or chunk-size trickle ends
+    at the overall limit."""
+
+    def __init__(self, inner: Any, sock: Any, deadline: _Deadline) -> None:
+        super().__init__()
+        self._inner, self._sock, self._deadline = inner, sock, deadline
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, b: Any) -> int | None:
+        if self._deadline.expired.is_set() or self._deadline.remaining() <= 0:
+            raise self._deadline.overall_timeout()
+        self._sock.settimeout(self._deadline.per_read())
+        return cast(int | None, self._inner.readinto(b))
+
+    def close(self) -> None:
+        self._inner.close()
+        super().close()
+
+
+class _BoundedSocket:
+    """The connection's socket with `makefile` bounded by the deadline; the rest delegates."""
+
+    def __init__(self, sock: Any, deadline: _Deadline) -> None:
+        self._sock, self._deadline = sock, deadline
+
+    def makefile(self, mode: str = "rb") -> io.BufferedReader:
+        inner = self._sock.makefile(mode)
+        raw = getattr(inner, "raw", inner)  # nothing has been read yet
+        return io.BufferedReader(_BoundedRaw(raw, self._sock, self._deadline))
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._sock, name)
 
 
 def https_transport(
@@ -93,16 +169,21 @@ def https_transport(
     *,
     clock: Callable[[], float] = time.monotonic,
     connection_factory: ConnectionFactory = _default_connection,
+    timer_factory: TimerFactory = _default_timer,
 ) -> Response:
+    """One bounded call. The overall limit is hard: a watchdog shuts the socket at the
+    deadline (a timer shutdown is an OverallTimeout), every socket read is given only the
+    time left, and the deadline is checked after every read."""
     parts = urlsplit(request.url)
     if parts.scheme != "https" or not parts.hostname:
         raise InsecureUrl("only https endpoints are permitted")
     path = parts.path or "/"
     if parts.query:
         path = f"{path}?{parts.query}"
-    deadline = clock() + request.overall_s
+    deadline = _Deadline(request, clock)
     conn = connection_factory(parts.hostname, parts.port or 443, request.connect_s)
     chunks: list[bytes] = []
+    watchdog: _Timer | None = None
     try:
         try:
             conn.connect()
@@ -110,35 +191,53 @@ def https_transport(
             raise ConnectTimeout(f"no connection within {request.connect_s} s") from None
         except OSError as error:
             raise TransportError(f"connection failed: {type(error).__name__}") from None
-        per_read = request.idle_s if request.stream else max(deadline - clock(), 0.001)
-        conn.sock.settimeout(per_read)
+        raw_sock = conn.sock
+        per_read = deadline.per_read()
+        raw_sock.settimeout(per_read)
+        conn.sock = _BoundedSocket(raw_sock, deadline)
+
+        def expire() -> None:
+            deadline.expired.set()
+            try:
+                raw_sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass  # already closed or never connected: the flag above still ends the call
+
+        watchdog = timer_factory(max(deadline.remaining(), 0.0), expire)
+        watchdog.start()
         timeout_error: type[TransportError] = IdleTimeout if request.stream else OverallTimeout
         try:
             conn.request("POST", path, request.body, request.headers)
             reply = conn.getresponse()
             while chunk := reply.read1(READ_CHUNK_BYTES):
                 chunks.append(chunk)
-                if clock() > deadline:
-                    raise OverallTimeout(
-                        f"wall-clock deadline of {request.overall_s} s exceeded",
-                        b"".join(chunks),
-                    )
+                if deadline.expired.is_set() or deadline.remaining() < 0:
+                    raise deadline.overall_timeout(b"".join(chunks))
+        except TransportError as error:
+            error.partial = error.partial or b"".join(chunks)
+            raise
         except TimeoutError:
+            if deadline.expired.is_set() or deadline.remaining() <= 0:
+                raise deadline.overall_timeout(b"".join(chunks)) from None
             raise timeout_error(f"no byte within {per_read} s", b"".join(chunks)) from None
         except OSError as error:
+            if deadline.expired.is_set():
+                raise deadline.overall_timeout(b"".join(chunks)) from None
             raise TransportError(
                 f"network error: {type(error).__name__}", b"".join(chunks)
             ) from None
         except http.client.HTTPException as error:
+            if deadline.expired.is_set():
+                raise deadline.overall_timeout(b"".join(chunks)) from None
             raise TransportError(f"http error: {type(error).__name__}", b"".join(chunks)) from None
-        if clock() > deadline:
-            raise OverallTimeout(
-                f"wall-clock deadline of {request.overall_s} s exceeded", b"".join(chunks)
-            )
+        if deadline.expired.is_set() or deadline.remaining() < 0:
+            raise deadline.overall_timeout(b"".join(chunks))
         headers: dict[str, str] = {}
         for name, value in reply.getheaders():
             key = name.lower()
             headers[key] = f"{headers[key]}, {value}" if key in headers else value
         return Response(reply.status, b"".join(chunks), headers)
     finally:
+        if watchdog is not None:
+            watchdog.cancel()
         conn.close()

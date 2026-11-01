@@ -15,8 +15,10 @@ from deploy_workflow.model.providers import (
     MaxOutputTooLarge,
     ProviderError,
     UnknownEffort,
+    _openrouter_body,
     build,
     classify,
+    effort_for,
     error_from_transport,
     parse,
     retry_after_seconds,
@@ -27,6 +29,7 @@ from deploy_workflow.model.turn import (
     Message,
     ModelSpec,
     Provider,
+    ProviderBlock,
     ToolCall,
     ToolSpec,
     Turn,
@@ -133,7 +136,26 @@ def test_openrouter_build_deepseek_ignores_open_inference() -> None:
 
 def test_other_openrouter_id_has_no_provider_ignore() -> None:
     other = ModelSpec("x", "openrouter", "mistralai/some-model", "high")
-    assert "provider" not in _body(build(other, _request(effort="high"), KEY))
+    assert "provider" not in _openrouter_body(other, _request(effort="high"), "high")
+    assert "provider" in _openrouter_body(DEEPSEEK, _request(effort="max"), "max")
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        ModelSpec("sol-medium", "openai", "gpt-6.1-sol-mini", "medium"),
+        ModelSpec("opus-medium", "anthropic", "claude-opus-5-5-20261101", "medium"),
+        ModelSpec("x", "openrouter", "mistralai/some-model", "high"),
+        ModelSpec("sol-medium", "openai", "claude-opus-5-5", "medium"),
+    ],
+)
+def test_model_outside_the_section_7_1_table_or_off_its_config_is_refused(
+    spec: ModelSpec,
+) -> None:
+    with pytest.raises(UnknownEffort):
+        effort_for(spec)
+    with pytest.raises(UnknownEffort):
+        build(spec, _request(effort=spec.effort), KEY)
 
 
 def test_max_output_over_cap_refused() -> None:
@@ -160,7 +182,7 @@ def test_sol_high_is_admitted() -> None:
     build(SOL, _request(effort="high"), KEY)
 
 
-@pytest.mark.parametrize("key", ["", "k\r\nX-Evil: 1"])
+@pytest.mark.parametrize("key", ["", "k\r\nX-Evil: 1", KEY + "\u200b", "has space", "k\u00e9y"])
 def test_bad_key_refused_before_building(key: str) -> None:
     with pytest.raises(KeyMissing):
         build(SOL, _request(), key)
@@ -412,7 +434,7 @@ def test_anthropic_in_stream_error_is_unknown_charge() -> None:
     err_event = {"type": "error", "error": {"type": "overloaded_error", "message": "busy"}}
     err = parse("anthropic", 200, _sse(START, err_event, stop=False), {}, Redactor())
     assert isinstance(err, ProviderError)
-    assert err.error_class == "StreamError" and "overloaded_error" in err.message
+    assert err.error_class == "overloaded_error" and "overloaded_error" in err.message
     assert err.kind is ErrorKind.SENT_CHARGE_UNKNOWN
 
 
@@ -575,4 +597,263 @@ def test_key_in_a_header_is_flagged() -> None:
 
 def test_key_shape_is_flagged_by_a_regex_only_redactor() -> None:
     err = parse("openai", 401, KEY.encode(), {}, Redactor())
+    assert isinstance(err, ProviderError) and err.error_class == "KeyReflected"
+
+
+# ------------------------------------------------------------------ fix round 1
+
+
+def _usage_kinds(err: object) -> ProviderError:
+    assert isinstance(err, ProviderError)
+    assert err.kind is ErrorKind.SENT_CHARGE_USAGE
+    assert err.usage is not None
+    return err
+
+
+def test_error_kind_has_usage_member_and_invariants() -> None:
+    assert ErrorKind.SENT_CHARGE_USAGE.value == "SentChargeUsage"
+    with pytest.raises(ValueError):
+        ProviderError(ErrorKind.SENT_CHARGE_USAGE, "x", "m")
+    with pytest.raises(ValueError):
+        ProviderError(ErrorKind.SENT_CHARGE_KNOWN, "x", "m", usage=Usage(output_tokens=1))
+
+
+def test_usage_bearing_errors_are_sent_charge_usage() -> None:
+    bad = _openai_reply(
+        output=[{"type": "function_call", "call_id": "c", "name": "n", "arguments": "{bad"}]
+    )
+    assert _usage_kinds(parse("openai", 200, bad, {}, Redactor())).usage == Usage(
+        input_tokens=100,
+        cached_read_tokens=40,
+        cache_write_tokens=7,
+        output_tokens=50,
+        reasoning_tokens=0,
+    )
+    for reason in ("refusal", "pause_turn", "model_context_window_exceeded"):
+        delta = {
+            "type": "message_delta",
+            "delta": {"stop_reason": reason},
+            "usage": {"output_tokens": 3},
+        }
+        _usage_kinds(parse("anthropic", 200, _sse(START, delta), {}, Redactor()))
+    cut = _sse(START, *TOOL_BLOCK[:2], DELTA, stop=False)
+    err = _usage_kinds(parse("anthropic", 200, cut, {}, Redactor()))
+    assert err.error_class == "StreamCut"
+
+
+def test_openai_refusal_part_is_a_usage_error() -> None:
+    reply = _openai_reply(
+        output=[{"type": "message", "content": [{"type": "refusal", "refusal": "no"}]}]
+    )
+    err = _usage_kinds(parse("openai", 200, reply, {}, Redactor()))
+    assert err.error_class == "Refusal"
+
+
+def test_openrouter_malformed_arguments_keeps_cost() -> None:
+    bad = _openrouter_reply().replace(b'{\\"a\\":1}', b"{bad")
+    err = _usage_kinds(parse("openrouter", 200, bad, {}, Redactor()))
+    assert err.error_class == "MalformedToolArguments"
+    assert err.billed_usd == Decimal("0.00123456789")
+
+
+def test_tool_arguments_keep_decimal_digits_and_refuse_nan() -> None:
+    args = '{"a":2.50,"b":12345678901234567.89}'
+    reply = _openai_reply(
+        output=[{"type": "function_call", "call_id": "c", "name": "n", "arguments": args}]
+    )
+    turn = parse("openai", 200, reply, {}, Redactor())
+    assert isinstance(turn, Turn)
+    assert str(turn.tool_calls[0].arguments["a"]) == "2.50"
+    assert str(turn.tool_calls[0].arguments["b"]) == "12345678901234567.89"
+    nan = _openai_reply(
+        output=[{"type": "function_call", "call_id": "c", "name": "n", "arguments": '{"d":NaN}'}]
+    )
+    err = parse("openai", 200, nan, {}, Redactor())
+    assert isinstance(err, ProviderError) and err.error_class == "MalformedToolArguments"
+
+
+def test_decimal_arguments_are_resent_exactly() -> None:
+    from decimal import Decimal as D
+
+    request = TurnRequest(
+        (Message("user", "go"), Message("assistant", "", (ToolCall("c", "n", {"a": D("2.50")}),))),
+        (),
+        100,
+        "medium",
+    )
+    assert b'"input":{"a":2.50}' in build(OPUS, request, KEY).body
+
+
+def test_missing_call_id_or_name_is_unparsable() -> None:
+    reply = _openai_reply(output=[{"type": "function_call", "arguments": "{}", "name": "n"}])
+    err = parse("openai", 200, reply, {}, Redactor())
+    assert isinstance(err, ProviderError) and err.error_class == "UnparsableReply"
+
+
+def test_in_stream_error_class_is_the_error_type() -> None:
+    event = {"type": "error", "error": {"type": "overloaded_error", "message": "busy"}}
+    err = parse("anthropic", 200, _sse(START, event, stop=False), {}, Redactor())
+    assert isinstance(err, ProviderError)
+    assert err.error_class == "overloaded_error" and err.kind is ErrorKind.SENT_CHARGE_UNKNOWN
+
+
+def test_sse_splits_on_newline_and_carriage_return_only() -> None:
+    text = {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {"type": "text_delta", "text": "a\u2028b\x85c"},
+    }
+    body = (
+        _sse(
+            START,
+            {"type": "content_block_start", "index": 0, "content_block": {"type": "text"}},
+            text,
+            {
+                "type": "message_delta",
+                "delta": {"stop_reason": "end_turn"},
+                "usage": {"output_tokens": 3},
+            },
+        )
+        .replace(b"\\u2028", "\u2028".encode())
+        .replace(b"\\u0085", "\x85".encode())
+    )
+    turn = parse("anthropic", 200, body, {}, Redactor())
+    assert isinstance(turn, Turn) and turn.text == "a\u2028b\x85c"
+
+
+def test_deeply_nested_reply_is_unparsable() -> None:
+    providers: tuple[Provider, ...] = ("openai", "openrouter", "anthropic")
+    for provider in providers:
+        err = parse(provider, 200, b"[" * 200_000, {}, Redactor())
+        assert isinstance(err, ProviderError) and err.error_class == "UnparsableReply"
+    assert classify(400, b"[" * 200_000) is ErrorKind.SENT_CHARGE_UNKNOWN
+
+
+THINK_EVENTS = [
+    {
+        "type": "content_block_start",
+        "index": 0,
+        "content_block": {"type": "thinking", "thinking": "", "signature": ""},
+    },
+    {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {"type": "thinking_delta", "thinking": "hm"},
+    },
+    {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {"type": "thinking_delta", "thinking": "m"},
+    },
+    {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {"type": "signature_delta", "signature": "SIG=="},
+    },
+    {"type": "content_block_stop", "index": 0},
+    {
+        "type": "content_block_start",
+        "index": 1,
+        "content_block": {"type": "redacted_thinking", "data": "OPAQUE"},
+    },
+    {"type": "content_block_stop", "index": 1},
+]
+THINK = (
+    ProviderBlock("anthropic", {"type": "thinking", "thinking": "hmm", "signature": "SIG=="}),
+    ProviderBlock("anthropic", {"type": "redacted_thinking", "data": "OPAQUE"}),
+)
+
+
+def test_anthropic_thinking_blocks_are_captured_in_order() -> None:
+    shifted = [{**e, "index": 2} for e in TOOL_BLOCK]
+    body = _sse(START, *THINK_EVENTS, *shifted, DELTA)
+    turn = parse("anthropic", 200, body, {}, Redactor())
+    assert isinstance(turn, Turn) and turn.provider_blocks == THINK
+    assert turn.tool_calls == (ToolCall("c1", "submit_x", {"a": 1}),)
+
+
+def test_anthropic_resends_thinking_blocks_unchanged_before_tool_use() -> None:
+    request = TurnRequest(
+        (
+            Message("user", "go"),
+            Message("assistant", "words", (ToolCall("c1", "n", {"a": 1}),), provider_blocks=THINK),
+            Message("tool", "r", tool_call_id="c1"),
+        ),
+        TOOLS,
+        100,
+        "medium",
+    )
+    content = _body(build(OPUS, request, KEY))["messages"][1]["content"]
+    assert content[0] == THINK[0].data and content[1] == THINK[1].data
+    assert [b["type"] for b in content[2:]] == ["text", "tool_use"]
+
+
+def test_other_providers_ignore_provider_blocks() -> None:
+    request = TurnRequest(
+        (Message("user", "go"), Message("assistant", "words", provider_blocks=THINK)),
+        TOOLS,
+        100,
+        "medium",
+    )
+    assert "SIG==" not in build(SOL, request, KEY).body.decode()
+    assert "SIG==" not in build(DEEPSEEK, replace_effort(request), KEY).body.decode()
+
+
+def replace_effort(request: TurnRequest) -> TurnRequest:
+    return TurnRequest(request.messages, request.tools, request.max_output_tokens, "max")
+
+
+def test_key_split_across_deltas_or_escaped_is_flagged() -> None:
+    red = Redactor([KEY])
+    split = _sse(
+        START,
+        {"type": "content_block_start", "index": 0, "content_block": {"type": "text"}},
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": KEY[:4]},
+        },
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": KEY[4:]},
+        },
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "end_turn"},
+            "usage": {"output_tokens": 3},
+        },
+    )
+    err = parse("anthropic", 200, split, {}, red)
+    assert isinstance(err, ProviderError) and err.error_class == "KeyReflected"
+    assert KEY not in repr(err)
+    escaped = json.dumps({"error": {"message": KEY}}).replace("sk-", "\\u0073k-").encode()
+    assert KEY.encode() not in escaped
+    err = parse("openai", 401, escaped, {}, red)
+    assert isinstance(err, ProviderError) and err.error_class == "KeyReflected"
+    assert KEY not in repr(err)
+    think = _sse(
+        START,
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {"type": "thinking", "thinking": ""},
+        },
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "thinking_delta", "thinking": KEY[:5]},
+        },
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "thinking_delta", "thinking": KEY[5:]},
+        },
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "end_turn"},
+            "usage": {"output_tokens": 3},
+        },
+    )
+    err = parse("anthropic", 200, think, {}, red)
     assert isinstance(err, ProviderError) and err.error_class == "KeyReflected"

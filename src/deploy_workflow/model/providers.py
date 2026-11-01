@@ -2,16 +2,19 @@
 
 ``build`` makes exactly one request; ``parse`` reads one reply. Retry, resend and repair belong
 to the loop. A reply that is not a usable turn comes back as a ``ProviderError`` carrying an
-``ErrorKind``; an error that carries ``usage`` is settled from it (computed), otherwise by kind.
+``ErrorKind`` that says how its charge is settled: SentChargeKnown (a 4xx error object, nothing
+generated) at 0; SentChargeUsage (tokens were generated and usage is reported) from that usage,
+computed, never at 0; SentChargeUnknown held and counted; NotSent nothing.
 Provider facts: work/context-plan/provider-docs-2026-10-31.md and provider-docs-o5-controller.md.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 from enum import Enum
 from typing import Any, cast
 
@@ -28,14 +31,20 @@ from deploy_workflow.model.transport import (
     TransportError,
 )
 from deploy_workflow.model.turn import (
+    CONFIG_MODELS,
     Message,
     ModelSpec,
     Provider,
+    ProviderBlock,
     StopReason,
     ToolCall,
     Turn,
+    TurnError,
     TurnRequest,
     Usage,
+    dump_json,
+    load_arguments,
+    load_json,
 )
 
 OPENAI_URL = "https://api.openai.com/v1/responses"
@@ -49,16 +58,11 @@ MESSAGE_CHARS = 500
 RETRY_AFTER_DEFAULT_S = 120
 RETRY_AFTER_MAX_S = 300  # runner.py:608-614
 
-# Spec §7.1 uses per model (controller ruling). A model not listed accepts the provider words.
+# Spec §7.1 uses per model (controller ruling). Any other (model, effort) pair is refused.
 MODEL_EFFORTS: Mapping[str, frozenset[str]] = {
     "gpt-6.1-sol": frozenset({"medium", "high"}),
     "claude-opus-5-5": frozenset({"medium"}),
     "deepseek/deepseek-v4.1-flash-1017": frozenset({"max"}),
-}
-PROVIDER_EFFORTS: Mapping[str, frozenset[str]] = {
-    "openai": frozenset({"medium", "high", "max"}),
-    "anthropic": frozenset({"medium", "high", "max"}),
-    "openrouter": frozenset({"medium", "high", "max"}),
 }
 
 
@@ -96,7 +100,8 @@ class KeyMissing(ProviderConfigError):
 
 class ErrorKind(Enum):
     NOT_SENT = "NotSent"
-    SENT_CHARGE_KNOWN = "SentChargeKnown"  # nothing was generated: settles 0, computed
+    SENT_CHARGE_KNOWN = "SentChargeKnown"  # a 4xx error object, no usage: nothing generated, 0
+    SENT_CHARGE_USAGE = "SentChargeUsage"  # tokens generated, usage reported: settle from it
     SENT_CHARGE_UNKNOWN = "SentChargeUnknown"  # held and counted
 
 
@@ -106,10 +111,14 @@ class ProviderError:
     error_class: str
     message: str
     http_status: int | None = None
-    usage: Usage | None = None  # present: the charge is settled from it
-    billed_usd: Decimal | None = None
+    usage: Usage | None = None  # exactly when kind is SentChargeUsage
+    billed_usd: Decimal | None = None  # OpenRouter usage.cost on a usage-bearing error
     reported_model: str | None = None
     request_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if (self.kind is ErrorKind.SENT_CHARGE_USAGE) != (self.usage is not None):
+            raise ValueError("usage is present exactly when kind is SentChargeUsage")
 
 
 class _BadReply(Exception):
@@ -124,20 +133,24 @@ class _BadArguments(Exception):
 
 
 def effort_for(spec: ModelSpec, effort: str | None = None) -> str:
+    """The provider's effort word, only for a (model, effort) pair in the §7.1 table and a
+    model that is the one its configuration names."""
     word = spec.effort if effort is None else effort
-    allowed = MODEL_EFFORTS.get(spec.model, PROVIDER_EFFORTS[spec.provider])
-    if word not in allowed:
+    expected = CONFIG_MODELS.get(spec.config_id)
+    if expected is not None and expected != spec.model:
+        raise UnknownEffort(f"config {spec.config_id!r} runs {expected!r}, not {spec.model!r}")
+    if word not in MODEL_EFFORTS.get(spec.model, frozenset()):
         raise UnknownEffort(f"effort {word!r} is not accepted for {spec.model!r}")
     return word
 
 
 def _json_bytes(body: Mapping[str, Any]) -> bytes:
-    return json.dumps(body, separators=(",", ":")).encode("utf-8")
+    return dump_json(body).encode("utf-8")
 
 
 def _check(spec: ModelSpec, request: TurnRequest, key: str) -> str:
-    if not key or any(c in key for c in "\r\n\x00"):
-        raise KeyMissing("the key is empty or not a valid header value")
+    if not key or not all("!" <= c <= "~" for c in key):
+        raise KeyMissing("the key is empty or not printable ASCII")
     if not 1 <= request.max_output_tokens <= MAX_OUTPUT_TOKENS:
         raise MaxOutputTooLarge(
             f"max_output_tokens {request.max_output_tokens} outside 1..{MAX_OUTPUT_TOKENS}"
@@ -175,7 +188,7 @@ def build(spec: ModelSpec, request: TurnRequest, key: str) -> Request:
 
 
 def _args_json(call: ToolCall) -> str:
-    return json.dumps(call.arguments, separators=(",", ":"))
+    return dump_json(call.arguments)
 
 
 def _openai_body(spec: ModelSpec, request: TurnRequest, effort: str) -> dict[str, Any]:
@@ -226,7 +239,9 @@ def _anthropic_body(spec: ModelSpec, request: TurnRequest, effort: str) -> dict[
         if m.role == "user":
             out.append({"role": "user", "content": m.text})
         elif m.role == "assistant":
-            blocks: list[dict[str, Any]] = []
+            blocks: list[dict[str, Any]] = [
+                dict(b.data) for b in m.provider_blocks if b.provider == "anthropic"
+            ]  # thinking blocks first, unchanged and in order
             if m.text:
                 blocks.append({"type": "text", "text": m.text})
             blocks.extend(
@@ -314,7 +329,7 @@ def _openrouter_body(spec: ModelSpec, request: TurnRequest, effort: str) -> dict
 def _is_error_object(body: bytes) -> bool:
     try:
         data = json.loads(body)
-    except ValueError:
+    except (ValueError, RecursionError):
         return False
     if not isinstance(data, dict) or "usage" in data:
         return False
@@ -325,7 +340,8 @@ def classify(status: int, body: bytes) -> ErrorKind:
     """Whether the charge for a reply that is not a usable turn is known.
 
     A 4xx whose body is the provider's error object with no usage generated nothing (known).
-    Every 5xx, other status, unparsable or empty reply is unknown (ruling B10)."""
+    Every 5xx, other status, unparsable or empty reply is unknown (ruling B10). A reply that
+    generated tokens and reports usage is SentChargeUsage, decided where the usage is read."""
     if 400 <= status < 500 and _is_error_object(body):
         return ErrorKind.SENT_CHARGE_KNOWN
     return ErrorKind.SENT_CHARGE_UNKNOWN
@@ -348,7 +364,7 @@ def _snippet(redactor: Redactor, text: str) -> str:
 def _provider_message(text: str) -> str:
     try:
         data = json.loads(text)
-    except ValueError:
+    except (ValueError, RecursionError):
         return text
     if isinstance(data, dict):
         err = data.get("error")
@@ -368,10 +384,12 @@ def _http_error_class(status: int) -> str:
 
 
 def _http_error(redactor: Redactor, status: int, body: bytes, text: str) -> ProviderError:
+    message = _provider_message(text)
+    reflected = redactor.text(message) != message  # e.g. a JSON-escaped key, whole once decoded
     return ProviderError(
         kind=classify(status, body),
-        error_class=_http_error_class(status),
-        message=_snippet(redactor, _provider_message(text)),
+        error_class="KeyReflected" if reflected else _http_error_class(status),
+        message=_snippet(redactor, message),
         http_status=status,
     )
 
@@ -381,9 +399,10 @@ def error_from_transport(
 ) -> Turn | ProviderError:
     """A transport failure as a classified error.
 
-    Only a refusal before any connection is NotSent; every other failure may have reached the
-    provider and is SentChargeUnknown. An Anthropic stream cut by a timeout whose last usage
-    event arrived is settled from it (a Turn or a usage-carrying error), not unknown."""
+    Only a refusal before any connection is NotSent; every other failure (a watchdog or
+    deadline OverallTimeout included) may have reached the provider and is SentChargeUnknown.
+    An Anthropic stream cut by a timeout whose last usage event arrived is settled from it
+    (a Turn or a SentChargeUsage error), not unknown."""
     if isinstance(exc, InsecureUrl):
         return ProviderError(ErrorKind.NOT_SENT, "InsecureUrl", _snippet(redactor, str(exc)))
     error_class = (
@@ -393,7 +412,7 @@ def error_from_transport(
     )
     if provider == "anthropic" and exc.partial:
         cut = parse(provider, 200, exc.partial, {}, redactor)
-        if isinstance(cut, Turn) or cut.usage is not None:
+        if isinstance(cut, Turn) or cut.kind is ErrorKind.SENT_CHARGE_USAGE:
             return cut
     return ProviderError(ErrorKind.SENT_CHARGE_UNKNOWN, error_class, _snippet(redactor, str(exc)))
 
@@ -410,8 +429,9 @@ def parse(
 ) -> Turn | ProviderError:
     """One reply as a turn or a classified error.
 
-    A body or header holding a key (exact value or key shape) is redacted and returned as
-    ``KeyReflected`` without being parsed; its text is the redacted text."""
+    A body or header holding a key (exact value or key shape), or a key that is whole only
+    after decoding (JSON escapes, SSE deltas joined), comes back as ``KeyReflected`` with the
+    redacted text, never as a turn."""
     text = body.decode("utf-8", errors="replace")
     clean = redactor.text(text)
     if clean != text or any(redactor.text(v) != v for v in headers.values()):
@@ -423,14 +443,49 @@ def parse(
         return _http_error(redactor, status, body, text)
     try:
         if provider == "openai":
-            return _parse_openai(status, text)
-        if provider == "anthropic":
-            return _parse_anthropic(status, text, redactor)
-        return _parse_openrouter(status, text)
-    except _BadReply as error:
+            result = _parse_openai(status, text)
+        elif provider == "anthropic":
+            result = _parse_anthropic(status, text, redactor)
+        else:
+            result = _parse_openrouter(status, text)
+        return _guard_decoded(result, status, redactor)
+    except (_BadReply, RecursionError) as error:
+        detail = "reply is nested too deeply" if isinstance(error, RecursionError) else str(error)
         return ProviderError(
-            ErrorKind.SENT_CHARGE_UNKNOWN, "UnparsableReply", _snippet(redactor, str(error)), status
+            ErrorKind.SENT_CHARGE_UNKNOWN, "UnparsableReply", _snippet(redactor, detail), status
         )
+
+
+def _guard_decoded(
+    result: Turn | ProviderError, status: int, redactor: Redactor
+) -> Turn | ProviderError:
+    """Run the redactor over the decoded payload: a key can be whole only here."""
+    if isinstance(result, ProviderError):
+        if any(
+            redactor.text(v) != v
+            for v in (result.message, result.reported_model, result.request_id)
+            if v
+        ):
+            return ProviderError(
+                result.kind,
+                "KeyReflected",
+                _snippet(redactor, result.message),
+                result.http_status,
+                result.usage,
+                result.billed_usd,
+            )
+        return result
+    blocks = [{"provider": b.provider, "data": b.data} for b in result.provider_blocks]
+    calls = [{"id": c.call_id, "name": c.name, "args": c.arguments} for c in result.tool_calls]
+    payload = [result.text, result.reported_model, result.request_id, blocks, calls]
+    if redactor.json_value(payload) != payload:
+        return ProviderError(
+            ErrorKind.SENT_CHARGE_UNKNOWN,
+            "KeyReflected",
+            _snippet(redactor, result.text),
+            status,
+        )
+    return result
 
 
 def _count(data: Mapping[str, Any] | None, key: str) -> int | None:
@@ -451,10 +506,10 @@ def _sub(data: Mapping[str, Any] | None, key: str) -> Mapping[str, Any] | None:
     return value
 
 
-def _object(text: str, *, parse_float: Any = None) -> dict[str, Any]:
+def _object(text: str) -> dict[str, Any]:
     try:
-        data = json.loads(text, parse_float=parse_float)
-    except ValueError:
+        data = load_json(text)
+    except TurnError:
         raise _BadReply("reply is not JSON") from None
     if not isinstance(data, dict):
         raise _BadReply("reply is not a JSON object")
@@ -467,27 +522,56 @@ def _arguments(raw: object) -> dict[str, Any]:
     if not isinstance(raw, str):
         raise _BadArguments("arguments are not a string")
     try:
-        value = json.loads(raw or "{}")
-    except ValueError:
-        raise _BadArguments("arguments are not JSON") from None
-    if not isinstance(value, dict):
-        raise _BadArguments("arguments are not a JSON object")
-    return value
+        return load_arguments(raw or "{}")
+    except TurnError:
+        raise _BadArguments("arguments are not a JSON object") from None
 
 
 def _str_or_none(value: object) -> str | None:
     return value if isinstance(value, str) else None
 
 
-def _malformed(status: int, usage: Usage, model: str | None, rid: str | None) -> ProviderError:
+def _id(item: Mapping[str, Any], key: str) -> str:
+    value = item.get(key)
+    if not isinstance(value, str) or not value:
+        raise _BadReply(f"a tool call has no {key}")
+    return value
+
+
+def _usage_error(
+    error_class: str,
+    message: str,
+    status: int,
+    usage: Usage,
+    model: str | None,
+    rid: str | None,
+    billed: Decimal | None = None,
+) -> ProviderError:
+    """Tokens were generated: SentChargeUsage when usage was reported, else unknown."""
+    reported = any(getattr(usage, f) is not None for f in usage.__dataclass_fields__)
     return ProviderError(
-        ErrorKind.SENT_CHARGE_KNOWN,
+        ErrorKind.SENT_CHARGE_USAGE if reported else ErrorKind.SENT_CHARGE_UNKNOWN,
+        error_class,
+        message,
+        status,
+        usage if reported else None,
+        billed,
+        model,
+        rid,
+    )
+
+
+def _malformed(
+    status: int, usage: Usage, model: str | None, rid: str | None, billed: Decimal | None = None
+) -> ProviderError:
+    return _usage_error(
         "MalformedToolArguments",
         "a tool call's arguments are not a JSON object",
         status,
         usage,
-        reported_model=model,
-        request_id=rid,
+        model,
+        rid,
+        billed,
     )
 
 
@@ -524,13 +608,16 @@ def _parse_openai(status: int, text: str) -> Turn | ProviderError:
     for item in output:
         kind = item.get("type") if isinstance(item, dict) else None
         if kind == "function_call":
+            call_id, name = _id(item, "call_id"), _id(item, "name")
             try:
                 args = _arguments(item.get("arguments"))
             except _BadArguments:
                 return _malformed(status, usage, model, rid)
-            calls.append(ToolCall(str(item.get("call_id")), str(item.get("name")), args))
+            calls.append(ToolCall(call_id, name, args))
         elif kind == "message":
             for part in item.get("content") or []:
+                if isinstance(part, dict) and part.get("type") == "refusal":
+                    return _usage_error("Refusal", "the model refused", status, usage, model, rid)
                 if isinstance(part, dict) and part.get("type") == "output_text":
                     texts.append(str(part.get("text", "")))
     incomplete = _sub(data, "incomplete_details")
@@ -549,6 +636,9 @@ def _parse_openai(status: int, text: str) -> Turn | ProviderError:
 
 # Anthropic Messages (SSE)
 
+_LINE_BREAK = re.compile(r"\r\n|\r|\n")  # SSE lines end at LF, CR or CRLF only
+_ERROR_TYPE = re.compile(r"[A-Za-z0-9_]{1,64}")
+
 
 def _sse_events(text: str) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
@@ -558,15 +648,15 @@ def _sse_events(text: str) -> list[dict[str, Any]]:
         if not data:
             return
         try:
-            event = json.loads("\n".join(data))
-        except ValueError:
+            event = load_json("\n".join(data))
+        except TurnError:
             raise _BadReply("an event's data is not JSON") from None
         data.clear()
         if not isinstance(event, dict):
             raise _BadReply("an event's data is not a JSON object")
         events.append(event)
 
-    for line in text.splitlines():
+    for line in _LINE_BREAK.split(text):
         if not line:
             flush()
             if events and events[-1].get("type") in ("message_stop", "error"):
@@ -589,14 +679,13 @@ _ANTHROPIC_NAMED_ERRORS: Mapping[str, str] = {
     "pause_turn": "PauseTurn",
     "model_context_window_exceeded": "ContextWindowExceeded",
 }
+_THINKING_TYPES = ("thinking", "redacted_thinking")
 
 
 def _anthropic_usage(raw: Mapping[str, Any]) -> Usage:
     creation = _sub(raw, "cache_creation")
-    five, hour = (
-        _count(creation, "ephemeral_5m_input_tokens"),
-        _count(creation, "ephemeral_1h_input_tokens"),
-    )
+    five = _count(creation, "ephemeral_5m_input_tokens")
+    hour = _count(creation, "ephemeral_1h_input_tokens")
     written = _count(raw, "cache_creation_input_tokens")
     if written is None and five is not None and hour is not None:
         written = five + hour
@@ -608,6 +697,23 @@ def _anthropic_usage(raw: Mapping[str, Any]) -> Usage:
         cache_write_1h_tokens=hour,
         output_tokens=_count(raw, "output_tokens"),
         reasoning_tokens=_count(_sub(raw, "output_tokens_details"), "thinking_tokens"),
+    )
+
+
+def _in_stream_error(
+    event: Mapping[str, Any], status: int, message: Mapping[str, Any], redactor: Redactor
+) -> ProviderError:
+    err = event.get("error")
+    err = err if isinstance(err, dict) else {}
+    kind = err.get("type")
+    error_class = kind if isinstance(kind, str) and _ERROR_TYPE.fullmatch(kind) else "StreamError"
+    return ProviderError(
+        ErrorKind.SENT_CHARGE_UNKNOWN,  # tokens may have been generated: the charge stays unknown
+        redactor.text(error_class),
+        _snippet(redactor, f"{err.get('type', 'error')}: {err.get('message', '')}"),
+        status,
+        reported_model=_str_or_none(message.get("model")),
+        request_id=_str_or_none(message.get("id")),
     )
 
 
@@ -624,16 +730,7 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
     for event in events:
         kind, index = event.get("type"), event.get("index")
         if kind == "error":
-            err = event.get("error")
-            err = err if isinstance(err, dict) else {}
-            return ProviderError(
-                ErrorKind.SENT_CHARGE_UNKNOWN,
-                "StreamError",
-                _snippet(redactor, f"{err.get('type', 'error')}: {err.get('message', '')}"),
-                status,
-                reported_model=_str_or_none(message.get("model")),
-                request_id=_str_or_none(message.get("id")),
-            )
+            return _in_stream_error(event, status, message, redactor)
         if kind == "message_start" and isinstance(event.get("message"), dict):
             message = dict(event["message"])
             usage_raw.update(_sub(message, "usage") or {})
@@ -651,9 +748,12 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
             dtype = delta.get("type")
             if dtype == "input_json_delta" and index in partial:
                 partial[index].append(str(delta.get("partial_json", "")))
-            elif dtype == "text_delta":
-                blocks[index]["text"] = str(blocks[index].get("text") or "") + str(
-                    delta.get("text", "")
+            elif dtype in ("text_delta", "thinking_delta", "signature_delta"):
+                field = {"text_delta": "text", "thinking_delta": "thinking"}.get(
+                    str(dtype), "signature"
+                )
+                blocks[index][field] = str(blocks[index].get(field) or "") + str(
+                    delta.get(field, "")
                 )
         elif kind == "content_block_stop" and isinstance(index, int):
             if index not in blocks:
@@ -678,39 +778,38 @@ def _parse_anthropic(status: int, text: str, redactor: Redactor) -> Turn | Provi
         )
     usage = _anthropic_usage(usage_raw)
     if partial:
-        return ProviderError(
-            ErrorKind.SENT_CHARGE_KNOWN,
-            "StreamCut",
-            "the stream ended inside a tool call",
-            status,
-            usage,
-            reported_model=model,
-            request_id=rid,
+        return _usage_error(
+            "StreamCut", "the stream ended inside a tool call", status, usage, model, rid
         )
     if stop_reason in _ANTHROPIC_NAMED_ERRORS:
-        return ProviderError(
-            ErrorKind.SENT_CHARGE_KNOWN,
+        return _usage_error(
             _ANTHROPIC_NAMED_ERRORS[cast(str, stop_reason)],
             f"stop_reason {stop_reason}",
             status,
             usage,
-            reported_model=model,
-            request_id=rid,
+            model,
+            rid,
         )
     texts: list[str] = []
     calls: list[ToolCall] = []
+    provider_blocks: list[ProviderBlock] = []
     for index in sorted(blocks):
         block = blocks[index]
         if block.get("type") == "text":
             texts.append(str(block.get("text", "")))
+        elif block.get("type") in _THINKING_TYPES:
+            provider_blocks.append(ProviderBlock("anthropic", dict(block)))
         elif block.get("type") == "tool_use":
+            call_id, name = _id(block, "id"), _id(block, "name")
             try:
                 args = _arguments(block.get("input_json", "{}"))
             except _BadArguments:
                 return _malformed(status, usage, model, rid)
-            calls.append(ToolCall(str(block.get("id")), str(block.get("name")), args))
+            calls.append(ToolCall(call_id, name, args))
     stop: StopReason = _ANTHROPIC_STOP.get(stop_reason or "", "other")
-    return Turn("".join(texts), tuple(calls), usage, stop, model, rid, status, None)
+    return Turn(
+        "".join(texts), tuple(calls), usage, stop, model, rid, status, None, tuple(provider_blocks)
+    )
 
 
 # OpenRouter chat completions
@@ -723,7 +822,7 @@ _OPENROUTER_STOP: Mapping[str, StopReason] = {
 
 
 def _parse_openrouter(status: int, text: str) -> Turn | ProviderError:
-    data = _object(text, parse_float=Decimal)
+    data = _object(text)
     model, rid = _str_or_none(data.get("model")), _str_or_none(data.get("id"))
     if data.get("error"):
         return ProviderError(
@@ -738,11 +837,10 @@ def _parse_openrouter(status: int, text: str) -> Turn | ProviderError:
     cost_raw = None if raw_usage is None else raw_usage.get("cost")
     billed: Decimal | None = None
     if cost_raw is not None:
-        try:
-            billed = Decimal(str(cost_raw))
-        except InvalidOperation:
-            raise _BadReply("usage.cost is not a number") from None
-        if isinstance(cost_raw, bool) or not billed.is_finite() or billed < 0:
+        if isinstance(cost_raw, bool) or not isinstance(cost_raw, int | Decimal):
+            raise _BadReply("usage.cost is not a number")
+        billed = Decimal(cost_raw)
+        if not billed.is_finite() or billed < 0:
             raise _BadReply("usage.cost is not a non-negative number")
     usage = Usage(
         input_tokens=_count(raw_usage, "prompt_tokens"),
@@ -763,11 +861,12 @@ def _parse_openrouter(status: int, text: str) -> Turn | ProviderError:
         fn = item.get("function") if isinstance(item, dict) else None
         if not isinstance(fn, dict):
             raise _BadReply("a tool call has no function")
+        call_id, name = _id(item, "id"), _id(fn, "name")
         try:
             args = _arguments(fn.get("arguments"))
         except _BadArguments:
-            return _malformed(status, usage, model, rid)
-        calls.append(ToolCall(str(item.get("id")), str(fn.get("name")), args))
+            return _malformed(status, usage, model, rid, billed)
+        calls.append(ToolCall(call_id, name, args))
     content = message.get("content")
     stop = _OPENROUTER_STOP.get(str(choice.get("finish_reason")), "other")
     if calls and stop == "end":

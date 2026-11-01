@@ -2,7 +2,8 @@
 
 import http.client
 import socket
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from typing import Any
 
 import pytest
 
@@ -37,9 +38,13 @@ class Clock:
 class FakeSock:
     def __init__(self) -> None:
         self.timeouts: list[float] = []
+        self.shut = False
 
     def settimeout(self, value: float) -> None:
         self.timeouts.append(value)
+
+    def shutdown(self, _how: int) -> None:
+        self.shut = True
 
 
 class FakeReply:
@@ -65,7 +70,8 @@ class FakeConnection:
         connect_error: Exception | None = None,
     ) -> None:
         self.reply = reply
-        self.sock = FakeSock()
+        self.raw_sock = FakeSock()
+        self.sock: Any = self.raw_sock
         self.connect_error = connect_error
         self.sent: list[tuple[str, str]] = []
         self.closed = False
@@ -123,7 +129,7 @@ def test_stream_idle_timeout_after_data_keeps_partial() -> None:
     conn = FakeConnection(FakeReply(200, reads))
     with pytest.raises(IdleTimeout) as info:
         https_transport(_req(stream=True), clock=Clock(), connection_factory=lambda *_: conn)
-    assert conn.sock.timeouts == [120.0]
+    assert conn.raw_sock.timeouts == [120.0]
     assert info.value.partial == b"data: 1\n\n"
 
 
@@ -145,7 +151,7 @@ def test_slow_trickle_past_overall_limit() -> None:
 def test_non_streaming_read_uses_overall_as_per_read_timeout() -> None:
     conn = FakeConnection(FakeReply(200, iter([b'{"ok":1}'])))
     out = https_transport(_req(), clock=Clock(), connection_factory=lambda *_: conn)
-    assert conn.sock.timeouts == [900.0]
+    assert conn.raw_sock.timeouts == [900.0]
     assert out.status == 200 and out.body == b'{"ok":1}'
     assert conn.sent == [("POST", "/v1/x")]
 
@@ -163,3 +169,87 @@ def test_redirect_is_returned_not_followed() -> None:
     assert out.headers["location"] == "https://elsewhere.example/"
     assert out.headers["retry-after"] == "7"
     assert len(conn.sent) == 1
+
+
+class FakeTimer:
+    def __init__(self, interval: float, fn: Callable[[], None]) -> None:
+        self.interval, self.fn, self.cancelled, self.started = interval, fn, False, False
+
+    def start(self) -> None:
+        self.started = True
+
+    def cancel(self) -> None:
+        self.cancelled = True
+
+
+def test_watchdog_shuts_the_socket_at_the_deadline_and_is_an_overall_timeout() -> None:
+    timers: list[FakeTimer] = []
+
+    def factory(interval: float, fn: Callable[[], None]) -> FakeTimer:
+        timers.append(FakeTimer(interval, fn))
+        return timers[-1]
+
+    class Hung(FakeReply):
+        def read1(self, _size: int = -1, /) -> bytes:
+            timers[0].fn()  # the deadline passes while the read is blocked
+            raise OSError("socket shut down")
+
+    conn = FakeConnection(Hung(200, iter([])))
+    with pytest.raises(OverallTimeout):
+        https_transport(
+            _req(stream=True),
+            clock=Clock(),
+            connection_factory=lambda *_: conn,
+            timer_factory=factory,
+        )
+    assert timers[0].interval == 900.0 and timers[0].started and timers[0].cancelled
+    assert conn.raw_sock.shut
+
+
+def test_watchdog_is_cancelled_on_success() -> None:
+    timers: list[FakeTimer] = []
+
+    def factory(interval: float, fn: Callable[[], None]) -> FakeTimer:
+        timers.append(FakeTimer(interval, fn))
+        return timers[-1]
+
+    conn = FakeConnection(FakeReply(200, iter([b"ok"])))
+    https_transport(
+        _req(), clock=Clock(), connection_factory=lambda *_: conn, timer_factory=factory
+    )
+    assert timers[0].cancelled
+
+
+def test_per_read_timeout_is_recomputed_before_each_socket_read() -> None:
+    import io
+
+    clock = Clock()
+    seen: list[float] = []
+
+    class Raw(io.RawIOBase):
+        def readable(self) -> bool:
+            return True
+
+        def readinto(self, b: Any) -> int:
+            clock.now += 400.0
+            b[0:1] = b"x"
+            return 1
+
+    class Sock(FakeSock):
+        def settimeout(self, value: float) -> None:
+            seen.append(value)
+
+        def makefile(self, _mode: str) -> io.BufferedReader:
+            return io.BufferedReader(Raw())
+
+    class Conn(FakeConnection):
+        def getresponse(self) -> Any:
+            fp = self.sock.makefile("rb")
+            for _ in range(4):
+                fp.read(1)
+
+    conn = Conn(FakeReply(200, iter([])))
+    conn.sock = Sock()
+    with pytest.raises(OverallTimeout):
+        https_transport(_req(stream=True), clock=clock, connection_factory=lambda *_: conn)
+    assert seen == [120.0, 120.0, 120.0, 100.0]  # the last read gets only what is left

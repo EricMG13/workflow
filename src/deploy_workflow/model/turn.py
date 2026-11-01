@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields
 from decimal import Decimal, InvalidOperation
@@ -25,12 +26,67 @@ CONFIG_PROVIDERS: Mapping[str, str] = MappingProxyType(
     }
 )
 
+# The model each §7.1 configuration runs (spec §7.1). effort_for refuses any other pair.
+CONFIG_MODELS: Mapping[str, str] = MappingProxyType(
+    {
+        "sol-medium": "gpt-6.1-sol",
+        "sol-high": "gpt-6.1-sol",
+        "opus-medium": "claude-opus-5-5",
+        "deepseek-max": "deepseek/deepseek-v4.1-flash-1017",
+    }
+)
+
 _ROLES = ("system", "user", "assistant", "tool")
 _STOP_REASONS = ("end", "tool_use", "max_tokens", "other")
 
 
 class TurnError(ValueError):
     """A turn, spec or recording is malformed."""
+
+
+def _refuse_constant(name: str) -> object:
+    raise TurnError(f"{name} is not allowed in a JSON number")
+
+
+def load_json(text: str) -> object:
+    """Parse JSON keeping decimal digits exactly (Decimal) and refusing NaN and Infinity."""
+    try:
+        return json.loads(text, parse_float=Decimal, parse_constant=_refuse_constant)
+    except json.JSONDecodeError as error:
+        raise TurnError(f"not JSON: {error.msg}") from None
+
+
+def load_arguments(text: str) -> dict[str, Any]:
+    value = load_json(text)
+    if not isinstance(value, dict):
+        raise TurnError("tool arguments are not a JSON object")
+    return value
+
+
+def dump_json(value: object) -> str:
+    """Compact JSON that writes a Decimal with its exact digits; refuses NaN and Infinity."""
+    if isinstance(value, Decimal):
+        if not value.is_finite():
+            raise TurnError("a non-finite number cannot be written")
+        return str(value)
+    if isinstance(value, Mapping):
+        return (
+            "{" + ",".join(f"{json.dumps(str(k))}:{dump_json(v)}" for k, v in value.items()) + "}"
+        )
+    if isinstance(value, list | tuple):
+        return "[" + ",".join(dump_json(v) for v in value) + "]"
+    try:
+        return json.dumps(value, allow_nan=False)
+    except ValueError as error:
+        raise TurnError(str(error)) from None
+
+
+@dataclass(frozen=True)
+class ProviderBlock:
+    """An opaque, provider-tagged block (Anthropic thinking) returned unchanged on the next turn."""
+
+    provider: str
+    data: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -70,6 +126,7 @@ class Message:
     text: str
     tool_calls: tuple[ToolCall, ...] = ()
     tool_call_id: str | None = None
+    provider_blocks: tuple[ProviderBlock, ...] = ()
 
     def __post_init__(self) -> None:
         if self.role not in _ROLES:
@@ -78,6 +135,8 @@ class Message:
             raise TurnError("a tool message needs tool_call_id")
         if self.role != "assistant" and self.tool_calls:
             raise TurnError("only an assistant message carries tool_calls")
+        if self.role != "assistant" and self.provider_blocks:
+            raise TurnError("only an assistant message carries provider_blocks")
 
 
 @dataclass(frozen=True)
@@ -117,6 +176,7 @@ class Turn:
     request_id: str | None
     http_status: int
     billed_usd: Decimal | None = field(default=None)
+    provider_blocks: tuple[ProviderBlock, ...] = ()
 
     def __post_init__(self) -> None:
         if self.stop_reason not in _STOP_REASONS:
@@ -137,9 +197,11 @@ _TURN_KEYS = frozenset(
         "request_id",
         "http_status",
         "billed_usd",
+        "provider_blocks",
     }
 )
 _USAGE_KEYS = frozenset(f.name for f in fields(Usage))
+_BLOCK_KEYS = frozenset({"provider", "data"})
 _CALL_KEYS = frozenset({"call_id", "name", "arguments"})
 
 
@@ -147,7 +209,7 @@ def turn_to_json(turn: Turn) -> dict[str, Any]:
     return {
         "text": turn.text,
         "tool_calls": [
-            {"call_id": c.call_id, "name": c.name, "arguments": c.arguments}
+            {"call_id": c.call_id, "name": c.name, "arguments": dump_json(c.arguments)}
             for c in turn.tool_calls
         ],
         "usage": {f.name: getattr(turn.usage, f.name) for f in fields(Usage)},
@@ -156,6 +218,7 @@ def turn_to_json(turn: Turn) -> dict[str, Any]:
         "request_id": turn.request_id,
         "http_status": turn.http_status,
         "billed_usd": None if turn.billed_usd is None else str(turn.billed_usd),
+        "provider_blocks": [{"provider": b.provider, "data": b.data} for b in turn.provider_blocks],
     }
 
 
@@ -191,10 +254,19 @@ def turn_from_json(obj: object) -> Turn:
         if not (
             isinstance(item["call_id"], str)
             and isinstance(item["name"], str)
-            and isinstance(item["arguments"], dict)
+            and isinstance(item["arguments"], str)
         ):
             raise TurnError("tool call fields have the wrong types")
-        calls.append(ToolCall(item["call_id"], item["name"], item["arguments"]))
+        calls.append(ToolCall(item["call_id"], item["name"], load_arguments(item["arguments"])))
+    raw_blocks = data["provider_blocks"]
+    if not isinstance(raw_blocks, list):
+        raise TurnError("provider_blocks must be a list")
+    blocks: list[ProviderBlock] = []
+    for raw in raw_blocks:
+        entry = _exact_keys("provider block", raw, _BLOCK_KEYS)
+        if not (isinstance(entry["provider"], str) and isinstance(entry["data"], dict)):
+            raise TurnError("provider block fields have the wrong types")
+        blocks.append(ProviderBlock(entry["provider"], entry["data"]))
     usage_obj = _exact_keys("usage", data["usage"], _USAGE_KEYS)
     usage = Usage(**{k: usage_obj[k] for k in _USAGE_KEYS})
     billed_raw = data["billed_usd"]
@@ -219,4 +291,5 @@ def turn_from_json(obj: object) -> Turn:
         request_id=_optional_str("request_id", data["request_id"]),
         http_status=status,
         billed_usd=billed,
+        provider_blocks=tuple(blocks),
     )

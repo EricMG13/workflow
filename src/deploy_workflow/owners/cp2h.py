@@ -78,6 +78,7 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.context import Rating
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2g import cp2g_reader
@@ -162,7 +163,7 @@ REGISTER_HEADER = "Agency  Instrument  Rating  Outlook  Date"
 SCALE_HEADER = "Position  Alder Ratings  Brook Credit"
 TERMS_HEADER = "Agency  Direction  Metric  Comparison  Threshold"
 UNRATED = ("Withdrawn", "Not rated")
-THRESHOLD_NOT_STATED = "Not stated"
+THRESHOLD_NOT_STATED = NOT_STATED = "Not stated"
 Comparison = Literal["Above", "Below"]
 Direction = Literal["Downgrade", "Upgrade"]
 UnitKind = Literal["multiple", "percent"]
@@ -222,6 +223,9 @@ class RegisterRow:
     position: int | None  # None: Withdrawn or Not rated (no position on the scale)
     line: str  # the page:1 register line
     scale_line: str | None  # the page:2 scale line that states the position
+    # Where the row came from. A "context" row has no page lines: `line` is its row index and
+    # `scale_line` is None. Branch on this field, never on `scale_line is None`.
+    source: Literal["ratings", "context"] = "ratings"
 
 
 @dataclass(frozen=True)
@@ -356,6 +360,84 @@ def _register(
             RegisterRow(agency, instrument, rating, outlook, dated, position, line, scale_line)
         )
     return tuple(out)
+
+
+# The context file's ratings sit on one fixed combined scale (the ruling's recorded cost: this is
+# a code table, uncited; the frozen oracle's `combined_scale.by_agency` is its pin). A lower
+# position is a higher rating; one position is one notch.
+_SP_FITCH = (
+    "AAA", "AA+", "AA", "AA-", "A+", "A", "A-", "BBB+", "BBB", "BBB-", "BB+", "BB", "BB-",
+    "B+", "B", "B-", "CCC+", "CCC", "CCC-", "CC", "C",
+)  # fmt: skip
+_MOODYS = (
+    "Aaa", "Aa1", "Aa2", "Aa3", "A1", "A2", "A3", "Baa1", "Baa2", "Baa3", "Ba1", "Ba2", "Ba3",
+    "B1", "B2", "B3", "Caa1", "Caa2", "Caa3", "Ca", "C",
+)  # fmt: skip
+COMBINED_SCALE: Mapping[str, Mapping[str, int]] = {
+    "S&P": {s: n for n, s in enumerate((*_SP_FITCH, "SD", "D"), 1)},
+    "Moody's": {s: n for n, s in enumerate(_MOODYS, 1)},
+    "Fitch": {s: n for n, s in enumerate((*_SP_FITCH, "RD", "D"), 1)},
+}
+
+
+def possessive(name: str) -> str:
+    """`name` unchanged when it already ends in `'s`, else `name` + `'s`."""
+    return name if name.endswith("'s") else name + "'s"
+
+
+def _context_row(i: int, r: Rating) -> RegisterRow:
+    """One register row; the agency has a scale and the rating is unrated or on it (checked)."""
+    scale = COMBINED_SCALE[r.agency]
+    return RegisterRow(
+        agency=r.agency,
+        instrument=NOT_STATED,  # the context has no instrument field
+        rating=r.rating,
+        outlook=r.outlook or NOT_STATED,
+        date=r.as_of or NOT_STATED,
+        position=None if r.rating in UNRATED else scale[r.rating],
+        # the row index: nothing resolves it inside `_compose`; `register_source` (Task 3)
+        # returns the per-row citations
+        line=str(i),
+        scale_line=None,
+        source="context",
+    )
+
+
+def context_register(ratings: Sequence[Rating]) -> tuple[RegisterRow, ...]:
+    """The register from the context's ratings rows, in context order. Refusals, in this order:
+    no row, an agency twice (`Rating register not found`), a rating not on the agency's scale
+    (`Rating not on the scale: <agency> <rating>`); an agency without a scale is off-scale
+    whatever its rating, an unrated rating needs only a scaled agency."""
+    if not ratings:
+        raise SourceIssue(REGISTER_NOT_FOUND)
+    agencies = [r.agency for r in ratings]
+    if len(set(agencies)) != len(agencies):
+        raise SourceIssue(REGISTER_NOT_FOUND)
+    for r in ratings:
+        scale = COMBINED_SCALE.get(r.agency)
+        if scale is None or (r.rating not in UNRATED and r.rating not in scale):
+            raise SourceIssue(clipped(("Rating not on the scale: ", r.agency, " ", r.rating)))
+    return tuple(_context_row(i, r) for i, r in enumerate(ratings))
+
+
+def context_ratings(register: Sequence[RegisterRow], terms_pages: Sequence[str]) -> RatingsSource:
+    """The context register with the trigger terms of the attached ratings source's page:3. A
+    missing page, header or empty block is `Trigger terms not found`, as is a term whose agency
+    has no rated register row; every other terms refusal is `parse_ratings`'."""
+    page = terms_pages[2] if len(terms_pages) > 2 else ""
+    block = _block(page, TERMS_HEADER, 5)
+    if block is None or block.empty:
+        raise SourceIssue(TERMS_NOT_FOUND)
+    triggers = _terms(_rows(block, TERMS_NOT_FOUND))
+    rated = {r.agency for r in register if r.position is not None}
+    if any(t.agency not in rated for t in triggers):
+        raise SourceIssue(TERMS_NOT_FOUND)
+    return RatingsSource(
+        register=tuple(register),
+        triggers=triggers,
+        register_published=PUBLICATION_NOT_STATED,  # a context row carries its own date
+        terms_published=_published(page),
+    )
 
 
 def _threshold(text: str, metric: Metric) -> Decimal | None:
@@ -948,9 +1030,10 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
             "Position on the combined scale",
             f"Rating dated {r.date}",
         )
-        if r.position is None or r.scale_line is None:
+        if r.position is None:
             reason = (
-                f"{r.agency}'s rating is {r.rating.lower()}, so it has no position on the scale"
+                f"{possessive(r.agency)} rating is {r.rating.lower()}, "
+                "so it has no position on the scale"
             )
             b.unsettled(at, label, POSITION_UNIT, reason, period=period, status="not_applicable")
         else:
@@ -962,7 +1045,12 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
                 "scale position stated in the source mapping",
                 period=period,
                 source=True,
-                citations=(b.cite("page:2", r.scale_line),),
+                # a context row has no page:2 line; Task 3 supplies its citations
+                citations=(
+                    (b.cite("page:2", r.scale_line),)
+                    if r.source == "ratings" and r.scale_line is not None
+                    else ()
+                ),
             )
         b.row(
             "T2R.2",
@@ -1261,7 +1349,10 @@ def _divergence(b: _Book, source: RatingsSource, rows: Mapping[str, str]) -> lis
         b.text((*at, "second_agency"), "Second agency", rb.agency, derives=(f"T2R.2.{ib}.agency",))
         if ra.position is None or rb.position is None:
             who = ra if ra.position is None else rb
-            why = f"{who.agency}'s rating is {who.rating.lower()}, so no notch comparison is made"
+            why = (
+                f"{possessive(who.agency)} rating is {who.rating.lower()}, "
+                "so no notch comparison is made"
+            )
             b.unsettled(
                 (*at, "notches"),
                 "Notches apart",
@@ -1879,7 +1970,7 @@ def _own_limitations(
         if t.threshold is None
     )
     out += (
-        f"{r.agency}'s rating is {r.rating.lower()}: no notch comparison is made and no trigger "
+        f"{possessive(r.agency)} rating is {r.rating.lower()}: no notch comparison is made and no trigger "
         "terms are published."
         for r in source.register
         if r.position is None

@@ -130,8 +130,10 @@ def _unsettled_ref() -> str:
 def test_gap_text_reports_an_unsettled_reference_beside_a_prohibited_conclusion() -> None:
     ref = _unsettled_ref()
     issues = _gap_validate(f"Our rating is weak [{ref}].")
-    assert f"gaps[0].gap: reference {ref} names a fact that is not settled" in issues
-    assert any("prohibited conclusion" in x for x in issues)
+    assert issues == (
+        'gaps[0].gap: prohibited conclusion (rating call): "our rating"',
+        f"gaps[0].gap: reference {ref} names a fact that is not settled",
+    )
 
 
 def test_gap_text_with_an_unterminated_brace_returns_issues_without_raising() -> None:

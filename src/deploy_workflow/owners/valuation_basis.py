@@ -175,11 +175,8 @@ def _shown_two_dp(value: Decimal) -> str:
         return str(value.quantize(CENTS, rounding=ROUND_HALF_UP))
 
 
-def _limit_gap(
-    requested: str, basis: str, shown: str, edge: str, limit: Decimal, ebitda_basis: str
-) -> Selection:
-    reason = f"the selected multiple {shown} is {edge} the {limit} limit of the CP-4C field; no multiple is selected"
-    return _gap(requested, basis, reason, ebitda_basis)
+def _limit_reason(shown: str, edge: str, limit: Decimal) -> str:
+    return f"the selected multiple {shown} is {edge} the {limit} limit of the CP-4C field; no multiple is selected"
 
 
 def _gap(
@@ -198,12 +195,18 @@ def _chosen(
 ) -> Selection:
     """A selected multiple (rounded half-even to 2 dp) and its implied EV; never clamped."""
     if value >= UNROUNDABLE:  # cannot be rounded in CTX, and is far over the limit
-        return _limit_gap(requested, basis, str(value), "above", MAX_MULTIPLE, ebitda_basis)
+        return _gap(
+            requested, basis, _limit_reason(str(value), "above", MAX_MULTIPLE), ebitda_basis
+        )
     multiple = _two_dp(value)
     if multiple > MAX_MULTIPLE:
-        return _limit_gap(requested, basis, str(multiple), "above", MAX_MULTIPLE, ebitda_basis)
+        return _gap(
+            requested, basis, _limit_reason(str(multiple), "above", MAX_MULTIPLE), ebitda_basis
+        )
     if multiple < MIN_MULTIPLE:  # rounds to 0.00: CP-4C refuses a zero multiple
-        return _limit_gap(requested, basis, str(multiple), "below", MIN_MULTIPLE, ebitda_basis)
+        return _gap(
+            requested, basis, _limit_reason(str(multiple), "below", MIN_MULTIPLE), ebitda_basis
+        )
     if ebitda_basis == "NTM":  # an NTM multiple is not applied to LTM EBITDA
         return Selection(requested, basis, multiple, reason, ebitda_basis, None)
     if issuer_ebitda is None or issuer_ebitda <= 0:

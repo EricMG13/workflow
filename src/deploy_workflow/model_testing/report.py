@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
 
-from deploy_vii.contracts import PATHWAY_MODULES
+from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_workflow.model.record import CallRecord
 from deploy_workflow.model_testing.budget import account_spend
 from deploy_workflow.model_testing.configs import ACCOUNTS, CASES, CONFIGS
@@ -37,10 +37,11 @@ def _seconds(value: Decimal) -> str:
     return f"{_quantise(value, '1')} s"
 
 
-def _tokens_text(total: int | None) -> str:
-    if total is None:
+def _tokens_text(tokens: tuple[int, bool] | None) -> str:
+    if tokens is None:
         return "n/r tok"
-    return f"{_quantise(Decimal(total) / 1000, '0.1')}k tok"
+    total, partial = tokens
+    return f"{'≥' if partial else ''}{_quantise(Decimal(total) / 1000, '0.1')}k tok"
 
 
 def _cell_text(text: str) -> str:
@@ -65,14 +66,18 @@ def _cost_text(records: Sequence[CallRecord]) -> str:
     return f"{_money(total)} reserved" if reserved else _money(total)
 
 
-def _tokens(records: Sequence[CallRecord]) -> int | None:
-    """Input + output + reasoning; ``None`` only when no record reported any of the three."""
+def _tokens(records: Sequence[CallRecord]) -> tuple[int, bool] | None:
+    """Input + output + reasoning and whether it is only a lower bound (some field was not
+    reported); ``None`` only when no record reported any of the three."""
     total: int | None = None
+    partial = False
     for r in records:
         for part in (r.input_tokens, r.output_tokens, r.reasoning_tokens):
-            if part is not None:
+            if part is None:
+                partial = True
+            else:
                 total = part if total is None else total + part
-    return total
+    return None if total is None else (total, partial)
 
 
 def _wall(records: Sequence[CallRecord]) -> Decimal | None:
@@ -145,8 +150,8 @@ def _config_order(config_ids: set[str]) -> list[str]:
     return [c for c in CONFIGS if c in config_ids]
 
 
-def _module_order(pathway: str, scores: Sequence[PathwayScore]) -> list[str]:
-    plan = list(PATHWAY_MODULES.get(pathway, ()))  # type: ignore[call-overload]
+def _module_order(pathway: PathwayId, scores: Sequence[PathwayScore]) -> list[str]:
+    plan = list(PATHWAY_MODULES[pathway])
     seen = set(plan)
     for s in scores:
         for m in s.modules:
@@ -158,7 +163,7 @@ def _module_order(pathway: str, scores: Sequence[PathwayScore]) -> list[str]:
 
 
 def _pathway_section(
-    pathway: str, scores: Sequence[PathwayScore], by_run: dict[str, Sequence[CallRecord]]
+    pathway: PathwayId, scores: Sequence[PathwayScore], by_run: dict[str, Sequence[CallRecord]]
 ) -> list[str]:
     by_config = {s.config_id: s for s in scores}
     configs = _config_order(set(by_config))
@@ -206,25 +211,36 @@ def _totals_section(scores: Sequence[PathwayScore], runs: Runs) -> list[str]:
                     matched, scored = matched + m, scored + n
         mine = [(meta, records) for meta, records in runs if meta.config_id == config_id]
         records = [r for _, rs in mine for r in rs]
+        live = [r for meta, rs in mine if meta.mode == "live" for r in rs]
+        offline = [r for meta, rs in mine if meta.mode == "offline" for r in rs]
         walls = [w for w in (_wall(rs) for _, rs in mine) if w is not None]
         median = _median(walls)
         rows.append(
             [
                 config_id,
                 _percent(matched, scored),
-                _cost_text(records),
+                _cost_text(live),
+                _cost_text(offline),
                 _tokens_text(_tokens(records)),
                 "n/r" if median is None else _seconds(median),
                 str(_retries(records)),
             ]
         )
-    header = ["Config", "Accuracy", "Cost", "Tokens", "Median wall time", "Retries"]
+    header = [
+        "Config",
+        "Accuracy",
+        "Cost (live)",
+        "Cost (offline, computed)",
+        "Tokens",
+        "Median wall time",
+        "Retries",
+    ]
     return ["## Totals", "", *_table(header, rows), ""]
 
 
 def _rerun(fault: FaultRecord) -> str:
     if fault.rerun_passed is None:
-        return "not rerun"
+        return "none"
     return "passed" if fault.rerun_passed else "failed"
 
 
@@ -236,8 +252,8 @@ def _faults_section(faults: Sequence[FaultRecord]) -> list[str]:
         lines.append("")
         for f in mine:
             lines.append(
-                f"- {f.fault_id} · {f.case_id} · {f.module_id} · fix {f.fix_ref or '—'}"
-                f" · rerun {_rerun(f)}"
+                f"- {f.fault_id} · {f.case_id} · {f.module_id} · {f.config_id}"
+                f" · fix {f.fix_ref or '—'} · rerun: {_rerun(f)}"
             )
         if mine:
             lines.append("")
@@ -276,6 +292,8 @@ def render_report(scores: Sequence[PathwayScore], runs: Runs, faults: Sequence[F
         if (s.pathway, s.config_id) in seen:
             raise ValueError(f"duplicate score for {s.pathway} on {s.config_id}")
         seen.add((s.pathway, s.config_id))
+        if s.pathway not in CASES:
+            raise ValueError(f"score for unknown pathway {s.pathway}")
         if s.run_id not in by_run:
             raise ValueError(f"no run records for scored run {s.run_id}")
 

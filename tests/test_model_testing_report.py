@@ -284,3 +284,45 @@ def test_duplicate_score_refused() -> None:
     one = score("sol-medium", "r-sol", [module("CP-0", ["match"], True)])
     with pytest.raises(ValueError, match="duplicate"):
         render_report([one, one], [(meta(), [call()])], [])
+
+
+def test_partial_tokens_marked_lower_bound() -> None:
+    scores = [score("sol-medium", "r-sol", [module("CP-0", ["match"], True)])]
+    records = [call(index=0, tokens=(1000, 500, 200)), call(index=1, tokens=(None, None, None))]
+    text = render_report(scores, [(meta(), records)], [])
+    assert "≥1.7k tok" in text
+    assert text.count("≥1.7k tok") == 2  # the cell and the config total
+    full = render_report(scores, [(meta(), [call(tokens=(1000, 500, 200))])], [])
+    assert "≥" not in full
+    assert "n/r tok" in render_report(scores, [(meta(), [call()])], [])
+
+
+def test_unknown_pathway_refused() -> None:
+    s = score("sol-medium", "r-sol", [module("CP-0", ["match"], True)])
+    s = s.model_copy(update={"pathway": "nope"})
+    with pytest.raises(ValueError, match="nope"):
+        render_report([s], [(meta(), [call()])], [])
+
+
+def test_cost_columns_split_live_and_offline() -> None:
+    scores = [
+        score("sol-medium", "r-sol", [module("CP-0", ["match"], True)]),
+        score("sol-high", "r-off", [module("CP-0", ["match"], True)], mode="offline"),
+    ]
+    runs: Runs = [
+        (meta(), [call(settled="1.00")]),
+        (
+            meta("sol-high", "r-off", "offline"),
+            [call("sol-high", "r-off", settled=None, reserved="3")],
+        ),
+    ]
+    text = render_report(scores, runs, [])
+    assert "| Cost (live) | Cost (offline, computed) |" in text
+    assert "| sol-medium | 100.0% (1/1) | $1.00 | $0.00 |" in text
+    assert "| sol-high | 100.0% (1/1) | $0.00 | $3.00 reserved |" in text
+
+
+def test_fault_line_has_config_and_rerun_field() -> None:
+    text = render_report([], [], [fault("f1", "prompt"), fault("f2", "model", rerun_passed=True)])
+    assert "- f1 · shc-earnings-update · CP-1B · sol-medium · fix — · rerun: none" in text
+    assert "rerun: passed" in text

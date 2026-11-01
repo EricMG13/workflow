@@ -158,6 +158,11 @@ def test_bad_source_id_refused(args: dict[str, Any], bad: str) -> None:
     refused(args, BadSourceId)
 
 
+def test_reserved_source_id_case_variant_refused(args: dict[str, Any]) -> None:
+    args["sources"][0] = CaseSource("CONTEXT", args["sources"][0].path, "text/html")
+    refused(args, DuplicateSource)
+
+
 def test_reserved_source_id_refused(args: dict[str, Any]) -> None:
     args["sources"][0] = CaseSource("context", args["sources"][0].path, "text/html")
     refused(args, BadSourceId)
@@ -226,12 +231,13 @@ def test_fifo_source_refused_without_blocking(args: dict[str, Any], tmp_path: Pa
     fifo = tmp_path / "pipe"
     os.mkfifo(fifo)
     args["sources"][1] = CaseSource("s2", fifo, "text/plain")
-    signal.signal(signal.SIGALRM, lambda *_: pytest.fail("blocked on a FIFO"))
+    previous = signal.signal(signal.SIGALRM, lambda *_: pytest.fail("blocked on a FIFO"))
     signal.alarm(5)
     try:
         refused(args, SourceUnreadable)
     finally:
         signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 def test_missing_source_refused(args: dict[str, Any], tmp_path: Path) -> None:
@@ -316,6 +322,7 @@ def test_file_replaced_before_prepare_is_a_fault(
     monkeypatch.setattr("deploy_workflow.run_inputs.prepare", swapping)
     with pytest.raises(StagedSourceChanged, match="prepare: source s1 changed"):
         stage_sources(checked, args["run_dir"])
+    assert not (args["run_dir"] / "pack").exists()
 
 
 def test_file_vanished_before_prepare_is_a_fault(
@@ -331,3 +338,68 @@ def test_file_vanished_before_prepare_is_a_fault(
     monkeypatch.setattr("deploy_workflow.run_inputs.prepare", vanishing)
     with pytest.raises(StagedSourceChanged, match="source s2 changed"):
         stage_sources(checked, args["run_dir"])
+    assert not (args["run_dir"] / "pack").exists()
+
+
+def test_non_ready_status_with_matching_sha_is_a_fault(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked = check_arguments(**args)
+    real = prepare
+
+    def downgrading(request: Any, root: Path, destination: Path) -> Any:
+        pack = real(request, root, destination)
+        first = pack.sources[0].model_copy(update={"status": "unreadable", "limitation": "x"})
+        return pack.model_copy(update={"sources": (first, *pack.sources[1:])})
+
+    monkeypatch.setattr("deploy_workflow.run_inputs.prepare", downgrading)
+    with pytest.raises(StagedSourceChanged, match="source s1 changed"):
+        stage_sources(checked, args["run_dir"])
+    assert not (args["run_dir"] / "pack").exists()
+
+
+@pytest.mark.parametrize(
+    ("data", "media"),
+    [
+        (b"", "text/plain"),
+        (b"  \n\n", "text/plain"),
+        (b"not a pdf", "application/pdf"),
+        (b"not a zip", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        (b"<html><body></body></html>", "text/html"),
+    ],
+)
+def test_unready_source_refused_before_any_write(
+    args: dict[str, Any], tmp_path: Path, data: bytes, media: str
+) -> None:
+    bad = tmp_path / "bad.bin"
+    bad.write_bytes(data)
+    args["sources"][1] = CaseSource("s2", bad, media)
+    refused(args, SourceUnreadable)
+
+
+def test_nul_in_a_path_is_unreadable(args: dict[str, Any], tmp_path: Path) -> None:
+    nul = Path(str(tmp_path) + "/a\x00b")
+    refused(args, SourceUnreadable, context=nul)
+    args["sources"][1] = CaseSource("s2", nul, "text/plain")
+    refused(args, SourceUnreadable)
+
+
+def test_staged_files_are_private(args: dict[str, Any]) -> None:
+    stage_sources(check_arguments(**args), args["run_dir"])
+    for path in (args["run_dir"] / "sources").iterdir():
+        assert path.stat().st_mode & 0o777 == 0o600
+
+
+def test_converted_html_over_cap_refused(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    big = tmp_path / "big.html"
+    big.write_bytes(b"<meta charset=windows-1252><p>" + b"\xe9" * 1900 + b"</p>")
+    monkeypatch.setattr("deploy_workflow.run_inputs.MAX_BYTES", 2500)
+    args["sources"][0] = CaseSource("s1", big, "text/html")
+    refused(args, SourceTooLarge)
+
+
+def test_read_capped_refuses_a_device() -> None:
+    with pytest.raises(SourceUnreadable):
+        read_capped(Path("/dev/null"))

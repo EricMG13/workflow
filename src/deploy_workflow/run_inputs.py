@@ -25,6 +25,7 @@ from deploy_vii.preparation import (
     PreparedPack,
     SourceRequest,
     prepare,
+    prepare_source,
 )
 from deploy_workflow.context import CONTEXT_SOURCE_ID, RunContext, load_context, preparation_request
 from deploy_workflow.html_text import convert_html
@@ -149,8 +150,10 @@ def read_capped(path: Path) -> bytes:
     descriptor (FIFO, directory, device refused), then read at most ``MAX_BYTES + 1`` from it."""
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
-    except OSError as error:
-        raise SourceUnreadable(f"{path}: cannot open ({error.strerror})") from None
+    except (OSError, ValueError) as error:
+        raise SourceUnreadable(
+            f"{path}: cannot open ({getattr(error, 'strerror', None) or error})"
+        ) from None
     try:
         if not stat.S_ISREG(os.fstat(fd).st_mode):
             os.close(fd)
@@ -190,6 +193,13 @@ def _check_adapter(adapter: ModelAdapter, model: ModelSpec) -> GateResult | None
     return adapter.gate if isinstance(adapter, LiveAdapter) else None
 
 
+def _require_ready(request: SourceRequest, data: bytes) -> None:
+    """``prepare_source`` does no I/O: refuse a source the pack would call unusable now."""
+    prepared = prepare_source(request, data)
+    if prepared.status != "ready":
+        raise SourceUnreadable(f"source {request.source_id!r}: {prepared.limitation}")
+
+
 def check_arguments(
     *,
     case_id: str,
@@ -218,7 +228,7 @@ def check_arguments(
         raise PathwayMismatch(f"context pathway {run_context.run.pathway!r} is not {pathway!r}")
     files: list[StagedFile] = []
     requests: list[SourceRequest] = []
-    seen: set[str] = set()
+    seen: set[str] = {CONTEXT_SOURCE_ID}
     for item, raw in zip(sources, source_raw, strict=True):
         source_id = _identifier(item.source_id, BadSourceId, "source_id")
         if source_id == CONTEXT_SOURCE_ID:
@@ -237,11 +247,11 @@ def check_arguments(
             raise UnsupportedMedia(f"source {source_id!r}: media type {item.media_type!r}")
         filename = source_id + _SUFFIX[media]
         files.append(StagedFile(source_id, filename, data, hashlib.sha256(data).hexdigest()))
-        requests.append(
-            SourceRequest.model_validate(
-                {"source_id": source_id, "path": filename, "media_type": media}
-            )
+        pack_request = SourceRequest.model_validate(
+            {"source_id": source_id, "path": filename, "media_type": media}
         )
+        _require_ready(pack_request, data)
+        requests.append(pack_request)
     if cp_dr:
         raise CpDrNotBuilt("cp_dr=True is refused until O7b")
     request = preparation_request(
@@ -271,14 +281,15 @@ def _write_new(directory: Path, filename: str, data: bytes) -> None:
     target = (directory / filename).resolve()
     if target.parent != directory.resolve():
         raise RunInputError(f"staging path {filename!r} leaves the sources directory")
-    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW, 0o644)
+    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "wb") as handle:
         handle.write(data)
 
 
 def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
     """Create ``run_dir``, stage the bytes that were hashed (never a second read) under
-    ``sources/`` and build the pack at ``run_dir/pack`` from that single root."""
+    ``sources/`` and build the pack from that single root into ``pack.unverified``, renamed to ``pack`` only after
+    every pack hash equals the staged hash (a fault leaves no ``pack``)."""
     try:
         os.mkdir(run_dir)
     except FileExistsError:
@@ -287,12 +298,14 @@ def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
     os.mkdir(sources)
     for staged in checked.files:
         _write_new(sources, staged.filename, staged.data)
-    pack: PreparedPack = prepare(checked.request, sources, run_dir / "pack")
+    unverified = run_dir / "pack.unverified"
+    pack: PreparedPack = prepare(checked.request, sources, unverified)
     by_id = {source.source_id: source for source in pack.sources}
     for staged in checked.files:
         found = by_id.get(staged.source_id)
         if found is None or found.status != "ready" or found.sha256 != staged.sha256:
             raise StagedSourceChanged(f"prepare: source {staged.source_id} changed")
+    os.rename(unverified, run_dir / "pack")
 
 
 __all__ = [

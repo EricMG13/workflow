@@ -53,8 +53,10 @@ def prompt_factory(
 ) -> PromptFor:
     """The ``PromptFor`` of a run (O6-P1). ``store`` supplies the attempt, the module context of
     a step that embeds one, the settled CP-1 facts and the sources the step's tools read.
-    ``pin_form(module_id, pack)`` is Phase 6's ``pins.submission_form``; it is asked only for a
-    module in ``compose.PINS_ENABLED``, and with none given no pin reaches a prompt."""
+    With ``pin_form=None`` the pins come from the request's own context
+    (``compose.request_pin_form``). ``pin_form(module_id, pack)``, Phase 6's
+    ``pins.submission_form``, is an override: it is asked only for a module in
+    ``compose.PINS_ENABLED``, and its form replaces the one derived from the context."""
 
     def prompt_for(
         binding: OwnerBinding, spec: StepSpec, issues: tuple[str, ...]

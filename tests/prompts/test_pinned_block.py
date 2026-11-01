@@ -250,20 +250,53 @@ DIFFERING: dict[str, dict[str, Any]] = {
     "CP-3D": {"recovery.percent_text": "45"},
     "CP-4C": {"valuation[*].multiple": ["5.5", "6.5", "7.5"]},
 }
-ABSOLUTE = re.compile(r"retype no figure|are your assumptions")
+# Sentences that state an absolute: the text must name the pinned-assumptions block as the exception.
+ABSOLUTE = re.compile(
+    r"retype no figure|are your assumptions|are your analyst assumptions|you supply, as analyst"
+)
+# CP-2E's gap rule and hedge-ratio absence would otherwise forbid a pinned hedge ratio. (CP-3D's
+# "never fill the gap" is about quotes and absences of market facts; its text is Phase 3's.)
+HEDGE_ABSOLUTE = re.compile(r"never fill the gap|hedge ratio \(or why none")
 WITHIN_RANGE = "within the schema's range"
+B27_EXCEPTION = (
+    ", unless the pinned-assumptions block pins it, in which case submit exactly the pinned value"
+)
+# What a text may say about a pin: these phrases, and no other mention of one.
+PIN_PHRASES = re.compile(r"pinned-assumptions block|\bpins\b|\bthe pinned value\b")
+# Python's pinned label, in any wording: the model is never told to write it (P6-P13).
+LABEL_WORDS = re.compile(
+    r"user[- ]supplied|supplied by (the )?(user|analyst)|context file|equals the pin|\bpinn"
+)
+
+
+RULE_LINE = re.compile(r"^[a-z]\. \[[a-z_]+\.\d+\] ")
+
+
+def sentences_of(line: str) -> list[str]:
+    """One line's sentences (a sentence ends at a full stop before a capital letter or a backtick)."""
+    return re.split(r"(?<=\.)\s+(?=[A-Z`])", " ".join(line.split()))
 
 
 def text_admits_the_pin(module: str) -> None:
-    """The step's absolute sentences and its B27 `choose within the schema's range` sentence name
-    the pinned-assumptions block as the exception (the O6 rule wins)."""
+    """Every sentence that states an absolute names the pinned-assumptions block as the exception;
+    each B27 `choose within the schema's range` sentence continues with the exact-submission
+    exception (the O6 rule wins); no prose sentence mentions a pin except through those phrases,
+    so the text never tells the model to write Python's pinned label, in any wording. A numbered
+    rule line is frozen and may forbid the label, so only its absolutes are checked."""
     text = (TEXTS_DIR / f"{STEPS[module]}.md").read_text(encoding="utf-8")
-    for line in text.splitlines():
-        if ABSOLUTE.search(line):
-            assert "pinned-assumptions" in line, line[:120]
-    after = text.split(WITHIN_RANGE)[1][:200]
-    assert "pinned-assumptions" in after, after
-    # Python's pinned label is Python's: the text never tells the model to write it.
+    lines = text.splitlines()
+    found = [s for line in lines for s in sentences_of(line)]
+    assert any(WITHIN_RANGE in s for s in found)
+    for line in lines:
+        prose = RULE_LINE.match(line) is None
+        for sentence in sentences_of(line):
+            if ABSOLUTE.search(sentence) or (module == "CP-2E" and HEDGE_ABSOLUTE.search(sentence)):
+                assert "pinned-assumptions block" in sentence, sentence[:160]
+            if WITHIN_RANGE in sentence:
+                tail = sentence.split(WITHIN_RANGE, 1)[1]
+                assert tail.startswith(B27_EXCEPTION), sentence[:200]
+            if prose:
+                assert not LABEL_WORDS.search(PIN_PHRASES.sub("", sentence)), sentence[:160]
     assert owner_pins.pinned_line(module) not in text
 
 

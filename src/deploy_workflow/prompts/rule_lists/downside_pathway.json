@@ -71,6 +71,13 @@
    "checks": [
     "oracle:cp2a:v13"
    ]
+  },
+  {
+   "id": "downside_pathway.7",
+   "statement": "Do not write Python's pinned-shock-size line in a gap, in any case or spacing; Python adds that line when shock sizes are pinned.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2a:validate"
+   ]
   }
  ]
 }

@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 from b29_strip import B29_SPANS, undo_b29
 from b30_strip import B30_SPANS, undo_b30
+from b34_strip import B34_SPANS, undo_b34
 from merge_strip import undo_merged_contract
 from p5_strip import undo_p5
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
@@ -106,7 +107,9 @@ def test_existing_is_the_contracts_plus_the_text_stems() -> None:
 # test_the_b29_wording_is_the_only_change_to_the_frozen_message keeps the previous digest.
 # And again by B30 (the market-observation and preference rules, the method text and the Basis
 # schema text name `basis.context_rows`); test_the_b30_wording_is_the_only_change_to_the_frozen_
-# message keeps the digest after B29.
+# message keeps the digest after B29. And again by B34 (the preference line under "What to return"
+# names `basis.context_rows`); test_the_b34_wording_is_the_only_change_to_the_frozen_message keeps
+# the digest after B30.
 # financials and narrative were re-frozen by the O6 merge integration (ruling M-R1: the merged
 # restricted-cash change in their contract text and schema); test_the_merged_restricted_cash_change_
 # is_the_only_change keeps their old digests and shows that undoing exactly it gives the old message.
@@ -152,14 +155,14 @@ def test_the_b29_wording_is_the_only_change_to_the_frozen_message(
 ) -> None:
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
-    text = undo_b29(step, undo_b30(step, system.text))
+    text = undo_b29(step, undo_b30(step, undo_b34(step, system.text)))
     body = json.dumps([[system.role, text], [user.role, user.text]])
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_B29_FROZEN[step]
 
 
 def test_the_b29_strip_removes_only_spans_the_message_holds(pack: PreparedPack) -> None:
     for step, spans in B29_SPANS.items():
-        system = undo_b30(step, compose(request_for(step, pack))[0].text)
+        system = undo_b30(step, undo_b34(step, compose(request_for(step, pack))[0].text))
         assert all(system.count(span) == count for span, count, _ in spans)
 
 
@@ -177,12 +180,37 @@ def test_the_b30_wording_is_the_only_change_to_the_frozen_message(
 ) -> None:
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
-    body = json.dumps([[system.role, undo_b30(step, system.text)], [user.role, user.text]])
+    body = json.dumps(
+        [[system.role, undo_b30(step, undo_b34(step, system.text))], [user.role, user.text]]
+    )
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_B30_FROZEN[step]
 
 
 def test_the_b30_strip_removes_only_spans_the_message_holds(pack: PreparedPack) -> None:
     for step, spans in B30_SPANS.items():
+        system = undo_b34(step, compose(request_for(step, pack))[0].text)
+        assert all(system.count(span) == count for span, count, _ in spans)
+
+
+# The answer key (B34): relative_value's digest before the preference line named
+# `basis.context_rows` (the FROZEN value after B30, f3b1aba5). Never edited.
+PRE_B34_FROZEN: dict[str, str] = {
+    "relative_value": "f3b1aba5daffca2ebeebe195f6bb4daab5115994007ab6561cba2629928b1c30",
+}
+
+
+@pytest.mark.parametrize("step", sorted(PRE_B34_FROZEN))
+def test_the_b34_wording_is_the_only_change_to_the_frozen_message(
+    pack: PreparedPack, step: str
+) -> None:
+    messages = compose(request_for(step, pack))
+    system, user = messages[0], messages[1]
+    body = json.dumps([[system.role, undo_b34(step, system.text)], [user.role, user.text]])
+    assert hashlib.sha256(body.encode()).hexdigest() == PRE_B34_FROZEN[step]
+
+
+def test_the_b34_strip_removes_only_spans_the_message_holds(pack: PreparedPack) -> None:
+    for step, spans in B34_SPANS.items():
         system = compose(request_for(step, pack))[0].text
         assert all(system.count(span) == count for span, count, _ in spans)
 
@@ -215,7 +243,7 @@ FROZEN: dict[str, str] = {
     "narrative": ("3e8d87b8f6e5085f539e94e7184db2e89feb7cc45b4e03e897925dca24d819f7"),
     "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
-    "relative_value": ("f3b1aba5daffca2ebeebe195f6bb4daab5115994007ab6561cba2629928b1c30"),
+    "relative_value": ("d9202926890f8f011bcbf97fc40334e2b576fd57959f460d75c27b204262cba0"),
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
     "source_readiness": ("cf819db26dab80a34951dde352cb95f10bb38fb1ce01684e293bd856d3ccb743"),
 }

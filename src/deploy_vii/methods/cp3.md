@@ -45,7 +45,8 @@ What to return:
 - `market_evidence`: each quoted span with kind, as_of and limitation.
 - `preference`: the `ordering` of the instruments, most preferred first, each assessed
   facility_id exactly once and nothing else; the rationale; its basis (at least one market
-  evidence quote unless the confidence is Insufficient Information); its confidence (High,
+  evidence quote or a context row named in
+  `basis.context_rows` unless the confidence is Insufficient Information); its confidence (High,
   Medium, Low or Insufficient Information, which states its limitation).
 - `risks`: each risk to the ordering with its mechanic, implication, severity and `cp2_refs`.
 - `gaps`: what the analysis lacks, why it matters, what it affects, its severity and the action.

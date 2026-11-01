@@ -175,6 +175,10 @@ QX = quote("revolver-x", "observed", "2026-01-09", "Dealer C", "99.10", "99.60")
 QE = quote("term-loan", "observed", "2026-01-09", "Dealer D")  # every figure empty
 BAD_Q = quote("term-loan", "observed", "2026-02-01", "Dealer A", "98.50", "99.00", "98,75")
 DEAL = deal("term-loan", "2026-01-08", "Lead arranger", "325", "350", "99.0", "99.5")
+QU1 = quote("term-loan", "observed", "2026-01-09", "Dealer A", "98.50", "99.00")
+QU2 = quote("term-loan", "observed", "2026-01-10", "Dealer B", "98.50", "99.00")  # same prefix, later fields differ
+DU1 = deal("term-loan", "2026-01-08", "Lead arranger", "325", "350", "99.0", "99.5")
+DU2 = deal("term-loan", "2026-01-09", "Co-arranger", "325", "350", "99.0", "99.5")
 DEAL_LONE = deal("term-loan", "2026-01-08", "Lead arranger", sl="325", ol="99.0", oh="99.5")
 
 CONTEXTS = {  # id: (layout, object)
@@ -184,6 +188,8 @@ CONTEXTS = {  # id: (layout, object)
     "unmatched": ("indent", context("secondary", [Q1, QX, QE])),
     "deal-talk": ("indent", context("primary", deals=[DEAL])),
     "deal-lone-bound": ("indent", context("primary", deals=[DEAL_LONE])),
+    "unciteable": ("minified", context("secondary", [QU1, QU2])),
+    "unciteable-deal": ("minified", context("primary", deals=[DU1, DU2])),
     "no-quotes": ("indent", context("secondary", [])),
     "minified": ("minified", context("secondary", [Q1, Q2])),
     "bad-bytes": ("indent", context("secondary", [BAD_Q], issuer_id="southbridge-synthetic")),
@@ -198,8 +204,9 @@ def render(layout, obj):
 
 CTX_BYTES = {cid: render(*spec) for cid, spec in CONTEXTS.items()}
 CTX_PATH = {cid: f"{CASE_DIR}/contexts/{cid}.json" for cid in CONTEXTS}
-assert len(CTX_BYTES["minified"].decode("utf-8").splitlines()) == 1
-assert all(len(CTX_BYTES[c].decode("utf-8").splitlines()) > 1 for c in CONTEXTS if c != "minified")
+assert all(
+    (len(CTX_BYTES[c].decode("utf-8").splitlines()) == 1) == (CONTEXTS[c][0] == "minified") for c in CONTEXTS
+)
 
 # --- 3. citations: Design 3 (hand-derived; Python builds them in the phase) -------------------------
 QFIELDS = ("bid", "ask", "price", "yield_pct", "spread_bps")
@@ -228,6 +235,9 @@ def cites_indent(cid):
     return out
 
 
+COLLIDES = {}
+
+
 def cites_minified(cid):
     """One line. The member does not sit alone on its line, so the quote is anchored: the text from
     the quote object's `{` through the figure's closing quote (Design 3). It must be unique."""
@@ -239,14 +249,26 @@ def cites_minified(cid):
             row_text = json.dumps(row, separators=(",", ":"), ensure_ascii=False)
             assert text.count(row_text) == 1, (cid, section, idx)
             start = text.index(row_text)
+            later_rows = [
+                json.dumps(r, separators=(",", ":"), ensure_ascii=False) for r in obj[section][idx + 1 :]
+            ]
+            prev_rows = [
+                json.dumps(r, separators=(",", ":"), ensure_ascii=False) for r in obj[section][:idx]
+            ]
             for key, value in row.items():
                 if key not in QFIELDS + DFIELDS or not value:
                     continue  # only a supplied figure is ever cited
                 m = f"{json.dumps(key)}:{json.dumps(value)}"
                 assert row_text.count(m) == 1
                 anchored = row_text[: row_text.index(m) + len(m)]
-                assert text.count(anchored) == 1, "anchored quote is not unique in the line"
-                assert text[start : start + len(anchored)] == anchored
+                if text.count(anchored) != 1:
+                    # a residual collision (B20): another row of this section opens with the same text.
+                    # The earlier row keeps it; the later row (higher index) is dropped into a gap.
+                    if any(r.startswith(anchored) for r in prev_rows):
+                        COLLIDES[(cid, section, idx)] = True
+                    else:
+                        assert any(r.startswith(anchored) for r in later_rows), "repeat is not a row prefix"
+                assert text[start : start + len(anchored)] == anchored or (cid, section, idx) in COLLIDES
                 out[(section, idx, key)] = (1, anchored)
     return out
 
@@ -285,6 +307,9 @@ def python_evidence(cid):
             own.append(f"Gap (Medium): context quote for facility {fid} matches no CP-1 facility (T4.18); not used")
             continue
         supplied = [k for k in QFIELDS if q[k]]
+        if (cid, "quotes", i) in COLLIDES and supplied:
+            own.append(f"context quote for facility {fid} cannot be cited as one unique span; not used")
+            continue
         if not supplied:
             own.append(f"Gap (Medium): context quote for facility {fid} carries no figure; not used")
             continue
@@ -323,6 +348,9 @@ def python_evidence(cid):
                 keys += [("deal_terms", i, lo), ("deal_terms", i, hi)]
             elif d[lo] or d[hi]:
                 lone.append((label, lo if d[lo] else hi, d[lo] or d[hi]))
+        if (cid, "deal_terms", i) in COLLIDES and pieces:
+            own.append(f"context deal terms for facility {fid} cannot be cited as one unique span; not used")
+            continue
         if not pieces:
             continue
         rows.append(
@@ -492,6 +520,8 @@ SUBS = {
     "no-quotes": deepcopy(RV),
     "minified": submission(["c01", "c02"]),
     "context-only": submission(["c01", "c02"]),
+    "unciteable": submission(["c01"], **TXT["unmatched"]),
+    "unciteable-deal": submission(["c01"], **TXT["deal-talk"]),
     "bad-bytes": deepcopy(RV),
 }
 assert SUBS["no-quotes"] == RV
@@ -768,25 +798,46 @@ def cp3_expected(case_id):
 
 CP3_CASES = [
     "observed-and-talk", "talk-only", "stale", "unmatched", "deal-talk", "deal-lone-bound",
-    "with-market-row", "no-quotes", "minified", "context-only", "bad-bytes",
+    "with-market-row", "no-quotes", "minified", "context-only", "unciteable", "unciteable-deal", "bad-bytes",
 ]
 CASES_EXPECTED = {c: cp3_expected(c) for c in CP3_CASES}
 
 # deal-lone-bound: unpinned wording, structure pinned (the plan fixes no text)
+LONE_LIMITATION = (
+    "Provider: Lead arranger; user-supplied figure; "
+    "spread talk lower bound 325 given without an upper bound; not used"
+)
 _lone = EVIDENCE["deal-lone-bound"][0][0]
 CASES_EXPECTED["deal-lone-bound"]["lone_bound"] = {
     "row_quote_cell": _lone["quote_cell"],
     "citations": len(_lone["citations"]),
     "omitted": _lone["lone_bounds"],
-    "limitation_cell_must_contain": ["spread", "325", "without"],
-    "wording_status": "Design 2 says a lone bound is omitted and named in the Limitation cell; it fixes no text. The row's limitation is pinned by fragments only; the proposed exact text is below.",
-    "proposed_limitation": "Provider: Lead arranger; user-supplied figure; spread talk lower bound 325 given without an upper bound; not used",
+    "limitation": LONE_LIMITATION,
+    "wording_status": "Design 2 fixes the prefix and that the lone bound is omitted and named; the naming text is ruled (B20 review) as pinned here, joined with '; ' like the stale text.",
 }
 assert _lone["quote_cell"] == "term-loan: OID talk 99.0-99.5" and len(_lone["citations"]) == 2
 _lim = CASES_EXPECTED["deal-lone-bound"]["t33_rows"][0]["facts"][4]
-_lim["text"] = None
-_lim["text_must_contain"] = CASES_EXPECTED["deal-lone-bound"]["lone_bound"]["limitation_cell_must_contain"]
-_lim["text_proposed"] = CASES_EXPECTED["deal-lone-bound"]["lone_bound"]["proposed_limitation"]
+_lim["text"] = LONE_LIMITATION
+
+CASES_EXPECTED["unciteable"]["unciteable"] = {
+    "kind": "residual key collision with different content (B20): both quote objects open with the same text through ask; they differ only later (as_of, provider)",
+    "dropped_rows": ["quotes[1]"],
+    "gap_limitations": ["context quote for facility term-loan cannot be cited as one unique span; not used"],
+    "python_rows": ["c01"],
+    "c01_from": "quotes[0] (the earlier row keeps the text; its two citations are the shared prefix, so they are not unique in the line)",
+    "c01_cite_quotes": CASES_EXPECTED["unciteable"]["t33_rows"][0]["facts"][2]["cite_quotes"],
+}
+CASES_EXPECTED["unciteable-deal"]["unciteable"] = {
+    "kind": "residual key collision (B20): both deal objects are equal through talk_oid_high; they differ only in as_of and provider",
+    "dropped_rows": ["deal_terms[1]"],
+    "gap_limitations": ["context deal terms for facility term-loan cannot be cited as one unique span; not used"],
+    "python_rows": ["c01"],
+    "c01_from": "deal_terms[0]",
+    "c01_cite_quotes": CASES_EXPECTED["unciteable-deal"]["t33_rows"][0]["facts"][2]["cite_quotes"],
+}
+for _c, _g in (("unciteable", "quote"), ("unciteable-deal", "deal terms")):
+    assert CASES_EXPECTED[_c]["unciteable"]["gap_limitations"][0] in CASES_EXPECTED[_c]["own_limitations"]["members"]
+    assert len(CASES_EXPECTED[_c]["t33_rows"]) == 1
 
 # stale positive: the exact-30 row carries no stale text
 assert "Stale quote" not in CASES_EXPECTED["stale"]["t33_rows"][0]["facts"][4]["text"]
@@ -929,8 +980,11 @@ CP3D = {
                 "quotes[0].price: no thousands separators; write 1250, not 1,250.",
                 "quotes[0].as_of: is after the run as-of date (2026-01-10); sources dated after it are refused.",
             ],
-            "issues": "context source unreadable: followed by the reader's problems (ContextRefused.problems of load_context; context.py:315-354); the validator returns the issue, no exception escapes upstream_of",
-            "join_not_pinned": "how the two problems are joined into one or two issues is not fixed by Design 9; each problem text must appear in the issues",
+            "issues": [
+                "context source unreadable: quotes[0].price: no thousands separators; write 1250, not 1,250.",
+                "context source unreadable: quotes[0].as_of: is after the run as-of date (2026-01-10); sources dated after it are refused.",
+            ],
+            "issues_note": "one issue per ContextRefused.problems entry of load_context (context.py:315-354), in order (B20); the validator returns them, no exception escapes upstream_of",
         },
     ],
     "observations_data_function": "context_observations_data(upstream) -> list[dict] returns, per offered row, {row, kind, source_id, locator, quote, level_text, as_of_text}; list equals offered_observations for the case",
@@ -971,7 +1025,7 @@ EXPECTED = {
         "T3.3.m01": f"{R3E}:{line_of(R3E, 'T3.3.m01.source')}",
         "T3.1.basis_text": f"{R3E}:{line_of(R3E, 'T3.1.i01.basis')}",
         "T3.4.basis_text": f"{R3E}:{line_of(R3E, 'T3.4.preference.basis')}",
-        "own_limitations": f"{R3E}:{line_of(R3E, 'Gap (Material): Only one dealer quotation and no traded price')}",
+        "own_limitations": f"{R3E}:3432-3433",
         "confidence_caps": f"{R3E}:{line_of(R3E, 'CP-2 is restricted')}",
         "level_phrases": "src/deploy_vii/cp3_relative_value.py:127-144 (existing rule, unchanged)",
     },

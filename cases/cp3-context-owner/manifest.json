@@ -141,6 +141,22 @@
       "spans": 79,
       "sha256": "2dfe0b8462f13ed9a208ac7834d6d650e16d76c174178fcc54a7da63f3279a12"
     },
+    "unciteable": {
+      "path": "cases/cp3-context-owner/contexts/unciteable.json",
+      "layout": "minified",
+      "run_type": "secondary",
+      "bytes": 1257,
+      "spans": 1,
+      "sha256": "0b2063435fcd8e051afc33adc4bcdf018e644c51b28ef85c8bf0eed95ac1146c"
+    },
+    "unciteable-deal": {
+      "path": "cases/cp3-context-owner/contexts/unciteable-deal.json",
+      "layout": "minified",
+      "run_type": "primary",
+      "bytes": 1571,
+      "spans": 1,
+      "sha256": "8fb2a5ffef3ce8682bd3ae46fc5fb91cc93183ca1390d1c919a24dd7c84414a8"
+    },
     "no-quotes": {
       "path": "cases/cp3-context-owner/contexts/no-quotes.json",
       "layout": "indent",
@@ -238,6 +254,20 @@
       "run_type": "secondary"
     },
     {
+      "case_id": "unciteable",
+      "pack": "R3+context",
+      "context": "unciteable",
+      "run_id": "ctx3-unciteable-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "unciteable-deal",
+      "pack": "R3+context",
+      "context": "unciteable-deal",
+      "run_id": "ctx3-unciteable-deal-v1",
+      "run_type": "primary"
+    },
+    {
       "case_id": "bad-bytes",
       "pack": "R3+context",
       "context": "bad-bytes",
@@ -255,8 +285,10 @@
     "contexts/observed-and-talk.json": "659d7b509ed9b5c0d91381db8eff24d075cd4ff07754ac3ed4dc5fabcad12783",
     "contexts/stale.json": "c914fe5b2f111053cb3fca14ed4bd97d6ca754ee0c7768a1d98583ac8f792c1d",
     "contexts/talk-only.json": "0f4dd912286203907a974c10011319a163c7de291139482de119060b35bf862a",
+    "contexts/unciteable-deal.json": "8fb2a5ffef3ce8682bd3ae46fc5fb91cc93183ca1390d1c919a24dd7c84414a8",
+    "contexts/unciteable.json": "0b2063435fcd8e051afc33adc4bcdf018e644c51b28ef85c8bf0eed95ac1146c",
     "contexts/unmatched.json": "fae7cbe9692dad65cd65f72e42dcd4d0802130c06ed6993e4fd292ec4a9cf4e6",
-    "expected.json": "fc090695e0ff5c02a98a780d60acca656dc5ebaad4350df6699f9b5ce821817d",
-    "submissions.json": "e6ef7aa81c5c1d773b656b9eecca53ccc1f646af0e708ce82c99a7ce2aba4a81"
+    "expected.json": "36a1602af6fc3841efd7c801fec436fcd2ada58dd832d52da98e94dee3542349",
+    "submissions.json": "ec65230e8d2b204597191c64eba29eac4cadb074ede39a4a2972c6a943830335"
   }
 }

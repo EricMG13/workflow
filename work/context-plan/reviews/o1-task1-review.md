@@ -33,3 +33,15 @@ Probes: `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--clau
 - Fix round 1: M1, plus all Lows above (they ride with this fix).
 - D12: `project_commit` names the commit where the file hashes to `sha256` (item-19 rule, strict probe):
   set it to 5a00d7be in the fix commit; `review` names this file.
+
+## Stale pin found by the Phase 7 plan review (2026-11-01)
+- **M2 (O1 Task 1):** 5a00d7be changed `src/deploy_vii/registry.py` (adf30a0b… → 19ec267d…) but two oracle files
+  still pin the old hash: `cases/cpos-owner/builder/build.py:32` (its `read_pinned` asserts it, so the cpos
+  oracle rebuild fails at HEAD) and `cases/cpos-owner/manifest.json:14`. Nothing else pins a file Task 1
+  changed (`docs/INTEGRATION.md:968` is a dated record, left as is). Probe:
+  `scratchpad/p7probe/cpos_pins.py <tree>` (exit 1 at HEAD).
+- Ruling: fix round 2 = a mechanical re-pin by a separate preparer (mx-scaffold, not Task 1's builder), who runs
+  the cpos builder twice in a scratch copy plus the product's table, claim and render validators and
+  `cases/pins.py --check`, and reports exit codes; reviewed by `mx-precise`. The builder's oracle content does
+  not change (Task 1 changed CP-5's fan-in set, not presets); the preparer proves it by the byte-identical
+  rebuild.

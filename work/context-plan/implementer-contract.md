@@ -16,7 +16,11 @@ dispatch names; if not, stop and report NEEDS_CONTEXT.
    a network call; reading a credential, key file or provider env var; editing `src/deploy_vii`
    except files your brief names (each such change appends one `post_import_patches` record to
    `docs/reuse/manifest.json` in the same commit: destination, imported_sha256, prior_project_sha256,
-   project_commit, sha256, reason, review — copy the last record's shape); editing DEPLOY VII.
+   project_commit, sha256, reason, review — copy the last record's shape; for a file not in the
+   manifest's `files[]` use ruling B14's repo-authored shape); editing DEPLOY VII. For every file you
+   change that other files may pin (anything under `src/deploy_vii`, `cases/`, a lease), run
+   `git grep -n <old sha256>` and report each hit: a pin you leave stale breaks an oracle builder.
+   You never re-pin an oracle yourself (a separate preparer does); name the hits as a concern.
 5. No new dependency. No new pytest marker (pyproject has `--strict-markers`).
 6. Do not dispatch subagents, not helpers and never a reviewer. Review is the controller's job.
 7. Commit with plain `git` (message from your brief, ending with the line

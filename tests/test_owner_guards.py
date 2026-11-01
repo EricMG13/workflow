@@ -18,6 +18,7 @@ import io
 import json
 import logging
 import os
+import unicodedata
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -751,3 +752,166 @@ def test_a_host_frame_reaches_the_host_and_is_retained(
     assert reply["status"] == "refused" and "call_id" in reply, reply  # a receipt, not a label
     assert len(workflow._calls) == 1 and workflow.state().invokes_used == 1
     assert len(_audit_files(workflow, "calls")) == 1 and _faults(workflow) == []
+
+
+# ------------------------------------------------------------ the fault record's detail (G7)
+
+KEY = "sk-ant-api03-" + "Q" * 40
+
+
+def _raise_in_inputs(monkeypatch: pytest.MonkeyPatch, error: BaseException) -> None:
+    def raiser(*args: Any, **kwargs: Any) -> Any:
+        raise error
+
+    monkeypatch.setattr(owner, "_inputs", raiser)
+
+
+def _detail_of(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: BaseException) -> str:
+    workflow = _read_world(tmp_path, monkeypatch)
+    _raise_in_inputs(monkeypatch, error)
+    with pytest.raises(type(error)):
+        workflow.read_inputs()
+    (fault,) = _internal_faults(workflow)
+    assert fault.detail is not None
+    return fault.detail
+
+
+def test_a_key_in_the_error_text_is_redacted_before_the_cut(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detail = _detail_of(tmp_path, monkeypatch, RuntimeError(f"Authorization: Bearer {KEY}"))
+    assert KEY not in detail and "[redacted]" in detail
+    straddling = RuntimeError(
+        "z" * 489 + " " + KEY
+    )  # the key starts before char 500 and ends after it
+    detail = _detail_of(tmp_path / "cut", monkeypatch, straddling)
+    assert "sk-ant" not in detail and detail.endswith("[redacted]")
+
+
+def test_controls_separators_and_format_characters_are_escaped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detail = _detail_of(tmp_path, monkeypatch, RuntimeError("a\x85b\x9bc\u2028d\u2029e\u202ef"))
+    assert detail == "a\\x85b\\x9bc\\u2028d\\u2029e\\u202ef"
+    assert all(unicodedata.category(c) not in ("Cc", "Zl", "Zp", "Cf") for c in detail)
+
+
+def test_the_c0_edges_and_del_are_escaped(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    detail = _detail_of(tmp_path, monkeypatch, RuntimeError("a\x1fb\x7fc\x20d"))
+    assert detail == "a\\x1fb\\x7fc d"
+
+
+def test_a_lone_surrogate_in_the_message_is_escaped_and_the_original_raised(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+    _raise_in_inputs(monkeypatch, RuntimeError("a\ud800b\udfffc"))
+    with pytest.raises(RuntimeError, match="^a\ud800b\udfffc$"):
+        workflow.read_inputs()
+    (fault,) = _internal_faults(workflow)
+    assert fault.detail == "a\\ud800b\\udfffc"
+
+
+def test_the_escaping_is_injective_for_a_backslash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    newline = _detail_of(tmp_path / "one", monkeypatch, RuntimeError("a\nb"))
+    literal = _detail_of(tmp_path / "two", monkeypatch, RuntimeError("a\\x0ab"))
+    assert newline == "a\\x0ab" and literal == "a\\x5cx0ab" and newline != literal
+
+
+def test_the_bound_is_500_after_redaction_and_escaping(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detail = _detail_of(tmp_path, monkeypatch, RuntimeError("z" * 499 + "\n" + "y" * 100))
+    assert len(detail) == 500 and detail.endswith("\\")  # cut inside the escape of the newline
+
+
+def test_an_error_whose_text_raises_still_leaves_its_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Odd(RuntimeError):
+        def __str__(self) -> str:
+            raise TypeError("no text")
+
+    workflow = _read_world(tmp_path, monkeypatch)
+    _raise_in_inputs(monkeypatch, Odd())
+    with pytest.raises(Odd):
+        workflow.read_inputs()
+    (fault,) = _internal_faults(workflow)
+    assert (fault.error_type, fault.detail) == ("Odd", "<unprintable Odd>")
+
+
+def test_the_fault_is_written_before_the_reraise_under_the_lock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow = _read_world(tmp_path, monkeypatch)
+    seen: list[bool] = []
+    real = owner._retain
+
+    def retain(store: Any, kind: str, value: Any) -> None:
+        if kind == "faults":
+            seen.append(workflow._operation.locked())
+        real(store, kind, value)
+
+    monkeypatch.setattr(owner, "_retain", retain)
+    _raise_in_inputs(monkeypatch, RuntimeError("boom"))
+    with pytest.raises(RuntimeError):
+        workflow.read_inputs()
+    assert seen == [True] and len(_internal_faults(workflow)) == 1
+    assert not workflow._operation.locked()
+
+
+def test_an_internal_error_in_publish_is_journaled_and_ends_the_stream(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`publish`'s inner catch is fail-closed; an error outside it (here `_current`) is journaled."""
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path)
+    monkeypatch.setattr(workflow, "_current", _boom)
+    out = io.StringIO()
+    with pytest.raises(RuntimeError):
+        owner.serve_json_lines(
+            workflow,
+            io.StringIO('{"operation":"publish"}\n'),
+            out,
+            destination=tmp_path / "r.json",
+            participant="p",
+        )
+    assert out.getvalue() == ""
+    assert [(f.code, f.operation) for f in _faults(workflow)] == [("InternalError", "publish")]
+
+
+def test_a_drained_line_that_is_not_utf8_is_answered_bad_arguments(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path)
+    raw = b"x" * (MAX_LINE + 2) + b"y" * 50_000 + b"\xff\n" + b'{"operation":"nope"}\n'
+    answers = _serve_lines_from(
+        workflow, tmp_path, io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8")
+    )
+    assert answers[0] == {"status": "refused", "error_code": "bad_arguments"}
+    assert _faults(workflow) == []
+
+
+def _serve_lines_from(workflow: Any, root: Path, reader: Any) -> list[dict[str, Any]]:
+    out = io.StringIO()
+    owner.serve_json_lines(
+        workflow, reader, out, destination=root / "receipt.json", participant="external-model"
+    )
+    return [json.loads(line) for line in out.getvalue().splitlines()]
+
+
+def test_fill_at_binding_maps_any_os_error_to_identity_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def denied(*args: Any, **kwargs: Any) -> Any:
+        raise PermissionError("denied")
+
+    stand_in: Any = object()  # `_hist` and `_fill` are replaced, so no store is read
+    monkeypatch.setattr(owner, "_hist", lambda store, binding: stand_in)
+    monkeypatch.setattr(owner, "_fill", denied)
+    with pytest.raises(WorkflowError) as caught:
+        owner.fill_at_binding(stand_in, stand_in, "{}")
+    assert caught.value.code == "identity_mismatch"

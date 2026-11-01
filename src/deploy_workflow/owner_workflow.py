@@ -19,8 +19,10 @@ exception that is not a `WorkflowError` or `SourceError` as an `InternalError` f
 `faults/` and raise it again unchanged. `serve_json_lines` no longer converts internal errors to
 `bad_arguments` or `internal_error`: it answers only malformed requests (`bad_arguments`) and
 expected refusals, and an internal error ends the stream. A run that ended on an internal error
-therefore has a `faults/` record and, as only a loop run writes a `run.json`, none from the
-transport; the loop (O5) ends such a run `stopped` with a `run.json`.
+therefore has a `faults/` record and none from the transport has a `run.json`. In the loop (O5) an
+internal error in a tool call (`_caught`) ends the run `stopped` with a `run.json`; one raised
+where `run_pathway` calls `publish` or `write_receipt` itself propagates, with the `faults/`
+record and no `run.json`.
 """
 
 import argparse
@@ -29,6 +31,7 @@ import logging
 import math
 import sys
 import tempfile
+import unicodedata
 from collections import Counter
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
@@ -111,6 +114,7 @@ from deploy_workflow.financial_workflow import (
     _verify_promotion,
 )
 from deploy_workflow.host import MAX_ARGUMENT_DEPTH, SourceSession
+from deploy_workflow.model.redact import Redactor
 from deploy_workflow.owners import (
     cp1a,
     cp1b,
@@ -300,6 +304,9 @@ _OPTIONAL_FAULT_FIELDS = (
     "detail",
 )
 _LOG = logging.getLogger(__name__)
+# Unicode categories escaped in an `InternalError` detail: control, line and paragraph separator,
+# format (bidi marks), surrogate.
+_ESCAPED_CATEGORIES = frozenset({"Cc", "Zl", "Zp", "Cf", "Cs"})
 
 
 @dataclass(frozen=True)
@@ -964,13 +971,12 @@ def fill_at_binding(
     """`_fill` at the binding's own historical snapshot, as the receipt verifier fills: what the
     journal retained for `payload` when it was submitted at `binding`, whatever the journal holds
     now. Raises `ValueError` or `WorkflowError` when the binding or the payload cannot be filled;
-    a binding naming a snapshot the store does not hold is `identity_mismatch`, as the receipt
-    verifier maps it (an `OSError` is never raised from here)."""
+    evidence the store cannot read (an absent snapshot or blob, a denied read: `OSError`) is
+    `identity_mismatch`, as the receipt verifier maps it, so no `OSError` is raised from here."""
     try:
-        historical = _hist(store, binding)
+        return _fill(_hist(store, binding), binding, payload)
     except OSError:
         raise WorkflowError("identity_mismatch") from None
-    return _fill(historical, binding, payload)
 
 
 def _journaled_issues(
@@ -1035,18 +1041,32 @@ def _retain(store: Execution, kind: str, value: Contract) -> None:
     _put(_audit(store, kind, value.content_hash()), value.model_dump_json().encode())
 
 
-def _bounded_detail(error: BaseException) -> str:
-    """The first `MAX_FAULT_DETAIL` characters of the error's text with control characters (and
-    lone surrogates, which cannot be written as UTF-8) escaped, so a record holds one line."""
-    text = "".join(
-        f"\\x{ord(c):02x}"
-        if ord(c) < 32 or ord(c) == 127
-        else f"\\u{ord(c):04x}"
-        if 0xD800 <= ord(c) <= 0xDFFF
-        else c
-        for c in str(error)[:MAX_FAULT_DETAIL]
+def _escaped(char: str) -> str:
+    """`char` as itself, or as `\\xNN`, `\\uNNNN` or `\\UNNNNNNNN` when it is a control, a line
+    or paragraph separator, a format character (bidi marks), a lone surrogate or a backslash, so
+    that the text is one printable line and the escaping is injective."""
+    code = ord(char)
+    if char != "\\" and unicodedata.category(char) not in _ESCAPED_CATEGORIES:
+        return char
+    return (
+        f"\\x{code:02x}"
+        if code < 0x100
+        else f"\\u{code:04x}"
+        if code < 0x10000
+        else f"\\U{code:08x}"
     )
-    return text[:MAX_FAULT_DETAIL]
+
+
+def _bounded_detail(error: BaseException) -> str:
+    """The error's text, redacted as the loop redacts a failure (`Redactor`), escaped, and cut to
+    `MAX_FAULT_DETAIL` characters, in that order. An error whose text cannot be made is
+    `<unprintable ClassName>`, so its record is still written (the failure is logged)."""
+    try:
+        text = Redactor().text(str(error))
+    except Exception:  # noqa: BLE001 - logged; the record keeps the class name instead
+        _LOG.warning("error text of %s unavailable", type(error).__name__, exc_info=True)
+        return f"<unprintable {type(error).__name__}>"[:MAX_FAULT_DETAIL]
+    return "".join(_escaped(c) for c in text[:MAX_FAULT_DETAIL])[:MAX_FAULT_DETAIL]
 
 
 def _retain_internal_error(
@@ -1071,10 +1091,9 @@ def _journaled_errors(workflow: "OwnerWorkflow", operation: str) -> Iterator[Non
     except (WorkflowError, SourceError):
         raise
     except Exception as error:
+        detail = _bounded_detail(error)
         try:
-            _retain_internal_error(
-                workflow._store, operation, type(error).__name__, _bounded_detail(error)
-            )
+            _retain_internal_error(workflow._store, operation, type(error).__name__, detail)
         except Exception as write_error:  # noqa: BLE001 - logged and chained; the original is raised
             _LOG.error(
                 "InternalError fault for %s not written (%s)",
@@ -3656,6 +3675,16 @@ def _utf8_text(value: object) -> bool:
     return True
 
 
+def _drain(reader: TextIO, line: str) -> None:
+    """Read on to the end of an over-length line. If the rest of it is not UTF-8 the participant's
+    bytes end the drain there: the caller answers `bad_arguments` for the line, as before G7."""
+    try:
+        while line and not line.endswith("\n"):
+            line = reader.readline(MAX_LINE + 1)
+    except UnicodeDecodeError:
+        return
+
+
 def serve_json_lines(
     workflow: OwnerWorkflow,
     reader: TextIO,
@@ -3668,8 +3697,9 @@ def serve_json_lines(
     `_checked`) answers `bad_arguments` and a `WorkflowError` or `SourceError` its own code. The
     transport no longer converts internal errors (G7, Q7): an exception from a workflow method is
     retained as an `InternalError` fault by that method and propagates, ending the stream; the
-    participant sees end of stream, not a label. Such a run has a `faults/` record and, with no
-    `run.json` (only a loop run writes one), is recovered by a rerun."""
+    participant sees end of stream, not a label. Such a run has a `faults/` record and no
+    `run.json` (a loop run writes one only for an error in a tool call), and is recovered by a
+    rerun."""
     if workflow._calls or workflow._submissions or workflow._reads:
         raise WorkflowError("not_permitted")
     workflow._participant, workflow._transport = participant, "bounded-json-lines/1"
@@ -3680,8 +3710,7 @@ def serve_json_lines(
             return
         try:
             if len(line) > MAX_LINE or not line.endswith("\n"):
-                while line and not line.endswith("\n"):
-                    line = reader.readline(MAX_LINE + 1)
+                _drain(reader, line)
                 raise WorkflowError("bad_arguments")
             request = _checked(_request_of(line))
             operation = request.get("operation")

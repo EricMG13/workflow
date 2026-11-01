@@ -1925,6 +1925,15 @@
       "sha256": "a5451e47977f7f57d56c3563dfa7e1ef7f9eef24d59d668b90ea5295aaac3ece",
       "reason": "B22 Lows: docstrings",
       "review": "work/context-plan/reviews/b22-tools-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "prior_project_sha256": "6c80484307aef1d6c6d3b17d7432f642fdd4b11f0a3db2b26cdb3cbf8f5a9f7f",
+      "project_commit": "072e0590c73c910a6fb7634b098d9070792da3d8",
+      "sha256": "adaea3d43efe9660411782721db94a6edb8179d717a271dd3773dbc43106c2c3",
+      "reason": "B6/B6a (docs/rulings/2026-10-31-context-plan.md): Python builds CP-3 market evidence from the pack's context source (quotes and deal_terms talk): context_evidence reader and citations, Basis.context_rows (omitted from the dump when empty), T3.3 rows c01.., staleness cap, context CONTEXT-block rows.",
+      "review": "mx-adversary pending: .superpowers/sdd/2026-10-31-phase-3-market-evidence/task-1-report.md"
     }
   ],
   "local_patch_lineage": [

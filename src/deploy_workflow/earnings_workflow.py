@@ -17,7 +17,7 @@ from collections import Counter
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from threading import Lock
@@ -1650,8 +1650,10 @@ _COMMON_LIMITS = (
     "No causal-driver evidence is supplied by the selected authorized CP1 inputs.",
     "No management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.",
 )
-_QUARTER_ID = re.compile(r"q([1-4])-(\d{4})")
-_FY_ID = re.compile(r"fy-(\d{4})")
+_QUARTER_ID = re.compile(r"q([1-4])-([0-9]{4})")
+_FY_ID = re.compile(r"fy-([0-9]{4})")
+_UNSUPPORTED = "unsupported_pair"
+_FOUR_QUARTERS_REQUIRED = re.compile(r"Four complete contiguous quarters\b[^;]*\brequired\b")
 _FOUR_QUARTERS = "Four complete contiguous quarters"
 _LEVERAGE_MEASURES = ("total_leverage_reported", "net_leverage_reported")
 _CHECKPOINT_LIMIT = "Owner checkpoint only; complete CP5 consumption and selected-run/native rendering are not accepted by this receipt."
@@ -1717,12 +1719,12 @@ def _leverage_reasons(report: EarningsDeltaReport) -> tuple[str, ...]:
     must be missing, or the "unavailable" prose is false and the pair fails closed."""
     points = [p for p in report.points if p.measure_id in _LEVERAGE_MEASURES]
     if any(p.prior_status != "missing" for p in points):
-        raise ValueError("unsupported_pair")
+        raise ValueError(_UNSUPPORTED)
     return tuple(dict.fromkeys(p.reason for p in points if p.reason))
 
 
 def _standalone(reasons: tuple[str, ...]) -> bool:
-    return bool(reasons) and all(_FOUR_QUARTERS in r for r in reasons)
+    return bool(reasons) and all(_FOUR_QUARTERS_REQUIRED.search(r) for r in reasons)
 
 
 def _leverage_gap(report: EarningsDeltaReport) -> str:
@@ -1864,16 +1866,94 @@ def _compose(
     )
 
 
+def _register_rows(producer: Module) -> list[dict[str, str]]:
+    """The T4.14 period rows of the head, as field -> text."""
+    rows: dict[str, dict[str, str]] = {}
+    for fact in producer.facts:
+        if fact.table_id == "T4.14":
+            rows.setdefault(fact.row_id, {})[fact.field] = fact.text or ""
+    return list(rows.values())
+
+
+def _row_of(rows: list[dict[str, str]], pid: str) -> dict[str, str] | None:
+    return next((r for r in rows if r.get("period_id") == pid), None)
+
+
+def _row_is(pid: str, row: dict[str, str]) -> bool:
+    """Whether the T4.14 row bears out the period words of the id: kind, fiscal year, quarter."""
+    quarter, year = _QUARTER_ID.fullmatch(pid), _FY_ID.fullmatch(pid)
+    if quarter is not None:
+        return (row.get("period_type"), row.get("fiscal_quarter"), row.get("fiscal_year")) == (
+            "QUARTER",
+            quarter[1],
+            quarter[2],
+        )
+    return year is not None and (row.get("period_type"), row.get("fiscal_year")) == ("FY", year[1])
+
+
+def _fiscal_year(row: dict[str, str]) -> int:
+    text = row.get("fiscal_year", "")
+    return int(text) if text.isascii() and text.isdigit() else -1
+
+
+def _no_earlier_series(rows: list[dict[str, str]], year: int) -> bool:
+    """No duration row (FY, quarter, LTM, YTD) of fiscal year `year` or earlier; a row whose
+    fiscal year is unreadable cannot be shown to be later, so it counts against the claim."""
+    return all(r.get("period_type") == "PERIOD_END" or _fiscal_year(r) > year for r in rows)
+
+
+def _opening_matches(rows: list[dict[str, str]], year: int) -> bool:
+    """Opening PERIOD_END rows, when the register has any, include one dated end of `year`. A
+    register with none (the literal pinned one) keeps the pinned bytes: the claim stands on the
+    prior id being the year before the current period."""
+    opening = [
+        r.get("end_date", "")[:4]
+        for r in rows
+        if r.get("period_type") == "PERIOD_END" and r.get("period_id", "").startswith("opening-")
+    ]
+    return not opening or str(year) in opening
+
+
 def _require_flat_or_gap(report: EarningsDeltaReport) -> None:
     """The composer's "is flat" prose is true only of a pair whose every T1B.1 delta is a known
-    zero; any other pair with a prior fails closed."""
+    zero, and every current value it calls known must be; any other report fails closed."""
+    if any(p.current_status != "known" for p in report.points):
+        raise ValueError(_UNSUPPORTED)
     if report.prior_basis_id is None:
         return
     earnings = {m for _, _, _, rows in _NUMERIC_ROWS[:1] for m, _ in rows}
     if any(
         p.delta_status != "known" or p.delta != 0 for p in report.points if p.measure_id in earnings
     ):
-        raise ValueError("unsupported_pair")
+        raise ValueError(_UNSUPPORTED)
+
+
+def _require_register_claims(producer: Module, report: EarningsDeltaReport) -> None:
+    """Every claim the prose makes is read from the head's T4.14 rows or the composer refuses
+    with `unsupported_pair` (no key exists for a pair it cannot state truthfully): the period words
+    match the rows, a pair with a prior is adjacent ("sequential"), no FY or earlier duration row
+    contradicts "No FY{y} annual income statement or prior-year quarterly series", and a
+    missing-prior pair is the FY the year before the current period, with its opening row."""
+    _require_flat_or_gap(report)
+    rows = _register_rows(producer)
+    _period_word(report.prior_period_id)
+    current = _row_of(rows, report.current_period_id)
+    if current is None or not _row_is(report.current_period_id, current):
+        raise ValueError(_UNSUPPORTED)
+    year = int(current["fiscal_year"]) - 1
+    if not _no_earlier_series(rows, year):
+        raise ValueError(_UNSUPPORTED)
+    if report.prior_basis_id is None:
+        gap = _FY_ID.fullmatch(report.prior_period_id)
+        if gap is None or int(gap[1]) != year or not _opening_matches(rows, year):
+            raise ValueError(_UNSUPPORTED)
+        return
+    prior = _row_of(rows, report.prior_period_id)
+    if prior is None or not _row_is(report.prior_period_id, prior):
+        raise ValueError(_UNSUPPORTED)
+    gap_days = date.fromisoformat(current["start_date"]) - date.fromisoformat(prior["end_date"])
+    if gap_days != timedelta(days=1):
+        raise ValueError(_UNSUPPORTED)
 
 
 def compose_delta(
@@ -1890,7 +1970,7 @@ def compose_delta(
     walk's one `earnings-delta-submission`); `own_limits` is the module's own limitation list,
     so the checkpoint line belongs to the receipt path only."""
     gap = report.prior_basis_id is None
-    _require_flat_or_gap(report)
+    _require_register_claims(producer, report)
     prior_word, current_word = (
         _period_word(report.prior_period_id),
         _period_word(report.current_period_id),

@@ -779,25 +779,45 @@ def test_cp1b_probe_rejects_tampered_head(tmp_path: Path) -> None:
 _FOREIGN_WORDS = ("FY2024", "FY2025", "q3-2025", "q4-2025", "Q3", "Q4", "Opening-2024")
 
 
-def _flat_producer_at(prior: str, current: str) -> Module:
-    """The literal flat register moved to other quarters: ids, dates and the basis identities of
-    q3-2025 and q4-2025 renamed, so a flat pair exists at periods the old prose never names."""
+def _flat_producer_at(prior: str, current: str, *, keep_fy: bool = False) -> Module:
+    """The literal flat register moved to `prior` (q1-<year>) -> `current` (q2-<year>) (ids, dates, fiscal year and
+    quarter, basis identities of q3-2025 and q4-2025 renamed): a flat pair at periods the old prose
+    never names. It holds the two quarters only, unless `keep_fy`, which keeps the fy-2025 row and
+    values, so the absence claims the prose derives are true of it only for years after 2025."""
+    year = int(prior[-4:])
     renames = {
         "q3-2025": prior,
         "q4-2025": current,
-        "Q3 25": "Q1 27",
-        "Q4 25": "Q2 27",
-        "2025-07-01": "2027-01-01",
-        "2025-09-30": "2027-03-31",
-        "2025-10-01": "2027-04-01",
-        "2025-12-31": "2027-06-29",
+        "Q3 25": f"Q1 {year % 100}",
+        "Q4 25": f"Q2 {year % 100}",
+        "2025-07-01": f"{year}-01-01",
+        "2025-09-30": f"{year}-03-31",
+        "2025-10-01": f"{year}-04-01",
+        "2025-12-31": f"{year}-06-29",
         a1.BASES["q3-2025"]: _basis_of(prior, "QUARTER"),
         a1.BASES["q4-2025"]: _basis_of(current, "QUARTER"),
     }
-    text = _producer().model_dump_json()
+    base = _producer()
+    kept = tuple(
+        f
+        for f in base.facts
+        if keep_fy or ("fy-2025" not in f.fact_id and f.field != a1.BASES["fy-2025"])
+    )
+    text = base.model_copy(update={"facts": kept}).model_dump_json()
     for old, new in renames.items():
         text = text.replace(old, new)
-    return Module.model_validate_json(text)
+    moved = Module.model_validate_json(text)
+    fixed = {
+        "fiscal_quarter": {prior: "1", current: "2"},
+        "fiscal_year": {prior: str(year), current: str(year)},
+    }
+    facts = tuple(
+        f.model_copy(update={"text": fixed[f.field][f.period or ""]})
+        if f.field in fixed and f.period in fixed[f.field]
+        else f
+        for f in moved.facts
+    )
+    return moved.model_copy(update={"facts": facts})
 
 
 def _prose(module: Module) -> list[str]:
@@ -855,3 +875,202 @@ def test_nonzero_delta_pair_not_flat() -> None:
             _attempt(producer),
             _run(),
         )
+
+
+# --- B19 fix 1: every claim is read from the register, or the composer refuses ----------------------
+
+
+def _compose_pair(producer: Module, prior: str, current: str) -> Module:
+    report = build_earnings_delta(cp1b.cp1_view(producer), prior, current)
+    return ew.compose_delta(
+        producer,
+        report,
+        ew._operands(producer, report),
+        (),
+        ew._own_limits(report, owner=True),
+        _attempt(producer),
+        _run(),
+    )
+
+
+def _refused(producer: Module, prior: str, current: str) -> None:
+    with pytest.raises(ValueError, match="^unsupported_pair$"):
+        _compose_pair(producer, prior, current)
+
+
+def _rewrite(module: Module, field: str, period: str, **update: Any) -> Module:
+    facts = tuple(
+        f.model_copy(update=update) if f.field == field and f.period == period else f
+        for f in module.facts
+    )
+    return module.model_copy(update={"facts": facts})
+
+
+def test_false_absence_claim_is_refused() -> None:
+    """q1-2026 -> q2-2026 with an fy-2025 row in the register: "No FY2025 annual income statement
+    ... is supplied" would be false, so the composer refuses instead of writing it."""
+    _refused(_flat_producer_at("q1-2026", "q2-2026", keep_fy=True), "q1-2026", "q2-2026")
+    _compose_pair(_flat_producer_at("q1-2026", "q2-2026"), "q1-2026", "q2-2026")  # none: writes
+
+
+def test_false_opening_claim_is_refused() -> None:
+    """The gap pair whose register holds an opening row for another year only."""
+    module = _with_opening(_producer())
+    facts = tuple(
+        f.model_copy(
+            update={
+                "fact_id": f.fact_id.replace("2024", "2023"),
+                "row_id": "opening-2023",
+                "period": "opening-2023",
+                "text": f.text.replace("2024", "2023") if f.text else f.text,
+            }
+        )
+        if f.row_id == "opening-2024"
+        else f
+        for f in module.facts
+    )
+    _refused(module.model_copy(update={"facts": facts}), "fy-2024", "fy-2025")
+    _compose_pair(module, "fy-2024", "fy-2025")  # the opening-2024 row is there: writes
+
+
+def test_year_on_year_quarter_pair_is_not_sequential() -> None:
+    module = _with_period(_producer(), "q4-2024", "QUARTER", "4", "2024-10-01", "2024-12-31")
+    _refused(module, "q4-2024", "q4-2025")
+
+
+def test_non_adjacent_pair_is_not_sequential() -> None:
+    """q2 starts two days after a gap, same length: the delta core accepts it, "sequential" is not
+    true of it."""
+    text = _flat_producer_at("q1-2027", "q2-2027").model_dump_json()
+    text = text.replace("2027-04-01", "2027-04-03").replace("2027-06-29", "2027-07-01")
+    _refused(Module.model_validate_json(text), "q1-2027", "q2-2027")
+
+
+def test_period_words_must_match_the_register_rows() -> None:
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    for field, wrong in (("fiscal_quarter", "3"), ("fiscal_year", "2026"), ("period_type", "FY")):
+        facts = tuple(
+            f.model_copy(update={"text": wrong})
+            if f.field == field and f.period == "q2-2027"
+            else f
+            for f in producer.facts
+        )
+        with pytest.raises(ValueError):
+            _compose_pair(producer.model_copy(update={"facts": facts}), "q1-2027", "q2-2027")
+    _compose_pair(producer, "q1-2027", "q2-2027")
+
+
+def test_a_flat_fy_pair_cannot_deny_its_own_prior_year() -> None:
+    """fy-2026 -> fy-2027: the prior is the FY the prose would call absent, so it is refused."""
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    text = producer.model_dump_json()
+    for old, new in (
+        ("q1-2027", "fy-2026"),
+        ("q2-2027", "fy-2027"),
+        ("2027-01-01", "2026-01-01"),
+        ("2027-03-31", "2026-12-31"),
+        ("2027-04-01", "2027-01-01"),
+        ("2027-06-29", "2027-12-31"),
+        (_basis_of("q1-2027", "QUARTER"), _basis_of("fy-2026", "FY")),
+        (_basis_of("q2-2027", "QUARTER"), _basis_of("fy-2027", "FY")),
+        ('"QUARTER"', '"FY"'),
+    ):
+        text = text.replace(old, new)
+    moved = Module.model_validate_json(text)
+    facts = tuple(
+        f.model_copy(
+            update={"text": None, "status": "not_applicable", "limitation": "FY has no quarter"}
+        )
+        if f.field == "fiscal_quarter"
+        else f.model_copy(update={"text": "2026" if f.period == "fy-2026" else "2027"})
+        if f.field == "fiscal_year"
+        else f
+        for f in moved.facts
+    )
+    _refused(moved.model_copy(update={"facts": facts}), "fy-2026", "fy-2027")
+
+
+def test_gap_pair_at_another_year_names_its_own_opening() -> None:
+    """fy-2025 absent -> fy-2026: kills a hard-coded "Opening-2024"."""
+    base = _with_opening(_producer())
+    kept = tuple(
+        f
+        for f in base.facts
+        if "q3-2025" not in f.fact_id
+        and "q4-2025" not in f.fact_id
+        and f.field not in (a1.BASES["q3-2025"], a1.BASES["q4-2025"])
+    )
+    text = base.model_copy(update={"facts": kept}).model_dump_json()
+    for old, new in (
+        ("2025-12-31", "2026-12-31"),
+        ("2025-01-01", "2026-01-01"),
+        ("fy-2025", "fy-2026"),
+        (a1.BASES["fy-2025"], _basis_of("fy-2026", "FY")),
+        ('"text":"2025"', '"text":"2026"'),
+        ("2024-12-31", "2025-12-31"),
+        ("opening-2024", "opening-2025"),
+        ('"text":"2024"', '"text":"2025"'),
+    ):
+        text = text.replace(old, new)
+    prose = "\n".join(_prose(_compose_pair(Module.model_validate_json(text), "fy-2025", "fy-2026")))
+    assert "Opening-2025" in prose and "FY2025" in prose and "FY2026" in prose
+    assert "2024" not in prose
+
+
+def test_composer_guards_prior_leverage_known_and_other_reasons() -> None:
+    from dataclasses import replace
+
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    report = build_earnings_delta(cp1b.cp1_view(producer), "q1-2027", "q2-2027")
+
+    def compose(changed: Any) -> Module:
+        return ew.compose_delta(
+            producer,
+            changed,
+            ew._operands(producer, changed),
+            (),
+            ew._own_limits(changed, owner=True),
+            _attempt(producer),
+            _run(),
+        )
+
+    def levered(**update: Any) -> Any:
+        points = tuple(
+            replace(p, **update) if p.measure_id in ew._LEVERAGE_MEASURES else p
+            for p in report.points
+        )
+        return replace(report, points=points)
+
+    with pytest.raises(ValueError, match="^unsupported_pair$"):
+        compose(levered(prior_status="known"))  # G2
+    other = "\n".join(_prose(compose(levered(reason="Trailing basis not selected"))))  # G4
+    assert "Q1 trailing leverage comparison is unavailable (Trailing basis not selected)" in other
+    assert "standalone" not in other
+    said = "\n".join(
+        _prose(compose(levered(reason="Four complete contiguous quarters are available")))
+    )
+    assert "Four complete contiguous quarters are unavailable" not in said
+
+
+def test_period_ids_of_another_shape_have_no_word() -> None:  # G3
+    for pid in ("ltm-2025", "h1-2025", "fy-٢٠٢٤"):
+        with pytest.raises(ew.OwnerError) as caught:
+            ew._period_word(pid)
+        assert caught.value.code == "identity_mismatch"
+    with pytest.raises(ew.OwnerError):
+        ew._period_year("h1-2025")
+
+
+def test_validator_maps_the_composer_refusal_to_the_issue(monkeypatch: pytest.MonkeyPatch) -> None:
+    def refuse(*args: Any, **kwargs: Any) -> Any:
+        raise ValueError("unsupported_pair")
+
+    def other(*args: Any, **kwargs: Any) -> Any:
+        raise ValueError("something else")
+
+    monkeypatch.setattr(cp1b, "compose_delta", refuse)
+    outcome = _validate(_payload("q3-2025", "q4-2025", "flat_sequential"))[0]
+    assert outcome.issues == ("unsupported_pair",) and outcome.output is None
+    monkeypatch.setattr(cp1b, "compose_delta", other)
+    with pytest.raises(ValueError, match="something else"):
+        _validate(_payload("q3-2025", "q4-2025", "flat_sequential"))

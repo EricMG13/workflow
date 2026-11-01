@@ -120,10 +120,13 @@ def expected_comparison(report: EarningsDeltaReport) -> str:
 
 
 def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
-    """Whether the composer's fixed prose (and the Northbridge limitation lines) is true of this
-    report (ruling B19): the flat q3-2025 -> q4-2025 pair or the missing-prior
-    fy-2024 -> fy-2025 pair, with every current value known, no 2024 duration period in the register and, for the gap pair, the opening-2024 balance row
-    and known FY2025 leverage; for the flat pair, Q3 leverage missing for the four-quarter reason."""
+    """Whether this report is one of the two pairs this core accepts until Task 4b widens it
+    (ruling B19, P2T4a-R2): the flat q3-2025 -> q4-2025 pair or the missing-prior
+    fy-2024 -> fy-2025 pair. The composer derives its prose from the register and refuses what it
+    cannot state truthfully; these guards and pins are narrower and stay:
+    every current value known, no 2024 duration period in the register and, for the gap pair, the
+    opening-2024 balance row and known FY2025 leverage; for the flat pair, Q3 leverage missing for
+    the four-quarter reason."""
     pair = (report.prior_period_id, report.current_period_id)
     points = {p.measure_id: p for p in report.points}
     if pair not in (FLAT_PAIR, GAP_PAIR) or any(
@@ -312,6 +315,10 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
         )
     except OwnerError as error:
         return StepValidation(issues=(error.code,))
+    except ValueError as error:
+        if str(error) != UNSUPPORTED:  # only the composer's one named refusal is an issue
+            raise
+        return StepValidation(issues=(UNSUPPORTED,))
     return StepValidation(output=candidate.model_dump_json())
 
 

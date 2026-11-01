@@ -38,3 +38,15 @@ Final-report items: all decided by the user's "apply your recommendations for al
 docs/rulings/2026-10-31-context-plan.md (11 items). Remaining for the final report: what B17 decided, the Plan B
 hand-off items (work/context-plan/part-b-review-2026-10-31.md), the unanswered ChatGPT-link review, and the
 slow/promotion tests left to CI (B16).
+B17 plan amendments review (mx-autonomous aa2f06f2): P3/P5/P7 approve, P8 fix (H: report_view.py:2298 USD literal → ruling B18 2fa3457d; H: re-pin list; M: nine labels; L x3). Plan fixer mx-feature ad789fb6. (00:46 UTC)
+Phase 8 plan fix 2 73e254fd approved (aa2f06f2). Phases 3, 5, 7, 8 B17 amendments: approved (d6508410, 73e254fd). Preparers: P3 ab25fc2b, P4 a86eb9b2, P5 a5601db8 (mx-feature). (00:48 UTC)
+Preparers: P6 a9445071, P7 a6370cff, P8 afe48384 (mx-feature), dispatched 00:48 UTC. Builders of Phases 3-8 must be other agents.
+
+Plan amendments pending (apply before each phase's build; one docs dispatch + mx-feature review), 01:19 UTC:
+- Phase 2 Task 4: B19 step — generalise the CP-1B composer prose before the owner path widens pairs.
+- Phase 3 Design 3 (:65-67) and ruled decision 3 (:274): B20/B20a/B20b (member alone on its line; every colliding row dropped; gap names row n; Design 5 prefix).
+- Phase 5 Task 3: "ten cases" = 15 ids incl. legal-draft-missing(+gap) with the ruled draft-missing text.
+- Phase 6 Tasks 5/7 REDs: pinned row also T2F.9.r08.text (CP-2E) and T3E.9.r12.text (CP-3D).
+- Phase 8 Done-when 1: no stale unshifted literal (derived list), not "no 2025".
+Pre-existing defects for the owner (final report): cases/cp4c-owner/builder/build.py:51 stale CP-3C manifest pin 2f65c085 (10ec5231) and class-by-class division vs the lease's largest-remainder; docs/CP5-OWNER-LEASE.md:43 methodology 1bb6c0bc vs 0932d9fb; tests/test_upstream_tools.py ruff C408 x14 + mypy; earnings.py:315-318 raw-day period-length comparison (FY2024 leap year; Q2 91 vs Q3 92 days); O1/B1: no CP-5/integrity check of CP-MODEL head identity (only publish_cp_model).
+All Task 0 oracles frozen (Phases 2-8, o2-synthetic); cases/pins.py --check 0 (176 paths) at 5485b8be. (01:21 UTC)

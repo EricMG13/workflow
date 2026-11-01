@@ -36,7 +36,7 @@ def compare(context: RunContext, entities: Sequence[tuple[str, tuple[str, ...]]]
     """Compare ``context.identity.borrower_name`` with the borrower-role T4.2 entities."""
     named = context.identity.borrower_name
     found = tuple(dict.fromkeys(name for name, roles in entities if _is_borrower(roles)))
-    if not named or not found:
+    if not _fold(named) or not found:
         return IdentityCheck("not_supplied", (), named, found)
     if _fold(named) in {_fold(name) for name in found}:
         return IdentityCheck("match", (), named, found)

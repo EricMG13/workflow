@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -46,7 +47,25 @@ def test_mismatch_gap_text_and_found() -> None:
 
 def test_empty_borrower_name_is_not_supplied_but_lists_found() -> None:
     _expect("ctx-research@B", "ctx-research", [BORROWER])
-    assert ORACLE["empty_borrower_name"]["outcome"] == "not_supplied"
+    empty = compare(_ctx("ctx-research"), [BORROWER])
+    assert (empty.outcome, list(empty.gaps)) == (
+        ORACLE["empty_borrower_name"]["outcome"],
+        ORACLE["empty_borrower_name"]["gaps"],
+    )
+
+
+@pytest.mark.parametrize("name", ["   ", " . ", "-,", "\t"])
+def test_name_that_folds_to_nothing_is_not_supplied(name: str) -> None:
+    ctx = _ctx("ctx-b-match")
+    blank = ctx.model_copy(
+        update={"identity": ctx.identity.model_copy(update={"borrower_name": name})}
+    )
+    got = compare(blank, [BORROWER])
+    assert (got.outcome, list(got.gaps)) == (
+        ORACLE["empty_borrower_name"]["outcome"],
+        ORACLE["empty_borrower_name"]["gaps"],
+    )
+    assert list(got.found) == CASES["ctx-b-match@B"]["found"]
 
 
 def test_no_borrower_role_row_is_not_supplied() -> None:
@@ -55,7 +74,7 @@ def test_no_borrower_role_row_is_not_supplied() -> None:
 
 def test_two_scope_rows_of_one_entity_are_listed_once() -> None:
     got = compare(_ctx("ctx-b-match"), [BORROWER, BORROWER])
-    assert got.found == ("Northbridge Holdings LLC",)
+    assert got.found == tuple(CASES["ctx-b-match@B"]["found"])
 
 
 def test_joined_role_string_is_split() -> None:

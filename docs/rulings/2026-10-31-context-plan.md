@@ -126,3 +126,11 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   pair; every other pair is refused with issue `unsupported_pair`; the view lists exactly the accepted pairs.
   Phase 2 Task 4 gains a step: generalise the composer prose from the report's own pair, periods and deltas
   before the owner path widens its pairs. Cost if wrong: owner runs refuse pairs until Phase 2 Task 4 lands.
+- **B20 (controller, 2026-11-01): context citation rule, shared by Phases 3 and 4.** A context figure is cited by its
+  key/value text only when that member is alone on its line; otherwise by the text from the row object's `{`
+  through the figure when that is one unique line; otherwise the row is dropped into a named gap. Phase 3 plan
+  Design 3 (:65-67) is amended to say so (Phase 3 oracle review; plan :166, :221, ruled decision 3). Phase 3 gap
+  texts: `context quote for facility <facility_id> cannot be cited as one unique span; not used` and
+  `context deal terms for facility <facility_id> cannot be cited as one unique span; not used`; on a residual
+  key collision the later row (higher index) is dropped. CP-3D unreadable context: one issue per problem,
+  `context source unreadable: <problem>`. Cost if wrong: one oracle re-cut and the helper's branch order.

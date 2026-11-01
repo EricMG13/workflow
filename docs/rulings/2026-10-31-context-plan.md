@@ -305,4 +305,4 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
   3. the union fast gate of all carried lanes, the golden and `cases/pins.py --check` exit 0 at the tip.
 
   Interleaved lanes whose tasks are approved but whose phase is unfinished are named in the release note.
-- **Pending user decision (sent to MANAGER):** may the first cut carry task-approved, phase-pending lanes (O3/O4 Tasks 1-5, O6 Tasks 1-5, O7a)? Recommendation: yes.
+- **User decision (relayed by MANAGER, 2026-11-01, the user's reply verbatim: "1").** The first cut may carry the task-approved, phase-pending lanes, gated as proposed: O3/O4 Tasks 1-5; O6 Tasks 1-5 and its end batch; O7a and the frozen O7 oracle; B26. When the cut is valid, MANAGER receives the exact tip, its gate results, the carried and left-out lists, and the `src/deploy_vii` diff list, for the user's merge approval.

@@ -1063,7 +1063,7 @@ def _bounded_detail(error: BaseException) -> str:
     `<unprintable ClassName>`, so its record is still written (the failure is logged)."""
     try:
         text = Redactor().text(str(error))
-    except Exception:
+    except Exception:  # noqa: BLE001 - logged; the record keeps the class name instead
         _LOG.exception("error text of %s unavailable", type(error).__name__)
         return f"<unprintable {type(error).__name__}>"[:MAX_FAULT_DETAIL]
     return "".join(_escaped(c) for c in text[:MAX_FAULT_DETAIL])[:MAX_FAULT_DETAIL]

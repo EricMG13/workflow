@@ -1095,6 +1095,16 @@ class OwnerWorkflow:
         return cls(Execution.create(directory, pack), planned, publication_directory)
 
     @property
+    def binding(self) -> OwnerBinding:
+        """The active step's binding (module, step, ticket, attempt); read-only (O5 Q1)."""
+        return self._binding
+
+    @property
+    def spec(self) -> StepSpec:
+        """The active step's spec; read-only (O5 Q1)."""
+        return self._spec
+
+    @property
     def _refused(self) -> bool:
         """Publication is terminal (H1): CP-MODEL's required producer has no settled head."""
         snapshot = self._store.read()

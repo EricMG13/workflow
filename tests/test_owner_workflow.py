@@ -464,3 +464,27 @@ def test_create_reads_kind_from_reference_not_callers_mapping(tmp_path: Path) ->
         )
     assert caught.value.code == "not_permitted"
     assert list(tmp_path.iterdir()) == []
+
+
+def test_binding_and_spec_accessors_mirror_the_private_fields(tmp_path: Path) -> None:
+    """O5 Q1: read-only views of the active step, equal to the private fields at construction
+    and after a valid submit moves the walk to the next step."""
+    pack = fw.make_pack()
+    workflow = _owner().OwnerWorkflow.create(
+        tmp_path / "store", pack, publication_directory=tmp_path / "model"
+    )
+    assert workflow.binding is workflow._binding
+    assert workflow.spec is workflow._spec
+    assert (workflow.binding.module_id, workflow.binding.step_id) == ("CP-0", "source_readiness")
+    assert workflow.spec.step_id == "source_readiness"
+    first = workflow.binding
+    fw.read_sources(workflow)
+    assert workflow.submit_review(fw.readiness(pack))["status"] == "valid"
+    assert workflow.binding is workflow._binding and workflow.spec is workflow._spec
+    assert workflow.binding != first
+    assert (workflow.binding.module_id, workflow.binding.step_id) == ("CP-1", "source_context")
+    assert workflow.spec.step_id == "source_context"
+    with pytest.raises(AttributeError):
+        workflow.binding = first
+    with pytest.raises(AttributeError):
+        workflow.spec = workflow.spec

@@ -30,7 +30,7 @@
     "value_classes": "user figures and names: source; Python-composed text and the labels: normalized; multiples, statistics, selection, EBITDA and implied EV: calculated (user_multiple's selected_multiple: source); calculation_id is `calc:<fact_id>` on calculated facts",
     "t1c_1_to_8": "unchanged: equal to the frozen cp1c-owner no_peers case (positive for credit-plus-comps); the analyst submission does not change",
     "limitation_order": "the frozen case's own_limitations, then own_limitations_new in order (a new line equal to a frozen line is not repeated), then on a synthetic run the synthetic line",
-    "cp4c": "every valuation case (v01-v03, the stress case included) carries the selected multiple M when known; a submitted multiple equal to M numerically is accepted (7 equals 7.00); another value or `not assessed` is refused with `valuation <case_id>: multiple <submitted as typed> differs from the CP-1C selected multiple <M at 2 dp>`, one issue per valuation in case order; EV = CP-2G FY2026 EBITDA x M exact; implied LTM multiple = EV / 30; the T4E.3 multiple cell's formula gains the suffix; when M is unknown CP-4C is unchanged; when the context pins ev_multiple the pin governs (Ruled Q4)",
+    "cp4c": "every valuation case (v01-v03, the stress case included) carries the selected multiple M when known; a submitted multiple equal to M numerically is accepted (7 equals 7.00); another value or `not assessed` is refused with `valuation <case_id>: multiple <submitted as typed> differs from the CP-1C selected multiple <M at 2 dp>`, one issue per valuation in case order; EV = CP-2G FY2026 EBITDA x M exact; implied LTM multiple = EV / 30; the T4E.3 multiple cell's formula gains the suffix; when M is unknown CP-4C applies no multiple rule; when the context pins ev_multiple the pin governs (Ruled Q4)",
     "cp4c_inputs": "CP-4C's bound inputs follow plan order over its required and selected optional edges: prepared-pack, CP-0, CP-1, CP-1C, CP-2A, CP-4, CP-2G"
   },
   "refusal_ids": {
@@ -1935,6 +1935,16 @@
             ],
             "issues": [
               "valuation v01: multiple 4.00 differs from the CP-1C selected multiple 7.00"
+            ]
+          },
+          "ev-multiple-differs-v03": {
+            "multiples": [
+              "7.00",
+              "7.00",
+              "4.00"
+            ],
+            "issues": [
+              "valuation v03: multiple 4.00 differs from the CP-1C selected multiple 7.00"
             ]
           },
           "ev-not-assessed-when-selected": {
@@ -6197,6 +6207,16 @@
               "valuation v01: multiple 4.00 differs from the CP-1C selected multiple 9.50"
             ]
           },
+          "ev-multiple-differs-v03": {
+            "multiples": [
+              "9.50",
+              "9.50",
+              "4.00"
+            ],
+            "issues": [
+              "valuation v03: multiple 4.00 differs from the CP-1C selected multiple 9.50"
+            ]
+          },
           "ev-not-assessed-when-selected": {
             "multiples": [
               "9.50",
@@ -9226,6 +9246,16 @@
               "valuation v01: multiple 4.00 differs from the CP-1C selected multiple 8.25"
             ]
           },
+          "ev-multiple-differs-v03": {
+            "multiples": [
+              "8.25",
+              "8.25",
+              "4.00"
+            ],
+            "issues": [
+              "valuation v03: multiple 4.00 differs from the CP-1C selected multiple 8.25"
+            ]
+          },
           "ev-not-assessed-when-selected": {
             "multiples": [
               "8.25",
@@ -12057,6 +12087,16 @@
               "valuation v01: multiple 4.00 differs from the CP-1C selected multiple 9.00"
             ]
           },
+          "ev-multiple-differs-v03": {
+            "multiples": [
+              "9.00",
+              "9.00",
+              "4.00"
+            ],
+            "issues": [
+              "valuation v03: multiple 4.00 differs from the CP-1C selected multiple 9.00"
+            ]
+          },
           "ev-not-assessed-when-selected": {
             "multiples": [
               "9.00",
@@ -13380,6 +13420,16 @@
               "valuation v01: multiple 4.00 differs from the CP-1C selected multiple 8.50"
             ]
           },
+          "ev-multiple-differs-v03": {
+            "multiples": [
+              "8.50",
+              "8.50",
+              "4.00"
+            ],
+            "issues": [
+              "valuation v03: multiple 4.00 differs from the CP-1C selected multiple 8.50"
+            ]
+          },
           "ev-not-assessed-when-selected": {
             "multiples": [
               "8.50",
@@ -14314,6 +14364,607 @@
           "No peer source is in the pack: no peer universe, median, position or outlier flag can be formed.",
           "Gap (Critical): No peer financial source is in the pack.",
           "Valuation basis not selected: No peer figures: user_list peers need the peer lookup (O7d).",
+          "Synthetic case; not real issuer qualification"
+        ],
+        "module_status": "restricted",
+        "module_status_note": "own limitations are non-empty (as the frozen cp1c cases): restricted; blocked only by the frozen refusal paths"
+      },
+      "cp4c": {
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ],
+        "plan_order": [
+          "CP-0",
+          "CP-1",
+          "CP-1C",
+          "CP-2A",
+          "CP-4",
+          "CP-2G",
+          "CP-4C"
+        ],
+        "inputs": [
+          "prepared-pack",
+          "CP-0",
+          "CP-1",
+          "CP-1C",
+          "CP-2A",
+          "CP-4",
+          "CP-2G"
+        ],
+        "multiple_rule": "not bound: the selected multiple is unknown, so CP-4C applies no multiple rule",
+        "accepted_submissions": [
+          {
+            "multiples": [
+              "4.00",
+              "3.00",
+              "2.00"
+            ]
+          },
+          {
+            "multiples": [
+              "not assessed",
+              "not assessed",
+              "not assessed"
+            ]
+          }
+        ],
+        "formula_suffix": null,
+        "added_limitation": null
+      }
+    },
+    "auto-dr-public": {
+      "context": "contexts/auto-dr-public.json",
+      "pack": "closed-chain",
+      "run": {
+        "run_id": "valctx-auto-dr-public-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      },
+      "plan_order": [
+        "CP-0",
+        "CP-1",
+        "CP-1C",
+        "CP-2A",
+        "CP-4",
+        "CP-2G",
+        "CP-4C"
+      ],
+      "cp1c": {
+        "base_cells": "T1C.1-T1C.8 and their facts, claims and tie-outs equal cases/cp1c-owner/expected.json cases.no_peers (submission cases/cp1c-owner/submissions.json no_peers); nothing in them changes",
+        "table_ids": [
+          "T1C.1",
+          "T1C.2",
+          "T1C.3",
+          "T1C.4",
+          "T1C.5",
+          "T1C.6",
+          "T1C.7",
+          "T1C.8",
+          "T1C.9",
+          "T1C.10",
+          "T1C.11"
+        ],
+        "records": [],
+        "statistics": {
+          "public_comps": {
+            "n_total": 0,
+            "n_admitted": 0,
+            "min": null,
+            "median": null,
+            "max": null,
+            "outliers": null
+          },
+          "precedents": {
+            "n_total": 0,
+            "n_admitted": 0,
+            "min": null,
+            "median": null,
+            "max": null,
+            "outliers": null
+          }
+        },
+        "single_value_rows": {},
+        "selection": {
+          "requested_basis": "auto",
+          "selected_basis": "Insufficient Information",
+          "selected_multiple": null,
+          "issuer_ebitda": "30.0",
+          "implied_ev": null,
+          "reason": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+          "gap": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+          "ebitda_basis": "Not stated by the user"
+        },
+        "tables": [
+          {
+            "table_id": "T1C.9",
+            "title": "EV/EBITDA records",
+            "columns": [
+              {
+                "field": "kind",
+                "label": "Kind"
+              },
+              {
+                "field": "name",
+                "label": "Name"
+              },
+              {
+                "field": "figures_date",
+                "label": "Figures dated"
+              },
+              {
+                "field": "source",
+                "label": "Source"
+              },
+              {
+                "field": "currency",
+                "label": "Currency"
+              },
+              {
+                "field": "ebitda_period",
+                "label": "EBITDA period"
+              },
+              {
+                "field": "ev",
+                "label": "Enterprise value"
+              },
+              {
+                "field": "ebitda",
+                "label": "EBITDA"
+              },
+              {
+                "field": "multiple",
+                "label": "EV/EBITDA"
+              },
+              {
+                "field": "flag",
+                "label": "Outlier flag"
+              },
+              {
+                "field": "result",
+                "label": "Result"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "none",
+                "label": "No records",
+                "fact_ids": [
+                  "T1C.9.none.kind",
+                  "T1C.9.none.name",
+                  "T1C.9.none.figures_date",
+                  "T1C.9.none.source",
+                  "T1C.9.none.currency",
+                  "T1C.9.none.ebitda_period",
+                  "T1C.9.none.ev",
+                  "T1C.9.none.ebitda",
+                  "T1C.9.none.multiple",
+                  "T1C.9.none.flag",
+                  "T1C.9.none.result"
+                ]
+              }
+            ]
+          },
+          {
+            "table_id": "T1C.10",
+            "title": "EV/EBITDA statistics",
+            "columns": [
+              {
+                "field": "n_total",
+                "label": "Records"
+              },
+              {
+                "field": "n_admitted",
+                "label": "Admitted"
+              },
+              {
+                "field": "min",
+                "label": "Minimum"
+              },
+              {
+                "field": "median",
+                "label": "Median"
+              },
+              {
+                "field": "max",
+                "label": "Maximum"
+              },
+              {
+                "field": "outliers",
+                "label": "Outliers"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "public_comps",
+                "label": "Public comps",
+                "fact_ids": [
+                  "T1C.10.public_comps.n_total",
+                  "T1C.10.public_comps.n_admitted",
+                  "T1C.10.public_comps.min",
+                  "T1C.10.public_comps.median",
+                  "T1C.10.public_comps.max",
+                  "T1C.10.public_comps.outliers"
+                ]
+              }
+            ]
+          },
+          {
+            "table_id": "T1C.11",
+            "title": "Valuation basis selection",
+            "columns": [
+              {
+                "field": "requested_basis",
+                "label": "Requested basis"
+              },
+              {
+                "field": "selected_basis",
+                "label": "Selected basis"
+              },
+              {
+                "field": "reason",
+                "label": "Reason"
+              },
+              {
+                "field": "ebitda_basis",
+                "label": "EBITDA basis"
+              },
+              {
+                "field": "selected_multiple",
+                "label": "Selected multiple"
+              },
+              {
+                "field": "issuer_ebitda",
+                "label": "Issuer EBITDA"
+              },
+              {
+                "field": "implied_ev",
+                "label": "Implied enterprise value"
+              }
+            ],
+            "rows": [
+              {
+                "row_id": "selection",
+                "label": "Selection",
+                "fact_ids": [
+                  "T1C.11.selection.requested_basis",
+                  "T1C.11.selection.selected_basis",
+                  "T1C.11.selection.reason",
+                  "T1C.11.selection.ebitda_basis",
+                  "T1C.11.selection.selected_multiple",
+                  "T1C.11.selection.issuer_ebitda",
+                  "T1C.11.selection.implied_ev"
+                ]
+              }
+            ]
+          }
+        ],
+        "facts": [
+          {
+            "fact_id": "T1C.9.none.kind",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "kind",
+            "label": "Kind",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.name",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "name",
+            "label": "Name",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.figures_date",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "figures_date",
+            "label": "Figures dated",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.source",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "source",
+            "label": "Source",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.currency",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "currency",
+            "label": "Currency",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.ebitda_period",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "ebitda_period",
+            "label": "EBITDA period",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.ev",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "ev",
+            "label": "Enterprise value",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.ebitda",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "ebitda",
+            "label": "EBITDA",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.multiple",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "multiple",
+            "label": "EV/EBITDA",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.flag",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "flag",
+            "label": "Outlier flag",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.9.none.result",
+            "table_id": "T1C.9",
+            "row_id": "none",
+            "field": "result",
+            "label": "Result",
+            "status": "missing",
+            "text": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+          },
+          {
+            "fact_id": "T1C.10.public_comps.n_total",
+            "table_id": "T1C.10",
+            "row_id": "public_comps",
+            "field": "n_total",
+            "label": "Records",
+            "status": "known",
+            "unit": "records",
+            "period": "Window 2025-01-10 to 2026-01-10",
+            "amount_exact": "0",
+            "shown": "0 records",
+            "value_class": "calculated",
+            "formula": "count of records in the set",
+            "calculation_id": "calc:T1C.10.public_comps.n_total",
+            "derives_from": []
+          },
+          {
+            "fact_id": "T1C.10.public_comps.n_admitted",
+            "table_id": "T1C.10",
+            "row_id": "public_comps",
+            "field": "n_admitted",
+            "label": "Admitted",
+            "status": "known",
+            "unit": "records",
+            "period": "Window 2025-01-10 to 2026-01-10",
+            "amount_exact": "0",
+            "shown": "0 records",
+            "value_class": "calculated",
+            "formula": "count of records admitted (EV and EBITDA above zero, dated within the window)",
+            "calculation_id": "calc:T1C.10.public_comps.n_admitted",
+            "derives_from": []
+          },
+          {
+            "fact_id": "T1C.10.public_comps.min",
+            "table_id": "T1C.10",
+            "row_id": "public_comps",
+            "field": "min",
+            "label": "Minimum",
+            "status": "missing",
+            "unit": "MULTIPLE",
+            "period": "Window 2025-01-10 to 2026-01-10",
+            "amount_exact": null,
+            "shown": null,
+            "limitation": "Not calculable: no admitted records"
+          },
+          {
+            "fact_id": "T1C.10.public_comps.median",
+            "table_id": "T1C.10",
+            "row_id": "public_comps",
+            "field": "median",
+            "label": "Median",
+            "status": "missing",
+            "unit": "MULTIPLE",
+            "period": "Window 2025-01-10 to 2026-01-10",
+            "amount_exact": null,
+            "shown": null,
+            "limitation": "Not calculable: 0 admitted of 3 required"
+          },
+          {
+            "fact_id": "T1C.10.public_comps.max",
+            "table_id": "T1C.10",
+            "row_id": "public_comps",
+            "field": "max",
+            "label": "Maximum",
+            "status": "missing",
+            "unit": "MULTIPLE",
+            "period": "Window 2025-01-10 to 2026-01-10",
+            "amount_exact": null,
+            "shown": null,
+            "limitation": "Not calculable: no admitted records"
+          },
+          {
+            "fact_id": "T1C.10.public_comps.outliers",
+            "table_id": "T1C.10",
+            "row_id": "public_comps",
+            "field": "outliers",
+            "label": "Outliers",
+            "status": "missing",
+            "unit": "records",
+            "period": "Window 2025-01-10 to 2026-01-10",
+            "amount_exact": null,
+            "shown": null,
+            "limitation": "Not calculable: 0 admitted of 3 required"
+          },
+          {
+            "fact_id": "T1C.11.selection.requested_basis",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "requested_basis",
+            "label": "Requested basis",
+            "status": "known",
+            "text": "auto",
+            "shown": "auto",
+            "value_class": "source",
+            "citations": [
+              {
+                "source_id": "context",
+                "locator": "line:30",
+                "quote": "\"basis\": \"auto\","
+              }
+            ]
+          },
+          {
+            "fact_id": "T1C.11.selection.selected_basis",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "selected_basis",
+            "label": "Selected basis",
+            "status": "known",
+            "text": "Insufficient Information",
+            "shown": "Insufficient Information",
+            "value_class": "normalized"
+          },
+          {
+            "fact_id": "T1C.11.selection.reason",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "reason",
+            "label": "Reason",
+            "status": "known",
+            "text": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+            "shown": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+            "value_class": "normalized"
+          },
+          {
+            "fact_id": "T1C.11.selection.ebitda_basis",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "ebitda_basis",
+            "label": "EBITDA basis",
+            "status": "known",
+            "text": "Not stated by the user",
+            "shown": "Not stated by the user",
+            "value_class": "normalized"
+          },
+          {
+            "fact_id": "T1C.11.selection.selected_multiple",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "selected_multiple",
+            "label": "Selected multiple",
+            "status": "missing",
+            "unit": "MULTIPLE",
+            "period": "EBITDA basis: Not stated by the user",
+            "amount_exact": null,
+            "shown": null,
+            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required"
+          },
+          {
+            "fact_id": "T1C.11.selection.issuer_ebitda",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "issuer_ebitda",
+            "label": "Issuer EBITDA",
+            "status": "known",
+            "unit": "MILLIONS",
+            "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "amount_exact": "30",
+            "shown": "30.0",
+            "currency": "USD",
+            "scale": "1000000",
+            "decimals": 1,
+            "value_class": "calculated",
+            "formula": "CP-1 LTM adjusted EBITDA (T4.10)",
+            "calculation_id": "calc:T1C.11.selection.issuer_ebitda",
+            "derives_from": [
+              "cp1:ebitda"
+            ]
+          },
+          {
+            "fact_id": "T1C.11.selection.implied_ev",
+            "table_id": "T1C.11",
+            "row_id": "selection",
+            "field": "implied_ev",
+            "label": "Implied enterprise value",
+            "status": "missing",
+            "unit": "MILLIONS",
+            "period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+            "amount_exact": null,
+            "shown": null,
+            "scale": "1000000",
+            "limitation": "Not calculable: no selected multiple"
+          }
+        ],
+        "own_limitations_new": [
+          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required."
+        ],
+        "own_limitations": [
+          "No peer source is in the pack: no peer universe, median, position or outlier flag can be formed.",
+          "Gap (Critical): No peer financial source is in the pack.",
+          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required."
+        ],
+        "settled_limitations": [
+          "No peer source is in the pack: no peer universe, median, position or outlier flag can be formed.",
+          "Gap (Critical): No peer financial source is in the pack.",
+          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required.",
           "Synthetic case; not real issuer qualification"
         ],
         "module_status": "restricted",
@@ -18468,6 +19119,16 @@
               "valuation v01: multiple 4.00 differs from the CP-1C selected multiple 7.00"
             ]
           },
+          "ev-multiple-differs-v03": {
+            "multiples": [
+              "7.00",
+              "7.00",
+              "4.00"
+            ],
+            "issues": [
+              "valuation v03: multiple 4.00 differs from the CP-1C selected multiple 7.00"
+            ]
+          },
           "ev-not-assessed-when-selected": {
             "multiples": [
               "7.00",
@@ -20206,6 +20867,7 @@
           "CP-4",
           "CP-2G"
         ],
+        "phase6_pinned_line": "PENDING_PHASE6_FREEZE",
         "selected_multiple": "7.00",
         "pinned_multiple": "8.5",
         "valuations": [

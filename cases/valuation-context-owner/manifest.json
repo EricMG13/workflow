@@ -245,6 +245,24 @@
         ]
       }
     },
+    "auto-dr-public": {
+      "file": "contexts/auto-dr-public.json",
+      "pack": "closed-chain",
+      "sha256": "adb19749473b7e51af9c60ea5b46fb0f129836d22c7fb58ee3f985c2275b8fb7",
+      "run": {
+        "run_id": "valctx-auto-dr-public-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
     "dr-public": {
       "file": "contexts/dr-public.json",
       "pack": "closed-chain",
@@ -355,10 +373,11 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "f1c1b425956df8a55633ecaea60e930a1c6c116b749419b61c895196e54c3403",
+    "sha256": "d1f85576ba68a53581cf07c5b718194d0b0cd8466d361684160fa59f44e41417",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {
+    "contexts/auto-dr-public.json": "adb19749473b7e51af9c60ea5b46fb0f129836d22c7fb58ee3f985c2275b8fb7",
     "contexts/auto-public-private.json": "2574b55dce398a88fca3b8038c55c2b2538286a9520a67b2389d8644e26f5ecd",
     "contexts/auto-public.json": "2b4998fb970bf6321fe15e0ce5540bdd2d93fc7aaef9f7b712cdd1e49409266d",
     "contexts/auto-thin.json": "ee1e4d4b447534a8abaec80d988e6901ae661d68e4e5a12a0bf7123604e19f87",
@@ -374,7 +393,7 @@
     "contexts/user-list.json": "76484b05df453b04a235197021c0e1c9364a025e861eacd9c3911785c0e658f9",
     "contexts/user-multiple.json": "e17a46bdca76ac51eaabef56e610b5671dc51078fcafd25e5dd496fb1121f00b",
     "contexts/window-edges.json": "1b170618fb2a2b83351151fb5c7c27ceaf1daa738486e329ebc13a70e2f991e9",
-    "expected.json": "6790ea42190e3d92ae163c5546f78eb7519169f40e639ace444cdcef3c7f4cd7"
+    "expected.json": "1938b96612fab6df9c5fd668a6a5ba2f64385ba9bbba1103790be9bc78845c50"
   },
   "files_sha256_note": "every output except manifest.json and README.md (README is hand-written)"
 }

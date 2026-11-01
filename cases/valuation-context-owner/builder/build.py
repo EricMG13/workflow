@@ -207,6 +207,7 @@ CASES = {
     "issuer-trading-ntm": dict(peer_source="none", basis="issuer_trading", listed=True, market=dict(cap="200", debt="70", ebitda_basis="NTM", as_of="2026-01-05")),
     "user-multiple": dict(peer_source="none", basis="user_multiple", um=dict(value="8.5", basis="LTM", rationale=UM_RATIONALE)),
     "user-list": dict(peer_source="user_list", basis="public_comps", user_list=USER_LIST),
+    "auto-dr-public": dict(peer_source="cp_dr_public", basis="auto"),
     "dr-public": dict(peer_source="cp_dr_public", basis="public_comps"),
     "credit-plus-comps": dict(peer_source="user_comps", basis="auto", peers=["A", "B", "C", "D", "E"], pack="peers", requested=["CP-1C"]),
     "auto-public-private": dict(peer_source="user_comps", basis="auto", peers=["A", "B", "C", "D", "E"], case_kind="private"),
@@ -424,7 +425,9 @@ def evaluate(spec, recs, ctx_obj):
         if val["peer_source"] == "user_list":
             sel.gap = GAP_UL
         elif val["peer_source"] == "cp_dr_public":
-            sel.gap = GAP_DR
+            sel.selected_basis, sel.basis_known = INSUFFICIENT, True
+            sel.gap = f"{GAP_DR}; precedents {prec.n_admitted} admitted of {MIN_ADMITTED} required"
+            sel.reason = sel.gap
         elif public.median is not None:
             sel.selected_basis, sel.basis_known = "public_comps", True
             sel.multiple = round2(public.median)
@@ -890,6 +893,8 @@ def cp4c_block(cid, spec, sel, ctx_obj):
     else:
         limitation = (f"The EV multiple is the CP-1C selected multiple {fixed(m, 2)}x (basis {basis_text}, EBITDA basis {ebitda_basis}), applied to the "
                       f"CP-2G forecast EBITDA of each valuation case (base case FY2026 for the base valuation); no alignment is made between an LTM or NTM multiple and a forecast year.")
+    if pin:
+        block["phase6_pinned_line"] = "PENDING_PHASE6_FREEZE"
     block.update({"selected_multiple": fixed(m, 2), "pinned_multiple": pin, "valuations": values,
                   "added_limitation": limitation,
                   "formula_suffix": None if pin else f", equal to the CP-1C selected multiple (T1C.11, basis {basis_text})"})
@@ -908,6 +913,10 @@ def cp4c_block(cid, spec, sel, ctx_obj):
             "ev-multiple-differs": {
                 "multiples": ["4.00", mtxt, mtxt],
                 "issues": [f"valuation v01: multiple 4.00 differs from the CP-1C selected multiple {mtxt}"],
+            },
+            "ev-multiple-differs-v03": {
+                "multiples": [mtxt, mtxt, "4.00"],
+                "issues": [f"valuation v03: multiple 4.00 differs from the CP-1C selected multiple {mtxt}"],
             },
             "ev-not-assessed-when-selected": {
                 "multiples": [mtxt, "not assessed", mtxt],
@@ -1070,6 +1079,9 @@ assert n_["selected_multiple"] is None and n_["reason"] == NTM_GAP
 u_ = EXPECTED_CASES["user-multiple"]["cp1c"]["selection"]
 assert u_["selected_multiple"] == "8.50" and u_["implied_ev"] == "255.0"
 assert EXPECTED_CASES["user-list"]["cp1c"]["selection"]["gap"] == GAP_UL
+adr = EXPECTED_CASES["auto-dr-public"]["cp1c"]["selection"]
+assert adr["selected_basis"] == INSUFFICIENT and adr["selected_multiple"] is None
+assert adr["reason"] == GAP_DR + "; precedents 0 admitted of 3 required"
 assert EXPECTED_CASES["dr-public"]["cp1c"]["selection"]["gap"] == GAP_DR
 pv = EXPECTED_CASES["pin-vs-selection"]
 assert pv["cp1c"]["selection"]["selected_multiple"] == "7.00" and pv["cp4c"]["valuations"][0]["ev_shown"] == "262.65"
@@ -1120,7 +1132,7 @@ EXPECTED = {
         "cp4c": "every valuation case (v01-v03, the stress case included) carries the selected multiple M when known; a submitted multiple equal to M numerically is accepted "
                 "(7 equals 7.00); another value or `not assessed` is refused with `valuation <case_id>: multiple <submitted as typed> differs from the CP-1C selected multiple <M at 2 dp>`, "
                 "one issue per valuation in case order; EV = CP-2G FY2026 EBITDA x M exact; implied LTM multiple = EV / 30; the T4E.3 multiple cell's formula gains the suffix; "
-                "when M is unknown CP-4C is unchanged; when the context pins ev_multiple the pin governs (Ruled Q4)",
+                "when M is unknown CP-4C applies no multiple rule; when the context pins ev_multiple the pin governs (Ruled Q4)",
         "cp4c_inputs": "CP-4C's bound inputs follow plan order over its required and selected optional edges: prepared-pack, CP-0, CP-1, CP-1C, CP-2A, CP-4, CP-2G",
     },
     "refusal_ids": {

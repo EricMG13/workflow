@@ -2008,6 +2008,24 @@
       "review": "docs/rulings/2026-10-31-s8-vii.md"
     },
     {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "dbf8de0750e9acbe729406c0afd92137ab1c63b8785767f49fb1cc80762e89e2",
+      "project_commit": "425e2d397c3081f93704f3a61af30bc15b10e8d8",
+      "sha256": "5f022051a278efb15df603703f4d0c6d4ae8414bc3cf9ecb2fe54db00ece8832",
+      "reason": "B17-9/B18 (docs/rulings/2026-10-31-context-plan.md), Phase 8 Task 6b: CP-1B layout validation reads the money currency from revenue:current (required non-None), checks every money fact (prior, current, delta) against it instead of USD, and compares row labels with cp1b_layouts(scale_label('MILLIONS', currency)); USD output unchanged.",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/ (task-6b-brief.md, wave-1-addendum.md, task-6b-report.md)"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp1b.py",
+      "imported_sha256": "188e84616a69640500e007c87daa7d84a80d3912e528bb91222a2793a4c32e36",
+      "prior_project_sha256": "188e84616a69640500e007c87daa7d84a80d3912e528bb91222a2793a4c32e36",
+      "project_commit": "425e2d397c3081f93704f3a61af30bc15b10e8d8",
+      "sha256": "906d1df2643623f53db096dad415a8377573b07293b90aaa00203f496d837a28",
+      "reason": "repo-authored (not in files[]): B17-9/B18 (docs/rulings/2026-10-31-context-plan.md), Phase 8 Task 6b: the nine money labels take a {unit} placeholder and cp1b_layouts(unit='US$ m') returns them formatted; _CP1B_LAYOUTS = cp1b_layouts() keeps every USD caller unchanged.",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/ (task-6b-brief.md, wave-1-addendum.md, task-6b-report.md)"
+    },
+    {
       "destination": "src/deploy_vii/source_context.py",
       "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
       "prior_project_sha256": "d0cf155b79767c4ec70c731a87a3aa77e596c05169d966176d276b199898b4be",

@@ -255,7 +255,7 @@
    {
     "position": 17,
     "sp": "CCC+",
-    "fitch": null,
+    "fitch": "CCC+",
     "moodys": "Caa1"
    },
    {
@@ -267,7 +267,7 @@
    {
     "position": 19,
     "sp": "CCC-",
-    "fitch": null,
+    "fitch": "CCC-",
     "moodys": "Caa3"
    },
    {
@@ -338,7 +338,9 @@
     "B+": 14,
     "B": 15,
     "B-": 16,
+    "CCC+": 17,
     "CCC": 18,
+    "CCC-": 19,
     "CC": 20,
     "C": 21,
     "RD": 22,
@@ -372,7 +374,7 @@
    "Withdrawn",
    "Not rated"
   ],
-  "note": "Fitch publishes no CCC+ or CCC-: its single CCC is position 18, as S&P CCC; position 22 is S&P SD and Fitch RD, 23 is D for S&P and Fitch; Moody's has neither"
+  "note": "S&P and Fitch share the letter symbols; position 22 is S&P SD and Fitch RD, 23 is D for S&P and Fitch; Moody's has neither"
  },
  "cases": {
   "positive": {
@@ -669,7 +671,7 @@
  },
  "run_time_bindings": "as cases/cp2h-owner/manifest.json run_time_bindings: pack hash, {{FIG:..}}, {{EVID:..}}, {{INPUTS_SHA256}} and ticket ids are bound at run time",
  "outputs": {
-  "expected.json": "b194eaa051b726115f61b989a7320480f37fefcafb5a0abcb46a43476eb421be",
+  "expected.json": "fc83997b6bce58d2ea8cf0f9d4fbd4ff778ae53929e13af57c41f61d4b4f5e39",
   "submissions.json": "52339f9986fba7504ffeccad9e2618e0fdf992d4bc81db3249ecaed85e37cd21",
   "cp2h-context-view-tree.json": "145c9ad05ce4cd838a846135fb4c4275ad9f775a19a3270e6964c077e4bcfa4a"
  }

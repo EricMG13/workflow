@@ -111,9 +111,9 @@ SCALE_ROWS = (
     (14, "B+", "B+", "B1"),
     (15, "B", "B", "B2"),
     (16, "B-", "B-", "B3"),
-    (17, "CCC+", None, "Caa1"),  # Fitch publishes a single CCC category
+    (17, "CCC+", "CCC+", "Caa1"),
     (18, "CCC", "CCC", "Caa2"),
-    (19, "CCC-", None, "Caa3"),
+    (19, "CCC-", "CCC-", "Caa3"),
     (20, "CC", "CC", "Ca"),
     (21, "C", "C", "C"),
     (22, "SD", "RD", None),  # S&P selective default, Fitch restricted default; Moody's has none
@@ -781,7 +781,7 @@ def main():
             ],
             "by_agency": SCALE,
             "no_position": list(UNRATED),
-            "note": "Fitch publishes no CCC+ or CCC-: its single CCC is position 18, as S&P CCC; position 22 is S&P SD and Fitch RD, 23 is D for S&P and Fitch; Moody's has neither",
+            "note": "S&P and Fitch share the letter symbols; position 22 is S&P SD and Fitch RD, 23 is D for S&P and Fitch; Moody's has neither",
         },
         "citation_rules": {
             "span": "the context source `context`, locator `line:N` (splitlines of the file's bytes), source_sha256 = sha256 of the file bytes",

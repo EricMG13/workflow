@@ -1669,15 +1669,22 @@ def _case_parameters(run: Run) -> tuple[OwnerCaseId, str, str]:
     return selected[run.run_id]
 
 
-def _own_limits(gap: bool, *, checkpoint: bool = True) -> tuple[str, ...]:
-    """CP-1B's own limitations. `checkpoint` adds the owner-checkpoint line, true only of the
-    frozen `EarningsWorkflow` receipt path; the owner walk (`owners/cp1b`) leaves it out."""
+_OWNER_PERIMETER_LIMIT = (
+    "Consolidated IFRS financials in USD millions; audit status, borrower, guarantor and "
+    "restricted-group perimeters are not established."
+)
+
+
+def _own_limits(gap: bool, *, owner: bool = False) -> tuple[str, ...]:
+    """CP-1B's own limitations. `owner` is the owner walk (`owners/cp1b`): no checkpoint line (it
+    names the receipt path) and a perimeter line that claims only what the delta core checks (the
+    dimensions), not that the statements are unaudited, which no owner-path check establishes."""
     return (
-        *_COMMON_LIMITS,
+        *((_OWNER_PERIMETER_LIMIT, *_COMMON_LIMITS[1:]) if owner else _COMMON_LIMITS),
         "No year-on-year earnings comparison or broader nonzero earnings qualification."
         if gap
         else "Bounded flat sequential earnings comparison only; no broader nonzero earnings qualification.",
-        *((_CHECKPOINT_LIMIT,) if checkpoint else ()),
+        *(() if owner else (_CHECKPOINT_LIMIT,)),
         "Requested FY2024 comparison basis is absent; current FY2025 values remain known. Opening-2024 balance data is not a substituted income comparator."
         if gap
         else "Q3 trailing leverage comparison is unavailable; current Q4 standalone leverage remains valid.",

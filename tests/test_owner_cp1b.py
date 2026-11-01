@@ -166,6 +166,218 @@ def test_cp1b_a_view_that_is_not_cp1_is_charged_invalid_source_view() -> None:
     assert cp1b.compute(wrong, review("q3-2025", "q4-2025")).issues == ("invalid_source_view",)
 
 
+# --- B19: only the pairs the composer's fixed prose is true of --------------------------------
+
+
+def _moved(facts: tuple[Any, ...], fact_id: str, amount: str) -> tuple[Any, ...]:
+    assert sum(f.fact_id == fact_id for f in facts) == 1
+    return tuple(
+        f.model_copy(update={"amount": Decimal(amount)}) if f.fact_id == fact_id else f
+        for f in facts
+    )
+
+
+def _with_period(
+    module: Any, pid: str, kind: str, quarter: str | None, start: str, end: str
+) -> Any:
+    """A copy of the literal register with one more period row, values copied from q4-2025."""
+    fields = dict(
+        zip(
+            a1.PERIOD_FIELDS,
+            (
+                pid,
+                kind,
+                end[:4],
+                quarter,
+                start,
+                end,
+                "USD",
+                "MILLIONS",
+                "IFRS",
+                "consolidated group",
+            ),
+            strict=True,
+        )
+    )
+    source = {f.field: f for f in module.facts if f.row_id == "period.q4-2025"}
+    added = [
+        source[name].model_copy(
+            update={
+                "fact_id": f"period.{pid}.{name}",
+                "row_id": f"period.{pid}",
+                "text": value,
+                "period": pid,
+                "status": "not_applicable" if value is None else "known",
+            }
+        )
+        for name, value in fields.items()
+    ]
+    basis = a1.BASES["q4-2025"]
+    label = f"{pid}: {start} to {end}"
+    for fact in [f for f in module.facts if f.field == basis]:
+        measure = fact.row_id.removeprefix("metric.")
+        added.append(
+            fact.model_copy(
+                update={
+                    "fact_id": f"value.{measure}.{pid}",
+                    "field": _basis_of(pid, kind),
+                    "period": label,
+                }
+            )
+        )
+    return module.model_copy(update={"facts": (*module.facts, *added)})
+
+
+def _basis_of(pid: str, kind: str) -> str:
+    from deploy_workflow.earnings import _basis, _Period
+
+    return _basis(_Period(pid, kind, dt.date(2000, 1, 1), dt.date(2000, 1, 2), {}))
+
+
+@pytest.mark.parametrize(
+    ("prior", "current"),
+    [
+        ("q2-2025", "q4-2025"),  # a period the register lacks, against a quarter
+        ("q3-2025x", "q4-2025"),  # a misspelt prior
+        ("q1-2026", "q4-2025"),  # a prior after the current period, not in the register
+        ("q4-2024", "q4-2025"),  # a prior year, not in the register
+        ("fy-2024", "q4-2025"),
+    ],
+)
+def test_cp1b_other_pairs_are_unsupported(prior: str, current: str) -> None:
+    for comparison in ("flat_sequential", "comparative_not_supplied"):
+        found = cp1b.compute(a1.fixture(), review(prior, current, comparison))
+        assert found.report is None and found.issues == ("unsupported_pair",), comparison
+
+
+def test_cp1b_q2_prior_is_not_labelled_fy2024() -> None:
+    """Reviewer case A: q2-2025 -> q4-2025 used to settle with the FY2024/FY2025 prose."""
+    found = cp1b.compute(a1.fixture(), review("q2-2025", "q4-2025", "comparative_not_supplied"))
+    assert found.issues == ("unsupported_pair",)
+
+
+def test_cp1b_non_flat_quarter_pair_is_unsupported() -> None:
+    """Reviewer case B: revenue 30 -> 45 is not flat, and the prose says "is flat"."""
+    module = a1.fixture()
+    moved = module.model_copy(update={"facts": _moved(module.facts, "value.revenue.q4-2025", "45")})
+    found = cp1b.compute(moved, review("q3-2025", "q4-2025"))
+    assert found.report is None and found.issues == ("unsupported_pair",)
+
+
+def test_cp1b_q4_2024_present_is_still_unsupported() -> None:
+    module = _with_period(a1.fixture(), "q4-2024", "QUARTER", "4", "2024-10-01", "2024-12-31")
+    found = cp1b.compute(module, review("q4-2024", "q4-2025"))
+    assert found.report is None and found.issues == ("unsupported_pair",)
+
+
+def test_cp1b_prior_year_period_in_the_register_falsifies_the_limits() -> None:
+    """The limitation "no FY2024 annual income statement or prior-year quarterly series is
+    supplied" is true only while the register carries none, so the pair is refused."""
+    module = _with_period(a1.fixture(), "q4-2024", "QUARTER", "4", "2024-10-01", "2024-12-31")
+    for prior, current, comparison in (
+        ("q3-2025", "q4-2025", "flat_sequential"),
+        ("fy-2024", "fy-2025", "comparative_not_supplied"),
+    ):
+        found = cp1b.compute(module, review(prior, current, comparison))
+        assert found.issues == ("unsupported_pair",), (prior, current)
+
+
+def test_cp1b_comparison_label_is_derived_from_the_deltas() -> None:
+    module = a1.fixture()
+    flat = cp1b.compute(module, review("q3-2025", "q4-2025")).report
+    gap = cp1b.compute(module, review("fy-2024", "fy-2025", "comparative_not_supplied")).report
+    assert flat is not None and gap is not None
+    assert cp1b.expected_comparison(flat) == "flat_sequential"
+    assert cp1b.expected_comparison(gap) == "comparative_not_supplied"
+    moved = module.model_copy(update={"facts": _moved(module.facts, "value.revenue.q4-2025", "45")})
+    raw = build_earnings_delta(moved, "q3-2025", "q4-2025")
+    with pytest.raises(ValueError, match="unsupported_pair"):
+        cp1b.expected_comparison(raw)
+
+
+def test_cp1b_owner_limits_state_nothing_the_path_cannot_know() -> None:
+    """The owner head carries no "Unaudited" claim (the delta core checks the dimensions, not the
+    audit status) and no checkpoint line."""
+    for prior, current, comparison in (
+        ("q3-2025", "q4-2025", "flat_sequential"),
+        ("fy-2024", "fy-2025", "comparative_not_supplied"),
+    ):
+        outcome, _, _ = _validate(_payload(prior, current, comparison))
+        assert outcome.output is not None
+        owned = Module.model_validate_json(outcome.output)
+        assert owned.limitations and not any("naudited" in x for x in owned.limitations)
+        assert not any("Owner checkpoint" in x for x in owned.limitations)
+
+
+# --- the split composer keeps the receipt path's bytes ----------------------------------------
+
+# sha256 of `EarningsWorkflow._compose(...).model_dump_json()` on the literal register, taken at
+# dbcfbadb~1 (before the composer split) by mx-precise's probe_byte_identity.py
+# (scratchpad/o1t3-review/probe_byte_identity.py) with these inputs.
+PRE_SPLIT_COMPOSED = {
+    ("q3-2025", "q4-2025"): "82661619fdd206dcaf64e2781659ab5300ce50b5763048524a18c3c2d85a88f4",
+    ("fy-2024", "fy-2025"): "252d73fc7cd796772af792e1e370e2e99841012968d2eed307446b7677340a82",
+}
+
+
+@pytest.mark.parametrize("pair", sorted(PRE_SPLIT_COMPOSED))
+def test_split_composer_keeps_the_pre_split_bytes(pair: tuple[str, str]) -> None:
+    producer = _producer()
+    attempt = _attempt(producer)
+    prior, current = pair
+    report = build_earnings_delta(cp1b.cp1_view(producer), prior, current)
+    selections = tuple(
+        ew.MeasureSelection(
+            measure_id=p.measure_id,
+            prior_fact_id=p.prior_fact_id,
+            current_fact_id=p.current_fact_id,
+            companion_fact_ids=p.companion_fact_ids,
+        )
+        for p in report.points
+    )
+    derived = ew.EarningsDeltaReview(
+        prior_period_id=prior,
+        current_period_id=current,
+        selections=selections,
+        comparison_assessment=cp1b.expected_comparison(report),  # type: ignore[arg-type]
+        driver_assessment="not_supplied",
+        guidance_assessment="not_supplied",
+    )
+    binding = ew.OwnerBinding(
+        run_id=_run().run_id,
+        issuer_id=_run().issuer_id,
+        as_of="2026-01-01",
+        method_version="deploy-v-r14",
+        pack_sha256="c" * 64,
+        snapshot_sha256="d" * 64,
+        module_id="CP-1B",
+        step_id="earnings_delta",
+        ticket_id="t1",
+        attempt=0,
+        inputs=attempt.inputs,
+    )
+    participation = ew.EarningsParticipation(
+        binding=binding,
+        session_id="s1",
+        grant_sha256="e" * 64,
+        manifest_sha256="e" * 64,
+        access_read_sha256="e" * 64,
+        call_ids=(),
+        successful_call_ids=(),
+        manifest_call_ids=(),
+        period_lookup_call_ids=(),
+        metric_lookup_call_ids=(),
+        citation_call_ids=(),
+    )
+    composed = ew._compose(
+        producer, report, ew._operands(producer, report), derived, participation, attempt, _run()
+    )
+    assert (
+        hashlib.sha256(composed.model_dump_json().encode()).hexdigest()
+        == (PRE_SPLIT_COMPOSED[pair])
+    )
+
+
 # --- the view, the validator and the candidate -----------------------------------------------
 
 
@@ -225,8 +437,10 @@ def test_cp1b_view_offers_periods_and_the_accepted_pairs() -> None:
     body = json.loads(text)
     assert [p["period_id"] for p in body["periods"]] == ["q3-2025", "q4-2025", "fy-2025"]
     assert [(p["prior_period_id"], p["current_period_id"]) for p in body["pairs"]] == [
-        ("q3-2025", "q4-2025")
+        ("q3-2025", "q4-2025"),
+        ("fy-2024", "fy-2025"),
     ]
+    assert body["pairs"][1]["comparison_assessment"] == "comparative_not_supplied"
     pair = body["pairs"][0]
     assert pair["comparison_assessment"] == "flat_sequential"
     assert tuple(p["measure"] for p in pair["points"]) == a1.MEASURES
@@ -317,9 +531,12 @@ def test_cp1b_candidate_is_the_receipt_path_candidate() -> None:
     assert owned.inputs[-1].sha256 == submission.content_hash()
     assert ew._CHECKPOINT_LIMIT in receipt_path.limitations
     assert ew._CHECKPOINT_LIMIT not in owned.limitations
-    assert [x for x in receipt_path.limitations if x != ew._CHECKPOINT_LIMIT] == list(
-        owned.limitations
-    )
+    # the owner walk states only what the delta core checks: its perimeter line replaces the
+    # Northbridge "Unaudited ..." line
+    assert list(owned.limitations) == [
+        ew._OWNER_PERIMETER_LIMIT,
+        *(x for x in receipt_path.limitations[1:] if x != ew._CHECKPOINT_LIMIT),
+    ]
     assert cp1b._candidate(outcome.output, attempt) == owned
     with pytest.raises(WorkflowError, match="identity_mismatch"):
         cp1b._candidate(outcome.output, attempt.model_copy(update={"number": 1}))
@@ -350,32 +567,62 @@ def _foundation(tmp_path: Path, case_id: str) -> Any:
     return store, attempt
 
 
+def _receipt_head(tmp_path: Path, case_id: str) -> Module:
+    """The CP-1B head `EarningsWorkflow` composes for `case_id` (the frozen receipt path)."""
+    import test_earnings_workflow as host_tests
+
+    from deploy_vii.execution import Execution
+
+    core = host_tests.api()
+    workflow = host_tests.drive_fresh_foundation(core, tmp_path / "receipt-store", case_id)
+    host_tests.settle_owner(core, workflow, tmp_path / "receipt.json")
+    store = Execution(tmp_path / "receipt-store")
+    head = next(h for h in store.read().heads if h.module_id == "CP-1B")
+    return store.head_module(head)
+
+
 @promotion
-def test_cp1b_period_pairs(tmp_path: Path) -> None:
-    store, attempt = _foundation(tmp_path, "E-QOQ-FLAT")
+@pytest.mark.parametrize(
+    ("case_id", "prior", "current", "comparison"),
+    [
+        ("E-QOQ-FLAT", "q3-2025", "q4-2025", "flat_sequential"),
+        ("E-NO-YOY", "fy-2024", "fy-2025", "comparative_not_supplied"),
+    ],
+)
+def test_cp1b_period_pairs(
+    tmp_path: Path, case_id: str, prior: str, current: str, comparison: str
+) -> None:
+    store, attempt = _foundation(tmp_path / "owner", case_id)
     submitted = cp1b.submit(
-        store,
-        attempt.ticket_id,
-        "earnings_delta",
-        _payload("q3-2025", "q4-2025", "flat_sequential"),
-        None,
+        store, attempt.ticket_id, "earnings_delta", _payload(prior, current, comparison), None
     )
     assert submitted.journal.status == "finished"
     snapshot = store.read()
     head = next(h for h in snapshot.heads if h.module_id == "CP-1B")
     settled = store.head_module(head)
     owned = {f.fact_id: f for f in settled.facts}
-    growth = {"revenue", "ebitda", "adjusted_ebitda"}
-    for expected in ORACLE["positive"]["points"]:
-        measure = expected["measure_id"]
-        if measure not in a1.MEASURES[:7]:  # the T1B.1 rows
-            continue
-        delta = owned[f"cp1b:T1B.1:{measure}:delta"]
-        assert delta.status == expected["delta_status"]
-        assert delta.amount == (None if expected["delta"] is None else Decimal(expected["delta"]))
-        if measure in growth:
-            assert owned[f"cp1b:T1B.1:{measure}:growth"].status == expected["growth_status"]
+    if case_id == "E-QOQ-FLAT":
+        growth = {"revenue", "ebitda", "adjusted_ebitda"}
+        for expected in ORACLE["positive"]["points"]:
+            measure = expected["measure_id"]
+            if measure not in a1.MEASURES[:7]:  # the T1B.1 rows
+                continue
+            delta = owned[f"cp1b:T1B.1:{measure}:delta"]
+            assert delta.status == expected["delta_status"]
+            assert delta.amount == (
+                None if expected["delta"] is None else Decimal(expected["delta"])
+            )
+            if measure in growth:
+                assert owned[f"cp1b:T1B.1:{measure}:growth"].status == expected["growth_status"]
+    else:
+        revenue = owned["cp1b:T1B.1:revenue:current"]
+        assert revenue.amount == Decimal(ORACLE["gap"]["current_revenue"])
+        assert owned["cp1b:T1B.1:revenue:prior"].status == "missing"
     assert settled.inputs[-1].input_id == "earnings-delta-submission"
+    # tables and claims equal what EarningsWorkflow composes for the same case
+    receipt = _receipt_head(tmp_path, case_id)
+    assert settled.tables == receipt.tables
+    assert settled.claims == receipt.claims
     done = next(a for a in snapshot.attempts if a.ticket_id == attempt.ticket_id)
     cp1b.probe(store, snapshot, done)  # the untampered head rebuilds
 

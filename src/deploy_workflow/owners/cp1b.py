@@ -82,9 +82,65 @@ class Computation:
     report: EarningsDeltaReport | None
 
 
+UNSUPPORTED = "unsupported_pair"
+FLAT_PAIR = ("q3-2025", "q4-2025")
+GAP_PAIR = ("fy-2024", "fy-2025")
+_EARNINGS = (
+    "revenue",
+    "ebitda",
+    "adjusted_ebitda",
+    "ebitda_margin",
+    "cfo_reported",
+    "capex",
+    "fcf",
+)
+_BALANCES = ("cash_closing", "total_debt", "net_debt")
+_LEVERAGE = ("total_leverage_reported", "net_leverage_reported")
+
+
+def _flat(report: EarningsDeltaReport) -> bool:
+    """A prior exists and every T1B.1 delta is a known zero."""
+    points = {p.measure_id: p for p in report.points}
+    return report.prior_basis_id is not None and all(
+        points[m].delta_status == "known" and points[m].delta == 0 for m in _EARNINGS
+    )
+
+
 def expected_comparison(report: EarningsDeltaReport) -> str:
-    """The comparison assessment Python derives: no prior basis is `comparative_not_supplied`."""
-    return "comparative_not_supplied" if report.prior_basis_id is None else "flat_sequential"
+    """The comparison label, derived from the report: no prior basis is
+    `comparative_not_supplied`; a prior with every T1B.1 delta zero is `flat_sequential`. Any
+    other report has no label the composer's prose is true of."""
+    if report.prior_basis_id is None:
+        return "comparative_not_supplied"
+    if _flat(report):
+        return "flat_sequential"
+    raise ValueError(UNSUPPORTED)
+
+
+def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
+    """Whether the composer's fixed prose (and the Northbridge limitation lines) is true of this
+    report (ruling B19): the flat q3-2025 -> q4-2025 pair or the missing-prior
+    fy-2024 -> fy-2025 pair, with every current value known, no 2024 period in the register
+    (the limitations say no FY2024 or prior-year series is supplied) and, for the flat pair,
+    no known Q3 leverage (the prose says the trailing comparison is unavailable)."""
+    pair = (report.prior_period_id, report.current_period_id)
+    points = {p.measure_id: p for p in report.points}
+    if pair not in (FLAT_PAIR, GAP_PAIR) or any(
+        points[m].current_status != "known" for m in (*_EARNINGS, *_BALANCES)
+    ):
+        return False
+    rows = _periods(view)
+    if any(
+        "2024" in (r["start_date"].text or "") + (r["end_date"].text or "") for r in rows.values()
+    ):
+        return False
+    if pair == GAP_PAIR:
+        return report.prior_basis_id is None
+    return (
+        _flat(report)
+        and all(points[m].prior_status == "missing" for m in _LEVERAGE)
+        and all(points[m].current_status == "known" for m in _LEVERAGE)
+    )
 
 
 def _pair(view: ModuleView, prior: str, current: str) -> Computation:
@@ -99,10 +155,13 @@ def _pair(view: ModuleView, prior: str, current: str) -> Computation:
 def compute(view: ModuleView, submission: EarningsDeltaOwnerReview) -> Computation:
     """Pure: the report for the submitted pair, or the validator issues. A pair
     `build_earnings_delta` refuses is named by its `ValueError` code; an assessment other than
-    the one Python derives for the pair is refused."""
+    the one Python derives for the pair is refused. A pair the composer's prose is not true of is
+    `unsupported_pair` (ruling B19)."""
     found = _pair(view, submission.prior_period_id, submission.current_period_id)
     if found.report is None:
         return found
+    if not supported(view, found.report):
+        return Computation((UNSUPPORTED,), None)
     expected = expected_comparison(found.report)
     if submission.comparison_assessment != expected:
         issue = (
@@ -157,9 +216,9 @@ def _point_rows(report: EarningsDeltaReport) -> list[dict[str, str | None]]:
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
     """(sha256, body) of the one `read_inputs` view as compact JSON: the periods the settled CP-1
-    head offers, and for each ordered pair the validator accepts, the assessment Python derives
-    and the point list it builds. A prior period the register does not carry is also accepted
-    (`comparative_not_supplied`); only the pairs among offered periods are listed."""
+    head offers, and exactly the pairs the validator accepts (ruling B19: the flat q3-2025 ->
+    q4-2025 pair and the missing-prior fy-2024 -> fy-2025 pair), each with the assessment Python
+    derives and the point list it builds."""
     module = cp1_view(_cp1(historical, attempt))
     body: dict[str, object]
     try:
@@ -170,18 +229,17 @@ def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
         body = {"register_issue": str(error), "periods": [], "pairs": []}
     else:
         pairs: list[dict[str, object]] = []
-        for prior in rows:
-            for current in rows:
-                found = _pair(module, prior, current)
-                if found.report is not None:
-                    pairs.append(
-                        {
-                            "prior_period_id": prior,
-                            "current_period_id": current,
-                            "comparison_assessment": expected_comparison(found.report),
-                            "points": _point_rows(found.report),
-                        }
-                    )
+        for prior, current in (FLAT_PAIR, GAP_PAIR):
+            found = _pair(module, prior, current)
+            if found.report is not None and supported(module, found.report):
+                pairs.append(
+                    {
+                        "prior_period_id": prior,
+                        "current_period_id": current,
+                        "comparison_assessment": expected_comparison(found.report),
+                        "points": _point_rows(found.report),
+                    }
+                )
         body = {
             "periods": [
                 {
@@ -227,7 +285,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
             found.report,
             _operands(producer, found.report),
             (Input(input_id=SUBMISSION_INPUT, sha256=submission.content_hash()),),
-            _own_limits(found.report.prior_basis_id is None, checkpoint=False),
+            _own_limits(found.report.prior_basis_id is None, owner=True),
             attempt,
             pack.run,
         )

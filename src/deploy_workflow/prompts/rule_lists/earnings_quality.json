@@ -38,7 +38,7 @@
   },
   {
    "id": "earnings_quality.4",
-   "statement": "Each `rationale` is run text with no bare figure (digits only inside a period or filing label); a figure appears only as a reference to a fact the module context lists, in that fact's unit, and never as a reference to a gap.",
+   "statement": "Each `rationale` is run text with no bare figure (digits only inside a period or filing label); a figure appears only as a reference in that fact's unit, and never as a reference to a gap. An assessment `rationale` references module facts only (as `{T1D.x.y.z|unit}`, for example a listed `claimed_ref`), and a CP-1 reference is refused there; only `overall.rationale` may reference a fact of `cp1_facts`.",
    "checks": [
     "oracle:cp1d:r09",
     "fn:deploy_workflow.owners.cp1d:_model_text_issues",

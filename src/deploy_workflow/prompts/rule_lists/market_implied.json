@@ -92,6 +92,13 @@
     "oracle:cp3d:term_absence_without_search",
     "fn:deploy_workflow.owners.cp3d:absence_paths"
    ]
+  },
+  {
+   "id": "market_implied.9",
+   "statement": "Do not write Python's pinned-recovery line in a `technicals` limitation, in any case or spacing; Python adds that line when a recovery is pinned.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp3d:_check_pin_label"
+   ]
   }
  ]
 }

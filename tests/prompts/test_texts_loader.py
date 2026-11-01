@@ -3,6 +3,7 @@
 import hashlib
 import importlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,23 @@ def test_a_found_text_is_the_step_contract(texts: Path, pack: PreparedPack) -> N
     assert compose_module.has_prompt(NEW)
 
 
+LETTERED = "Method.\nStep rules:\na. [market_implied.1] First.\nb. [market_implied.2] Second.\n"
+
+
+def test_a_loaded_text_gets_no_letter_index(texts: Path, pack: PreparedPack) -> None:
+    """The M2 letter index serves STEP_CONTRACTS steps only; a loaded text has real tags."""
+    (texts / f"{NEW}.md").write_text(LETTERED, encoding="utf-8")
+    system = system_of(pack)
+    assert "[market_implied.1]" in system
+    assert not re.search(rf"\[{NEW}\.[a-z]\]", system)
+
+
+def test_a_contract_step_keeps_its_letter_index(pack: PreparedPack) -> None:
+    step = CONTRACT_STEPS[0]
+    system = compose(request_for(step, pack))[0].text
+    assert re.search(rf"\[{step}\.a\]=a", system)
+
+
 def test_a_text_is_read_as_utf8(texts: Path, pack: PreparedPack) -> None:
     (texts / f"{NEW}.md").write_bytes("Crédit — text\n".encode())
     assert "Crédit — text" in system_of(pack)
@@ -62,6 +80,12 @@ def test_a_file_for_a_step_that_has_a_contract_is_refused(texts: Path, pack: Pre
     (texts / "narrative.md").write_text(TEXT, encoding="utf-8")
     with pytest.raises(PromptError, match="narrative"):
         system_of(pack, "narrative")
+
+
+def test_every_text_file_ends_with_exactly_one_newline() -> None:
+    for path in sorted(compose_module.TEXTS_DIR.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        assert text.endswith("\n") and not text.endswith("\n\n"), path.name
 
 
 def test_existing_is_the_contracts_plus_the_text_stems() -> None:

@@ -260,7 +260,10 @@ def _rule5(request: PromptRequest, contract: str) -> str:
 
 def _system(request: PromptRequest, contract: str, pins_present: bool) -> str:
     step_id, spec = request.step_id, request.spec
-    letters = re.findall(r"^([a-z])\. ", contract, re.MULTILINE)
+    # The M2 letter index serves the STEP_CONTRACTS steps; a loaded text carries real tags.
+    letters = (
+        re.findall(r"^([a-z])\. ", contract, re.MULTILINE) if step_id in STEP_CONTRACTS else []
+    )
     index = ", ".join(f"[{step_id}.{c}]={c}" for c in letters)
     orchestrator = [O1, O2, O3]
     if spec.inputs != "none":

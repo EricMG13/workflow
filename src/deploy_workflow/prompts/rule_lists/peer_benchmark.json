@@ -30,7 +30,7 @@
   },
   {
    "id": "peer_benchmark.4",
-   "statement": "Each `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty; a reference that resolves to no fact, or to a fact whose value is a gap, is refused. State no instrument recommendation or recovery conclusion in any text field (`rationale`, `limitation` and gap fields).",
+   "statement": "Each `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty; a reference that resolves to no fact, or to a fact whose value is a gap, is refused. State no instrument recommendation or recovery conclusion in any text field (`rationale`, `limitation` and gap fields), and leave none blank: a blank `limitation` (of an assessment, when given, or of `overall`) or gap field (`gap`, `why_it_matters`, `affected_analysis`, `action`) is refused.",
    "checks": [
     "oracle:cp1c:r06",
     "oracle:cp1c:r09",

@@ -13,12 +13,12 @@ from deploy_workflow.context import RunContext, context_facts, load_context
 from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.owner_workflow import OWNER_SPECS, StepSpec
 from deploy_workflow.prompts import PromptRequest
+from deploy_workflow.prompts.compose import TEXTS_DIR
 
-TEXTS = Path(__file__).parents[2] / "src" / "deploy_workflow" / "prompts" / "texts"
 CONTRACT_STEPS = tuple(sorted(STEP_CONTRACTS))  # steps whose text is a STEP_CONTRACTS entry
 
 
-def steps_with_text(texts: Path = TEXTS) -> tuple[str, ...]:
+def steps_with_text(texts: Path = TEXTS_DIR) -> tuple[str, ...]:
     """The steps with a text: the STEP_CONTRACTS steps and the stems of ``texts/*.md``."""
     return tuple(sorted({*STEP_CONTRACTS, *(p.stem for p in texts.glob("*.md"))}))
 

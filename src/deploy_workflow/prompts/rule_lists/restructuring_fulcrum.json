@@ -2,7 +2,7 @@
  "rules": [
   {
    "id": "restructuring_fulcrum.1",
-   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds at least three entries.",
+   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries.",
    "checks": [
     "oracle:cp4c:r01",
     "oracle:cp4c:r02",

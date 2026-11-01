@@ -305,15 +305,7 @@ def line_of(item, quote):
     return f"line:{found[0]}"
 
 
-INJECTION_LOCATOR = (
-    "line:%d"
-    % [
-        n
-        for (sid, loc), t in TEXT.items()
-        if sid == "ev-3" and INJECTION in t
-        for n in [int(loc[5:])]
-    ][0]
-)
+INJECTION_LOCATOR = line_of("ev-3", INJECTION)
 
 
 def find_quote(source, locator, quote):

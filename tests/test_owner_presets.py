@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from deploy_vii.contracts import Run
+from deploy_vii.contracts import PATHWAY_MODULES, Run
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.registry import dependencies, edge_rule
+from deploy_vii.registry import dependencies, edge_rule, plan
 from deploy_workflow import owner_workflow as ow
 
 PLANS = {
@@ -66,3 +66,66 @@ def test_check_specs_admits_earnings_relative_value_and_covenant_refinancing(
     pack = PreparedPack(run=run, sources=())
     planned = ow._check_specs(pack, ow.OWNER_SPECS, tmp_path / "pub", tmp_path / "ex")
     assert planned == PLANS[pathway]
+
+
+BASELINE = {
+    "credit_snapshot": (
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-4",
+        "CP-MODEL",
+        "CP-3",
+        "CP-5",
+        "CP-6",
+    ),
+    **PLANS,
+    "distressed_restructuring": (
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-2A",
+        "CP-4",
+        "CP-2G",
+        "CP-2H",
+        "CP-4C",
+        "CP-5",
+    ),
+    "portfolio_decision": (
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-MODEL",
+        "CP-3",
+        "CP-5",
+        "CP-6",
+        "CP-8",
+    ),
+}
+
+
+@pytest.mark.parametrize("pathway", sorted(PATHWAY_MODULES))
+def test_check_specs_passes_for_all_six_presets(pathway: str, tmp_path: Path) -> None:
+    run = Run(
+        run_id="r1",
+        issuer_id="i1",
+        issuer_name="I",
+        as_of=dt.date(2026, 1, 1),
+        case_kind="synthetic",
+        pathway=pathway,  # type: ignore[arg-type]
+    )
+    pack = PreparedPack(run=run, sources=())
+    planned = ow._check_specs(
+        pack, ow.OWNER_SPECS, tmp_path / f"pub-{pathway}", tmp_path / f"ex-{pathway}"
+    )
+    assert planned == BASELINE[pathway] == plan(run.requested_modules)
+    for module_id in planned:
+        assert module_id in ow.OWNER_SPECS
+        if module_id == "CP-MODEL":  # the deterministic stop: no analytical probe
+            assert ow.OWNER_SPECS[module_id].kind == "deterministic"
+        else:
+            assert module_id in ow.SUPPORTED_ANALYTICAL
+            assert module_id in ow._PROBES

@@ -353,3 +353,20 @@ def test_state_is_a_fresh_immutable_value(tmp_path: Path) -> None:
     assert first == second and first is not second
     with pytest.raises(ValidationError):  # the model is frozen
         first.phase = "x"
+
+
+def test_stale_is_true_in_the_inactive_branch_at_the_cp_model_stop(
+    cp3: SimpleNamespace, tmp_path: Path
+) -> None:
+    """R3, the branch of `state()` taken when no module is active: the phase is `walked` at the
+    CP-MODEL stop and another writer begins the next module (L1, Task 2 re-review)."""
+    order = ("CP-0", "CP-1", "CP-MODEL", refusals.g1x.MODULE)
+    workflow = refusals.order_tests._terminal_world(cp3, tmp_path, order)
+    assert workflow.phase == "walked" and workflow.state().stale is False
+    Execution(workflow._store.directory).begin(refusals.g1x.MODULE)  # moves the journal
+    state = workflow.state()
+    assert state.phase == "walked" and state.module_id is None
+    assert state.stale is True
+    assert state.snapshot_sha256 == Execution(workflow._store.directory).read().content_hash()
+    with pytest.raises(WorkflowError, match="stale_binding"):
+        workflow.publish()

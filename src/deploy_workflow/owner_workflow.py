@@ -10,8 +10,9 @@ probes and views live in `deploy_workflow.owners`). G1-X
 (`docs/G1X-OWNER-CORE-PROTOCOL.md`) serves owner cores: an owner-only module (no live step
 contract) is entered through its registered core (`_CORES`), any module may register a
 precheck gate (`_PRECHECKS`), and every module with a `_VIEWS` entry may be read through
-`module_context` or `step_context`. No durable resume exists (an interrupted run is refused
-and a new run starts).
+`module_context` or `step_context`. `OwnerWorkflow.open` resumes a killed run from the retained
+audit (G5b); its docstring says how the journal and the audit are reconciled and what it cannot
+resume.
 """
 
 import argparse
@@ -704,6 +705,35 @@ class RefusedBegin(Contract):
         return data
 
 
+class UnreadSubmit(Contract):
+    """A submit refused because the step's inputs were not read. It changes nothing and is no part
+    of the receipt (the verifier compares the seven kinds it lists and ignores this one), but it
+    counts against the step's submit cap, so it is retained for `open()` to rebuild the count."""
+
+    binding: OwnerBinding
+    sequence: int
+
+
+class OwnerFault(Contract):
+    """A `faults/` record: a failure the run cannot continue from, written before the error is
+    raised. `kind` names the audit kind (or `journal`) and `digest` the record it concerns."""
+
+    schema_version: Literal["owner-fault/1"] = "owner-fault/1"
+    code: str
+    kind: str | None = None
+    digest: str | None = Field(default=None, max_length=160)
+
+
+class TornAudit(WorkflowError):
+    """The journal and the retained audit disagree in a way `open()` cannot repair. It carries the
+    code `identity_mismatch` (the receipt verifier's code for evidence that does not bind) and
+    `kind`/`digest` as the `OwnerFault` record names them; recovery is a rerun (G4)."""
+
+    def __init__(self, kind: str, digest: str | None) -> None:
+        super().__init__("identity_mismatch")
+        self.kind, self.digest = kind, digest
+
+
 class SettledHead(Contract):
     module_id: Identifier
     ticket_id: Identifier
@@ -720,8 +750,9 @@ class OwnerState(Contract):
     phase: str
     plan: tuple[Identifier, ...]
     snapshot_sha256: Hash
-    # True when the journal moved since this instance last bound its step: the binding and the
-    # counters below are then the instance's last view, not the journal's (G5a).
+    # True when the journal's current sha256 differs from this instance's `_current_sha256`: the
+    # binding and the counters below are then the instance's last view, not the journal's (G5a,
+    # R3). A rebind that fails after `_current_sha256` is set is an owner-list item (L1).
     stale: bool
     module_id: Identifier | None
     step_id: Identifier | None
@@ -926,6 +957,12 @@ def _retain(store: Execution, kind: str, value: Contract) -> None:
     _put(_audit(store, kind, value.content_hash()), value.model_dump_json().encode())
 
 
+def _torn(store: Execution, kind: str, digest: str | None) -> TornAudit:
+    """Record the fault under `faults/` and return the error to raise (the caller raises it)."""
+    _retain(store, "faults", OwnerFault(code="torn_audit", kind=kind, digest=digest))
+    return TornAudit(kind, digest)
+
+
 def _raw(store: Execution, digest: str) -> str:
     raw = _audit(store, "payloads", digest).read_bytes()
     if _hash(raw) != digest:
@@ -1042,8 +1079,11 @@ def _check_specs(
     specs: Mapping[str, OwnerSpec],
     publication_directory: Path | None,
     directory: Path,
+    *,
+    published: bool = False,
 ) -> tuple[str, ...]:
-    """Every refusal happens before anything is written."""
+    """Every refusal happens before anything is written. `published` (a resume that finds a
+    `publications` record, P12) lets the output directory exist: it is then the run's own."""
     try:
         planned = plan(pack.run.requested_modules)
     except ValueError:
@@ -1077,7 +1117,7 @@ def _check_specs(
         out = publication_directory
         if (
             out is None
-            or out.exists()
+            or (out.exists() and not published)
             or out.resolve() == directory.resolve()
             or directory.resolve() in out.resolve().parents
         ):
@@ -1085,8 +1125,224 @@ def _check_specs(
     return planned
 
 
+@dataclass(frozen=True)
+class _Retained:
+    """Every record of the audit kinds a resume reads, each parsed and checked against its digest."""
+
+    begins: list[BeginRecord]
+    refusals: list[RefusedBegin]
+    calls: list[OwnerCall]
+    reads: list[OwnerInputRead]
+    submissions: list[OwnerSubmission]
+    bindings: list[OwnerSubmissionBinding]
+    unread: list[UnreadSubmit]
+    publications: list[PublicationCall]
+
+
+@dataclass(frozen=True)
+class _Resubmit:
+    """A step the journal holds pending (its payload written, its validation not finished) and the
+    snapshot and attempt it was written from: the step is rebound there and its payload resubmitted."""
+
+    before: ExecutionSnapshot
+    attempt: Attempt
+    step_id: str
+
+
+def _load[T: Contract](store: Execution, kind: str, model: type[T]) -> list[T]:
+    """The retained records of `kind`: each parses, re-serialises to its own bytes and is named by
+    its own digest, or the audit is torn."""
+    directory = store.directory / AUDIT / kind
+    found: list[T] = []
+    for path in sorted(directory.iterdir()) if directory.is_dir() else ():
+        raw = path.read_bytes()
+        try:
+            value = model.model_validate_json(raw)
+        except ValueError:
+            raise _torn(store, kind, path.name) from None
+        if value.model_dump_json().encode() != raw or value.content_hash() != path.name:
+            raise _torn(store, kind, path.name)
+        found.append(value)
+    return found
+
+
+def _retained_audit(store: Execution) -> _Retained:
+    return _Retained(
+        begins=_load(store, "begins", BeginRecord),
+        refusals=_load(store, "refused-begin", RefusedBegin),
+        calls=_load(store, "calls", OwnerCall),
+        reads=_load(store, "input-reads", OwnerInputRead),
+        submissions=_load(store, "submissions", OwnerSubmission),
+        bindings=_load(store, "bindings", OwnerSubmissionBinding),
+        unread=_load(store, "unread-submits", UnreadSubmit),
+        publications=_load(store, "publications", PublicationCall),
+    )
+
+
+def _chain_of(store: Execution) -> list[ExecutionSnapshot]:
+    """The journal's snapshots from the created one to the current one, along `parent`."""
+    try:
+        chain = [store.read()]
+        while chain[-1].parent is not None:
+            chain.append(_snapshot(store, chain[-1].parent))
+    except (OSError, ValueError):
+        raise _torn(store, "snapshots", None) from None
+    chain.reverse()
+    return chain
+
+
+def _covered(store: Execution, got: _Retained, position: Mapping[str, int]) -> int:
+    """The chain position the retained transitions reach, walking them in order (F4).
+
+    A begin, a submission and a publication each record `before -> after`; sorted, each must start
+    where the previous one ended, from the created snapshot (a refused submission or publication
+    changes no snapshot and has width 0). A record that names a snapshot outside the chain, or a
+    gap between two records, is torn. Calls, reads, refusals and unread submits are only placed:
+    they must name a snapshot of the chain."""
+    spans: list[tuple[int, int, str]] = []
+    transitions: list[tuple[str, Contract, str, str]] = [
+        ("begins", b, b.snapshot_before_sha256, b.snapshot_after_sha256) for b in got.begins
+    ]
+    transitions += [
+        ("submissions", s, s.binding.binding.snapshot_sha256, s.snapshot_after_sha256)
+        for s in got.submissions
+    ]
+    transitions += [
+        ("publications", p, p.snapshot_before_sha256, p.snapshot_after_sha256)
+        for p in got.publications
+    ]
+    for kind, record, first, last in transitions:
+        if first not in position or last not in position or position[last] < position[first]:
+            raise _torn(store, kind, record.content_hash())
+        spans.append((position[first], position[last], record.content_hash()))
+    placed: list[tuple[str, Contract, str]] = [
+        ("calls", c, c.binding.snapshot_sha256) for c in got.calls
+    ]
+    placed += [("input-reads", r, r.binding.snapshot_sha256) for r in got.reads]
+    placed += [("refused-begin", r, r.snapshot_sha256) for r in got.refusals]
+    placed += [("unread-submits", u, u.binding.snapshot_sha256) for u in got.unread]
+    for kind, record, digest in placed:
+        if digest not in position:
+            raise _torn(store, kind, record.content_hash())
+    cursor = 0
+    for start, end, digest in sorted(spans):
+        if start != cursor:
+            raise _torn(store, "journal", digest)
+        cursor = end
+    return cursor
+
+
+def _begin_between(
+    before: ExecutionSnapshot, after: ExecutionSnapshot, analytical: frozenset[str]
+) -> BeginRecord | None:
+    """The `BeginRecord` of the one transition `before -> after` when it is exactly a begin of an
+    analytical module (a pure function of the two snapshots, `_expected_begin`), else None."""
+    if after.heads != before.heads or len(after.attempts) != len(before.attempts) + 1:
+        return None
+    new = after.attempts[-1]
+    if after.attempts[:-1] != before.attempts or new.module_id not in analytical:
+        return None
+    try:
+        expected = _expected_begin(before, new.module_id, new.ticket_id)
+    except WorkflowError:
+        return None
+    if new != expected:
+        return None
+    return BeginRecord(
+        module_id=new.module_id,
+        ticket_id=new.ticket_id,
+        attempt=new.number,
+        snapshot_before_sha256=before.content_hash(),
+        snapshot_after_sha256=after.content_hash(),
+    )
+
+
+def _pending_between(before: ExecutionSnapshot, after: ExecutionSnapshot) -> _Resubmit | None:
+    """`after` is `before` plus one pending step on one pending attempt and nothing else: what
+    `Execution.submit_step` writes before it validates (execution.py)."""
+    if after.heads != before.heads or len(after.attempts) != len(before.attempts):
+        return None
+    changed = [(a, b) for a, b in zip(after.attempts, before.attempts, strict=True) if a != b]
+    if len(changed) != 1:
+        return None
+    new, old = changed[0]
+    if (
+        new.ticket_id != old.ticket_id
+        or new.status != "pending"
+        or len(new.steps) != len(old.steps) + 1
+        or new.steps[-1].status != "pending"
+        or new.model_copy(update={"steps": old.steps}) != old
+    ):
+        return None
+    return _Resubmit(before=before, attempt=old, step_id=new.steps[-1].step_id)
+
+
+def _tail(
+    store: Execution,
+    chain: Sequence[ExecutionSnapshot],
+    cursor: int,
+    got: _Retained,
+    analytical: frozenset[str],
+    deterministic: str | None,
+) -> BeginRecord | _Resubmit | None:
+    """What the journal holds past the last retained transition (F4).
+
+    Nothing: the audit is whole. One begin with no `BeginRecord` (window (b), between
+    `store.begin` and the begins retain): rebuilt, retained and returned. One pending step with
+    its binding retained and no `submissions` record (window (a), during validation): returned for
+    the step to be rebound and its payload resubmitted. A publisher attempt with no `publications`
+    record (window (c), between `publish` and its retain), a stray binding, or any other gap is
+    torn: a second `publish` would double-publish and the call record cannot be rebuilt."""
+    recorded = {p.ticket_id for p in got.publications}
+    if deterministic is not None and any(
+        a.module_id == deterministic and a.ticket_id not in recorded for a in chain[-1].attempts
+    ):
+        raise _torn(store, "publications", chain[-1].content_hash())
+    known = {s.binding.content_hash() for s in got.submissions}
+    stray = [b for b in got.bindings if b.content_hash() not in known]
+    tail = chain[cursor + 1 :]
+    if not tail:
+        if stray:
+            raise _torn(store, "bindings", stray[0].content_hash())
+        return None
+    before = chain[cursor]
+    if len(tail) == 1 and not stray:
+        record = _begin_between(before, tail[0], analytical)
+        if record is not None:
+            _retain(store, "begins", record)
+            return record
+    pending = _pending_between(before, tail[0]) if len(tail) == 1 else None
+    if pending is None or not stray:
+        raise _torn(store, "journal", tail[0].content_hash())
+    binding = stray[0]
+    if (
+        len(stray) != 1
+        or binding.binding.snapshot_sha256 != before.content_hash()
+        or (binding.binding.ticket_id, binding.binding.step_id)
+        != (pending.attempt.ticket_id, pending.step_id)
+    ):
+        raise _torn(store, "bindings", binding.content_hash())
+    new = next(a for a in tail[0].attempts if a.ticket_id == pending.attempt.ticket_id)
+    try:
+        stored = _fill(store, binding.binding, _raw(store, binding.payload_sha256))[0]
+    except (OSError, ValueError):
+        raise _torn(store, "payloads", binding.payload_sha256) from None
+    if _hash(stored.encode()) != new.steps[-1].payload_sha256:
+        raise _torn(store, "bindings", binding.content_hash())
+    return pending
+
+
 class OwnerWorkflow:
     def __init__(
+        self,
+        store: Execution,
+        planned: tuple[str, ...],
+        publication_directory: Path | None,
+    ) -> None:
+        self._setup(store, planned, publication_directory)
+        self._begin(self._analytical[0])
+
+    def _setup(
         self,
         store: Execution,
         planned: tuple[str, ...],
@@ -1121,7 +1377,8 @@ class OwnerWorkflow:
         self._spec: StepSpec
         self._binding: OwnerBinding
         self._current_sha256 = ""
-        self._begin(self._analytical[0])
+        # Replayed call id -> retained call id, for a session `open()` rebuilt (see `open`).
+        self._alias: dict[str, str] = {}
 
     @classmethod
     def create(
@@ -1136,6 +1393,225 @@ class OwnerWorkflow:
         if not any(OWNER_SPECS[m].kind == "analytical" for m in planned):
             raise WorkflowError("not_permitted")
         return cls(Execution.create(directory, pack), planned, publication_directory)
+
+    @classmethod
+    def open(
+        cls,
+        directory: Path,
+        *,
+        specs: Mapping[str, OwnerSpec] = OWNER_SPECS,
+        publication_directory: Path | None = None,
+    ) -> "OwnerWorkflow":
+        """Resume a killed run from its journal and retained audit (G5b).
+
+        Refused (`not_permitted`) unless `directory/current` exists, and as `create` refuses
+        (`_check_specs`; an existing output directory is allowed once a publication is recorded).
+        `__init__` is bypassed: it would begin CP-0. The lists the receipt is built from are
+        rebuilt from `owner-run-audit/`, ordered by position in the journal's snapshot chain, and
+        the walk continues from the journal (`_advance`), which recomputes what no record shows:
+        a refusal retained or not, the CP-MODEL stop, the next begin.
+
+        The journal and the audit are reconciled by walking the chain (F4): every retained
+        transition (begin, submission, publication) starts where the previous one ended. What the
+        journal holds beyond the last one is either nothing, or one of two repairable windows, or
+        `TornAudit` (`identity_mismatch` plus a `faults/` record naming kind and digest):
+        (a) during validation, one pending step with its payload and binding retained and no
+        `submissions` record: the step is rebound at the snapshot before the pending write and the
+        caller resubmits the same payload, which continues validation; (b) between `store.begin`
+        and the begins retain: the `BeginRecord` is rebuilt from the two snapshots and retained;
+        (c) between `publish` and the publications retain, a stray binding, a step already
+        validated but unrecorded, and any other gap are torn.
+
+        Calls: a kill with unsubmitted `invoke` calls is resumed in the same epoch. A rebuilt
+        `SourceSession` starts at sequence 0 with new call ids, so the retained epoch is replayed
+        through its public `invoke` (the verifier's own method, deterministic); each replay must
+        equal the retained call but for its id, and the retained ids are kept by remapping them in
+        `submit_review` (`_alias`). A call killed before its retain is lost, so `invokes_used`
+        can be one less than before the kill.
+
+        Known limits: a second identical refused `publish` leaves one record (the two have one
+        digest), so a resume counts one publication; a submit that raised after `_limits` was
+        incremented, other than the unread-inputs refusal, is not counted; a JSON-lines run is not
+        resumed (it resumes as `trusted-python`); `phase` `failed` is rebuilt from the last
+        publication being `failed` with a publisher head, a pending publisher attempt or the
+        output directory still present."""
+        if not (directory / "current").is_file():
+            raise WorkflowError("not_permitted")
+        store = Execution(directory)
+        recorded = directory / AUDIT / "publications"
+        planned = _check_specs(
+            store.pack(),
+            specs,
+            publication_directory,
+            directory,
+            published=recorded.is_dir() and any(recorded.iterdir()),
+        )
+        if not any(OWNER_SPECS[m].kind == "analytical" for m in planned):
+            raise WorkflowError("not_permitted")
+        workflow = cls.__new__(cls)
+        workflow._setup(store, planned, publication_directory)
+        workflow._resume()
+        return workflow
+
+    def _resume(self) -> None:
+        store = self._store
+        got = _retained_audit(store)
+        chain = _chain_of(store)
+        position = {s.content_hash(): i for i, s in enumerate(chain)}
+        cursor = _covered(store, got, position)
+        deterministic = next(
+            (m for m in self._plan if self._specs[m].kind == "deterministic"), None
+        )
+        tail = _tail(store, chain, cursor, got, frozenset(self._analytical), deterministic)
+        if isinstance(tail, BeginRecord):
+            got.begins.append(tail)
+        self._rebuild_lists(got, position)
+        snapshot = chain[-1]
+        self._current_sha256 = snapshot.content_hash()
+        pending = [a for a in snapshot.attempts if a.status == "pending"]
+        if len(pending) > 1:
+            raise _torn(store, "journal", snapshot.content_hash())
+        if deterministic is not None:
+            self._rebuild_publication(snapshot, deterministic)
+        if (store.directory / AUDIT / "receipt.sha256").exists():
+            self._sealed, self._phase = True, "complete"
+        elif pending:
+            self._resume_pending(pending[0], tail if isinstance(tail, _Resubmit) else None, got)
+        else:
+            self._continue_walk(snapshot, deterministic)
+
+    def _rebuild_lists(self, got: _Retained, position: Mapping[str, int]) -> None:
+        """The receipt's lists, their order and the counters, from the retained records."""
+        store = self._store
+        for kind, items in (("begins", got.begins), ("refused-begin", got.refusals)):
+            for item in items:
+                if item.module_id not in self._analytical:
+                    raise _torn(store, kind, item.content_hash())
+        if len({r.module_id for r in got.refusals}) != len(got.refusals):
+            raise _torn(store, "refused-begin", got.refusals[0].content_hash())
+        self._begins = sorted(got.begins, key=lambda b: position[b.snapshot_before_sha256])
+        self._refusals = sorted(got.refusals, key=lambda r: self._plan.index(r.module_id))
+        self._submissions = sorted(got.submissions, key=lambda s: s.sequence)
+        for expected, submission in enumerate(self._submissions, 1):
+            if submission.sequence != expected:
+                raise _torn(store, "submissions", submission.content_hash())
+        self._calls = sorted(
+            got.calls, key=lambda c: (position[c.binding.snapshot_sha256], c.sequence)
+        )
+        self._reads = sorted(
+            got.reads, key=lambda r: (position[r.binding.snapshot_sha256], r.sequence)
+        )
+        self._publications = sorted(
+            got.publications,
+            key=lambda p: (position[p.snapshot_before_sha256], position[p.snapshot_after_sha256]),
+        )
+        if self._refusals:  # the first refusal names the submit outcome (L2)
+            self._refusal_kind = (
+                "not_authorized" if self._refusals[0].missing_commands else "blocked"
+            )
+        limits: Counter[tuple[str, str, str]] = Counter()
+        for call in self._calls:
+            limits[(call.binding.ticket_id, call.binding.step_id, "invoke")] += 1
+        for read in self._reads:
+            limits[(read.binding.ticket_id, read.binding.step_id, "read_inputs")] += 1
+        for submission in self._submissions:
+            bound = submission.binding.binding
+            limits[(bound.ticket_id, bound.step_id, "submit_review")] += 1
+        for unread in got.unread:  # a submit refused before any submission record
+            limits[(unread.binding.ticket_id, unread.binding.step_id, "submit_review")] += 1
+        self._limits = limits
+
+    def _rebuild_publication(self, snapshot: ExecutionSnapshot, publisher: str) -> None:
+        """`_model` and `_publisher_done`, as `publish` leaves them: the walk resumes after a
+        published module or a terminal refusal (the stop snapshot has no usable producer)."""
+        published = [p for p in self._publications if p.status == "published"]
+        if published:
+            if not {publisher, "CP-1"} <= {h.module_id for h in snapshot.heads}:
+                raise _torn(self._store, "publications", published[-1].content_hash())
+            model = _record(self._store, publisher)
+            self._model = ModelPublication(
+                ticket_id=model.ticket_id,
+                result_sha256=model.result_sha256,
+                cp1_result_sha256=_record(self._store, "CP-1").result_sha256,
+                files=published[-1].files,
+            )
+            self._publisher_done = True
+        elif self._publications and self._publications[-1].status == "refused":
+            stop = _snapshot(self._store, self._publications[-1].snapshot_before_sha256)
+            self._publisher_done = _terminal(stop.heads, stop.run, publisher)
+
+    def _failed_publication(self, snapshot: ExecutionSnapshot, publisher: str) -> bool:
+        """`publish` left the phase `failed`: its last record is `failed` and a publisher head, a
+        pending publisher attempt or the output directory remains (its cleanup did not finish)."""
+        if not self._publications or self._publications[-1].status != "failed":
+            return False
+        return (
+            any(h.module_id == publisher for h in snapshot.heads)
+            or any(a.module_id == publisher and a.status == "pending" for a in snapshot.attempts)
+            or (self._publication_directory is not None and self._publication_directory.exists())
+        )
+
+    def _resume_pending(self, attempt: Attempt, resubmit: _Resubmit | None, got: _Retained) -> None:
+        """Re-activate the journal's one pending attempt at its next step, as `submit_review` does
+        after a valid or an invalid step; its epoch is restored from the retained calls."""
+        if attempt.module_id not in self._analytical:
+            # A publisher attempt whose interruption failed: `publish` left the phase failed.
+            if attempt.ticket_id in {p.ticket_id for p in self._publications}:
+                self._phase = "failed"
+                self._resume_after = attempt.module_id
+                return
+            raise _torn(self._store, "publications", attempt.ticket_id)
+        done = sum(s.status == "valid" for s in attempt.steps)
+        steps = _sequence(attempt.module_id)
+        if done >= len(steps):
+            raise _torn(self._store, "journal", attempt.ticket_id)
+        if resubmit is None:
+            self._activate(attempt, steps[done])
+        else:
+            self._activate(resubmit.attempt, resubmit.step_id, at=resubmit.before)
+        self._restore_epoch()
+
+    def _restore_epoch(self) -> None:
+        """The active binding's retained calls are the open epoch, in sequence order. A source
+        session is rebuilt by replaying them (see `open`)."""
+        epoch = sorted(
+            (c for c in self._calls if c.binding == self._binding), key=lambda c: c.sequence
+        )
+        if [c.sequence for c in epoch] != list(range(1, len(epoch) + 1)):
+            raise _torn(self._store, "calls", epoch[0].content_hash())
+        if self._session is not None:
+            for call in epoch:
+                replayed = _parse(OwnerCall, self._session.invoke(call.tool, call.arguments))
+                if replayed.model_copy(update={"call_id": call.call_id}) != call:
+                    raise _torn(self._store, "calls", call.content_hash())
+                self._alias[replayed.call_id] = call.call_id
+        self._epoch_calls = epoch
+
+    def _continue_walk(self, snapshot: ExecutionSnapshot, publisher: str | None) -> None:
+        """No attempt is pending: continue from the last module the walk reached (begun or
+        refused), or from the publisher's stop. A refusal never retained is recomputed here."""
+        reached = [self._plan.index(b.module_id) for b in self._begins]
+        reached += [self._plan.index(r.module_id) for r in self._refusals]
+        if publisher is not None and self._publications:
+            reached.append(self._plan.index(publisher))
+        if not reached:  # killed between `Execution.create` and the first begin
+            self._begin(self._analytical[0])
+            return
+        last = self._plan[max(reached)]
+        if last == publisher:
+            if self._publisher_done:  # `publish` settled: the walk resumes after the stop
+                self._phase = "analytical"
+                self._advance(last)
+            else:
+                failed = publisher is not None and self._failed_publication(snapshot, publisher)
+                self._phase = "failed" if failed else "walked"
+                self._resume_after = last
+            return
+        attempts = [a for a in snapshot.attempts if a.module_id == last]
+        if attempts and attempts[-1].number == 0 and attempts[-1].issues:
+            self._begin(last)  # attempt 0 settled invalid: its one repair is begun next
+        else:
+            self._advance(last)
 
     @property
     def binding(self) -> OwnerBinding:
@@ -1231,17 +1707,28 @@ class OwnerWorkflow:
         self._store.pack(snapshot)
         return snapshot
 
-    def _activate(self, attempt: Attempt, step_id: str) -> None:
+    def _activate(
+        self, attempt: Attempt, step_id: str, *, at: ExecutionSnapshot | None = None
+    ) -> None:
+        """Bind the step at the journal's current snapshot, or (`open()` resuming a step whose
+        payload the journal already holds pending) at the earlier snapshot `at`: its binding, its
+        source session and its history are then those of `at`, the journal being ahead of them."""
         snapshot = self._store.read()
+        bound = snapshot if at is None else at
         self._spec = _step(self._specs, attempt.module_id, step_id)
-        self._binding = _owner_binding(snapshot, attempt, step_id)
+        self._binding = _owner_binding(bound, attempt, step_id)
         self._current_sha256 = snapshot.content_hash()
         self._session = (
-            SourceSession.from_execution(self._store, attempt.ticket_id, step_id)
+            SourceSession.from_execution(
+                self._store if at is None else _FrozenExecution(self._store, at),
+                attempt.ticket_id,
+                step_id,
+            )
             if self._spec.sources
             else None
         )
         self._epoch_calls = []
+        self._alias = {}
         _hist(self._store, self._binding)
 
     def _begin(self, module_id: str) -> bool:
@@ -1379,6 +1866,13 @@ class OwnerWorkflow:
             # G1-X §3: a step whose inputs are not "none" (every session-less step, and a step
             # with pack sources that also has a view) is read on its own binding first.
             if spec.inputs != "none" and not any(r.binding == self._binding for r in self._reads):
+                # The refusal counts against the submit cap (above) and changes nothing else:
+                # retained so that a resume rebuilds the count (Task 2 review Q1).
+                _retain(
+                    self._store,
+                    "unread-submits",
+                    UnreadSubmit(binding=self._binding, sequence=self._limits[key]),
+                )
                 raise WorkflowError("not_permitted")
             evidence = (
                 self._epoch_calls[-1].source_evidence if self._epoch_calls else SourceEvidence()
@@ -1393,7 +1887,9 @@ class OwnerWorkflow:
             )
             if (
                 self._session is not None
-                and _parse(OwnerSubmissionBinding, self._session.bind_submission(payload))
+                and self._unaliased(
+                    _parse(OwnerSubmissionBinding, self._session.bind_submission(payload))
+                )
                 != binding
             ):
                 raise WorkflowError("identity_mismatch")
@@ -1505,6 +2001,20 @@ class OwnerWorkflow:
                 "stored_payload_sha256": stored_hash,
                 "prefilled": list(paths),
             }
+
+    def _unaliased(self, bound: OwnerSubmissionBinding) -> OwnerSubmissionBinding:
+        """The session's binding with the call ids of a replayed epoch renamed to the retained
+        ones (`open()`); the identity when the session is the one that made the calls."""
+        if not self._alias:
+            return bound
+        return bound.model_copy(
+            update={
+                "call_ids": tuple(self._alias.get(i, i) for i in bound.call_ids),
+                "successful_call_ids": tuple(
+                    self._alias.get(i, i) for i in bound.successful_call_ids
+                ),
+            }
+        )
 
     def _refusal_code(self) -> str | None:
         if not self._refusals:

@@ -37,6 +37,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Context, Decimal, Inexact, InvalidOperation
 from pathlib import Path
+from typing import Literal
 
 from deploy_workflow.model.pricing import money_text, price_of, refusal_values
 
@@ -48,6 +49,7 @@ __all__ = [
     "OverrunStop",
     "RetryUsed",
     "RunStopped",
+    "StopKind",
     "money_text",
     "refusal_values",
 ]
@@ -97,6 +99,9 @@ class _Hold:
     usd: Decimal
     config_id: str
     retry_of: str | None
+
+
+StopKind = Literal["overrun", "unknown", "crash_left", "faulted"]
 
 
 @dataclass(frozen=True)
@@ -249,6 +254,14 @@ class Budget:
             return self._stops()
 
     @property
+    def stop_kind(self) -> StopKind | None:
+        """The kind of the stop that stands, or None (read only). An overrun is named before an
+        unknown charge, whatever order the call ids sort in."""
+        with self._lock:
+            found = self._stop_kind()
+            return None if found is None else found[0]
+
+    @property
     def settled_calls(self) -> tuple[str, ...]:
         """The sorted ids of the reservations settled as sent: a settled marker whose status is
         not ``released`` (a released hold was never sent)."""
@@ -286,23 +299,40 @@ class Budget:
             and self._settled[c].status == "settled"
         }
 
-    def _stops(self, *, except_unknown: str | None = None) -> str | None:
-        """Why the run is stopped, or None."""
+    def _stop_kind(self, *, except_unknown: str | None = None) -> tuple[StopKind, str] | None:
+        """The stop that stands, as (kind, call id or ""), or None. An overrun wins over an
+        unknown charge whatever order the call ids sort in."""
         if self._faulted:
-            return "a marker write failed"
+            return "faulted", ""
         if self._crash_left:
-            return "a reservation left unsettled by a crash"
+            return "crash_left", ""
         resolved = self._resolved()
+        unknown: str | None = None
         for call_id, settlement in self._settled.items():
             if settlement.status == "overrun":
-                return f"{call_id!r} overran its reservation"
+                return "overrun", call_id
             if (
-                settlement.status == "unknown"
+                unknown is None
+                and settlement.status == "unknown"
                 and call_id not in resolved
                 and call_id != except_unknown
             ):
-                return f"{call_id!r} has an unknown charge"
-        return None
+                unknown = call_id
+        return None if unknown is None else ("unknown", unknown)
+
+    def _stops(self, *, except_unknown: str | None = None) -> str | None:
+        """Why the run is stopped, or None."""
+        found = self._stop_kind(except_unknown=except_unknown)
+        if found is None:
+            return None
+        kind, call_id = found
+        if kind == "faulted":
+            return "a marker write failed"
+        if kind == "crash_left":
+            return "a reservation left unsettled by a crash"
+        if kind == "overrun":
+            return f"{call_id!r} overran its reservation"
+        return f"{call_id!r} has an unknown charge"
 
     # -- operations -------------------------------------------------------------------
 

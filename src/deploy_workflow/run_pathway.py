@@ -473,12 +473,12 @@ def _held(budget: Budget, resume: bool) -> _Fault | None:
     (it may have been sent, its charge unknown), an unknown charge, an overrun. The fresh run
     would have stopped with the loop's name for it; the resumed run stops before any step (the
     model is not called, nothing is published) and every charge is counted once in the spend."""
-    reason = budget.stop_reason if resume else None
-    if reason is None:
+    kind = budget.stop_kind if resume else None
+    if kind is None:
         return None
-    if budget.unsettled:
+    if kind == "crash_left":
         text = "RunStopped: a reservation left unsettled by a crash: " + ", ".join(budget.unsettled)
-    elif "overran" in reason:
+    elif kind == "overrun":
         text = "OverrunStop: the actual charge was above the reservation"
     else:
         text = "UnknownCharge: the charge of a sent call is unknown"

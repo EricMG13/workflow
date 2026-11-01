@@ -352,6 +352,7 @@ class ToolLoop:
         self._counts: Counter[tuple[str, str, str]] = Counter()
         self._retry_used = False
         self._first_issues: tuple[str, ...] = ()
+        self._wait_402_first = False  # a resumed step whose last record is its first 402
         self._seed(resumed)
 
     def _seed(self, resumed: bool) -> None:
@@ -383,9 +384,21 @@ class ToolLoop:
             raise ValueError("calls.jsonl holds more than one invocation digest for the step")
         if digests:
             self._digests[key] = digests.pop()
+        self._wait_402_first = self._last_was_first_402(binding)
         resubmitted = self._workflow.resumed_submission
         if resubmitted is not None and resubmitted["status"] == "invalid":
             self._first_issues = tuple(resubmitted["issues"])
+
+    def _last_was_first_402(self, binding: OwnerBinding) -> bool:
+        """The step's last record is a 402 (``recorded_stop`` already stopped a second one): the
+        killed process was in the Retry-After wait, so this request counts as resent once (L8)."""
+        mine = [
+            r
+            for r in self._log.records()
+            if (r["module_id"], r["step_id"], r["attempt"])
+            == (binding.module_id, binding.step_id, binding.attempt)
+        ]
+        return bool(mine) and mine[-1]["http_status"] == 402
 
     # -- the run ---------------------------------------------------------------------
 
@@ -456,9 +469,19 @@ class ToolLoop:
 
     # -- one logical request: the 402 wait and the one retry ---------------------------
 
+    def _wait_out_killed_402(self) -> bool:
+        """True once a resumed step whose last record is a first 402 has waited: that request is
+        then resent once already, so a second 402 stops. The record keeps no Retry-After; the
+        wait is the default."""
+        if not self._wait_402_first:
+            return False
+        self._wait_402_first = False
+        self._sleep(RETRY_AFTER_DEFAULT_S)
+        return True
+
     def _request(self, ctx: _Ctx, request: TurnRequest) -> _Attempt:
         outgoing = redacted_request(self._redactor, request)
-        resent_402 = False
+        resent_402 = self._wait_out_killed_402()
         retry_of: str | None = None
         while True:
             done = self._attempt(ctx, outgoing, retry_of)

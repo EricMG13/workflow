@@ -12,6 +12,7 @@ import os
 import socket
 import sys
 import traceback
+import uuid
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, NoReturn
@@ -23,6 +24,7 @@ from deploy_vii.preparation import prepare
 from deploy_workflow import run_inputs as run_inputs_module
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model import adapter as adapter_module
+from deploy_workflow.model import loop as loop_module
 from deploy_workflow.model import transport as transport_module
 from deploy_workflow.model.adapter import (
     LiveAdapter,
@@ -1298,9 +1300,9 @@ def test_a_first_402_record_is_not_a_stop_the_resume_waits_and_resends(
         kill_at_reserve(m, 2)  # killed while it waits out the 402
         with pytest.raises(Kill):
             run_pathway(**args)
-    sent = scripted_complete(monkeypatch, [credit(), credit()])
-    outcome = run_pathway(**args, resume=True)  # a new logical request: waits out one 402, resends
-    assert len(sent) == 2 and outcome.outcome == "stopped"
+    sent = scripted_complete(monkeypatch, [credit()])
+    outcome = run_pathway(**args, resume=True)  # the 402 was already resent once: one send more
+    assert len(sent) == 1 and outcome.outcome == "stopped"
     assert outcome.stopped_reason is not None and outcome.stopped_reason.startswith(
         "CreditExhausted"
     )
@@ -1520,3 +1522,72 @@ def test_the_identity_is_checked_under_the_lock(
     except rp.ResumeRefused:
         pass
     assert replaced.count("run.json") == 1, (inner, replaced)
+
+
+OVER = pack_helpers.Usage(input_tokens=100, output_tokens=10_000_000)
+
+
+@pytest.mark.parametrize("order", ["unknown-first", "overrun-first"])
+def test_an_overrun_after_a_retry_keeps_its_name_on_resume(
+    order: str, args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L7 (3b Low): a 5xx (unknown, retryable) then a retry that overruns. The fresh run stops
+    OverrunStop; after a kill before run.json the resume writes the same stop, whichever way the
+    two call ids sort."""
+    ids = iter([uuid.UUID(int=1), uuid.UUID(int=2)])
+    if order == "overrun-first":
+        ids = iter([uuid.UUID(int=2), uuid.UUID(int=1)])
+    monkeypatch.setattr(loop_module, "uuid4", lambda: next(ids))
+    with monkeypatch.context() as m:
+        scripted_complete(
+            m,
+            [
+                pack_helpers.failed("sent_unknown", "ProviderServerError", 502),
+                pack_helpers.ok(
+                    pack_helpers.tool_call("read_pages", source_id="s1", first_page=1, last_page=1),
+                    usage=OVER,
+                ),
+            ],
+        )
+        wrote = fresh_reason_dies_before_run_json(m)
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    assert wrote[0][1].startswith("OverrunStop")
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == [] and outcome.stopped_reason == wrote[0][1]
+
+
+def test_a_kill_during_the_402_wait_costs_at_most_one_more_send_after_the_wait(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L8 (3b Low): the last record of the step is a first 402 (the kill came in the Retry-After
+    wait), so the resumed loop counts it as resent once: it waits first, sends at most once, and a
+    second 402 stops. The fresh rule is two sends for one logical request."""
+
+    def credit() -> Any:
+        return pack_helpers.failed("sent_known", "CreditExhausted402", 402, retry_after=30)
+
+    def killed_sleep(seconds: float) -> NoReturn:
+        raise Kill("during the Retry-After wait")
+
+    with monkeypatch.context() as m:
+        first = scripted_complete(m, [credit()])
+        m.setattr("time.sleep", killed_sleep)
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    events: list[str] = []
+    monkeypatch.setattr("time.sleep", lambda seconds: events.append("wait"))
+    sent = scripted_complete(monkeypatch, [credit(), credit()])
+    real_complete = RecordedAdapter.complete
+
+    def complete(self: Any, request: Any, **k: Any) -> Any:
+        events.append("send")
+        return real_complete(self, request, **k)
+
+    monkeypatch.setattr(RecordedAdapter, "complete", complete)
+    outcome = run_pathway(**args, resume=True)
+    assert len(first) + len(sent) == 2  # one logical request: two sends in all
+    assert events[:2] == ["wait", "send"]  # the wait comes first
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("CreditExhausted")

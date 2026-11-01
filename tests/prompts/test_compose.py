@@ -498,6 +498,10 @@ class _Exploding:
         raise AssertionError("os.environ was read while composing")
 
 
+EVIDENCE_STEPS = ("relative_value", "market_implied")
+EVIDENCE_BLOCK = re.compile(r"<<<CONTEXT id=context-evidence .*?<<<END>>>", flags=re.DOTALL)
+
+
 ABSOLUTE = re.compile(r"(?<![\w.])/(?:Users|home|private|tmp|var|etc|opt)/")
 
 
@@ -514,6 +518,10 @@ def test_m6_no_sentinel_or_path_reaches_any_message(
     # Phase 6 Task 9: an enabled module's own pins are the one allowed place, inside the one
     # pinned-assumptions block (test_pinned_block.py checks that block holds no more than the pins).
     joined = re.sub(r"<<<CONTEXT id=pinned-assumptions .*?<<<END>>>", "", joined, flags=re.DOTALL)
+    # Phase 3 Task 4: for these two steps Python's context evidence rows are the other allowed place,
+    # inside the one fenced context-evidence block (test_context_evidence.py checks the block).
+    if step_id in EVIDENCE_STEPS:
+        joined = EVIDENCE_BLOCK.sub("", joined)
     leaked = [s for s in sentinels if s in joined]
     assert not leaked, leaked
     assert not ABSOLUTE.search(joined)
@@ -524,20 +532,37 @@ def test_m6_the_issuer_identity_the_run_carries_is_allowed(pack: PreparedPack) -
     assert pack.run.issuer_name in joined  # build dumps pack.run, so the name is not a leak
 
 
-def test_m6_cp3_module_context_market_evidence_is_the_one_exempt_entry(pack: PreparedPack) -> None:
-    """Phase 3 Task 1 adds ``context_market_evidence`` to CP-3's CONTEXT (the ruled exemption)
-    until Phase 3 Task 4 moves it into the fenced block. The test holds with or without it."""
+def test_m6_the_evidence_block_is_the_one_exemption_of_two_steps(pack: PreparedPack) -> None:
+    """Phase 3 Task 4: Python's context evidence rows (``context_market_evidence``) sit in the one
+    fenced ``context-evidence`` block of ``relative_value``; sentinels may appear inside it and
+    nowhere else. The same passthrough under any other module-context key is a leak."""
     ctx, sentinels = sentinel_context(pack)
-    exempt = "context_market_evidence"
-    module_context = {**CP3_MODULE_CONTEXT, exempt: [{"issuer_market": "EXEMPT-ONLY"}]}
-    joined = "\n".join(
-        m.text
-        for m in compose(
-            request_for("relative_value", pack, context=ctx, module_context=module_context)
+    rows = [{"row": "c01", "provider": sentinels[0], "figures": {"bid": sentinels[1]}}]
+    messages = compose(
+        request_for(
+            "relative_value",
+            pack,
+            context=ctx,
+            module_context={**CP3_MODULE_CONTEXT, "context_market_evidence": rows},
         )
     )
-    assert "EXEMPT-ONLY" in joined  # the exempt entry is the module context's, passed through
-    assert not [s for s in sentinels if s in joined]
+    joined = "\n".join(m.text for m in messages)
+    assert (
+        sentinels[0] in joined and sentinels[1] in joined
+    )  # the rows are Python's, passed through
+    assert len(EVIDENCE_BLOCK.findall(joined)) == 1
+    outside = EVIDENCE_BLOCK.sub("", joined)
+    assert not [s for s in sentinels[:2] if s in outside]  # only inside the block
+    leaky = compose(
+        request_for(
+            "relative_value",
+            pack,
+            context=ctx,
+            module_context={**CP3_MODULE_CONTEXT, "cp2_evidence_rows": rows},
+        )
+    )
+    outside = EVIDENCE_BLOCK.sub("", "\n".join(m.text for m in leaky))
+    assert sentinels[0] in outside  # any other key stays visible to the M6 strip
 
 
 # ------------------------------------------------------------------- pins (gated off)

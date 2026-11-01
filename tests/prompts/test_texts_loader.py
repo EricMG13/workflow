@@ -12,7 +12,6 @@ from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_tex
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
-from deploy_workflow.owners import cp3d
 from deploy_workflow.prompts import NoPrompt, compose
 
 compose_module: Any = importlib.import_module("deploy_workflow.prompts.compose")
@@ -96,7 +95,9 @@ def test_existing_is_the_contracts_plus_the_text_stems() -> None:
 # Frozen at HEAD (before the loader): sha256 of the JSON of each STEP_CONTRACTS step's composed
 # messages on the o2 pack. Re-frozen by O6 Task 5 (T5-D) for the [compose.<id>] tokens and CP-0's
 # G8 block; tests/prompts/test_g8.py keeps the old digests and shows that removing exactly those
-# gives the old message.
+# gives the old message. relative_value was re-frozen by Phase 3 Task 4 (the CP3_EVIDENCE_RULE
+# reword, B17 item 3); tests/prompts/test_context_evidence.py keeps its old digest and shows that
+# putting back the old rule text and removing the evidence block gives the old message.
 def test_the_twelve_existing_steps_compose_byte_identically(pack: PreparedPack) -> None:
     got = {}
     for step in sorted(STEP_CONTRACTS):
@@ -116,60 +117,15 @@ FROZEN: dict[str, str] = {
     "narrative": ("d4677ff1aa1cbb825ca73c54ecd6743ed53164f8d072764bba0a7ff2035499a0"),
     "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
-    "relative_value": ("b8693476b0f4e65871ddb987d1288c2a2f24641ee24a68eb90b4fa1c13454f52"),
+    "relative_value": ("dc90b63a7ee77bd4482fdadba8b6e25a5492951897753e2e4a828af3ea9dd729"),
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
     "source_readiness": ("f79002b0b6dba89b493fdd93f8baf1c8aa914bd71102370c1d0a6e6fca62f2b6"),
 }
 
 
-def context_text(name: str) -> str:
-    return compose(request_for(NEW, ctx.context_pack(name), context=None))[1].text
-
-
-def rows_block(message: str) -> list[dict[str, str]]:
-    start = message.index("<<<CONTEXT id=context-rows")
-    body = message[message.index(">>>", start) + 3 : message.index("<<<END>>>", start)]
-    return json.loads(body)  # type: ignore[no-any-return]
-
-
-@pytest.mark.parametrize("name", ["observed-and-talk", "stale", "unmatched"])
-def test_the_block_lists_the_offered_rows_in_order(texts: Path, name: str) -> None:
-    (texts / f"{NEW}.md").write_text(TEXT, encoding="utf-8")
-    offers = cp3d.context_offers(ctx.context_pack(name))
-    expected = [
-        {
-            "row": row,
-            "kind": o.kind,
-            "facility_id": offers.facilities[row],
-            "as_of": offers.dates[row].isoformat(),
-        }
-        for row, o in offers.observations.items()
-    ]
-    assert expected
-    assert rows_block(context_text(name)) == expected
-
-
-@pytest.mark.parametrize("name", ["observed-and-talk", "stale", "unmatched"])
-def test_the_block_holds_no_figure(texts: Path, name: str) -> None:
-    (texts / f"{NEW}.md").write_text(TEXT, encoding="utf-8")
-    message = context_text(name)
-    levels = {
-        o.level_text for o in cp3d.context_offers(ctx.context_pack(name)).observations.values()
-    }
-    assert levels
-    for level in levels:
-        assert level not in message
-
-
-def test_no_context_source_no_block(texts: Path, pack: PreparedPack) -> None:
-    (texts / f"{NEW}.md").write_text(TEXT, encoding="utf-8")
-    assert "context-rows" not in compose(request_for(NEW, pack))[1].text
-
-
-def test_offer_errors_no_block(texts: Path) -> None:
-    (texts / f"{NEW}.md").write_text(TEXT, encoding="utf-8")
-    assert cp3d.context_offers(ctx.context_pack("bad-bytes")).errors
-    assert "context-rows" not in context_text("bad-bytes")
+# The CP-3D rows block (O6-P24 ``context-rows``: id, kind, facility, date only) became Python's
+# one fenced ``context-evidence`` block in Phase 3 Task 4 (it now carries the quote and level text
+# too, for the model to refer to by row id); tests/prompts/test_context_evidence.py checks it.
 
 
 def test_contract_steps_ignore_a_loaded_text(texts: Path) -> None:

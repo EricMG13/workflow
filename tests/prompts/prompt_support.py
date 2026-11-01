@@ -31,6 +31,16 @@ CP3_MODULE_CONTEXT = {
     "cp1_facts": [{"ref": "fact-1", "label": "Revenue", "shown": "120"}],
 }
 
+# The CP3_EVIDENCE_RULE text before the Phase 3 Task 4 reword (B17 item 3), verbatim from 3881082d:
+# the answer key's other half for the relative_value digests (OLD_FROZEN, OLD_RELATIVE_VALUE).
+OLD_EVIDENCE_RULE = (
+    "Quotes appear only in `market_evidence`: each observed or indicative_talk row quotes one "
+    "span of a source listed under `market_evidence_sources` in the CONTEXT block, its "
+    "`quote.source_id` equal to its `source_id`, one row per quoted span. A `none` row quotes "
+    "nothing (a null `quote`) and states its `limitation`. A `basis.quotes` entry repeats a "
+    "`market_evidence` row's quote exactly."
+)
+
 
 def make_pack(root: Path) -> PreparedPack:
     (root / "recordings").mkdir(parents=True)

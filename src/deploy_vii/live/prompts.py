@@ -583,8 +583,10 @@ CP3_EVIDENCE_RULE = (
     "Quotes appear only in `market_evidence`: each observed or indicative_talk row quotes one "
     "span of a source listed under `market_evidence_sources` in the CONTEXT block, its "
     "`quote.source_id` equal to its `source_id`, one row per quoted span. A `none` row quotes "
-    "nothing (a null `quote`) and states its `limitation`. A `basis.quotes` entry repeats a "
-    "`market_evidence` row's quote exactly."
+    "nothing (a null `quote`) and states its `limitation`. A `basis` refers to Python's context "
+    "rows by id (`basis.context_rows`) and never copies their figures; a `basis.quotes` entry "
+    "still repeats a `market_evidence` row's quote exactly, for the rows of a `third_party` source "
+    "only."
 )
 CP3_TALK_RULE = (
     "Indicative talk is never a market level: an `observed` row never quotes talk wording (talk, "

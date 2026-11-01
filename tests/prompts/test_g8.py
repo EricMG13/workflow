@@ -6,10 +6,10 @@ import json
 import re
 
 import pytest
-from prompt_support import request_for
+from prompt_support import OLD_EVIDENCE_RULE, request_for
 
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
-from deploy_vii.live.prompts import STEP_CONTRACTS
+from deploy_vii.live.prompts import CP3_EVIDENCE_RULE, STEP_CONTRACTS
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import live_consumers
 from deploy_workflow.prompts import compose, rules
@@ -123,12 +123,14 @@ def test_every_token_is_followed_by_its_own_rules_statement(
 def test_the_tokens_and_the_g8_block_are_the_only_change_to_the_frozen_message(
     pack: PreparedPack, step_id: str
 ) -> None:
-    """T5-D: remove the ``[compose.<id>] `` tokens and, for CP-0, the G8 line, and the message is
-    the one the old frozen digest pins."""
+    """T5-D: remove the ``[compose.<id>] `` tokens and, for CP-0, the G8 line, and (Phase 3 Task 4)
+    put back CP-3's old evidence rule, and the message is the one the old frozen digest pins."""
     messages = compose(request_for(step_id, pack))
     system = messages[0].text
     if step_id == "source_readiness":
         system = system.replace(g8_line(system) + "\n", "")
     system = TOKEN.sub("", system)
+    # Phase 3 Task 4 (B17 item 3): CP-3's evidence rule was reworded; put the old text back.
+    system = system.replace(CP3_EVIDENCE_RULE, OLD_EVIDENCE_RULE)
     body = json.dumps([[messages[0].role, system], [messages[1].role, messages[1].text]])
     assert hashlib.sha256(body.encode()).hexdigest() == OLD_FROZEN[step_id]

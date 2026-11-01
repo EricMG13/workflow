@@ -40,7 +40,12 @@ from deploy_workflow.financial_workflow import MAX_CALLS
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import StepSpec
 from deploy_workflow.owners import pins as owner_pins
-from deploy_workflow.owners.cp3d import context_offers
+from deploy_workflow.owners.cp3d import (
+    MarketContext,
+    Upstream,
+    context_observations_data,
+    context_offers,
+)
 from deploy_workflow.prompts.fence import (
     UntrustedItem,
     data_block,
@@ -119,8 +124,13 @@ O6_PINS = (
 PINS_ENABLED: frozenset[str] = frozenset({"CP-2A", "CP-2D", "CP-2E", "CP-3C", "CP-3D", "CP-4C"})
 PINS_ID = "pinned-assumptions"
 REPAIR_ID = "prior-validation-issues"
-ROWS_ID = "context-rows"
+EVIDENCE_ID = "context-evidence"
+RELATIVE_VALUE = "relative_value"
 MARKET_IMPLIED = "market_implied"
+# The key CP-3's module context carries Python's rows under (the model-facing text names it), and
+# the key CP-3D's rows get inside the block.
+CP3_EVIDENCE_KEY = "context_market_evidence"
+CP3D_EVIDENCE_KEY = "context_observations"
 TEXTS_DIR = Path(__file__).parent / "texts"  # the new steps' texts, <step_id>.md (O6 Task 4)
 _BLOCK_NAMES = re.compile(r"(SOURCE|CONTEXT) block id=([^\s(),;]+)")
 
@@ -341,6 +351,15 @@ def _system(request: PromptRequest, contract: str, pins_present: bool) -> str:
     return "\n".join(lines)
 
 
+def _without_evidence(request: PromptRequest) -> Mapping[str, object] | None:
+    """The module context less Python's context evidence rows, which have their own fenced block
+    (``_evidence_block``): the rows move out of the pack facts, they are not copied."""
+    module_context = request.module_context
+    if module_context is None or request.step_id != RELATIVE_VALUE:
+        return module_context
+    return {k: v for k, v in module_context.items() if k != CP3_EVIDENCE_KEY}
+
+
 def _pack_facts(request: PromptRequest) -> str:
     """Python-stated facts from public ``PreparedPack`` fields; for ``source_readiness`` the
     consumers to judge; for ``business_context`` its consumers and the CP-1 facts a figure may
@@ -376,13 +395,13 @@ def _pack_facts(request: PromptRequest) -> str:
         ]
     if step_id == BUSINESS_CONTEXT:
         body.update(context_block(pack, request.cp1_facts))
-    if request.module_context is not None:
-        if clash := sorted(set(body) & set(request.module_context)):
+    if (module_context := _without_evidence(request)) is not None:
+        if clash := sorted(set(body) & set(module_context)):
             raise PromptError(
                 f"the module context of step {step_id} would replace the pack facts: "
                 + ", ".join(clash)
             )
-        body.update(request.module_context)
+        body.update(module_context)
     return json.dumps(body, indent=1, sort_keys=True)
 
 
@@ -403,25 +422,47 @@ def _check(request: PromptRequest) -> str:
     return contract
 
 
-def _context_rows_block(request: PromptRequest) -> str | None:
-    """O6-P24: the context rows Python offers a market_implied step, by id, kind, facility and
-    date, so the model can cite one by ``context_row``; no quote text, level or figure. None for
-    another step, a pack with no context source, or one whose context cannot be read."""
-    if request.step_id != MARKET_IMPLIED:
-        return None
-    offers = context_offers(request.pack)
+def _cp3d_rows(pack: PreparedPack) -> list[dict[str, str | None]] | None:
+    """The observations the pack's context file offers CP-3D, as the owner's
+    ``context_observations_data`` lists them. None for a pack with no context source, or one whose
+    context cannot be read. Only the context fields of ``MarketContext`` are read here; the pack
+    pages and CP-0 authority are the validator's, and the function reads none of them."""
+    offers = context_offers(pack)
     if offers.errors or not offers.observations:
         return None
-    rows = [
-        {
-            "row": row,
-            "kind": observation.kind,
-            "facility_id": offers.facilities[row],
-            "as_of": offers.dates[row].isoformat(),
-        }
-        for row, observation in offers.observations.items()
-    ]
-    return data_block("CONTEXT", ROWS_ID, json.dumps(rows, indent=1))
+    context = MarketContext(
+        pages={},
+        names={},
+        third_party=frozenset(),
+        published={},
+        run_as_of=pack.run.as_of,
+        context_quote_rows=offers.quote_rows,
+        context_observations=offers.observations,
+        context_facilities=offers.facilities,
+        context_dates=offers.dates,
+    )
+    return context_observations_data(Upstream(context, ()))
+
+
+def _evidence_body(request: PromptRequest) -> dict[str, object] | None:
+    if request.step_id == RELATIVE_VALUE:
+        module_context = request.module_context
+        if module_context is None or CP3_EVIDENCE_KEY not in module_context:
+            return None
+        return {CP3_EVIDENCE_KEY: module_context[CP3_EVIDENCE_KEY]}
+    if request.step_id == MARKET_IMPLIED:
+        rows = _cp3d_rows(request.pack)
+        return None if rows is None else {CP3D_EVIDENCE_KEY: rows}
+    return None
+
+
+def _evidence_block(request: PromptRequest) -> str | None:
+    """Phase 3 Task 4: Python's context evidence rows (CP-3's ``context_market_evidence``, CP-3D's
+    ``context_observations_data``) as one fenced block. The rows are the context file's, which is
+    untrusted text: the body goes through ``data_block``'s refusal of delimiters. The model refers to
+    a row by id and never copies its figures. None when the step has no rows to show."""
+    body = _evidence_body(request)
+    return None if body is None else data_block("CONTEXT", EVIDENCE_ID, json.dumps(body, indent=1))
 
 
 def compose(request: PromptRequest) -> tuple[Message, ...]:
@@ -438,8 +479,8 @@ def compose(request: PromptRequest) -> tuple[Message, ...]:
         blocks.append(run_context_block(request.context))
     if pins is not None:
         blocks.append(pins)
-    if (rows := _context_rows_block(request)) is not None:
-        blocks.append(rows)
+    if (evidence := _evidence_block(request)) is not None:
+        blocks.append(evidence)
     if request.untrusted:
         blocks.append(untrusted_evidence_block(request.untrusted))
     if request.issues:

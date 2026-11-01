@@ -7,12 +7,14 @@ distinctive sentinel written into every leaf of `quotes`, `ratings`, `deal_terms
 hold for every step:
 
 1. the system message never changes with the context values;
-2. no sentinel appears in the user message more often than its original value did, except the
-   O6-P24 allowance: `quotes[i].facility_id` and `quotes[i].as_of` inside the `context-rows`
-   CONTEXT block of `market_implied`; and, for an enabled module (Phase 6 Task 9), the
-   `assumptions.<module>` values inside that step's own `pinned-assumptions` CONTEXT block.
+2. no sentinel appears in the user message more often than its original value did, except two
+   allowances kept apart: Python's context evidence rows (Phase 3 Task 4: `quotes[i]` leaves of
+   `market_implied`, and `quotes`/`deal_terms` leaves of `relative_value`) inside that step's one
+   `context-evidence` CONTEXT block; and, for an enabled module (Phase 6 Task 9), the
+   `assumptions.<module>` values, never a `rationale`, inside that step's own
+   `pinned-assumptions` CONTEXT block.
 
-The pack carries the context as its own `context` source, so `context-rows` is built for
+The pack carries the context as its own `context` source, so `context-evidence` is built for
 `market_implied` (the shared o2 pack has no quotes). The whole grid (every readable context
 file x every inventory step) runs in about 15 seconds.
 """
@@ -44,7 +46,9 @@ SKIP = {
     ("run", "pathway"),
     ("run", "case_kind"),
 }
-ALLOWED = {"facility_id", "as_of"}
+# The context sections whose Python-built rows sit in a step's `context-evidence` block (Phase 3
+# Task 4): CP-3D offers the context's quotes; CP-3 offers quotes and deal talk.
+EVIDENCE_SECTIONS = {"market_implied": ("quotes",), "relative_value": ("quotes", "deal_terms")}
 Path_ = tuple[Any, ...]
 BLOCK = re.compile(r"<<<([A-Z_]+) id=([^\s>]+)[^>]*>>>")
 
@@ -147,14 +151,19 @@ def block_of(text: str, pos: int) -> tuple[str, str] | None:
 
 
 def outside(user: str, pat: re.Pattern[str], leaf: Path_, step: str) -> int:
-    """Occurrences of the sentinel outside the allowances: the O6-P24 rows, and the step's own
-    module's pins inside the `pinned-assumptions` block (no other module's, no other block)."""
-    rows = leaf[0] == "quotes" and leaf[-1] in ALLOWED
-    own = leaf[0] == "assumptions" and leaf[1] == module_of(step).lower().replace("-", "")
+    """Occurrences of the sentinel outside the two allowances, which stay separate: the context
+    rows of the step's own evidence sections inside the `context-evidence` block, and the step's
+    own module's pins (never its `rationale`) inside the `pinned-assumptions` block."""
+    rows = leaf[0] in EVIDENCE_SECTIONS.get(step, ())
+    own = (
+        leaf[0] == "assumptions"
+        and leaf[1] == module_of(step).lower().replace("-", "")
+        and leaf[-1] != "rationale"
+    )
     count = 0
     for m in pat.finditer(user):
         block = block_of(user, m.start())
-        ok = (rows and block == ("CONTEXT", "context-rows")) or (
+        ok = (rows and block == ("CONTEXT", "context-evidence")) or (
             own and block == ("CONTEXT", "pinned-assumptions")
         )
         count += 0 if ok else 1
@@ -184,7 +193,7 @@ def trace_file(
     for step in steps:
         sys0, user0 = messages(step, packs[0], ctxs[0])
         sys1, user1 = messages(step, packs[1], ctxs[1])
-        out.rows_blocks += "context-rows" in user1
+        out.rows_blocks += "context-evidence" in user1
         if sys0 != sys1:
             out.leaks.append(f"{path.name} {step}: the system message differs with the context")
         for value, leaf in kept.items():
@@ -214,7 +223,7 @@ def test_no_context_value_reaches_the_system_message_or_a_step_outside_the_allow
     files = context_files()
     out = run_trace(pack, files, tuple(inventory()))
     assert out.files >= 60, "the real context files were not found"
-    assert out.rows_blocks > 0, "no market_implied composition built the context-rows block"
+    assert out.rows_blocks > 0, "no market_implied composition built the context-evidence block"
     assert out.leaks == []
 
 

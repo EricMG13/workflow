@@ -1,0 +1,380 @@
+{
+  "schema_version": "valuation-context-owner-cases/1",
+  "scope": "Phase 7 Task 0 oracle: EV/EBITDA valuation from the context file (CP-1C T1C.9-T1C.11, CP-4C multiple binding)",
+  "status": "prepared; not reviewed; not frozen; not pinned (cases/PINS.json and cases/pins.py PATTERNS are changed at the freeze step)",
+  "raw_rule": "contexts are the literal bytes the form writes (json indent 2, LF, trailing LF, ensure_ascii False); the `context` source sha256 is sha256 of those bytes; spans line:N via splitlines",
+  "inputs_pinned": {
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+    "cases/cp1c-owner/manifest.json": "6f0b5489d56af478704f5f78f20f20ebce7e95c5ca07d9c09a01db87540ad4a5",
+    "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
+    "cases/cp1c-owner/expected.json": "2165d28d06e80347b8ea9c5a78350a1a41bb60db4b140cfce3e4256bccc57862",
+    "cases/cp4c-owner/manifest.json": "62102d7dae0507320e1ae09517322c2db9fdb94b04d0b8f9610f61892ac6dfd8",
+    "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
+    "cases/cp4c-owner/expected.json": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6",
+    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
+  },
+  "packs": {
+    "closed-chain": {
+      "sources": [
+        "identity",
+        "financial",
+        "legal-covenants",
+        "context"
+      ],
+      "identity": {
+        "path": "cases/financial/manifest.json",
+        "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+      },
+      "financial": {
+        "path": "cases/financial/manifest.json",
+        "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "scope_pages": "page:4 (balance sheet rows) read; page:5 not cited"
+      },
+      "legal-covenants": {
+        "path": "cases/legal/manifest.json",
+        "case": "legal-current-matching-definition",
+        "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec"
+      },
+      "context": "contexts/<case>.json via context.prepare (the literal bytes; sha256 in contexts.<case>.sha256)",
+      "base": "cases/cp4c-owner/manifest.json positive pack plus the context source"
+    },
+    "peers": {
+      "sources": [
+        "identity",
+        "financial",
+        "peers",
+        "context"
+      ],
+      "identity": {
+        "path": "cases/financial/manifest.json",
+        "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+      },
+      "financial": {
+        "path": "cases/financial/manifest.json",
+        "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "scope_pages": "page:4 (balance sheet rows) read; page:5 not cited"
+      },
+      "peers": {
+        "path": "cases/cp1c-owner/manifest.json",
+        "case": "synthetic_source.positive",
+        "sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b"
+      },
+      "context": "contexts/credit-plus-comps.json via context.prepare",
+      "base": "cases/cp1c-owner/manifest.json positive pack plus the context source"
+    }
+  },
+  "contexts": {
+    "auto-public": {
+      "file": "contexts/auto-public.json",
+      "pack": "closed-chain",
+      "sha256": "2b4998fb970bf6321fe15e0ce5540bdd2d93fc7aaef9f7b712cdd1e49409266d",
+      "run": {
+        "run_id": "valctx-auto-public-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "auto-thin": {
+      "file": "contexts/auto-thin.json",
+      "pack": "closed-chain",
+      "sha256": "ee1e4d4b447534a8abaec80d988e6901ae661d68e4e5a12a0bf7123604e19f87",
+      "run": {
+        "run_id": "valctx-auto-thin-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "public-thin": {
+      "file": "contexts/public-thin.json",
+      "pack": "closed-chain",
+      "sha256": "c0f6e57a66edbccd56bde105a096dd140f584f465bd7934df80c146c67f3cb99",
+      "run": {
+        "run_id": "valctx-public-thin-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "precedents": {
+      "file": "contexts/precedents.json",
+      "pack": "closed-chain",
+      "sha256": "44d8f13c2a60e5474fc4857a1944387c61dd0509acf1dbc82092d3717e5b77b9",
+      "run": {
+        "run_id": "valctx-precedents-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "blend": {
+      "file": "contexts/blend.json",
+      "pack": "closed-chain",
+      "sha256": "25c354ae9c098f54ef5a2b72e21aec7ba082c27249566b95233a9ba7161bf89c",
+      "run": {
+        "run_id": "valctx-blend-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "blend-thin": {
+      "file": "contexts/blend-thin.json",
+      "pack": "closed-chain",
+      "sha256": "1776832cfda716553c089bfea27a66b74818f4ef7492fda10c1f0176343f9862",
+      "run": {
+        "run_id": "valctx-blend-thin-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "issuer-trading": {
+      "file": "contexts/issuer-trading.json",
+      "pack": "closed-chain",
+      "sha256": "63830f7c4503c950a48e2e444fb0afacc0590e322bc715d2b26516079d209d52",
+      "run": {
+        "run_id": "valctx-issuer-trading-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "issuer-trading-ntm": {
+      "file": "contexts/issuer-trading-ntm.json",
+      "pack": "closed-chain",
+      "sha256": "808e9b46d73823708283a23e73d31eee6a261d209111be347c5265ea957061bb",
+      "run": {
+        "run_id": "valctx-issuer-trading-ntm-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "user-multiple": {
+      "file": "contexts/user-multiple.json",
+      "pack": "closed-chain",
+      "sha256": "e17a46bdca76ac51eaabef56e610b5671dc51078fcafd25e5dd496fb1121f00b",
+      "run": {
+        "run_id": "valctx-user-multiple-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "user-list": {
+      "file": "contexts/user-list.json",
+      "pack": "closed-chain",
+      "sha256": "76484b05df453b04a235197021c0e1c9364a025e861eacd9c3911785c0e658f9",
+      "run": {
+        "run_id": "valctx-user-list-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "dr-public": {
+      "file": "contexts/dr-public.json",
+      "pack": "closed-chain",
+      "sha256": "3b10d52fb21aeb4616298a16dbfcf6919b931e7c118476651c3f416c191be0c9",
+      "run": {
+        "run_id": "valctx-dr-public-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "credit-plus-comps": {
+      "file": "contexts/credit-plus-comps.json",
+      "pack": "peers",
+      "sha256": "2b4998fb970bf6321fe15e0ce5540bdd2d93fc7aaef9f7b712cdd1e49409266d",
+      "run": {
+        "run_id": "valctx-credit-plus-comps-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C"
+        ]
+      }
+    },
+    "auto-public-private": {
+      "file": "contexts/auto-public-private.json",
+      "pack": "closed-chain",
+      "sha256": "2574b55dce398a88fca3b8038c55c2b2538286a9520a67b2389d8644e26f5ecd",
+      "run": {
+        "run_id": "valctx-auto-public-private-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "private",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "pin-vs-selection": {
+      "file": "contexts/pin-vs-selection.json",
+      "pack": "closed-chain",
+      "sha256": "63abdb0728e549da4b02fbad22f9e6d6435c4f340a7c00d3ba28767cf76b7eea",
+      "run": {
+        "run_id": "valctx-pin-vs-selection-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    },
+    "window-edges": {
+      "file": "contexts/window-edges.json",
+      "pack": "closed-chain",
+      "sha256": "1b170618fb2a2b83351151fb5c7c27ceaf1daa738486e329ebc13a70e2f991e9",
+      "run": {
+        "run_id": "valctx-window-edges-v1",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-1C",
+          "CP-4C"
+        ]
+      }
+    }
+  },
+  "edges": {
+    "decision": "Phase 7 Design 11-12: CP-4C gains CP-1C as an optional upstream; the distressed preset gains CP-1C",
+    "plan_order_both": [
+      "CP-0",
+      "CP-1",
+      "CP-1C",
+      "CP-2A",
+      "CP-4",
+      "CP-2G",
+      "CP-4C"
+    ],
+    "plan_order_cp1c": [
+      "CP-0",
+      "CP-1",
+      "CP-1C"
+    ],
+    "derivation": "registry.plan's layering over methodology.json (required lists asserted at build) with the optional edge CP-4C -> CP-1C added"
+  },
+  "builder": {
+    "file": "builder/build.py",
+    "sha256": "f1c1b425956df8a55633ecaea60e930a1c6c116b749419b61c895196e54c3403",
+    "run": "python3 -I cases/valuation-context-owner/builder/build.py"
+  },
+  "files_sha256": {
+    "contexts/auto-public-private.json": "2574b55dce398a88fca3b8038c55c2b2538286a9520a67b2389d8644e26f5ecd",
+    "contexts/auto-public.json": "2b4998fb970bf6321fe15e0ce5540bdd2d93fc7aaef9f7b712cdd1e49409266d",
+    "contexts/auto-thin.json": "ee1e4d4b447534a8abaec80d988e6901ae661d68e4e5a12a0bf7123604e19f87",
+    "contexts/blend-thin.json": "1776832cfda716553c089bfea27a66b74818f4ef7492fda10c1f0176343f9862",
+    "contexts/blend.json": "25c354ae9c098f54ef5a2b72e21aec7ba082c27249566b95233a9ba7161bf89c",
+    "contexts/credit-plus-comps.json": "2b4998fb970bf6321fe15e0ce5540bdd2d93fc7aaef9f7b712cdd1e49409266d",
+    "contexts/dr-public.json": "3b10d52fb21aeb4616298a16dbfcf6919b931e7c118476651c3f416c191be0c9",
+    "contexts/issuer-trading-ntm.json": "808e9b46d73823708283a23e73d31eee6a261d209111be347c5265ea957061bb",
+    "contexts/issuer-trading.json": "63830f7c4503c950a48e2e444fb0afacc0590e322bc715d2b26516079d209d52",
+    "contexts/pin-vs-selection.json": "63abdb0728e549da4b02fbad22f9e6d6435c4f340a7c00d3ba28767cf76b7eea",
+    "contexts/precedents.json": "44d8f13c2a60e5474fc4857a1944387c61dd0509acf1dbc82092d3717e5b77b9",
+    "contexts/public-thin.json": "c0f6e57a66edbccd56bde105a096dd140f584f465bd7934df80c146c67f3cb99",
+    "contexts/user-list.json": "76484b05df453b04a235197021c0e1c9364a025e861eacd9c3911785c0e658f9",
+    "contexts/user-multiple.json": "e17a46bdca76ac51eaabef56e610b5671dc51078fcafd25e5dd496fb1121f00b",
+    "contexts/window-edges.json": "1b170618fb2a2b83351151fb5c7c27ceaf1daa738486e329ebc13a70e2f991e9",
+    "expected.json": "6790ea42190e3d92ae163c5546f78eb7519169f40e639ace444cdcef3c7f4cd7"
+  },
+  "files_sha256_note": "every output except manifest.json and README.md (README is hand-written)"
+}

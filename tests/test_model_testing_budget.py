@@ -7,6 +7,7 @@ from typing import Any, Literal
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from pydantic import ValidationError
 
 from deploy_workflow.model.record import CallRecord
 from deploy_workflow.model_testing.budget import (
@@ -182,7 +183,22 @@ def test_unknown_charge_offline_does_not_stop() -> None:
     [("-50", "1", "computed"), (None, "-40", "unknown"), ("1", "-1", "computed")],
 )
 def test_negative_money_refused(settled: str | None, reserved: str, status: str) -> None:
-    batch: Runs = [(meta(), [call("sol-medium", settled, reserved=reserved, status=status)])]
+    with pytest.raises(ValidationError):
+        call("sol-medium", settled, reserved=reserved, status=status)
+    # CallRecord refuses negatives itself; model_copy models a record that bypassed it.
+    valid = call(
+        "sol-medium",
+        None if settled is None else str(abs(Decimal(settled))),
+        reserved=str(abs(Decimal(reserved))),
+        status=status,
+    )
+    bad = valid.model_copy(
+        update={
+            "settled_usd": None if settled is None else Decimal(settled),
+            "reserved_usd": Decimal(reserved),
+        }
+    )
+    batch: Runs = [(meta(), [bad])]
     with pytest.raises(ValueError, match=r"run-1.*CP-1.*step-1.*0"):
         account_spend(batch, "openai")
     with pytest.raises(ValueError, match="run-1"):

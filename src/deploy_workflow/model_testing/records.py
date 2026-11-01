@@ -13,7 +13,7 @@ from typing import Literal
 from pydantic import ConfigDict, ValidationError, model_validator
 
 from deploy_vii.contracts import Contract, PathwayId
-from deploy_workflow.model.record import CallRecord, _strings
+from deploy_workflow.model.record import CallRecord, strings
 from deploy_workflow.model.redact import KEY_PATTERN
 from deploy_workflow.model_testing.configs import CONFIGS
 
@@ -54,7 +54,7 @@ class RunMeta(Contract):
     def _checked(self) -> RunMeta:
         if not (self.cap_usd.is_finite() and self.cap_usd > 0):
             raise ValueError("cap_usd must be a finite amount above zero")
-        for text in _strings(self.model_dump(mode="json")):
+        for text in strings(self.model_dump(mode="json")):
             if KEY_PATTERN.search(text):
                 raise ValueError("a run.json field holds key material")  # never the value
         ruling = (self.ruling_path, self.ruling_sha256, self.ruling_date)

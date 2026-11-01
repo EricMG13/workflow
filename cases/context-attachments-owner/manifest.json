@@ -1,0 +1,923 @@
+{
+  "schema_version": "context-attachments-owner-cases/1",
+  "scope": "Phase 5 Task 0 oracle: declared attachments (CP-0 precheck) and the draft-documents mode",
+  "status": "prepared by preparer; not reviewed; not frozen; not pinned (cases/PINS.json and pins.py PATTERNS are changed at the freeze step)",
+  "pack_rule": "Packs are built through prepare with Run(requested_modules=('CP-4',)): the frozen identity, financial and legal sources as cases/cp4-owner pack_sources (no source bytes edited); the `context` source from context-*.json and the `bridge` source from bridge.txt via SourceRequest(media_type='text/plain'). preparation_request is not used (the credit_snapshot preset is CP-0, CP-1, CP-MODEL, CP-1A, CP-2, CP-4, ... contracts.py:49-51; the walk is sequential so a preset run would need CP-1A and CP-2 inputs this case does not freeze). Each context repeats run.as_of, issuer and pathway or context_facts refuses (context.py:756-769) except `mismatch`, which breaks run.as_of on purpose.",
+  "raw_rule": "context files are the literal bytes the form writes (json indent 2, LF, trailing LF); the `context` source sha256 is sha256 of those bytes, spans line:N via splitlines",
+  "pattern_note": "cases/pins.py PATTERNS (cases/pins.py:20-30) do not match context-*.json or bridge.txt (M2): their sha256 is recorded below and a test re-hashes each file against it",
+  "frozen_inputs": {
+    "cases/cp4-owner/expected.json": {
+      "sha256": "1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78",
+      "role": "cases/cp4-owner/expected.json: positive.CP-4.own_limitations (the two CP-4 limitations a draft run adds to)"
+    },
+    "cases/cp4-owner/manifest.json": {
+      "sha256": "2c12bf6836f54b704201af217866002d279b51cd8f1ed6094154aec9198f6b23",
+      "role": "cases/cp4-owner/manifest.json:52-86 pack_sources of the positive case (identity, financial, legal-covenants); :101-135 the gap legal source reused as legal-draft"
+    },
+    "cases/cp4-owner/submissions.json": {
+      "sha256": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
+      "role": "cases/cp4-owner/submissions.json: positive.readiness_review pieces, cp1_source_context, legal_covenants"
+    },
+    "cases/financial/manifest.json": {
+      "sha256": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+      "role": "cases/financial/manifest.json: identity and financial pages"
+    },
+    "cases/legal/manifest.json": {
+      "sha256": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+      "role": "cases/legal/manifest.json: legal pages (positive and missing-definition bytes)"
+    },
+    "cases/context-attachments-owner/context-abs.json": {
+      "sha256": "e3f85c145c6e9eab9fa56e606b4bcab556c41afc7e1645f6d7311730932e2586",
+      "role": "context file (M2: not covered by PINS PATTERNS)"
+    },
+    "cases/context-attachments-owner/context-bridge.json": {
+      "sha256": "dbd891356fab19de598e0e0b0742a01787427afce793c1e21d10a78b857bfcd3",
+      "role": "context file (M2: not covered by PINS PATTERNS)"
+    },
+    "cases/context-attachments-owner/context-draft.json": {
+      "sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+      "role": "context file (M2: not covered by PINS PATTERNS)"
+    },
+    "cases/context-attachments-owner/context-executed.json": {
+      "sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+      "role": "context file (M2: not covered by PINS PATTERNS)"
+    },
+    "cases/context-attachments-owner/context-mismatch.json": {
+      "sha256": "98a6edffbb6cdc0c902dfb1131cb01c49908defd359de312aca8b45230f36fa3",
+      "role": "context file (M2: not covered by PINS PATTERNS)"
+    },
+    "cases/context-attachments-owner/context-none.json": {
+      "sha256": "3e18a4d9115d85718b68d0c93ad9ba68e89c5b6a6b9e13bf58e2f456bc263d49",
+      "role": "context file (M2: not covered by PINS PATTERNS)"
+    },
+    "cases/context-attachments-owner/bridge.txt": {
+      "sha256": "6ede79b4f0d4775921dc297975ef00de64f17a917e9fdb3141d0917bddb76337",
+      "role": "bridge source bytes (M2: not covered by PINS PATTERNS)"
+    }
+  },
+  "contexts": {
+    "context-abs": {
+      "file": "cases/context-attachments-owner/context-abs.json",
+      "sha256": "e3f85c145c6e9eab9fa56e606b4bcab556c41afc7e1645f6d7311730932e2586",
+      "attachments": {
+        "portfolio_workbook": true,
+        "prior_case": true,
+        "management_bridge": true,
+        "legal_documents": "executed"
+      },
+      "run_as_of": "2026-01-10"
+    },
+    "context-bridge": {
+      "file": "cases/context-attachments-owner/context-bridge.json",
+      "sha256": "dbd891356fab19de598e0e0b0742a01787427afce793c1e21d10a78b857bfcd3",
+      "attachments": {
+        "portfolio_workbook": false,
+        "prior_case": false,
+        "management_bridge": true,
+        "legal_documents": "none"
+      },
+      "run_as_of": "2026-01-10"
+    },
+    "context-draft": {
+      "file": "cases/context-attachments-owner/context-draft.json",
+      "sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+      "attachments": {
+        "portfolio_workbook": false,
+        "prior_case": false,
+        "management_bridge": false,
+        "legal_documents": "draft"
+      },
+      "run_as_of": "2026-01-10"
+    },
+    "context-executed": {
+      "file": "cases/context-attachments-owner/context-executed.json",
+      "sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+      "attachments": {
+        "portfolio_workbook": false,
+        "prior_case": false,
+        "management_bridge": false,
+        "legal_documents": "executed"
+      },
+      "run_as_of": "2026-01-10"
+    },
+    "context-mismatch": {
+      "file": "cases/context-attachments-owner/context-mismatch.json",
+      "sha256": "98a6edffbb6cdc0c902dfb1131cb01c49908defd359de312aca8b45230f36fa3",
+      "attachments": {
+        "portfolio_workbook": false,
+        "prior_case": false,
+        "management_bridge": false,
+        "legal_documents": "none"
+      },
+      "run_as_of": "2026-01-11"
+    },
+    "context-none": {
+      "file": "cases/context-attachments-owner/context-none.json",
+      "sha256": "3e18a4d9115d85718b68d0c93ad9ba68e89c5b6a6b9e13bf58e2f456bc263d49",
+      "attachments": {
+        "portfolio_workbook": false,
+        "prior_case": false,
+        "management_bridge": false,
+        "legal_documents": "none"
+      },
+      "run_as_of": "2026-01-10"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "abs-refused",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-abs-refused"
+      },
+      "context": "cases/context-attachments-owner/context-abs.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-abs.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "e3f85c145c6e9eab9fa56e606b4bcab556c41afc7e1645f6d7311730932e2586",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.abs-refused",
+      "expected": "cases/context-attachments-owner/expected.json#cases.abs-refused"
+    },
+    {
+      "case_id": "abs-gap-ok",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-abs-gap-ok"
+      },
+      "context": "cases/context-attachments-owner/context-abs.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-abs.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "e3f85c145c6e9eab9fa56e606b4bcab556c41afc7e1645f6d7311730932e2586",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V",
+        "M"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.abs-gap-ok",
+      "expected": "cases/context-attachments-owner/expected.json#cases.abs-gap-ok"
+    },
+    {
+      "case_id": "abs-present",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-abs-present"
+      },
+      "context": "cases/context-attachments-owner/context-bridge.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "bridge",
+          "path": "cases/context-attachments-owner/bridge.txt",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest); the file bytes are bridge.txt in this case directory",
+          "sha256": "6ede79b4f0d4775921dc297975ef00de64f17a917e9fdb3141d0917bddb76337",
+          "status": "ready"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-bridge.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "dbd891356fab19de598e0e0b0742a01787427afce793c1e21d10a78b857bfcd3",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.abs-present",
+      "expected": "cases/context-attachments-owner/expected.json#cases.abs-present"
+    },
+    {
+      "case_id": "abs-unready",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-abs-unready"
+      },
+      "context": "cases/context-attachments-owner/context-bridge.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "bridge",
+          "path": "cases/context-attachments-owner/bridge-absent.txt",
+          "media_type": "text/plain",
+          "built_by": "prepare with no bytes (prepare_source(request, None)): status missing, extraction_status blocked, limitation 'Requested file is absent'; the file does not exist",
+          "sha256": null,
+          "status": "missing",
+          "limitation": "Requested file is absent"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-bridge.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "dbd891356fab19de598e0e0b0742a01787427afce793c1e21d10a78b857bfcd3",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.abs-unready",
+      "expected": "cases/context-attachments-owner/expected.json#cases.abs-unready"
+    },
+    {
+      "case_id": "none-declared",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-none-declared"
+      },
+      "context": "cases/context-attachments-owner/context-none.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-none.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "3e18a4d9115d85718b68d0c93ad9ba68e89c5b6a6b9e13bf58e2f456bc263d49",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V",
+        "M"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.none-declared",
+      "expected": "cases/context-attachments-owner/expected.json#cases.none-declared"
+    },
+    {
+      "case_id": "legal-exec-missing",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-legal-exec-missing"
+      },
+      "context": "cases/context-attachments-owner/context-executed.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-executed.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.legal-exec-missing",
+      "expected": "cases/context-attachments-owner/expected.json#cases.legal-exec-missing"
+    },
+    {
+      "case_id": "legal-exec-missing-gap",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-legal-exec-missing-gap"
+      },
+      "context": "cases/context-attachments-owner/context-executed.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-executed.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V",
+        "M"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.legal-exec-missing-gap",
+      "expected": "cases/context-attachments-owner/expected.json#cases.legal-exec-missing-gap"
+    },
+    {
+      "case_id": "draft-ok",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-draft-ok"
+      },
+      "context": "cases/context-attachments-owner/context-draft.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-draft.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V",
+        "M"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.draft-ok",
+      "expected": "cases/context-attachments-owner/expected.json#cases.draft-ok"
+    },
+    {
+      "case_id": "draft-wrong-context",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-draft-wrong-context"
+      },
+      "context": "cases/context-attachments-owner/context-executed.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-executed.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.draft-wrong-context",
+      "expected": "cases/context-attachments-owner/expected.json#cases.draft-wrong-context"
+    },
+    {
+      "case_id": "draft-wrong-context-no-context",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-draft-wrong-context-no-context"
+      },
+      "context": null,
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.draft-wrong-context-no-context",
+      "expected": "cases/context-attachments-owner/expected.json#cases.draft-wrong-context-no-context"
+    },
+    {
+      "case_id": "draft-cited-other",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-draft-cited-other"
+      },
+      "context": "cases/context-attachments-owner/context-draft.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-draft.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V",
+        "M"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.draft-cited-other",
+      "expected": "cases/context-attachments-owner/expected.json#cases.draft-cited-other"
+    },
+    {
+      "case_id": "draft-uncited",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-draft-uncited"
+      },
+      "context": "cases/context-attachments-owner/context-draft.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-draft",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/cp4-owner/manifest.json:101-135 (gap case legal source, bytes unchanged), source_id changed so a draft source can sit beside the executed one",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-draft.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V",
+        "M"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.draft-uncited",
+      "expected": "cases/context-attachments-owner/expected.json#cases.draft-uncited"
+    },
+    {
+      "case_id": "mismatch",
+      "run": {
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-4"
+        ],
+        "run_id": "ctxatt-mismatch"
+      },
+      "context": "cases/context-attachments-owner/context-mismatch.json",
+      "pack_sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+          "limitation": null,
+          "origin": "cases/financial/manifest.json#sources[identity]",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+          "origin": "cases/financial/manifest.json#sources[financial]; limitation per tests/test_financial_workflow.py:22, 48-52",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "legal-covenants",
+          "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+          "status": "ready",
+          "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+          "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+          "origin": "cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source",
+          "built_by": "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+        },
+        {
+          "source_id": "context",
+          "path": "cases/context-attachments-owner/context-mismatch.json",
+          "media_type": "text/plain",
+          "built_by": "prepare (SourceRequest(source_id='context', path, media_type='text/plain')); context.preparation_request is not used",
+          "sha256": "98a6edffbb6cdc0c902dfb1131cb01c49908defd359de312aca8b45230f36fa3",
+          "status": "ready"
+        }
+      ],
+      "paths_tested": [
+        "P",
+        "V"
+      ],
+      "submissions": "cases/context-attachments-owner/submissions.json#cases.mismatch",
+      "expected": "cases/context-attachments-owner/expected.json#cases.mismatch"
+    }
+  ],
+  "upstream_line_citations": {
+    "context.py:756-769": "src/deploy_workflow/context.py context_facts pairs and `{path}: context has {theirs!r} but the run has {ours!r}` (verified at 73e254fd: pairs :756-762, problems :763-768, raise :769)",
+    "contracts.py:49-51": "src/deploy_vii/contracts.py _PRESETS credit_snapshot (CP-0, CP-1, CP-MODEL, CP-1A, CP-2, CP-4, ...)",
+    "owner_workflow _gate": "src/deploy_workflow/owner_workflow.py:837-855; _PRECHECKS :625-627 holds only CP-4 today (the CP-0 row is Task 3)",
+    "cp4_legal.py:476-478": "the frozen 'is not an executed or filed source (CP-0 authority ..., or the source is not ready)' row issue"
+  },
+  "builder": {
+    "file": "cases/context-attachments-owner/builder/build.py",
+    "run": "python3 -I cases/context-attachments-owner/builder/build.py"
+  },
+  "files_sha256": {
+    "bridge.txt": "6ede79b4f0d4775921dc297975ef00de64f17a917e9fdb3141d0917bddb76337",
+    "context-abs.json": "e3f85c145c6e9eab9fa56e606b4bcab556c41afc7e1645f6d7311730932e2586",
+    "context-bridge.json": "dbd891356fab19de598e0e0b0742a01787427afce793c1e21d10a78b857bfcd3",
+    "context-draft.json": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+    "context-executed.json": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+    "context-mismatch.json": "98a6edffbb6cdc0c902dfb1131cb01c49908defd359de312aca8b45230f36fa3",
+    "context-none.json": "3e18a4d9115d85718b68d0c93ad9ba68e89c5b6a6b9e13bf58e2f456bc263d49",
+    "expected.json": "21a09e7759ad87b7c813174f04afbf1e1849f4e1ba55e59718f54ed906584ede",
+    "submissions.json": "7a0f798510c3d690c444d929ecbd790892f22b4b57de8dc0fe6ed9c80fb18ca2"
+  },
+  "files_sha256_note": "every output except manifest.json; builder/build.py is pinned by cases/pins.py at the freeze step"
+}

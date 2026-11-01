@@ -859,7 +859,18 @@ def test_form_mirrors_period_rules() -> None:
     html = FORM.read_text()
     for problem in IDP_EXPECTED["reader"]["refused"]["ctx-h"]["problems"][:1]:
         assert problem.split(": ", 1)[1] in html
-    assert "must be the same kind as the current period." in html
+    for problem in IDP_EXPECTED["reader"]["refused"]["ctx-mixed"]["problems"]:
+        assert problem.split(": ", 1)[1] in html
+
+
+def test_form_period_pair_is_no_longer_planned_and_textareas_are_styled() -> None:
+    html = FORM.read_text()
+    assert "CP-1B period pair from this form" not in html
+    assert "period pair from this form is Planned" not in html
+    assert ".f textarea{" in html and ".f textarea[aria-invalid=true]" in html
+    assert "t.matches('input, select, textarea')" in html
+    # the markers on features that are still not built stay
+    assert html.count("Planned") >= 8
 
 
 def test_comma_name_round_trips() -> None:

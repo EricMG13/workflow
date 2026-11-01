@@ -1,6 +1,6 @@
 # Run context file (proposal)
 
-Status: proposal, 2026-10-31. Nothing reads the context file yet. Changing `Run`
+Status: proposal, 2026-10-31. The modules named under "Built today" now read the context file. Changing `Run`
 (`src/deploy_vii/contracts.py:82`) and adding module modes are the user's decisions
 (AGENTS.md: shared interfaces and `src/deploy_vii` go to the user).
 
@@ -40,10 +40,10 @@ cited filing becomes an issue, never an override.
 
 | Module | Context | Today (code) |
 |---|---|---|
-| CP-0 | Issuer/borrower names, run type | An unconfirmed issuer blocks every consumer (`readiness.py:419`) |
-| CP-1 | Borrower, guarantor, restricted group names; as-of | Roles only from filings; missing role is a gap (`source_context.py:571`) |
-| CP-1A | Sector, sponsor, transaction, use of proceeds | Cited rows only, else a gap |
-| CP-1B | Current and prior period | Hard-coded per test `run_id` (`earnings_workflow.py:1655`) |
+| CP-0 | Issuer/borrower names, run type | An unconfirmed issuer blocks every consumer (`readiness.py:419`). The context's borrower name and aliases are shown on the delivered "Run context" page as user-supplied; they do not change the gate |
+| CP-1 | Borrower, guarantor, restricted group names; as-of | Roles only from filings; missing role is a gap (`source_context.py:571`). The context's borrower name is checked against the located borrower entities; a mismatch is the gap `borrower_name_mismatch`, never an override |
+| CP-1A | Sector, sponsor, transaction, use of proceeds | Cited rows only, else a gap. Sector and sponsor from the context are shown beside them, marked user-supplied |
+| CP-1B | Current and prior period | The context pair, for the two pairs the oracle names (q3-2025 to q4-2025; fy-2024 absent to fy-2025); any other pair is refused `unsupported_pair` until Phase 8. The frozen test `run_id` path is unchanged |
 | CP-1C | Peers; issuer's name as written in the peer table | `peers` source; credit metrics only (margin, leverage, coverage, FFO/debt), **no EV/EBITDA** (`cp1c.py:158`) |
 | CP-1D | Management or marketing EBITDA bridge | Optional `bridge` source |
 | CP-2A | Stress sizes, watch levels | Model-chosen |
@@ -59,7 +59,7 @@ cited filing becomes an issue, never an override.
 | CP-4C | EV multiple, claim ranking | Model-chosen multiple, or "not assessed" |
 | CP-8 | Prior decision (`prior_case`) | Required; absent blocks the module |
 | CP-DR | Peer sourcing; user research questions | LOCAL gap research only |
-| CP-L10 | Comparison periods | Four fixed 2025 quarters |
+| CP-L10 | Comparison periods | The four quarters ending at the context's current quarter; a non-quarter context is refused `context_period_not_quarter` |
 
 ## Valuation design (ruling 2)
 
@@ -118,8 +118,11 @@ means not supplied, never zero). Money is in millions of the stated currency.
 
 Built: the form, the `context/1` reader, pack preparation with the `Run` mapping, and
 the frozen-pack reader (Phase 1), and quotes as CP-3 and CP-3D market evidence
-(Phase 3; `rv_quotes` stays for now). Planned, each needing its own lease:
+(Phase 3; `rv_quotes` stays for now), the context's periods in CP-1B (limited to the two
+pairs above; other pairs wait for Phase 8) and CP-L10, and the borrower, alias, sector and
+sponsor names shown and checked on the delivered credit snapshot (Phase 2). Planned, each
+needing its own lease:
 CP-DR web peer and precedent sourcing (live provider calls are paused); CP-1C
-EV/EBITDA; valuation basis selection; CP-1B period pair from context; CP-4
+EV/EBITDA; valuation basis selection; CP-4
 draft-document mode; CP-DR user questions; pinned assumptions; non-USD currency; real
 agency names in CP-2H.

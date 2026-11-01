@@ -126,8 +126,9 @@ fieldset{border:0;margin:var(--rb-s-5) 0 0;padding:0;min-width:0}
 legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
 .f{margin:var(--rb-s-4) 0;min-width:0}
 .f label{display:block;font-weight:500;margin-bottom:var(--rb-s-1)}
-.f input[type=text],.f input[type=date],.f select{width:100%;min-height:30px;padding:3px var(--rb-s-3);border:1px solid var(--rb-ink-3);border-radius:var(--rb-r-tile);background:var(--rb-panel)}
-.f input[aria-invalid=true],.f select[aria-invalid=true]{border-color:var(--rb-neg);background:var(--rb-neg-tint)}
+.f input[type=text],.f input[type=date],.f select,.f textarea{width:100%;min-height:30px;padding:3px var(--rb-s-3);border:1px solid var(--rb-ink-3);border-radius:var(--rb-r-tile);background:var(--rb-panel)}
+.f textarea{resize:vertical}
+.f input[aria-invalid=true],.f select[aria-invalid=true],.f textarea[aria-invalid=true]{border-color:var(--rb-neg);background:var(--rb-neg-tint)}
 .help{margin:var(--rb-s-1) 0 0;font-size:var(--rb-fs-table);color:var(--rb-ink-2)}
 .err{margin:var(--rb-s-1) 0 0;font-size:var(--rb-fs-table);font-weight:600;color:var(--rb-neg)}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 var(--rb-s-5)}
@@ -477,7 +478,7 @@ const OPTIONS = {
     {v:'primary', label:'Primary (new issue)', text:'Deal terms and price talk expected. Talk alone caps relative-value confidence below High. Legal documents are usually drafts; CP-4 accepts only executed or filed documents today (draft mode Planned). Default pathway: Credit Snapshot. Shows section 4.'},
     {v:'secondary', label:'Secondary (trading)', text:'Observed quotes expected. Without them CP-3 relative value states Insufficient Information. Default pathway: Relative Value. Shows section 5.'},
     {v:'research', label:'Research', def:true, text:'No market inputs needed. Relative-value and portfolio sections show gaps where quotes or holdings are absent. Default pathway: Credit Snapshot.'},
-    {v:'earnings', label:'Earnings update', text:'Current and prior periods required; CP-1B compares them (period pair from this form is Planned; today only fixed test periods run). Default pathway: Earnings Update.'}
+    {v:'earnings', label:'Earnings update', text:'Current and prior periods required; CP-1B compares them. Default pathway: Earnings Update.'}
   ],
   case_kind: [
     {v:'public', label:'Public', def:true, text:'Filings are public (10-K/10-Q).'},
@@ -1087,7 +1088,6 @@ function panel(o) {
 
   const pinnedN = Object.keys(ASM_MODULE).filter(k => o.assumptions[k] && has(ASM_MODULE[k])).length;
   const planned = [];
-  if (has('CP-1B') && o.run.run_type === 'earnings') planned.push('CP-1B period pair from this form');
   if (has('CP-2D') && o.run.reporting_currency && o.run.reporting_currency !== 'USD') planned.push('non-USD currency');
   if (has('CP-1C') && v.peer_source === 'cp_dr_public') planned.push('CP-DR public peer sourcing and CP-1C EV/EBITDA');
   if (has('CP-1C') && v.basis === 'auto') planned.push('valuation basis selection');
@@ -1183,7 +1183,7 @@ $('f').addEventListener('click', e => {
 });
 $('f').addEventListener('focusout', e => {
   const t = e.target;
-  if (t.matches && t.matches('input, select')) { t.dataset.touched = '1'; update(); }
+  if (t.matches && t.matches('input, select, textarea')) { t.dataset.touched = '1'; update(); }
 });
 $('steperr').addEventListener('click', e => {
   const t = e.target;

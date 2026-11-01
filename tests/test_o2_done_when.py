@@ -13,8 +13,10 @@ payload sequence reaches CP-8. That gap is reported, not worked around.
 
 import http.client
 import json
+import os
 import socket
 import time
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -58,10 +60,46 @@ def records_of(run_dir: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in (run_dir / "calls.jsonl").read_text().splitlines()]
 
 
+# (module, step) -> (the section of submissions.json `positive`, that section's top-level keys),
+# written here independently of ``o2_case.FROZEN_STEP`` so that a wrong mapping fails.
+FROZEN_SECTIONS = {
+    ("CP-0", "source_readiness"): (
+        "readiness_review",
+        ("pack_sha256", "objective", "reporting_period", "issuer_confirmed", "sources")
+        + ("consumers", "gaps", "analysis"),
+    ),
+    ("CP-1", "source_context"): (
+        "cp1_source_context",
+        ("pack_sha256", "entities", "sources", "limitations"),
+    ),
+    ("CP-1A", "business_context"): (
+        "business_context",
+        ("sources", "company", "business_lines", "owners", "operating_drivers", "transactions")
+        + ("events", "governance_and_sponsor", "capital_allocation", "acquisitions")
+        + ("disclosure_items", "credit_translations", "conflicts", "gaps", "consumers"),
+    ),
+    ("CP-3", "relative_value"): (
+        "relative_value",
+        ("instruments", "market_evidence", "preference", "risks", "gaps"),
+    ),
+    ("CP-5", "integrity_review"): (
+        "integrity_review",
+        ("claim_reviews", "contradictions", "gaps"),
+    ),
+    ("CP-6", "committee_challenge"): (
+        "committee_challenge",
+        ("recommendation", "thesis_challenges", "recovery_view", "risks", "gaps"),
+    ),
+}
+
+
 def test_every_scripted_payload_is_the_frozen_payload() -> None:
     frozen = o2_case.frozen_submissions()["positive"]
-    for step_id, name in o2_case.FROZEN_STEP.items():
-        assert o2_case.payload_for(step_id) == json.dumps(frozen[name])
+    assert {step for _, step in FROZEN_SECTIONS} == set(o2_case.FROZEN_STEP)
+    for (_, step), (section, keys) in FROZEN_SECTIONS.items():
+        assert tuple(frozen[section]) == keys  # the oracle section is the one named here
+        assert o2_case.payload_for(step) == json.dumps(frozen[section])
+        assert tuple(json.loads(o2_case.payload_for(step))) == keys  # and that is what is scripted
     with pytest.raises(KeyError):
         o2_case.payload_for("financials")  # the frozen oracle holds no payload for it
 
@@ -166,6 +204,13 @@ def test_end_to_end_offline(tmp_path: Path) -> None:
     ]
     assert [r["cost_status"] for r in records] == ["computed", "computed", "unknown"]
     assert all(r["schema_version"] == "model-call/1" for r in records)
+    searches = [  # the frozen drivers' searches (tests/s1a_runs.py:305-307)
+        {"query": "subsequent", "source_id": "financial"},
+        {"query": "acquisition", "source_id": "business"},
+    ]
+    assert [c["arguments_sha256"] for c in records[1]["tool_calls"][:2]] == [
+        arguments_sha256(item) for item in searches
+    ]
     frozen = load_arguments(o2_case.payload_for("source_context"))
     assert records[1]["tool_calls"][2]["arguments_sha256"] == arguments_sha256(frozen)
     # the replay's calls.jsonl equals the authoring run's, field for field, apart from timing
@@ -192,3 +237,81 @@ def test_end_to_end_offline(tmp_path: Path) -> None:
     assert set(bodies[1]) == OFFLINE_KEYS and bodies[1]["mode"] == "offline"
     heads = {h.module_id: h.status for h in Execution(replayed.run_dir / "execution").read().heads}
     assert heads == {"CP-0": "restricted"}  # CP-1 is open at financials: no head yet
+
+
+class TrapMapping(Mapping[str, str]):
+    """Any read raises and is recorded, except pydantic's own ``PYDANTIC_*`` plugin lookups, which
+    pass through to the real environment (the library reads them whenever it builds a schema; no
+    key is among them). Everything else, including iteration and length, trips."""
+
+    def __init__(self, real: Mapping[str, str]) -> None:
+        self.touched: list[str] = []
+        self._real = real
+
+    def _own(self, key: object) -> bool:
+        return isinstance(key, str) and key.startswith("PYDANTIC_")
+
+    def _trip(self, what: str) -> NoReturn:
+        self.touched.append(what)
+        raise AssertionError(f"environment touched: {what}")
+
+    def __getitem__(self, key: str) -> str:
+        if self._own(key):
+            return self._real[key]
+        self._trip(key)
+
+    def __iter__(self) -> Iterator[str]:
+        self._trip("<iter>")
+
+    def __len__(self) -> int:
+        self.touched.append("<len>")
+        raise AssertionError("environment touched: <len>")
+
+    def __contains__(self, key: object) -> bool:
+        if self._own(key):
+            return key in self._real
+        self._trip(str(key))
+
+    def get(self, key: str, default: object = None) -> Any:
+        if self._own(key):
+            return self._real.get(key, default)
+        self._trip(key)
+
+
+ANSWERS = ("source_readiness", "source_context")
+
+
+def walk_under_trap(
+    root: Path, monkeypatch: pytest.MonkeyPatch, plant: bool = False
+) -> TrapMapping:
+    """Author and replay with ``os.environ`` replaced by a trap. pydantic reads its own plugin
+    variables lazily on first use, so a warm-up walk runs first, untrapped. ``plant`` makes the
+    authoring adapter read a key variable inside the walk, to show the trap sees it."""
+    warm = o2_case.author(root / "warm", answers=ANSWERS)
+    o2_case.replay(root / "warm-replay", warm.recordings)
+    trap = TrapMapping(os.environ)
+    with monkeypatch.context() as scoped:  # pytest reads os.environ outside the test body
+        scoped.setattr(os, "environ", trap)
+        if plant:
+            original = o2_case.ScriptAdapter.complete
+
+            def planted(self: o2_case.ScriptAdapter, *args: Any, **kwargs: Any) -> Any:
+                os.environ.get("OPENAI_API_KEY")
+                return original(self, *args, **kwargs)
+
+            scoped.setattr(o2_case.ScriptAdapter, "complete", planted)
+        authored = o2_case.author(root / "a", answers=ANSWERS)
+        o2_case.replay(root / "r", authored.recordings)
+    return trap
+
+
+def test_authoring_and_replay_read_no_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert walk_under_trap(tmp_path, monkeypatch).touched == []
+
+
+def test_the_environment_trap_sees_a_read_planted_inside_the_walk(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert "OPENAI_API_KEY" in walk_under_trap(tmp_path, monkeypatch, plant=True).touched

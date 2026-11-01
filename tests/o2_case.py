@@ -135,6 +135,7 @@ class ScriptAdapter:
         calls = [ToolCall(f"call-{invocation_digest[:12]}-{call_index}", name, arguments)]
         if step_id in SEARCH_BEFORE and not read_first and call_index == 0:
             # the frozen CP-1 context makes absence claims; the step needs the recorded searches
+            # (the two search_pack calls of tests/s1a_runs.py:305-307, as the frozen drivers make)
             searches = [
                 ToolCall(
                     f"call-{invocation_digest[:12]}-{call_index}-s{n}",

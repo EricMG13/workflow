@@ -371,3 +371,19 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
 - **D12 review ids.** The same dispatch fills in the D12 `review` ids for B29 (mx-adversary ac70b2b7) and B30 (mx-adversary a3f74bdc), which were B30 L1 and B29 I3.
 - **What does not change.** The refusal messages, for the reason in B30.
 - **Cost if wrong:** one wording revert.
+
+## B35. Phases 7 and 8 build before O7b-d, under B33 pipelining (applied recommendation, B31; recorded 23:20 UTC 2026-11-01)
+
+- **What happened.** Phases 7 and 8 started building (Phase 7 Task 2, Phase 8 Tasks 1 and 6b) under B33's pipelining clause, after a pre-flight of each (`work/context-plan/phase-7-8-preflight-brief.md`; `.superpowers/sdd/2026-10-31-phase-{7,8}-*/preflight.md`). No ruling amended B24's line "O7, Phase 7 and Phase 8 stay in order" before they started. This ruling records the reorder and its limits.
+- **Order now.**
+  - Phase 7 lands before O7b-1. O7b-1's brief re-reads the methodology hash and the pin count (P7-P1).
+  - Phase 7 Task 3 (`owners/cp1c.py`) lands before O7c and O7d. Until O7 is built, `cp_dr_public` gives the CP-1C gap (Phase 7 Design 8, D5).
+  - Phase 8 Tasks 2 and 6 wait for Phase 7 Tasks 3 and 4, and Task 8 waits for Phase 7 Task 5b.
+- **Collision controls.**
+  1. Each task's files are listed in its phase pre-flight, and no two running tasks share a file.
+  2. Single-writer files (`docs/reuse/manifest.json`, `cases/PINS.json`, the golden, `owner_workflow.py`) are serialised in the ledgers.
+  3. Phase 8 edits `owner_workflow.py` nowhere.
+  4. Phase 7 Task 1's registry change and 48-file re-pin are built in a scratch tree and committed back to back (P7-R4).
+  5. The controller's `scope.py --role builder` check and the tests run on a clean archive per builder range.
+- **Release.** B28's cut rule is unchanged. A release carries only approved tasks, and names phase-pending lanes.
+- **Cost if wrong.** O7b-d rebase onto Phase 7's `cp1c.py`, registry and pins, at most one fix round each.

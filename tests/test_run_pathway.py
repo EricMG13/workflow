@@ -11,6 +11,7 @@ import json
 import os
 import socket
 import sys
+import traceback
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, NoReturn
@@ -18,6 +19,7 @@ from typing import Any, NoReturn
 import pytest
 
 from deploy_vii.live.prompts import PromptError
+from deploy_vii.preparation import prepare
 from deploy_workflow import run_inputs as run_inputs_module
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model import adapter as adapter_module
@@ -36,11 +38,13 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 from deploy_workflow.run_inputs import (
     BadCap,
     CaseSource,
+    CheckedRun,
     RunDirExists,
     check_arguments,
     stage_sources,
 )
 from deploy_workflow.run_pathway import run_pathway
+from deploy_workflow.workflow import WorkflowError
 
 fw: Any = importlib.import_module("tests.test_financial_workflow")
 
@@ -269,20 +273,29 @@ def test_the_offline_run_json_key_set_and_sources(args: dict[str, Any]) -> None:
     assert text["converted_sha256"] is None
     assert context["source_id"] == "context" and context["media_type"] == "text/plain"
     assert context["converted_sha256"] is None
+    assert context["sha256"] == hashlib.sha256(args["context"].read_bytes()).hexdigest()
+    assert (
+        html["converted_sha256"]
+        == hashlib.sha256((args["run_dir"] / "sources" / "s1.txt").read_bytes()).hexdigest()
+    )
 
 
-def test_a_changed_html_source_is_a_fault_before_anything_is_written(
-    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+def test_the_harness_path_keeps_the_original_hash_and_the_html_media_type(
+    args: dict[str, Any],
 ) -> None:
-    real = run_inputs_module.read_capped
-
-    def changed(path: Path) -> bytes:
-        return real(path).replace(b"1,234", b"9,999")
-
-    monkeypatch.setattr(rp, "read_capped", changed)
-    with pytest.raises(run_inputs_module.StagedSourceChanged):
-        run_pathway(**args)
-    assert not os.path.lexists(args["run_dir"])
+    """``_run_pathway`` without the caller's entries: an HTML source stays ``text/html`` with its
+    original hash, and its staged (converted) hash is ``converted_sha256``."""
+    checked = check_arguments(**args)
+    stage_sources(checked, args["run_dir"])
+    rp._run_pathway(checked, args["run_dir"], args["adapter"])
+    html, text, context = run_json(args["run_dir"])["sources"]
+    staged = (args["run_dir"] / "sources" / "s1.txt").read_bytes()
+    assert html["media_type"] == "text/html"
+    assert html["sha256"] == hashlib.sha256(HTML).hexdigest()
+    assert html["converted_sha256"] == hashlib.sha256(staged).hexdigest()
+    assert text["media_type"] == "text/plain" and text["converted_sha256"] is None
+    assert text["sha256"] == hashlib.sha256(b"plain text\n").hexdigest()
+    assert context["media_type"] == "text/plain"
 
 
 # ---------------------------------------------------------------- redaction
@@ -367,6 +380,18 @@ def test_an_unexpected_exception_in_the_walk_propagates(
 # ---------------------------------------------------------------- _finish_run
 
 
+SPENT = Decimal("0.3")
+
+
+def seed_spend(budget: Budget) -> None:
+    """One settled charge (0.2) and one held unknown (0.1): spent is their sum, 0.3."""
+    first, second = "call-" + "a" * 8, "call-" + "b" * 8
+    budget.reserve(first, Decimal("0.25"), config_id="sol-medium")
+    budget.settle(first, Decimal("0.2"))
+    budget.reserve(second, Decimal("0.1"), config_id="sol-medium")
+    budget.settle(second, None)
+
+
 @pytest.fixture
 def finished(args: dict[str, Any]) -> tuple[Any, OwnerWorkflow, Budget, Path]:
     """A one-module walk (the gap pack: CP-0, then a refused publication): ``Run.requested_modules``
@@ -382,7 +407,9 @@ def finished(args: dict[str, Any]) -> tuple[Any, OwnerWorkflow, Budget, Path]:
     assert workflow.submit_review(fw.readiness(pack, gap=True))["status"] == "valid"
     assert workflow.publish()["status"] == "refused"
     meta = rp._Meta(checked, rp._staged_entries(checked, run_dir), False, Redactor())
-    return meta, workflow, Budget(Decimal(1), run_dir / "execution"), run_dir
+    budget = Budget(Decimal(1), run_dir / "execution")
+    seed_spend(budget)
+    return meta, workflow, budget, run_dir
 
 
 def test_finish_run_writes_the_receipt_the_delivery_and_run_json_last(
@@ -399,6 +426,7 @@ def test_finish_run_writes_the_receipt_the_delivery_and_run_json_last(
     monkeypatch.setattr("deploy_workflow.run_pathway.os.replace", spy)
     outcome = rp._finish_run(workflow, run_dir, meta, budget)
     assert outcome.outcome == "settled" and outcome.stopped_reason is None
+    assert outcome.spent_usd == SPENT
     assert (run_dir / "owner-run.json").is_file()
     assert (run_dir / "delivery" / "report.html").is_file()
     assert len(replaced) == 1  # run.json is the only file moved into place by this module
@@ -425,6 +453,7 @@ def test_a_blocked_render_stops_the_run_and_keeps_the_receipt(
     outcome = rp._finish_run(workflow, run_dir, meta, budget)
     assert outcome.outcome == "stopped"
     assert outcome.stopped_reason == "render: owner_render_blocked"
+    assert outcome.spent_usd == SPENT
     assert (run_dir / "owner-run.json").is_file()
     assert run_json(run_dir)["stopped_reason"] == "render: owner_render_blocked"
 
@@ -440,6 +469,7 @@ def test_a_verify_failure_after_the_rename_keeps_the_delivery(
     monkeypatch.setattr(rp, "verify_owner_rendered_slice", tampered)
     outcome = rp._finish_run(workflow, run_dir, meta, budget)
     assert outcome.stopped_reason == "render: owner_render_delivery"
+    assert outcome.spent_usd == SPENT
     assert (run_dir / "delivery" / "report.html").is_file()
 
 
@@ -457,3 +487,295 @@ def test_sealing_an_unfinished_walk_is_a_named_fault(
     assert outcome.stopped_reason == "WorkflowError: not_permitted"
     assert not (args["run_dir"] / "owner-run.json").exists()
     assert run_json(args["run_dir"])["stopped_reason"] == "WorkflowError: not_permitted"
+
+
+# ---------------------------------------------------------------- the walk to a publication
+
+
+@pytest.fixture
+def walked(args: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> CheckedRun:
+    """The real ``_walk``, ``_drive``, ``publish`` and ``_finish_run`` over the gap pack (CP-0, then
+    a refused publication). Only ``ToolLoop.run`` is replaced: it does the fixture's reads and the
+    CP-0 submit on the real workflow, and books a settled charge and a held unknown on the real
+    budget. No recording is used."""
+    checked = check_arguments(**args)
+    stage_sources(checked, args["run_dir"])
+    pack = fw.make_pack(True)
+    monkeypatch.setattr(rp, "load_pack", lambda path: pack)
+
+    def run(self: ToolLoop) -> tuple[dict[str, Any], ...]:
+        fw.read_sources(self._workflow, gap=True)
+        result = self._workflow.submit_review(fw.readiness(pack, gap=True))
+        seed_spend(self._budget)
+        return (result,)
+
+    monkeypatch.setattr(ToolLoop, "run", run)
+    return checked
+
+
+def test_a_walk_with_a_publication_settles_through_the_public_seams(
+    args: dict[str, Any], walked: CheckedRun
+) -> None:
+    outcome = rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    run_dir = args["run_dir"]
+    assert outcome.outcome == "settled" and outcome.stopped_reason is None
+    assert outcome.spent_usd == SPENT
+    receipt = json.loads((run_dir / "owner-run.json").read_text())
+    assert [p["status"] for p in receipt["publications"]] == ["refused"]  # publish() ran
+    assert (run_dir / "delivery" / "report.html").is_file()
+    assert run_json(run_dir)["outcome"] == "settled"
+
+
+def test_a_receipt_that_fails_verification_stops_the_run_and_keeps_the_spend(
+    args: dict[str, Any], walked: CheckedRun, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def tampered(*a: object, **k: object) -> NoReturn:
+        raise WorkflowError("identity_mismatch")
+
+    monkeypatch.setattr(rp, "verify_owner_run_receipt", tampered)
+    outcome = rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason == "WorkflowError: identity_mismatch"
+    assert outcome.spent_usd == SPENT
+    assert not (args["run_dir"] / "delivery").exists()
+    assert (args["run_dir"] / "owner-run.json").is_file()
+
+
+def test_a_non_terminal_refused_publication_stops_with_its_code_and_no_receipt(
+    args: dict[str, Any], walked: CheckedRun, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: dict[str, Any] = {}
+    real_publish = OwnerWorkflow.publish
+
+    def publish(self: OwnerWorkflow) -> dict[str, Any]:
+        seen["result"] = real_publish(self)
+        return seen["result"]  # type: ignore[no-any-return]
+
+    monkeypatch.setattr(OwnerWorkflow, "_refused", property(lambda self: False))
+    monkeypatch.setattr(OwnerWorkflow, "publish", publish)
+    outcome = rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    code = seen["result"]["error_code"]
+    assert seen["result"]["status"] == "refused" and code
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason == f"publish: {code}"
+    assert not (args["run_dir"] / "owner-run.json").exists()
+    assert run_json(args["run_dir"])["stopped_reason"] == f"publish: {code}"
+
+
+class CountingWorkflow:
+    def __init__(self, result: dict[str, Any] | None) -> None:
+        self.result, self.published = result, 0
+
+    def publish(self) -> dict[str, Any]:
+        self.published += 1
+        if self.result is None:
+            raise AssertionError("publish was called")
+        return self.result
+
+
+class CountingLoop:
+    def __init__(self) -> None:
+        self.runs = 0
+
+    def run(self) -> tuple[()]:
+        self.runs += 1
+        return ()
+
+
+def test_the_walk_resumes_after_a_publication_that_returns_a_next_step() -> None:
+    workflow = CountingWorkflow({"status": "ok", "error_code": None, "next_step": "step"})
+    loop = CountingLoop()
+    assert rp._drive(workflow, loop, fw.make_pack(False)) is None  # type: ignore[arg-type]
+    assert (workflow.published, loop.runs) == (1, 2)
+
+
+def test_a_plan_with_no_publisher_never_calls_publish(monkeypatch: pytest.MonkeyPatch) -> None:
+    workflow, loop = CountingWorkflow(None), CountingLoop()
+    monkeypatch.setattr(rp, "plan", lambda requested: ("CP-0",))
+    assert rp._drive(workflow, loop, fw.make_pack(False)) is None  # type: ignore[arg-type]
+    assert (workflow.published, loop.runs) == (0, 1)
+
+
+# ---------------------------------------------------------------- unnamed faults propagate
+
+
+def test_a_value_error_outside_the_named_seams_propagates(
+    args: dict[str, Any], walked: CheckedRun, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(requested: object) -> NoReturn:
+        raise ValueError("not a named seam")
+
+    monkeypatch.setattr(rp, "plan", broken)
+    with pytest.raises(ValueError, match="not a named seam"):
+        rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    assert not (args["run_dir"] / "run.json").exists()
+
+
+def test_run_dir_exists_from_staging_propagates_and_the_other_run_is_untouched(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = args["run_dir"]
+
+    def raced(checked: object, directory: Path) -> NoReturn:
+        directory.mkdir()
+        (directory / "theirs.txt").write_text("another run")
+        raise RunDirExists(f"{directory} already exists")
+
+    monkeypatch.setattr(rp, "stage_sources", raced)
+    with pytest.raises(RunDirExists):
+        run_pathway(**args)
+    assert files_under(run_dir) == {"theirs.txt": hashlib.sha256(b"another run").hexdigest()}
+
+
+@pytest.mark.parametrize("seam", ["load_pack", "create", "render"])
+def test_an_unnamed_exception_at_a_seam_propagates(
+    args: dict[str, Any], walked: CheckedRun, monkeypatch: pytest.MonkeyPatch, seam: str
+) -> None:
+    def broken(*a: object, **k: object) -> NoReturn:
+        raise RuntimeError("a programming error")
+
+    if seam == "load_pack":
+        monkeypatch.setattr(rp, "load_pack", broken)
+    elif seam == "create":
+        monkeypatch.setattr(OwnerWorkflow, "create", staticmethod(broken))
+    else:
+        monkeypatch.setattr(rp, "render_owner_slice", broken)
+    with pytest.raises(RuntimeError, match="programming error"):
+        rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    assert not (args["run_dir"] / "run.json").exists()
+
+
+# ---------------------------------------------------------------- the named seams stop the run
+
+
+def test_a_workflow_that_cannot_be_created_stops_with_its_code(
+    args: dict[str, Any], walked: CheckedRun, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def refuse(*a: object, **k: object) -> NoReturn:
+        raise WorkflowError("not_permitted")
+
+    monkeypatch.setattr(OwnerWorkflow, "create", staticmethod(refuse))
+    outcome = rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    assert outcome.stopped_reason == "workflow: not_permitted"
+    assert outcome.spent_usd == Decimal(0)
+    assert run_json(args["run_dir"])["stopped_reason"] == "workflow: not_permitted"
+
+
+def test_a_pack_that_fails_to_load_stops_as_prepare(
+    args: dict[str, Any], walked: CheckedRun, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def refuse(path: Path) -> NoReturn:
+        raise ValueError("Prepared pack hash mismatch")
+
+    monkeypatch.setattr(rp, "load_pack", refuse)
+    outcome = rp._run_pathway(walked, args["run_dir"], args["adapter"])
+    assert outcome.stopped_reason == "prepare: Prepared pack hash mismatch"
+    assert run_json(args["run_dir"])["outcome"] == "stopped"
+
+
+def test_run_json_is_synced_as_a_file_then_moved_then_its_directory_is_synced(
+    finished: tuple[Any, OwnerWorkflow, Budget, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    meta, workflow, budget, run_dir = finished
+    events: list[tuple[str, int]] = []
+    real_fsync, real_replace = os.fsync, os.replace
+    directory = run_dir.stat().st_ino
+
+    def fsync(fd: int) -> None:
+        events.append(("dir" if os.fstat(fd).st_ino == directory else "file", os.fstat(fd).st_ino))
+        real_fsync(fd)
+
+    def replace(src: Any, dst: Any) -> None:
+        events.append(("replace", os.stat(src).st_ino))
+        real_replace(src, dst)
+
+    monkeypatch.setattr("deploy_workflow.run_pathway.os.fsync", fsync)
+    monkeypatch.setattr("deploy_workflow.run_pathway.os.replace", replace)
+    rp._finish_run(workflow, run_dir, meta, budget)
+    moved = next(i for i, (kind, _) in enumerate(events) if kind == "replace")
+    inode = events[moved][1]
+    assert ("file", inode) in events[:moved]  # the temp file's data is synced before the move
+    assert events[moved + 1] == ("dir", directory)  # then the directory entry
+
+
+# ---------------------------------------------------------------- stderr and run.json redaction
+
+
+def test_a_partial_stderr_line_with_a_key_is_redacted_when_the_run_ends(
+    args: dict[str, Any], capsys: pytest.CaptureFixture[str]
+) -> None:
+    def factory(pack: Any) -> PromptFor:
+        inner = rp._default_prompt_for(pack)
+
+        def prompt_for(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
+            print(f"tail {SECRET}", end="", file=sys.stderr)  # no newline
+            return inner(binding, spec, issues)
+
+        return prompt_for
+
+    checked = check_arguments(**args)
+    stage_sources(checked, args["run_dir"])
+    rp._run_pathway(checked, args["run_dir"], args["adapter"], factory)
+    err = capsys.readouterr().err
+    assert SECRET not in err and "tail [redacted]" in err
+
+
+def test_stderr_written_while_staging_is_redacted(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    real = prepare
+
+    def noisy(request: Any, sources: Path, out: Path) -> Any:
+        print(f"library warning {SECRET}", file=sys.stderr)
+        print(f"partial {SECRET}", end="", file=sys.stderr)
+        return real(request, sources, out)
+
+    monkeypatch.setattr(run_inputs_module, "prepare", noisy)
+    run_pathway(**args)
+    err = capsys.readouterr().err
+    assert SECRET not in err
+    assert "library warning [redacted]" in err and "partial [redacted]" in err
+
+
+def test_a_key_shaped_source_path_is_redacted_in_run_json(args: dict[str, Any]) -> None:
+    odd = args["sources"][1].path.with_name(f"{SECRET}.txt")
+    args["sources"][1].path.rename(odd)
+    args["sources"][1] = CaseSource("s2", odd, "text/plain")
+    run_pathway(**args)
+    text = (args["run_dir"] / "run.json").read_text()
+    assert SECRET not in text and "[redacted]" in text
+    assert_clean(args["run_dir"], SECRET)
+
+
+def test_a_double_fault_does_not_chain_the_raw_fault_into_the_escaping_error(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The mapped fault carries a key; writing ``run.json`` then fails (a leftover temp file).
+    The error that escapes must not hold the raw fault as its context."""
+
+    def prepare(request: object, sources: object, out: object) -> NoReturn:
+        (args["run_dir"] / "run.json.tmp").write_bytes(b"")
+        raise ValueError(f"cannot prepare with {SECRET}")
+
+    monkeypatch.setattr(run_inputs_module, "prepare", prepare)
+    with pytest.raises(FileExistsError) as escaped:
+        run_pathway(**args)
+    text = "".join(traceback.format_exception(escaped.value))
+    assert SECRET not in text
+    assert escaped.value.__context__ is None and escaped.value.__cause__ is None
+    assert_clean(args["run_dir"], SECRET)
+
+
+def test_the_redacting_stream_is_closed_when_the_run_ends(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    streams: list[Any] = []
+    real = Redactor.redact_stream
+
+    def keep(self: Redactor, stream: Any) -> Any:
+        streams.append(real(self, stream))
+        return streams[-1]
+
+    monkeypatch.setattr(Redactor, "redact_stream", keep)
+    run_pathway(**args)
+    assert len(streams) == 2 and all(stream.closed for stream in streams)  # outer and inner

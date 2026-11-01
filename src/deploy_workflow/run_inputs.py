@@ -122,12 +122,15 @@ class RunOutcome:
 
 @dataclass(frozen=True)
 class StagedFile:
-    """One file to stage: the bytes that were read (or converted) and their sha256."""
+    """One file to stage: the bytes that were read (or converted) and their sha256.
+    ``original_sha256`` is the hash of the bytes read before any conversion (equal to ``sha256``
+    unless the source was HTML)."""
 
     source_id: str
     filename: str
     data: bytes
     sha256: str
+    original_sha256: str
 
 
 @dataclass(frozen=True)
@@ -246,7 +249,15 @@ def check_arguments(
         else:
             raise UnsupportedMedia(f"source {source_id!r}: media type {item.media_type!r}")
         filename = source_id + _SUFFIX[media]
-        files.append(StagedFile(source_id, filename, data, hashlib.sha256(data).hexdigest()))
+        files.append(
+            StagedFile(
+                source_id,
+                filename,
+                data,
+                hashlib.sha256(data).hexdigest(),
+                hashlib.sha256(raw).hexdigest(),
+            )
+        )
         pack_request = SourceRequest.model_validate(
             {"source_id": source_id, "path": filename, "media_type": media}
         )
@@ -259,7 +270,11 @@ def check_arguments(
     )
     files.append(
         StagedFile(
-            CONTEXT_SOURCE_ID, "context.json", context_raw, hashlib.sha256(context_raw).hexdigest()
+            CONTEXT_SOURCE_ID,
+            "context.json",
+            context_raw,
+            hashlib.sha256(context_raw).hexdigest(),
+            hashlib.sha256(context_raw).hexdigest(),
         )
     )
     return CheckedRun(

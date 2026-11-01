@@ -403,3 +403,16 @@ def test_converted_html_over_cap_refused(
 def test_read_capped_refuses_a_device() -> None:
     with pytest.raises(SourceUnreadable):
         read_capped(Path("/dev/null"))
+
+
+def test_every_staged_file_carries_the_hash_of_the_bytes_read(args: dict[str, Any]) -> None:
+    """HTML is staged converted: ``sha256`` is the converted bytes', ``original_sha256`` the file's."""
+    import hashlib
+
+    checked = check_arguments(**args)
+    html, text, context = checked.files
+    assert html.original_sha256 == hashlib.sha256(HTML).hexdigest()
+    assert html.sha256 == hashlib.sha256(html.data).hexdigest() != html.original_sha256
+    assert text.original_sha256 == text.sha256 == hashlib.sha256(b"plain text\n").hexdigest()
+    raw = (ROOT / "cases/context/research-minimal.json").read_bytes()
+    assert context.original_sha256 == context.sha256 == hashlib.sha256(raw).hexdigest()

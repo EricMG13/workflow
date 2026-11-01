@@ -191,6 +191,16 @@ Report the `diff` of the global file against
 `/private/tmp/claude-501/-Users-ericguei-Documents-Deploy-Workflow--claude-worktrees-open-items-fd69c5/c8389da7-7468-41f1-b496-de45232b3ad7/scratchpad/global-CLAUDE.md.bak`.
 Commit the repo files only: `docs(verifier): Builder-Verifier gate and prove-it skills`.
 
+### T1 fix round 1 (controller ruling on review `work/builder-verifier/t1-review.md`)
+
+Replace exactly (each old text occurs once):
+1. `.claude/skills/create-prove-it/SKILL.md` step 7: `The controller plants one bug the comparison must catch, confirms exit 1,
+   and reverts it.` becomes `A planter agent (\`mx-feature\`) plants one bug the comparison must catch, uncommitted; the controller confirms exit 1; the planter reverts it.` (Medium M1: the controller writes no code.)
+2. `.claude/skills/create-prove-it/SKILL.md` step 5: `The oracle preparer writes` becomes `The oracle preparer (\`mx-feature\`) writes`. (Info.)
+3. `.claude/skills/audit-prove-it/SKILL.md` line 7: `Mutations are never committed or pushed.` becomes `Mutations are never pushed or kept.` (Low.)
+4. `.claude/skills/maintain-prove-it/SKILL.md` step 5: `Done is the comparison exiting 0.` becomes `Done is the gates and the comparison exiting 0. The verifier upgrade is its own task and does not use the product fix's rounds.` (Low, Info.)
+5. `~/.claude/CLAUDE.md` line 23: `; the task's answer key and comparison, which the implementer does not edit` becomes `; the task's answer key, which the implementer does not edit, and its comparison, which the implementer does not weaken`. (Low.)
+
 ## T2 - `cases/prove/scope.py` (mx-feature; review mx-precise)
 
 Files: `cases/prove/scope.py`, `tests/test_prove_scope.py`. Stdlib only; runs as

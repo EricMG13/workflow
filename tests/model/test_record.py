@@ -1082,6 +1082,7 @@ def test_nested_unexpected_name_and_value_never_reach_error_text() -> None:
               "refusal_code": None, _KEYISH: 1}  # fmt: skip
     text = _invalid_text(tool_calls=(nested,))
     assert "ZZZZZZ" not in text and "unexpected field" in text
+    assert "keysk-proj-ZZZZZZSECRETKEY" not in _invalid_text(**{"keysk-proj-ZZZZZZSECRETKEY": 1})
     assert "ZZZZZZ" not in _invalid_text(http_status=_KEYISH)
 
 
@@ -1125,3 +1126,43 @@ def test_strings_is_public_and_old_name_is_an_alias() -> None:
 
     assert module.strings({"a": ["x", ("y",)], "b": 1}) == ["x", "y"]
     assert module._strings is module.strings
+
+
+@pytest.mark.parametrize("zero", ["-0", "-0.00", "-0E+3", "0.00"])
+def test_zero_money_is_written_as_plain_zero(zero: str) -> None:
+    body = json.loads(
+        record(reserved_usd=Decimal(zero), settled_usd=Decimal(zero)).model_dump_json()
+    )
+    assert (body["reserved_usd"], body["settled_usd"]) == ("0", "0")
+
+
+def test_attempt_accepts_only_exact_int() -> None:
+    class Flag(int):
+        pass
+
+    for bad in (Flag(1), True, 0.0, "0"):
+        with pytest.raises(ValidationError):
+            record(attempt=bad)
+    assert record(attempt=1).attempt == 1
+
+
+def test_record_invalid_has_no_chained_exception() -> None:
+    with pytest.raises(RecordInvalid) as caught:
+        CallRecord.build(Redactor(), **fields(**{_KEYISH: 1}))
+    assert caught.value.__context__ is None and caught.value.__cause__ is None
+
+
+def test_export_record_invalid_has_no_chained_exception(tmp_path: Path) -> None:
+    body = json.loads(record().model_dump_json())
+    body[_KEYISH] = 1
+    (tmp_path / "calls.jsonl").write_text(json.dumps(body) + "\n")
+    with pytest.raises(RecordInvalid) as caught:
+        export_recording(tmp_path, tmp_path / "o.jsonl", Redactor())
+    assert caught.value.__context__ is None and caught.value.__cause__ is None
+    assert "ZZZZZZ" not in str(caught.value)
+
+
+def test_strings_is_exported() -> None:
+    from deploy_workflow.model import record as module
+
+    assert "strings" in module.__all__

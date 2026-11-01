@@ -3,9 +3,10 @@
 import gc
 import io
 import logging
+import re
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from deploy_workflow.model.redact import KEY_PATTERN, Redactor
@@ -264,7 +265,10 @@ GLUED = "sk-proj-QQQQQQFAKEKEY"
         "q=%20" + GLUED,
         "a=" + GLUED,
         GLUED,
+        "x-" + GLUED,
         "x\n" + GLUED,
+        "q=%2F" + GLUED,
+        "q=%3D" + GLUED,
     ],
 )
 def test_glued_embedded_quoted_encoded_and_leading_keys_redacted(text: str) -> None:
@@ -278,3 +282,30 @@ def test_word_internal_sk_is_not_over_redacted() -> None:
     assert r.text("risk-or-abcdefgh") == "risk-or-abcdefgh"
     assert r.text("task-proj-abcdefgh") == "task-proj-abcdefgh"
     assert r.bytes_(b"risk-or-abcdefgh") == b"risk-or-abcdefgh"
+
+
+_OLD_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
+
+
+@example("x-sk-proj-abcdefg")
+@given(st.text(alphabet='sk-orantpj_%2F0aB .="', max_size=40))
+def test_every_old_pattern_match_still_matches(text: str) -> None:
+    for m in _OLD_PATTERN.finditer(text):
+        assert KEY_PATTERN.match(text, m.start()), (text, m.span())
+
+
+def test_dash_preceded_key_is_redacted_with_str_and_bytes() -> None:
+    r = Redactor()
+    assert r.text("x-" + GLUED) == "x-[redacted]"
+    assert r.bytes_(b"x-" + GLUED.encode()) == b"x-[redacted]"
+
+
+@pytest.mark.parametrize("prefix", ["%2F", "%3D"])
+def test_percent_encoded_key_survives_a_stream_split(prefix: str) -> None:
+    out = io.StringIO()
+    stream = Redactor().redact_stream(out)
+    stream.write("q=" + prefix + GLUED[:10])
+    stream.flush()
+    stream.write(GLUED[10:] + "\n")
+    stream.close()
+    assert "QQQQQQ" not in out.getvalue()

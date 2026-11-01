@@ -200,14 +200,16 @@ class CallRecord(Contract):
     @field_validator("attempt", mode="before")
     @classmethod
     def _attempt_is_int(cls, value: Any) -> Any:
-        # Literal[0, 1] accepts True and False because they equal 1 and 0.
-        if isinstance(value, bool):
+        # Literal[0, 1] accepts True, False and int subclasses because they equal 1 and 0.
+        if type(value) is not int:
             raise PydanticCustomError("attempt_type", "attempt must be the integer 0 or 1")
         return value
 
     @field_serializer("reserved_usd", "settled_usd")
     def _money(self, value: Decimal | None) -> str | None:
-        return None if value is None else money_text(value)
+        if value is None:
+            return None
+        return "0" if value == 0 else money_text(value)  # -0 and 0.00 are written as 0
 
     @model_validator(mode="after")
     def _checked(self) -> CallRecord:
@@ -237,7 +239,8 @@ class CallRecord(Contract):
             )
             return cls(**clean)
         except ValidationError as error:
-            raise _invalid(error) from None
+            invalid = _invalid(error)
+        raise invalid  # outside the handler: no chained ValidationError, which holds the input
 
     @classmethod
     def refused(
@@ -659,10 +662,13 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
     run = Path(run_dir)
     responses: dict[tuple[str, int], dict[str, Any]] = {}
     for item in CallLog(run, redactor).records():
+        invalid: RecordInvalid | None = None
         try:
             rec = CallRecord.model_validate_json(json.dumps(item))
         except ValidationError as error:
-            raise _invalid(error) from None
+            invalid = _invalid(error)
+        if invalid is not None:
+            raise invalid  # outside the handler: no chained ValidationError
         key = (rec.invocation_digest, rec.call_index)
         stopped_ok = (
             rec.error_class in LOOP_STOPS
@@ -714,4 +720,5 @@ __all__ = [
     "invocation_digest",
     "invocation_preimage",
     "retain_preimage",
+    "strings",
 ]

@@ -2335,8 +2335,8 @@ def _pin_lines(pack: PreparedPack, submission: MarketImpliedSubmission) -> tuple
     """The line where the submitted recovery percent differs from the context pin, as typed (the
     text is clipped by `pin_issues`; nothing is parsed here); a recovery absence is the
     `submitted absence` line. A context the run refuses is the single line
-    `Context refused: ...` and no pin line, apart from the market-quote `context_errors` that
-    `validate_market_implied` reports. Empty, and nothing mapped, when nothing is pinned."""
+    `Context refused: ...` and no pin line (`_issues` does not call this when the upstream
+    already carries `context_errors`). Empty, and nothing mapped, when nothing is pinned."""
     try:
         if pins_of(MODULE_ID, pack) is None:
             return ()
@@ -2353,6 +2353,10 @@ def _issues(
     """The content issues, then the pin lines: the one issue set of the step validator and the
     composer gate."""
     content = validate_market_implied(submission=submission, upstream=upstream)
+    if upstream.context.context_errors:
+        # The context is already refused (the `context source unreadable` lines are in `content`),
+        # so the pins are not read: no pin line and no second `Context refused:` line (P6-P3).
+        return tuple(dict.fromkeys(content))
     return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
 
 

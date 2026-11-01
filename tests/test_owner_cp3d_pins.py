@@ -12,7 +12,6 @@ from __future__ import annotations
 import copy
 import importlib
 import json
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
@@ -92,27 +91,10 @@ def _report(
     )
 
 
-def _same_cell(fact: Any, cell: dict[str, Any], *, spelling: bool) -> bool:
-    """The fact equals the frozen cell. With `spelling` the amount only needs to be equal as a
-    number: the recovery typed `70.00` is stored as `0.70`, the frozen `70` as `0.7`."""
-    got, want = conn._fact_view(fact), conn._expected_view(cell)
-    if spelling and got["amount"] is not None and want["amount"] is not None:
-        if Decimal(got["amount"]) != Decimal(want["amount"]):
-            return False
-        got, want = {**got, "amount": None}, {**want, "amount": None}
-    return bool(got == want)
-
-
-def _expect_frozen(
-    report: cp3d.MarketImpliedReport,
-    base_case: str,
-    *,
-    pinned: bool,
-    spelling: bool = False,
-) -> None:
+def _expect_frozen(report: cp3d.MarketImpliedReport, base_case: str, *, pinned: bool) -> None:
     """The report equals the frozen `cases/cp3d-owner` case, but for the pinned line when `pinned`:
-    one more own limitation (last), one more T3E.9 row and fact (last), nothing else. `spelling`
-    allows the recovery amount to differ in trailing zeros only (see `_same_cell`)."""
+    one more own limitation (last), one more T3E.9 row and fact (last), nothing else. Strict: only
+    a submission spelled exactly as the frozen base reproduces it."""
     want = conn.EXPECTED["cases"][base_case]
     facts = {f.fact_id: f for f in report.facts}
     assert [t.table_id for t in report.tables] == [t["table_id"] for t in want["tables"]]
@@ -126,7 +108,7 @@ def _expect_frozen(
             assert row.label == frozen_row["label"]
             assert list(row.fact_ids) == [c["fact_id"] for c in frozen_row["facts"]]
             for fact_id, cell in zip(row.fact_ids, frozen_row["facts"], strict=True):
-                assert _same_cell(facts[fact_id], cell, spelling=spelling), fact_id
+                assert conn._fact_view(facts[fact_id]) == conn._expected_view(cell), fact_id
     assert [(c.claim_id, c.text) for c in report.claims] == [
         (c["claim_id"], c["text"]) for c in want["claims"]
     ]
@@ -134,6 +116,27 @@ def _expect_frozen(
     assert len(report.facts) == sum(
         len(c) for t in want["tables"] for r in t["rows"] for c in [r["facts"]]
     ) + (1 if pinned else 0)
+
+
+def _expect_differential(tmp_path: Path, pinned: cp3d.MarketImpliedReport, case: str) -> None:
+    """A pin never normalises the submitted value: the pinned report equals the no-context report
+    of the same submission (`70.00` stays `0.70`), but for the pinned label (the last own line,
+    the last T3E.9 row and its fact)."""
+    spec = CASES[case]
+    plain_pack = _pack(tmp_path / "plain", None, spec["base_case"])
+    plain = _report(plain_pack, _payload(case), spec["base_case"])
+    assert PINNED not in plain.limitations
+    assert list(pinned.limitations) == [*plain.limitations, PINNED]
+    assert [t.table_id for t in pinned.tables] == [t.table_id for t in plain.tables]
+    for got, want in zip(pinned.tables, plain.tables, strict=True):
+        if got.table_id == "T3E.9":
+            assert len(got.rows) == len(want.rows) + 1
+            assert [r.model_dump() for r in got.rows[:-1]] == [r.model_dump() for r in want.rows]
+        else:
+            assert got.model_dump() == want.model_dump()
+    assert [f.model_dump() for f in pinned.facts[:-1]] == [f.model_dump() for f in plain.facts]
+    assert pinned.facts[-1].fact_id == ROW["fact_id"] and pinned.facts[-1].text == PINNED
+    assert pinned.claims == plain.claims
 
 
 # --- the oracle cases -----------------------------------------------------------------------
@@ -172,13 +175,14 @@ def test_a_numerically_equal_spelling_is_accepted_and_pinned(tmp_path: Path) -> 
     assert done.output == report.model_dump_json()
     assert list(report.limitations) == EXPECTED["cases"]["match"]["own_limitations"]
     assert report.limitations[-1] == PINNED
+    _expect_differential(tmp_path, report, "match")
 
 
 def test_the_pinned_row_is_t3e9_r12_appended_last_and_nothing_moves(tmp_path: Path) -> None:
     spec = CASES["match"]
     pack = _pack(tmp_path, spec["context"], spec["base_case"])
     report = _report(pack, _payload("match"), spec["base_case"])
-    _expect_frozen(report, "positive", pinned=True, spelling=True)
+    _expect_differential(tmp_path, report, "match")
     table = next(t for t in report.tables if t.table_id == "T3E.9")
     assert [r.row_id for r in table.rows][-2:] == ["r11", "r12"]
     assert len(table.rows) == 12
@@ -315,18 +319,51 @@ def _other_run(pack: PreparedPack) -> PreparedPack:
     )
 
 
-def test_a_refused_context_is_one_line_and_no_pin_line(tmp_path: Path) -> None:
-    pack = _other_run(_pack(tmp_path, CONTEXT, "positive"))
+def test_an_unreadable_context_gives_phase_3_lines_alone_and_skips_the_pins(
+    tmp_path: Path,
+) -> None:
+    """P6-P3: with `context_errors` set the pins are not read, so there is no pin line and no
+    `Context refused:` line; the issues equal those of the same unreadable context with no pin."""
+    pack = _other_run(_pack(tmp_path / "a", CONTEXT, "positive"))
+    up = _upstream(pack, "positive")
+    assert up.context.context_errors
+    for case in ("differs", "match", "absence"):
+        sub = _submission(_payload(case))
+        content = cp3d.validate_market_implied(submission=sub, upstream=up)
+        got = cp3d._issues(pack, sub, up)
+        assert got == tuple(dict.fromkeys(content)) and got
+        assert not any(i.startswith("Context refused") or "recovery_pct" in i for i in got)
+    nopin = _other_run(_pack(tmp_path / "b", NO_CP3D, "positive"))
+    sub = _submission(_payload("differs"))
+    want = cp3d._issues(nopin, sub, _upstream(nopin, "positive"))
+    assert cp3d._issues(pack, sub, up) == want
+    assert list(_validate(pack, _payload("differs"), "positive").issues) == list(want)
+    with pytest.raises(ValueError) as composer:
+        _report(pack, _payload("match"), "positive")
+    assert "Context refused" not in str(composer.value)
+
+
+def test_a_context_the_pins_reader_refuses_is_one_line_when_there_are_no_context_errors(
+    tmp_path: Path,
+) -> None:
+    """No frozen context reaches this branch (a context `context_facts` refuses is also refused by
+    the offers reader, so `context_errors` is set). The test builds it: the upstream comes from the
+    good pack and the pins are read from the run-mismatched pack."""
+    good = _pack(tmp_path, CONTEXT, "positive")
+    up = _upstream(good, "positive")
+    assert up.context.context_errors == ()
+    pack = _other_run(good)
     with pytest.raises(ContextRefused) as raised:
         pins_of("CP-3D", pack)
     want = "Context refused: " + str(raised.value)
-    assert cp3d._pin_lines(pack, _submission(_payload("differs"))) == (want,)
-    got = list(_validate(pack, _payload("differs"), "positive").issues)
-    assert got.count(want) == 1 and got[-1] == want
+    sub = _submission(_payload("differs"))
+    assert cp3d._pin_lines(pack, sub) == (want,)
+    got = cp3d._issues(pack, sub, up)
+    assert list(got) == [want]
     assert not any("recovery_pct" in i for i in got)
     with pytest.raises(ValueError) as composer:
-        _report(pack, _payload("match"), "positive")
-    assert want in str(composer.value)
+        cp3d.market_implied(pack=pack, submission=sub, upstream=up)
+    assert str(composer.value) == want
 
 
 def test_a_refusal_over_the_bound_with_many_problems_is_one_clipped_line(
@@ -371,17 +408,6 @@ def test_a_value_error_while_comparing_is_not_caught(
     monkeypatch.setattr(cp3d, "pin_issues", broken)
     with pytest.raises(ValueError, match="compare failed"):
         cp3d._pin_lines(pack, _submission(_payload("differs")))
-
-
-def test_the_market_quote_context_errors_stay_a_separate_line(tmp_path: Path) -> None:
-    """Phase 3's `context source unreadable` lines are not merged with the pin refusal."""
-    pack = _other_run(_pack(tmp_path, CONTEXT, "positive"))
-    content = cp3d.validate_market_implied(
-        submission=_submission(_payload("match")), upstream=_upstream(pack, "positive")
-    )
-    got = cp3d._issues(pack, _submission(_payload("match")), _upstream(pack, "positive"))
-    assert list(got[: len(content)]) == list(content)
-    assert len(got) == len(content) + 1 and got[-1].startswith("Context refused: ")
 
 
 # --- the label on every branch ----------------------------------------------------------------

@@ -1819,6 +1819,13 @@
      "fn:deploy_vii.readiness:validate_review",
      "fn:deploy_vii.prose:issues"
     ]
+   },
+   {
+    "id": "source_readiness.g8",
+    "statement": "Write one consumer judgment for each. Python writes \"Run <id>\" for READY or READY_WITH_LIMITATIONS; any lower readiness refuses that module in this run, and every module that requires it.",
+    "checks": [
+     "fn:deploy_vii.readiness:validate_review"
+    ]
    }
   ]
  },
@@ -1854,10 +1861,10 @@
    "src/deploy_workflow/owners/cp2d.py": "cc7a462168e7498c0af4facc5197b32a0ee2f0054a6b5ecc03a1657bbfca7423",
    "src/deploy_workflow/owners/cp2e.py": "88b87ae65766ac5368096967c538d88127e98f4ef4b9cb9ff0916c55657a2732",
    "src/deploy_workflow/owners/cp2g.py": "71c06be61716570408bfed1913c5f8853bb8010c5a96f61554b61f84923e4bdb",
-   "src/deploy_workflow/owners/cp2h.py": "7280c83c695a62e6f2334728d0f0ad66851116e13da266475001170868881eb2",
+   "src/deploy_workflow/owners/cp2h.py": "6c631c63645bfd1a2009aa13c93d99994670f48d521ab34bc96959a771bf4349",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
    "src/deploy_workflow/owners/cp3c.py": "6ce5989769711e1f978f300a205e0fd80a5ac8a011c9f2eee5831210cb7cdb0b",
-   "src/deploy_workflow/owners/cp3d.py": "b06b7126dcead6fe426e8fa6eeb93ea200386ec2b876df819efba76a94c0e61f",
+   "src/deploy_workflow/owners/cp3d.py": "da9a9e5a6835d05ff331bd84b01cdc40e8bc2d5ee9f3ce9dd76c151acfefea5e",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
    "src/deploy_workflow/owners/cp4c.py": "4fec1bf89e5744c23ea5becfdf90ead8407d9ef2c6a5ba6973a04d18fd71bed8",
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",

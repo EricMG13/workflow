@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import refusal_view
 from cp2a_runs import bound_literal, cp2a_closed, oracle, promoted
 from s1a_runs import clone_workflow
 
@@ -169,10 +170,8 @@ def test_a2b_refused_begin_for_cp1_and_no_cp2a_anywhere(refused: Closed) -> None
     store = _verify(refused)
     receipt = _receipt(refused)
     want = EXPECTED["cases"]["refused"]["refused_begins"]
-    assert [(r.module_id, r.reason) for r in receipt.refusals] == [
-        (w["module_id"], w["reason"]) for w in want
-    ]
-    assert len(receipt.refusals) == 1
+    # frozen field: refused_begins (CP-1, then the CP-2A consequence), G3 / B23
+    assert refusal_view.of_receipt(receipt) == refusal_view.of_oracle(want)
     snapshot = store.read()
     assert [h.module_id for h in snapshot.heads] == EXPECTED["cases"]["refused"]["heads"]
     assert {a.module_id for a in snapshot.attempts} == set(EXPECTED["cases"]["refused"]["attempts"])

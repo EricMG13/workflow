@@ -116,8 +116,8 @@ def run_blocked(
 
 @pytest.fixture(scope="module")
 def run_refused(tmp_path_factory: pytest.TempPathFactory) -> Closed:
-    """A3c: CP-0 does not command CP-1A, so it is refused at begin and the walk stops; CP-MODEL
-    publishes."""
+    """A3c: CP-0 does not command CP-1A, so it is refused at begin, CP-2 is refused as its
+    consequence (G3) and the walk goes on to CP-MODEL, which publishes."""
     root = tmp_path_factory.mktemp("cpos-closed-refused")
     text = runs.cp0_cp1a_conditional("positive", runs.make_pack("positive"))
     workflow, _ = runs.promoted("positive", root, cp0_text=text)

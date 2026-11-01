@@ -188,6 +188,14 @@ def test_missing_inputs_chain_on_the_real_dependencies() -> None:
     assert owner._missing_inputs(after, "CP-5", error) == (("CP-4", "CP-4C"), ())
 
 
+def test_missing_inputs_are_in_plan_order_not_alphabetical() -> None:
+    """CP-4C on the distressed plan with only CP-0 settled: plan order puts CP-2G last (frozen
+    cp4c-owner `refused_begins`); a sort would put it before CP-4."""
+    before = _snapshot(("CP-0",), DISTRESSED)
+    error = _error(before, "CP-4C")
+    assert owner._missing_inputs(before, "CP-4C", error) == (("CP-1", "CP-2A", "CP-4", "CP-2G"), ())
+
+
 def test_missing_inputs_names_a_blocked_producer_without_a_restricted_edge() -> None:
     """A blocked head under a `block` edge is unusable, so it is named too."""
     snapshot = _snapshot(("CP-0", "CP-1", "CP-1A"), ("CP-2",))

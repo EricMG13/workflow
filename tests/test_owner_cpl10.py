@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import refusal_view
 from cpl10_runs import (
     ALL_GAPS,
     LIMITED,
@@ -84,9 +85,9 @@ def test_cp1_missing_is_the_frozen_refused_begin(tmp_path: Path) -> None:
     ]
     assert cp0.module_id == "CP-0"
     receipt = workflow.write_receipt(tmp_path / "receipt.json")
-    assert [r.module_id for r in receipt.refusals] == ["CP-1"]
+    # frozen field: refused_begins (CP-1 by command, CP-L10 a consequence naming CP-1), G3 / B23
+    assert refusal_view.of_receipt(receipt) == refusal_view.of_oracle(want["refused_begins"])
     assert receipt.refusals[0].reason == str(NotAuthorized("CP-1", ("DO NOT RUN",)))
-    assert receipt.refusals[0].reason == want["refused_begins"][0]["reason"]
     assert not [a for a in snapshot.attempts if a.module_id == "CP-L10"]
     assert not [h for h in snapshot.heads if h.module_id == "CP-L10"]
     ow.verify_owner_run_receipt(Execution(tmp_path / "store"), receipt)

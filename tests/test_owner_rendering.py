@@ -534,6 +534,17 @@ def test_fast_a_head_planned_after_the_first_refusal_is_an_outcome_refused_begin
     assert _rules((ROOT_REFUSAL,), _heads("CP-0", "CP-1A")) == "owner_render_outcome"
 
 
+def test_fast_a_head_planned_between_two_roots_is_an_outcome_refusal_whatever_the_list_order() -> (
+    None
+):
+    """The earliest refused module in the plan decides, not the first listed (the verifier does not
+    bind `receipt.refusals` order): CP-1A settled between the roots CP-1 and CP-2."""
+    later = _refused_begin("CP-2", "CP-0 has not authorized this consumer's source readiness")
+    heads = _heads("CP-0", "CP-1A")
+    assert _rules((ROOT_REFUSAL, later), heads) == "owner_render_outcome"
+    assert _rules((later, ROOT_REFUSAL), heads) == "owner_render_outcome"
+
+
 def test_fast_a_consequence_naming_an_unrefused_module_is_blocked() -> None:
     consequence = _refused_begin("CP-2", BLOCKED_EDGE, "CP-1A")  # CP-1A is not refused
     assert _rules((ROOT_REFUSAL, consequence), _heads("CP-0")) == "owner_render_blocked"

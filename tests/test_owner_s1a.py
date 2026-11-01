@@ -895,7 +895,12 @@ def test_unauthorized_cp1a_is_refused_and_cp_model_publishes(
     runs.finish(workflow, root / "owner-receipt.json")
     receipt = OwnerRunReceipt.model_validate_json((root / "owner-receipt.json").read_bytes())
     _verify(root, receipt)  # the seal itself verified it; this is the read-only audit
-    assert [r.module_id for r in receipt.refusals] == ["CP-1A"]
+    # cpos-owner `s1a_refused_cp1a` (re-cut, G3 / B23a): CP-1A is refused by command, then CP-2 as
+    # a consequence (its missing input CP-1A was refused in the walk); the walk goes on to CP-MODEL
+    assert [(r.module_id, r.missing_inputs, r.missing_commands) for r in receipt.refusals] == [
+        ("CP-1A", (), ("Run CP-1A",)),
+        ("CP-2", ("CP-1A",), ()),
+    ]
     assert receipt.model is not None and receipt.publications
     assert verify_cp_model_publication(store, root / "model") == ()
     assert {h.module_id for h in store.read().heads} == {"CP-0", "CP-1", "CP-MODEL"}

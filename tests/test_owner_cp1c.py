@@ -28,6 +28,7 @@ from typing import Any
 
 import cp1c_runs as runs
 import pytest
+import refusal_view
 import test_method_cp1c as stage1
 import view_tree
 from defect_classes import model_text_failures
@@ -286,8 +287,10 @@ def test_a1_verification_writes_nothing(positive: Closed) -> None:
 def test_a2_refused_begin_for_cp1_and_no_cp1c_anywhere(refused: Closed) -> None:
     store = _verify(refused)
     want = EXPECTED["cases"]["refused"]
-    reason = want["refused_begins"][0]["reason"].removeprefix("str(NotAuthorized): ")
-    assert [(r.module_id, r.reason) for r in _receipt(refused).refusals] == [("CP-1", reason)]
+    # frozen field: refused_begins (CP-1 by command, CP-1C a consequence naming CP-1), G3 / B23
+    assert refusal_view.of_receipt(_receipt(refused)) == refusal_view.of_oracle(
+        want["refused_begins"]
+    )
     assert [a.module_id for a in store.read().attempts] == want["attempts"]
     assert [h.module_id for h in store.read().heads] == want["heads"]
     commands = {c.row_id: c.text for c in _head(store, "CP-0").commands}

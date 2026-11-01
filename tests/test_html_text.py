@@ -1,0 +1,215 @@
+"""Tests for the stdlib HTML to line converter (O2 Task 1, R1)."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
+from deploy_workflow import html_text
+from deploy_workflow.html_text import UndecodableHtml, convert_html
+
+REPO = Path(__file__).resolve().parents[1]
+CORPUS = Path("/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1")
+# Quotes not inside one line for the chosen rule (tr + p), measured in the task-1 note.
+RECORDED_MISSES = 81
+
+
+def _check_py() -> Any:
+    spec = importlib.util.spec_from_file_location("golden_check", REPO / "cases/goldens/check.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _text(html: str) -> str:
+    return convert_html(html.encode("utf-8")).text
+
+
+def test_table_rows_are_lines() -> None:
+    html = (
+        "<html><body><table><tr><td>Revenue</td><td>1,234</td></tr>"
+        "<tr><td>Cost</td><td>(5)</td></tr></table></body></html>"
+    )
+    assert _text(html) == "Revenue 1,234\nCost (5)\n"
+
+
+def test_inline_spans_do_not_split_a_number() -> None:
+    html = "<p><span>(</span>1,234<span>)</span></p>"
+    assert _text(html) == "(1,234)\n"
+
+
+def test_skipped_and_hidden_elements_dropped_div_is_a_space() -> None:
+    html = (
+        "<head><title>T</title></head><body>x<script>y</script><style>z</style>"
+        '<div style="display: none">h</div>w</body>'
+    )
+    assert _text(html) == "x w\n"
+
+
+def test_ix_header_dropped() -> None:
+    assert _text("<ix:header>H</ix:header><p>A</p><p>B</p>") == "A\nB\n"
+
+
+def test_unclosed_head_ends_at_body() -> None:
+    assert _text("<head><title>T</title><body><p>A</p></body>") == "A\n"
+
+
+def test_empty_paragraphs_dropped() -> None:
+    assert _text("<p>A</p><p>  \u200b </p><p>B</p>") == "A\nB\n"
+
+
+def test_no_visible_text_is_empty_string() -> None:
+    assert _text("<html><head><title>T</title></head><body></body></html>") == ""
+
+
+def test_characters_that_split_lines_are_normalised() -> None:
+    result = convert_html("<p>a b\x0bc\x85d</p>".encode()).text
+    assert result == "a b c d\n"
+    assert len(result.splitlines()) == 1
+
+
+def test_entities_unescaped() -> None:
+    assert _text("<p>A &amp; B&nbsp;C</p>") == "A & B C\n"
+
+
+def test_line_count_matches_text() -> None:
+    converted = convert_html(b"<p>A</p><p>B</p><p>C</p>")
+    assert converted.line_count == 3
+    assert converted.encoding == "utf-8"
+
+
+def test_utf8_and_bom() -> None:
+    assert convert_html("<p>café</p>".encode()).text == "café\n"
+    bom = convert_html(b"\xef\xbb\xbf<p>x</p>")
+    assert bom.text == "x\n"
+    assert bom.encoding == "utf-8-sig"
+
+
+def test_declared_windows_1252() -> None:
+    converted = convert_html(b'<meta charset="windows-1252"><p>caf\xe9</p>')
+    assert converted.text == "café\n"
+    assert converted.encoding == "windows-1252"
+
+
+def test_declared_via_xml_declaration() -> None:
+    converted = convert_html(b'<?xml version="1.0" encoding="iso-8859-1"?><p>caf\xe9</p>')
+    assert converted.text == "café\n"
+    assert converted.encoding == "iso-8859-1"
+
+
+def test_undeclared_invalid_utf8_refused() -> None:
+    with pytest.raises(UndecodableHtml):
+        convert_html(b"<p>caf\xe9</p>")
+
+
+def test_other_declared_charset_refused() -> None:
+    with pytest.raises(UndecodableHtml):
+        convert_html(b'<meta charset="shift_jis"><p>x\xe9</p>')
+
+
+def test_unknown_charset_name_refused() -> None:
+    with pytest.raises(UndecodableHtml):
+        convert_html(b'<meta charset="no-such-codec"><p>x\xe9</p>')
+
+
+def test_declared_charset_that_does_not_decode_refused() -> None:
+    with pytest.raises(UndecodableHtml):
+        convert_html(b'<meta charset="ascii"><p>caf\xe9</p>')
+
+
+def test_nul_refused() -> None:
+    with pytest.raises(UndecodableHtml):
+        convert_html(b"<p>a\x00b</p>")
+
+
+def test_constants_match_check_py() -> None:
+    check = _check_py()
+    assert html_text.VOID == check.VOID
+    assert html_text.SKIP == check.SKIP
+    assert html_text.BLOCK == check.BLOCK
+    assert html_text.ZERO_WIDTH_CHARS == "\u200b‌‍⁠﻿"
+    assert html_text.LINE_TAGS <= check.BLOCK
+
+
+FIXTURES = [
+    "<table><tr><td>Revenue</td><td>1,234</td></tr><tr><td>Cost</td><td>(5)</td></tr></table>",
+    "<p><span>(</span>1,234<span>)</span></p>",
+    (
+        "<head><title>T</title></head><body>x<script>y</script><style>z</style>"
+        '<div style="display: none">h</div>w</body>'
+    ),
+    "<ix:header>H</ix:header><p>A</p><p>B</p>",
+    "<p>A</p><p>  \u200b </p><p>B</p>",
+    "<p>a b\x0bc\x85d</p><br/><ul><li>one</li><li>two &amp; three</li></ul>",
+]
+
+
+@pytest.mark.parametrize("html", FIXTURES)
+def test_equivalent_to_check_py_visible_text(html: str) -> None:
+    check = _check_py()
+    lines = _text(html).splitlines()
+    assert check.normalise(" ".join(lines)) == check.visible_text(html)
+
+
+_TAGS = st.sampled_from(["p", "div", "tr", "td", "span", "table", "li", "br", "b", "script"])
+_TEXT = st.text(alphabet=st.sampled_from(list("ab 1(),\n\t\x0b\x85\u200b  ")), max_size=8)
+
+
+@st.composite
+def _html(draw: st.DrawFn, depth: int = 0) -> str:
+    parts: list[str] = []
+    for _ in range(draw(st.integers(0, 4))):
+        if depth < 3 and draw(st.booleans()):
+            tag = draw(_TAGS)
+            parts.append(f"<{tag}>{draw(_html(depth + 1))}</{tag}>")
+        else:
+            parts.append(draw(_TEXT))
+    return "".join(parts)
+
+
+@settings(max_examples=200, deadline=None)
+@given(_html())
+def test_no_hidden_splits_and_clean_lines(html: str) -> None:
+    text = _text(html)
+    lines = text.splitlines()
+    assert lines == (text.split("\n")[:-1] if text else [])
+    assert all(line and line == line.strip() for line in lines)
+
+
+def test_corpus_goldens_decode_and_recorded_misses() -> None:
+    if not CORPUS.is_dir():
+        pytest.skip("public corpus directory absent (artifacts/public-corpus/v1)")
+    check = _check_py()
+    total = 0
+    misses = 0
+    for case in sorted((REPO / "cases/goldens").iterdir()):
+        golden = case / "module_golden.json"
+        if not golden.is_file():
+            continue
+        data = json.loads(golden.read_text())
+        converted: dict[str, list[str]] = {}
+        for source in data["sources"]:
+            path = CORPUS / source["file"]
+            if path.suffix.lower() == ".pdf" or not path.is_file():
+                continue
+            if path.suffix.lower() not in {".htm", ".html"}:
+                continue
+            converted[source["source_id"]] = convert_html(path.read_bytes()).text.splitlines()
+        for fact in data["facts"]:
+            for evidence in fact["evidence"]:
+                lines = converted.get(evidence["source_id"])
+                if lines is None:
+                    continue
+                total += 1
+                quote = check.normalise(evidence["quote"])
+                if not any(quote in line for line in lines):
+                    misses += 1
+    assert total > 0
+    assert misses == RECORDED_MISSES

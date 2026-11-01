@@ -567,50 +567,43 @@ def _strings(path: str, item: object, names: Sequence[str]) -> tuple[dict[str, s
     return row, problems
 
 
-def _row_problems(path: str, row: Mapping[str, str], run_as_of: date, quote: bool) -> list[str]:
-    """The figures, date and kind of one row against the context's number and date rules."""
-    problems: list[str] = []
+def _figure_problems(path: str, row: Mapping[str, str], quote: bool) -> list[str]:
+    """The figures of one row that are not a plain number (the context's `NUM`)."""
     figures = (
         [name for name, _ in QUOTE_FIGURES]
         if quote
         else [name for _, low, high, _ in DEAL_RANGES for name in (low, high)]
     )
-    problems += [
+    return [
         f"{path}.{name} is not a plain number"
         for name in figures
         if row.get(name) and not re.fullmatch(CONTEXT_NUM, row[name], re.ASCII)
     ]
+
+
+def _date_problems(path: str, stated: str, run_as_of: date) -> list[str]:
+    """A row's date: ISO, and not after the run as-of."""
+    when = _valid_date(stated)
+    if when is None:
+        return [f"{path}.as_of is not an ISO date"]
+    if when > run_as_of:
+        return [f"{path}.as_of {stated} is after the run as-of {run_as_of.isoformat()}"]
+    return []
+
+
+def _row_problems(path: str, row: Mapping[str, str], run_as_of: date, quote: bool) -> list[str]:
+    """The figures, date and kind of one row against the context's number and date rules."""
+    problems = _figure_problems(path, row, quote)
     if quote and row.get("kind") not in ("observed", "indicative_talk"):
         problems.append(f"{path}.kind is not observed or indicative_talk")
     stated = row.get("as_of", "")
-    if stated or quote:
-        when = _valid_date(stated)
-        if when is None:
-            problems.append(f"{path}.as_of is not an ISO date")
-        elif when > run_as_of:
-            problems.append(f"{path}.as_of {stated} is after the run as-of {run_as_of.isoformat()}")
+    if stated or quote:  # a deal row may state no date; a quote must
+        problems += _date_problems(path, stated, run_as_of)
     return problems
 
 
-def _read_context(source: Source, run: Run) -> _Parsed:
-    """The context source's quotes and deal rows (only the members CP-3 uses), or the issues that
-    make the file unreadable. `prepare` never calls `load_context`, so every figure, date and
-    identity used is re-checked here; no other form rule is re-applied."""
-    text = "\n".join(span.text for span in source.spans)
-
-    def refused(*problems: str) -> _Parsed:
-        return _Parsed(text, (), (), tuple(UNREADABLE + problem for problem in problems))
-
-    if source.status != "ready":
-        return refused(f"status is {source.status}: {source.limitation}")
-    try:
-        loaded = json.loads(text, object_pairs_hook=_no_duplicates)
-    except json.JSONDecodeError as error:
-        return refused(f"not valid JSON ({error.msg} at line {error.lineno})")
-    except (ValueError, RecursionError) as error:
-        return refused(f"not valid JSON ({error})")
-    if not isinstance(loaded, dict):
-        return refused("the top level is not an object")
+def _identity_problems(loaded: Mapping[str, Any], run: Run) -> list[str]:
+    """The schema tag and the issuer identity against the run."""
     problems: list[str] = []
     if loaded.get("schema") != CONTEXT_SCHEMA:
         problems.append(f"schema is not {CONTEXT_SCHEMA}")
@@ -621,33 +614,77 @@ def _read_context(source: Source, run: Run) -> _Parsed:
         for name, ours in (("issuer_id", run.issuer_id), ("issuer_name", run.issuer_name))
         if name in identity and identity[name] != ours
     ]
-    rows: dict[str, tuple[dict[str, str], ...]] = {}
-    for array, names in (("quotes", QUOTE_STRINGS), ("deal_terms", DEAL_STRINGS)):
-        items = loaded.get(array)
-        if not isinstance(items, list):
-            problems.append(f"{array} is {'missing' if array not in loaded else 'not a list'}")
-            continue
-        parsed: list[dict[str, str]] = []
-        for index, item in enumerate(items):
-            row, found = _strings(f"{array}[{index}]", item, names)
-            problems += found or _row_problems(
-                f"{array}[{index}]", row, run.as_of, array == "quotes"
-            )
-            parsed.append(row)
-        rows[array] = tuple(parsed)
-    if problems:
-        return refused(*problems)
-    return _Parsed(text, rows["quotes"], rows["deal_terms"], ())
+    return problems
+
+
+def _array_rows(
+    loaded: Mapping[str, Any], array: str, names: Sequence[str], run: Run
+) -> tuple[tuple[dict[str, str], ...], list[str]]:
+    """One array's rows (the members CP-3 uses) and their problems."""
+    items = loaded.get(array)
+    if not isinstance(items, list):
+        return (), [f"{array} is {'missing' if array not in loaded else 'not a list'}"]
+    rows: list[dict[str, str]] = []
+    problems: list[str] = []
+    for index, item in enumerate(items):
+        path = f"{array}[{index}]"
+        row, found = _strings(path, item, names)
+        problems += found or _row_problems(path, row, run.as_of, array == "quotes")
+        rows.append(row)
+    return tuple(rows), problems
+
+
+def _read_context(source: Source, run: Run) -> _Parsed:
+    """The context source's quotes and deal rows (only the members CP-3 uses), or the issues that
+    make the file unreadable. `prepare` never calls `load_context`, so every figure, date and
+    identity used is re-checked here; no other form rule is re-applied. The source must be
+    `text/plain` with one line per span: citations map a line of the joined text to its span."""
+    text = "\n".join(span.text for span in source.spans)
+
+    def refused(*problems: str) -> _Parsed:
+        return _Parsed(text, (), (), tuple(UNREADABLE + problem for problem in problems))
+
+    if source.status != "ready":
+        return refused(f"status is {source.status}: {source.limitation}")
+    if source.media_type != "text/plain":
+        return refused(f"media type is {source.media_type}, not text/plain")
+    if any("\n" in span.text for span in source.spans):
+        return refused("a span holds more than one line")
+    try:
+        loaded = json.loads(text, object_pairs_hook=_no_duplicates)
+    except json.JSONDecodeError as error:
+        return refused(f"not valid JSON ({error.msg} at line {error.lineno})")
+    except (ValueError, RecursionError) as error:
+        return refused(f"not valid JSON ({error})")
+    if not isinstance(loaded, dict):
+        return refused("the top level is not an object")
+    problems = _identity_problems(loaded, run)
+    quotes, found = _array_rows(loaded, "quotes", QUOTE_STRINGS, run)
+    problems += found
+    deals, found = _array_rows(loaded, "deal_terms", DEAL_STRINGS, run)
+    problems += found
+    return refused(*problems) if problems else _Parsed(text, quotes, deals, ())
 
 
 def _skip(text: str, at: int) -> int:
-    return _WS.match(text, at).end()  # type: ignore[union-attr]  # `[ \t\n\r]*` always matches
+    found = _WS.match(text, at)  # `[ \t\n\r]*` matches at every offset
+    return at if found is None else found.end()
 
 
 def _expect(text: str, at: int, char: str) -> int:
     if text[at : at + 1] != char:
         raise ValueError(f"expected {char!r} at offset {at}")
     return _skip(text, at + 1)
+
+
+def _after(text: str, at: int, close: str) -> int:
+    """After one member or element ending at `at`: past a ',' , or at the closing `close`."""
+    at = _skip(text, at)
+    if text[at : at + 1] == ",":
+        return _skip(text, at + 1)
+    if text[at : at + 1] != close:
+        raise ValueError(f"expected ',' or {close!r} at offset {at}")
+    return at
 
 
 def _object_members(text: str, at: int, prefix: str, found: dict[str, _Member]) -> int:
@@ -665,12 +702,22 @@ def _object_members(text: str, at: int, prefix: str, found: dict[str, _Member]) 
             if path in found:
                 raise ValueError(f"duplicate member {path}")
             found[path] = _Member(key_start, at, end, start)
-        at = _skip(text, end)
-        if text[at : at + 1] == ",":
-            at = _skip(text, at + 1)
-        elif text[at : at + 1] != "}":
-            raise ValueError(f"expected ',' or '}}' at offset {at}")
+        at = _after(text, end, "}")
     return at + 1
+
+
+def _array_members(text: str, at: int, key: str, found: dict[str, _Member]) -> int:
+    """Read the array at `at` (`quotes` or `deal_terms`); record the string members of each of
+    its objects; return the offset after its `]`."""
+    at = _expect(text, at, "[")
+    index = 0
+    while text[at : at + 1] != "]":
+        if text[at : at + 1] == "{":
+            end = _object_members(text, at, f"{key}[{index}]", found)
+        else:
+            _, end = _DECODER.raw_decode(text, at)
+        at, index = _after(text, end, "]"), index + 1
+    return _skip(text, at + 1)
 
 
 def _members(text: str) -> dict[str, _Member]:
@@ -682,24 +729,10 @@ def _members(text: str) -> dict[str, _Member]:
         key, end = _DECODER.raw_decode(text, at)
         at = _expect(text, _skip(text, end), ":")
         if key in _ARRAYS and text[at : at + 1] == "[":
-            at = _expect(text, at, "[")
-            index = 0
-            while text[at : at + 1] != "]":
-                if text[at : at + 1] == "{":
-                    end = _object_members(text, at, f"{key}[{index}]", found)
-                else:
-                    _, end = _DECODER.raw_decode(text, at)
-                at, index = _skip(text, end), index + 1
-                if text[at : at + 1] == ",":
-                    at = _skip(text, at + 1)
-            at = _skip(text, at + 1)
+            end = _array_members(text, at, key, found)
         else:
             _, end = _DECODER.raw_decode(text, at)
-            at = _skip(text, end)
-        if text[at : at + 1] == ",":
-            at = _skip(text, at + 1)
-        elif text[at : at + 1] != "}":
-            raise ValueError(f"expected ',' or '}}' at offset {at}")
+        at = _after(text, end, "}")
     return found
 
 
@@ -729,16 +762,21 @@ def _cite(source: Source, text: str, member: _Member) -> Citation | None:
 
 
 def _cite_all(
-    ctx: _Reading, array: str, index: int, fields: Sequence[str]
+    ctx: _Reading, array: str, index: int, row: Mapping[str, str], fields: Sequence[str]
 ) -> tuple[Citation, ...] | None:
-    """The citations of the named figures of one row, in order; None unless every one cites."""
-    cited = [
-        _cite(ctx.source, ctx.parsed.text, ctx.members[f"{array}[{index}].{name}"])
-        for name in fields
-    ]
-    if any(item is None for item in cited):
-        return None
-    return tuple(item for item in cited if item is not None)
+    """The citations of the named figures of one row, in order; None unless every one cites. A
+    figure whose raw text is not exactly `"<value>"` (a JSON escape, say) is not cited: the
+    file's bytes would not hold the figure the Quote cell shows."""
+    cited: list[Citation] = []
+    for name in fields:
+        member = ctx.members[f"{array}[{index}].{name}"]
+        if ctx.parsed.text[member.value_start : member.value_end] != f'"{row[name]}"':
+            return None
+        citation = _cite(ctx.source, ctx.parsed.text, member)
+        if citation is None:
+            return None
+        cited.append(citation)
+    return tuple(cited)
 
 
 def _stale_text(facility: str, stated: str, run_as_of: date) -> str | None:
@@ -772,7 +810,7 @@ def _quote_row(ctx: _Reading, index: int, quote: Mapping[str, str]) -> ContextRo
     fields = [name for name, _ in QUOTE_FIGURES if quote[name]]
     if not fields:
         return f"context quote for facility {facility} carries no figure; not used"
-    cites = _cite_all(ctx, "quotes", index, fields)
+    cites = _cite_all(ctx, "quotes", index, quote, fields)
     if cites is None:
         return (
             f"context quote row {index + 1} for facility {facility} cannot be cited as one "
@@ -818,7 +856,7 @@ def _deal_row(ctx: _Reading, index: int, deal: Mapping[str, str]) -> ContextRow 
     here = f"context deal terms row {index + 1} for facility {facility}"
     if not shown:
         return f"{here} carries no complete talk range; not used"
-    cites = _cite_all(ctx, "deal_terms", index, fields)
+    cites = _cite_all(ctx, "deal_terms", index, deal, fields)
     if cites is None:
         return f"{here} cannot be cited as one unique span; not used"
     stale = _stale_text(facility, deal["as_of"], ctx.run_as_of)
@@ -992,54 +1030,65 @@ def _bind_evidence(
     first: dict[QuoteKey, int] = {}
     issues: list[str] = list(context.issues)
     for index, row in enumerate(submission.market_evidence):
+        path = f"market_evidence[{index}]"
+        if row.source_id == CONTEXT_SOURCE:  # a model never writes a context row
+            issues.append(f"{path}: context market evidence is built by Python; {BY_ROW_ID}")
+            continue
         # One row per quoted span: a basis quote names its row, so a span quoted twice (under
         # two kinds, say) would leave the row it names to submission order.
         if row.quote is not None and (seen := first.setdefault(_key(row.quote), index)) != index:
             issues.append(
-                f"market_evidence[{index}]: quotes the same span as market_evidence[{seen}] "
+                f"{path}: quotes the same span as market_evidence[{seen}] "
                 f"({row.quote.source_id} {row.quote.locator})"
             )
-        path = f"market_evidence[{index}]"
-        quote = row.quote
-        if row.source_id == CONTEXT_SOURCE:
-            issues.append(f"{path}: context market evidence is built by Python; {BY_ROW_ID}")
-            continue
-        if row.kind == NONE:
-            if quote is not None:
-                issues.append(f"{path}: a none row quotes nothing")
-            if not row.limitation:
-                issues.append(f"{path}: a none row states its limitation")
-            continue
-        if quote is None:
-            issues.append(f"{path}: an {row.kind} row quotes its source")
-            continue
-        if quote.source_id != row.source_id:
-            issues.append(f"{path}.quote: quotes {quote.source_id}, not {row.source_id}")
-        if row.source_id not in market:
-            issues.append(f"{path}: {row.source_id} is not a third_party source (CP-0 T3)")
-        digest = digests.get(quote.source_id)
-        if digest is None:
-            issues.append(f"Unavailable or changed source: {quote.source_id}")
-            continue
-        try:
-            citation = Citation(
-                source_id=quote.source_id,
-                source_sha256=digest,
-                locator=quote.locator,
-                quote=quote.quote,
-            )
-        except ValidationError:
-            issues.append(f"{path}: malformed citation (empty locator or quote)")
-            continue
-        issues.extend(f"{path}: {i}" for i in citation_issues((citation,), pack.sources))
-        if row.kind == "observed":
-            issues.extend(
-                f'{path}: an observed row quotes indicative talk: "{marker}"'
-                for marker in _found(_TALK, quote.quote)
-            )
-        kinds[_key(quote)] = row.kind
-        citations[_key(quote)] = citation
+        found, citation = _market_row(path, row, market, digests, pack)
+        issues += found
+        if citation is not None and row.quote is not None:
+            kinds[_key(row.quote)] = row.kind
+            citations[_key(row.quote)] = citation
     return _Evidence(kinds, citations, tuple(dict.fromkeys(issues)), context)
+
+
+def _market_row(
+    path: str,
+    row: MarketEvidence,
+    market: frozenset[str],
+    digests: Mapping[str, str],
+    pack: PreparedPack,
+) -> tuple[list[str], Citation | None]:
+    """One model market-evidence row's issues and, when it binds, its `Citation`."""
+    quote = row.quote
+    if row.kind == NONE:
+        extra = [f"{path}: a none row quotes nothing"] if quote is not None else []
+        return extra + (
+            [] if row.limitation else [f"{path}: a none row states its limitation"]
+        ), None
+    if quote is None:
+        return [f"{path}: an {row.kind} row quotes its source"], None
+    issues: list[str] = []
+    if quote.source_id != row.source_id:
+        issues.append(f"{path}.quote: quotes {quote.source_id}, not {row.source_id}")
+    if row.source_id not in market:
+        issues.append(f"{path}: {row.source_id} is not a third_party source (CP-0 T3)")
+    digest = digests.get(quote.source_id)
+    if digest is None:
+        return [*issues, f"Unavailable or changed source: {quote.source_id}"], None
+    try:
+        citation = Citation(
+            source_id=quote.source_id,
+            source_sha256=digest,
+            locator=quote.locator,
+            quote=quote.quote,
+        )
+    except ValidationError:
+        return [*issues, f"{path}: malformed citation (empty locator or quote)"], None
+    issues.extend(f"{path}: {i}" for i in citation_issues((citation,), pack.sources))
+    if row.kind == "observed":
+        issues.extend(
+            f'{path}: an observed row quotes indicative talk: "{marker}"'
+            for marker in _found(_TALK, quote.quote)
+        )
+    return issues, citation
 
 
 def _basis_issues(
@@ -1063,10 +1112,15 @@ def _basis_issues(
     return issues
 
 
+def _cites_market(basis: Basis) -> bool:
+    """The basis cites market evidence: a `market_evidence` quote or a context row."""
+    return bool(basis.quotes or basis.context_rows)
+
+
 def _talk_only(basis: Basis, evidence: _Evidence) -> bool:
     kinds = {evidence.kinds.get(_key(quote)) for quote in basis.quotes}
     kinds |= {evidence.context_kinds.get(row_id) for row_id in basis.context_rows}
-    return bool(basis.quotes or basis.context_rows) and kinds <= {"indicative_talk"}
+    return _cites_market(basis) and kinds <= {"indicative_talk"}
 
 
 def _level_issues(where: str, text: str) -> list[str]:
@@ -1094,7 +1148,7 @@ def _instrument_issues(
             issues.append(f"{path}.facility_id: unknown CP-1 facility {row.facility_id}")
         issues += _basis_issues(path, row.basis, catalogue, evidence)
         market = not _none(row.market_observation)
-        cites_market = bool(row.basis.quotes or row.basis.context_rows)
+        cites_market = _cites_market(row.basis)
         if market and not cites_market:
             issues.append(f"{path}: a market observation cites a market_evidence quote")
         if not (row.basis.cp2_refs or cites_market or _figures(row, bound)):
@@ -1104,6 +1158,17 @@ def _instrument_issues(
         if market and _talk_only(row.basis, evidence):
             issues += _level_issues(f"{path}.market_observation", row.market_observation)
     return issues
+
+
+def _cap_reasons(upstream: Upstream, evidence: _Evidence) -> list[str]:
+    """Why the preference is capped below High: the upstream caps, talk-only evidence and a stale
+    context quote, in that order."""
+    reasons = list(upstream.caps)
+    if evidence.strength() == {"indicative_talk"}:
+        reasons.append("the market evidence is indicative talk only")
+    if evidence.context_stale:
+        reasons.append(CONTEXT_CAP)
+    return reasons
 
 
 def _preference_issues(
@@ -1133,13 +1198,9 @@ def _preference_issues(
             "preference.confidence: Insufficient Information without observed or indicative "
             "market evidence"
         )
-    if not insufficient and not (row.basis.quotes or row.basis.context_rows):
+    if not insufficient and not _cites_market(row.basis):
         issues.append("preference: a relative value preference cites a market_evidence quote")
-    reasons = list(upstream.caps)
-    if strength == {"indicative_talk"}:
-        reasons.append("the market evidence is indicative talk only")
-    if evidence.context_stale:
-        reasons.append(CONTEXT_CAP)
+    reasons = _cap_reasons(upstream, evidence)
     if reasons and row.confidence == "High":
         issues.append(f"preference.confidence: capped below High because {'; '.join(reasons)}")
     if _talk_only(row.basis, evidence):
@@ -1751,6 +1812,46 @@ def submit_cp3_step(store: Execution, ticket_id: str, step_id: str, payload: str
     )
 
 
+def _market_note(third_party: bool, offered: ContextEvidence) -> str:
+    """The CONTEXT block's note on where market evidence may come from."""
+    if third_party:
+        return (
+            "Quote market evidence only from a source listed in market_evidence_sources; "
+            "classify each quote observed or indicative_talk, never talk as a level."
+        )
+    if offered.rows:
+        return CONTEXT_ONLY_NOTE
+    return (
+        "No third_party source: there is no market evidence, so the preference is "
+        "Insufficient Information."
+    )
+
+
+def _context_caps(offered: ContextEvidence) -> list[str]:
+    return [CONTEXT_CAP] if any(row.stale for row in offered.rows) else []
+
+
+def _context_rows_block(pack: PreparedPack, offered: ContextEvidence) -> dict[str, object]:
+    """`context_market_evidence` for a pack with a `context` source (none otherwise): the rows the
+    model may cite by id (`basis.context_rows`); their figures are shown so it can choose, never
+    to be copied. `provider` is the user's text."""
+    if not any(source.source_id == CONTEXT_SOURCE for source in pack.sources):
+        return {}
+    rows = [
+        {
+            "row": row.row_id,
+            "facility_id": row.facility_id,
+            "kind": row.kind,
+            "as_of": row.as_of or NOT_STATED,
+            "provider": row.provider,
+            "stale": row.stale is not None,
+            "figures": row.figures,
+        }
+        for row in offered.rows
+    ]
+    return {"context_market_evidence": rows}
+
+
 def context_block(pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """What the `relative_value` CONTEXT block adds to the pack facts, all Python's: the
     upstream statuses, the CP-1 facilities and the figures a reference may name, the CP-2 rows
@@ -1766,7 +1867,6 @@ def context_block(pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     market = upstream.market_sources
     blocked = upstream.cp2_status == "blocked"
     offered = context_evidence(pack, upstream.facilities)
-    has_context = any(source.source_id == CONTEXT_SOURCE for source in pack.sources)
     block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
@@ -1837,34 +1937,9 @@ def context_block(pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
             for source in pack.sources
             if source.source_id in market and source.status == "ready"
         ],
-        "market_evidence_note": (
-            "Quote market evidence only from a source listed in market_evidence_sources; "
-            "classify each quote observed or indicative_talk, never talk as a level."
-            if market
-            else CONTEXT_ONLY_NOTE
-            if offered.rows
-            else "No third_party source: there is no market evidence, so the preference is "
-            "Insufficient Information."
-        ),
-        "confidence_caps": [
-            *upstream.caps,
-            *([CONTEXT_CAP] if any(r.stale for r in offered.rows) else []),
-        ],
+        "market_evidence_note": _market_note(bool(market), offered),
+        "confidence_caps": [*upstream.caps, *_context_caps(offered)],
         "inherited_limitations": list(upstream.inherited),
     }
-    if has_context:
-        # The rows the model may cite by id (`basis.context_rows`); their figures are shown so it
-        # can choose, never to be copied. `provider` is the user's text.
-        block["context_market_evidence"] = [
-            {
-                "row": row.row_id,
-                "facility_id": row.facility_id,
-                "kind": row.kind,
-                "as_of": row.as_of or NOT_STATED,
-                "provider": row.provider,
-                "stale": row.stale is not None,
-                "figures": row.figures,
-            }
-            for row in offered.rows
-        ]
+    block.update(_context_rows_block(pack, offered))
     return block

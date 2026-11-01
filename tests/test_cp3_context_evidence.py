@@ -10,6 +10,7 @@ Packs are the R3 pack (or the S1 pack for `context-only`) plus a `context` sourc
 import copy
 import json
 import re
+from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -186,6 +187,19 @@ def check_cells(case: str, result: CP3Result) -> None:
         assert claims[claim["claim_id"]] == claim["cites"], claim["claim_id"]
 
 
+def is_context_item(text: str) -> bool:
+    return text == USER_LABEL or text.startswith(("Stale quote", "Gap (Medium): context "))
+
+
+def check_limitation_order(actual: Sequence[str], members: Sequence[str]) -> None:
+    """The oracle's rule: the model's gaps, then the evidence label, then the context items (their
+    order among themselves is not pinned)."""
+    head = [m for m in members if not is_context_item(m)]
+    tail = [m for m in members if is_context_item(m)]
+    assert list(actual[: len(head)]) == head
+    assert sorted(actual[len(head) :]) == sorted(tail)
+
+
 @pytest.mark.parametrize("case", CASES)
 def test_case_equals_oracle(case: str) -> None:
     _, result = run_case(case)
@@ -194,7 +208,7 @@ def test_case_equals_oracle(case: str) -> None:
     check_rows(case, result)
     check_cells(case, result)
     members = own_members(case)
-    assert sorted(result.report.limitations) == sorted(members)
+    check_limitation_order(result.report.limitations, members)
     if "own_limitations_count" in CP3[case]:
         assert len(result.report.limitations) == CP3[case]["own_limitations_count"]
     user_label = "Market evidence rows from the context file are user-supplied figures"
@@ -383,11 +397,16 @@ def test_context_block_lists_rows_and_caps_and_note(case: str) -> None:
 
 
 def test_cp6_catalogue_lists_context_rows() -> None:
-    for case in ("observed-and-talk", "with-market-row", "talk-only"):
+    for case in CASES:
         inputs, result = run_case(case)
         catalogue = cp3_catalogue(candidate(result, inputs, attempt=0))
         got = {ref: row.label for ref, row in catalogue.items() if ref.startswith("T3.3.")}
-        assert got == CP3[case]["cp6_catalogue_t33"]
+        labels = {"m": "Market evidence", "c": "Context market evidence"}
+        order = CP3[case]["t33_row_order"]
+        derived = {f"T3.3.{r}": f"{labels[r[0]]} {int(r[1:])}" for r in order}
+        assert got == derived, case
+        if "cp6_catalogue_t33" in CP3[case]:
+            assert got == CP3[case]["cp6_catalogue_t33"], case
 
 
 # --- offsets and the reader -----------------------------------------------------------------------
@@ -517,6 +536,13 @@ def test_third_party_basis_quotes_unchanged() -> None:
     assert result.report is not None
     plain = compute(base)
     assert plain.report is not None
+    got = {t.table_id: t for t in result.report.tables}
+    for table in plain.report.tables:
+        if table.table_id == "T3.3":  # the unused context rows follow the model's own rows
+            assert got["T3.3"].rows[: len(table.rows)] == table.rows
+        else:
+            assert got[table.table_id] == table, table.table_id
+    assert result.report.claims == plain.report.claims
     facts = facts_of(result)
     for cell in ("source", "kind", "quote", "as_of", "limitation"):
         assert facts[f"T3.3.m01.{cell}"] == next(
@@ -547,7 +573,8 @@ def test_deal_row_without_a_date_is_not_stated_and_never_stale() -> None:
     assert cells["T3.3.c01.limitation"] == (
         "Provider: Lead arranger; user-supplied figure; date not stated"
     )
-    assert not any("Stale" in text for text in result.report.limitations)  # type: ignore[union-attr]
+    assert result.report is not None
+    assert not any("Stale" in text for text in result.report.limitations)
 
 
 def test_deal_row_for_an_unknown_facility_and_lone_bounds_are_named_gaps() -> None:
@@ -595,7 +622,16 @@ def test_equal_figures_in_two_indented_rows_cite_their_own_lines() -> None:
 
 
 def test_a_stale_quote_that_is_not_cited_still_caps_confidence() -> None:
-    literal = apply_edits(SUBS["cases"]["stale"], [["set", "preference.confidence", "High"]])
+    frozen = SUBS["cases"]["stale"]
+    assert "c02" in frozen["preference"]["basis"]["context_rows"]  # the frozen case cites it
+    literal = apply_edits(
+        frozen,
+        [
+            ["set", "preference.confidence", "High"],
+            ["set", "preference.basis.context_rows", ["c01"]],
+            ["set", "instruments[0].basis.context_rows", ["c01"]],
+        ],
+    )
     result = compute(case_inputs("stale", literal))
     assert result.issues[0].endswith("a context quote is more than 30 days old")
 
@@ -616,3 +652,183 @@ def test_level_wording_is_refused_for_talk_only_context_rows_but_not_observed_on
     assert talk.issues == (
         'preference.rationale: indicative talk worded as a market level: "trades at"',
     )
+
+
+# --- fix round 1 -----------------------------------------------------------------------------------
+
+READ_ONLY = "context source unreadable: "
+FORGED = (
+    "market_evidence[{}]: context market evidence is built by Python; cite it by row id in a basis"
+)
+
+
+def with_source(source: Source) -> CP3Inputs:
+    return inputs_for("x", pack_for("x", source), SUBS["cases"]["no-quotes"])
+
+
+def returns_issues(source: Source) -> None:
+    """compute and context both return (F1: no IndexError), and the file is one named issue."""
+    inputs = with_source(source)
+    result = compute(inputs)
+    assert result.report is None
+    assert len(result.issues) == 1
+    assert result.issues[0].startswith(READ_ONLY)
+    block = context(inputs)
+    assert block["context_market_evidence"] == []
+
+
+def test_multiline_span_in_a_context_source_is_unreadable() -> None:
+    text = context_source("observed-and-talk")
+    one = text.spans[0].model_copy(update={"text": context_bytes("observed-and-talk").decode()})
+    returns_issues(
+        Source.model_validate_json(text.model_copy(update={"spans": (one,)}).model_dump_json())
+    )
+
+
+def test_non_text_context_source_is_unreadable() -> None:
+    text = context_source("observed-and-talk")
+    pdf = text.model_copy(update={"media_type": "application/pdf"})
+    returns_issues(Source.model_validate_json(pdf.model_dump_json()))
+
+
+def test_prepared_pdf_named_context_is_unreadable() -> None:
+    lines = context_bytes("observed-and-talk").decode().splitlines()
+    body = (
+        "BT /F1 9 Tf 11 TL 20 1960 Td "
+        + " ".join(
+            "(" + ln.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)") + ") Tj T*"
+            for ln in lines
+        )
+        + " ET"
+    )
+    objs = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 900 2000] /Contents 4 0 R "
+            "/Resources << /Font << /F1 5 0 R >> >> >>"
+        ),
+        f"<< /Length {len(body)} >>\nstream\n{body}\nendstream",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>",
+    ]
+    out, offsets = "%PDF-1.4\n", []
+    for i, obj in enumerate(objs, 1):
+        offsets.append(len(out.encode()))
+        out += f"{i} 0 obj\n{obj}\nendobj\n"
+    xref = len(out.encode())
+    out += f"xref\n0 {len(objs) + 1}\n0000000000 65535 f \n"
+    out += "".join(f"{o:010d} 00000 n \n" for o in offsets)
+    out += f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"
+    request = SourceRequest(source_id="context", path="context.pdf", media_type="application/pdf")
+    source = prepare_source(request, out.encode("latin-1"))
+    inputs = with_source(source)
+    assert compute(inputs).report is None  # returns; an issue (unreadable or not text/plain)
+    context(inputs)
+
+
+def forged(kind: str, quote: dict[str, str] | None, limitation: str | None = "x") -> dict[str, Any]:
+    return {
+        "source_id": "context",
+        "kind": kind,
+        "quote": quote,
+        "as_of": "Not stated",
+        "limitation": limitation,
+    }
+
+
+def test_two_forged_context_rows_get_only_the_p3_p6_message_each() -> None:
+    quote = {"source_id": "context", "locator": "line:32", "quote": '"price": "98.75"'}
+    rows = [forged("observed", quote), forged("observed", quote)]
+    literal = apply_edits(SUBS["cases"]["observed-and-talk"], [["set", "market_evidence", rows]])
+    result = compute(case_inputs("observed-and-talk", literal))
+    assert sorted(result.issues) == [FORGED.format(0), FORGED.format(1)]
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        forged("none", None, None),
+        forged("observed", None),
+        forged("indicative_talk", {"source_id": "market", "locator": "page:1", "quote": "x"}),
+    ],
+)
+def test_a_forged_context_row_gets_exactly_one_issue(row: dict[str, Any]) -> None:
+    literal = apply_edits(SUBS["cases"]["observed-and-talk"], [["set", "market_evidence", [row]]])
+    assert compute(case_inputs("observed-and-talk", literal)).issues == (FORGED.format(0),)
+
+
+def test_a_json_escaped_figure_is_unciteable() -> None:
+    text = context_bytes("observed-and-talk").decode()
+    escaped = text.replace('"price": "98.75"', '"price": "\\u0039\\u0038.75"', 1)
+    assert escaped != text
+    pack = pack_for("x", context_source("observed-and-talk", escaped.encode()))
+    result = compute(inputs_for("x", pack, SUBS["cases"]["no-quotes"]))
+    assert result.report is not None
+    assert (
+        "Gap (Medium): context quote row 1 for facility term-loan cannot be cited as one unique "
+        "span; not used"
+    ) in result.report.limitations
+    assert [f.text for f in result.report.facts if f.fact_id == "T3.3.c01.quote"] == [
+        "term-loan: price 99.25, spread 335 bps"
+    ]
+
+
+def read_issues(raw: bytes) -> tuple[str, ...]:
+    return compute(
+        inputs_for(
+            "x", pack_for("x", context_source("observed-and-talk", raw)), SUBS["cases"]["no-quotes"]
+        )
+    ).issues
+
+
+def edited_doc(edit: Any) -> bytes:
+    doc = json.loads(context_bytes("observed-and-talk"))
+    edit(doc)
+    return json.dumps(doc, indent=2).encode()
+
+
+def test_each_reader_check_fires_alone() -> None:
+    assert read_issues(edited_doc(lambda d: d["quotes"][0].update(as_of=""))) == (
+        READ_ONLY + "quotes[0].as_of is not an ISO date",
+    )
+    assert read_issues(edited_doc(lambda d: d["quotes"][0].update(bid="\uff19\uff18.50"))) == (
+        READ_ONLY + "quotes[0].bid is not a plain number",
+    )
+    assert read_issues(edited_doc(lambda d: d["quotes"][0].update(kind="firm"))) == (
+        READ_ONLY + "quotes[0].kind is not observed or indicative_talk",
+    )
+    assert read_issues(edited_doc(lambda d: d.update(schema="context/2"))) == (
+        READ_ONLY + "schema is not context/1",
+    )
+
+
+def test_duplicate_key_in_an_otherwise_valid_file_is_unreadable() -> None:
+    text = context_bytes("observed-and-talk").decode()
+    dup = text.replace('"bid": "98.50",', '"bid": "98.50",\n      "bid": "98.50",', 1)
+    assert dup != text
+    (issue,) = read_issues(dup.encode())
+    assert issue.startswith(READ_ONLY + "not valid JSON (")
+    assert "duplicate key 'bid'" in issue
+
+
+def test_deeply_nested_json_is_unreadable_not_a_crash() -> None:
+    depth = 100_000
+    raw = ('{"schema": "context/1", "other": ' + "[" * depth + "]" * depth + "}").encode()
+    (issue,) = read_issues(raw)
+    assert issue.startswith(READ_ONLY + "not valid JSON (")
+
+
+def test_duplicate_context_row_ids_in_a_basis_compose_once() -> None:
+    literal = apply_edits(
+        SUBS["cases"]["observed-and-talk"],
+        [["set", "instruments[0].basis.context_rows", ["c02", "c01", "c02"]]],
+    )
+    result = compute(case_inputs("observed-and-talk", literal))
+    assert result.issues == ()
+    facts = facts_of(result)
+    basis = facts["T3.1.i01.basis"].text or ""
+    assert basis.count("Market evidence context c02") == 1
+    assert basis.index("context c02") < basis.index("context c01")
+    assert result.report is not None
+    claim = next(c for c in result.report.claims if c.claim_id == "T3.1.i01")
+    assert len(claim.citations) == len(set(claim.citations)) == 7

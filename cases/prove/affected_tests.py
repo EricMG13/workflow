@@ -9,11 +9,16 @@ number of tests it selects) goes to stderr. A git failure or an unparsable .py f
 
 Changed paths come from `git diff --name-only --no-renames -z BASE...HEAD` (NUL-split, decoded
 utf-8 with surrogateescape). P is a changed path, B its basename, A(P) its directory names
-except the first component, L(F) the string literals of a .py file F under src/, tests/ or
-cases/.
+except the first component, D(P) its directory names (the first included), L(F) the string
+literals of a .py file F under src/, tests/ or cases/.
 - ALL (every test): pyproject.toml, uv.lock, .python-version, any conftest.py, anything under
   .github/, or this script.
 - Seeds(P), for every other P whatever its type:
+  0. P under docs/, work/ or .claude/: only this rule applies (1-5 do not). Seeds are every F with
+     a code literal containing P, or whose code literals, split on "/", hold every name in D(P)
+     as a whole segment, plus B when P sits directly in its top directory (docs/X.md). Code
+     literals are L(F) without docstrings (the leading string statement of a module, class or
+     function body). Empty seeds select nothing.
   1. P is .py under src/, tests/ or cases/: P itself, plus every F with a literal equal to a
      module name of P (dotted name; bare stem for files under tests/).
   2. Every F with a literal containing P, or a literal containing B together with a literal
@@ -149,21 +154,41 @@ def reach(seeds: set[str], names: dict[str, set[str]], deps: dict[str, set[str]]
 
 
 @functools.cache
-def literals(source: str) -> tuple[str, ...]:
-    """String constants of a module, including the constant parts of f-strings."""
+def literals(source: str, docstrings: bool = True) -> tuple[str, ...]:
+    """String constants of a module, including the constant parts of f-strings.
+
+    With docstrings=False the leading string statement of a module, class or function body is
+    skipped.
+    """
     tree = ast.parse(source)
+    skip: set[int] = set()
+    if not docstrings:
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                first = node.body[0] if node.body else None
+                if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant):
+                    skip.add(id(first.value))
     return tuple(
-        n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+        n.value
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in skip
     )
 
 
 def seeds_for(path: str, py_files: dict[str, str]) -> set[str]:
-    """Files a changed path can affect directly: rules 1-4 of the module docstring."""
+    """Files a changed path can affect directly: rules 0-4 of the module docstring."""
     base = path.rsplit("/", 1)[-1]
     top_dirs = [d for d in path.split("/")[:-1] if d]  # D(P): every directory, first included
     dirs = top_dirs[1:]  # A(P): without the first component
-    lits = {f: literals(src) for f, src in py_files.items()}
     seeds: set[str] = set()
+    if path.startswith(IGNORED_PREFIXES):
+        need = set(top_dirs) if dirs else {*top_dirs, base}
+        for f, src in py_files.items():
+            ls = literals(src, docstrings=False)
+            if any(path in lit for lit in ls) or need <= {s for lit in ls for s in lit.split("/")}:
+                seeds.add(f)
+        return seeds
+    lits = {f: literals(src) for f, src in py_files.items()}
     is_py = path.endswith(".py")
     if is_py and path.startswith(PY_ROOTS):
         mods = {n.removeprefix("bare:") for n in module_names(path)}

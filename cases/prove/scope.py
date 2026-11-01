@@ -81,7 +81,7 @@ def printable(text: str) -> str:
 
 
 def per_commit(base: str, head: str) -> tuple[int, list[str]]:
-    shas = git("rev-list", "--no-merges", "-z", f"{base}..{head}")
+    shas = "\n".join(git("rev-list", "--no-merges", f"{base}..{head}")).split()
     violations: list[str] = []
     for sha in shas:
         paths = git(

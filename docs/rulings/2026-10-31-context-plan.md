@@ -347,3 +347,19 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
 
 - **B29 and B30 ship as one release, not two.** They are the same kind of edit, to the same files, and get one golden refresh. This amends B29's and B30's timing rulings. Cost if wrong: one release carries two wording edits instead of one.
 - **Phases 2 and 5 start now, in parallel with O3 Task 6, O3 Task 7 and O6 Task 6.** This replaces "after O3/O4". Both oracles are frozen: Phase 2 at da9f350b and Phase 5 at f6d3c4b3. A pre-flight against HEAD runs first. Tasks that do not write `owner_workflow.py`, `run_pathway.py` or `docs/reuse/manifest.json` go first. Tasks that do write them queue serially behind the in-flight lane on each file (P21; the manifest and the golden have one writer). Cost if wrong: a merge-order conflict on a shared file, caught by the per-task review.
+
+## B33. Faster without weaker reviews (applied recommendation, B31; 19:29 UTC 2026-11-01)
+
+- **Pipelining.** While a task or phase is under review, the next task or phase that writes different files starts building. A release still waits for every review its cut rule names (B28). Cost if wrong: a review finding forces a rework of the next task's base.
+- **Pre-flight before every lane's first dispatch.** Phases 2 and 5 now; O3 Task 7, O6 Task 6 and O7b-1 before they start. The pre-flight checks the plan text against HEAD.
+- **One reviewer seat where two would duplicate.**
+  - A wording-only `src/deploy_vii` edit gets `mx-adversary` alone.
+  - A batch of docs, config or rename changes gets one `mx-feature` review (global §1).
+  - Code keeps `mx-precise`, plus `mx-adversary` when the code is sensitive.
+- **Reviewers start from verified facts.** Each review prompt names the pre-flight, the earlier reviews' probe paths and the frozen oracle, so the reviewer re-runs those checks rather than re-deriving them. The review depth and the reviewer agents are unchanged.
+- **Not changed:**
+  - reviewer effort;
+  - adversary seats on sensitive code;
+  - RED-first;
+  - only controller-run checks count as evidence;
+  - phase and whole-branch reviews.

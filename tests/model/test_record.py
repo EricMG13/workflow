@@ -1061,3 +1061,67 @@ def test_adapter_error_record_exports_sent_unknown(tmp_path: Path) -> None:
         "AdapterError",
         None,
     )
+
+
+_KEYISH = "sk-proj-ZZZZZZSECRETKEY"
+
+
+def _invalid_text(**over: Any) -> str:
+    with pytest.raises(RecordInvalid) as caught:
+        CallRecord.build(Redactor(), **fields(**over))
+    return str(caught.value)
+
+
+def test_unexpected_field_name_never_reaches_error_text() -> None:
+    text = _invalid_text(**{_KEYISH: 1})
+    assert "ZZZZZZ" not in text and "unexpected field" in text
+
+
+def test_nested_unexpected_name_and_value_never_reach_error_text() -> None:
+    nested = {"name": "n", "arguments_sha256": "b" * 64, "result_bytes": None,
+              "refusal_code": None, _KEYISH: 1}  # fmt: skip
+    text = _invalid_text(tool_calls=(nested,))
+    assert "ZZZZZZ" not in text and "unexpected field" in text
+    assert "ZZZZZZ" not in _invalid_text(http_status=_KEYISH)
+
+
+def test_invalid_from_json_line_hides_key_shaped_field_name() -> None:
+    body = json.loads(record().model_dump_json())
+    body[_KEYISH] = 1
+    with pytest.raises(ValidationError) as caught:
+        CallRecord.model_validate_json(json.dumps(body))
+    from deploy_workflow.model.record import _invalid
+
+    assert "ZZZZZZ" not in str(_invalid(caught.value))
+
+
+@pytest.mark.parametrize("bad", ["-5", "-0.01", "-1E+999999"])
+@pytest.mark.parametrize("name", ["reserved_usd", "settled_usd"])
+def test_negative_money_refused(name: str, bad: str) -> None:
+    with pytest.raises(ValidationError):
+        record(**{name: Decimal(bad)})
+    with pytest.raises(RecordInvalid):
+        CallRecord.build(Redactor(), **fields(**{name: Decimal(bad)}))
+
+
+def test_negative_zero_money_is_accepted_as_zero() -> None:
+    # Decision: -0 equals 0, so it passes the lower bound and is written as zero.
+    rec = record(reserved_usd=Decimal("-0"), settled_usd=Decimal("-0"))
+    assert rec.reserved_usd == 0 and rec.settled_usd == 0
+
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_attempt_refuses_booleans(flag: bool) -> None:
+    with pytest.raises(ValidationError):
+        record(attempt=flag)
+    body = json.loads(record().model_dump_json())
+    body["attempt"] = flag
+    with pytest.raises(ValidationError):
+        CallRecord.model_validate_json(json.dumps(body))
+
+
+def test_strings_is_public_and_old_name_is_an_alias() -> None:
+    from deploy_workflow.model import record as module
+
+    assert module.strings({"a": ["x", ("y",)], "b": 1}) == ["x", "y"]
+    assert module._strings is module.strings

@@ -30,13 +30,15 @@ from pydantic import (
     Field,
     ValidationError,
     field_serializer,
+    field_validator,
     model_validator,
 )
+from pydantic_core import PydanticCustomError
 
 from deploy_vii.contracts import Contract, Hash
 from deploy_workflow.model.pricing import CostStatus, money_text, refusal_values
 from deploy_workflow.model.providers import ProviderError, parse
-from deploy_workflow.model.redact import KEY_PATTERN, Redactor
+from deploy_workflow.model.redact import KEY_PATTERN, REPLACEMENT, Redactor
 from deploy_workflow.model.turn import (
     Turn,
     TurnError,
@@ -112,9 +114,19 @@ class ToolCallRecord(Contract):
     refusal_code: str | None
 
 
+def _where(error: Mapping[str, Any]) -> str:
+    """An error's location. An ``extra_forbidden`` error's last ``loc`` element is the input's own
+    field name, which may be a key, so a fixed placeholder replaces it; other elements are
+    redacted by pattern."""
+    loc = [KEY_PATTERN.sub(REPLACEMENT, str(part)) for part in error["loc"]]
+    if error["type"] == "extra_forbidden":
+        loc[-1] = "unexpected field"
+    return ".".join(loc)
+
+
 def _invalid(error: ValidationError) -> RecordInvalid:
     found = error.errors(include_input=False, include_url=False, include_context=False)
-    return RecordInvalid("; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in found))
+    return RecordInvalid("; ".join(f"{_where(e)}: {e['msg']}" for e in found))
 
 
 def _redact(redactor: Redactor, value: Any) -> Any:
@@ -135,14 +147,18 @@ def arguments_sha256(arguments: Mapping[str, Any]) -> str:
     return hashlib.sha256(dump_json(arguments).encode()).hexdigest()
 
 
-def _strings(value: object) -> list[str]:
+def strings(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, Mapping):
-        return [s for item in value.values() for s in _strings(item)]
+        return [s for item in value.values() for s in strings(item)]
     if isinstance(value, list | tuple):
-        return [s for item in value for s in _strings(item)]
+        return [s for item in value for s in strings(item)]
     return []
+
+
+# ponytail: drop this alias once model_testing/records.py imports ``strings``.
+_strings = strings
 
 
 class CallRecord(Contract):
@@ -173,13 +189,21 @@ class CallRecord(Contract):
     cache_write_tokens: int | None = Field(ge=0)  # the sum; the 5m/1h split is not recorded
     output_tokens: int | None = Field(ge=0)
     reasoning_tokens: int | None = Field(ge=0)
-    reserved_usd: Decimal
-    settled_usd: Decimal | None
+    reserved_usd: Decimal = Field(ge=0)
+    settled_usd: Decimal | None = Field(ge=0)
     cost_status: CostStatus
     tool_calls: tuple[ToolCallRecord, ...]
     submit_sha256: Hash | None
     error_class: str | None
     error: str | None
+
+    @field_validator("attempt", mode="before")
+    @classmethod
+    def _attempt_is_int(cls, value: Any) -> Any:
+        # Literal[0, 1] accepts True and False because they equal 1 and 0.
+        if isinstance(value, bool):
+            raise PydanticCustomError("attempt_type", "attempt must be the integer 0 or 1")
+        return value
 
     @field_serializer("reserved_usd", "settled_usd")
     def _money(self, value: Decimal | None) -> str | None:
@@ -189,7 +213,7 @@ class CallRecord(Contract):
     def _checked(self) -> CallRecord:
         if (self.cost_status == "unknown") != (self.settled_usd is None):
             raise ValueError("settled_usd is None exactly when cost_status is unknown")
-        for text in _strings(self.model_dump(mode="json")):
+        for text in strings(self.model_dump(mode="json")):
             if KEY_PATTERN.search(text):
                 raise ValueError("a record field holds key material")  # never the value
         return self
@@ -206,10 +230,11 @@ class CallRecord(Contract):
         elif isinstance(error, str):
             values["error"] = redactor.text(error)
         clean = {name: _redact(redactor, value) for name, value in values.items()}
-        clean["tool_calls"] = tuple(
-            ToolCallRecord(**c) if isinstance(c, dict) else c for c in clean.get("tool_calls", ())
-        )
         try:
+            clean["tool_calls"] = tuple(
+                ToolCallRecord(**c) if isinstance(c, dict) else c
+                for c in clean.get("tool_calls", ())
+            )
             return cls(**clean)
         except ValidationError as error:
             raise _invalid(error) from None

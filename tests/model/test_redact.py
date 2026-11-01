@@ -34,7 +34,6 @@ def test_regex_only_redactor_catches_known_shapes() -> None:
     assert r.text("sk-" + "a" * 20) == "[redacted]"
     assert r.text("sk-" + "a" * 19) == "sk-" + "a" * 19
     assert r.text("risk-or-x") == "risk-or-x"
-    assert KEY_PATTERN.pattern == r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})"
 
 
 def test_chain_cause_redacted() -> None:
@@ -249,3 +248,33 @@ def test_flush_cost_stays_linear_in_held_text() -> None:
         started = time.perf_counter()
         stream.flush()
         assert time.perf_counter() - started < 1.0
+
+
+GLUED = "sk-proj-QQQQQQFAKEKEY"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "key_" + GLUED,
+        "401 key_" + GLUED + " bad",
+        "pre_" + GLUED + "_post",
+        '{"error": "' + GLUED + '"}',
+        '{"k":"x_' + GLUED + '"}',
+        "q=%20" + GLUED,
+        "a=" + GLUED,
+        GLUED,
+        "x\n" + GLUED,
+    ],
+)
+def test_glued_embedded_quoted_encoded_and_leading_keys_redacted(text: str) -> None:
+    assert "QQQQQQ" not in Redactor().text(text)
+    assert b"QQQQQQ" not in Redactor().bytes_(text.encode())
+    assert not KEY_PATTERN.search(Redactor().text(text))
+
+
+def test_word_internal_sk_is_not_over_redacted() -> None:
+    r = Redactor()
+    assert r.text("risk-or-abcdefgh") == "risk-or-abcdefgh"
+    assert r.text("task-proj-abcdefgh") == "task-proj-abcdefgh"
+    assert r.bytes_(b"risk-or-abcdefgh") == b"risk-or-abcdefgh"

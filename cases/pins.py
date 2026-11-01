@@ -27,6 +27,7 @@ PATTERNS = (
     "cases/charts/*-expected.json",
     "cases/charts/expected.json",
     "cases/charts/builder/*.py",
+    "cases/cp3-context-owner/contexts/*.json",
     "cases/context-identity-periods/*.json",
     "cases/context-identity-periods/contexts/*.json",
     "cases/context-identity-periods/sources/*.json",

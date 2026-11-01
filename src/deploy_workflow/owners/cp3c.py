@@ -71,6 +71,7 @@ from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2d import Cp2dHead
 from deploy_workflow.owners.cp2g import stale_issues
+from deploy_workflow.owners.period_basis import DEFAULT_BASIS, PeriodBasis, PeriodRefused
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-3C"
@@ -299,8 +300,8 @@ def _check_value(
 class Cp1Fact:
     """One CP-1 head fact a binding names (manifest.json#fact_bindings), as read: never defaulted.
 
-    Amounts are US$ m with unit MILLIONS. A T4.18 amount the head states in unit ``currency``
-    (USD, scale 1e6) is normalised to MILLIONS by the Stage 2 binding, as CP-2D's copy rule does.
+    Amounts are in the run's money unit with unit MILLIONS. A T4.18 amount the head states in unit
+    ``currency`` (the run currency, scale 1e6) is normalised to MILLIONS by the Stage 2 binding, as CP-2D's copy rule does.
     """
 
     table_id: str  # T4.10 or T4.18
@@ -393,6 +394,8 @@ class Cp3cInputs:
     # pin itself is checked by `_pin_lines`, not the method; `refinancing_risk` sets this once the
     # context is accepted.
     pinned: bool = False
+    # The run's period and currency strings (Phase 8); the 2025 USD literals without a context.
+    basis: PeriodBasis = DEFAULT_BASIS
 
 
 # --- values that are known or carry the reason they are not (rulings C-2, C-6) ----------------
@@ -450,7 +453,7 @@ _UNMATCHED_CAUSE = (
 _PRE_D0_CAUSE = (
     "the total needs every facility to mature on or after the balance date, and one does not"
 )
-_FX_CAUSE = "the total needs every facility in USD, and one is not"
+_FX_CAUSE = "the total needs every facility in {ccy}, and one is not"
 
 
 def _unstated_gap(fid: str, term: str, status: Status = "missing") -> Gap:
@@ -544,7 +547,7 @@ class UnmatchedFacility:
 
 @dataclass(frozen=True)
 class Operands:
-    """Every operand of the Method in US$ m; None is missing, never 0."""
+    """Every operand of the Method in the run's money unit; None is missing, never 0."""
 
     cash: Decimal | None
     undrawn_revolver: Decimal | None
@@ -969,7 +972,7 @@ def _facility(
         )
     elif terms.currency != currency:  # ruling C-6 with 2D5's reason
         fx = FX_REASON.format(fid=fid, ccy=terms.currency, base=currency)
-        principal = Gap(fx, cause=_FX_CAUSE)
+        principal = Gap(fx, cause=_FX_CAUSE.format(ccy=currency))
     else:
         amount = _cp2d_amount(row.principal)
         # Round 8 B6 (2D-c); Stage 2 round 5 item 7: an unsettled principal names its status.
@@ -1327,15 +1330,15 @@ class _Context:
 
 
 _T3D1_COLUMNS = (
-    "Principal (US$ m)",
+    "Principal ({unit})",
     "Maturity date",
     "Months from {d0}",
     "Inside CP-2D horizon",
-    "Amortisation before maturity (US$ m)",
-    "Principal payable at maturity (US$ m)",
-    "Resources at maturity (US$ m)",
-    "Resources applied (US$ m)",
-    "Refinancing need (US$ m)",
+    "Amortisation before maturity ({unit})",
+    "Principal payable at maturity ({unit})",
+    "Resources at maturity ({unit})",
+    "Resources applied ({unit})",
+    "Refinancing need ({unit})",
     "Resources cover of principal at maturity",
 )
 _RESOURCES_FORMULA = (
@@ -1382,7 +1385,8 @@ def _t3d1(c: _Context) -> Table:
         ]
         rows.append((c.label(m.facility.facility_id), cells))
     rows += c.unmatched(_T3D1_GAPS)
-    columns = tuple(col.format(d0=c.balance) for col in _T3D1_COLUMNS)
+    unit = c.inputs.basis.money_unit
+    columns = tuple(col.format(d0=c.balance, unit=unit) for col in _T3D1_COLUMNS)
     title = "Refinancing need by maturity"
     return _table("T3D.1", title, "Facility", columns, rows, c.inputs.currency)
 
@@ -1494,9 +1498,9 @@ def _t3d4(c: _Context) -> Table:
     columns = (
         "Security",
         "Seniority",
-        "Principal (US$ m)",
+        f"Principal ({c.inputs.basis.money_unit})",
         "Share of total principal",
-        "Claims at or ahead (US$ m)",
+        f"Claims at or ahead ({c.inputs.basis.money_unit})",
         "Claims at or ahead / LTM adjusted EBITDA",
     )
     return _table("T3D.4", "Creditor position", "Facility", columns, rows, c.inputs.currency)
@@ -1507,7 +1511,7 @@ def _t3d5(c: _Context) -> Table:
     junior = "claims at or ahead of the most junior facility / adjusted EBITDA"
     rows: list[Line] = [
         (
-            "Claims at or ahead of the most junior facility (US$ m)",
+            f"Claims at or ahead of the most junior facility ({c.inputs.basis.money_unit})",
             [
                 c.usd(r.junior_claims, "largest claims at or ahead among the facilities"),
                 _gap(REASON_LME, _MILLIONS),
@@ -2073,19 +2077,17 @@ _SCALE = Decimal(1000000)
 # --- the bindings (cases/cp3c-owner/manifest.json `fact_bindings`) ------------------------------
 
 CP1_METRICS = ("cash_closing", "undrawn_rcf", "adjusted_ebitda", "cash_interest")
-FACT_BINDINGS: Mapping[str, cp2d.FactBinding] = MappingProxyType(
-    {
-        name: cp2d.FactBinding(
-            "T4.10",
-            "LTM Q4 25: 2025-01-01 to 2025-12-31",
-            f"LTM Q4 25 (2025-01-01 to 2025-12-31) · {name}",
-        )
-        for name in CP1_METRICS
-    }
-)
+
+
+def fact_bindings(basis: PeriodBasis = DEFAULT_BASIS) -> Mapping[str, cp2d.FactBinding]:
+    """The T4.10 fact each CP-1 metric selects, for the run's periods: CP-2D's rule (one function)."""
+    return MappingProxyType({name: cp2d.bind410(name, basis) for name in CP1_METRICS})
+
+
+FACT_BINDINGS: Mapping[str, cp2d.FactBinding] = fact_bindings(DEFAULT_BASIS)
 # T4.18: the QUARTER period at the latest period end wins over its FY alias; the alias must agree
 # on every term; one row per facility_id. Names are `<facility_id>.<term>`.
-SCHEDULE_PERIOD = "q4-2025"
+SCHEDULE_PERIOD = DEFAULT_BASIS.schedule_period
 FACILITY_TERMS = ("secured_status", "seniority", "annual_amortisation", "facility_name")
 _ALIAS_TERMS = ("currency", "rate_type", *FACILITY_TERMS)
 # CP-2D: the stable fact ids of the CP-2D oracle; the wall cells are named
@@ -2193,19 +2195,17 @@ def _known_text(row: Mapping[str, Fact], field: str) -> str | None:
     return fact.text if fact is not None and fact.status == "known" else None
 
 
-def _balance_date(module: Module) -> tuple[date, tuple[str, ...]]:
+def _balance_date(module: Module, schedule: str = SCHEDULE_PERIOD) -> tuple[date, tuple[str, ...]]:
     """The end date of the schedule period (T4.14) and the other periods ending that day."""
     ends: dict[str, str] = {}
     for row in _rows(module, "T4.14").values():
         pid, end = _known_text(row, "period_id"), _known_text(row, "end_date")
         if pid is not None and end is not None:
             ends[pid] = end
-    if SCHEDULE_PERIOD not in ends:
-        raise ValueError(f"CP-3C: CP-1 states no end date for {SCHEDULE_PERIOD}")
-    aliases = tuple(
-        p for p, e in ends.items() if e == ends[SCHEDULE_PERIOD] and p != SCHEDULE_PERIOD
-    )
-    return date.fromisoformat(ends[SCHEDULE_PERIOD]), aliases
+    if schedule not in ends:
+        raise ValueError(f"CP-3C: CP-1 states no end date for {schedule}")
+    aliases = tuple(p for p, e in ends.items() if e == ends[schedule] and p != schedule)
+    return date.fromisoformat(ends[schedule]), aliases
 
 
 def _same(a: Fact | None, b: Fact | None) -> bool:
@@ -2221,7 +2221,9 @@ def _same(a: Fact | None, b: Fact | None) -> bool:
     )
 
 
-def _facility_rows(module: Module, aliases: tuple[str, ...]) -> dict[str, dict[str, Fact]]:
+def _facility_rows(
+    module: Module, aliases: tuple[str, ...], schedule: str = SCHEDULE_PERIOD
+) -> dict[str, dict[str, Fact]]:
     """The T4.18 row of each facility at the schedule period; each FY alias row must agree on
     every term CP-3C reads."""
     chosen: dict[str, dict[str, Fact]] = {}
@@ -2234,12 +2236,12 @@ def _facility_rows(module: Module, aliases: tuple[str, ...]) -> dict[str, dict[s
         if (fid, period) in by_period:
             raise ValueError(clipped(("CP-3C: facility ", fid, " has two T4.18 rows in ", period)))
         by_period[fid, period] = row
-        if period == SCHEDULE_PERIOD:
+        if period == schedule:
             chosen[fid] = row
     for alias in aliases:
         listed = {fid for (fid, period) in by_period if period == alias}
         if listed != set(chosen):
-            raise ValueError(f"CP-3C: the {alias} T4.18 rows are not the {SCHEDULE_PERIOD} rows")
+            raise ValueError(f"CP-3C: the {alias} T4.18 rows are not the {schedule} rows")
         for fid, row in chosen.items():
             for term in _ALIAS_TERMS:
                 if not _same(row.get(term), by_period[fid, alias].get(term)):
@@ -2247,7 +2249,7 @@ def _facility_rows(module: Module, aliases: tuple[str, ...]) -> dict[str, dict[s
                         clipped(
                             (
                                 f"CP-3C: facility {fid} {term} differs between its ",
-                                f"{SCHEDULE_PERIOD} row and its {alias} alias",
+                                f"{schedule} row and its {alias} alias",
                             )
                         )
                     )
@@ -2271,7 +2273,7 @@ def _terms(fid: str, row: Mapping[str, Fact]) -> FacilityTerms:
     )
 
 
-def select_cp1(cp1: Module) -> Cp1Selection:
+def select_cp1(cp1: Module, basis: PeriodBasis = DEFAULT_BASIS) -> Cp1Selection:
     """Apply the CP-1 bindings. Each T4.10 name selects exactly one fact (zero or several raise);
     a fact CP-1 reports missing, conflicting or not applicable is read as that status."""
     index: dict[tuple[str, str, str], list[Fact]] = {}
@@ -2280,14 +2282,14 @@ def select_cp1(cp1: Module) -> Cp1Selection:
             index.setdefault((fact.table_id, fact.period or "", fact.label), []).append(fact)
     offered: list[Offered] = []
     metrics: dict[str, Cp1Fact] = {}
-    for name, b in FACT_BINDINGS.items():
+    for name, b in fact_bindings(basis).items():
         hits = index.get((b.table_id, b.period, b.label), [])
         if len(hits) != 1:
             raise ValueError(f"CP-3C: CP-1 offers {len(hits)} facts for {name}, not exactly one")
         offered.append(Offered(name, CP1, hits[0]))
         metrics[name] = _cp1_fact(name, hits[0], money=True)
-    balance, aliases = _balance_date(cp1)
-    rows = _facility_rows(cp1, aliases)
+    balance, aliases = _balance_date(cp1, basis.schedule_period)
+    rows = _facility_rows(cp1, aliases, basis.schedule_period)
     facilities = tuple(_terms(fid, row) for fid, row in rows.items())
     offered += [
         Offered(f"{fid}.{term}", CP1, row[term])
@@ -2465,23 +2467,30 @@ def cp3c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
     )
 
 
-def select(upstream: Upstream) -> Selection:
+def select(upstream: Upstream, basis: PeriodBasis = DEFAULT_BASIS) -> Selection:
     """The store adapter: the bound heads -> the Stage 1 operands. `submit`, `probe` and `view`
-    reach the CP-1 and CP-2D facts only through this selection."""
-    cp1 = select_cp1(upstream.cp1)
+    reach the CP-1 and CP-2D facts only through this selection. The reporting currency stays the
+    one the facts state; it must be the run's (no FX, ruling Q8.1)."""
+    cp1 = select_cp1(upstream.cp1, basis)
     ops, cp2d_offered = select_cp2d(upstream.cp2d, upstream.cp2d_read)
+    currency = reporting_currency(cp1=cp1.operands, cp2d=ops)
+    if currency != basis.currency:
+        raise PeriodRefused(f"run.reporting_currency {basis.currency}, but CP-1 reports {currency}")
     return Selection(
         cp1=cp1.operands,
         cp2d=ops,
         balance_date=cp1.balance_date,
-        currency=reporting_currency(cp1=cp1.operands, cp2d=ops),
+        currency=currency,
         offered=tuple(sorted((*cp1.offered, *cp2d_offered), key=lambda o: o.name)),
         facilities=cp1.facilities,
     )
 
 
 def _inputs_from(
-    upstream: Upstream, selection: Selection, submission: RefinancingRiskSubmission
+    upstream: Upstream,
+    selection: Selection,
+    submission: RefinancingRiskSubmission,
+    basis: PeriodBasis = DEFAULT_BASIS,
 ) -> Cp3cInputs:
     return Cp3cInputs(
         balance_date=selection.balance_date,
@@ -2491,6 +2500,7 @@ def _inputs_from(
         cp2d=selection.cp2d,
         submission=submission,
         offered={ref: name for name, ref in selection.refs},
+        basis=basis,
     )
 
 
@@ -2498,7 +2508,8 @@ def _inputs(
     store: Execution, attempt: Attempt, submission: RefinancingRiskSubmission
 ) -> Cp3cInputs:
     upstream = cp3c_upstream(store=store, attempt=attempt)
-    return _inputs_from(upstream, select(upstream), submission)
+    basis = cp2d.run_basis(store.pack(), upstream.cp1)
+    return _inputs_from(upstream, select(upstream, basis), submission, basis)
 
 
 # --- validation -------------------------------------------------------------------------------
@@ -2521,7 +2532,10 @@ def _provenance_issues(upstream: Upstream) -> tuple[str, ...]:
 
 
 def validate_refinancing(
-    *, submission: RefinancingRiskSubmission, upstream: Upstream
+    *,
+    submission: RefinancingRiskSubmission,
+    upstream: Upstream,
+    basis: PeriodBasis = DEFAULT_BASIS,
 ) -> tuple[str, ...]:
     """Staleness alone when a bound upstream changed (no content check runs on it), then
     provenance alone, else the calculation-level issues over the refs the view offers."""
@@ -2531,7 +2545,7 @@ def validate_refinancing(
     provenance = _provenance_issues(upstream)
     if provenance:
         return provenance
-    offered = {ref: name for name, ref in select(upstream).refs}
+    offered = {ref: name for name, ref in select(upstream, basis).refs}
     return submission_issues(submission=submission, offered=offered)
 
 
@@ -2556,7 +2570,15 @@ def _lines(
 ) -> tuple[str, ...]:
     """The content issues, then the pin lines (also after the stale-only and provenance-only
     returns): the one issue set of the step validator and the composer gate."""
-    content = validate_refinancing(submission=submission, upstream=upstream)
+    try:
+        basis = cp2d.run_basis(pack, upstream.cp1)
+    except ContextRefused:
+        # `_pin_lines` reports the refused context as an issue, so nothing composes from this
+        # default basis.
+        basis = DEFAULT_BASIS
+    except PeriodRefused as error:
+        return (clipped(("Period basis refused: ", str(error))),)
+    content = validate_refinancing(submission=submission, upstream=upstream, basis=basis)
     return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
 
 
@@ -2698,11 +2720,12 @@ def refinancing_risk(
     issues = _lines(pack, submission, upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
-    selection = select(upstream)
+    basis = cp2d.run_basis(pack, upstream.cp1)
+    selection = select(upstream, basis)
     # `_lines` returned no line, and a refused context is one of its lines, so `pins_of` cannot
     # raise here. (`_lines` returns the lines; this composer gate is what raises.)
     pinned = pins_of(MODULE_ID, pack) is not None
-    result = compute(replace(_inputs_from(upstream, selection, submission), pinned=pinned))
+    result = compute(replace(_inputs_from(upstream, selection, submission, basis), pinned=pinned))
     facts = [_cell_fact(c, selection) for t in result.tables for r in t.rows for c in r.cells]
     tables = [_report_table(t) for t in result.tables]
     for text in (result.judgments, result.gaps_ledger, result.trace):
@@ -2749,7 +2772,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     for module in (upstream.cp1, upstream.cp2d):
         if module.run_id != pack.run.run_id:
             raise ValueError(f"CP-3C: the bound {module.module_id} module belongs to another run")
-    selection = select(upstream)
+    selection = select(upstream, cp2d.run_basis(pack, upstream.cp1))
     return {
         "upstream": [
             {"module_id": i.input_id, "status": i.status}

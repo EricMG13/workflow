@@ -63,14 +63,19 @@ from deploy_vii.model._cells import CONTEXT as CP1_CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import figure_unit
-from deploy_workflow.context import ContextRefused
+from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_BASIS,
+    PeriodBasis,
+    PeriodRefused,
+    period_basis,
+)
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2D"
 HORIZON_BOUNDS = (1, 60)
-CURRENCY = "USD"
 
 Section = Literal["liquidity_runway", "maturity_wall", "funding_gap"]
 SECTIONS: tuple[Section, ...] = ("liquidity_runway", "maturity_wall", "funding_gap")
@@ -169,7 +174,7 @@ class Operands:
     offered, which reads as missing.
 
     T4.5 flows are the twelve months to the balance date in the CP-1 fact's own sign; T4.6
-    balances and T4.10 metrics are at the balance date, US$ m. ``liquidity_to_debt`` is a
+    balances and T4.10 metrics are at the balance date, in the run money unit. ``liquidity_to_debt`` is a
     decimal fraction (0.4 is 40%; ruling 2D3).
     """
 
@@ -214,6 +219,8 @@ class Cp2dInputs:
     # user-supplied. The pins themselves are checked by `validate_liquidity_bridge`, not the core;
     # `liquidity_bridge` sets this once that validator has accepted the context.
     pinned: bool = False
+    # The run's period and currency strings (Phase 8); the 2025 USD literals without a context.
+    basis: PeriodBasis = DEFAULT_BASIS
 
 
 # --- values that are known or carry the reason they are not ------------------------------------
@@ -304,7 +311,7 @@ REV_RATIO = "Not calculable: available liquidity missing"
 DRAWINGS_UNDRAWN = "Undrawn revolver not calculable: drawings undisclosed"
 DRAWINGS_AVAILABLE = "Available liquidity not calculable: revolver drawings undisclosed"
 RUNWAY_NO_DRAWINGS = "Not calculable: revolver drawings undisclosed"
-FX_REASON = "Not calculable: facility {fid} is in {ccy}, not USD; no FX conversion is applied"
+FX_REASON = "Not calculable: facility {fid} is in {ccy}, not {base}; no FX conversion is applied"
 CURRENCY_UNSTATED = (
     "Not calculable: facility {fid} currency is not stated; no FX conversion is applied"
 )
@@ -422,11 +429,11 @@ def _ordered(facilities: tuple[Facility, ...]) -> tuple[Facility, ...]:
     )
 
 
-def _currency_gap(f: Facility) -> Gap | None:
+def _currency_gap(f: Facility, base: str = DEFAULT_BASIS.currency) -> Gap | None:
     if f.currency is None:
         return Gap(CURRENCY_UNSTATED.format(fid=f.facility_id))
-    if f.currency != CURRENCY:
-        return Gap(FX_REASON.format(fid=f.facility_id, ccy=f.currency))
+    if f.currency != base:
+        return Gap(FX_REASON.format(fid=f.facility_id, ccy=f.currency, base=base))
     return None
 
 
@@ -455,12 +462,12 @@ def _principal(f: Facility) -> Num:
     return f.principal
 
 
-def _usd_principal(f: Facility) -> Num:
-    """The principal as a US$ amount: missing when unstated or not in USD."""
+def _usd_principal(f: Facility, base: str = DEFAULT_BASIS.currency) -> Num:
+    """The principal in the run currency: missing when unstated or in another currency."""
     principal = _principal(f)
     if isinstance(principal, Gap):
         return principal
-    return _currency_gap(f) or principal
+    return _currency_gap(f, base) or principal
 
 
 def _amortisation(f: Facility, horizon_months: int) -> Num:
@@ -490,6 +497,7 @@ def _schedule(
     balance_date: date,
     horizon_end: date,
     absent: Gap | None,
+    base: str = DEFAULT_BASIS.currency,
 ) -> tuple[Num, Num]:
     """(maturities, amortisation) inside the horizon, each missing at its first gap."""
     if absent is not None:
@@ -497,7 +505,7 @@ def _schedule(
     maturities: Num = _ZERO
     amortisation: Num = _ZERO
     for f in ordered:
-        blocked = _currency_gap(f) or _position_gap(f, balance_date)
+        blocked = _currency_gap(f, base) or _position_gap(f, balance_date)
         if blocked is not None:
             maturities = _total(maturities, blocked)
             amortisation = _total(amortisation, blocked)
@@ -510,7 +518,9 @@ def _schedule(
     return maturities, amortisation
 
 
-def _undrawn_term(ordered: tuple[Facility, ...], absent: Gap | None) -> Num:
+def _undrawn_term(
+    ordered: tuple[Facility, ...], absent: Gap | None, base: str = DEFAULT_BASIS.currency
+) -> Num:
     """Undrawn term commitment: the sum of commitment less drawn (shown, not counted)."""
     if absent is not None:
         return absent
@@ -519,7 +529,7 @@ def _undrawn_term(ordered: tuple[Facility, ...], absent: Gap | None) -> Num:
         undrawn = _diff(
             _term(f, f.commitment, "commitment"), _term(f, f.drawn_amount, "drawn amount")
         )
-        total = _total(total, _currency_gap(f) or undrawn)
+        total = _total(total, _currency_gap(f, base) or undrawn)
     return total
 
 
@@ -549,14 +559,18 @@ class WallRow:
 
 
 def _wall(
-    ordered: tuple[Facility, ...], balance_date: date, horizon_end: date, total_debt: Num
+    ordered: tuple[Facility, ...],
+    balance_date: date,
+    horizon_end: date,
+    total_debt: Num,
+    base: str = DEFAULT_BASIS.currency,
 ) -> tuple[WallRow, ...]:
     """One row per facility in wall order. A row whose share or date is missing makes its own
     and every later cumulative share missing with the first reason."""
     rows: list[WallRow] = []
     cumulative: Num = _ZERO
     for f in ordered:
-        amount = _usd_principal(f)
+        amount = _usd_principal(f, base)
         share = _ratio(amount, total_debt)
         undated = _date_gap(f)
         if isinstance(cumulative, Gap):
@@ -655,6 +669,7 @@ class Bridge:
     sources_and_uses_difference: Num
     financing_lines_difference: Num
     wall: tuple[WallRow, ...]
+    basis: PeriodBasis = DEFAULT_BASIS
 
 
 def compose_bridge(
@@ -663,6 +678,7 @@ def compose_bridge(
     horizon_months: int,
     minimum_cash: Decimal | None,
     balance_date: date,
+    basis: PeriodBasis = DEFAULT_BASIS,
 ) -> Bridge:
     """Method items 1-6, pure Decimal. A missing operand makes its dependants gaps."""
     low, high = HORIZON_BOUNDS
@@ -692,7 +708,7 @@ def compose_bridge(
         monthly = annual if isinstance(annual, Gap) else annual / 12
         over_horizon = annual if isinstance(annual, Gap) else annual * horizon_months / 12
         maturities, amortisation = _schedule(
-            ordered, horizon_months, balance_date, horizon_end, absent
+            ordered, horizon_months, balance_date, horizon_end, absent, basis.currency
         )
         end_cash = _diff(_total(cash, over_horizon), _total(amortisation, maturities))
         undrawn: Num = _diff(_op(o, "rcf_commitment"), _op(o, "rcf_drawn"))
@@ -747,8 +763,8 @@ def compose_bridge(
             _op(o, "other_investing_financing"),
         )
         lines_difference = _diff(lines, financing)
-        wall = _wall(ordered, balance_date, horizon_end, _op(o, "total_debt_bs"))
-        term_undrawn = _undrawn_term(ordered, absent)
+        wall = _wall(ordered, balance_date, horizon_end, _op(o, "total_debt_bs"), basis.currency)
+        term_undrawn = _undrawn_term(ordered, absent, basis.currency)
     return Bridge(
         horizon_months=horizon_months,
         minimum_cash=minimum_cash,
@@ -777,6 +793,7 @@ def compose_bridge(
         sources_and_uses_difference=difference,
         financing_lines_difference=lines_difference,
         wall=wall,
+        basis=basis,
     )
 
 
@@ -787,6 +804,7 @@ def bridge_of(inputs: Cp2dInputs) -> Bridge:
         horizon_months=inputs.submission.horizon_months,
         minimum_cash=None if minimum is None else minimum.amount,
         balance_date=inputs.balance_date,
+        basis=inputs.basis,
     )
 
 
@@ -828,19 +846,19 @@ def check_cp1_totals(*, operands: Operands, bridge: Bridge) -> tuple[tuple[str, 
 # --- spelling ---------------------------------------------------------------------------------
 
 
-def amount_text(value: Decimal) -> str:
-    """US$ m prose spelling: 0 dp half-up, negatives in brackets (display.py)."""
-    return format_value(value, "amount", "known") + " US$ m"
+def amount_text(value: Decimal, unit: str = DEFAULT_BASIS.money_unit) -> str:
+    """Money prose spelling in the run's unit: 0 dp half-up, negatives in brackets (display.py)."""
+    return format_value(value, "amount", "known") + f" {unit}"
 
 
-def exact_amount_text(value: Decimal) -> str:
+def exact_amount_text(value: Decimal, unit: str = DEFAULT_BASIS.money_unit) -> str:
     """Ruling L3: a difference spelled exactly (normalised, negatives in brackets, no
-    rounding), in US$ m. Trailing zeros are stripped from the text: ``Decimal.normalize`` would
+    rounding), in the run's unit. Trailing zeros are stripped from the text: ``Decimal.normalize`` would
     round to the context precision."""
     body = format(value.copy_abs(), "f")
     if "." in body:
         body = body.rstrip("0").rstrip(".")
-    return (f"({body})" if value < 0 else body) + " US$ m"
+    return (f"({body})" if value < 0 else body) + f" {unit}"
 
 
 def _months_text(value: Decimal | int) -> str:
@@ -904,10 +922,12 @@ def _known_nonzero(value: Num) -> Decimal | None:
     return value if not isinstance(value, Gap) and value != 0 else None
 
 
-def _facility_limitations(f: Facility, balance_date: date) -> list[tuple[str, str, str]]:
+def _facility_limitations(
+    f: Facility, balance_date: date, base: str = DEFAULT_BASIS.currency
+) -> list[tuple[str, str, str]]:
     out: list[tuple[str, str, str]] = []
     fid = f.facility_id
-    if f.currency is not None and f.currency != CURRENCY:
+    if f.currency is not None and f.currency != base:
         out.append(
             (
                 f"Facility currency ({fid})",
@@ -963,7 +983,9 @@ def _limitations(
             (
                 "Sources and uses difference",
                 "Limitation",
-                SOURCES_AND_USES_DIFFER.format(amount=exact_amount_text(difference)),
+                SOURCES_AND_USES_DIFFER.format(
+                    amount=exact_amount_text(difference, bridge.basis.money_unit)
+                ),
             )
         )
     lines = _known_nonzero(bridge.financing_lines_difference)
@@ -972,7 +994,9 @@ def _limitations(
             (
                 "Financing lines difference",
                 "Limitation",
-                FINANCING_LINES_DIFFER.format(amount=exact_amount_text(lines)),
+                FINANCING_LINES_DIFFER.format(
+                    amount=exact_amount_text(lines, bridge.basis.money_unit)
+                ),
             )
         )
     if isinstance(bridge.maturities_in_horizon, Gap) and (
@@ -980,7 +1004,7 @@ def _limitations(
     ):
         out.append(("Facility schedule", "Gap", SCHEDULE_EMPTY_LIMITATION))
     for f in bridge.ordered_facilities:
-        out += _facility_limitations(f, bridge.balance_date)
+        out += _facility_limitations(f, bridge.balance_date, bridge.basis.currency)
     for label, text in check_cp1_totals(operands=operands, bridge=bridge):
         out.append((f"CP-1 {label} cross-check", "Limitation", text))
     if isinstance(bridge.undrawn_revolver, Gap):
@@ -1078,7 +1102,7 @@ class Ledger:
 
 @dataclass(frozen=True)
 class ClaimText:
-    """A claim: ``{id|US$ m}`` slots are resolved into ``text``; ``[id]`` chips name gap cells
+    """A claim: ``{id|<unit>}`` slots are resolved into ``text``; ``[id]`` chips name gap cells
     and stay in ``text`` until Stage 2 spells them with the report's G numbers."""
 
     claim_id: str
@@ -1299,7 +1323,7 @@ def _sources_and_uses(o: Operands, b: Bridge) -> Table:
         "T2E.1",
         "Liquidity sources and uses",
         "Line",
-        (f"Twelve months to {d0} (US$ m)",),
+        (f"Twelve months to {d0} ({b.basis.money_unit})",),
         _number("T2E.1", rows),
     )
 
@@ -1344,7 +1368,7 @@ def _position(o: Operands, b: Bridge) -> Table:
         "T2E.2",
         "Liquidity position",
         "Line",
-        (f"{b.balance_date.isoformat()} (US$ m)",),
+        (f"{b.balance_date.isoformat()} ({b.basis.money_unit})",),
         _number("T2E.2", rows),
     )
 
@@ -1424,7 +1448,7 @@ def _wall_table(b: Bridge) -> Table:
             )
         )
     columns = (
-        "Principal (US$ m)",
+        f"Principal ({b.basis.money_unit})",
         "Maturity date",
         f"Months from {b.balance_date.isoformat()}",
         "Inside horizon",
@@ -1455,7 +1479,13 @@ def _funding_table(o: Operands, b: Bridge) -> Table:
         ("Headroom over minimum cash", [_money(b.headroom, d0)]),
         ("Funding gap", [_money(b.funding_gap, d0)]),
     ]
-    return Table("T2E.5", "Funding gap", "Line", ("Value (US$ m)",), _number("T2E.5", rows))
+    return Table(
+        "T2E.5",
+        "Funding gap",
+        "Line",
+        (f"Value ({b.basis.money_unit})",),
+        _number("T2E.5", rows),
+    )
 
 
 # --- claims (lease "Submission schema"; rulings 2D2, 2D5, 2D-b) --------------------------------
@@ -1487,9 +1517,9 @@ GAP_DRAWINGS = (
 # Ruling L5: claims name no facility id.
 MAT_FX = (
     "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
-    "every facility in USD, and one is not; no FX conversion is applied."
+    "every facility in {base}, and one is not; no FX conversion is applied."
 )
-# Round 6f (d): an unstated currency does not prove "one is not" in USD; MAT_FX needs a stated
+# Round 6f (d): an unstated currency does not prove "one is not" in the run currency; MAT_FX needs a stated
 # foreign currency.
 MAT_CURRENCY = (
     "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
@@ -1515,18 +1545,19 @@ GAP_NOT_ASSESSED = "The funding gap is not calculated: the minimum cash has not 
 
 
 class _Claims:
-    """Writes claims with ``{id|US$ m}`` slots for known cells and ``[id]`` chips for gaps."""
+    """Writes claims with ``{id|<money unit>}`` slots for known cells and ``[id]`` chips for gaps."""
 
-    def __init__(self, tables: tuple[Table, ...]) -> None:
+    def __init__(self, tables: tuple[Table, ...], unit: str = DEFAULT_BASIS.money_unit) -> None:
         self.cells = {c.fact_id: c for t in tables for r in t.rows for c in r.cells}
+        self.unit = unit
 
     def slot(self, fact_id: str) -> str:
         cell = self.cells[fact_id]
         if cell.state != "known":
             return f"[{fact_id}]"
         if cell.unit != "MILLIONS":
-            raise ValueError(f"A claim may reference only a US$ m cell: {fact_id}")
-        return "{" + fact_id + "|US$ m}"
+            raise ValueError(f"A claim may reference only a {self.unit} cell: {fact_id}")
+        return "{" + fact_id + "|" + self.unit + "}"
 
     def known(self, fact_id: str) -> bool:
         return self.cells[fact_id].state == "known"
@@ -1536,10 +1567,10 @@ class _Claims:
         chips: list[str] = []
         text = template
         for fact_id, cell in self.cells.items():
-            slot = "{" + fact_id + "|US$ m}"
+            slot = "{" + fact_id + "|" + self.unit + "}"
             if slot in template:
                 refs.append(fact_id)
-                text = text.replace(slot, f"{cell.shown} US$ m")
+                text = text.replace(slot, f"{cell.shown} {self.unit}")
             if f"[{fact_id}]" in template:
                 chips.append(fact_id)
         order = sorted(refs, key=lambda r: template.index("{" + r + "|"))
@@ -1550,15 +1581,18 @@ class _Claims:
 
 
 def _currency_facility(b: Bridge) -> Facility | None:
-    return next((f for f in b.ordered_facilities if _currency_gap(f) is not None), None)
+    base = b.basis.currency
+    return next((f for f in b.ordered_facilities if _currency_gap(f, base) is not None), None)
 
 
-def _facility_cause(f: Facility, balance_date: date, horizon_end: date) -> str | None:
+def _facility_cause(
+    f: Facility, balance_date: date, horizon_end: date, base: str = DEFAULT_BASIS.currency
+) -> str | None:
     """Ruling D-2 form 3: what a facility lacks for the funding gap, in the ruled order (FX,
     currency, maturity date (unstated, or before D0: round 11), principal; annual amortisation
     when it matures after the horizon)."""
-    if f.currency is not None and f.currency != CURRENCY:
-        need = "in USD"
+    if f.currency is not None and f.currency != base:
+        need = f"in {base}"
     elif f.currency is None:
         need = "with its currency stated"
     elif f.maturity_date is None:
@@ -1577,7 +1611,7 @@ def _facility_cause(f: Facility, balance_date: date, horizon_end: date) -> str |
 def _gap_missing(o: Operands, b: Bridge) -> str | None:
     """Forms 3 and 4 of ruling D-2 for a missing funding gap, or None for the revolver form."""
     for f in b.ordered_facilities:
-        cause = _facility_cause(f, b.balance_date, b.horizon_end)
+        cause = _facility_cause(f, b.balance_date, b.horizon_end, b.basis.currency)
         if cause is not None:
             return GAP_FACILITY.format(cause=cause)
     for name in _GAP_OPERANDS:
@@ -1598,7 +1632,7 @@ def _gap_missing(o: Operands, b: Bridge) -> str | None:
 
 
 def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimText, ...]:
-    c = _Claims(tables)
+    c = _Claims(tables, b.basis.money_unit)
     d0 = format_date(b.balance_date)
     revolver = b.undrawn_revolver
     drawings = isinstance(revolver, Gap) and revolver.reason == DRAWINGS_UNDRAWN
@@ -1617,7 +1651,9 @@ def _claims(o: Operands, b: Bridge, tables: tuple[Table, ...]) -> tuple[ClaimTex
         )
     foreign = _currency_facility(b)
     if foreign is not None:
-        maturities = MAT_CURRENCY if foreign.currency is None else MAT_FX
+        maturities = (
+            MAT_CURRENCY if foreign.currency is None else MAT_FX.format(base=b.basis.currency)
+        )
     else:
         maturities = (
             f"The cash outflow from debt maturing inside the horizon is {c.slot('T2E.3.r07')} "
@@ -1676,7 +1712,7 @@ def _judgments(b: Bridge, submission: LiquidityBridgeSubmission) -> Ledger:
     minimum = (
         "not assessed"
         if b.minimum_cash is None
-        else amount_text(b.minimum_cash) + " (analyst assumption)"
+        else amount_text(b.minimum_cash, b.basis.money_unit) + " (analyst assumption)"
     )
     rows = (
         ("Horizon", _months_text(b.horizon_months)),
@@ -1864,56 +1900,67 @@ class FactBinding:
     label: str
 
 
-_T45_PERIOD = "LTM Q4 25 · 2025-01-01 to 2025-12-31"
-_T46_PERIOD = "q4-2025 · 2025-10-01 to 2025-12-31"
-_T410_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+def bind45(label: str, basis: PeriodBasis = DEFAULT_BASIS) -> FactBinding:
+    return FactBinding("T4.5", basis.t45_period, f"{label} · {basis.ltm_tag}")
 
 
-def _bind45(label: str) -> FactBinding:
-    return FactBinding("T4.5", _T45_PERIOD, f"{label} · LTM Q4 25")
+def bind46(label: str, basis: PeriodBasis = DEFAULT_BASIS) -> FactBinding:
+    return FactBinding("T4.6", basis.t46_period, f"{label} · {basis.schedule_period}")
 
 
-def _bind46(label: str) -> FactBinding:
-    return FactBinding("T4.6", _T46_PERIOD, f"{label} · q4-2025")
+def bind410(metric: str, basis: PeriodBasis = DEFAULT_BASIS) -> FactBinding:
+    return FactBinding("T4.10", basis.ltm_period, f"{basis.ltm_column} · {metric}")
 
 
-def _bind410(metric: str) -> FactBinding:
-    return FactBinding("T4.10", _T410_PERIOD, f"LTM Q4 25 (2025-01-01 to 2025-12-31) · {metric}")
-
-
-# Name order is the manifest's. Each predicate selects exactly one fact ("zero or several fail").
-FACT_BINDINGS: Mapping[str, FactBinding] = MappingProxyType(
-    {
-        "cash_closing": _bind410("cash_closing"),
-        "undrawn_rcf": _bind410("undrawn_rcf"),
-        "liquidity": _bind410("liquidity"),
-        "total_debt": _bind410("total_debt"),
-        "liquidity_to_debt": _bind410("liquidity_to_debt"),
-        "cfo_reported": _bind410("cfo_reported"),
-        "opening_cash": _bind45("Opening cash"),
-        "cfo": _bind45("Operating cash flow"),
-        "investing": _bind45("Net cash used in investing"),
-        "debt_issuance": _bind45("Debt issuance"),
-        "debt_repayment": _bind45("Debt repayment"),
-        "net_debt_issuance": _bind45("Net debt issuance"),
-        "equity_issuance": _bind45("Equity issuance"),
-        "equity_repurchases": _bind45("Equity repurchases"),
-        "dividends_paid": _bind45("Dividends paid"),
-        "other_investing_financing": _bind45("Other investing and financing"),
-        "financing": _bind45("Net cash used in financing"),
-        "fx_effect": _bind45("FX effect on cash"),
-        "closing_cash": _bind45("Closing cash"),
-        "fcf_unlevered": _bind45("Fcf unlevered"),
-        "cash_bs": _bind46("Cash and cash equivalents"),
-        "restricted_cash": _bind46("Restricted cash"),
-        "rcf_commitment": _bind46("RCF commitment"),
-        "rcf_drawn": _bind46("RCF drawings"),
-        "total_debt_bs": _bind46("Total debt"),
-    }
+_T410_NAMES = (
+    "cash_closing",
+    "undrawn_rcf",
+    "liquidity",
+    "total_debt",
+    "liquidity_to_debt",
+    "cfo_reported",
 )
+_T45_LABELS = (
+    ("opening_cash", "Opening cash"),
+    ("cfo", "Operating cash flow"),
+    ("investing", "Net cash used in investing"),
+    ("debt_issuance", "Debt issuance"),
+    ("debt_repayment", "Debt repayment"),
+    ("net_debt_issuance", "Net debt issuance"),
+    ("equity_issuance", "Equity issuance"),
+    ("equity_repurchases", "Equity repurchases"),
+    ("dividends_paid", "Dividends paid"),
+    ("other_investing_financing", "Other investing and financing"),
+    ("financing", "Net cash used in financing"),
+    ("fx_effect", "FX effect on cash"),
+    ("closing_cash", "Closing cash"),
+    ("fcf_unlevered", "Fcf unlevered"),
+)
+_T46_LABELS = (
+    ("cash_bs", "Cash and cash equivalents"),
+    ("restricted_cash", "Restricted cash"),
+    ("rcf_commitment", "RCF commitment"),
+    ("rcf_drawn", "RCF drawings"),
+    ("total_debt_bs", "Total debt"),
+)
+
+
+def fact_bindings(basis: PeriodBasis = DEFAULT_BASIS) -> Mapping[str, FactBinding]:
+    """The CP-1 fact each name selects, for the run's periods. Name order is the manifest's. Each
+    predicate selects exactly one fact ("zero or several fail")."""
+    return MappingProxyType(
+        {
+            **{name: bind410(name, basis) for name in _T410_NAMES},
+            **{name: bind45(label, basis) for name, label in _T45_LABELS},
+            **{name: bind46(label, basis) for name, label in _T46_LABELS},
+        }
+    )
+
+
+FACT_BINDINGS: Mapping[str, FactBinding] = fact_bindings(DEFAULT_BASIS)
 # T4.18: the QUARTER period at the latest period end wins over its FY alias; the alias must agree
 # on every term; one row per facility_id.
-SCHEDULE_PERIOD = "q4-2025"
+SCHEDULE_PERIOD = DEFAULT_BASIS.schedule_period
 FACILITY_FIELDS = (
     "principal",
     "maturity_date",
@@ -1962,8 +2009,12 @@ class Selection:
         )
 
 
-def _usd_millions(name: str, fact: Fact) -> None:
-    """A money fact must be US dollars in millions (CP-1: scale 1e6 USD, or `MILLIONS`); a
+def _currency_words(code: str) -> str:
+    return "US dollars" if code == "USD" else code
+
+
+def _usd_millions(name: str, fact: Fact, basis: PeriodBasis = DEFAULT_BASIS) -> None:
+    """A money fact must be the run currency in millions (CP-1: scale 1e6, or `MILLIONS`); a
     ratio must be a PERCENT fraction. Anything else cannot be read as the Stage 1 amount."""
     if fact.amount is None:
         return
@@ -1971,22 +2022,22 @@ def _usd_millions(name: str, fact: Fact) -> None:
         fact.unit == "PERCENT"
         if name in _RATIO_NAMES
         else fact.unit in ("currency", "MILLIONS")
-        and fact.currency == CURRENCY
+        and fact.currency == basis.currency
         and fact.scale == Decimal(1000000)
     )
     if not ok:
         raise ValueError(
-            f"CP-2D: {name} is not in US dollars millions"
+            f"CP-2D: {name} is not in {_currency_words(basis.currency)} millions"
             if name not in _RATIO_NAMES
             else f"CP-2D: {name} is not a percent fraction"
         )
 
 
-def _operand_of(name: str, fact: Fact) -> Operand:
+def _operand_of(name: str, fact: Fact, basis: PeriodBasis = DEFAULT_BASIS) -> Operand:
     """The Stage 1 operand of a CP-1 fact: its status, amount, own period and, when it is not
     known, CP-1's limitation verbatim. A known fact is never defaulted and a non-known one never
     becomes an amount."""
-    _usd_millions(name, fact)
+    _usd_millions(name, fact, basis)
     if fact.status == "known":
         if fact.amount is None:
             raise ValueError(f"CP-2D: {name} is known without an amount and a period")
@@ -2022,7 +2073,7 @@ def _same_terms(a: Fact, b: Fact) -> bool:
     )
 
 
-def _balance_date(module: Module) -> tuple[date, tuple[str, ...]]:
+def _balance_date(module: Module, schedule: str = SCHEDULE_PERIOD) -> tuple[date, tuple[str, ...]]:
     """The end date of the schedule period (T4.14), and the other periods that end the same day
     (the FY alias of a quarter)."""
     ends: dict[str, str] = {}
@@ -2030,17 +2081,15 @@ def _balance_date(module: Module) -> tuple[date, tuple[str, ...]]:
         pid, end = _known_text(row, "period_id"), _known_text(row, "end_date")
         if pid is not None and end is not None:
             ends[pid] = end
-    if SCHEDULE_PERIOD not in ends:
-        raise ValueError(f"CP-2D: CP-1 states no end date for {SCHEDULE_PERIOD}")
-    balance = date.fromisoformat(ends[SCHEDULE_PERIOD])
-    aliases = tuple(
-        p for p, end in ends.items() if end == ends[SCHEDULE_PERIOD] and p != SCHEDULE_PERIOD
-    )
+    if schedule not in ends:
+        raise ValueError(f"CP-2D: CP-1 states no end date for {schedule}")
+    balance = date.fromisoformat(ends[schedule])
+    aliases = tuple(p for p, end in ends.items() if end == ends[schedule] and p != schedule)
     return balance, aliases
 
 
 def _facility_rows(
-    module: Module, aliases: tuple[str, ...]
+    module: Module, aliases: tuple[str, ...], schedule: str = SCHEDULE_PERIOD
 ) -> tuple[dict[str, dict[str, Fact]] | None, tuple[Facility, ...]]:
     """The T4.18 rows at the schedule period by facility id, and the Stage 1 facilities. The
     schedule is None (absent) when CP-1 holds no T4.18 fact at all, and () when it holds some but
@@ -2058,7 +2107,7 @@ def _facility_rows(
         if (facility_id, period) in by_period:
             raise ValueError(f"CP-2D: facility {facility_id} has two T4.18 rows in {period}")
         by_period[facility_id, period] = row
-        if period == SCHEDULE_PERIOD:
+        if period == schedule:
             chosen[facility_id] = row
     for alias in aliases:
         listed = {fid for (fid, period) in by_period if period == alias}
@@ -2066,7 +2115,7 @@ def _facility_rows(
             raise ValueError(f"CP-2D: facility {facility_id} lacks its {alias} alias row")
         for facility_id in sorted(listed - set(chosen)):
             raise ValueError(
-                f"CP-2D: facility {facility_id} has a {alias} row but no {SCHEDULE_PERIOD} row"
+                f"CP-2D: facility {facility_id} has a {alias} row but no {schedule} row"
             )
     facilities = []
     for facility_id, row in chosen.items():
@@ -2078,13 +2127,15 @@ def _facility_rows(
                 ):
                     raise ValueError(
                         f"CP-2D: facility {facility_id} {term} differs between its "
-                        f"{SCHEDULE_PERIOD} row and its {alias} alias"
+                        f"{schedule} row and its {alias} alias"
                     )
-        facilities.append(_facility_of(facility_id, row))
+        facilities.append(_facility_of(facility_id, row, schedule))
     return chosen, tuple(facilities)
 
 
-def _facility_of(facility_id: str, row: Mapping[str, Fact]) -> Facility:
+def _facility_of(
+    facility_id: str, row: Mapping[str, Fact], schedule: str = SCHEDULE_PERIOD
+) -> Facility:
     """The Stage 1 facility of a T4.18 row. CP-1 writes the money terms in the row's own
     currency, so a facility in another currency is read as stated: the Stage 1 FX path makes its
     row and every total missing with the limitation (lease Reuse, ruling A5). A money term must
@@ -2112,11 +2163,11 @@ def _facility_of(facility_id: str, row: Mapping[str, Fact]) -> Facility:
         commitment=row["commitment"].amount,
         drawn_amount=row["drawn_amount"].amount,
         annual_amortisation=row["annual_amortisation"].amount,
-        period=SCHEDULE_PERIOD,
+        period=schedule,
     )
 
 
-def select_cp1(cp1: Module) -> Selection:
+def select_cp1(cp1: Module, basis: PeriodBasis = DEFAULT_BASIS) -> Selection:
     """Apply the manifest bindings to a CP-1 module. Each name selects exactly one fact: zero or
     several raise (`ValueError`), and a fact CP-1 reports missing, conflicting or not applicable
     is read as that status, never as zero."""
@@ -2126,21 +2177,22 @@ def select_cp1(cp1: Module) -> Selection:
             index.setdefault((fact.table_id, fact.period or "", fact.label), []).append(fact)
     offered: list[Offered] = []
     selected: dict[str, Fact] = {}
-    for name, binding in FACT_BINDINGS.items():
+    for name, binding in fact_bindings(basis).items():
         hits = index.get((binding.table_id, binding.period, binding.label), [])
         if len(hits) != 1:
             raise ValueError(f"CP-2D: CP-1 offers {len(hits)} facts for {name}, not exactly one")
         selected[name] = hits[0]
         offered.append(Offered(name, hits[0]))
-    balance, aliases = _balance_date(cp1)
-    rows, facilities = _facility_rows(cp1, aliases)
+    schedule = basis.schedule_period
+    balance, aliases = _balance_date(cp1, schedule)
+    rows, facilities = _facility_rows(cp1, aliases, schedule)
     maturity_refs: list[str] = []
     for facility_id, row in (rows or {}).items():
         for field in FACILITY_FIELDS:
             offered.append(Offered(f"T4.18 {field}", row[field], facility_id))
         maturity_refs.append(row["maturity_date"].fact_id)
     operands = Operands(
-        **{name: _operand_of(name, selected[name]) for name in OPERAND_NAMES},
+        **{name: _operand_of(name, selected[name], basis) for name in OPERAND_NAMES},
         facilities=None if rows is None else facilities,
     )
     offered.sort(key=lambda o: (o.name, o.fact.fact_id))
@@ -2189,14 +2241,34 @@ def cp2d_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
     )
 
 
-def _inputs_from(upstream: Upstream, submission: LiquidityBridgeSubmission) -> Cp2dInputs:
-    selection = select_cp1(upstream.cp1)
+def run_basis(pack: PreparedPack, cp1: Module) -> PeriodBasis:
+    """The run's period and currency strings, read from the pack's context and CP-1's T4.14
+    register; the 2025 USD literals when the pack carries no context. A context with no base
+    period (blank, allowed off earnings runs) keeps those 2025 USD literals too, so a CP-1 of
+    another year fails at selection ("CP-1 offers 0 facts"); a blank base with another reporting
+    currency is refused. Raises `ContextRefused` or `PeriodRefused`."""
+    context = context_facts(pack)
+    if context is not None and not context.run.current_period:
+        if context.run.reporting_currency != DEFAULT_BASIS.currency:
+            raise PeriodRefused(
+                f"run.reporting_currency {context.run.reporting_currency} needs "
+                "a run.current_period (fy or q4 base)"
+            )
+        return DEFAULT_BASIS
+    return period_basis(context, cp1.facts)
+
+
+def _inputs_from(
+    upstream: Upstream, submission: LiquidityBridgeSubmission, basis: PeriodBasis = DEFAULT_BASIS
+) -> Cp2dInputs:
+    selection = select_cp1(upstream.cp1, basis)
     return Cp2dInputs(
         operands=selection.operands,
         balance_date=selection.balance_date,
         submission=submission,
         offered_refs=frozenset(o.fact.fact_id for o in selection.offered),
         maturity_date_refs=selection.maturity_date_refs,
+        basis=basis,
     )
 
 
@@ -2205,7 +2277,8 @@ def _inputs(
 ) -> Cp2dInputs:
     """The store adapter: the settled CP-1 head bound by `attempt` -> the Stage 1 input object.
     `submit`, `probe` and `view` all reach CP-1 through this selection."""
-    return _inputs_from(cp2d_upstream(store=store, attempt=attempt), submission)
+    upstream = cp2d_upstream(store=store, attempt=attempt)
+    return _inputs_from(upstream, submission, run_basis(store.pack(), upstream.cp1))
 
 
 # --- validation of a submission against the bound upstream ------------------------------------
@@ -2278,7 +2351,15 @@ def validate_liquidity_bridge(
     facts the bound CP-1 head offers, then the pin lines. Empty when the submission can be
     composed. The one issue set of the step validator and the composer gate."""
     issues = [*_stale_issues(upstream), *_provenance_issues(upstream)]
-    selection = select_cp1(upstream.cp1)
+    try:
+        basis = run_basis(pack, upstream.cp1)
+    except ContextRefused:
+        # `_pin_lines` below reports the refused context as an issue, so nothing composes from
+        # this default basis.
+        basis = DEFAULT_BASIS
+    except PeriodRefused as error:
+        return tuple(dict.fromkeys([*issues, f"Period basis refused: {error}"]))
+    selection = select_cp1(upstream.cp1, basis)
     issues += submission_issues(
         submission=submission,
         offered_refs=frozenset(o.fact.fact_id for o in selection.offered),
@@ -2360,9 +2441,9 @@ def _citations(*groups: Sequence[Fact]) -> tuple[Citation, ...]:
     return tuple(dict.fromkeys(c for group in groups for fact in group for c in fact.citations))
 
 
-def _shape(unit: str | None) -> dict[str, Any]:
+def _shape(unit: str | None, currency: str = DEFAULT_BASIS.currency) -> dict[str, Any]:
     if unit == "MILLIONS":
-        return {"unit": unit, "currency": CURRENCY, "scale": Decimal(1000000)}
+        return {"unit": unit, "currency": currency, "scale": Decimal(1000000)}
     return {} if unit is None else {"unit": unit}
 
 
@@ -2420,7 +2501,7 @@ class _Composer:
                 status=_FACT_STATUS[cell.state],
                 limitation=cell.reason,
                 citations=self._copy_citations(cell, facility),
-                **_shape(cell.unit),
+                **_shape(cell.unit, self.result.bridge.basis.currency),
             )
         copy = cell.cp1_operand is not None and cell.cp1_operand not in RECOMPUTED_TAGS
         derived: dict[str, Any] = {}
@@ -2435,7 +2516,7 @@ class _Composer:
                 amount=cell.amount,
                 period=cell.period,
                 citations=self._copy_citations(cell, facility),
-                **_shape(cell.unit),
+                **_shape(cell.unit, self.result.bridge.basis.currency),
                 **derived,
             )
         return Fact(
@@ -2574,11 +2655,12 @@ def liquidity_bridge(
     issues = validate_liquidity_bridge(pack=pack, submission=submission, upstream=upstream)
     if issues:
         raise ValueError("; ".join(issues))
-    selection = select_cp1(upstream.cp1)
+    basis = run_basis(pack, upstream.cp1)
+    selection = select_cp1(upstream.cp1, basis)
     # A refused context is a `Context refused: ...` issue, so `validate_liquidity_bridge` returned
     # none and raised above; `pins_of` cannot raise `ContextRefused` here.
     pinned = pins_of(MODULE_ID, pack) is not None
-    result = compute(replace(_inputs_from(upstream, submission), pinned=pinned))
+    result = compute(replace(_inputs_from(upstream, submission, basis), pinned=pinned))
     out = _Composer(selection, result)
     for table in result.tables:
         out.table(table)
@@ -2630,7 +2712,8 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     record at any depth (manifest `view_tree_draft`)."""
     if upstream.cp1.run_id != pack.run.run_id:
         raise ValueError("CP-2D: the bound CP-1 module belongs to another run")
-    selection = select_cp1(upstream.cp1)
+    basis = run_basis(pack, upstream.cp1)
+    selection = select_cp1(upstream.cp1, basis)
     return {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
@@ -2653,7 +2736,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         "cp1_facts_note": VIEW_NOTE,
         "bounds": {
             "horizon_months": list(HORIZON_BOUNDS),
-            "minimum_cash": "decimal >= 0 in US$ m, or null with minimum_cash_absence",
+            "minimum_cash": f"decimal >= 0 in {basis.money_unit}, or null with minimum_cash_absence",
         },
         "inherited_limitations": list(upstream.inherited),
     }

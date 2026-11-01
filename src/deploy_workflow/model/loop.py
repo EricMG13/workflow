@@ -801,8 +801,9 @@ class ToolLoop:
             if failure is not None or result is None:
                 # Whatever the workflow raised is one loop stop (record.LOOP_STOPS); the original
                 # type name and the redacted message go in the detail.
-                record["refusal_code"] = "WorkflowError"
-                out.stop = ("WorkflowError", self._named(failure))
+                stop_class = _stop_class(failure)
+                record["refusal_code"] = stop_class
+                out.stop = (stop_class, self._named(failure))
                 return out
             content, refusal, outcome = result
             if returned:
@@ -844,6 +845,14 @@ class ToolLoop:
     @staticmethod
     def _tool_message(call: ToolCall, content: str) -> Message:
         return Message("tool", content, tool_call_id=call.call_id)
+
+
+def _stop_class(failure: BaseException | None) -> str:
+    """The loop stop (``record.LOOP_STOPS``) a failure of the workflow is: a ``read_inputs`` body
+    over the byte cap (G6, P8) is named ``InputsTooLarge``; any other failure is ``WorkflowError``."""
+    if isinstance(failure, WorkflowError) and failure.code == "inputs_too_large":
+        return "InputsTooLarge"
+    return "WorkflowError"
 
 
 def _caught[T](action: Callable[[], T]) -> tuple[T | None, Exception | None]:

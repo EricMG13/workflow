@@ -514,7 +514,9 @@ def retain_preimage(store: _Store, preimage: Mapping[str, Any]) -> str:
 
 # The closed set of stop classes the tool loop writes into the record of a reply that was ok:
 # the reply parsed as a turn, then the loop stopped on it. Such a record exports as the ok turn.
-LOOP_STOPS: frozenset[str] = frozenset({"NoSubmit", "CallLimit", "WorkflowError", "BadTurn"})
+LOOP_STOPS: frozenset[str] = frozenset(
+    {"NoSubmit", "CallLimit", "InputsTooLarge", "WorkflowError", "BadTurn"}
+)
 
 # The class of a record whose ``complete`` raised: the call may have been sent, the charge is unknown.
 ADAPTER_ERROR = "AdapterError"

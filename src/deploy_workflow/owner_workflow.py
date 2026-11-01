@@ -26,7 +26,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from threading import Lock
 from types import MappingProxyType, ModuleType
-from typing import Annotated, Any, Literal, TextIO
+from typing import Annotated, Any, Literal, NoReturn, TextIO
 from uuid import uuid4
 
 from pydantic import Field, SerializerFunctionWrapHandler, model_serializer
@@ -269,6 +269,8 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
+# G6: the bytes a `read_inputs` body may take: the bound a submitted payload already obeys.
+MAX_INPUT_BYTES: int = MAX_LINE
 
 
 @dataclass(frozen=True)
@@ -724,12 +726,20 @@ class TransportMarker(Contract):
 
 class OwnerFault(Contract):
     """A `faults/` record: a failure the run cannot continue from, written before the error is
-    raised. `kind` names the audit kind (or `journal`) and `digest` the record it concerns."""
+    raised. `kind` names the audit kind (or `journal`) and `digest` the record it concerns.
+    `InputsTooLarge` (a `read_inputs` body over `MAX_INPUT_BYTES`) and `CallLimit` (a call refused
+    at `MAX_CALLS`) name the step's `binding`, and the former its `size` and `cap`; neither holds
+    the body. A faults record is outside the receipt's compared set and replay's call bodies."""
 
     schema_version: Literal["owner-fault/1"] = "owner-fault/1"
     code: str
     kind: str | None = None
     digest: str | None = Field(default=None, max_length=160)
+    # G6: the fields of an `InputsTooLarge` or `CallLimit` record. Never the body.
+    binding: OwnerBinding | None = None
+    size: int | None = Field(default=None, ge=0)
+    cap: int | None = Field(default=None, ge=0)
+    call_kind: Literal["invoke", "read_inputs", "submit_review"] | None = None
 
 
 class TornAudit(WorkflowError):
@@ -2016,6 +2026,16 @@ class OwnerWorkflow:
         if self._publisher_done or all(self._specs[m].kind == "analytical" for m in self._plan):
             self._phase = "complete"
 
+    def _at_cap(self, call_kind: Literal["invoke", "read_inputs", "submit_review"]) -> NoReturn:
+        """Refuse a call past `MAX_CALLS` for its step: a `CallLimit` fault is journaled (the
+        binding, never a body), then the same `not_permitted` refusal as before is raised."""
+        _retain(
+            self._store,
+            "faults",
+            OwnerFault(code="CallLimit", binding=self._binding, cap=MAX_CALLS, call_kind=call_kind),
+        )
+        raise WorkflowError("not_permitted")
+
     def invoke(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         with self._locked():
             self._current()
@@ -2023,7 +2043,7 @@ class OwnerWorkflow:
                 raise WorkflowError("not_permitted")
             key = (self._binding.ticket_id, self._binding.step_id, "invoke")
             if self._limits[key] >= MAX_CALLS:
-                raise WorkflowError("not_permitted")
+                self._at_cap("invoke")
             self._limits[key] += 1
             if self._session is None:
                 call = OwnerCall(
@@ -2054,9 +2074,25 @@ class OwnerWorkflow:
             if self._phase != "analytical":
                 raise WorkflowError("not_permitted")
             key = (self._binding.ticket_id, self._binding.step_id, "read_inputs")
-            if self._spec.inputs == "none" or self._limits[key] >= MAX_CALLS:
+            if self._spec.inputs == "none":
                 raise WorkflowError("not_permitted")
+            if self._limits[key] >= MAX_CALLS:
+                self._at_cap("read_inputs")
             digest, body = _inputs(self._store, self._binding, self._spec)
+            size = len(body.encode())
+            if size > MAX_INPUT_BYTES:  # G6: nothing is retained, counted or truncated
+                _retain(
+                    self._store,
+                    "faults",
+                    OwnerFault(
+                        code="InputsTooLarge",
+                        binding=self._binding,
+                        size=size,
+                        cap=MAX_INPUT_BYTES,
+                        call_kind="read_inputs",
+                    ),
+                )
+                raise WorkflowError("inputs_too_large")
             self._limits[key] += 1
             record = OwnerInputRead(
                 binding=self._binding, sequence=self._limits[key], inputs_sha256=digest, body=body
@@ -2077,7 +2113,7 @@ class OwnerWorkflow:
                 raise WorkflowError("not_permitted")
             key = (self._binding.ticket_id, self._binding.step_id, "submit_review")
             if self._limits[key] >= MAX_CALLS:
-                raise WorkflowError("not_permitted")
+                self._at_cap("submit_review")
             spec = self._spec
             # G1-X §3: a step whose inputs are not "none" (every session-less step, and a step
             # with pack sources that also has a view) is read on its own binding first. A

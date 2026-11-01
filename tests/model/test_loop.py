@@ -857,7 +857,7 @@ def test_a_bad_turn_stop_exports(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 def test_every_stop_written_after_an_ok_reply_is_a_loop_stop(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    assert LOOP_STOPS == {"NoSubmit", "CallLimit", "WorkflowError", "BadTurn"}
+    assert LOOP_STOPS == {"NoSubmit", "CallLimit", "InputsTooLarge", "WorkflowError", "BadTurn"}
     seen: set[str] = set()
     for number, script in enumerate(
         [

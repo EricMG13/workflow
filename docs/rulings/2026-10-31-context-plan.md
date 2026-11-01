@@ -251,3 +251,17 @@ The user wrote in this session: "fable is available". This lifts the 2026-10-28 
 - The phase reviews already done (O1, O5 and O2) are not rerun.
 
 Cost if wrong: higher review spend on the remaining phase reviews. The user can narrow this ruling.
+
+## B26. O5 follow-up batch (controller, 2026-11-01)
+
+The model-testing framework session reported four defects in the released O5 code (`src/deploy_workflow/model/`), relayed through MANAGER:
+- key-shaped field names in `RecordInvalid` text;
+- negative `reserved_usd` and `settled_usd`, and a boolean `attempt`;
+- keys glued to a word character that `KEY_PATTERN` misses;
+- the private `_strings`, which the framework imports.
+
+They predate the current tasks, but they are this plan's code and touch key leakage and money. They are fixed here as one follow-up batch, built by mx-feature and reviewed by mx-adversary (`.superpowers/sdd/2026-10-31-part-b-o5/followup-1-brief.md`). They are not left as owner items. The fix goes to the PR Manager as an addition to the O5 release.
+
+Cost if wrong: one small extra batch and review.
+
+The O2 note in the same message is for information. The offline synthetic full walk (`tests/o2_case.py`) ends `stopped` with `render: owner_render_scope` and takes more than 5 minutes. It is checked at the O3/O4 phase gate in CI and in O7.

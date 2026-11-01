@@ -15,7 +15,7 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
    - whether OpenAI's `input_tokens_details.cache_write_tokens` exists;
    - opus long-context rates (none stated in the provider docs; opus has no `max_input_tokens`).
 3. Confirm `ANTHROPIC_VERSION = "2026-10-21"` and Bearer auth (`model/providers.py`). Context7 was the only source for both.
-4. Reservation size. `bytes_per_token` is 1 (`model/loop.py`). That is provably safe, but it reserves about 4x on input, and a sol request over about 272 KB is refused. `TOKEN_OVERHEAD = 64` has not been measured against the providers' tool-use prompts. DEPLOY VII's 3.0 was measured on GLM 5.3 Flash, not on these models. Measure both per config before changing them.
+4. Reservation size. `bytes_per_token` is 1 (`model/loop.py`). That is provably safe, but it reserves about 4x on input, and a sol request over about 272 KB is refused. `TOKEN_OVERHEAD = 64` has not been measured against the providers' tool-use prompts. DEPLOY VII's 3.0 was measured on GLM 5.3 Flash, not on these models. Measure both per config before changing them. O2's `run_pathway.MAX_OUTPUT_TOKENS = 32768` (controller choice, under the 131072 global cap) sizes every reservation: the first sol-medium reservation is about $0.36, so a smaller cap stops at `BudgetExhausted`. Set it per config from the re-fetched limits.
 5. Real-socket TLS is untested; every test injects the connection. Run one supervised local-TLS or real-socket smoke test before the first paid call. Two related gaps: the reply body has no size cap, and `first_byte_at` is always None.
 6. O2 `run_pathway` must:
    - refuse adapters that are not of the exact type;
@@ -36,3 +36,6 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 | Two Budgets over one Execution dir each enforce the cap only in memory | `budget.py` (ponytail comment) | single-process runner |
 | A parent directory swapped for a symlink passes the O_NOFOLLOW gate read | `adapter.py` gate | tripwire, not an authenticator |
 | Operator procedure for a crash-left reservation marker (settle it with the billed actual) | `budget.py` | the run stays stopped until settled |
+| A settled charge above its reservation can take spend past the cap, and the stop reason then reads `NoSubmit`, not an overrun (O2 Task 3 adversary p04: 100.00002 spent on a cap of 1) | `model/loop.py:556-570` | the next reserve refuses; `spent_usd` in run.json shows the true total |
+| An exception inside a tool call (for example a TypeError) becomes a stop with run.json through O5's `_caught`, not a propagated crash (p09) | `model/loop.py` `_caught` | run_pathway docstring says so |
+| A RecordedAdapter miss is recorded as `AdapterError`, cost unknown, with the reservation held, so an offline stopped run reports non-zero `spent_usd` (O2 Task 3 C4) | `model/loop.py` | offline spend is not money (Q7); parked for the end-of-plan batch |

@@ -12,6 +12,7 @@
     "cases/cp4c-owner/manifest.json": "62102d7dae0507320e1ae09517322c2db9fdb94b04d0b8f9610f61892ac6dfd8",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6",
+    "cases/pins-context-owner/expected.json": "f2e7ef35fc42ca9605f4e210bbd4dfe9cda6aa7e3144af44b447ee5bc4d42aa8",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
   },
   "packs": {
@@ -373,7 +374,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "d1f85576ba68a53581cf07c5b718194d0b0cd8466d361684160fa59f44e41417",
+    "sha256": "8e53654df221c01030197a422999d1f6344407597fdaeb682ded94a07359a082",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {
@@ -393,7 +394,7 @@
     "contexts/user-list.json": "76484b05df453b04a235197021c0e1c9364a025e861eacd9c3911785c0e658f9",
     "contexts/user-multiple.json": "e17a46bdca76ac51eaabef56e610b5671dc51078fcafd25e5dd496fb1121f00b",
     "contexts/window-edges.json": "1b170618fb2a2b83351151fb5c7c27ceaf1daa738486e329ebc13a70e2f991e9",
-    "expected.json": "1938b96612fab6df9c5fd668a6a5ba2f64385ba9bbba1103790be9bc78845c50"
+    "expected.json": "76697efd49f577d4e2a617bb0a75879f304283b9d692a9256d2668f4e5aab7a1"
   },
   "files_sha256_note": "every output except manifest.json and README.md (README is hand-written)"
 }

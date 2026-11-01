@@ -25,7 +25,7 @@
     "selection": "auto: public comps with >= 3 admitted, else precedents with >= 3 admitted, else Insufficient Information (known text, multiple missing); explicit bases never fall back; blend = plain average of both medians, both needed; blend is never automatic; selected multiple = chosen value rounded half-even to 2 dp",
     "rounding_of_display": "deploy_vii/display.py: ROUND_HALF_UP on the exact value, thousands commas; MILLIONS amounts at decimals 1, multiples at decimals 2, counts as '<n> records' (no singular)",
     "t1c10_rows": "public_comps for auto, public_comps and blend (or when peer records exist); precedents for precedents and blend (or when precedent records exist); issuer_trading and user_multiple rows for those bases (single value: min = median = max = the value, outliers not_applicable, n_total 1)",
-    "t1c9_none_row": "when the context has no peer or precedent records T1C.9 holds one row `none` (all cells not_applicable; for peer_source cp_dr_public with a peer basis, missing with the Design 8 text); user_list names give rows e01.. with name known and every figure cell missing",
+    "t1c9_none_row": "when the context has no peer or precedent records T1C.9 holds one row `none` (all cells not_applicable; for peer_source cp_dr_public with a peer basis or auto, missing with the Design 8 text); user_list names give rows e01.. with name known and every figure cell missing",
     "citations": "a fact from the user's field cites {source_id context, locator line:N, quote the stripped line}; N is the line of the field in the context file's json.dumps(indent=2) text (ensure_ascii False, LF, trailing LF); the citation's source_sha256 is contexts.<case>.sha256 in the manifest",
     "value_classes": "user figures and names: source; Python-composed text and the labels: normalized; multiples, statistics, selection, EBITDA and implied EV: calculated (user_multiple's selected_multiple: source); calculation_id is `calc:<fact_id>` on calculated facts",
     "t1c_1_to_8": "unchanged: equal to the frozen cp1c-owner no_peers case (positive for credit-plus-comps); the analyst submission does not change",
@@ -20867,7 +20867,8 @@
           "CP-4",
           "CP-2G"
         ],
-        "phase6_pinned_line": "PENDING_PHASE6_FREEZE",
+        "phase6_pinned_line": "The EV multiple is a user-supplied assumption pinned in the context file; the submission equals the pin.",
+        "phase6_pinned_line_source": "cases/pins-context-owner/expected.json:21",
         "selected_multiple": "7.00",
         "pinned_multiple": "8.5",
         "valuations": [

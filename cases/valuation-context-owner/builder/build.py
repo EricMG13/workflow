@@ -35,6 +35,7 @@ PINS = {
     "cases/cp4c-owner/manifest.json": "62102d7dae0507320e1ae09517322c2db9fdb94b04d0b8f9610f61892ac6dfd8",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6",
+    "cases/pins-context-owner/expected.json": "f2e7ef35fc42ca9605f4e210bbd4dfe9cda6aa7e3144af44b447ee5bc4d42aa8",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 RAW = {}
@@ -857,6 +858,12 @@ UPSTREAM_LINES = {
 assert Decimal(_FACTS["T4E.3.v01.ebitda"]["amount_exact"]) == Decimal("30.9")
 
 
+_P6 = RAW["cases/pins-context-owner/expected.json"].decode("utf-8").splitlines()
+PHASE6_LINE_NO = next(i for i, t in enumerate(_P6, 1) if t.strip().startswith('"CP-4C": "The EV multiple is'))
+PHASE6_PINNED_LINE = json.loads("{" + _P6[PHASE6_LINE_NO - 1].strip().rstrip(",") + "}")["CP-4C"]
+assert PHASE6_PINNED_LINE == "The EV multiple is a user-supplied assumption pinned in the context file; the submission equals the pin."
+
+
 def cp4c_block(cid, spec, sel, ctx_obj):
     bound = sel.multiple is not None
     pin = spec.get("pin")
@@ -894,7 +901,8 @@ def cp4c_block(cid, spec, sel, ctx_obj):
         limitation = (f"The EV multiple is the CP-1C selected multiple {fixed(m, 2)}x (basis {basis_text}, EBITDA basis {ebitda_basis}), applied to the "
                       f"CP-2G forecast EBITDA of each valuation case (base case FY2026 for the base valuation); no alignment is made between an LTM or NTM multiple and a forecast year.")
     if pin:
-        block["phase6_pinned_line"] = "PENDING_PHASE6_FREEZE"
+        block["phase6_pinned_line"] = PHASE6_PINNED_LINE
+        block["phase6_pinned_line_source"] = f"cases/pins-context-owner/expected.json:{PHASE6_LINE_NO}"
     block.update({"selected_multiple": fixed(m, 2), "pinned_multiple": pin, "valuations": values,
                   "added_limitation": limitation,
                   "formula_suffix": None if pin else f", equal to the CP-1C selected multiple (T1C.11, basis {basis_text})"})
@@ -1121,7 +1129,7 @@ EXPECTED = {
         "rounding_of_display": "deploy_vii/display.py: ROUND_HALF_UP on the exact value, thousands commas; MILLIONS amounts at decimals 1, multiples at decimals 2, counts as '<n> records' (no singular)",
         "t1c10_rows": "public_comps for auto, public_comps and blend (or when peer records exist); precedents for precedents and blend (or when precedent records exist); "
                       "issuer_trading and user_multiple rows for those bases (single value: min = median = max = the value, outliers not_applicable, n_total 1)",
-        "t1c9_none_row": "when the context has no peer or precedent records T1C.9 holds one row `none` (all cells not_applicable; for peer_source cp_dr_public with a peer basis, "
+        "t1c9_none_row": "when the context has no peer or precedent records T1C.9 holds one row `none` (all cells not_applicable; for peer_source cp_dr_public with a peer basis or auto, "
                          "missing with the Design 8 text); user_list names give rows e01.. with name known and every figure cell missing",
         "citations": "a fact from the user's field cites {source_id context, locator line:N, quote the stripped line}; N is the line of the field in the context file's "
                      "json.dumps(indent=2) text (ensure_ascii False, LF, trailing LF); the citation's source_sha256 is contexts.<case>.sha256 in the manifest",

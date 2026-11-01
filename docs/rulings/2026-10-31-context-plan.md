@@ -265,3 +265,32 @@ They predate the current tasks, but they are this plan's code and touch key leak
 Cost if wrong: one small extra batch and review.
 
 The O2 note in the same message is for information. The offline synthetic full walk (`tests/o2_case.py`) ends `stopped` with `render: owner_render_scope` and takes more than 5 minutes. It is checked at the O3/O4 phase gate in CI and in O7.
+
+## B27. Analyst-assumption figures under O1 (user, 2026-11-01)
+
+The O6 Task 4 adversary review found a conflict (M1). Orchestrator rule O1 says "never use … any figure not shown there". But eight new owner steps require analyst-assumption figures that no evidence shows:
+- `downside_pathway`
+- `forward_credit_model`
+- `liquidity_bridge`
+- `macro_fx`
+- `refinancing_risk`
+- `market_implied`
+- `restructuring_fulcrum`
+- `earnings_quality`
+
+The question went to the user through MANAGER with three options:
+1. Keep O1's text and add one sentence to each of the eight texts.
+2. Keep O1 strict, so the eight steps refuse.
+3. Supply the assumptions through the context form.
+
+The user's reply, relayed verbatim by MANAGER: "1".
+
+**Ruling.** O1's text is unchanged. Each of the eight step texts gains one sentence that names that step's assumption fields. The model:
+- chooses each value within the schema's range;
+- bases it on the figures the module context lists, where they bear on it;
+- never presents it as sourced;
+- states its basis in the step's limitation field.
+
+Python labels the value an analyst assumption. The sentence is built in the O6 Task 4 fix round and reviewed by mx-adversary.
+
+The adversary's M2 is a separate matter: two steps ask the model to reproduce Python's arithmetic (restructuring_fulcrum `.6`/`.7`, forward_credit_model `.3`). It goes to the owner list.

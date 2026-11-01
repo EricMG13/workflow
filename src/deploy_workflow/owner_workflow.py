@@ -711,6 +711,28 @@ class SettledHead(Contract):
     status: Literal["accepted", "restricted", "blocked"]
 
 
+class OwnerState(Contract):
+    """The walk's position, read-only (G5a). Identity, counters and settled heads only: never a
+    payload, a `read_inputs` body or a call body. The step fields are `None` unless a module is
+    active (phase `analytical`)."""
+
+    schema_version: Literal["owner-state/1"] = "owner-state/1"
+    phase: str
+    plan: tuple[Identifier, ...]
+    snapshot_sha256: Hash
+    module_id: Identifier | None
+    step_id: Identifier | None
+    ticket_id: Identifier | None
+    attempt: int | None
+    inputs_required: bool
+    inputs_read: bool
+    invokes_used: int
+    reads_used: int
+    submits_used: int
+    settled: tuple[SettledHead, ...]
+    refusals: tuple[RefusedBegin, ...]
+
+
 class OwnerRunReceipt(Contract):
     schema_version: Literal["owner-run-receipt/1"] = "owner-run-receipt/1"
     run: Run
@@ -1126,6 +1148,57 @@ class OwnerWorkflow:
     def phase(self) -> str:
         """The walk's phase (analytical, walked, complete or failed); read-only (O5 Q6)."""
         return self._phase
+
+    def state(self) -> OwnerState:
+        """The walk's position as a fresh immutable value (G5a). It takes `_operation` without
+        blocking, like the other methods, but not `_locked()`: a sealed run is inspectable, and a
+        stale instance (which `open()` relies on) still answers because it never calls
+        `_current()`; the snapshot is read from the journal."""
+        if not self._operation.acquire(blocking=False):
+            raise WorkflowError("not_permitted")
+        try:
+            snapshot = self._store.read()
+            settled = tuple(_settled(self._store, h.module_id) for h in snapshot.heads)
+            if self._phase != "analytical":  # no module is active: the last binding is history
+                return OwnerState(
+                    phase=self._phase,
+                    plan=self._plan,
+                    snapshot_sha256=snapshot.content_hash(),
+                    module_id=None,
+                    step_id=None,
+                    ticket_id=None,
+                    attempt=None,
+                    inputs_required=False,
+                    inputs_read=False,
+                    invokes_used=0,
+                    reads_used=0,
+                    submits_used=0,
+                    settled=settled,
+                    refusals=tuple(self._refusals),
+                )
+            binding = self._binding
+
+            def used(name: str) -> int:
+                return self._limits[(binding.ticket_id, binding.step_id, name)]
+
+            return OwnerState(
+                phase=self._phase,
+                plan=self._plan,
+                snapshot_sha256=snapshot.content_hash(),
+                module_id=binding.module_id,
+                step_id=binding.step_id,
+                ticket_id=binding.ticket_id,
+                attempt=binding.attempt,
+                inputs_required=self._spec.inputs != "none",
+                inputs_read=any(r.binding == binding for r in self._reads),
+                invokes_used=used("invoke"),
+                reads_used=used("read_inputs"),
+                submits_used=used("submit_review"),
+                settled=settled,
+                refusals=tuple(self._refusals),
+            )
+        finally:
+            self._operation.release()
 
     @property
     def _refused(self) -> bool:

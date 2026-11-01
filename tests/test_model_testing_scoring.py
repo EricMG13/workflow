@@ -620,3 +620,45 @@ def test_unknown_head_status_is_refused() -> None:
     mapping = _mapping(case, [_entry(IHRT_BILLIONS, "CP-2")])
     with pytest.raises(ValueError, match="head_status"):
         _score(None, case, mapping, head="bogus")
+
+
+# ---- fix round 2 ----------------------------------------------------------------------
+
+NATL_SHARE = "CP-2.debt_stack.revolving_credit_facility.drawn_share_of_commitment.2025-09-30"
+IHRT_DATE_CONFLICT = "CP-4.exchange_dates.Exchange.press_release_date"
+
+
+def test_unitless_decimal_golden_accepts_fraction_units_raw() -> None:
+    # N1: golden 0.375 (decimal, unit None); no x100 outside value_type percent
+    for unit in ("decimal_fraction", "PERCENT"):
+        ok, _, _ = _one(NATL_SHARE, NATL, amount=Decimal("0.375"), unit=unit)
+        assert ok.facts[0].outcome == "match", unit
+        assert ok.facts[0].observed == "0.375"
+    bad, _, _ = _one(NATL_SHARE, NATL, amount=Decimal("0.38"), unit="decimal_fraction")
+    assert bad.facts[0].outcome == "mismatch"
+
+
+def test_evidenced_date_text_is_conflict_ok() -> None:
+    # N2: "On the Settlement Date" is one of the printed values of the IHRT conflict
+    case = _case(IHRT, IHRT_DATE_CONFLICT)
+    entry = _entry(IHRT_DATE_CONFLICT, "CP-4")
+    mapping = _mapping(case, [entry], modules=("CP-4",))
+    module = _module([_fact(entry, text="on the  settlement date", limitation="two dates")], "CP-4")
+    assert _score(module, case, mapping, module_id="CP-4").facts[0].outcome == "conflict_ok"
+    other = _module([_fact(entry, text="some other day", limitation="two dates")], "CP-4")
+    assert _score(other, case, mapping, module_id="CP-4").facts[0].outcome == "mismatch"
+
+
+def test_scale_word_must_follow_the_number() -> None:
+    from deploy_workflow.model_testing import scoring
+
+    assert scoring._printed_number("$175,000,000 of the $1 billion facility") == Decimal(175000000)
+    assert scoring._printed_number("$175 million") == Decimal(175000000)
+    assert scoring._printed_number("$2.5Billion") == Decimal(2500000000)
+
+
+def test_pp_is_a_point_unit() -> None:
+    ok, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.2"), unit="pp")
+    assert ok.facts[0].outcome == "match"
+    frac, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.922"), unit="pp")
+    assert frac.facts[0].outcome == "mismatch"

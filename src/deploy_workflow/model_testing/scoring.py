@@ -35,11 +35,11 @@ _PERCENT_TYPES = ("percent", "bps")
 # Fact.unit semantics (display.py "percent takes a decimal fraction"; cp5_integrity.UNIT_SCALE):
 # fractions hold 0.922 for 92.2 percent; decimal_percent holds points; basis_points holds bps.
 _FRACTION_UNITS = frozenset({"PERCENT", "decimal_fraction"})
-_POINT_UNITS = frozenset({"decimal_percent"})
+_POINT_UNITS = frozenset({"decimal_percent", "pp"})
 _BPS_UNITS = frozenset({"basis_points"})
 _RATIO_UNITS = _FRACTION_UNITS | _POINT_UNITS | _BPS_UNITS
 _PRINTED_NUMBER = re.compile(r"\d[\d,]*(\.\d+)?")
-_SCALE_WORDS = re.compile(r"\b(thousand|million|billion)s?\b", re.IGNORECASE)
+_SCALE_WORD = re.compile(r"\s*(thousand|million|billion)s?\b", re.IGNORECASE)
 _SCALE_WORD_EXP = {"thousand": 3, "million": 6, "billion": 9}
 _DATE_FORMATS = ("%Y-%m-%d", "%B %d, %Y", "%b %d, %Y", "%d %B %Y", "%d %b %Y")
 
@@ -106,6 +106,8 @@ def _unit_problem(fact: Fact, golden: Any) -> str | None:
         ok = unit in _FRACTION_UNITS | _POINT_UNITS
     elif vtype == "bps":
         ok = unit in _BPS_UNITS
+    elif golden.get("unit") is None and vtype == "decimal":
+        ok = unit not in _POINT_UNITS | _BPS_UNITS  # a unitless ratio may be a fraction unit
     else:
         ok = unit not in _RATIO_UNITS
     if not ok:
@@ -118,7 +120,7 @@ def _module_units(fact: Fact, golden: Any) -> Decimal | None:
     if fact.amount is None:
         return None
     value = _CTX.multiply(fact.amount, fact.scale)
-    if fact.unit in _FRACTION_UNITS:
+    if fact.unit in _FRACTION_UNITS and golden["value_type"] == "percent":
         value = _CTX.multiply(value, Decimal(100))
     return value
 
@@ -192,7 +194,7 @@ def _printed_number(printed: str) -> Decimal | None:
     stripped = printed.strip()
     if (stripped.startswith("(") and stripped.endswith(")")) or stripped.startswith("-"):
         value = -value
-    word = _SCALE_WORDS.search(printed)
+    word = _SCALE_WORD.match(printed, match.end())
     if word is not None:
         value = value.scaleb(_SCALE_WORD_EXP[word.group(1).lower()], _CTX)
     return value
@@ -205,6 +207,8 @@ def _printed_matches(printed: str, fact: Fact, golden: Any) -> bool:
     if vtype == "date":
         if fact.text is None:
             return False
+        if _text(fact.text) == _text(printed):
+            return True
         want = _parse_date(printed)
         return want is not None and _parse_date(fact.text) == want
     if vtype not in checker().NUMERIC_TYPES:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -111,7 +112,7 @@ def test_undeclared_invalid_utf8_refused() -> None:
 
 def test_other_declared_charset_refused() -> None:
     with pytest.raises(UndecodableHtml):
-        convert_html(b'<meta charset="shift_jis"><p>x\xe9</p>')
+        convert_html(b'<meta charset="shift_jis"><p>\x82\xa0</p>')
 
 
 def test_unknown_charset_name_refused() -> None:
@@ -217,3 +218,32 @@ def test_corpus_goldens_decode_and_recorded_misses() -> None:
 
 def test_div_is_a_space_not_a_line_break() -> None:
     assert _text("<div>A</div><div>B</div>") == "A B\n"
+
+
+def test_void_tag_is_not_pushed_so_it_cannot_hide_text() -> None:
+    assert _text('<p>a<img style="display:none">b</p>') == "ab\n"
+
+
+def test_self_closing_br_breaks_a_line() -> None:
+    assert _text("a<br/>b") == "a\nb\n"
+
+
+def test_text_after_a_closed_paragraph_is_its_own_line() -> None:
+    assert _text("<p>A</p>B") == "A\nB\n"
+
+
+def test_charset_sniff_stops_at_4096_bytes() -> None:
+    inside = b"<!--" + b"x" * 4000 + b'--><meta charset="windows-1252"><p>caf\xe9</p>'
+    assert len(inside.split(b"<meta")[0]) < 4096
+    assert convert_html(inside).encoding == "windows-1252"
+    outside = b"<!--" + b"x" * 4100 + b'--><meta charset="windows-1252"><p>caf\xe9</p>'
+    with pytest.raises(UndecodableHtml):
+        convert_html(outside)
+
+
+def test_many_unclosed_paragraphs_convert_in_linear_time() -> None:
+    raw = b"<p>Revenue <b>1,234</b> rose" * 20000
+    started = time.monotonic()
+    converted = convert_html(raw)
+    assert time.monotonic() - started < 2.0
+    assert converted.line_count == 20000

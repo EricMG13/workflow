@@ -18,6 +18,7 @@ from __future__ import annotations
 import codecs
 import html.parser
 import re
+from collections import Counter
 from dataclasses import dataclass
 
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "wbr"}
@@ -97,6 +98,7 @@ class _Lines(html.parser.HTMLParser):
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
         self.stack: list[tuple[str, bool]] = []
+        self.open_names: Counter[str] = Counter()  # open tag name -> count, keeps end tags linear
         self.skipping = 0
 
     def _break(self, tag: str) -> None:
@@ -113,6 +115,7 @@ class _Lines(html.parser.HTMLParser):
             return
         hidden = tag in SKIP or any(k == "style" and HIDDEN.search(v or "") for k, v in attrs)
         self.stack.append((tag, hidden))
+        self.open_names[tag] += 1
         self.skipping += hidden
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -122,18 +125,19 @@ class _Lines(html.parser.HTMLParser):
         self._break(tag)
         if tag in VOID:
             return
-        names = [t for t, _ in self.stack]
-        if tag not in names:
+        if not self.open_names[tag]:
             return
-        keep = len(names) - 1 - names[::-1].index(tag)
-        while len(self.stack) > keep:
-            _, hidden = self.stack.pop()
+        while True:
+            name, hidden = self.stack.pop()
+            self.open_names[name] -= 1
             self.skipping -= hidden
+            if name == tag:
+                return
 
     def handle_data(self, data: str) -> None:
         if not self.skipping:
             # Newlines inside text are plain whitespace, never a line break.
-            self.parts.append(re.sub(r"\s+", " ", data.translate(_ZERO_WIDTH)))
+            self.parts.append(re.sub(r"\s+", " ", data))
 
 
 def _decode(raw: bytes) -> tuple[str, str]:

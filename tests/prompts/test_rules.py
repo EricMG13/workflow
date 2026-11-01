@@ -32,11 +32,11 @@ NEW = tuple(s for s in STEPS if s not in EXISTING)
 
 # Issue sites and oracle ids that no rule covers yet, with the task that covers each. The test
 # fails for a step if a site listed here is already covered, so this list only shrinks.
-CP3_T4 = "Phase 3 T4 regenerates the 12 lists from STEP_CONTRACTS (its context rule, 072e0590)"
+CP3_CONTEXT_READER = "CP-3 context-reader sites, UNREADABLE or PENDING (owner list)"
 PENDING: dict[str, dict[str, str]] = {
     "relative_value": {
         **{
-            f"fn:deploy_vii.cp3_relative_value:{name}": CP3_T4
+            f"fn:deploy_vii.cp3_relative_value:{name}": CP3_CONTEXT_READER
             for name in (
                 "_array_rows",
                 "_row_problems",

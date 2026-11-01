@@ -1951,7 +1951,7 @@
       "project_commit": "f4e1028ac6211358f1d07f86d5bfe56ef6a28829",
       "sha256": "b9b846432b65db8112b7bc0ba078445b5447b658c4beb00cf7994fcfffaf2c6c",
       "reason": "B17 item 3 (docs/rulings, user-approved), Phase 3 Task 4: wording-only reword of CP3_EVIDENCE_RULE in the relative_value contract: a basis refers to Python's context rows by id (basis.context_rows) and never copies their figures; basis.quotes still repeats a market_evidence row's quote, for third_party rows only. No other contract text changes.",
-      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (task-4-addendum.md P3T4-R1, task-4a-report.md)"
+      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (task-4-addendum.md P3T4-R1, task-4a-report.md); mx-adversary ac7b8cfa (Phase 3 Task 4 Part A)"
     }
   ],
   "local_patch_lineage": [

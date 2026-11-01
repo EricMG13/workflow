@@ -47,8 +47,11 @@ SKIP = {
     ("run", "case_kind"),
 }
 # The context sections whose Python-built rows sit in a step's `context-evidence` block (Phase 3
-# Task 4): CP-3D offers the context's quotes; CP-3 offers quotes and deal talk.
-EVIDENCE_SECTIONS = {"market_implied": ("quotes",), "relative_value": ("quotes", "deal_terms")}
+# Task 4): CP-3D offers the context's quotes. CP-3's block holds only the rows its module context
+# carries (Python's, a fixed marker here): no context leaf is allowed in it, so a block built from
+# the run context's own quotes is a leak (fix 1, F1).
+EVIDENCE_SECTIONS = {"market_implied": ("quotes",)}
+RV_ROWS = [{"row": "c01", "kind": "bid", "figures": {"price": "RVROW-MARK"}}]
 Path_ = tuple[Any, ...]
 BLOCK = re.compile(r"<<<([A-Z_]+) id=([^\s>]+)[^>]*>>>")
 
@@ -170,8 +173,18 @@ def outside(user: str, pat: re.Pattern[str], leaf: Path_, step: str) -> int:
     return count
 
 
-def messages(step: str, pack: PreparedPack, ctx: RunContext | None) -> tuple[str, str]:
-    mc = CP3_MODULE_CONTEXT if step == "relative_value" else None
+def messages(
+    step: str, pack: PreparedPack, ctx: RunContext | None, rows: bool = True
+) -> tuple[str, str]:
+    """``rows`` gives relative_value Python's evidence rows (a fixed marker); without them its
+    module context has no ``context_market_evidence`` and no block may be built."""
+    mc = None
+    if step == "relative_value":
+        mc = (
+            {**CP3_MODULE_CONTEXT, "context_market_evidence": RV_ROWS}
+            if rows
+            else CP3_MODULE_CONTEXT
+        )
     system, user = compose(request_for(step, pack, context=ctx, module_context=mc))[:2]
     return system.text, user.text
 
@@ -181,6 +194,7 @@ class Trace:
         self.leaks: list[str] = []
         self.files = 0
         self.rows_blocks = 0
+        self.rv_blocks = 0
 
 
 def trace_file(
@@ -191,15 +205,31 @@ def trace_file(
     ctxs = [context_facts(p) for p in packs]
     out.files += 1
     for step in steps:
-        sys0, user0 = messages(step, packs[0], ctxs[0])
-        sys1, user1 = messages(step, packs[1], ctxs[1])
-        out.rows_blocks += "context-evidence" in user1
-        if sys0 != sys1:
-            out.leaks.append(f"{path.name} {step}: the system message differs with the context")
-        for value, leaf in kept.items():
-            pat = re.compile(rf"(?<![\w.]){re.escape(value)}(?![\w])")
-            if outside(user1, pat, leaf, step) > outside(user0, pat, leaf, step):
-                out.leaks.append(f"{path.name} {step}: {leaf} {value!r} outside the allowance")
+        for rows in (True, False) if step == "relative_value" else (True,):
+            trace_step(step, packs, ctxs, kept, path, out, rows)
+
+
+def trace_step(
+    step: str,
+    packs: list[PreparedPack],
+    ctxs: list[RunContext | None],
+    kept: dict[str, Path_],
+    path: Path,
+    out: Trace,
+    rows: bool,
+) -> None:
+    sys0, user0 = messages(step, packs[0], ctxs[0], rows)
+    sys1, user1 = messages(step, packs[1], ctxs[1], rows)
+    out.rows_blocks += "context-evidence" in user1
+    out.rv_blocks += step == "relative_value" and rows and "context-evidence" in user1
+    if step == "relative_value" and not rows and "context-evidence" in user1:
+        out.leaks.append(f"{path.name} {step}: a context-evidence block without Python's rows")
+    if sys0 != sys1:
+        out.leaks.append(f"{path.name} {step}: the system message differs with the context")
+    for value, leaf in kept.items():
+        pat = re.compile(rf"(?<![\w.]){re.escape(value)}(?![\w])")
+        if outside(user1, pat, leaf, step) > outside(user0, pat, leaf, step):
+            out.leaks.append(f"{path.name} {step}: {leaf} {value!r} outside the allowance")
 
 
 def run_trace(base: PreparedPack, files: list[tuple[Path, Any]], steps: tuple[str, ...]) -> Trace:
@@ -224,6 +254,7 @@ def test_no_context_value_reaches_the_system_message_or_a_step_outside_the_allow
     out = run_trace(pack, files, tuple(inventory()))
     assert out.files >= 60, "the real context files were not found"
     assert out.rows_blocks > 0, "no market_implied composition built the context-evidence block"
+    assert out.rv_blocks > 0, "no relative_value composition built the context-evidence block"
     assert out.leaks == []
 
 

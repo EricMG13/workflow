@@ -116,7 +116,7 @@ O6_PINS = (
 
 # Phase 6 enables a module here when the owner's pin check for it lands; empty until then, so
 # no pin reaches a prompt that the owner would not yet check (H4).
-PINS_ENABLED: frozenset[str] = frozenset({"CP-2A", "CP-2D", "CP-2E"})
+PINS_ENABLED: frozenset[str] = frozenset({"CP-2A", "CP-2D", "CP-2E", "CP-3C"})
 PINS_ID = "pinned-assumptions"
 REPAIR_ID = "prior-validation-issues"
 ROWS_ID = "context-rows"

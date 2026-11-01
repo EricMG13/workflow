@@ -298,6 +298,10 @@ def test_cp2e_is_enabled_and_pinned(pack: PreparedPack) -> None:
     enabled_and_pinned_by_default("CP-2E", pack)
 
 
+def test_cp3c_is_enabled_and_pinned(pack: PreparedPack) -> None:
+    enabled_and_pinned_by_default("CP-3C", pack)
+
+
 # ------------------------------------------------------------------------------ the guard
 
 Runner = Callable[[Path, pytest.MonkeyPatch], list[str]]
@@ -343,7 +347,7 @@ OWNER_DIFFERS: dict[str, Runner] = {
 
 
 def enabled_without_a_pin_check(
-    enabled: Iterable[str], owners: Mapping[str, Runner], tmp: Path, mp: pytest.MonkeyPatch
+    enabled: Iterable[str], owners: Mapping[str, Runner], tmp: Path
 ) -> list[str]:
     """The enabled module ids whose owner's entry validator, run on the oracle's `differs` case,
     emits no `assumptions.<module>.` line: a prompt would invite a pin the owner does not check."""
@@ -352,21 +356,20 @@ def enabled_without_a_pin_check(
         prefix = f"assumptions.{module.lower().replace('-', '')}."
         runner = owners.get(module)
         (tmp / module).mkdir()
-        lines = [] if runner is None else runner(tmp / module, mp)
+        lines: list[str] = []
+        if runner is not None:
+            with pytest.MonkeyPatch.context() as isolated:  # each harness patches shared modules
+                lines = runner(tmp / module, isolated)
         if not any(line.startswith(prefix) for line in lines):
             unchecked.append(module)
     return unchecked
 
 
-def test_enabled_modules_check_their_pin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    assert not enabled_without_a_pin_check(
-        compose_module.PINS_ENABLED, OWNER_DIFFERS, tmp_path, monkeypatch
-    )
+def test_enabled_modules_check_their_pin(tmp_path: Path) -> None:
+    assert not enabled_without_a_pin_check(compose_module.PINS_ENABLED, OWNER_DIFFERS, tmp_path)
 
 
-def test_a_stub_owner_that_emits_no_pin_line_fails_the_guard(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_a_stub_owner_that_emits_no_pin_line_fails_the_guard(tmp_path: Path) -> None:
     stub: dict[str, Runner] = {"CP-9Z": lambda _t, _m: ["some other issue"]}
-    assert enabled_without_a_pin_check(["CP-9Z"], stub, tmp_path, monkeypatch) == ["CP-9Z"]
-    assert enabled_without_a_pin_check(["CP-9Y"], stub, tmp_path, monkeypatch) == ["CP-9Y"]
+    assert enabled_without_a_pin_check(["CP-9Z"], stub, tmp_path) == ["CP-9Z"]
+    assert enabled_without_a_pin_check(["CP-9Y"], stub, tmp_path) == ["CP-9Y"]

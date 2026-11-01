@@ -716,9 +716,10 @@ def build_expected_runs():
             rec["period_basis"] = None
             rec["currency_basis"] = {"currency": "USD", "money_unit": "US$ m"}
             mods["CP-2A"] = module_entry("CP-2A", "USD", {"offering": "unchanged: period-agnostic; a q3 base is not a refusal for a currency-only module (M3)"})
-            pending = "NEEDS_CONTEXT: the brief says this module settles on a q3-2026 base, but see report"
-            mods["CP-1B"] = {"outcome": "PENDING_RULING", "pending": pending + " (earnings.py:316-318 refuses prior q2-2026 (91 days) with current q3-2026 (92 days) as incompatible_periods; the refusal would not be a PeriodRefused)"}
-            mods["CP-L10"] = {"outcome": "PENDING_RULING", "pending": pending + " (Phase 2 plan :114 states a q3 current period leaves CP-L10 an unbound CP-1 operand: the quarter before Q1 2026 is not in the pack)"}
+            mods["CP-1B"] = {"outcome": "refused", "layer": "build_earnings_delta", "error": "incompatible_periods", "issue_contains": "incompatible_periods", "figures_produced": False, "is_period_refused": False, "ruling": "controller: freeze today's refusal; earnings.py:316-318 compares period lengths in raw days (prior q2-2026 = 91, current q3-2026 = 92); a pre-existing defect reported to the owner; if the owner fixes it this case is re-cut"}
+            quarters = ["q4-2025", "q1-2026", "q2-2026", "q3-2026"]
+            assert "q4-2025" not in {f"q{n}-2026" for n in range(1, 5)} and quarters[0] == "q4-2025"
+            mods["CP-L10"] = {"outcome": "refused", "layer": "offering", "issue_contains": "unbound CP-1 operand: q4-2025 (no CP-1 T4.14 period)", "missing_quarter_id": "q4-2025", "quarters_needed": quarters, "figures_produced": False, "is_period_refused": False, "ruling": "controller: Phase 2 plan :114 (q3-2025 current -> q4-2024 missing) shifted one year; the shifted pack holds T4.14 periods q1-2026..q4-2026 only"}
         mods_clean = mods
         rec["modules"] = mods_clean
         rec["stale_period_literals_forbidden_in_emitted_period_strings"] = STALE["period_literals"] if rid in ("R1", "R2", "R3", "R6") else []

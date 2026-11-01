@@ -552,12 +552,28 @@
           "offering": "unchanged: period-agnostic; a q3 base is not a refusal for a currency-only module (M3)"
         },
         "CP-1B": {
-          "outcome": "PENDING_RULING",
-          "pending": "NEEDS_CONTEXT: the brief says this module settles on a q3-2026 base, but see report (earnings.py:316-318 refuses prior q2-2026 (91 days) with current q3-2026 (92 days) as incompatible_periods; the refusal would not be a PeriodRefused)"
+          "outcome": "refused",
+          "layer": "build_earnings_delta",
+          "error": "incompatible_periods",
+          "issue_contains": "incompatible_periods",
+          "figures_produced": false,
+          "is_period_refused": false,
+          "ruling": "controller: freeze today's refusal; earnings.py:316-318 compares period lengths in raw days (prior q2-2026 = 91, current q3-2026 = 92); a pre-existing defect reported to the owner; if the owner fixes it this case is re-cut"
         },
         "CP-L10": {
-          "outcome": "PENDING_RULING",
-          "pending": "NEEDS_CONTEXT: the brief says this module settles on a q3-2026 base, but see report (Phase 2 plan :114 states a q3 current period leaves CP-L10 an unbound CP-1 operand: the quarter before Q1 2026 is not in the pack)"
+          "outcome": "refused",
+          "layer": "offering",
+          "issue_contains": "unbound CP-1 operand: q4-2025 (no CP-1 T4.14 period)",
+          "missing_quarter_id": "q4-2025",
+          "quarters_needed": [
+            "q4-2025",
+            "q1-2026",
+            "q2-2026",
+            "q3-2026"
+          ],
+          "figures_produced": false,
+          "is_period_refused": false,
+          "ruling": "controller: Phase 2 plan :114 (q3-2025 current -> q4-2024 missing) shifted one year; the shifted pack holds T4.14 periods q1-2026..q4-2026 only"
         }
       },
       "stale_period_literals_forbidden_in_emitted_period_strings": []

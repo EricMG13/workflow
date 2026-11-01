@@ -76,4 +76,10 @@ jobs:
             exit 0
           fi
           # shellcheck disable=SC2086
-          uv run --frozen pytest $files -m "not live" --durations=25
+          rc=0
+          uv run --frozen pytest $files -m "not live" --durations=25 || rc=$?
+          if [ "$rc" -eq 5 ]; then
+            echo "all selected tests deselected by -m 'not live'"
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi

@@ -7,22 +7,31 @@ Run from the repository root. Prints the selected test files (tests/**/test_*.py
 repository-relative path per line, sorted; empty output means none. A summary (changed path ->
 number of tests it selects) goes to stderr. A git failure or an unparsable .py file exits 2.
 
-Changed paths come from `git diff --name-only --no-renames BASE...HEAD`. Selection:
-- every test when pyproject.toml, uv.lock, .python-version, a conftest.py, anything under
-  .github/, this script, or a path no rule below covers (outside docs/, work/, .claude/, *.md)
-  changes;
-- a changed .py under src/, tests/ or cases/ selects the tests that reach it through the import
-  graph (all ast nodes; importlib.import_module with a literal counts) and itself if a test;
-- a changed non-.py file under src/<dir>/ counts as a change to every .py under that dir;
-- a changed non-.py file under cases/<name>/, tests/fixtures/<name>/ or directly under tests/
-  selects, through the graph, every .py under tests/ or cases/ whose source contains <name>
-  (the file name for a file directly under tests/).
+Changed paths come from `git diff --name-only --no-renames -z BASE...HEAD` (NUL-split, decoded
+utf-8 with surrogateescape). P is a changed path, B its basename, A(P) its directory names
+except the first component, L(F) the string literals of a .py file F under src/, tests/ or
+cases/.
+- ALL (every test): pyproject.toml, uv.lock, .python-version, any conftest.py, anything under
+  .github/, or this script.
+- Seeds(P), for every other P whatever its type:
+  1. P is .py under src/, tests/ or cases/: P itself, plus every F with a literal equal to a
+     module name of P (dotted name; bare stem for files under tests/).
+  2. Every F with a literal containing P, or a literal containing B together with a literal
+     (same F) containing a name in A(P).
+  3. P non-.py under src/<dir>/...: every .py directly in P's directory.
+  4. Seeds still empty and P non-.py: every F with a literal containing a name in A(P).
+  5. Seeds still empty: nothing when P is under docs/, work/, .claude/ or ends in .md; else ALL.
+- Tests are the test files reached from the seeds through the reverse import graph (ast, all
+  nodes; importlib.import_module with a literal counts); a seed that is a test counts.
+The graph and the literals are read from the working tree, which must be HEAD.
 HEAVY files are printed only by --tier heavy; every other selected test only by --tier fast.
 """
 
 import argparse
 import ast
 import fnmatch
+import functools
+import io
 import pathlib
 import subprocess
 import sys
@@ -37,6 +46,7 @@ HEAVY = (
 ALL_NAMES = ("pyproject.toml", "uv.lock", ".python-version")
 IGNORED_PREFIXES = ("docs/", "work/", ".claude/")
 PY_ROOTS = ("src/", "tests/", "cases/")
+SELF = "cases/prove/affected_tests.py"
 
 
 class GitError(Exception):
@@ -45,14 +55,13 @@ class GitError(Exception):
 
 def git(root: pathlib.Path, *args: str) -> str:
     try:
-        done = subprocess.run(
-            ["git", *args], cwd=root, capture_output=True, text=True, check=False
-        )
+        done = subprocess.run(["git", *args], cwd=root, capture_output=True, check=False)
     except OSError as exc:
         raise GitError(f"git {' '.join(args)}: {exc}") from exc
     if done.returncode != 0:
-        raise GitError(f"git {' '.join(args)}: {done.stderr.strip()}")
-    return done.stdout
+        stderr = done.stderr.decode("utf-8", "surrogateescape").strip()
+        raise GitError(f"git {' '.join(args)}: {stderr}")
+    return done.stdout.decode("utf-8", "surrogateescape")
 
 
 def module_names(path: str) -> set[str]:
@@ -109,9 +118,9 @@ def imports_of(path: str, source: str) -> set[str]:
             func = node.func
             name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
             arg = node.args[0]
-            if name == "import_module" and isinstance(arg, ast.Constant):
-                if isinstance(arg.value, str) and arg.value:
-                    found |= prefixes(arg.value)
+            target = arg.value if isinstance(arg, ast.Constant) else None
+            if name == "import_module" and isinstance(target, str) and target:
+                found |= prefixes(target)
     if path.startswith("tests/"):
         found |= {"bare:" + n for n in found if "." not in n}
     return found
@@ -139,6 +148,39 @@ def reach(seeds: set[str], names: dict[str, set[str]], deps: dict[str, set[str]]
     return seen
 
 
+@functools.cache
+def literals(source: str) -> tuple[str, ...]:
+    """String constants of a module, including the constant parts of f-strings."""
+    tree = ast.parse(source)
+    return tuple(
+        n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+    )
+
+
+def seeds_for(path: str, py_files: dict[str, str]) -> set[str]:
+    """Files a changed path can affect directly: rules 1-4 of the module docstring."""
+    base = path.rsplit("/", 1)[-1]
+    dirs = [d for d in path.split("/")[1:-1] if d]
+    lits = {f: literals(src) for f, src in py_files.items()}
+    seeds: set[str] = set()
+    is_py = path.endswith(".py")
+    if is_py and path.startswith(PY_ROOTS):
+        mods = {n.removeprefix("bare:") for n in module_names(path)}
+        seeds.add(path)
+        seeds |= {f for f, ls in lits.items() if mods.intersection(ls)}
+    for f, ls in lits.items():
+        if any(path in lit for lit in ls):
+            seeds.add(f)
+        elif any(base in lit for lit in ls) and any(d in lit for lit in ls for d in dirs):
+            seeds.add(f)
+    if not is_py and path.startswith("src/") and path.count("/") >= 2:
+        parent = path.rsplit("/", 1)[0]
+        seeds |= {f for f in py_files if f.rsplit("/", 1)[0] == parent}
+    if not seeds and not is_py:
+        seeds |= {f for f, ls in lits.items() if any(d in lit for lit in ls for d in dirs)}
+    return seeds
+
+
 def selection_for(
     path: str,
     py_files: dict[str, str],
@@ -147,30 +189,16 @@ def selection_for(
 ) -> set[str]:
     """Tests selected by one changed path; every test when no rule covers it."""
     tests = select_all(list(py_files))
-    base = path.rsplit("/", 1)[-1]
-    if path in ALL_NAMES or base == "conftest.py" or path.startswith(".github/"):
+    if (
+        path in ALL_NAMES
+        or path.rsplit("/", 1)[-1] == "conftest.py"
+        or path.startswith(".github/")
+        or path == SELF
+    ):
         return tests
-    if path == "cases/prove/affected_tests.py":
-        return tests
-    if path.startswith(IGNORED_PREFIXES) or path.endswith(".md"):
-        return set()
-    if path.endswith(".py") and path.startswith(PY_ROOTS):
-        return {t for t in reach({path}, names, deps) if t in tests}
-    parts = path.split("/")
-    if parts[0] == "src" and len(parts) > 2:
-        prefix = "/".join(parts[:2]) + "/"
-        seeds = {p for p in py_files if p.startswith(prefix)}
-        return {t for t in reach(seeds, names, deps) if t in tests}
-    needle = ""
-    if parts[0] == "cases" and len(parts) > 2:
-        needle = parts[1]
-    elif parts[:2] == ["tests", "fixtures"] and len(parts) > 3:
-        needle = parts[2]
-    elif parts[0] == "tests" and len(parts) == 2:
-        needle = parts[1]
-    if not needle:
-        return tests
-    seeds = {p for p, src in py_files.items() if needle in src}
+    seeds = seeds_for(path, py_files)
+    if not seeds:
+        return set() if path.startswith(IGNORED_PREFIXES) or path.endswith(".md") else tests
     return {t for t in reach(seeds, names, deps) if t in tests}
 
 
@@ -180,6 +208,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("base")
     parser.add_argument("head")
     args = parser.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(errors="surrogateescape")
     try:
         root = pathlib.Path(git(pathlib.Path.cwd(), "rev-parse", "--show-toplevel").strip())
         diff = git(root, "diff", "--name-only", "--no-renames", "-z", f"{args.base}...{args.head}")

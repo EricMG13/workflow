@@ -79,7 +79,7 @@ from deploy_workflow.owners.period_basis import (
     DEFAULT_BASIS,
     PeriodBasis,
     PeriodRefused,
-    period_basis,
+    run_basis,
 )
 
 MODULE_ID = "CP-1D"
@@ -2144,7 +2144,7 @@ def _inputs(
     """The one store adapter: the settled heads and the pack as the Stage 1 input object. Used by
     `submit` (through the validator), `probe` and `view`. Raises ValueError when the CP-1 head
     does not hold the seven operands."""
-    basis = period_basis(context_facts(pack), upstream.cp1.facts)
+    basis = run_basis(context_facts(pack), upstream.cp1.facts)
     operands, facts = _cp1_operands(upstream.cp1, basis)
     return (
         EarningsQualityInputs(
@@ -2344,7 +2344,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     own limitations (`inherited_limitations(..., (), ...)`), so settlement's list can be shorter by
     any line that repeats one of CP-1D's own limitations. No quote or citation text is in it."""
     source = next((s for s in pack.sources if s.source_id == BRIDGE_SOURCE_ID), None)
-    basis = period_basis(context_facts(pack), upstream.cp1.facts)
+    basis = run_basis(context_facts(pack), upstream.cp1.facts)
     bridge = (
         parse_bridge(_pages(source), basis.bridge_basis_line)
         if source is not None and source.status == "ready"

@@ -169,8 +169,8 @@ def _t410(period: str, column: str, scale: int = 0) -> list[Fact]:
                 row_id=metric,
                 field="value",
                 amount=Decimal(10 + number + scale),
-                unit="MILLIONS",
-                currency="EUR",
+                unit="MULTIPLE" if "leverage" in metric else "MILLIONS",
+                currency=None if "leverage" in metric else "EUR",
                 period=period,
                 value_class="calculated",
             )
@@ -304,3 +304,22 @@ def test_eur_run_composes_through_the_validator_with_the_oracle_claims() -> None
         if "{{FIG" not in text_want:
             assert got[claim_id] == text_want
     assert {f.period for f in report.facts if f.unit == "MILLIONS"} == {KEY["ltm_period"]}
+
+
+def test_blank_base_context_follows_run_basis_ruling_p8_r3() -> None:
+    usd = json.loads(json.dumps(R3))
+    usd["run"].update(
+        run_type="research", current_period="", prior_period="", reporting_currency="USD"
+    )
+    request = SourceRequest(source_id="context", path="context.json", media_type="text/plain")
+    pack = PreparedPack(
+        run=_eur_pack().run,
+        sources=(*_eur_sources(), prepare_source(request, json.dumps(usd).encode("utf-8"))),
+    )
+    inputs, _ = cp1d._inputs(pack, _eur_inputs(_eur_basis()).submission, _eur_upstream_2025())
+    assert inputs.basis == DEFAULT_BASIS
+
+
+def _eur_upstream_2025() -> cp1d.Upstream:
+    head = _head(_t410(DEFAULT_BASIS.ltm_period, DEFAULT_BASIS.ltm_column))
+    return cp1d.Upstream(bound=(), current=(), cp0=head, cp1=head, cp1b=None, inherited=())

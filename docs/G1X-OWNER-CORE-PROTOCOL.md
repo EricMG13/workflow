@@ -11,7 +11,7 @@ Sources: review-precise-1 of CP-2A and CP-2D, review-precise-2 of CP-4
 - **Live-contract modules** (`registry.step_chain(m)` succeeds; today CP-4 `legal_covenants`,
   CP-3 `relative_value`, CP-6 `committee_challenge`): `entry="model_payload"` as now; the core
   supplies only the items of §2 marked *all*.
-- **Owner-only modules** (`step_chain` raises "has no live step contract"; CP-2A, CP-2D):
+- **Owner-only modules** (no registered `step_chain`, which raises "has no live step contract", or one whose `shared_live` is false; CP-2A, CP-2D, CP-1B). `owner_workflow._owner_only` applies this rule. Note: `host._owner_sequence` (host.py:791-796) still applies the old rule (`step_chain` raises); CP-1B never reaches it because it has no sources:
   `entry="owner_core"`; the core supplies every item of §2. No `src/deploy_vii` registry edit.
 
 ## 2. Core module attributes (positional signatures, matching G1's call sites)

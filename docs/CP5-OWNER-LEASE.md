@@ -18,7 +18,7 @@ LEAD rebuilt cp3-cp6, cp5 and cp8 with `python3 -I`, and every output was byte-i
 
 The `docs/TOOL-CONTRACT.md` row for CP-5 `integrity_review` now reads `TOOL_CONTRACT_ROW.amended_to`.
 
-CP-5 runs only inside the CP-6 run (R6), and that run has no CP-MODEL. CP-5's consumption of CP-MODEL (DC-5) stays open on the CP-MODEL row, under G1-X §5. MODULES.csv moves the CP-5 row only after the R6 run.
+CP-5 runs only inside the CP-6 run (R6), and that run has no CP-MODEL. CP-5's consumption of CP-MODEL (DC-5) is closed by ruling B1 (no such edge: `registry.py` `_NOT_CP5_FAN_IN` includes CP-MODEL). MODULES.csv moves the CP-5 row only after the R6 run.
 
 Not verified: no pytest and no end-to-end R6 run. The view body was never built on a CP-3 head. The F2 refs were checked on the S1 positive heads.
 
@@ -56,7 +56,7 @@ Seams cite `docs/G1X-OWNER-CORE-PROTOCOL.md`; this lease adds none.
 
 ## Rulings applied (LEAD, 2026-10-28)
 
-1. **CP-MODEL: option (a).** R6 of `cases/cp3-cp6-owner` no longer requests CP-MODEL (`requested_modules`, `plan_order`, `cp1a_consumers`, the CP-0 `plan_order`, the R6 CP-1A consumer rows). `registry.plan` gives CP-0, CP-1, CP-1A, CP-2, CP-3, CP-5, CP-6. The cp5 builder asserts its run equals that R6. CP-5's consumption of CP-MODEL (DC-5) is not proved here; it stays open on the CP-MODEL row (G1-X section 5). No `--with-model` variant remains.
+1. **CP-MODEL: option (a).** R6 of `cases/cp3-cp6-owner` no longer requests CP-MODEL (`requested_modules`, `plan_order`, `cp1a_consumers`, the CP-0 `plan_order`, the R6 CP-1A consumer rows). `registry.plan` gives CP-0, CP-1, CP-1A, CP-2, CP-3, CP-5, CP-6. The cp5 builder asserts its run equals that R6. CP-5's consumption of CP-MODEL (DC-5) is closed by ruling B1 (no such edge; `registry.py` `_NOT_CP5_FAN_IN` includes CP-MODEL). No `--with-model` variant remains.
 2. **Owner view accepted**, with the `view(historical, attempt) -> (sha256, body)` binding below and a measured size.
 3. **TOOL-CONTRACT accepted**: the CP-5 row takes the owner view; `python_findings` carry the kind label plus where, no quote fragment.
 4. **Run sharing accepted**: CP-5 runs only inside R6; no R5 run, no extra promotion.
@@ -195,7 +195,7 @@ Analyst finding categories (unsupported, partly supported, contradiction) are no
 
 ## Consumption proof (D3)
 
-This lease is the D3 extension of the CP-5 integrity scope to CP-1, CP-1A, CP-2 and CP-3. CP-5's consumption of CP-MODEL (DC-5) is not proved: R6 does not request CP-MODEL (ruling 1) and DC-5 stays open on the CP-MODEL row. For module X it is satisfied only when all three hold in the actual run:
+This lease is the D3 extension of the CP-5 integrity scope to CP-1, CP-1A, CP-2 and CP-3. CP-5's consumption of CP-MODEL (DC-5) is closed by ruling B1 (no such edge; `registry.py` `_NOT_CP5_FAN_IN` includes CP-MODEL); R6 does not request CP-MODEL (ruling 1). For module X it is satisfied only when all three hold in the actual run:
 1. the CP-5 attempt inputs bind X's settled head hash (`T5.1` row `X`, `module_inputs` in the oracle);
 2. the settled review cites X's facts (T5B.1 `Upstream refs` cell names X's fact ids or citation refs, as in the literal);
 3. the verifier probe re-runs `cp5_integrity._validate_step` on `_FrozenExecution`, which reads exactly those heads, rebuilds the candidate with `cp5_module` and `settle`, and gets the head back.
@@ -246,3 +246,4 @@ Not verified: no end-to-end run (no CP-1 promotion, no owner harness, no G1-X co
 - 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/manifest.json 893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b → 7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe
 - 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/submissions.json eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b → 9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38
 - 2026-11-01 B17 item 11 (R6 CP-1A consumers include CP-MODEL): cases/cp3-cp6-owner/expected.json 7428c9340cae7221157657bdc628e43717b3f61716c86d6b6775c5b46b162a3e → 8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f
+- 2026-11-01 (O1 phase review): the frozen cases/cp5-owner text (`builder/build.py:123, :846`, `expected.json:54`) still lists the pre-B1 fan-in exclusions. Its content is unaffected because R6 has no CP-MODEL; it is left as frozen.

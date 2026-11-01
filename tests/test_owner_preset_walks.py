@@ -98,7 +98,6 @@ EXPECTED: dict[str, dict[str, Any]] = {
 }
 # Every misfit row is `predicted`: a static comparison of bound inputs, consumer lists or readiness
 # entry sets, not an observed refusal. Only a first gap at CP-0 is `measured`.
-MISFIT_BASIS = "predicted"
 UNSHAPED = {"context-attachments-owner"}
 UNSHAPED_COUNT = 5
 GAP_PRESETS = sorted(p for p in EXPECTED if EXPECTED[p]["first_gap"] == "CP-0")

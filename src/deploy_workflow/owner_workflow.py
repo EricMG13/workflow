@@ -151,8 +151,8 @@ SUPPORTED_ANALYTICAL = frozenset(
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
-# G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
-# raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
+# G1-X §2: the fixed owner-core registry, one row per owner-only module (`_owner_only`: no
+# registered `registry.step_chain`, or one whose `shared_live` is false). Never caller-supplied; module tasks add their rows. A core
 # supplies `STEP_IDS`, `SCHEMAS`, `submit` and, for steps with pack sources, `RULES`.
 _CORES: dict[str, ModuleType] = {
     "CP-DR": cpdr,

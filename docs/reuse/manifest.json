@@ -2011,9 +2011,9 @@
       "destination": "src/deploy_vii/report_view.py",
       "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
       "prior_project_sha256": "dbf8de0750e9acbe729406c0afd92137ab1c63b8785767f49fb1cc80762e89e2",
-      "project_commit": "425e2d397c3081f93704f3a61af30bc15b10e8d8",
-      "sha256": "5f022051a278efb15df603703f4d0c6d4ae8414bc3cf9ecb2fe54db00ece8832",
-      "reason": "B17-9/B18 (docs/rulings/2026-10-31-context-plan.md), Phase 8 Task 6b: CP-1B layout validation reads the money currency from revenue:current (required non-None), checks every money fact (prior, current, delta) against it instead of USD, and compares row labels with cp1b_layouts(scale_label('MILLIONS', currency)); USD output unchanged.",
+      "project_commit": "70e87b53998505b70e3f2e52f982dacb8a89faa0",
+      "sha256": "abf7398518fa989f2fed3c9a7164bb381af37304b6a3d7bb7d1748a7c5be9694",
+      "reason": "B17-9/B18 (docs/rulings/2026-10-31-context-plan.md), Phase 8 Task 6b: CP-1B layout validation reads the money currency from revenue:current (required non-None), checks every money fact (prior, current, delta) against it instead of USD, and compares row labels with cp1b_layouts(scale_label('MILLIONS', currency)); the currency must be three capital letters (fullmatch); USD output unchanged.",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/ (task-6b-brief.md, wave-1-addendum.md, task-6b-report.md)"
     },
     {

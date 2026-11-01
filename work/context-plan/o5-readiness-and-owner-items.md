@@ -159,3 +159,13 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
   - The CP-1B view offers `pairs: []`, with no reason text, for a resolved context pair outside the two pins.
 - **The cpos-owner report_view.py pin is stale (pre-existing, Phase 8 pre-flight P8-P3).** `cases/cpos-owner/manifest.json:10` and `builder/build.py:28` still name `5dc981…`, two records behind `dbf8de07…`. No test calls `read_pinned`, so only a cpos-owner rebuild would fail. The oracle preparer re-pins it.
 - **The CP-4C prompt and CP-1C's selected multiple (Phase 7 pre-flight P7-P12).** A CP-4C `STEP_CONTRACTS` sentence saying "use `selected_multiple` when present" is a `src/deploy_vii/live/prompts.py` edit. It goes through the O6 rule-list process (D12, mx-adversary, golden refresh). Until then, a live CP-4C run may ignore the offered multiple and take one repair round, which fails closed.
+
+## Phase 8 Task 1 owner items (2026-11-01)
+- `context_periods.resolve` reads a two-year spelling (`FY2025/26`, `2025-26`) as its first year, while vii's `fiscal_year_number` reads the second. PeriodBasis now refuses the mismatch (P8T1-R2), so such a register is falsely refused at `fy-2026`. `resolve` is shared with cpl10 `context_quarters` and `earnings_workflow._column_periods`; aligning it with vii is an owner decision.
+- PeriodBasis refuses stub fiscal years, anything outside 364-371 days (P8T1-R3). A transition-year pack needs an owner rule for its LTM label.
+
+## Phase 7 Task 2 owner item (2026-11-01)
+- Duplicate peer rows each count toward CP-1C's minimum of 3 admitted (adversary I-3). No dedup rule exists; one is an owner decision.
+
+## Phase 8 Task 4 owner item (2026-11-01)
+- A context with a blank run.current_period takes the default FY2025 basis when its currency is USD (P8-R3, which keeps the frozen Phase 6 pins-context cases). A 2026 run with a blank base therefore refuses at selection instead of inferring its year. Whether a blank base should derive its year from CP-1 is an owner decision.

@@ -25,7 +25,8 @@ Expected results cite the key by file and JSON path (for example
 with no runnable comparison blocks the build: run `/create-prove-it` first.
 
 Oracle preparer (writes keys), verifier author (writes `cases/prove/`, `.github/` and the
-prove-it skills) and builder (writes `src/` and `tests/`, except the verifier tests `tests/test_goldens_*.py` and `tests/test_prove_*.py`) are different agents. A builder's
+prove-it skills) and builder (writes `src/` and `tests/`, except the verifier tests
+`tests/test_goldens_*.py` and `tests/test_prove_*.py`) are different agents. A builder's
 test is evidence when it compares directly with a pinned key and the task reviewer confirms
 it does not weaken that comparison. `python3 -I cases/prove/scope.py` enforces the path
 split: PR CI per commit, the controller per builder range with `--role builder`. The

@@ -1,29 +1,66 @@
-"""A rerun after repair replays the retained upstream submissions (O3 Task 4, gap G4): the plan.
+"""A rerun after repair replays the retained upstream submissions (O3 Task 4, gap G4).
 
 A repaired module and every module that consumes it, transitively, run live; every other analytical
-module is replayed from the earlier run. ``plan_replay`` decides which, from the registry graph and
-the earlier run's retained, settled attempts (a module the earlier run cannot supply runs live, with
-the reason); ``check_replay`` is every refusal of a rerun before anything is written, including the
-pack check: the rerun's pack must equal the earlier one in everything but ``run.run_id``
-(``ReplayPackChanged`` otherwise). The earlier run directory is read only.
+module is replayed from the earlier run: its retained valid submissions are matched **by module and
+step** (never by invocation digest: the earlier run's invocation preimages and reservation
+markers are not read) and resubmitted through the new run's own ``OwnerWorkflow``, so the new run's journal, tickets,
+bindings and receipt are its own and a replayed step sends no model request. The deterministic
+publisher is never replayed: ``publish`` runs again.
+
+The earlier run directory is read only. Divergence stops the run and never falls back to a live
+call: a replayed ``invoke`` whose answer differs from the retained one raises ``ReplayDiverged``,
+a replayed submission the validator does not accept raises ``ReplayRejected``; both journal an
+``OwnerFault`` under ``faults/``.
+
+Two retained payloads bind the earlier run and are rewritten, by the allowlist ``REBOUND_FIELDS``
+alone and only while the rerun's pack equals the earlier one in everything but ``run.run_id``
+(``ReplayPackChanged`` otherwise): the CP-0 readiness review's ``pack_sha256`` (the pack hash
+includes ``run_id``) and the CP-1 financials' ``run_id``. Any other run-dependent value in a
+retained payload makes the submission ``ReplayRejected``.
 """
 
+import hashlib
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Literal
 
-from deploy_vii.contracts import Contract
+from deploy_vii.contracts import Contract, Hash, Identifier, Text
 from deploy_vii.execution import CONTEXT_PRODUCERS, Attempt, Execution, ExecutionSnapshot
 from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_vii.registry import dependencies, plan
-from deploy_workflow.owner_workflow import AUDIT, OWNER_SPECS, OwnerCall, OwnerSubmission
+from deploy_workflow.model.turn import TurnError, dump_json, load_arguments
+from deploy_workflow.owner_workflow import (
+    AUDIT,
+    OWNER_SPECS,
+    OwnerCall,
+    OwnerFault,
+    OwnerSubmission,
+    OwnerWorkflow,
+)
 from deploy_workflow.run_inputs import (
     CheckedRun,
     RunInputError,
     StagedSourceChanged,
     stage_sources,
 )
+
+# (module, step) -> the payload fields rewritten to the rerun's own value, each only when it holds
+# the earlier run's own value. Nothing wider (ruling N1, T4-R4). The fields sit in the object at
+# ``_REBOUND_HOLDER[(module, step)]`` (the CP-1 financials keep ``run_id`` in ``financial``).
+REBOUND_FIELDS: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType(
+    {
+        ("CP-0", "source_readiness"): ("pack_sha256",),
+        ("CP-1", "financials"): ("run_id",),
+    }
+)
+REBOUND_HOLDER: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType(
+    {("CP-0", "source_readiness"): (), ("CP-1", "financials"): ("financial",)}
+)
+REPLAYS = "replays"
+FAULTS = "faults"
 
 
 class ReplayRefused(RunInputError):
@@ -37,6 +74,48 @@ class ReplayPackChanged(ReplayRefused):
     sources need a fresh run."""
 
     code = "replay_pack_changed"
+
+
+class ReplayError(Exception):
+    """A replay that stops the run. ``str`` is ``<module> <step>: <detail>``; ``run_pathway``
+    writes it after the class name (``ReplayDiverged: CP-0 source_readiness: call``)."""
+
+    def __init__(self, module: str, step: str, detail: str) -> None:
+        super().__init__(f"{module} {step}: {detail}")
+        self.module, self.step, self.detail = module, step, detail
+
+
+class ReplayDiverged(ReplayError):
+    """A replayed ``invoke`` answered differently from the retained call."""
+
+
+class ReplayRejected(ReplayError):
+    """A replayed submission was not ``valid``, or its retained evidence could not be used."""
+
+    def __init__(self, module: str, step: str, issues: tuple[str, ...]) -> None:
+        super().__init__(module, step, "; ".join(issues) or "not valid")
+        self.issues = issues
+
+
+class Rebound(Contract):
+    path: Text
+    old: Text
+    new: Text
+
+
+class ReplayRecord(Contract):
+    """One ``replays`` audit record, per replayed step. ``earlier_payload_sha256`` and
+    ``payload_sha256`` are the hashes of the payload as the earlier run and the rerun submitted it
+    (equal unless ``rebound`` names a rewrite); ``snapshot_sha256`` is the rerun's snapshot after."""
+
+    schema_version: Literal["replay/1"] = "replay/1"
+    earlier_run_id: Identifier
+    module_id: Identifier
+    step_id: Identifier
+    earlier_payload_sha256: Hash
+    payload_sha256: Hash
+    snapshot_sha256: Hash
+    rebound: tuple[Rebound, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -111,6 +190,16 @@ class _Earlier:
         ]
         return max(found, key=lambda s: s.sequence, default=None)
 
+    def payload(self, digest: str, module: str, step: str) -> str:
+        path = self.directory / "execution" / AUDIT / "payloads" / digest
+        try:
+            raw = path.read_bytes()
+        except OSError:
+            raise ReplayRejected(module, step, ("a retained payload is missing",)) from None
+        if _sha256(raw) != digest:
+            raise ReplayRejected(module, step, ("a retained payload does not match its digest",))
+        return raw.decode("utf-8")
+
     def unusable(self, module_id: str) -> str | None:
         """Why the module cannot be replayed from this run, or None."""
         attempt = _settled_attempt(self.snapshot, module_id)
@@ -120,6 +209,10 @@ class _Earlier:
             if self.valid_submission(attempt.ticket_id, step.step_id) is None:
                 return f"the earlier run holds no valid submission of step {step.step_id}"
         return None
+
+
+def _sha256(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
 
 
 # ------------------------------------------------------------------ planning
@@ -225,11 +318,157 @@ def check_replay(
     return found
 
 
+# ------------------------------------------------------------------ replaying a module
+
+
+def _write_record(execution: Path, kind: str, value: Contract) -> None:
+    """Retain ``value`` under ``owner-run-audit/<kind>/<its digest>``, create-once."""
+    path = execution / AUDIT / kind / value.content_hash()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw = value.model_dump_json().encode()
+    try:
+        with path.open("xb") as stream:
+            stream.write(raw)
+    except FileExistsError:
+        if path.read_bytes() != raw:
+            raise ReplayRefused(f"{path} exists with other bytes") from None
+
+
+def _fault(execution: Path, code: str, kind: str, digest: str) -> None:
+    _write_record(execution, FAULTS, OwnerFault(code=code, kind=kind, digest=digest))
+
+
+@dataclass(frozen=True)
+class _Identity:
+    pack_sha256: str
+    run_id: str
+
+    @classmethod
+    def of(cls, store: Execution) -> "_Identity":
+        snapshot = store.read()
+        return cls(snapshot.pack_sha256, snapshot.run.run_id)
+
+
+def _rebind(
+    module: str, step: str, text: str, earlier: _Identity, rerun: _Identity
+) -> tuple[str, tuple[Rebound, ...]]:
+    """``text`` with each allowlisted field that holds the earlier run's own value set to the
+    rerun's; the text unchanged, and no record, when none does."""
+    fields = REBOUND_FIELDS.get((module, step))
+    if fields is None:
+        return text, ()
+    try:
+        document = load_arguments(text)
+    except TurnError:
+        return text, ()  # not an object: the validator refuses it
+    holder: Any = document
+    for key in REBOUND_HOLDER[(module, step)]:
+        holder = holder.get(key) if isinstance(holder, dict) else None
+    if not isinstance(holder, dict):
+        return text, ()
+    changes: list[Rebound] = []
+    for name in fields:
+        old, new = getattr(earlier, name), getattr(rerun, name)
+        if holder.get(name) == old and old != new:
+            holder[name] = new
+            path = ".".join((*REBOUND_HOLDER[(module, step)], name))
+            changes.append(Rebound(path=path, old=old, new=new))
+    return (dump_json(document), tuple(changes)) if changes else (text, ())
+
+
+def _same_answer(call: OwnerCall, got: dict[str, Any]) -> bool:
+    """The retained call and the replayed one agree: the body (evidence text included), the status
+    and the error code. The call id, sequence and binding are the rerun's own."""
+    return (got["body"], got["status"], got["error_code"]) == (
+        call.body,
+        call.status,
+        call.error_code,
+    )
+
+
+def _replay_calls(
+    workflow: OwnerWorkflow, retained: _Earlier, submission: OwnerSubmission, execution: Path
+) -> None:
+    binding = submission.binding.binding
+    module, step = binding.module_id, binding.step_id
+    for call_id in submission.binding.call_ids:
+        call = retained.calls.get(call_id)
+        if call is None:
+            raise ReplayRejected(module, step, ("a retained call is missing",))
+        got = workflow.invoke(call.tool, dict(call.arguments))
+        if not _same_answer(call, got):
+            _fault(execution, "replay_diverged", "calls", call.content_hash())
+            raise ReplayDiverged(module, step, "call")
+
+
+def _replay_step(
+    workflow: OwnerWorkflow, retained: _Earlier, ticket_id: str, execution: Path
+) -> None:
+    binding = workflow.binding
+    module, step = binding.module_id, binding.step_id
+    submission = retained.valid_submission(ticket_id, step)
+    if submission is None:
+        raise ReplayRejected(module, step, ("the earlier run holds no valid submission",))
+    earlier_sha = submission.binding.payload_sha256
+    payload = retained.payload(earlier_sha, module, step)
+    if workflow.spec.inputs != "none":
+        workflow.read_inputs()  # the body may embed the new run_id: recorded, never compared
+    _replay_calls(workflow, retained, submission, execution)
+    text, rebound = _rebind(
+        module, step, payload, _Identity.of(retained.store), _Identity.of(Execution(execution))
+    )
+    result = workflow.submit_review(text)
+    if result["status"] != "valid":
+        _fault(execution, "replay_rejected", "submissions", submission.content_hash())
+        raise ReplayRejected(module, step, tuple(result["issues"]))
+    _write_record(
+        execution,
+        REPLAYS,
+        ReplayRecord(
+            earlier_run_id=retained.snapshot.run.run_id,
+            module_id=module,
+            step_id=step,
+            earlier_payload_sha256=earlier_sha,
+            payload_sha256=_sha256(text.encode()),
+            snapshot_sha256=result["snapshot_sha256"],
+            rebound=rebound,
+        ),
+    )
+
+
+def replay_module(
+    workflow: OwnerWorkflow, earlier: Path, module_id: str, *, execution: Path
+) -> None:
+    """Replay the active module's steps from the earlier run directory ``earlier``, in order,
+    until the module settles. ``execution`` is the new run's execution directory (where the
+    ``replays`` and ``faults`` records go). The caller has checked the pack (``check_replay``)."""
+    retained = _Earlier(earlier)
+    check_same_pack(retained.store.pack(retained.snapshot), Execution(execution).pack())
+    attempt = _settled_attempt(retained.snapshot, module_id)
+    if attempt is None:
+        raise ReplayRejected(module_id, "-", ("the earlier run holds no settled valid attempt",))
+    seen: set[str] = set()
+    while workflow.phase == "analytical" and workflow.binding.module_id == module_id:
+        step = workflow.binding.step_id
+        if step in seen:
+            raise ReplayRejected(module_id, step, ("the step came back after a valid submission",))
+        seen.add(step)
+        _replay_step(workflow, retained, attempt.ticket_id, execution)
+
+
 __all__ = [
+    "REBOUND_FIELDS",
+    "REBOUND_HOLDER",
+    "Rebound",
+    "ReplayDiverged",
+    "ReplayError",
     "ReplayPackChanged",
     "ReplayPlan",
+    "ReplayRecord",
     "ReplayRefused",
+    "ReplayRejected",
     "check_replay",
     "check_same_pack",
     "plan_replay",
+    "replay_module",
 ]

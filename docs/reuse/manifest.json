@@ -2123,6 +2123,15 @@
       "sha256": "d53035f7368704e750ecaded0985ecdfdb18c86acf8aaa8d60cab371df05e24b",
       "reason": "B30 (docs/rulings, user-approved): wording-only: the Basis docstring names the context-row basis and Basis.context_rows gets a schema description (Python's context market-evidence row ids, cited by id, figures never copied). Default () and the omit-when-empty dump are unchanged, so content hashes are unchanged. No validator logic or refusal message changes.",
       "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b30-brief.md, b30-report.md); mx-adversary review of B30 (id supplied by the controller)"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "prior_project_sha256": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
+      "project_commit": "eeab0b8fecda6ee1a74b16c66711503e12928583",
+      "sha256": "475d9976caa7d7bcb2aea5e66a840fe027820bb0028c58bb562ace9ef8b34072",
+      "reason": "B7 (draft authority, user-approved) and B17 item 6: SourceAssessment.authority also admits 'draft' (Authority unchanged), validate_review refuses a draft assessment unless the context frozen in the pack declares legal_documents 'draft' (or says 'Draft authority refused, context invalid: <problem>'), and refuses executed, filed or draft authority on the 'context' source.",
+      "review": ".superpowers/sdd/2026-10-31-phase-5-attachments-modes/ (task-1-brief.md, task-1-report.md); review id supplied by the controller"
     }
   ],
   "local_patch_lineage": [

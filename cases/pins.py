@@ -33,6 +33,7 @@ PATTERNS = (
     "cases/context-identity-periods/sources/*.json",
     "cases/context-identity-periods/builder/build.py",
     "cases/o2-synthetic/*.json",
+    "cases/periods-currency-owner/t414.json",
     "cases/o2-synthetic/*.txt",
     "cases/o2-synthetic/builder/build.py",
     "cases/o2-synthetic/builder/cp1_financials.py",

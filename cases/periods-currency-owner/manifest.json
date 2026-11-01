@@ -1059,6 +1059,11 @@
     "bs_column": "Q4 2025-12-31",
     "bridge_basis_line": "Basis: FY2025 (January 1-December 31, 2025)"
   },
+  "t414_file": {
+    "path": "t414.json",
+    "sha256": "bf855781b3f0d3d41f1056d306677740219f815d1b7572ab19a9c2bd09b87c8e",
+    "rule": "P8-R1: pin-only; the shifted pack's CP-1 T4.14 rows behind period_basis/USD and period_basis/EUR; no expected.json value depends on it"
+  },
   "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",
   "dependencies": "R3's CP-1B settling on q3-2026 -> q4-2026 depends on Phase 2 Task 4 generalising the CP-1B prose (ruling B19); until then the owner path refuses unsupported_pair."
 }

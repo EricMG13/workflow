@@ -295,6 +295,68 @@ for _c in ("USD", "EUR"):
     _b = page_text("bridge", _c, "page:1")
     assert _b.split("\n")[4].startswith(BASIS[_c]["bridge_basis_line"] + f"; {_c}; amounts in millions"), _b.split("\n")[4]
 
+# --- 3b. the CP-1 T4.14 rows of the shifted pack (pin-only, ruling P8-R1) ----------------------------------------------
+
+
+def t414_rows(ccy):
+    """T4.14 rows for the shifted pack: the frozen `periods` register of cases/financial/manifest.json (the rows the CP-1
+    promotion is fed from: tests/test_financial_workflow.py `context`) under the four-rule mapping, spelled as CP-1 emits
+    them (T4.14 columns, model_interface.py SCHEMAS): fiscal_year text, fiscal_quarter "1".."4" or "", dates ISO or ""."""
+    rows = []
+    for per in FIN["periods"]:
+        t = TX[ccy]
+        pid = t.text(per["period_id"])
+        row = {
+            "period_id": pid,
+            "period_type": per["period_type"],
+            "fiscal_year": t.text(per["fiscal_year"]),
+            "fiscal_quarter": "" if per["fiscal_quarter"] is None else str(per["fiscal_quarter"]),
+            "start_date": t.text(per["start_date"]) if per["start_date"] else "",
+            "end_date": t.text(per["end_date"]),
+            "day_count": per.get("day_count"),
+            "currency": ccy,
+            "unit": "MILLIONS",
+            "accounting_basis": "IFRS",
+            "entity_perimeter": "consolidated group",
+        }
+        # the row agrees with the shifted statements: dates give the day count, the balance-sheet header names the end date
+        if row["start_date"]:
+            d0, d1 = dt.date.fromisoformat(row["start_date"]), dt.date.fromisoformat(row["end_date"])
+            assert (d1 - d0).days + 1 == row["day_count"]
+            assert row["end_date"] in FIN_P[ccy]["page:4"], pid
+        assert f"Currency: {ccy}; amounts in millions" in FIN_P[ccy]["page:1"]
+        rows.append(row)
+    return rows
+
+
+T414 = {
+    "schema_version": "periods-currency-owner-t414/1",
+    "derivation": (
+        "Pin-only fixture (ruling P8-R1): the CP-1 T4.14 period register of the shifted pack, for the contexts behind "
+        "expected.json#period_basis/USD (submissions.json#contexts/R1, fy-2026, USD) and #period_basis/EUR (#contexts/R2, q4-2026, EUR). "
+        "No CP-1 promotion was run. Rows come from the frozen `periods` list of cases/financial/manifest.json (the period scopes the CP-1 "
+        "source context is built from) under the four mapping rules, so ids are opening-2025, q1-2026..q4-2026, fy-2026. Per row: "
+        "period_type is the frozen type (QUARTER, FY, PERIOD_END); fiscal_year is the shifted year as text; fiscal_quarter is '1'..'4' for a "
+        "quarter, '' otherwise; start_date/end_date are the shifted ISO dates ('' when the frozen start is null), checked against the "
+        "shifted statements (page:1 states 90/91/92/92/365 days, page:4 header carries each end date); day_count is the stated count; "
+        "currency is the run currency read from the pack's own 'Currency: <ccy>; amounts in millions' clause (page:1) and unit MILLIONS, "
+        "accounting_basis IFRS, entity_perimeter consolidated group from page:2-4 headers. The FY row is the 2026 fiscal year; the Q4 row "
+        "ends on the FY end date; exactly one FY row and one QUARTER row with quarter 4."
+    ),
+    "contexts": {
+        "R1": {"context": "submissions.json#contexts/R1", "period_basis": "expected.json#period_basis/USD", "rows": t414_rows("USD")},
+        "R2": {"context": "submissions.json#contexts/R2", "period_basis": "expected.json#period_basis/EUR", "rows": t414_rows("EUR")},
+    },
+}
+for _k, _c in (("R1", "USD"), ("R2", "EUR")):
+    _rows = T414["contexts"][_k]["rows"]
+    _fy = [r for r in _rows if r["period_type"] == "FY"]
+    _q4 = [r for r in _rows if r["period_type"] == "QUARTER" and r["fiscal_quarter"] == "4"]
+    assert len(_fy) == 1 and len(_q4) == 1 and _q4[0]["end_date"] == _fy[0]["end_date"]
+    assert _fy[0]["start_date"] == BASIS[_c]["ltm_start"] and _fy[0]["end_date"] == BASIS[_c]["ltm_end"] and _q4[0]["start_date"] == BASIS[_c]["q4_start"]
+    assert _q4[0]["period_id"] == BASIS[_c]["schedule_period"] and _fy[0]["fiscal_year"] == str(BASIS[_c]["base_year"])
+    assert {r["currency"] for r in _rows} == {_c}
+
 # --- 4. day counts and the 29 February 2028 check ----------------------------------------------------------
 
 
@@ -862,6 +924,7 @@ def main():
         "old_to_new_source_sha256": OLD2NEW,
         "runs": runs_manifest,
         "default_period_literals_mapped": FROZEN_DEFAULT,
+        "t414_file": {"path": "t414.json", "sha256": sha(dumps(T414).encode("utf-8")), "rule": "P8-R1: pin-only; the shifted pack's CP-1 T4.14 rows behind period_basis/USD and period_basis/EUR; no expected.json value depends on it"},
         "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",
         "dependencies": "R3's CP-1B settling on q3-2026 -> q4-2026 depends on Phase 2 Task 4 generalising the CP-1B prose (ruling B19); until then the owner path refuses unsupported_pair.",
     }
@@ -887,6 +950,7 @@ def main():
     (OUT / "manifest.json").write_text(dumps(manifest), encoding="utf-8")
     (OUT / "submissions.json").write_text(dumps(submissions), encoding="utf-8")
     (OUT / "expected.json").write_text(dumps(expected), encoding="utf-8")
+    (OUT / "t414.json").write_text(dumps(T414), encoding="utf-8")
     bad = {k: v for k, v in cite_report.items() if v["quotes_not_in_shifted_page"]}
     print("wrote", OUT, "quotes with no shifted page match:", sum(v["quotes_not_in_shifted_page"] for v in cite_report.values()), "unmapped digests:", len(unmapped))
     if bad:

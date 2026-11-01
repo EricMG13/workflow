@@ -239,3 +239,4 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   as the approved Phase 3 plan (ruled decision 1) says. CP-3D stays quotes-only. This answers Phase 3 pre-flight P3-P1.
   The answer came through MANAGER. The phase therefore builds now, but it is not released to the PR Manager until the
   user confirms B6a in this session. The memory rule on relays (`deploy-workflow-manager-routing`) covers this.
+  Confirmed by the user in this session on 2026-11-01 ("confirm B6a"). Phase 3 can be released once its gates pass.

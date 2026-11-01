@@ -1907,6 +1907,15 @@
       "sha256": "19ec267dff71aa89cbfdfbece02e1a44f6800306572e15f16029d3bd23dc880a",
       "reason": "Part B O1 G1a: CP-MODEL joins CP-5's non-fan-in set so CP-MODEL is a stop in the owner walk and CP-5 no longer consumes it.",
       "review": "work/context-plan/reviews/o1-task1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/live/tools.py",
+      "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "prior_project_sha256": "f03f7d04cf10939859e04208406d7c1f81f540ba4802a67878b7ba967d2fb6af",
+      "project_commit": "f0cf47c65e561f857838a35bfbdad464a44adc02",
+      "sha256": "40414baabed9af60874c4cf0c9c5bab1d39f133c69c88d8fa66f8f75c8945202",
+      "reason": "B22: read_pages, extract_statements (line:N-M ranges) and seen_tables accept the line:N spans of a prepared text pack; page:N unchanged",
+      "review": "work/context-plan/reviews/b22-tools-review.md"
     }
   ],
   "local_patch_lineage": [

@@ -33,6 +33,7 @@ def _row(
     start: str,
     end: str,
     currency: str = "USD",
+    unit: str = "MILLIONS",
 ) -> list[Fact]:
     fields = {
         "period_id": period_id,
@@ -41,6 +42,7 @@ def _row(
         "start_date": start,
         "end_date": end,
         "currency": currency,
+        "unit": unit,
     }
     facts = [
         Fact(
@@ -148,7 +150,8 @@ def test_other_base_kinds_refused(period: str) -> None:
 
 
 def test_missing_or_duplicate_period_rows_refused() -> None:
-    fy, q4 = _calendar()[:7], _calendar()[7:]
+    fy = [f for f in _calendar() if f.row_id == "r1"]
+    q4 = [f for f in _calendar() if f.row_id == "r2"]
     with pytest.raises(PeriodRefused, match="no single period for fy-2026"):
         period_basis(_context("fy-2026"), q4)
     with pytest.raises(PeriodRefused, match="no single period for fy-2026"):
@@ -284,3 +287,111 @@ def test_period_basis_equals_oracle_block(run: str, currency: str) -> None:
     own = {f.name for f in dataclasses.fields(basis)}
     own |= {"year_labels", "not_reached_text", "balance_date_text"}
     assert own == set(wanted)
+
+
+# F1, F2, F5, F6 (round 2). Expected values for the derived fields are the adversary's key,
+# p8t1-adversary/probes/scripts/key_unpinned_fields.py.
+
+
+def _two(fy_text: str, q4_start: str, q4_end: str, start: str, end: str, **kw: str) -> list[Fact]:
+    return [
+        *_row("r1", "fy", "FY", fy_text, None, start, end, **kw),
+        *_row("r2", "q4", "QUARTER", fy_text, "4", q4_start, q4_end, **kw),
+    ]
+
+
+@pytest.mark.parametrize("base", ["fy-2025", "q4-2025"])
+def test_two_year_spelling_read_as_other_year_refused(base: str) -> None:
+    """F1: 'FY2025/26' matches 2025 but vii reads 2026; the basis must not print 2025."""
+    facts = _two("FY2025/26", "2026-04-01", "2026-06-30", "2025-07-01", "2026-06-30")
+    with pytest.raises(PeriodRefused, match=r"fiscal_year FY2025/26 reads as 2026, not 2025"):
+        period_basis(_context(base), facts)
+
+
+def test_non_calendar_derived_fields() -> None:
+    """F2, key 'non-calendar FY2026'."""
+    facts = _two("2026", "2026-04-01", "2026-06-30", "2025-07-01", "2026-06-30")
+    b = period_basis(_context("fy-2026"), facts)
+    assert (b.base_year, b.years) == (2026, (2027, 2028, 2029))
+    assert b.ltm_tag == "LTM Q4 26"
+    assert b.bs_period == "Q4 2026: 2026-06-30"
+    assert b.ltm_start == date(2025, 7, 1)
+    assert b.year_labels == ("FY2027", "FY2028", "FY2029")
+    assert b.not_reached_text == "Not reached by FY2029"
+
+
+def test_53_week_year_derived_fields() -> None:
+    """F2, key '53-week FY2026 ending 2 January'."""
+    facts = _two("2026", "2026-09-27", "2027-01-02", "2025-12-28", "2027-01-02")
+    b = period_basis(_context("fy-2026"), facts)
+    assert b.balance_date_text == "2 January 2027"
+    assert b.bs_period == "Q4 2026: 2027-01-02"
+    assert b.bridge_basis_line == "Basis: FY2026 (December 28, 2025-January 2, 2027)"
+    assert b.years == (2027, 2028, 2029)
+
+
+def test_balance_date_day_below_ten_is_not_padded() -> None:
+    facts = _two("2026", "2026-03-06", "2026-06-05", "2025-06-06", "2026-06-05")
+    assert period_basis(_context("fy-2026"), facts).balance_date_text == "5 June 2026"
+
+
+def test_reversed_fy_dates_refused() -> None:
+    """F2, key 'FY dates reversed'."""
+    facts = _two("2026", "2026-10-01", "2026-12-31", "2027-01-01", "2026-12-31")
+    with pytest.raises(PeriodRefused, match="starts after it ends"):
+        period_basis(_context("fy-2026"), facts)
+
+
+def test_other_row_currency_refused() -> None:
+    """F2, key 'opening row EUR, matched rows USD'."""
+    facts = [
+        *_row("r0", "opening-2025", "PERIOD_END", "2025", None, "2025-12-31", "2025-12-31", "EUR"),
+        *_calendar(),
+    ]
+    with pytest.raises(PeriodRefused, match="reporting_currency USD"):
+        period_basis(_context("fy-2026"), facts)
+
+
+@pytest.mark.parametrize(
+    "dates",
+    [
+        ("2025-10-01", "2026-12-31", "2026-01-01", "2026-12-31"),  # Q4 starts before the FY
+        ("2026-01-01", "2026-12-31", "2026-01-01", "2026-12-31"),  # Q4 carries the FY dates
+        ("2026-10-01", "2026-12-31", "2026-07-01", "2026-12-31"),  # a six-month "FY"
+    ],
+)
+def test_window_shape_refused(dates: tuple[str, str, str, str]) -> None:
+    """F5: Q4 lies inside the FY, differs from it, and the FY is 364 to 371 days."""
+    q4_start, q4_end, start, end = dates
+    with pytest.raises(PeriodRefused, match="CP-1 T4.14"):
+        period_basis(_context("fy-2026"), _two("2026", q4_start, q4_end, start, end))
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "q4_start"),
+    [
+        ("2025-12-28", "2027-01-02", "2026-09-27"),  # 53 weeks, 371 days
+        ("2025-12-29", "2026-12-27", "2026-09-28"),  # 52 weeks, 364 days
+    ],
+)
+def test_52_and_53_week_years_accepted(start: str, end: str, q4_start: str) -> None:
+    assert period_basis(_context("fy-2026"), _two("2026", q4_start, end, start, end))
+
+
+@pytest.mark.parametrize(
+    ("start", "end"), [("2025-12-30", "2026-12-27"), ("2025-12-27", "2027-01-02")]
+)
+def test_fy_length_outside_364_to_371_refused(start: str, end: str) -> None:
+    with pytest.raises(PeriodRefused, match="days"):
+        period_basis(_context("fy-2026"), _two("2026", "2026-10-01", end, start, end))
+
+
+@pytest.mark.parametrize("fn", [period_basis, currency_basis])
+def test_non_millions_unit_refused(fn: Any) -> None:
+    """F6: every owner prints 'm', so a THOUSANDS register is refused."""
+    facts = [
+        *_row("r1", "fy", "FY", "2026", None, "2026-01-01", "2026-12-31", unit="THOUSANDS"),
+        *_row("r2", "q4", "QUARTER", "2026", "4", "2026-10-01", "2026-12-31", unit="THOUSANDS"),
+    ]
+    with pytest.raises(PeriodRefused, match="unit"):
+        fn(_context("fy-2026"), facts)

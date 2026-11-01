@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from deploy_vii.contracts import Fact
+from deploy_vii.model.dates import fiscal_year_number
 from deploy_workflow.context import RunContext
 from deploy_workflow.context_periods import resolve
 
@@ -166,22 +167,51 @@ def _check_currency(
     return _currency(wanted)
 
 
-def _row_currency(wanted: str, period_id: str, row: Mapping[str, Fact]) -> None:
-    """A matched period row states the run currency itself: known and equal, or refuse."""
+def _row_basis(wanted: str, year: str, period_id: str, row: Mapping[str, Fact]) -> None:
+    """A matched period row states the run's currency and `MILLIONS` itself, and its fiscal year
+    reads (as vii reads it) as the context year; otherwise refuse."""
     fact = row.get("currency")
     if fact is None or fact.status != "known" or not fact.text:
         raise PeriodRefused(
-            f"run.reporting_currency {wanted}, but CP-1 T4.14 period {period_id} has no known currency"
+            f"run.reporting_currency {wanted}, but CP-1 T4.14 period {period_id} "
+            "has no known currency"
         )
     if fact.text != wanted:
         raise PeriodRefused(f"run.reporting_currency {wanted}, but CP-1 reports {fact.text}")
+    _check_unit(period_id, row)
+    spelled = row["fiscal_year"].text or ""
+    if fiscal_year_number(spelled) != int(year):
+        raise PeriodRefused(
+            f"CP-1 T4.14 period {period_id} fiscal_year {spelled} reads as "
+            f"{fiscal_year_number(spelled)}, not {year}"
+        )
+
+
+def _check_unit(period_id: str, row: Mapping[str, Fact]) -> None:
+    fact = row.get("unit")
+    if fact is None or fact.status != "known" or fact.text != "MILLIONS":
+        raise PeriodRefused(f"CP-1 T4.14 period {period_id} unit is not MILLIONS")
+
+
+def _check_window(start: date, end: date, q4_start: date) -> None:
+    """The Q4 row (ending with the year) starts strictly inside the fiscal year, so it is neither
+    the year nor before it; the year is 52 or 53 weeks (364 to 371 days)."""
+    days = (end - start).days + 1
+    if not start < q4_start:
+        raise PeriodRefused(f"CP-1 T4.14 Q4 starts {q4_start}, not inside the fiscal year {start}")
+    if not 364 <= days <= 371:
+        raise PeriodRefused(f"CP-1 T4.14 fiscal year {start} to {end} covers {days} days")
 
 
 def currency_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> CurrencyBasis:
     """The run's currency, checked against CP-1's T4.14 `currency`; any base kind, blank included."""
     if context is None:
         return DEFAULT_CURRENCY
-    return _check_currency(context, _period_register(cp1_facts))
+    register = _period_register(cp1_facts)
+    for period_id, row in register.items():
+        if "unit" in row:
+            _check_unit(period_id, row)
+    return _check_currency(context, register)
 
 
 def _row_dates(period_id: str, row: Mapping[str, Fact]) -> tuple[date, date]:
@@ -221,9 +251,10 @@ def period_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Perio
     currency = _check_currency(context, register)
     fy_id, q4_id = _one(register, f"fy-{year}"), _one(register, f"q4-{year}")
     for period_id in (fy_id, q4_id):
-        _row_currency(currency.currency, period_id, register[period_id])
+        _row_basis(currency.currency, year, period_id, register[period_id])
     start, end = _row_dates(fy_id, register[fy_id])
     q4_start, q4_end = _row_dates(q4_id, register[q4_id])
     if q4_end != end:
         raise PeriodRefused(f"CP-1 T4.14 Q4 {year} ends {q4_end}, not at the fiscal year end {end}")
+    _check_window(start, end, q4_start)
     return _basis(currency, int(year), start, end, q4_start, q4_id)

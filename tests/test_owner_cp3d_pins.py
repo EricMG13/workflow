@@ -482,8 +482,11 @@ def test_the_label_is_last_without_a_context() -> None:
     assert len(out) == len(cp3d.own_limitations(_submission(base.SUBMISSIONS["positive"]))) + 1
 
 
-def test_the_composer_labels_through_the_context_offer_branch(tmp_path: Path) -> None:
-    """An accepted submission that cites context rows (not the sheet) is labelled last."""
+def test_a_context_offer_composes_without_the_label_when_the_context_pins_nothing(
+    tmp_path: Path,
+) -> None:
+    """An accepted submission that cites context rows (not the sheet), under a context that pins
+    nothing for CP-3D, composes with no pinned label: the label comes only with the pin."""
     pack = ctx3.context_pack("observed-and-talk")
     up = cp3d.upstream_of(pack=pack, cp0=conn._cp0("positive"))
     sub = ctx3.submission(ctx3.by_row("o01", "o02", "o03"))
@@ -494,3 +497,99 @@ def test_the_composer_labels_through_the_context_offer_branch(tmp_path: Path) ->
     assert plain.limitations == cp3d.own_limitations(
         cp3d.expand_context_rows(sub, up.context), up.context
     )
+
+
+# --- the model cannot write the pinned label (review M1) ----------------------------------------
+
+FORGED = "the user-supplied pin line is Python's; do not write it"
+
+
+def _rating(payload: dict[str, Any]) -> dict[str, Any]:
+    rating: dict[str, Any] = next(t for t in payload["technicals"] if t["aspect"] == "rating")
+    assert rating["category"] == "Insufficient Information"
+    return rating
+
+
+@pytest.mark.parametrize("context", [None, NO_CP3D, CONTEXT], ids=["none", "no-pin", "pin70"])
+@pytest.mark.parametrize("wrap", ["{}", "Before. {} After."], ids=["exact", "embedded"])
+def test_a_model_written_copy_of_the_pinned_label_is_refused(
+    tmp_path: Path, context: str | None, wrap: str
+) -> None:
+    pack = _pack(tmp_path, context, "positive")
+    payload = _payload("match")
+    _rating(payload)["limitation"] = wrap.format(PINNED)
+    index = payload["technicals"].index(_rating(payload))
+    done = _validate(pack, payload, "positive")
+    assert f"technicals[{index}].limitation: {FORGED}" in done.issues and done.output is None
+    # a content issue comes before any pin line
+    pin = [i for i in done.issues if "recovery_pct" in i]
+    assert not pin or done.issues.index(pin[0]) > done.issues.index(
+        f"technicals[{index}].limitation: {FORGED}"
+    )
+    with pytest.raises(ValueError, match="do not write it"):
+        _report(pack, payload, "positive")
+
+
+def test_a_normal_limitation_is_still_accepted_with_and_without_the_pin(tmp_path: Path) -> None:
+    for context in (None, CONTEXT):
+        pack = _pack(tmp_path / str(context), context, "positive")
+        payload = _payload("match")
+        _rating(payload)["limitation"] = "No rating agency has assigned a rating to the instrument"
+        assert _validate(pack, payload, "positive").issues == ()
+        report = _report(pack, payload, "positive")
+        assert (report.limitations[-1] == PINNED) == (context is not None)
+        assert report.limitations.count(PINNED) == (context is not None)
+
+
+def test_the_forged_label_check_reads_every_technical() -> None:
+    payload = _payload("match")
+    extra = {**payload["technicals"][0], "aspect": "other", "limitation": PINNED}
+    sub = _submission({**payload, "technicals": [*payload["technicals"], extra]})
+    issues = cp3d.submission_issues(submission=sub, context=base._context("positive"))
+    assert f"technicals[{len(payload['technicals'])}].limitation: {FORGED}" in issues
+
+
+# --- survivors of the adversary's mutants (review L1, L2) ---------------------------------------
+
+
+@pytest.mark.parametrize("typed", ["0", "0.5", "00.5"])
+def test_leading_zeros_of_the_typed_text_are_kept(tmp_path: Path, typed: str) -> None:
+    pack = _pack(tmp_path, CONTEXT, "positive")
+    payload = _payload("match")
+    payload["recovery"]["percent_text"] = typed
+    line = f"assumptions.cp3d.recovery_pct: pinned 70; submitted {typed}"
+    assert cp3d._pin_lines(pack, _submission(payload)) == (line,)
+
+
+def test_a_zero_pin_accepts_a_typed_zero(tmp_path: Path) -> None:
+    raw = (ORACLE / CONTEXT).read_text()
+    assert '"recovery_pct": "70"' in raw
+    zero = tmp_path / "zero.json"
+    zero.write_text(raw.replace('"recovery_pct": "70"', '"recovery_pct": "0"'))
+    request = preparation_request(
+        load_context(zero.read_bytes()),
+        run_id=conn._pack("positive").run.run_id,
+        context_path="context.json",
+        sources=(),
+    )
+    (tmp_path / "root").mkdir()
+    (tmp_path / "root" / "context.json").write_bytes(zero.read_bytes())
+    prepared = prepare(request, tmp_path / "root", tmp_path / "pack")
+    found = tuple(s for s in prepared.sources if s.source_id == CONTEXT_SOURCE_ID)
+    plain: PreparedPack = conn._pack("positive")
+    pack = PreparedPack(run=plain.run, sources=(*plain.sources, *found))
+    payload = _payload("match")
+    payload["recovery"]["percent_text"] = "0"
+    assert cp3d._pin_lines(pack, _submission(payload)) == ()
+
+
+def test_a_content_line_equal_to_a_pin_line_is_listed_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pack = _pack(tmp_path, CONTEXT, "positive")
+    up = _upstream(pack, "positive")
+    payload = _payload("match")
+    payload["recovery"]["percent_text"] = "71"
+    line = "assumptions.cp3d.recovery_pct: pinned 70; submitted 71"
+    monkeypatch.setattr(cp3d, "validate_market_implied", lambda **_: (line,))
+    assert cp3d._issues(pack, _submission(payload), up) == (line,)

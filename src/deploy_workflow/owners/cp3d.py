@@ -1071,6 +1071,24 @@ def _check_technicals(sub: MarketImpliedSubmission, out: _Issues) -> None:
             out.ref_on_page(b, f"{path}.basis[{j}]")
 
 
+PIN_LABEL_FORGED = "the user-supplied pin line is Python's; do not write it"
+
+
+def _check_pin_label(sub: MarketImpliedSubmission, out: _Issues) -> None:
+    """Refuse a `technicals[i].limitation` that contains Python's pinned-recovery sentence: the
+    own limitations copy that text verbatim, so a model-written copy would state a pin that does
+    not exist or push the real label out of last place."""
+    label = pinned_line(MODULE_ID)
+    for i, x in enumerate(sub.technicals):
+        if x.limitation and label in x.limitation:
+            out.add(f"technicals[{i}].limitation: {PIN_LABEL_FORGED}")
+
+
+def _check_technicals_and_label(sub: MarketImpliedSubmission, out: _Issues) -> None:
+    _check_technicals(sub, out)
+    _check_pin_label(sub, out)
+
+
 def submission_issues(
     *, submission: MarketImpliedSubmission, context: MarketContext
 ) -> tuple[str, ...]:
@@ -1094,7 +1112,7 @@ def submission_issues(
         out.add("instrument: name does not occur in the quote")
     _check_terms(submission.terms, quotation, out)
     _check_recovery(submission, out)
-    _check_technicals(submission, out)
+    _check_technicals_and_label(submission, out)
     out.analyst_text("summary.text", submission.summary.text)
     return tuple(out.items)
 
@@ -2449,7 +2467,8 @@ def market_implied(
     """The report of a submission the validator accepts (`ValueError` listing the issues if not)."""
     if issues := _issues(pack, submission, upstream):
         raise ValueError("; ".join(issues))
-    # `_issues` raised on a refused context, so `pins_of` cannot raise here.
+    # A context the pins reader refuses is also refused by the offers reader, so its
+    # `context_errors` give content lines and `_issues` raised above; `pins_of` cannot raise here.
     pinned = pins_of(MODULE_ID, pack) is not None
     result = market_implied_result(submission=submission, context=upstream.context, pinned=pinned)
     tables: list[ReportTable] = []

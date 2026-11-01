@@ -39,6 +39,7 @@ GAP_CASE = "g1x-gap-case"
 OBJECTIVE = "CP-0.run.objective"
 CP1_FACT = "CP-1.revenue.total"
 MODEL_FACT = "CP-MODEL.model.ebitda"
+PRESET = PATHWAY_MODULES["credit_snapshot"]
 
 
 def _golden_fact(fact_id: str, status: str, value: str | None, value_type: str) -> dict[str, Any]:
@@ -60,7 +61,6 @@ def _case(case_id: str, pathway: Any, facts: Sequence[MappingABC[str, Any]]) -> 
         pathway=pathway,
         case_dir=Path("c"),
         context_path=Path("c/context.json"),
-        golden=MappingProxyType({}),
         facts=MappingProxyType({f["fact_id"]: f for f in facts}),
         out_of_plan=MappingProxyType({}),
         financial_gold_path=Path("g.json"),
@@ -217,12 +217,13 @@ def test_scores_plan_order(gap_run: Path) -> None:
     before = _tree(gap_run)
     score = score_run(gap_run, case, mapping, refusals={"CP-1": ("financial source",)})
     assert isinstance(score, PathwayScore)
-    assert [m.module_id for m in score.modules] == ["CP-0", "CP-1", "CP-MODEL"]
-    assert [m.head_status for m in score.modules] == ["restricted", "refused", "absent"]
+    assert [m.module_id for m in score.modules] == list(PRESET)
+    assert len(score.modules) == 9
+    assert [m.head_status for m in score.modules] == ["restricted", "refused", *7 * ["absent"]]
     cp0 = score.modules[0]
     assert [(f.fact_id, f.outcome) for f in cp0.facts] == [(OBJECTIVE, "match")]
     assert score.modules[1].facts[0].outcome == "gap_ok"
-    assert [m.passed for m in score.modules] == [True, True, False]  # CP-MODEL never ran
+    assert [m.passed for m in score.modules] == [True, True, *7 * [False]]  # the rest never ran
     assert score.rendered is True
     assert score.passed is False
     assert (score.run_id, score.case_id, score.pathway) == (
@@ -294,6 +295,7 @@ def test_refusal_names_flow_to_the_module(gap_run: Path) -> None:
     assert named.modules[1].facts[0].observed == "refused: financial source"
     assert named.modules[1].passed is True
     assert named.modules[2].passed is False and named.passed is False  # CP-MODEL absent
+    assert [m.passed for m in named.modules[2:]] == 7 * [False]
 
 
 def test_upstream_mismatch_reaches_downstream_modules(
@@ -316,11 +318,7 @@ def test_upstream_mismatch_reaches_downstream_modules(
     mapping = _mapping(GAP_CASE, [_entry(OBJECTIVE, "run", "objective")])
     score = score_run(gap_run, case, mapping)
     assert score.modules[0].facts[0].outcome == "mismatch"
-    assert seen == {
-        "CP-0": frozenset(),
-        "CP-1": frozenset({OBJECTIVE}),
-        "CP-MODEL": frozenset({OBJECTIVE}),
-    }
+    assert seen == {m: frozenset() if m == "CP-0" else frozenset({OBJECTIVE}) for m in PRESET}
 
 
 @pytest.fixture
@@ -329,7 +327,7 @@ def modules_pass(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, frozenset[s
     module rules. The wrapper calls the real scorer, records (module_id, upstream mismatches)
     and returns the real ``ModuleScore`` with ``passed`` forced True. Test-only: pathway.py has
     no such seam. The real G1 gap run cannot give every module a pass under the strict rules
-    (CP-MODEL never runs); the slow ``good_run`` tests are the unforced CI evidence."""
+    (seven preset modules never run); the slow ``good_run`` tests are the unforced CI evidence."""
     calls: list[tuple[str, frozenset[str]]] = []
     real = scoring_module.score_module
 
@@ -346,7 +344,8 @@ def test_composition_passes_when_settled_rendered_and_modules_pass(
 ) -> None:
     case, mapping = _gap_case()
     score = score_run(gap_run, case, mapping)
-    assert [c[0] for c in modules_pass] == ["CP-0", "CP-1", "CP-MODEL"]
+    assert [c[0] for c in modules_pass] == list(PRESET)
+    assert len(score.modules) == 9
     assert all(m.passed for m in score.modules)
     assert score.outcome == "settled" and score.rendered is True
     assert score.passed is True
@@ -378,24 +377,6 @@ def test_composition_stopped_outcome_is_the_only_cause(
     assert score.outcome == "stopped" and score.passed is False
 
 
-def test_inherited_upstream_arrives_at_the_downstream_module(
-    gap_run: Path, modules_pass: list[tuple[str, frozenset[str]]]
-) -> None:
-    """The recording shows CP-0's mismatched fact_id reaching CP-1 and CP-MODEL. The fast run has
-    no downstream module with a head (CP-1 is refused, CP-MODEL never ran), so the scorer's
-    ``inherited`` outcome is not reproduced here; the real-result variant needs the slow run."""
-    facts = [_golden_fact(OBJECTIVE, "known", "Something else entirely", "text")]
-    case = _case(GAP_CASE, "credit_snapshot", facts)
-    mapping = _mapping(GAP_CASE, [_entry(OBJECTIVE, "run", "objective")])
-    score = score_run(gap_run, case, mapping)
-    assert score.modules[0].facts[0].outcome == "mismatch"
-    assert dict(modules_pass) == {
-        "CP-0": frozenset(),
-        "CP-1": frozenset({OBJECTIVE}),
-        "CP-MODEL": frozenset({OBJECTIVE}),
-    }
-
-
 def test_reads_outcome_and_mode_from_run_json(gap_copy: Path) -> None:
     case, mapping = _gap_case()
     body = json.loads((gap_copy / "run.json").read_text())
@@ -403,13 +384,12 @@ def test_reads_outcome_and_mode_from_run_json(gap_copy: Path) -> None:
         outcome="stopped",
         stopped_reason="BudgetExhausted: cap",
         config_id="opus-medium",
-        run_id="copied-run-id",
     )
     (gap_copy / "run.json").write_text(json.dumps(body))
     score = score_run(gap_copy, case, mapping)
     assert score.outcome == "stopped" and score.stopped_reason == "BudgetExhausted: cap"
     assert score.mode == "offline" and score.ruling_sha256 is None
-    assert score.config_id == "opus-medium" and score.run_id == "copied-run-id"
+    assert score.config_id == "opus-medium" and score.run_id == "slice-cp1-model-gap"
     assert score.passed is False
 
 
@@ -436,6 +416,82 @@ def test_case_mismatch_refused(gap_run: Path) -> None:
     wrong_path = _case(GAP_CASE, "portfolio_decision", list(case.facts.values()))
     with pytest.raises(CaseError, match="is pathway"):
         score_run(gap_run, wrong_path, mapping)
+
+
+def _edit_receipt(run_dir: Path, edit: Any) -> None:
+    path = run_dir / "owner-run.json"
+    body = json.loads(path.read_text())
+    edit(body)
+    path.write_text(json.dumps(body))
+
+
+def test_plan_subset_is_still_scored_over_the_whole_preset(gap_copy: Path) -> None:
+    """A receipt whose plan leaves a preset module out does not shrink the pathway (spec 7.4)."""
+    case, mapping = _gap_case(model_value="5")
+    _edit_receipt(gap_copy, lambda b: b.update(plan=[m for m in b["plan"] if m != "CP-MODEL"]))
+    score = score_run(gap_copy, case, mapping)
+    assert [m.module_id for m in score.modules] == list(PRESET)
+    model = score.modules[PRESET.index("CP-MODEL")]
+    assert model.head_status == "absent" and model.passed is False
+    assert [f.outcome for f in model.facts] == ["missing_in_output"]
+    assert score.passed is False
+
+
+def test_receipt_of_another_run_refused(gap_copy: Path) -> None:
+    case, mapping = _gap_case()
+    body = json.loads((gap_copy / "run.json").read_text())
+    body.update(run_id="some-other-run")
+    (gap_copy / "run.json").write_text(json.dumps(body))
+    with pytest.raises(JournalError, match=r"run\.run_id") as caught:
+        score_run(gap_copy, case, mapping)
+    assert "some-other-run" not in str(caught.value)
+    assert "slice-cp1-model-gap" not in str(caught.value)
+
+
+def test_receipt_of_another_pathway_refused(gap_copy: Path) -> None:
+    case, mapping = _gap_case()
+    _edit_receipt(gap_copy, lambda b: b["run"].update(pathway="earnings_update"))
+    with pytest.raises(JournalError, match=r"run\.pathway") as caught:
+        score_run(gap_copy, case, mapping)
+    assert "earnings_update" not in str(caught.value)
+
+
+def test_receipt_plan_outside_the_preset_refused(gap_copy: Path) -> None:
+    case, mapping = _gap_case()
+    _edit_receipt(gap_copy, lambda b: b.update(plan=[*b["plan"], "CP-8"]))
+    with pytest.raises(JournalError, match="plan") as caught:
+        score_run(gap_copy, case, mapping)
+    assert "CP-8" not in str(caught.value)
+
+
+def test_render_problem_is_a_plain_code(gap_copy: Path) -> None:
+    case, mapping = _gap_case()
+    ok = score_run(gap_copy, case, mapping)
+    assert ok.rendered is True and ok.render_problem is None
+    shutil.rmtree(gap_copy / "delivery")
+    missing = score_run(gap_copy, case, mapping)
+    assert missing.rendered is False
+    assert missing.render_problem is not None
+    assert missing.render_problem.startswith("owner_render_")
+    assert str(gap_copy) not in missing.render_problem
+
+
+def test_render_problem_withholds_a_long_message(
+    gap_copy: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def refuse(*args: Any) -> None:
+        raise ValueError(f"cannot read {gap_copy}/secret value 12345")
+
+    monkeypatch.setattr(pathway_module, "verify_owner_rendered_slice", refuse)
+    case, mapping = _gap_case()
+    score = score_run(gap_copy, case, mapping)
+    assert score.rendered is False
+    assert score.render_problem == "unrecognised refusal"
+
+
+def test_no_receipt_has_no_render_problem(stopped_run: Path) -> None:
+    case, mapping = _o2_case()
+    assert score_run(stopped_run, case, mapping).render_problem is None
 
 
 # ------------------------------------------------------------------ stopped runs (O2 synthetic)
@@ -503,10 +559,11 @@ slow = pytest.mark.skipif(
 def test_settled_rendered_run_passes(good_run: Path) -> None:
     case, mapping = _good_case()
     score = score_run(good_run, case, mapping)
-    assert [m.head_status for m in score.modules] == ["restricted"] * 3
-    assert all(m.passed for m in score.modules)
+    # the run plans three modules; the other six preset modules are absent and fail (spec 7.4)
+    assert [m.head_status for m in score.modules] == ["restricted"] * 3 + ["absent"] * 6
+    assert all(m.passed for m in score.modules[:3])
     assert score.outcome == "settled" and score.rendered is True
-    assert score.passed is True
+    assert score.passed is False
 
 
 @slow
@@ -517,7 +574,7 @@ def test_tampered_delivery_isolated(good_copy: Path) -> None:
     raw[len(raw) // 2] ^= 0x01
     report.write_bytes(bytes(raw))
     score = score_run(good_copy, case, mapping)
-    assert all(m.passed for m in score.modules) and score.outcome == "settled"
+    assert all(m.passed for m in score.modules[:3]) and score.outcome == "settled"
     assert score.rendered is False and score.passed is False
 
 
@@ -528,5 +585,5 @@ def test_stopped_outcome_isolated(good_copy: Path) -> None:
     body.update(outcome="stopped", stopped_reason="render: owner_render_scope")
     (good_copy / "run.json").write_text(json.dumps(body))
     score = score_run(good_copy, case, mapping)
-    assert all(m.passed for m in score.modules) and score.rendered is True
+    assert all(m.passed for m in score.modules[:3]) and score.rendered is True
     assert score.outcome == "stopped" and score.passed is False

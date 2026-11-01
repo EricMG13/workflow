@@ -82,7 +82,7 @@ def _no_dups(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for k, v in pairs:
         if k in out:
-            raise ValueError(f"duplicate key {k!r}")
+            raise ValueError("duplicate key")
         out[k] = v
     return out
 
@@ -138,6 +138,6 @@ def load_mapping(path: Path, case: GoldenCase) -> Mapping:
         )
         raise MappingError(f"{name}: invalid mapping: {shown}") from exc
     except ValueError as exc:  # JSONDecodeError, UnicodeDecodeError, duplicate keys
-        raise MappingError(f"{name}: not valid JSON: {exc}") from exc
+        raise MappingError(f"{name}: not valid JSON (duplicate or malformed key)") from exc
     _check_against_case(mapping, case, name)
     return mapping

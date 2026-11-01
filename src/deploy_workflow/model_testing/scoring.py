@@ -28,6 +28,8 @@ Outcome = Literal[
 HeadStatus = Literal["accepted", "restricted", "blocked", "refused", "absent"]
 
 JUDGMENT_MODULES = frozenset({"CP-5", "CP-6", "CP-MODEL", "CP-2A"})
+# Golden statuses that carry no value: the module should show a gap, not a figure.
+_NO_VALUE_STATUSES = frozenset({"missing", "not_applicable"})
 
 # Wide enough that scaling and quantising never round before the comparison does.
 _CTX = Context(prec=120, rounding=ROUND_HALF_UP)
@@ -243,14 +245,16 @@ def _score_entry(
 
     if len(facts) > 1:
         seen = f"{len(facts)} facts at one locator"
-        if status == "missing" and any(_has_value(f) for f in facts):
+        if status in _NO_VALUE_STATUSES and any(_has_value(f) for f in facts):
             return out("invented", seen)
         return out("mismatch", seen)
-    if status == "missing":
+    if status in _NO_VALUE_STATUSES:
         return out("invented" if _has_value(fact) else "gap_ok")
     if status == "conflicting":
         if fact is not None and fact.status == "conflicting":
             return out("conflict_ok")
+        if fact is None or not _has_value(fact):
+            return out("missing_in_output")  # omitted: forgiven like any omitted fact
         limited = fact is not None and bool(
             (fact.limitation or "").strip() or _nonblank(module.limitations)
         )
@@ -332,7 +336,9 @@ def score_module(
             if refused_honestly:
                 scores.append(gap(entry.fact_id, golden))
                 continue
-            outcome: Outcome = "gap_ok" if golden["status"] == "missing" else "missing_in_output"
+            outcome: Outcome = (
+                "gap_ok" if golden["status"] in _NO_VALUE_STATUSES else "missing_in_output"
+            )
             scores.append(
                 FactScore(
                     fact_id=entry.fact_id,

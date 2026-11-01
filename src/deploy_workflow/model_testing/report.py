@@ -5,18 +5,17 @@ faults. Nothing here calls a model; every figure is derived from the records han
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import timedelta
 from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
 
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_workflow.model.record import CallRecord
-from deploy_workflow.model_testing.budget import account_spend
+from deploy_workflow.model_testing.budget import Runs, account_spend
 from deploy_workflow.model_testing.configs import ACCOUNTS, CASES, CONFIGS
 from deploy_workflow.model_testing.faults import FaultRecord
 from deploy_workflow.model_testing.pathway import PathwayScore
 from deploy_workflow.model_testing.records import RunMeta
 from deploy_workflow.model_testing.scoring import ModuleScore
-
-Runs = Sequence[tuple[RunMeta, Sequence[CallRecord]]]
 
 _WIDE = Context(prec=120, rounding=ROUND_HALF_UP)
 _MATCHED = frozenset({"match", "conflict_ok", "gap_ok"})
@@ -91,7 +90,7 @@ def _wall(records: Sequence[CallRecord]) -> Decimal | None:
             raise ValueError(
                 f"run {r.run_id} module {r.module_id} call {r.call_index}: finished before started"
             )
-        step = (delta.days * 86400 + delta.seconds) * 1_000_000 + delta.microseconds
+        step = delta // timedelta(microseconds=1)
         micros = step if micros is None else micros + step
     return None if micros is None else _WIDE.divide(Decimal(micros), Decimal(1_000_000))
 
@@ -113,20 +112,33 @@ def _retries(records: Sequence[CallRecord]) -> int:
     return count
 
 
-def _counts(module: ModuleScore) -> tuple[int, int, int]:
-    matched = sum(1 for f in module.facts if f.outcome in _MATCHED)
+def _counts(module: ModuleScore) -> tuple[int, int, int, int]:
+    """Matched, scored, inherited and refused facts. A refusal gap (``gap_ok`` on a refused
+    module) stays scored but is not matched: the module produced nothing to compare."""
+    refused = sum(
+        1
+        for f in module.facts
+        if module.head_status == "refused"
+        and f.outcome == "gap_ok"
+        and (f.observed or "").startswith("refused:")
+    )
+    matched = sum(1 for f in module.facts if f.outcome in _MATCHED) - refused
     scored = sum(1 for f in module.facts if f.outcome not in _UNSCORED)
     inherited = sum(1 for f in module.facts if f.outcome == "inherited")
-    return matched, scored, inherited
+    return matched, scored, inherited, refused
 
 
 def _cell(score: PathwayScore, module: ModuleScore, records: Sequence[CallRecord]) -> str:
     if score.outcome == "stopped":
         return _cell_text(f"STOPPED ({score.stopped_reason})")
-    matched, scored, inherited = _counts(module)
+    matched, scored, inherited, refused = _counts(module)
     head = f"{'PASS' if module.passed else 'FAIL'} {matched}/{scored}"
+    if refused:
+        head += f" ({refused} refused)"
     if inherited:
         head += f" ({inherited} inherited)"
+    if score.render_problem is not None:
+        head += " (render: " + _cell_text(score.render_problem) + ")"
     wall = _wall(records)
     parts = [
         head,
@@ -207,7 +219,7 @@ def _totals_section(scores: Sequence[PathwayScore], runs: Runs) -> list[str]:
         for s in scores:
             if s.config_id == config_id:
                 for module in s.modules:
-                    m, n, _ = _counts(module)
+                    m, n, _, _ = _counts(module)
                     matched, scored = matched + m, scored + n
         mine = [(meta, records) for meta, records in runs if meta.config_id == config_id]
         records = [r for _, rs in mine for r in rs]
@@ -281,13 +293,22 @@ def _accounts_section(runs: Runs) -> list[str]:
     return ["## Accounts", "", *_table(header, rows)]
 
 
+def _agree(score: PathwayScore, meta: RunMeta) -> None:
+    for field in ("config_id", "pathway", "case_id"):
+        if getattr(score, field) != getattr(meta, field):
+            raise ValueError(f"score for run {score.run_id}: {field} differs from its run")
+
+
 def render_report(scores: Sequence[PathwayScore], runs: Runs, faults: Sequence[FaultRecord]) -> str:
+    by_meta: dict[str, RunMeta] = {}
     by_run: dict[str, Sequence[CallRecord]] = {}
     for meta, records in runs:
         if meta.run_id in by_run:
             raise ValueError(f"duplicate run_id {meta.run_id}")
+        by_meta[meta.run_id] = meta
         by_run[meta.run_id] = records
     seen: set[tuple[str, str]] = set()
+    case_of: dict[str, str] = {}
     for s in scores:
         if (s.pathway, s.config_id) in seen:
             raise ValueError(f"duplicate score for {s.pathway} on {s.config_id}")
@@ -296,6 +317,9 @@ def render_report(scores: Sequence[PathwayScore], runs: Runs, faults: Sequence[F
             raise ValueError(f"score for unknown pathway {s.pathway}")
         if s.run_id not in by_run:
             raise ValueError(f"no run records for scored run {s.run_id}")
+        _agree(s, by_meta[s.run_id])
+        if case_of.setdefault(s.pathway, s.case_id) != s.case_id:
+            raise ValueError(f"scores for {s.pathway} name different case_id values")
 
     lines: list[str] = []
     if any(meta.mode == "offline" for meta, _ in runs):

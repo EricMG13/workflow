@@ -1,9 +1,8 @@
 """Golden case loader: checks a case with ``cases/goldens/check.py`` and the product's own
-context loader, pins the financial gold by sha256, and keeps only in-plan facts."""
+context loader, whose checker pins the financial gold by sha256, and keeps only in-plan facts."""
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 from collections import Counter
@@ -30,7 +29,6 @@ class GoldenCase:
     pathway: PathwayId
     case_dir: Path
     context_path: Path
-    golden: Mapping[str, Any]
     facts: Mapping[str, Mapping[str, Any]]
     out_of_plan: Mapping[str, int]
     financial_gold_path: Path
@@ -65,13 +63,8 @@ def load_case(case_dir: Path, corpus: Path) -> GoldenCase:
         raise CaseError(
             f"{case_dir.name}: context.json refused by the product: {'; '.join(exc.problems[:5])}"
         ) from exc
-    gold = golden["financial_gold"]
+    gold = golden["financial_gold"]  # check_case has verified the file against its pinned sha256
     gold_path = Path(gold["path"])
-    actual = hashlib.sha256(gold_path.read_bytes()).hexdigest()
-    if actual != gold["sha256"]:
-        raise CaseError(
-            f"{case_dir.name}: financial_gold sha256 {actual} differs from the pinned {gold['sha256']}"
-        )
     in_plan = set(PATHWAY_MODULES[pathway])
     facts = {f["fact_id"]: f for f in golden["facts"] if f["module"] in in_plan}
     out_of_plan = Counter(f["module"] for f in golden["facts"] if f["module"] not in in_plan)
@@ -80,7 +73,6 @@ def load_case(case_dir: Path, corpus: Path) -> GoldenCase:
         pathway=pathway,
         case_dir=case_dir,
         context_path=context_path,
-        golden=MappingProxyType(golden),
         facts=MappingProxyType(facts),
         out_of_plan=MappingProxyType(dict(out_of_plan)),
         financial_gold_path=gold_path,

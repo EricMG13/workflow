@@ -113,6 +113,28 @@ def module(module_id: str, outcomes: Sequence[Outcome], passed: bool) -> ModuleS
     )
 
 
+def refused_module(module_id: str, outcomes: Sequence[Outcome], passed: bool) -> ModuleScore:
+    """A refused head: its ``gap_ok`` facts carry the scorer's ``refused:`` marker."""
+    facts = tuple(
+        FactScore(
+            fact_id=f"{module_id}.{i}",
+            outcome=o,
+            expected=None,
+            observed="refused: pack" if o == "gap_ok" else None,
+        )
+        for i, o in enumerate(outcomes)
+    )
+    return ModuleScore(
+        module_id=module_id,
+        head_status="refused",
+        facts=facts,
+        untraced=(),
+        unscored=0,
+        judgment=False,
+        passed=passed,
+    )
+
+
 def score(
     config_id: str,
     run_id: str,
@@ -173,6 +195,7 @@ def fixture_inputs() -> tuple[list[PathwayScore], Runs, list[FaultRecord]]:
         call(
             "opus-medium", "r-opus", "CP-1", seconds=30, tokens=(3000, 900, None), settled="0.500"
         ),
+        call("opus-medium", "r-opus", "CP-5", seconds=8, tokens=(100, 50, None), settled="0.20"),
     ]
     scores = [
         score(
@@ -191,6 +214,7 @@ def fixture_inputs() -> tuple[list[PathwayScore], Runs, list[FaultRecord]]:
             [
                 module("CP-0", ["conflict_ok", "gap_ok", "match", "missing_in_output"], False),
                 module("CP-1", ["match", "match"], True),
+                refused_module("CP-5", ["gap_ok", "gap_ok", "match"], True),
             ],
             mode="offline",
         ),
@@ -326,3 +350,51 @@ def test_fault_line_has_config_and_rerun_field() -> None:
     text = render_report([], [], [fault("f1", "prompt"), fault("f2", "model", rerun_passed=True)])
     assert "- f1 · shc-earnings-update · CP-1B · sol-medium · fix — · rerun: none" in text
     assert "rerun: passed" in text
+
+
+def test_refusal_gaps_are_not_matches() -> None:
+    refused = refused_module("CP-0", ["gap_ok", "gap_ok", "gap_ok"], True)
+    scores = [score("sol-medium", "r-sol", [refused])]
+    text = render_report(scores, [(meta(), [call()])], [])
+    assert "PASS 0/3 (3 refused)" in text
+    assert "PASS 3/3" not in text
+    assert "| sol-medium | 0.0% (0/3) |" in text
+    both = refused_module("CP-0", ["gap_ok", "inherited", "match"], True)
+    text = render_report([score("sol-medium", "r-sol", [both])], [(meta(), [call()])], [])
+    assert "PASS 1/2 (1 refused) (1 inherited)" in text
+
+
+def test_gap_ok_on_an_accepted_module_still_matches() -> None:
+    accepted = module("CP-0", ["gap_ok", "match"], True)
+    text = render_report([score("sol-medium", "r-sol", [accepted])], [(meta(), [call()])], [])
+    assert "PASS 2/2" in text and "refused" not in text
+
+
+def test_render_problem_shown_in_the_cell() -> None:
+    s = score("sol-medium", "r-sol", [module("CP-0", ["match"], False)])
+    s = s.model_copy(update={"rendered": False, "render_problem": "owner_render_stale"})
+    text = render_report([s], [(meta(), [call()])], [])
+    assert "FAIL 1/1 (render: owner_render_stale) · $0.10" in text
+
+
+def test_score_disagreeing_with_its_run_refused() -> None:
+    base = score("sol-medium", "r-sol", [module("CP-0", ["match"], True)])
+    runs: Runs = [(meta(), [call()])]
+    for field, value in (
+        ("config_id", "opus-medium"),
+        ("case_id", "other-case"),
+        ("pathway", "credit_snapshot"),
+    ):
+        bad = base.model_copy(update={field: value})
+        with pytest.raises(ValueError, match=field):
+            render_report([bad], runs, [])
+
+
+def test_scores_of_one_pathway_share_a_case() -> None:
+    one = score("sol-medium", "r-sol", [module("CP-0", ["match"], True)])
+    two = score("opus-medium", "r-op", [module("CP-0", ["match"], True)], mode="offline")
+    two = two.model_copy(update={"case_id": "other-case"})
+    other_meta = meta("opus-medium", "r-op", "offline").model_copy(update={"case_id": "other-case"})
+    runs: Runs = [(meta(), [call()]), (other_meta, [call("opus-medium", "r-op")])]
+    with pytest.raises(ValueError, match="case_id"):
+        render_report([one, two], runs, [])

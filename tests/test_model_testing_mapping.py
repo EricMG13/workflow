@@ -32,7 +32,6 @@ def _case() -> GoldenCase:
         pathway="earnings_update",
         case_dir=Path("."),
         context_path=Path("context.json"),
-        golden=MappingProxyType({}),
         facts=MappingProxyType(facts),
         out_of_plan=MappingProxyType({}),
         financial_gold_path=Path("g.json"),
@@ -176,8 +175,9 @@ def test_case_id_must_match(tmp_path: Path) -> None:
 
 def test_duplicate_json_key_refused(tmp_path: Path) -> None:
     text = json.dumps(_doc())[:-1] + ', "preparer": "carol"}'
-    with pytest.raises(MappingError, match="duplicate key"):
+    with pytest.raises(MappingError, match=r"not valid JSON \(duplicate or malformed key\)") as ei:
         load_mapping(_write(tmp_path, text), _case())
+    assert "preparer" not in str(ei.value)  # no key name echoed
 
 
 def test_unknown_key_and_bad_json_refused(tmp_path: Path) -> None:

@@ -49,7 +49,6 @@ def _case(case_id: str, *fact_ids: str) -> GoldenCase:
         pathway=golden["pathway"],
         case_dir=GOLDENS / case_id,
         context_path=GOLDENS / case_id / "context.json",
-        golden=MappingProxyType({}),
         facts=MappingProxyType({fid: by_id[fid] for fid in fact_ids}),
         out_of_plan=MappingProxyType({}),
         financial_gold_path=Path("g.json"),
@@ -436,7 +435,6 @@ def test_scale_property(value: Decimal, scale: str | None) -> None:
         pathway="credit_snapshot",
         case_dir=Path("."),
         context_path=Path("c.json"),
-        golden=MappingProxyType({}),
         facts=MappingProxyType({"g1": golden}),
         out_of_plan=MappingProxyType({}),
         financial_gold_path=Path("g.json"),
@@ -662,3 +660,62 @@ def test_pp_is_a_point_unit() -> None:
     assert ok.facts[0].outcome == "match"
     frac, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.922"), unit="pp")
     assert frac.facts[0].outcome == "mismatch"
+
+
+def _with_status(case: GoldenCase, fid: str, status: str) -> GoldenCase:
+    golden = {**case.facts[fid], "status": status, "value": None}
+    return GoldenCase(
+        case_id=case.case_id,
+        pathway=case.pathway,
+        case_dir=case.case_dir,
+        context_path=case.context_path,
+        facts=MappingProxyType({fid: golden}),
+        out_of_plan=case.out_of_plan,
+        financial_gold_path=case.financial_gold_path,
+        financial_gold_sha256=case.financial_gold_sha256,
+    )
+
+
+def test_omitted_conflicting_fact_is_missing_in_output() -> None:
+    case = _case(LTH, LTH_CONFLICT)
+    entry = _entry(LTH_CONFLICT, "CP-2")
+    mapping = _mapping(case, [entry])
+    omitted = _score(_module([], limitations=("income statement not in the pack",)), case, mapping)
+    assert omitted.facts[0].outcome == "missing_in_output"
+    assert omitted.passed is False  # an accepted head earns no honest-gap pass
+    blocked = _score(
+        _module([], limitations=("income statement not in the pack",)),
+        case,
+        mapping,
+        head="blocked",
+    )
+    assert blocked.facts[0].outcome == "missing_in_output" and blocked.passed is True
+    refused = _score(_module([]), case, mapping, head="refused", refusal=("workbook",))
+    assert refused.facts[0].outcome == "gap_ok" and refused.passed is True
+    # no limitation, no pass
+    assert _score(_module([]), case, mapping, head="blocked").passed is False
+
+
+def test_conflicting_fact_with_wrong_value_stays_mismatch() -> None:
+    case = _case(LTH, LTH_CONFLICT)
+    entry = _entry(LTH_CONFLICT, "CP-2")
+    wrong = _module([_fact(entry, amount=Decimal(5), limitation="two values")], limitations=("x",))
+    score = _score(wrong, case, _mapping(case, [entry]), head="blocked")
+    assert score.facts[0].outcome == "mismatch" and score.passed is False
+
+
+def test_not_applicable_golden_is_a_gap_not_a_value() -> None:
+    case = _with_status(_case(NATL, NATL_TERM_B), NATL_TERM_B, "not_applicable")
+    entry = _entry(NATL_TERM_B, "CP-2")
+    mapping = _mapping(case, [entry])
+    omitted = _score(_module([]), case, mapping)
+    assert omitted.facts[0].outcome == "gap_ok" and omitted.passed is True
+    not_known = _score(_module([_fact(entry, status="missing")]), case, mapping)
+    assert not_known.facts[0].outcome == "gap_ok"
+    valued = _score(_module([_fact(entry, amount=Decimal(320))]), case, mapping)
+    assert valued.facts[0].outcome == "invented" and valued.passed is False
+    twice = _module(
+        [_fact(entry, amount=Decimal(1)), _fact(entry, fact_id="other", amount=Decimal(2))]
+    )
+    assert _score(twice, case, mapping).facts[0].outcome == "invented"
+    assert _score(None, case, mapping, head="absent").facts[0].outcome == "gap_ok"

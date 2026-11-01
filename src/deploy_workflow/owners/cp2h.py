@@ -152,6 +152,13 @@ class SourceIssue(ValueError):
     round 7 items 2, 3, 6, 8 and (h))."""
 
 
+class ContextCitationsNotWired(ValueError):
+    """A context-sourced register row reached the cell builder before its citations exist."""
+
+
+CONTEXT_CITATIONS_NOT_WIRED = (
+    "Context register rows have no citations here: they come from register_source (Phase 4 Task 3)"
+)
 REGISTER_NOT_FOUND = "Rating register not found"
 SCALE_NOT_FOUND = "Rating scale not found"
 TERMS_NOT_FOUND = "Trigger terms not found"
@@ -1014,6 +1021,8 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
     """T2R.2 source facts; the row id of each agency."""
     rows: dict[str, str] = {}
     for n, r in enumerate(source.register, 1):
+        if r.source != "ratings":
+            raise ContextCitationsNotWired(CONTEXT_CITATIONS_NOT_WIRED)
         row = f"r{n:02d}"
         rows[r.agency] = row
         line = (b.cite("page:1", r.line),)
@@ -1030,7 +1039,7 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
             "Position on the combined scale",
             f"Rating dated {r.date}",
         )
-        if r.position is None:
+        if r.position is None or r.scale_line is None:  # ratings rows only (context rows raised)
             reason = (
                 f"{possessive(r.agency)} rating is {r.rating.lower()}, "
                 "so it has no position on the scale"
@@ -1045,12 +1054,7 @@ def _agency_register(b: _Book, source: RatingsSource) -> dict[str, str]:
                 "scale position stated in the source mapping",
                 period=period,
                 source=True,
-                # a context row has no page:2 line; Task 3 supplies its citations
-                citations=(
-                    (b.cite("page:2", r.scale_line),)
-                    if r.source == "ratings" and r.scale_line is not None
-                    else ()
-                ),
+                citations=(b.cite("page:2", r.scale_line),),
             )
         b.row(
             "T2R.2",

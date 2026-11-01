@@ -167,3 +167,11 @@ def test_notches_equal_the_index_distance(a: str, b: str) -> None:
     )
     assert first.position is not None and second.position is not None
     assert abs(first.position - second.position) == abs(SP_SYMBOLS.index(a) - SP_SYMBOLS.index(b))
+
+
+def test_context_row_fails_closed_in_the_cell_builder() -> None:
+    # Task 3 replaces this error with the real per-row citations and flips this test.
+    register = cp2h.context_register(_context("context-positive.json"))
+    source = cp2h.context_ratings(register, _terms("positive"))
+    with pytest.raises(cp2h.ContextCitationsNotWired, match="register_source"):
+        cp2h._agency_register(cp2h._Book("0" * 64), source)

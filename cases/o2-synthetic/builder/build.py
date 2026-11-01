@@ -269,7 +269,10 @@ def build(out_dir: Path) -> None:
     }
     judged = [item["module_id"] for item in submissions["business_context"]["consumers"]]
     expected_consumers = list(cp1a_consumers(pack))
-    consumers_gap = sorted(set(expected_consumers) ^ set(judged))
+    if judged != expected_consumers:
+        raise RuntimeError(
+            f"CP-1A consumers {judged} differ from cp1a_consumers {expected_consumers}"
+        )
 
     document = {
         "schema_version": "o2-synthetic-submissions/1",
@@ -345,17 +348,7 @@ def build(out_dir: Path) -> None:
             "CP-8": "oracle frozen on other run fields (cases/cp8-owner/manifest.json, as_of 2026-04-30, a different pack); no CP-8 submission here. The preset still plans CP-8, so the run stops at CP-8 (BLOCKED row above)",
             "CP-MODEL": "no submission exists (Python-built)",
         },
-        "inherited_oracle_gaps": [
-            {
-                "where": "business_context.consumers",
-                "source": "cases/cp3-cp6-owner/submissions.json positive.business_context.consumers.R6",
-                "rule": "cp1a_consumers(pack) always adds CP-MODEL (src/deploy_vii/business_context.py:344-353)",
-                "judged": judged,
-                "required": expected_consumers,
-                "symmetric_difference": consumers_gap,
-                "action": "copied unchanged; the R3 consumers list in the same oracle carries a CP-MODEL row but R6's does not",
-            }
-        ],
+        "inherited_oracle_gaps": [],
         "run_time_bindings_changed_by_recut": [
             "cases/cp5-owner/manifest.json run_time_bindings.RT-3 c1_source_locator names page:N; the first CP-1 citation locator is now line:N of the prepared pack"
         ],

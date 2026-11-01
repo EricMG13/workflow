@@ -1390,3 +1390,31 @@ def test_a_context_with_a_broken_register_reports_the_register_code() -> None:
         cast(Execution, _Store(broken, payload, pack)), pack, _attempt(broken, step)
     )
     assert outcome.issues == ("incomplete_register",) and outcome.output is None
+
+
+def test_a_broken_register_gives_the_same_issues_with_or_without_a_context() -> None:
+    """A blocked CP-1 head with a broken register: the register's own refusal
+    (`invalid_source_view`) is what the validator and the view report, context or not. The
+    context check must not replace it with the register code of the unaccepted head."""
+    producer = _producer(opening=True)
+    broken = producer.model_copy(
+        update={
+            "status": "blocked",
+            "facts": tuple(
+                f
+                for f in producer.facts
+                if not (f.table_id == "T4.14" and f.period == "q4-2025" and f.field == "end_date")
+            ),
+        }
+    )
+    with_context = _ctx_pack("ctx-match")
+    without = PreparedPack(run=with_context.run, sources=())
+    step = StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
+    payload = _payload("q3-2025", "q4-2025", "flat_sequential")
+    results = [
+        cp1b._validate_step(cast(Execution, _Store(broken, payload, p)), p, _attempt(broken, step))
+        for p in (with_context, without)
+    ]
+    assert (results[0].issues, results[0].output) == (results[1].issues, results[1].output)
+    assert results[0].issues == ("invalid_source_view",)
+    assert _ctx_view_text(with_context, broken) == _ctx_view_text(without, broken)

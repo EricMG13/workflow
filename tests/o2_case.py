@@ -22,7 +22,12 @@ from typing import Any
 from deploy_vii.contracts import PathwayId
 from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_workflow.financial_workflow import STATEMENT_HEADING
-from deploy_workflow.model.adapter import AdapterReply, ModelAdapter, recorded_adapter
+from deploy_workflow.model.adapter import (
+    AdapterReply,
+    ModelAdapter,
+    RecordingMissing,
+    recorded_adapter,
+)
 from deploy_workflow.model.loop import PromptFor
 from deploy_workflow.model.turn import (
     Message,
@@ -62,6 +67,7 @@ FROZEN_STEP = {
     "integrity_review": "integrity_review",
     "committee_challenge": "committee_challenge",
 }
+SEARCH_BEFORE = ("source_context",)
 SEARCHES = (("financial", "subsequent"), ("business", "acquisition"))
 
 
@@ -104,14 +110,10 @@ def test_prompt_for(pack: PreparedPack) -> PromptFor:
     return prompt_for
 
 
-class ScriptEnded(Exception):
-    """The script holds no answer for this step; authoring stops here (test-only)."""
-
-
 class ScriptAdapter:
     """Answers a request from the frozen payload and records the answer. ``answers`` names the
-    steps it will answer; a request for any other step raises ``ScriptEnded``, which O5 records as
-    ``AdapterError`` and stops the run on. It returns no raw body (a recording is the evidence)."""
+    steps it will answer; a request for any other step raises ``RecordingMissing`` (nothing was recorded for it, as
+    for a recorded adapter), which O5 records as ``AdapterError`` and stops the run on. It returns no raw body (a recording is the evidence)."""
 
     ruling: Path | None = None
 
@@ -126,13 +128,24 @@ class ScriptAdapter:
         names = [tool.name for tool in request.tools]
         step_id = next(n for n in names if n.startswith("submit_")).removeprefix("submit_")
         if step_id not in self._answers:
-            raise ScriptEnded(f"no scripted answer for {step_id}")
+            raise RecordingMissing(invocation_digest, call_index)
         read_first = "read_inputs" in names and all(m.role != "tool" for m in request.messages)
         name = "read_inputs" if read_first else f"submit_{step_id}"
         arguments = {} if read_first else load_arguments(payload_for(step_id))
-        call = ToolCall(f"call-{invocation_digest[:12]}-{call_index}", name, arguments)
+        calls = [ToolCall(f"call-{invocation_digest[:12]}-{call_index}", name, arguments)]
+        if step_id in SEARCH_BEFORE and not read_first and call_index == 0:
+            # the frozen CP-1 context makes absence claims; the step needs the recorded searches
+            searches = [
+                ToolCall(
+                    f"call-{invocation_digest[:12]}-{call_index}-s{n}",
+                    "search_pack",
+                    {"query": query, "source_id": source_id},
+                )
+                for n, (source_id, query) in enumerate(SEARCHES)
+            ]
+            calls = [*searches, *calls]
         turn = Turn(
-            "", (call,), USAGE, "tool_use", MODEL.model, f"o2-{invocation_digest[:12]}", 200
+            "", tuple(calls), USAGE, "tool_use", MODEL.model, f"o2-{invocation_digest[:12]}", 200
         )
         line = {
             "invocation_digest": invocation_digest,

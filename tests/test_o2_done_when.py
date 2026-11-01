@@ -134,3 +134,61 @@ def test_stopped_run_fast(tmp_path: Path) -> None:
         authored_first.pop(key), first.pop(key)
     assert first == authored_first
     assert time.monotonic() - started < 300  # B16: under five minutes, no CP-1 promotion
+
+
+def test_end_to_end_offline(tmp_path: Path) -> None:
+    """The furthest honest walk: every step with a frozen payload (CP-0, CP-1 source_context) is
+    authored and replayed; the next step, CP-1 financials, has no frozen payload and no
+    recording, so both runs stop there. The settled walk with receipt and render waits on a user
+    decision about ``line:N`` support in vii ``live/tools.py`` (see ``blocker``)."""
+    authored = o2_case.author(
+        tmp_path / "authoring", answers=("source_readiness", "source_context")
+    )
+    replayed = o2_case.replay(tmp_path / "replay", authored.recordings)
+    for outcome in (authored.outcome, replayed):
+        assert outcome.outcome == "stopped"
+        assert outcome.stopped_reason is not None
+        assert outcome.stopped_reason.startswith("RecordingMissing: no recording for digest ")
+        assert outcome.run_id == o2_case.RUN_ID
+    assert replayed.stopped_reason == authored.outcome.stopped_reason
+    assert {p.name for p in replayed.run_dir.iterdir()} == STOPPED_SET
+    assert {p.name for p in authored.run_dir.iterdir()} == STOPPED_SET
+    records = records_of(replayed.run_dir)
+    assert [(r["module_id"], r["step_id"]) for r in records] == [
+        ("CP-0", "source_readiness"),
+        ("CP-1", "source_context"),
+        ("CP-1", "financials"),
+    ]
+    assert [c["name"] for c in records[1]["tool_calls"]] == [
+        "search_pack",
+        "search_pack",
+        "submit_source_context",
+    ]
+    assert [r["cost_status"] for r in records] == ["computed", "computed", "unknown"]
+    assert all(r["schema_version"] == "model-call/1" for r in records)
+    frozen = load_arguments(o2_case.payload_for("source_context"))
+    assert records[1]["tool_calls"][2]["arguments_sha256"] == arguments_sha256(frozen)
+    # the replay's calls.jsonl equals the authoring run's, field for field, apart from timing
+    expected = records_of(authored.run_dir)
+    for group in (records, expected):
+        for record in group:
+            for key in TIMESTAMPS:
+                record.pop(key)
+    # the one field that differs is a traceback's frames (adapter code); its final line is equal
+    assert [r["error"].splitlines()[-1] if r["error"] else None for r in records] == [
+        r["error"].splitlines()[-1] if r["error"] else None for r in expected
+    ]
+    for group in (records, expected):
+        for record in group:
+            record.pop("error")
+    assert records == expected
+    bodies = [
+        json.loads((d / "run.json").read_text()) for d in (authored.run_dir, replayed.run_dir)
+    ]
+    for body in bodies:  # the staged path of each source is under its own run directory
+        for entry in body["sources"]:
+            entry.pop("path")
+    assert bodies[0] == bodies[1]  # same case, run_id, sources, outcome and reason
+    assert set(bodies[1]) == OFFLINE_KEYS and bodies[1]["mode"] == "offline"
+    heads = {h.module_id: h.status for h in Execution(replayed.run_dir / "execution").read().heads}
+    assert heads == {"CP-0": "restricted"}  # CP-1 is open at financials: no head yet

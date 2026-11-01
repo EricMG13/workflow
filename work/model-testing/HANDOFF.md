@@ -163,5 +163,5 @@ Prerequisites before any live run:
 - Built and reviewed under SDD: Tasks 1-5 and 7-10 in `src/deploy_workflow/model_testing/` (configs, records, budget, cases, mapping, scoring, pathway, faults, report). Whole-branch review by mx-architect; fix wave 6315738e. Gates: 186 passed, 3 skipped (RUN_PROMOTION, deferred to CI); ruff, format and mypy strict all 0.
 - Deferred: Task 6 (mapping oracles, per landed context-plan phase, W3) and Task 11 (run driver, after O3/O4/O6 are merged).
 - Every ruling and deferred minor is in `work/model-testing/framework-build-ledger.md`.
-- Task 11 brief must carry: stop on any run folder without run.json (crashed live run); a refusal's named inputs come from O3; a good_run whose receipt plan is the full preset is needed for a real-scorer `passed=True` test; check refusal names against the case (I5).
+- Task 11 brief must carry: a user-filled settlement record for unknown charges (MANAGER ruling 2026-11-01); stop on any run folder without run.json (crashed live run); a refusal's named inputs come from O3; a good_run whose receipt plan is the full preset is needed for a real-scorer `passed=True` test; check refusal names against the case (I5).
 - Task 6 brief must carry: check `module_commits` keys against golden modules (Task 5 I-1).

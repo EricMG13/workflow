@@ -4,18 +4,24 @@ CONDITIONAL, the walk of ``tests/test_owner_refusals.py``). Fast: no model, no n
 import importlib
 import json
 from pathlib import Path
+from typing import Any
 
 import o2_case
 import pytest
+import test_method_cp3 as stage1
 from prompt_support import spec_of
 
-from deploy_vii.execution import Execution
+from deploy_vii.business_context import cp1_context_facts
+from deploy_vii.contracts import Fact
+from deploy_vii.execution import Execution, head_of
+from deploy_vii.live.context import module_context
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow import host
 from deploy_workflow.owner_workflow import OwnerBinding, OwnerWorkflow, StepSpec
 from deploy_workflow.prompts import NoPrompt, inventory, prompt_factory
 from deploy_workflow.prompts.compose import RunContextRefused
+from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.tools.source import SourceError
 
 compose_module = importlib.import_module("deploy_workflow.prompts.compose")
@@ -78,7 +84,7 @@ def test_the_repair_issues_reach_the_prompt(
     prompt_for = prompt_factory(pack, store)
     messages = prompt_for(walk.binding, walk.spec, ("fix the quote",))
     assert "<<<REPAIR id=prior-validation-issues" in messages[1].text
-    assert "- fix the quote" in messages[1].text
+    assert '- "fix the quote"' in messages[1].text
 
 
 def test_the_factory_prompt_equals_the_composer_of_the_same_request(
@@ -146,3 +152,120 @@ def test_the_pin_form_is_asked_only_for_an_enabled_module(
     monkeypatch.setattr(compose_module, "PINS_ENABLED", frozenset({"CP-0"}))
     on = prompt_factory(pack, store, pin_form=pin_form)(walk.binding, walk.spec, ())
     assert asked == ["CP-0"] and "13.37" in on[1].text
+
+
+def test_the_run_context_block_is_in_the_factory_prompt(
+    pack: PreparedPack, store: Execution, walk: OwnerWorkflow
+) -> None:
+    user = prompt_factory(pack, store)(walk.binding, walk.spec, ())[1].text
+    assert "<<<CONTEXT id=run-context sha256=" in user  # context_facts(pack) reached compose
+    assert '"run_type"' in user
+
+
+def cited(node: Any, out: set[tuple[str, str]]) -> None:
+    if isinstance(node, dict):
+        if isinstance(node.get("source_id"), str) and isinstance(node.get("locator"), str):
+            out.add((node["source_id"], node["locator"]))
+        for value in node.values():
+            cited(value, out)
+    elif isinstance(node, list):
+        for value in node:
+            cited(value, out)
+
+
+def test_p5a_a_cp0_payload_that_fits_the_offered_schema_is_accepted_by_the_validator(
+    pack: PreparedPack, store: Execution, walk: OwnerWorkflow, tmp_path: Path
+) -> None:
+    """The adversary's H1: the schema offered for submit_source_readiness must be one a valid CP-0
+    payload fits. Real OwnerWorkflow, the frozen o2 payload cut down to the offered properties."""
+    tools = tools_for(walk.binding, walk.spec)
+    offered = next(t for t in tools if t.name == "submit_source_readiness").parameters
+    payload = json.loads(o2_case.payload_for("source_readiness"))
+    # the strict schema requires every field; schema_version, which the frozen payload leaves to
+    # its default, is nullable there, and the prompt tells the model to write its literal
+    system = prompt_factory(pack, store)(walk.binding, walk.spec, ())[0].text
+    for key in set(offered["required"]) - set(payload):
+        literal = offered["properties"][key]["anyOf"][0]["enum"][0]
+        assert f'Write `{key}` as "{literal}", never null.' in system
+        payload[key] = literal
+    assert set(offered["required"]) <= set(payload)
+    assert set(payload) <= set(offered["properties"])  # nothing the schema forbids
+    assert payload["pack_sha256"] == pack.content_hash()  # what the prompt tells the model to copy
+    pairs: set[tuple[str, str]] = set()
+    cited(payload, pairs)
+    for source_id, locator in sorted(pairs):
+        line = int(locator.split(":")[1].split("-")[0])
+        walk.invoke("read_pages", {"source_id": source_id, "first_page": line, "last_page": line})
+    result = walk.submit_review(json.dumps(payload))
+    assert result["status"] == "valid", result.get("issues")
+    # and a payload without the field the offered schema requires is not one the model may send
+    short = {k: v for k, v in payload.items() if k != "pack_sha256"}
+    assert not set(offered["required"]) <= set(short)
+
+
+def seeded_store(root: Path, module: str, command_row: str) -> tuple[Execution, PreparedPack, Any]:
+    """Stage 1 fixture heads (hand-seeded, as tests/test_connect_cp3.py does), ``module`` begun."""
+    pack = stage1.make_pack("positive")
+    cp0 = stage1.make_cp0(pack, "positive")
+    command = Fact(
+        fact_id="run-consumer",
+        table_id="T8",
+        row_id=command_row,
+        field="exact_command",
+        label="Run consumer",
+        text=f"Run {command_row}",
+    )
+    heads = [cp0.model_copy(update={"facts": (*cp0.facts, command)}), stage1.make_cp1(pack)]
+    if module == "CP-3":
+        heads += [stage1.make_cp1a(pack, "positive", blocked=False), stage1.make_cp2(pack)]
+    store = Execution.create(root / "store", pack)
+    for head in heads:
+        store._store(head.model_dump_json())
+    store._write(store.read().model_copy(update={"heads": tuple(head_of(h) for h in heads)}))
+    return store, pack, store.begin(module)
+
+
+@pytest.fixture
+def listed_sources(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Hand-seeded heads are not verifiable producers, so ``session_sources`` would refuse them
+    (identity_mismatch); list the pack's sources instead. Only the source list is replaced."""
+    monkeypatch.setattr(
+        host,
+        "session_sources",
+        lambda store, ticket_id, step_id: tuple(s.source_id for s in store.pack().sources),
+    )
+
+
+def block_body(user: str, block_id: str) -> dict[str, Any]:
+    start = user.index(f"<<<CONTEXT id={block_id} ")
+    text = user[start:].split(">>>\n", 1)[1].split("\n<<<END>>>", 1)[0]
+    loaded: dict[str, Any] = json.loads(text)
+    return loaded
+
+
+def test_h2_cp3_embeds_exactly_the_module_context_of_the_store(
+    tmp_path: Path, listed_sources: None
+) -> None:
+    store, pack, attempt = seeded_store(tmp_path, "CP-3", "CP-3")
+    binding = OwnerBinding.model_construct(
+        step_id="relative_value", ticket_id=attempt.ticket_id, module_id="CP-3"
+    )
+    user = prompt_factory(pack, store)(binding, spec_of("relative_value"), ())[1].text
+    expected = module_context(store, attempt, "relative_value")
+    assert expected
+    body = block_body(user, "prepared-pack")
+    for key, value in expected.items():
+        assert body[key] == json.loads(json.dumps(value)), key
+
+
+def test_h2_cp1a_lists_the_facts_of_an_accepted_cp1(tmp_path: Path, listed_sources: None) -> None:
+    store, pack, attempt = seeded_store(tmp_path, "CP-1A", "CP-1A")
+    binding = OwnerBinding.model_construct(
+        step_id="business_context", ticket_id=attempt.ticket_id, module_id="CP-1A"
+    )
+    user = prompt_factory(pack, store)(binding, spec_of("business_context"), ())[1].text
+    facts = cp1_context_facts(store, attempt)
+    assert facts
+    listed = block_body(user, "prepared-pack")["cp1_facts"]
+    assert [row["ref"] for row in listed] == [f.fact_id for f in facts]
+    assert "CP-1 is not accepted in this journal" not in user

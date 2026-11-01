@@ -9,6 +9,7 @@ stops with a recorded reason (``run_pathway._FAULTS``) instead of a crash (O6-P2
 import hashlib
 import json
 import re
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -33,9 +34,8 @@ _MARKERS = (*DELIMITERS, UNTRUSTED_OPEN, "<<<END")
 # line break.
 _FIELD = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:+/-]*")
 _HASH = re.compile(r"[0-9a-f]{64}")
-_FORGED_LINE = re.compile(r"\s*<<<")
-# Defence in depth: any ``<<<`` opener followed by a capital, wherever it stands in a line.
-_ANY_OPENER = re.compile(r"<<<[A-Z]")
+# O6-P17: any ``<<<``, in any case and anywhere, in the normalised copy.
+_OPENER = "<<<"
 
 
 class FenceError(PromptError):
@@ -53,17 +53,23 @@ class UntrustedItem:
     text: str
 
 
+def _normalised(body: str) -> str:
+    """The copy detection runs on (never emitted): NFKC folds fullwidth and other compatibility
+    forms of ``<``, and format characters (Unicode Cf: zero-width, BOM, word joiner) that would
+    split a marker are removed."""
+
+    def strip(text: str) -> str:
+        return "".join(c for c in text if unicodedata.category(c) != "Cf")
+
+    return strip(unicodedata.normalize("NFKC", strip(body)))
+
+
 def _refuse_markers(label: str, body: str) -> None:
     for marker in _MARKERS:
         if marker in body:
             raise FenceError(f"{label} contains the reserved delimiter {marker}")
-    if _ANY_OPENER.search(body):
-        raise FenceError(f"{label} holds a block opener")
-    # str.splitlines also breaks on \r, \x0b, \x0c, \x1c-\x1e, \x85,   and  , so a header
-    # forged after any of them is caught as a line of its own.
-    for line in body.splitlines():
-        if _FORGED_LINE.match(line):
-            raise FenceError(f"{label} has a line that starts like a block header")
+    if _OPENER in _normalised(body):
+        raise FenceError(f"{label} holds a block opener or a lookalike of one")
 
 
 def _field(label: str, value: str, pattern: re.Pattern[str]) -> str:

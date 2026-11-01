@@ -9,6 +9,7 @@ the parts tools to ``financials``. Here a step gets ``search_pack`` and ``read_p
 
 from pydantic import BaseModel
 
+from deploy_vii.live.prompts import PromptError
 from deploy_vii.live.schema import strict_schema
 from deploy_vii.live.submission import STEPS
 from deploy_vii.live.tools import EXTRACT, READ, SEARCH, extract_spec, submit_name, tool_specs
@@ -20,8 +21,14 @@ __all__ = ["model_schema", "tool_names", "tools_for"]
 
 
 def model_schema(spec: StepSpec) -> type[BaseModel]:
-    """The schema the model is shown and submits against: the live step's (what the journal
-    normalises a payload against), else the spec's (the ``_fill`` rule)."""
+    """The schema the model is shown and submits against: the one the step's validator parses
+    (O6-P5a). ``source_readiness`` is ``spec.schema`` (``ReadinessReview``, with ``pack_sha256``):
+    CP-0 skips ``_fill`` (``financial_workflow._filled`` returns its payload unchanged and
+    ``cp0_workflow`` parses it as ``ReadinessReview``), so a schema without the field could never
+    pass. Any other live step is the live schema (what ``_fill`` normalises against), else the
+    spec's."""
+    if spec.step_id == "source_readiness":
+        return spec.schema
     live = STEPS.get(spec.step_id)
     return live.schema if live is not None else spec.schema
 
@@ -37,7 +44,7 @@ def tool_names(spec: StepSpec) -> tuple[str, ...]:
 
 def tools_for(binding: OwnerBinding, spec: StepSpec) -> tuple[ToolSpec, ...]:
     if binding.step_id != spec.step_id:
-        raise ValueError(f"binding is for step {binding.step_id}, spec for {spec.step_id}")
+        raise PromptError(f"binding is for step {binding.step_id}, spec for {spec.step_id}")
     # search_pack and read_pages are the live tools' own specs, taken by name so the owner path
     # and the live path cannot describe them differently.
     pack = {

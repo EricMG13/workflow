@@ -2,8 +2,10 @@
 
 import pytest
 
+from deploy_vii.live.prompts import PromptError
 from deploy_vii.live.schema import strict_schema
 from deploy_vii.live.submission import STEPS
+from deploy_vii.readiness import ReadinessReview
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerBinding, StepSpec
 from deploy_workflow.prompts import inventory
 from deploy_workflow.prompts.tools import model_schema, tools_for
@@ -38,12 +40,19 @@ def test_the_submit_tool_carries_the_strict_model_schema(module_id: str, spec: S
     assert dict(submit.parameters) == strict_schema(model_schema(spec))
 
 
+def test_p5a_the_cp0_schema_is_the_one_its_validator_parses() -> None:
+    """CP-0 does not go through ``_fill``: its validator parses ``ReadinessReview``, which holds
+    ``pack_sha256``; the strict submit schema must allow it and require it."""
+    spec = next(s for o in OWNER_SPECS.values() for s in o.steps if s.step_id == "source_readiness")
+    assert model_schema(spec) is ReadinessReview
+    submit = tools_for(binding_of("source_readiness"), spec)[-1]
+    assert "pack_sha256" in submit.parameters["properties"]
+    assert "pack_sha256" in submit.parameters["required"]
+
+
 def test_the_model_schema_is_the_live_one_for_a_live_step_else_the_spec_one() -> None:
-    readiness = next(
-        s for o in OWNER_SPECS.values() for s in o.steps if s.step_id == "source_readiness"
-    )
-    assert model_schema(readiness) is STEPS["source_readiness"].schema
-    assert model_schema(readiness) is not readiness.schema  # the spec adds pack_sha256 (O6-P5)
+    narrative = next(s for o in OWNER_SPECS.values() for s in o.steps if s.step_id == "narrative")
+    assert model_schema(narrative) is STEPS["narrative"].schema
     research = next(s for o in OWNER_SPECS.values() for s in o.steps if s.step_id == "research")
     assert "research" not in STEPS
     assert model_schema(research) is research.schema
@@ -57,7 +66,7 @@ def test_financials_gets_the_whole_object_submit_and_extraction() -> None:
 
 def test_a_binding_for_another_step_is_refused() -> None:
     spec = next(s for o in OWNER_SPECS.values() for s in o.steps if s.step_id == "narrative")
-    with pytest.raises(ValueError, match="narrative"):
+    with pytest.raises(PromptError, match="narrative"):
         tools_for(binding_of("quality"), spec)
 
 

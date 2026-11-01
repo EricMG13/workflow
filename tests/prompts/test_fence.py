@@ -9,6 +9,7 @@ from hypothesis import strategies as st
 from probes.injection_cases import (
     INERT_BODIES,
     LINE_START_BODIES,
+    LOOKALIKE_BODIES,
     MARKER_BODIES,
     QUESTION_INJECTION,
 )
@@ -184,3 +185,20 @@ def test_property_a_question_is_either_refused_or_a_json_value_of_the_whitelist(
     assert set(body) == {"note", "run_type", "research_questions"}
     assert body["research_questions"][0]["text"] == text  # not escaped, truncated or altered
     assert "\n" not in inner  # one JSON line: no line of the question can start a header
+
+
+@pytest.mark.parametrize("name", sorted(LOOKALIKE_BODIES))
+def test_p17_a_lookalike_closer_or_header_is_refused_in_evidence(name: str) -> None:
+    with pytest.raises(FenceError):
+        untrusted_evidence_block((item(LOOKALIKE_BODIES[name]),))
+
+
+@pytest.mark.parametrize("name", sorted(LOOKALIKE_BODIES))
+def test_p17_a_lookalike_closer_or_header_is_refused_in_a_repair_body(name: str) -> None:
+    with pytest.raises(FenceError):
+        data_block("REPAIR", "prior-validation-issues", LOOKALIKE_BODIES[name])
+
+
+def test_p17_a_body_with_a_harmless_format_character_is_unchanged() -> None:
+    text = "Net debt\u200b fell.\nSecond line."
+    assert text in untrusted_evidence_block((item(text),))  # detection is on a copy only

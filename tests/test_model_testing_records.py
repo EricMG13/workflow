@@ -232,3 +232,98 @@ def test_bad_run_json_never_echoes_input(tmp_path: Path) -> None:
     with pytest.raises(JournalError) as e:
         read_run(tmp_path)
     assert "abcdef123456" not in str(e.value)
+
+
+KEYFIELD = "sk-proj-abcdef123456"
+
+
+def test_extra_key_name_never_echoed_in_journal(tmp_path: Path) -> None:
+    body = json.loads(record().model_dump_json())
+    body[KEYFIELD] = 1
+    p = tmp_path / "c.jsonl"
+    p.write_text(json.dumps(body) + "\n")
+    with pytest.raises(JournalError) as e:
+        read_journal(p)
+    assert "abcdef123456" not in str(e.value)
+    assert "unexpected field" in str(e.value)
+
+
+def test_extra_tool_call_key_never_echoed(tmp_path: Path) -> None:
+    body = json.loads(record().model_dump_json())
+    body["tool_calls"] = [
+        {
+            "name": "n",
+            "arguments_sha256": "b" * 64,
+            "result_bytes": 1,
+            "refusal_code": None,
+            KEYFIELD: 1,
+        }
+    ]
+    p = tmp_path / "c.jsonl"
+    p.write_text(json.dumps(body) + "\n")
+    with pytest.raises(JournalError) as e:
+        read_journal(p)
+    assert "abcdef123456" not in str(e.value)
+
+
+def test_extra_key_name_never_echoed_in_run_json(tmp_path: Path) -> None:
+    write_run(tmp_path, **{KEYFIELD: 1})
+    with pytest.raises(JournalError) as e:
+        read_run(tmp_path)
+    assert "abcdef123456" not in str(e.value)
+
+
+def test_non_utf8_journal(tmp_path: Path) -> None:
+    p = tmp_path / "c.jsonl"
+    p.write_bytes(record().model_dump_json().encode() + b"\n" + b"\xff sk-proj-abcdef123456\n")
+    with pytest.raises(JournalError, match="line 2: not UTF-8") as e:
+        read_journal(p)
+    assert "abcdef123456" not in str(e.value)
+    assert e.value.__context__ is None and e.value.__cause__ is None
+
+
+def test_non_utf8_run_json(tmp_path: Path) -> None:
+    (tmp_path / "run.json").write_bytes(b"\xff sk-proj-abcdef123456")
+    with pytest.raises(JournalError, match="run.json: not UTF-8") as e:
+        read_run(tmp_path)
+    assert "abcdef123456" not in str(e.value)
+    assert e.value.__context__ is None and e.value.__cause__ is None
+
+
+def test_run_json_key_material_refused(tmp_path: Path) -> None:
+    write_run(tmp_path, outcome="stopped", stopped_reason="401 invalid key sk-proj-abcdef123456")
+    with pytest.raises(JournalError, match="key material") as e:
+        read_run(tmp_path)
+    assert "abcdef123456" not in str(e.value)
+
+
+def test_calls_not_a_file_refused(tmp_path: Path) -> None:
+    write_run(tmp_path)
+    (tmp_path / "calls.jsonl").mkdir()
+    with pytest.raises(JournalError, match="not a regular file"):
+        read_run(tmp_path)
+
+
+def test_calls_dangling_symlink_refused(tmp_path: Path) -> None:
+    write_run(tmp_path)
+    (tmp_path / "calls.jsonl").symlink_to(tmp_path / "nowhere")
+    with pytest.raises(JournalError, match="not a regular file"):
+        read_run(tmp_path)
+
+
+def test_errors_carry_no_context(tmp_path: Path) -> None:
+    p = write_raw(tmp_path / "c.jsonl", error="sk-proj-abcdef123456")
+    with pytest.raises(JournalError) as e:
+        read_journal(p)
+    assert e.value.__context__ is None and e.value.__cause__ is None
+    write_run(tmp_path, mode="bogus")
+    with pytest.raises(JournalError) as e2:
+        read_run(tmp_path)
+    assert e2.value.__context__ is None and e2.value.__cause__ is None
+
+
+@pytest.mark.parametrize("cap", ["-1", "0", "NaN", "Infinity"])
+def test_cap_usd_must_be_positive_finite(tmp_path: Path, cap: str) -> None:
+    write_run(tmp_path, cap_usd=cap)
+    with pytest.raises(JournalError, match="cap_usd"):
+        read_run(tmp_path)

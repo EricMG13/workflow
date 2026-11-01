@@ -10,10 +10,11 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
-from pydantic import ValidationError, model_validator
+from pydantic import ConfigDict, ValidationError, model_validator
 
 from deploy_vii.contracts import Contract, PathwayId
-from deploy_workflow.model.record import CallRecord
+from deploy_workflow.model.record import CallRecord, _strings
+from deploy_workflow.model.redact import KEY_PATTERN
 from deploy_workflow.model_testing.configs import CONFIGS
 
 
@@ -22,6 +23,8 @@ class JournalError(ValueError):
 
 
 class RunSource(Contract):
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     source_id: str
     path: str
     sha256: str
@@ -30,6 +33,8 @@ class RunSource(Contract):
 
 
 class RunMeta(Contract):
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     case_id: str
     pathway: PathwayId
     config_id: str
@@ -47,6 +52,11 @@ class RunMeta(Contract):
 
     @model_validator(mode="after")
     def _checked(self) -> RunMeta:
+        if not (self.cap_usd.is_finite() and self.cap_usd > 0):
+            raise ValueError("cap_usd must be a finite amount above zero")
+        for text in _strings(self.model_dump(mode="json")):
+            if KEY_PATTERN.search(text):
+                raise ValueError("a run.json field holds key material")  # never the value
         ruling = (self.ruling_path, self.ruling_sha256, self.ruling_date)
         if (self.mode == "live") != all(v is not None for v in ruling) or (
             self.mode != "live" and any(v is not None for v in ruling)
@@ -58,21 +68,40 @@ class RunMeta(Contract):
 
 
 def _messages(error: ValidationError) -> str:
+    """Locations and messages only; an input-supplied key name never appears."""
     found = error.errors(include_input=False, include_url=False, include_context=False)
-    return "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in found)
+    parts = []
+    for e in found:
+        loc = [str(x) for x in e["loc"]]
+        if e["type"] == "extra_forbidden" and loc:
+            loc[-1] = "unexpected field"
+        parts.append(f"{'.'.join(loc)}: {e['msg']}")
+    return KEY_PATTERN.sub("[redacted]", "; ".join(parts))
+
+
+def _check(where: str, line: bytes) -> tuple[CallRecord | None, str]:
+    """Parse one journal line; return the record or the refusal text (raised by the caller
+    outside any except block so no input-bearing exception stays as context)."""
+    try:
+        text = line.decode("utf-8")
+    except UnicodeDecodeError:
+        return None, f"{where}: not UTF-8"
+    if not text.strip():
+        return None, f"{where}: blank line"
+    try:
+        return CallRecord.model_validate_json(text), ""
+    except ValidationError as error:
+        return None, f"{where}: {_messages(error)}"
 
 
 def read_journal(path: Path) -> tuple[CallRecord, ...]:
     records: list[CallRecord] = []
     seen: set[tuple[str, str, str, int, int]] = set()
-    for number, line in enumerate(path.read_text().splitlines(), start=1):
+    for number, line in enumerate(path.read_bytes().splitlines(), start=1):
         where = f"{path.name} line {number}"
-        if not line.strip():
-            raise JournalError(f"{where}: blank line")
-        try:
-            record = CallRecord.model_validate_json(line)
-        except ValidationError as error:
-            raise JournalError(f"{where}: {_messages(error)}") from None
+        record, refusal = _check(where, line)
+        if record is None:
+            raise JournalError(refusal)
         config = CONFIGS.get(record.config_id)
         if config is None:
             raise JournalError(f"{where}: unknown config_id {record.config_id}")
@@ -86,16 +115,31 @@ def read_journal(path: Path) -> tuple[CallRecord, ...]:
     return tuple(records)
 
 
+def _read_meta(run_json: Path) -> tuple[RunMeta | None, str]:
+    try:
+        text = run_json.read_bytes().decode("utf-8")
+    except UnicodeDecodeError:
+        return None, "run.json: not UTF-8"
+    try:
+        return RunMeta.model_validate_json(text), ""
+    except ValidationError as error:
+        return None, f"run.json: {_messages(error)}"
+
+
 def read_run(run_dir: Path) -> tuple[RunMeta, tuple[CallRecord, ...]]:
     run_json = run_dir / "run.json"
     if not run_json.is_file():
         raise JournalError(f"no run.json in {run_dir}: the run was refused or crashed")
-    try:
-        meta = RunMeta.model_validate_json(run_json.read_text())
-    except ValidationError as error:
-        raise JournalError(f"run.json: {_messages(error)}") from None
+    meta, refusal = _read_meta(run_json)
+    if meta is None:
+        raise JournalError(refusal)
     calls = run_dir / "calls.jsonl"
-    records = read_journal(calls) if calls.is_file() else ()
+    if calls.is_symlink() or calls.exists():
+        if not calls.is_file():
+            raise JournalError("calls.jsonl is not a regular file")
+        records = read_journal(calls)
+    else:
+        records = ()
     for number, record in enumerate(records, start=1):
         for field in ("run_id", "case_id", "pathway", "config_id"):
             if getattr(record, field) != getattr(meta, field):

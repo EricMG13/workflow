@@ -1916,6 +1916,15 @@
       "sha256": "40414baabed9af60874c4cf0c9c5bab1d39f133c69c88d8fa66f8f75c8945202",
       "reason": "B22: read_pages, extract_statements (line:N-M ranges) and seen_tables accept the line:N spans of a prepared text pack; page:N unchanged",
       "review": "work/context-plan/reviews/b22-tools-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/live/tools.py",
+      "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "prior_project_sha256": "40414baabed9af60874c4cf0c9c5bab1d39f133c69c88d8fa66f8f75c8945202",
+      "project_commit": "fa95b8349605016d328a4d40c746f24971e867dd",
+      "sha256": "a5451e47977f7f57d56c3563dfa7e1ef7f9eef24d59d668b90ea5295aaac3ece",
+      "reason": "B22 Lows: docstrings",
+      "review": "work/context-plan/reviews/b22-tools-review.md"
     }
   ],
   "local_patch_lineage": [

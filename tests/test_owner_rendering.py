@@ -3618,7 +3618,7 @@ def test_run_context_alias_separator_and_mark_format_come_from_the_key() -> None
     assert re.fullmatch(r"user-supplied \(context source, line \d+\)", aliases["mark"])
 
 
-def test_empty_optional_fields_section_has_cp0_and_cp1_groups_only() -> None:
+def test_run_context_empty_optional_fields_section_has_cp0_and_cp1_groups_only() -> None:
     section = _section("ctx-research")
     assert _marked_rows(section) == RENDER_KEY["rows"]["ctx-research"]
     assert re.findall(r'<h3 data-group="([^"]*)">', section) == ["CP-0", "CP-1"]
@@ -3627,13 +3627,13 @@ def test_empty_optional_fields_section_has_cp0_and_cp1_groups_only() -> None:
     assert "borrower_name_mismatch" not in section
 
 
-def test_mismatch_prints_gap_and_leaves_the_gate_word() -> None:
+def test_run_context_mismatch_prints_gap_and_leaves_the_gate_word() -> None:
     section = _section("ctx-b-mismatch")
     assert html_lib.escape(RENDER_KEY["ctx-b-mismatch_gap_text"]) in section
     assert f">{GATE['identity_gate']}<" in section
 
 
-def test_match_prints_match_and_no_gap() -> None:
+def test_run_context_match_prints_match_and_no_gap() -> None:
     for name in ("ctx-b-match", "ctx-b-punct"):
         section = _section(name)
         assert ">match<" in section and "borrower_name_mismatch" not in section
@@ -3653,17 +3653,89 @@ def test_run_context_html_is_escaped() -> None:
     assert "&lt;script&gt;x&lt;/script&gt;" in section
 
 
-def test_run_context_mark_line_is_the_line_of_the_key_in_the_source() -> None:
-    context, spans = _ctx_source("ctx-b-match")
-    rows = {
-        r["key"]: r["mark"] for r in _marked_rows(g2.run_context_section(context, spans, GATE, []))
+def _key_token_line(text: str, key: str) -> int:
+    """`#render/mark_format`: the 1-based line of the row's key, found as the `"key":` token
+    inside the `identity` object (a value spelled like the key has no colon after it)."""
+    found = re.compile(rf'"{key}"\s*:').search(text, text.index('"identity"'))
+    assert found is not None
+    return text.count("\n", 0, found.start()) + 1
+
+
+def _identity_text(**update: Any) -> dict[str, Any]:
+    obj: dict[str, Any] = json.loads(
+        (IDP / "contexts" / "ctx-b-match.json").read_text(encoding="utf-8")
+    )
+    obj["identity"].update(update)
+    return obj
+
+
+def _layouts(obj: dict[str, Any]) -> dict[str, str]:
+    pretty = json.dumps(obj, indent=2)
+    inline = json.dumps(obj["identity"])
+    nested = json.dumps(obj["identity"], indent=2).replace("\n", "\n  ")
+    return {
+        "indent2": pretty + "\n",
+        "indent4": json.dumps(obj, indent=4) + "\n",
+        "tabs": json.dumps(obj, indent="\t") + "\n",
+        "crlf": pretty.replace("\n", "\r\n"),
+        "minified": json.dumps(obj, separators=(",", ":")),
+        "identity_inline": pretty.replace(nested, inline),
+        "space_before_colon": pretty.replace('"sector":', '"sector" :'),
     }
-    for key, mark in rows.items():
-        line = int(re.search(r"line (\d+)", mark).group(1))  # type: ignore[union-attr]
-        assert spans[line - 1].text.lstrip().startswith(f'"{key}"')
 
 
-def test_t42_adapter_maps_str_none_and_tuple_role_cells_to_tuples() -> None:
+def _section_of_text(text: str) -> tuple[str, int]:
+    from deploy_vii.contracts import Span
+    from deploy_workflow.context import load_context
+
+    spans = tuple(
+        Span(locator=f"line:{i}", text=line) for i, line in enumerate(text.splitlines(), 1)
+    )
+    context = load_context("\n".join(s.text for s in spans).encode("utf-8"))
+    return g2.run_context_section(context, spans, GATE, []), len(spans)
+
+
+@pytest.mark.parametrize(
+    "update",
+    [
+        {},
+        {"aliases": ["sector", "NBG"]},
+        {"aliases": ["Northbridge", "sponsor"]},
+        {"guarantors": ["aliases"]},
+        {"aliases": ["borrower_name", "NBG"]},
+    ],
+)
+def test_run_context_mark_line_is_the_key_line_in_every_layout(update: dict[str, Any]) -> None:
+    for name, text in _layouts(_identity_text(**update)).items():
+        section, _ = _section_of_text(text)
+        rows = _marked_rows(section)
+        assert [r["key"] for r in rows] == ["borrower_name", "aliases", "sector", "sponsor"], name
+        for row in rows:
+            match = re.fullmatch(r"user-supplied \(context source, line (\d+)\)", row["mark"])
+            assert match is not None, name
+            assert int(match.group(1)) == _key_token_line(text, row["key"]), (name, row["key"])
+    _, lines = _section_of_text(_layouts(_identity_text())["minified"])
+    assert lines == 1
+
+
+def test_run_context_control_characters_are_visible_escapes() -> None:
+    section = _section(
+        "ctx-b-match",
+        update={"sector": "a\u202eb\u0000c\u2066", "sponsor": "Fictional Partners"},
+    )
+    for raw in ("\u202e", "\u0000", "\u2066"):
+        assert raw not in section
+    assert "a\\u202Eb\\u0000c\\u2066" in section
+    assert _marked_rows(_section("ctx-b-match")) == RENDER_KEY["rows"]["ctx-b-match"]
+
+
+def test_run_context_issuer_row_needs_the_cp0_head() -> None:
+    section = _section("ctx-research", cp0={})
+    assert 'data-group="CP-0"' not in section and GATE["issuer"] not in section
+    assert re.findall(r'<h3 data-group="([^"]*)">', section) == ["CP-1"]
+
+
+def test_run_context_t42_adapter_maps_str_none_and_tuple_role_cells_to_tuples() -> None:
     def fact(row: str, field: str, text: str | None) -> Fact:
         return Fact(
             fact_id=f"T4.2.{row}.{field}",
@@ -3701,7 +3773,7 @@ _PROMOTION = pytest.mark.skipif(
 def _context_delivery(tmp_path: Path, context_name: str | None) -> tuple[Path, Path, Path, Path]:
     builder = getattr(importlib.import_module("s1a_runs"), "s1a_closed_with_context", None)
     if builder is None:
-        pytest.skip("pack-B context delivery builder (P2-P13, Task 6) is not built")
+        pytest.skip("Phase 2 Task 6 fixture pending (P2-P13)")
     store, receipt, model = builder("positive", tmp_path / "run", context_name)
     _, destination = _render_ok(tmp_path, store, receipt, model)
     return store, receipt, model, destination
@@ -3728,10 +3800,17 @@ def test_mismatch_prints_gap(tmp_path: Path) -> None:
 
 @_PROMOTION
 def test_no_context_page_bytes_unchanged(tmp_path: Path) -> None:
-    *_, destination = _context_delivery(tmp_path, None)
-    text = (destination / "report.html").read_text(encoding="utf-8")
-    assert "run-context" not in text
-    assert text.count(BANNER_ANCHOR + '<section id="delivery-scope-banner"') == 1
+    """`#render/no_context_source`: page bytes equal today's delivery bytes. The expected page is
+    core `render(view)` with only the lease-literal banner inserted; nothing here calls
+    `run_context_section`."""
+    store, _r, _m, destination = _context_delivery(tmp_path, None)
+    scope = g2.DELIVERY_SCOPES["s1a-credit-snapshot"]
+    banner = (
+        '<section id="delivery-scope-banner" class="banner" role="note" '
+        f'data-delivery-scope="{scope.scope_id}">{html_lib.escape(scope.banner["complete"])}</section>'
+    )
+    expected = render(Execution(store).view()).replace(BANNER_ANCHOR, BANNER_ANCHOR + banner, 1)
+    assert (destination / "report.html").read_bytes() == expected.encode("utf-8")
 
 
 @_PROMOTION
@@ -3743,3 +3822,207 @@ def test_edited_section_fails_verify(tmp_path: Path) -> None:
     page.write_bytes(raw[:at] + raw[at:].replace(b"Northbridge", b"Northbridgf", 1))
     with pytest.raises(ValueError, match=r"^owner_render_delivery$"):
         g2.verify_owner_rendered_slice(store, receipt, model, destination)
+
+
+# ---------------------------------------------------------------------------------------------
+# Fast verifier-path evidence for the run-context section (Phase 2 Task 5 fix 1). A real prepared
+# pack (with or without the `context` source) sits in a real Execution store and is driven through
+# the real `_capture`, `render_owner_slice` and `_verify_directory`. Only these steps are patched,
+# because each needs a closed owner run that no fast test can build, and none is touched by the
+# section: `_parse_receipt` (a stand-in receipt carrying the store's own hashes),
+# `verify_owner_run_receipt` (no-op), `_outcome_rules` (returns "complete") and `_sections` (the
+# block-proof rule refuses an idle view). No module has a head, so every module is idle.
+# ---------------------------------------------------------------------------------------------
+
+_S1A_MODULES = ("CP-1", "CP-MODEL", "CP-1A", "CP-2")
+_CTX_BYTES = (IDP / "contexts" / "ctx-b-match.json").read_bytes()
+_SIM_RUN = Run(
+    run_id="p2t5-sim",
+    issuer_id="northbridge-synthetic",
+    issuer_name="Northbridge Synthetic Group",
+    as_of=date(2026, 1, 10),
+    case_kind="synthetic",
+    pathway="credit_snapshot",
+    requested_modules=_S1A_MODULES,
+)
+
+
+def _sim_store(
+    root: Path, context: bytes | None, run: Run = _SIM_RUN, *, missing: bool = False
+) -> tuple[Path, Path]:
+    from deploy_vii.preparation import PreparationRequest, SourceRequest, prepare
+
+    src = root / "src"
+    src.mkdir(parents=True)
+    (src / "b.txt").write_text("borrower text\n")
+    sources = [SourceRequest(source_id="business", path="b.txt", media_type="text/plain")]
+    if context is not None and not missing:
+        (src / "context.json").write_bytes(context)
+    if context is not None or missing:
+        sources.append(
+            SourceRequest(source_id="context", path="context.json", media_type="text/plain")
+        )
+    pack = prepare(PreparationRequest(run=run, sources=tuple(sources)), src, root / "prepared")
+    Execution.create(root / "store", pack)
+    (root / "owner-run.json").write_bytes(b"{}")
+    return root / "store", root / "owner-run.json"
+
+
+def _sim_patch(monkeypatch: pytest.MonkeyPatch, store_dir: Path) -> None:
+    store = Execution(store_dir)
+    snap = store.read()
+    pack = store.pack(snap)
+    receipt = SimpleNamespace(
+        run=pack.run,
+        refusals=(),
+        model=None,
+        snapshot_sha256=snap.content_hash(),
+        pack_sha256=pack.content_hash(),
+        heads=[],
+        plan=(),
+        content_hash=lambda: "0" * 64,
+    )
+    monkeypatch.setattr(g2, "_parse_receipt", lambda raw: receipt)
+    monkeypatch.setattr(g2, "verify_owner_run_receipt", lambda *a, **k: None)
+    monkeypatch.setattr(g2, "_outcome_rules", lambda r, s, h: "complete")
+    monkeypatch.setattr(g2, "_sections", lambda *a: ())
+
+
+def _sim_render(
+    monkeypatch: pytest.MonkeyPatch, root: Path, context: bytes | None
+) -> tuple[Path, Path, Path]:
+    store, receipt = _sim_store(root, context)
+    _sim_patch(monkeypatch, store)
+    destination = root / "delivery"
+    g2.render_owner_slice(store, receipt, None, destination)
+    return store, receipt, destination
+
+
+def _sim_refusal(
+    monkeypatch: pytest.MonkeyPatch, root: Path, store: Path, receipt: Path
+) -> tuple[str, Path]:
+    _sim_patch(monkeypatch, store)
+    destination = root / "out" / "delivery"
+    destination.parent.mkdir()
+    with pytest.raises(ValueError) as caught:
+        g2.render_owner_slice(store, receipt, None, destination)
+    assert not destination.exists() and not list(destination.parent.glob(".owner-render-*"))
+    return str(caught.value), destination
+
+
+def test_run_context_minified_context_renders_the_section(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    minified = json.dumps(json.loads(_CTX_BYTES), separators=(",", ":")).encode()
+    _, _, destination = _sim_render(monkeypatch, tmp_path, minified)
+    rows = _marked_rows((destination / "report.html").read_text(encoding="utf-8"))
+    assert {r["key"]: r["mark"] for r in rows} == {
+        k: "user-supplied (context source, line 1)"
+        for k in ("borrower_name", "aliases", "sector", "sponsor")
+    }
+
+
+def test_run_context_refused_context_is_owner_render_context(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    other = _SIM_RUN.model_copy(update={"issuer_name": "Other Group"})
+    cases = {
+        "missing": (None, _SIM_RUN, True),
+        "notjson": (b"{ this is not json\n", _SIM_RUN, False),
+        "schema": (_CTX_BYTES.replace(b'"context/1"', b'"context/9"'), _SIM_RUN, False),
+        "issuer": (_CTX_BYTES, other, False),
+    }
+    for name, (context, run, missing) in cases.items():
+        root = tmp_path / name
+        store, receipt = _sim_store(
+            root, context if context is not None else b"x", run, missing=missing
+        )
+        code, _ = _sim_refusal(monkeypatch, root, store, receipt)
+        assert code == "owner_render_context", name
+
+
+def test_run_context_tampered_span_is_a_store_refusal_not_a_context_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, receipt = _sim_store(tmp_path, _CTX_BYTES)
+    _sim_patch(monkeypatch, store)
+    tampered = False
+    for blob in sorted((store / "blobs").iterdir()):
+        raw = blob.read_bytes()
+        if b"Northbridge Holdings LLC" in raw:
+            blob.chmod(0o644)
+            blob.write_bytes(raw.replace(b"Northbridge Holdings LLC", b"Southbridge Holdings LLC"))
+            tampered = True
+    assert tampered
+    with pytest.raises(ValueError, match=r"^owner_render_store$"):
+        g2._capture(store, receipt, None)
+
+
+@pytest.mark.parametrize("error", [RuntimeError("boom"), ValueError("plain"), KeyError("k")])
+def test_run_context_other_errors_are_not_relabelled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    store, receipt = _sim_store(tmp_path, _CTX_BYTES)
+    _sim_patch(monkeypatch, store)
+
+    def raiser(pack: Any) -> None:
+        raise error
+
+    monkeypatch.setattr(g2, "context_facts", raiser)
+    with pytest.raises(type(error)) as caught:
+        g2._capture(store, receipt, None)
+    assert caught.value is error
+
+
+def test_run_context_verifier_refuses_every_tamper_of_the_section(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    section = re.compile(rb'<section id="run-context".*?</section>', re.DOTALL)
+    cs, cr, cd = _sim_render(monkeypatch, tmp_path / "ctx", _CTX_BYTES)
+    ns, nr, nd = _sim_render(monkeypatch, tmp_path / "noctx", None)
+    page = (cd / "report.html").read_bytes()
+    assert b'<section id="run-context"' not in (nd / "report.html").read_bytes()
+    _sim_patch(monkeypatch, cs)
+    g2.verify_owner_rendered_slice(cs, cr, None, cd)
+    _sim_patch(monkeypatch, ns)
+    g2.verify_owner_rendered_slice(ns, nr, None, nd)
+    found = section.search(page)
+    assert found is not None
+    edits: dict[str, tuple[Path, Path, Path, Callable[[bytes], bytes]]] = {
+        "edit": (
+            cd,
+            cs,
+            cr,
+            lambda b: b.replace(
+                b"Northbridge Holdings LLC</span> <span",
+                b"Northbridgf Holdings LLC</span> <span",
+                1,
+            ),
+        ),
+        "mark": (cd, cs, cr, lambda b: b.replace(b"line 15)", b"line 16)", 1)),
+        "removed": (cd, cs, cr, lambda b: section.sub(b"", b, count=1)),
+        "added": (
+            nd,
+            ns,
+            nr,
+            lambda b: b.replace(b"</section>", b"</section>" + found.group(0), 1),
+        ),
+    }
+    for name, (destination, store, receipt, edit) in edits.items():
+        for fix_digest in (False, True):
+            copy = destination.parent / f"{name}-{fix_digest}"
+            shutil.copytree(destination, copy)
+            tampered = edit((copy / "report.html").read_bytes())
+            assert tampered != (destination / "report.html").read_bytes(), name
+            (copy / "report.html").write_bytes(tampered)
+            if fix_digest:
+                wire = json.loads((copy / g2.RECEIPT_NAME).read_bytes())
+                wire["files"]["report.html"] = hashlib.sha256(tampered).hexdigest()
+                (copy / g2.RECEIPT_NAME).write_bytes(
+                    json.dumps(
+                        wire, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+                    ).encode()
+                )
+            _sim_patch(monkeypatch, store)
+            with pytest.raises(ValueError, match=r"^owner_render_delivery$"):
+                g2.verify_owner_rendered_slice(store, receipt, None, copy)

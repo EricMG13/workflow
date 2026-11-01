@@ -19,9 +19,11 @@ import hashlib
 import json
 import logging
 import os
+import re
 import shutil
 import stat
 import tempfile
+import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from html import escape
@@ -49,6 +51,7 @@ from deploy_vii.contracts import (
     View,
 )
 from deploy_vii.execution import Execution, Head, Qualification
+from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import idle_statuses, modules
 from deploy_vii.report_view import Block, build, pathways
 from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, RunContext, context_facts
@@ -695,21 +698,60 @@ _ALIAS_SEPARATOR = "; "
 _CP0_FIELDS = frozenset({"issuer", "identity_gate"})
 
 
+_JSON_TOKEN = re.compile(r'"(?:[^"\\]|\\.)*"|[{}\[\]:]')
+
+
+def _identity_key_offsets(text: str) -> dict[str, int]:
+    """Offset of each ``"key"`` token of the top-level ``identity`` object (a string followed by
+    a colon), so a value spelled like a key is never taken for it."""
+    offsets: dict[str, int] = {}
+    depth = 0
+    top_key = ""
+    previous: re.Match[str] | None = None
+    for token in _JSON_TOKEN.finditer(text):
+        kind = token.group()
+        if kind in "{[":
+            depth += 1
+        elif kind in "}]":
+            depth -= 1
+        elif kind == ":" and previous is not None and previous.group().startswith('"'):
+            name = json.loads(previous.group())
+            if depth == 1:
+                top_key = name
+            elif depth == 2 and top_key == "identity":
+                offsets.setdefault(name, previous.start())
+        previous = token
+    return offsets
+
+
 def _key_line(spans: Sequence[Span], key: str) -> int:
-    """The line of ``key`` inside the context's ``identity`` object, from the frozen spans."""
-    inside = False
-    for span in spans:
-        text = span.text.lstrip()
-        inside = inside or text.startswith('"identity"')
-        name, _, number = span.locator.partition(":")
-        if inside and text.startswith(f'"{key}"') and name == "line" and number.isdigit():
-            return int(number)
-    raise _refusal("owner_render_context")
+    """The source line of ``key`` in the ``identity`` object, from the frozen spans (the reader's
+    own line split: the context bytes are the spans joined with newlines)."""
+    text = "\n".join(span.text for span in spans)
+    offset = _identity_key_offsets(text).get(key)
+    if offset is None:
+        raise _refusal("owner_render_context")
+    name, _, number = spans[text.count("\n", 0, offset)].locator.partition(":")
+    if name != "line" or not number.isdigit():
+        raise _refusal("owner_render_context")
+    return int(number)
+
+
+def _visible(value: str) -> str:
+    """HTML-escape, then show control (Cc) and format (Cf) characters as ``\\uXXXX`` so a bidi
+    control or NUL cannot reorder or hide the mark."""
+
+    def show(char: str) -> str:
+        if unicodedata.category(char) not in ("Cc", "Cf"):
+            return char
+        return f"\\u{ord(char):04X}" if ord(char) <= 0xFFFF else f"\\U{ord(char):08X}"
+
+    return "".join(show(c) for c in escape(value))
 
 
 def _context_row(group: str, key: str, label: str, value: str, line: int | None) -> str:
     mark = (
-        f' <span class="mark">{escape(_USER_SUPPLIED.format(line=line))}</span>'
+        f' <span class="mark">{_visible(_USER_SUPPLIED.format(line=line))}</span>'
         if line is not None
         else ""
     )
@@ -717,8 +759,8 @@ def _context_row(group: str, key: str, label: str, value: str, line: int | None)
         f'data-group="{group}" data-key="{key}"' if line is not None else f'data-group="{group}"'
     )
     return (
-        f'<li {attrs}><span class="label">{escape(label)}</span>: '
-        f'<span class="value">{escape(value)}</span>{mark}</li>'
+        f'<li {attrs}><span class="label">{_visible(label)}</span>: '
+        f'<span class="value">{_visible(value)}</span>{mark}</li>'
     )
 
 
@@ -736,11 +778,11 @@ def run_context_section(
     def supplied(group: str, key: str, label: str, value: str) -> list[str]:
         return [_context_row(group, key, label, value, _key_line(spans, key))] if value else []
 
-    cp0 = [
-        _context_row(
-            "CP-0", "issuer", "Issuer", cp0_fields.get("issuer", identity.issuer_name), None
-        )
-    ]
+    cp0 = (
+        [_context_row("CP-0", "issuer", "Issuer", cp0_fields["issuer"], None)]
+        if "issuer" in cp0_fields
+        else []
+    )
     if "identity_gate" in cp0_fields:
         cp0.append(
             _context_row(
@@ -787,6 +829,33 @@ def _t42_entities(module: ModuleView | None) -> list[tuple[str, tuple[str, ...]]
     ]
 
 
+def _frozen_context(pack: PreparedPack) -> RunContext | None:
+    """The context frozen in ``pack``; only a ``ContextRefused`` becomes ``owner_render_context``."""
+    try:
+        return context_facts(pack)
+    except ContextRefused as error:
+        raise _refusal("owner_render_context") from error
+
+
+def _run_context_of(
+    context: RunContext | None, pack: PreparedPack, shown_modules: Mapping[str, ModuleView]
+) -> str:
+    """The section for ``context`` from the frozen pack and the shown CP-0 and CP-1 heads; the
+    empty string when the pack carries no context."""
+    if context is None:
+        return ""
+    source = next(s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID)
+    cp0 = shown_modules.get("CP-0")
+    cp0_fields = {
+        f.field: f.text
+        for f in (cp0.facts if cp0 else ())
+        if f.table_id == "T1" and f.row_id == "run" and f.field in _CP0_FIELDS and f.text
+    }
+    return run_context_section(
+        context, source.spans, cp0_fields, _t42_entities(shown_modules.get("CP-1"))
+    )
+
+
 def _capture(
     execution_directory: Path, receipt_path: Path, publication_directory: Path | None
 ) -> _Capture:
@@ -813,10 +882,7 @@ def _capture(
         head_modules = {head.module_id: store.head_module(head) for head in snapshot.heads}
     except (ValueError, OSError) as error:
         raise _store_failure(error) from error
-    try:
-        context = context_facts(pack)
-    except ContextRefused as error:
-        raise _refusal("owner_render_context") from error
+    context = _frozen_context(pack)
     if (
         snapshot.content_hash() != receipt.snapshot_sha256
         or pack.content_hash() != receipt.pack_sha256
@@ -875,17 +941,7 @@ def _capture(
         f'data-delivery-scope="{scope.scope_id}">{escape(scope.banner[outcome])}</section>'
     )
     shown_modules = {m.module_id: m for m in view.modules if m.status in SHOWN_STATUSES}
-    if context is not None:
-        source = next(s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID)
-        cp0 = shown_modules.get("CP-0")
-        cp0_fields = {
-            f.field: f.text
-            for f in (cp0.facts if cp0 else ())
-            if f.table_id == "T1" and f.row_id == "run" and f.field in _CP0_FIELDS and f.text
-        }
-        banner += run_context_section(
-            context, source.spans, cp0_fields, _t42_entities(shown_modules.get("CP-1"))
-        )
+    banner += _run_context_of(context, pack, shown_modules)
     html_bytes = page.replace(_ANCHOR, _ANCHOR + banner, 1).encode("utf-8")
     payload = _payload_of(page)
     blocks: dict[str, Block] = {b.block_id: b for b in report.blocks}

@@ -1166,3 +1166,13 @@ def test_strings_is_exported() -> None:
     from deploy_workflow.model import record as module
 
     assert "strings" in module.__all__
+
+
+def test_nested_extra_field_location_is_exact() -> None:
+    body = json.loads(record(tool_calls=(TOOL,)).model_dump_json())
+    body["tool_calls"][0][_KEYISH] = 1
+    with pytest.raises(ValidationError) as caught:
+        CallRecord.model_validate_json(json.dumps(body))
+    from deploy_workflow.model.record import _invalid
+
+    assert str(_invalid(caught.value)).startswith("tool_calls.0.unexpected field: ")

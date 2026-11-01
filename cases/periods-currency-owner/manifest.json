@@ -1,0 +1,1062 @@
+{
+  "schema_version": "periods-currency-owner-cases/1",
+  "scope": "Phase 8 Task 0: periods and currency from the run context. Seven runs (R1-R6, R5b) over the frozen Northbridge pack with every calendar year +1, in USD and EUR.",
+  "status": "DRAFT by the Phase 8 Task 0 preparer, 2026-11-01; not executed; unreviewed",
+  "builder_rule": "cases/periods-currency-owner/builder/build.py reads the frozen oracles by value from their pinned files and maps them by four rules; no product code is imported or run",
+  "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
+  "inputs_pinned": {
+    "cases/cp1c-owner/expected.json": "2165d28d06e80347b8ea9c5a78350a1a41bb60db4b140cfce3e4256bccc57862",
+    "cases/cp1c-owner/manifest.json": "6f0b5489d56af478704f5f78f20f20ebce7e95c5ca07d9c09a01db87540ad4a5",
+    "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
+    "cases/cp1d-owner/expected.json": "8880a2c59a92604ea40e2f2d80e899ed45450d1094388e950ef7015637e2f993",
+    "cases/cp1d-owner/manifest.json": "07dd8530a7f53aa5fe2c1b4840554c0fc6392e26e53bf01ad2858458ecdfe955",
+    "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
+    "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
+    "cases/cp2a-owner/manifest.json": "5219f063dcb130b38b8059397a73ff890ccb14ef03f8c2a6188b971dce7ead1a",
+    "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
+    "cases/cp2d-owner/expected.json": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
+    "cases/cp2d-owner/manifest.json": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
+    "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
+    "cases/cp2e-owner/expected.json": "08a80e96cf23de2a5acbcc8f24ba2c713a1dc02152e3f5b99417d5ced3871592",
+    "cases/cp2e-owner/manifest.json": "4e3dab8f462c5d6968cfa3326d9f808242df7e1d34a6ca2b0383ed4752d4a6ab",
+    "cases/cp2e-owner/submissions.json": "d0e5915d1148d7a895915b70e7c56d937759f4a6eddc0feff0c5e8e163a7a804",
+    "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
+    "cases/cp2g-owner/manifest.json": "c7f66104fbfda75cd06b3dd51b2a49f7ed19b107e058ee7fe77d9832624a4068",
+    "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
+    "cases/cp2h-owner/expected.json": "d0d0310087cfed3bc1ca9c90d1bcd4b54960f0da3b29b449997e80459c14fae6",
+    "cases/cp2h-owner/manifest.json": "ff74170b7e69824be7e323789f244773465b7ad12eadff237aba7c3563877587",
+    "cases/cp2h-owner/submissions.json": "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e",
+    "cases/cp3c-owner/expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
+    "cases/cp3c-owner/manifest.json": "c63e531441397d9f600e164d3a8876f51b33a527aeb9a8a29a2ff3a59e656021",
+    "cases/cp3c-owner/submissions.json": "eff5c4fb64452a8aa40a646f58772e6eb55767ea18db9ff54f2f47183d6e2b11",
+    "cases/cp4c-owner/expected.json": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6",
+    "cases/cp4c-owner/manifest.json": "62102d7dae0507320e1ae09517322c2db9fdb94b04d0b8f9610f61892ac6dfd8",
+    "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
+    "cases/cpl10-owner/expected.json": "9a6345b5272da3c2f9b20c9055348e9edef2042f9aefbcdd784448e4b908fd63",
+    "cases/cpl10-owner/manifest.json": "53ccb16b86ce219d13af89403301a9d54b47d20ba1385b7c779fbf79a344cb04",
+    "cases/cpl10-owner/submissions.json": "464b275256ce5df37d3bc10b4bab0daa98467d2eb4e97783f66f8da6f3a2914c",
+    "cases/earnings/expected.json": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+    "cases/earnings/owner-expected.json": "a37dc25f8f756364ae88726cdec3f2de1bbf4c20892ca910d22e9646186efd9d",
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
+    "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4"
+  },
+  "mapping_rules": {
+    "years": "every 4-digit calendar year +1 in one regex pass over every string and key (2024->2025, 2025->2026, 2026->2027, 2029->2030; the business note's 2011 and 2019 shift too, 'every calendar year')",
+    "period_labels": "two-digit labels +1: `LTM Q4 25`, `Q1 25`..`Q4 25`, `FY25`; lower-case structural ids such as `change_vs_fy25`, `total_leverage_fy28` keep their spelling (Phase 8 plan, Decisions: Ids stay)",
+    "currency": "EUR runs: `US$` and `USD` -> `EUR`; USD runs keep `US$ m`; amounts are never changed",
+    "digests": "every 40+-hex digest -> the sha256 of the shifted source it names (computed here from the shifted bytes)",
+    "dropped_keys": [
+      "claims_note",
+      "cp0",
+      "derivation",
+      "derivation_note",
+      "execution",
+      "not_verified",
+      "note",
+      "plan_order",
+      "replaces",
+      "run_time_bindings",
+      "settled_limitations_note",
+      "source_variant",
+      "validated_on"
+    ],
+    "years_shifted": [
+      2011,
+      2019,
+      2024,
+      2025,
+      2026,
+      2027,
+      2028,
+      2029
+    ],
+    "two_digit_years_shifted": [
+      25
+    ]
+  },
+  "sources": {
+    "identity": {
+      "source_id": "identity",
+      "name": "Issuer identity and reporting scope note",
+      "status": "ready",
+      "extraction_status": "complete",
+      "frozen_from": "cases/financial/manifest.json#sources[identity]",
+      "frozen_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIssuer identity and reporting scope note\nPublished January 10, 2027.\nNorthbridge Synthetic Group is the issuer and consolidated group.\nFiscal year end: December 31.\nThis invented case is test data, not evidence about a real issuer.\nNo borrower, guarantor or restricted-group perimeter is established by this source set."
+        }
+      ],
+      "sha256": "1cc2f4baed500aa000aae8c044cfccdcdd3a2ee8e58ea1021def84d124cd65c6"
+    },
+    "financial@USD": {
+      "source_id": "financial",
+      "name": "Unaudited quarterly/FY2026 statements and complete facility schedule",
+      "status": "ready",
+      "extraction_status": "complete",
+      "frozen_from": "cases/financial/manifest.json#sources[financial]",
+      "frozen_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nUnaudited quarterly and reported FY2026 financial statements\nPublished January 10, 2027.\nReporting basis: IFRS; entity perimeter: consolidated group.\nCurrency: USD; amounts in millions. Expenses are presented by function.\nThis source reports four discrete calendar 2026 quarters and independently reported FY2026 annual totals for January 1-December 31, 2026 (365 days). No FY2025 annual income statement or prior-year quarterly series is supplied.\nThe opening balance is December 31, 2025. The quarters are January 1-March 31 (90 days), April 1-June 30 (91 days), July 1-September 30 (92 days), and October 1-December 31 (92 days).\nEach quarter cost of sales is 15, gross profit is 15, and selling/general/administrative operating expenses including depreciation are 8.75 (7.5 excluding depreciation plus 1.25 depreciation). Other operating expenses are zero. Total operating costs including cost of sales and depreciation are 23.75; these totals are distinct from function-only operating expenses of 8.75.\nFY2026 cost of sales is 60, gross profit is 60, selling/general/administrative operating expenses including depreciation are 35, depreciation is 5, and total operating costs including cost of sales and depreciation are 95.\nNo EBITDA adjustments or add-backs occurred in any quarter or FY2026; this disclosure is complete.\nOne operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2026; there are no corporate or elimination segments.\nNo acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2026. Each such flow is explicitly zero.\nThere were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2027.\nCash interest and cash taxes are classified in operating cash flows. Capital expenditure is entirely maintenance investment; growth capex is zero.\nOperational KPIs and source-reported unlevered free cash flow are not disclosed.\nOpening and quarterly/FY closing balance sheets are presented on page 4.\nRestricted cash, short-term investments, other current assets, goodwill, other intangibles, short-term debt, current portion of long-term debt, unsecured debt, subordinated debt, pensions, lease obligations and minority interests are each zero at opening and every quarter/FY end.\nThere is no revolving credit facility: RCF commitment and RCF drawings are each zero at opening and every quarter/FY end.\nThe complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2026 consists only of net profit 16 and dividends paid (9). Other comprehensive income and every other equity movement were zero throughout these periods: no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by function.\nCONSOLIDATED INCOME STATEMENT\nPeriod  Q1 2026  Q2 2026  Q3 2026  Q4 2026  FY 2026\nRevenue  30  30  30  30  120\nCost of sales  15  15  15  15  60\nGross profit  15  15  15  15  60\nSelling general and administrative expenses including depreciation  8.75  8.75  8.75  8.75  35\nOperating expenses excluding cost of sales including depreciation  8.75  8.75  8.75  8.75  35\nOther operating expenses  0  0  0  0  0\nTotal operating costs excluding depreciation  22.5  22.5  22.5  22.5  90.0\nTotal operating costs including cost of sales and depreciation  23.75  23.75  23.75  23.75  95.00\nDepreciation and amortization  1.25  1.25  1.25  1.25  5.00\nOperating profit EBIT  6.25  6.25  6.25  6.25  25.00\nReported EBITDA  7.5  7.5  7.5  7.5  30.0\nAdjusted EBITDA  7.5  7.5  7.5  7.5  30.0\nNet interest expense  1.25  1.25  1.25  1.25  5.00\nInterest income  0  0  0  0  0\nOther non-operating income  0  0  0  0  0\nProfit before tax  5  5  5  5  20\nIncome tax expense  1  1  1  1  4\nNet profit  4  4  4  4  16\nExceptionals  0  0  0  0  0\nShare based compensation  0  0  0  0  0\nOperating lease cost  0  0  0  0  0"
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by function.\nCONSOLIDATED CASH FLOW STATEMENT\nPeriod  Q1 2026  Q2 2026  Q3 2026  Q4 2026  FY 2026\nNet profit  4  4  4  4  16\nDepreciation and amortization  1.25  1.25  1.25  1.25  5.00\nOperating cash flow before working capital  5.25  5.25  5.25  5.25  21.00\nWorking capital cash movement  (0.5)  (0.5)  (0.5)  (0.5)  (2.0)\nOperating cash flow  4.75  4.75  4.75  4.75  19.00\nMaintenance capital expenditure  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)\nGrowth capital expenditure  0  0  0  0  0\nTotal capital expenditure  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)\nLevered free cash flow  2.25  2.25  2.25  2.25  9.00\nAcquisitions  0  0  0  0  0\nDisposals  0  0  0  0  0\nNet acquisitions and disposals  0  0  0  0  0\nNet cash used in investing  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)\nDebt issuance  1.25  1.25  1.25  1.25  5.00\nDebt repayment  0  0  0  0  0\nNet debt issuance  1.25  1.25  1.25  1.25  5.00\nEquity issuance  0  0  0  0  0\nEquity repurchases  0  0  0  0  0\nNet equity issuance  0  0  0  0  0\nDividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)\nOther investing and financing  0  0  0  0  0\nNet cash used in financing  (1)  (1)  (1)  (1)  (4)\nNet change in cash  1.25  1.25  1.25  1.25  5.00\nOpening cash  15.00  16.25  17.50  18.75  15.00\nClosing cash  16.25  17.50  18.75  20.00  20.00\nCash interest paid  1.25  1.25  1.25  1.25  5.00\nCash tax paid  1  1  1  1  4\nCash lease payments  0  0  0  0  0\nLease payments in financing  0  0  0  0  0\nInterest paid in financing  0  0  0  0  0\nFX effect on cash  0  0  0  0  0"
+        },
+        {
+          "locator": "page:4",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIFRS; consolidated group; USD; amounts in millions; unaudited; expenses by function.\nCONSOLIDATED BALANCE SHEET\nPeriod end  Opening 2025-12-31  Q1 2026-03-31  Q2 2026-06-30  Q3 2026-09-30  Q4 2026-12-31  FY 2026-12-31\nCash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00\nTrade receivables  12  12.75  13.50  14.25  15.00  15.00\nInventories  8  8.5  9.0  9.5  10.0  10.0\nTotal current assets  35  37.50  40.00  42.50  45.00  45.00\nProperty plant and equipment  55  56.25  57.50  58.75  60.00  60.00\nOther noncurrent assets  5  5  5  5  5  5\nTotal assets  95  98.75  102.50  106.25  110.00  110.00\nSenior secured term debt  45  46.25  47.50  48.75  50.00  50.00\nTotal debt  45  46.25  47.50  48.75  50.00  50.00\nTrade payables  17  17.75  18.50  19.25  20.00  20.00\nOther current liabilities  10  10  10  10  10  10\nTotal current liabilities  27  27.75  28.50  29.25  30.00  30.00\nTotal liabilities  72  74  76  78  80  80\nShareholders equity  23  24.75  26.50  28.25  30.00  30.00\nTotal equity  23  24.75  26.50  28.25  30.00  30.00\nTotal liabilities and equity  95  98.75  102.50  106.25  110.00  110.00\nRestricted cash  0  0  0  0  0  0\nShort-term investments  0  0  0  0  0  0\nOther current assets  0  0  0  0  0  0\nGoodwill  0  0  0  0  0  0\nOther intangibles  0  0  0  0  0  0\nShort-term debt  0  0  0  0  0  0\nCurrent portion of long-term debt  0  0  0  0  0  0\nUnsecured debt  0  0  0  0  0  0\nSubordinated debt  0  0  0  0  0  0\nPension obligations  0  0  0  0  0  0\nLease obligations  0  0  0  0  0  0\nMinority interests  0  0  0  0  0  0\nRCF commitment  0  0  0  0  0  0\nRCF drawings  0  0  0  0  0  0"
+        },
+        {
+          "locator": "page:5",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nComplete facility and classification schedule\nPublished January 10, 2027. USD millions; consolidated group; IFRS carrying values.\nThere is exactly one debt facility: Northbridge Term Loan, facility_id term-loan.\nIt is a senior secured term loan, not a lease. No other debt facilities or debt adjustments exist.\nDate                 Carrying value  Principal  Drawn amount  Commitment\n2025-12-31           45              45         45            50\n2026-03-31           46.25           46.25      46.25         50\n2026-06-30           47.5            47.5       47.5          50\n2026-09-30           48.75           48.75      48.75         50\n2026-12-31           50              50         50            50\nThe carrying value equals principal and drawn amount; there are no fees, unamortized adjustments or other carrying-value adjustments.\nThe facility has floating rate type with SOFR reference rate, spread 0 basis points and floor 0 basis points. Fixed coupon is not applicable. Mandatory annual amortisation is 0; final maturity is December 31, 2030. Cash interest amounts in the quarterly statements are reported cash payments, not a forecast calculation from the terms.\nFY2026 and Q4 share the same December 31, 2026 closing facility balance of 50. No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date.\nReported EBITDA equals revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization. Each reported quarter and FY2026 use this definition. Adjusted EBITDA equals reported EBITDA because there are no adjustments.\nCFO equals net profit plus depreciation and amortization plus the signed working-capital cash movement.\nNet cash change equals operating cash flow plus net investing cash flow plus net financing cash flow.\nCash movement equals closing cash less opening cash. Debt movement equals net cash debt issuance with zero noncash change."
+        }
+      ],
+      "sha256": "38f6e0aaa0a0676f37030ea5b92a46434c3a62c86592d003686788ff15c4a277"
+    },
+    "financial@EUR": {
+      "source_id": "financial",
+      "name": "Unaudited quarterly/FY2026 statements and complete facility schedule",
+      "status": "ready",
+      "extraction_status": "complete",
+      "frozen_from": "cases/financial/manifest.json#sources[financial]",
+      "frozen_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nUnaudited quarterly and reported FY2026 financial statements\nPublished January 10, 2027.\nReporting basis: IFRS; entity perimeter: consolidated group.\nCurrency: EUR; amounts in millions. Expenses are presented by function.\nThis source reports four discrete calendar 2026 quarters and independently reported FY2026 annual totals for January 1-December 31, 2026 (365 days). No FY2025 annual income statement or prior-year quarterly series is supplied.\nThe opening balance is December 31, 2025. The quarters are January 1-March 31 (90 days), April 1-June 30 (91 days), July 1-September 30 (92 days), and October 1-December 31 (92 days).\nEach quarter cost of sales is 15, gross profit is 15, and selling/general/administrative operating expenses including depreciation are 8.75 (7.5 excluding depreciation plus 1.25 depreciation). Other operating expenses are zero. Total operating costs including cost of sales and depreciation are 23.75; these totals are distinct from function-only operating expenses of 8.75.\nFY2026 cost of sales is 60, gross profit is 60, selling/general/administrative operating expenses including depreciation are 35, depreciation is 5, and total operating costs including cost of sales and depreciation are 95.\nNo EBITDA adjustments or add-backs occurred in any quarter or FY2026; this disclosure is complete.\nOne operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2026; there are no corporate or elimination segments.\nNo acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2026. Each such flow is explicitly zero.\nThere were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2027.\nCash interest and cash taxes are classified in operating cash flows. Capital expenditure is entirely maintenance investment; growth capex is zero.\nOperational KPIs and source-reported unlevered free cash flow are not disclosed.\nOpening and quarterly/FY closing balance sheets are presented on page 4.\nRestricted cash, short-term investments, other current assets, goodwill, other intangibles, short-term debt, current portion of long-term debt, unsecured debt, subordinated debt, pensions, lease obligations and minority interests are each zero at opening and every quarter/FY end.\nThere is no revolving credit facility: RCF commitment and RCF drawings are each zero at opening and every quarter/FY end.\nThe complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2026 consists only of net profit 16 and dividends paid (9). Other comprehensive income and every other equity movement were zero throughout these periods: no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIFRS; consolidated group; EUR; amounts in millions; unaudited; expenses by function.\nCONSOLIDATED INCOME STATEMENT\nPeriod  Q1 2026  Q2 2026  Q3 2026  Q4 2026  FY 2026\nRevenue  30  30  30  30  120\nCost of sales  15  15  15  15  60\nGross profit  15  15  15  15  60\nSelling general and administrative expenses including depreciation  8.75  8.75  8.75  8.75  35\nOperating expenses excluding cost of sales including depreciation  8.75  8.75  8.75  8.75  35\nOther operating expenses  0  0  0  0  0\nTotal operating costs excluding depreciation  22.5  22.5  22.5  22.5  90.0\nTotal operating costs including cost of sales and depreciation  23.75  23.75  23.75  23.75  95.00\nDepreciation and amortization  1.25  1.25  1.25  1.25  5.00\nOperating profit EBIT  6.25  6.25  6.25  6.25  25.00\nReported EBITDA  7.5  7.5  7.5  7.5  30.0\nAdjusted EBITDA  7.5  7.5  7.5  7.5  30.0\nNet interest expense  1.25  1.25  1.25  1.25  5.00\nInterest income  0  0  0  0  0\nOther non-operating income  0  0  0  0  0\nProfit before tax  5  5  5  5  20\nIncome tax expense  1  1  1  1  4\nNet profit  4  4  4  4  16\nExceptionals  0  0  0  0  0\nShare based compensation  0  0  0  0  0\nOperating lease cost  0  0  0  0  0"
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIFRS; consolidated group; EUR; amounts in millions; unaudited; expenses by function.\nCONSOLIDATED CASH FLOW STATEMENT\nPeriod  Q1 2026  Q2 2026  Q3 2026  Q4 2026  FY 2026\nNet profit  4  4  4  4  16\nDepreciation and amortization  1.25  1.25  1.25  1.25  5.00\nOperating cash flow before working capital  5.25  5.25  5.25  5.25  21.00\nWorking capital cash movement  (0.5)  (0.5)  (0.5)  (0.5)  (2.0)\nOperating cash flow  4.75  4.75  4.75  4.75  19.00\nMaintenance capital expenditure  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)\nGrowth capital expenditure  0  0  0  0  0\nTotal capital expenditure  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)\nLevered free cash flow  2.25  2.25  2.25  2.25  9.00\nAcquisitions  0  0  0  0  0\nDisposals  0  0  0  0  0\nNet acquisitions and disposals  0  0  0  0  0\nNet cash used in investing  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)\nDebt issuance  1.25  1.25  1.25  1.25  5.00\nDebt repayment  0  0  0  0  0\nNet debt issuance  1.25  1.25  1.25  1.25  5.00\nEquity issuance  0  0  0  0  0\nEquity repurchases  0  0  0  0  0\nNet equity issuance  0  0  0  0  0\nDividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)\nOther investing and financing  0  0  0  0  0\nNet cash used in financing  (1)  (1)  (1)  (1)  (4)\nNet change in cash  1.25  1.25  1.25  1.25  5.00\nOpening cash  15.00  16.25  17.50  18.75  15.00\nClosing cash  16.25  17.50  18.75  20.00  20.00\nCash interest paid  1.25  1.25  1.25  1.25  5.00\nCash tax paid  1  1  1  1  4\nCash lease payments  0  0  0  0  0\nLease payments in financing  0  0  0  0  0\nInterest paid in financing  0  0  0  0  0\nFX effect on cash  0  0  0  0  0"
+        },
+        {
+          "locator": "page:4",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nIFRS; consolidated group; EUR; amounts in millions; unaudited; expenses by function.\nCONSOLIDATED BALANCE SHEET\nPeriod end  Opening 2025-12-31  Q1 2026-03-31  Q2 2026-06-30  Q3 2026-09-30  Q4 2026-12-31  FY 2026-12-31\nCash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00\nTrade receivables  12  12.75  13.50  14.25  15.00  15.00\nInventories  8  8.5  9.0  9.5  10.0  10.0\nTotal current assets  35  37.50  40.00  42.50  45.00  45.00\nProperty plant and equipment  55  56.25  57.50  58.75  60.00  60.00\nOther noncurrent assets  5  5  5  5  5  5\nTotal assets  95  98.75  102.50  106.25  110.00  110.00\nSenior secured term debt  45  46.25  47.50  48.75  50.00  50.00\nTotal debt  45  46.25  47.50  48.75  50.00  50.00\nTrade payables  17  17.75  18.50  19.25  20.00  20.00\nOther current liabilities  10  10  10  10  10  10\nTotal current liabilities  27  27.75  28.50  29.25  30.00  30.00\nTotal liabilities  72  74  76  78  80  80\nShareholders equity  23  24.75  26.50  28.25  30.00  30.00\nTotal equity  23  24.75  26.50  28.25  30.00  30.00\nTotal liabilities and equity  95  98.75  102.50  106.25  110.00  110.00\nRestricted cash  0  0  0  0  0  0\nShort-term investments  0  0  0  0  0  0\nOther current assets  0  0  0  0  0  0\nGoodwill  0  0  0  0  0  0\nOther intangibles  0  0  0  0  0  0\nShort-term debt  0  0  0  0  0  0\nCurrent portion of long-term debt  0  0  0  0  0  0\nUnsecured debt  0  0  0  0  0  0\nSubordinated debt  0  0  0  0  0  0\nPension obligations  0  0  0  0  0  0\nLease obligations  0  0  0  0  0  0\nMinority interests  0  0  0  0  0  0\nRCF commitment  0  0  0  0  0  0\nRCF drawings  0  0  0  0  0  0"
+        },
+        {
+          "locator": "page:5",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nComplete facility and classification schedule\nPublished January 10, 2027. EUR millions; consolidated group; IFRS carrying values.\nThere is exactly one debt facility: Northbridge Term Loan, facility_id term-loan.\nIt is a senior secured term loan, not a lease. No other debt facilities or debt adjustments exist.\nDate                 Carrying value  Principal  Drawn amount  Commitment\n2025-12-31           45              45         45            50\n2026-03-31           46.25           46.25      46.25         50\n2026-06-30           47.5            47.5       47.5          50\n2026-09-30           48.75           48.75      48.75         50\n2026-12-31           50              50         50            50\nThe carrying value equals principal and drawn amount; there are no fees, unamortized adjustments or other carrying-value adjustments.\nThe facility has floating rate type with SOFR reference rate, spread 0 basis points and floor 0 basis points. Fixed coupon is not applicable. Mandatory annual amortisation is 0; final maturity is December 31, 2030. Cash interest amounts in the quarterly statements are reported cash payments, not a forecast calculation from the terms.\nFY2026 and Q4 share the same December 31, 2026 closing facility balance of 50. No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date.\nReported EBITDA equals revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization. Each reported quarter and FY2026 use this definition. Adjusted EBITDA equals reported EBITDA because there are no adjustments.\nCFO equals net profit plus depreciation and amortization plus the signed working-capital cash movement.\nNet cash change equals operating cash flow plus net investing cash flow plus net financing cash flow.\nCash movement equals closing cash less opening cash. Debt movement equals net cash debt issuance with zero noncash change."
+        }
+      ],
+      "sha256": "57211d83949d5ba5148b37b89f0f1e21b3d10e292ca39ef8d62ceac35efa2c23"
+    },
+    "peers@USD": {
+      "source_id": "peers",
+      "name": "Peer financial summary (synthetic)",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "pack_limitation": "Synthetic desk summary of invented peers; unaudited; not a market fact.",
+      "frozen_from": "cases/cp1c-owner/manifest.json#synthetic_source.positive",
+      "frozen_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "SYNTHETIC PEER DATA DESK\nPeer financial summary for credit benchmarking\nPublished January 10, 2027.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nBasis: twelve months to the period end shown; USD; amounts in millions; unaudited desk summaries.\nAdjusted EBITDA is reported EBITDA with no add-backs, as in the Northbridge Synthetic Group statements. Total debt is gross financial debt at the period end. Interest expense is cash interest paid. FFO is operating cash flow before working capital.\nPeer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO\nNorthbridge Synthetic Group  2026-12-31  120.0  30.0  50.0  5.0  21.0\nAlder Ridge Holdings  2026-12-31  200.0  52.0  104.0  8.0  41.6\nBrookmere Industries  2026-12-31  150.0  33.0  99.0  11.0  30.0\nCalder Vale Group  2026-12-31  90.0  27.0  40.5  4.5  18.9\nDunmore Cross Corporation  2026-09-30  300.0  48.0  240.0  24.0  30.0\nEllsworth Park Limited  2026-12-31  500.0  150.0  75.0  7.5  60.0"
+        },
+        {
+          "locator": "page:2",
+          "text": "SYNTHETIC PEER DATA DESK\nPeer reporting basis and period alignment\nPublished January 10, 2027.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nEach line is as stated by the peer in its own unaudited summary. The desk has restated no peer to the Northbridge Synthetic Group basis.\nPeer  Reporting basis  Operating segments  Fiscal year end\nNorthbridge Synthetic Group  IFRS  1  December 31\nAlder Ridge Holdings  IFRS  1  December 31\nBrookmere Industries  IFRS  1  December 31\nCalder Vale Group  IFRS  1  December 31\nDunmore Cross Corporation  IFRS  1  June 30\nEllsworth Park Limited  US GAAP  6  December 31\nDunmore Cross Corporation reports twelve months to September 30, 2026, which ends on a different date from the Northbridge Synthetic Group year end.\nEllsworth Park Limited is a diversified group with six operating segments reporting under US GAAP; the desk offers it as a size reference only."
+        }
+      ],
+      "sha256": "61720a3515ed0bf7a1d9b99cf4e79a5ddf12aa8ed4a66eef01158306f17ff534"
+    },
+    "peers@EUR": {
+      "source_id": "peers",
+      "name": "Peer financial summary (synthetic)",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "pack_limitation": "Synthetic desk summary of invented peers; unaudited; not a market fact.",
+      "frozen_from": "cases/cp1c-owner/manifest.json#synthetic_source.positive",
+      "frozen_sha256": "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "SYNTHETIC PEER DATA DESK\nPeer financial summary for credit benchmarking\nPublished January 10, 2027.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nBasis: twelve months to the period end shown; EUR; amounts in millions; unaudited desk summaries.\nAdjusted EBITDA is reported EBITDA with no add-backs, as in the Northbridge Synthetic Group statements. Total debt is gross financial debt at the period end. Interest expense is cash interest paid. FFO is operating cash flow before working capital.\nPeer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO\nNorthbridge Synthetic Group  2026-12-31  120.0  30.0  50.0  5.0  21.0\nAlder Ridge Holdings  2026-12-31  200.0  52.0  104.0  8.0  41.6\nBrookmere Industries  2026-12-31  150.0  33.0  99.0  11.0  30.0\nCalder Vale Group  2026-12-31  90.0  27.0  40.5  4.5  18.9\nDunmore Cross Corporation  2026-09-30  300.0  48.0  240.0  24.0  30.0\nEllsworth Park Limited  2026-12-31  500.0  150.0  75.0  7.5  60.0"
+        },
+        {
+          "locator": "page:2",
+          "text": "SYNTHETIC PEER DATA DESK\nPeer reporting basis and period alignment\nPublished January 10, 2027.\nThis invented case is test data, not evidence about real issuers. The peers named below do not exist.\nEach line is as stated by the peer in its own unaudited summary. The desk has restated no peer to the Northbridge Synthetic Group basis.\nPeer  Reporting basis  Operating segments  Fiscal year end\nNorthbridge Synthetic Group  IFRS  1  December 31\nAlder Ridge Holdings  IFRS  1  December 31\nBrookmere Industries  IFRS  1  December 31\nCalder Vale Group  IFRS  1  December 31\nDunmore Cross Corporation  IFRS  1  June 30\nEllsworth Park Limited  US GAAP  6  December 31\nDunmore Cross Corporation reports twelve months to September 30, 2026, which ends on a different date from the Northbridge Synthetic Group year end.\nEllsworth Park Limited is a diversified group with six operating segments reporting under US GAAP; the desk offers it as a size reference only."
+        }
+      ],
+      "sha256": "36777ead59547224af1d468396f06e0e117a4a393749b41d8ba99e0f2e4b2694"
+    },
+    "bridge@USD": {
+      "source_id": "bridge",
+      "name": "Management financing-case EBITDA bridge",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "pack_limitation": "Management-supplied proposals; unaudited and not recorded in the statements.",
+      "frozen_from": "cases/cp1d-owner/manifest.json#synthetic_source.positive",
+      "frozen_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge\nPublished January 10, 2027.\nThis invented case is test data, not evidence about a real issuer.\nBasis: FY2026 (January 1-December 31, 2026); USD; amounts in millions; unaudited management presentation.\nReported EBITDA and statement Adjusted EBITDA for FY2026 are 30.0 each, as in the unaudited statements, which record no adjustment.\nThe items below are management's proposed financing-case adjustments. None is recorded in the statements. These proposals are not pro-forma adjustments to the statements. Costs and savings are shown as positive add-backs.\nItem  Type  Status  Amount\nProcurement programme savings  Saving  Unrealised  3.00\nHead-office reorganisation savings  Saving  Unrealised  1.20\nLegal and advisory fees  Cost  Incurred  0.80\nInsurance and facilities savings  Saving  Unrealised  1.00\nTotal proposed adjustments  6.00\nManagement financing-case EBITDA  36.00"
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge: supporting schedule\nPublished January 10, 2027.\nProcurement programme savings: the annualised saving of 3.00 is identified across ten supplier categories. Signed supplier contracts cover an annualised saving of 1.80. Contracts covering the remaining 1.20 are under negotiation. One-time costs to achieve the saving are expected in 2027.\nHead-office reorganisation savings: the reorganisation is a management proposal under review. No board approval has been given and no notice has been issued to employees.\nLegal and advisory fees: the fees were incurred in FY2026 and are included in selling, general and administrative expenses in the statements. They were 0.20 in each of the four quarters of 2026, and similar fees are expected in 2027.\nInsurance and facilities savings: no supporting schedule, contract or quotation is supplied for this item."
+        }
+      ],
+      "sha256": "be80601dc73963ef9a04a287da6502a1887df1c79df1a316d92b6ede00706936"
+    },
+    "bridge@EUR": {
+      "source_id": "bridge",
+      "name": "Management financing-case EBITDA bridge",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "pack_limitation": "Management-supplied proposals; unaudited and not recorded in the statements.",
+      "frozen_from": "cases/cp1d-owner/manifest.json#synthetic_source.positive",
+      "frozen_sha256": "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge\nPublished January 10, 2027.\nThis invented case is test data, not evidence about a real issuer.\nBasis: FY2026 (January 1-December 31, 2026); EUR; amounts in millions; unaudited management presentation.\nReported EBITDA and statement Adjusted EBITDA for FY2026 are 30.0 each, as in the unaudited statements, which record no adjustment.\nThe items below are management's proposed financing-case adjustments. None is recorded in the statements. These proposals are not pro-forma adjustments to the statements. Costs and savings are shown as positive add-backs.\nItem  Type  Status  Amount\nProcurement programme savings  Saving  Unrealised  3.00\nHead-office reorganisation savings  Saving  Unrealised  1.20\nLegal and advisory fees  Cost  Incurred  0.80\nInsurance and facilities savings  Saving  Unrealised  1.00\nTotal proposed adjustments  6.00\nManagement financing-case EBITDA  36.00"
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nManagement financing-case EBITDA bridge: supporting schedule\nPublished January 10, 2027.\nProcurement programme savings: the annualised saving of 3.00 is identified across ten supplier categories. Signed supplier contracts cover an annualised saving of 1.80. Contracts covering the remaining 1.20 are under negotiation. One-time costs to achieve the saving are expected in 2027.\nHead-office reorganisation savings: the reorganisation is a management proposal under review. No board approval has been given and no notice has been issued to employees.\nLegal and advisory fees: the fees were incurred in FY2026 and are included in selling, general and administrative expenses in the statements. They were 0.20 in each of the four quarters of 2026, and similar fees are expected in 2027.\nInsurance and facilities savings: no supporting schedule, contract or quotation is supplied for this item."
+        }
+      ],
+      "sha256": "505efd9936fbce7fe15d027b82aa00b3b64c1e5aedb7773492da340073a98639"
+    },
+    "ratings": {
+      "source_id": "ratings",
+      "name": "Credit rating summary (fictional agencies)",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "pack_limitation": "Synthetic agency summary naming fictional agencies; not evidence about a real issuer.",
+      "frozen_from": "cases/cp2h-owner/manifest.json#synthetic_source.positive",
+      "frozen_sha256": "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nCredit rating summary\nPublished January 10, 2027.\nThis invented case is test data, not evidence about a real issuer. Alder Ratings and Brook Credit are fictional agencies.\nRatings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale.\nAgency  Instrument  Rating  Outlook  Date\nAlder Ratings  Issuer rating  BB  Negative  2026-11-14\nBrook Credit  Issuer rating  Ba3  Stable  2026-10-02"
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nRating scale equivalence\nPublished January 10, 2027.\nA lower position number is a higher rating. Each position is one notch.\nPosition  Alder Ratings  Brook Credit\n9  BBB-  Baa3\n10  BB+  Ba1\n11  BB  Ba2\n12  BB-  Ba3\n13  B+  B1\n14  B  B2\n15  B-  B3"
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nPublished rating trigger terms\nPublished January 10, 2027.\nEach agency states the terms below as conditions it would treat as a trigger for a rating review. Terms are tested at each fiscal year end on the Group's reported figures: total debt as reported in the statements, EBITDA as reported EBITDA, cash interest as cash interest paid, net debt as total debt less cash and cash equivalents, and free cash flow as levered free cash flow.\nAgency  Direction  Metric  Comparison  Threshold\nAlder Ratings  Downgrade  Total debt to EBITDA  Above  2.75x\nAlder Ratings  Downgrade  EBITDA to cash interest  Below  3.50x\nAlder Ratings  Downgrade  Free cash flow to total debt  Below  10.0%\nBrook Credit  Downgrade  Net debt to EBITDA  Above  2.25x\nBrook Credit  Upgrade  Net debt to EBITDA  Below  0.50x"
+        }
+      ],
+      "sha256": "9c88d9ecf79c2614ef1806b0e19e02da7200cb291834703c3a15a8c4541475c3"
+    },
+    "business": {
+      "source_id": "business",
+      "name": "Business and ownership note",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction",
+      "pack_limitation": null,
+      "frozen_from": "cases/snapshot/manifest.json#business_source.positive",
+      "frozen_sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nBusiness and ownership note\nPublished January 10, 2027.\nThis invented case is test data, not evidence about a real issuer.\nNorthbridge Synthetic Group is an industrial products manufacturer. It designs, manufactures and sells fastening and sealing components for industrial equipment.\nCustomers are industrial distributors that serve maintenance, repair and operations demand, and original-equipment manufacturers supplied under annual supply agreements.\nAll operations and all reported revenue are in the United States.\nManagement describes the group as a leading supplier with a resilient aftermarket franchise.\nRevenue is reported as one operating segment, Consolidated Operations. The split of revenue between fastening and sealing components, and between distributors and original-equipment manufacturers, is not disclosed.\nThe share of revenue from the largest customer is not disclosed."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nOperating model and ownership\nList prices are reviewed once a year. Management states that raw-material cost increases are passed to customers with a lag of one to two quarters.\nVolumes follow distributor restocking cycles and original-equipment production schedules.\nCost of sales consists mainly of steel, elastomer and manufacturing labour.\nCapital expenditure maintains existing plants; no growth capital programme is under way.\nWorking capital consists of trade receivables, inventories and trade payables.\nThe issuer is wholly owned by Harbour Ridge Holdings Limited, a synthetic holding company.\nHarbour Ridge Holdings Limited is held by private investors. The identity and percentage holdings of those investors are not disclosed.\nThe issuer paid a dividend to Harbour Ridge Holdings Limited in each quarter of 2026 under a shareholder distribution policy approved by the board.\nNo dividend recapitalisation, shareholder loan or related-party payment other than these dividends is reported.\nThe source set identifies no financial sponsor."
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nFinancing, transactions and history\nThe only borrowing of the group is the Northbridge Term Loan, a senior secured term loan with final maturity on December 31, 2030.\nNo acquisition, disposal, new financing, refinancing or change of ownership occurred in 2026, and none is announced or pending as of January 10, 2027.\nThis note does not describe the security package, guarantees or covenants of the Northbridge Term Loan.\nThe business was founded in 2012 as a family-owned manufacturer. Harbour Ridge Holdings Limited acquired the group in 2020.\nNo credit rating from a rating agency has been assigned."
+        }
+      ],
+      "sha256": "40a399e8f3072c5f765832f97edf4c07e3c7cb7b8b184c41fa19b5d5aa92ece9"
+    },
+    "legal-covenants@USD": {
+      "source_id": "legal-covenants",
+      "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction. Completeness refers to retained supplied pages, not a complete agreement.",
+      "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+      "frozen_from": "cases/legal/manifest.json#cases[0].legal_source",
+      "frozen_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nSynthetic executed Northbridge Term Loan covenant terms, current restatement\nThis invented agreement is test data, not evidence about a real issuer or legal advice.\nExecution attestation: the Borrower and all lenders signed this restatement on December 30, 2026. It became effective on December 31, 2026 and remains operative without amendment or waiver through January 10, 2027. All earlier versions of these selected terms are superseded.\nClause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note. This separate legal supplement establishes that Borrower only for this agreement; the two-source financial set did not establish a legal borrower, guarantor or restricted-group perimeter.\nClause 1.2. Group means exactly the IFRS consolidated group used in the unaudited quarterly and reported FY2026 financial statements published January 10, 2027. Group is the perimeter for this agreement's debt, cash, EBITDA and leverage test. No separate guarantor or restricted-group perimeter is established by the supplied agreement.\nClause 1.3. The agreement governs Northbridge Term Loan, facility_id term-loan, the sole senior secured term loan in the complete facility schedule. Its commitment is USD 50 million; it is fully drawn at December 31, 2026. Final contractual maturity remains December 31, 2030, and mandatory annual amortisation remains zero. This restatement does not increase the commitment or change that maturity.\nClause 1.4. The supplied pages contain the operative leverage test, selected definitions, debt permission and asset-sale condition only. Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: definitions and maintenance test\nClause 2.1. Covenant Debt means the Group's total debt at IFRS carrying value excluding both finance and operating lease obligations, with no other exclusions or pro-forma adjustments. For the test date all debt is the sole senior secured term loan; no other debt, lease debt or debt adjustment exists.\nClause 2.2. Eligible Cash means the Group's reported cash and cash equivalents that are unrestricted and freely available to service Group debt. At December 31, 2026 all reported cash and cash equivalents are eligible, restricted cash is zero, and there are no short-term investments or other cash-like deductions. Covenant Net Debt means Covenant Debt less Eligible Cash; negative net debt, if any, is not floored at zero.\nClause 2.3. Covenant EBITDA means the Group's reported EBITDA: revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization, over the trailing twelve months ending on the test date. No adjustments, add-backs, synergies, run-rate savings, pro-forma changes or exclusions are permitted. For December 31, 2026 the period is January 1 through December 31, 2026, identical to reported FY2026 and the four discrete calendar 2026 quarters. The underlying statements remain unaudited; this definition supplies no audit assurance.\nClause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2026. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2026 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: selected permissions and source limitations\nClause 4.1. Existing drawings under Northbridge Term Loan are permitted. Additional debt or an increase in that facility's commitment requires prior written consent of every lender. The maintenance leverage limit by itself is not a debt-incurrence permission or an available funding commitment. No additional automatic debt basket is provided by these selected terms.\nClause 5.1. Asset sales must be for fair market value. The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided. This provision does not establish that any asset sale occurred.\nSource limitation. These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package. Financial statements remain unaudited and consolidated; no borrower-only financial statements, guarantor perimeter or restricted-group financial information are supplied."
+        }
+      ],
+      "sha256": "672cba7c06269802d642dc08791dccfa5302edfb0ff64ea8d0d4138942c64bc5"
+    },
+    "legal-covenants@EUR": {
+      "source_id": "legal-covenants",
+      "name": "Synthetic executed Northbridge Term Loan current covenant terms",
+      "status": "ready",
+      "media_type": "text/plain",
+      "extractor": "supplied-representation",
+      "extraction_status": "complete",
+      "representation_scope": "Supplied located-page UTF-8 text only; not PDF or text_content extraction. Completeness refers to retained supplied pages, not a complete agreement.",
+      "limitation": "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+      "frozen_from": "cases/legal/manifest.json#cases[0].legal_source",
+      "frozen_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+      "pages": [
+        {
+          "locator": "page:1",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nSynthetic executed Northbridge Term Loan covenant terms, current restatement\nThis invented agreement is test data, not evidence about a real issuer or legal advice.\nExecution attestation: the Borrower and all lenders signed this restatement on December 30, 2026. It became effective on December 31, 2026 and remains operative without amendment or waiver through January 10, 2027. All earlier versions of these selected terms are superseded.\nClause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note. This separate legal supplement establishes that Borrower only for this agreement; the two-source financial set did not establish a legal borrower, guarantor or restricted-group perimeter.\nClause 1.2. Group means exactly the IFRS consolidated group used in the unaudited quarterly and reported FY2026 financial statements published January 10, 2027. Group is the perimeter for this agreement's debt, cash, EBITDA and leverage test. No separate guarantor or restricted-group perimeter is established by the supplied agreement.\nClause 1.3. The agreement governs Northbridge Term Loan, facility_id term-loan, the sole senior secured term loan in the complete facility schedule. Its commitment is EUR 50 million; it is fully drawn at December 31, 2026. Final contractual maturity remains December 31, 2030, and mandatory annual amortisation remains zero. This restatement does not increase the commitment or change that maturity.\nClause 1.4. The supplied pages contain the operative leverage test, selected definitions, debt permission and asset-sale condition only. Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
+        },
+        {
+          "locator": "page:2",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: definitions and maintenance test\nClause 2.1. Covenant Debt means the Group's total debt at IFRS carrying value excluding both finance and operating lease obligations, with no other exclusions or pro-forma adjustments. For the test date all debt is the sole senior secured term loan; no other debt, lease debt or debt adjustment exists.\nClause 2.2. Eligible Cash means the Group's reported cash and cash equivalents that are unrestricted and freely available to service Group debt. At December 31, 2026 all reported cash and cash equivalents are eligible, restricted cash is zero, and there are no short-term investments or other cash-like deductions. Covenant Net Debt means Covenant Debt less Eligible Cash; negative net debt, if any, is not floored at zero.\nClause 2.3. Covenant EBITDA means the Group's reported EBITDA: revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization, over the trailing twelve months ending on the test date. No adjustments, add-backs, synergies, run-rate savings, pro-forma changes or exclusions are permitted. For December 31, 2026 the period is January 1 through December 31, 2026, identical to reported FY2026 and the four discrete calendar 2026 quarters. The underlying statements remain unaudited; this definition supplies no audit assurance.\nClause 3.1. The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2026. The test applies to Northbridge Term Loan, facility_id term-loan, whether or not any amount is newly borrowed. The December 31, 2026 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter defined in Clause 1.2."
+        },
+        {
+          "locator": "page:3",
+          "text": "NORTHBRIDGE SYNTHETIC GROUP\nCurrent restatement: selected permissions and source limitations\nClause 4.1. Existing drawings under Northbridge Term Loan are permitted. Additional debt or an increase in that facility's commitment requires prior written consent of every lender. The maintenance leverage limit by itself is not a debt-incurrence permission or an available funding commitment. No additional automatic debt basket is provided by these selected terms.\nClause 5.1. Asset sales must be for fair market value. The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided. This provision does not establish that any asset sale occurred.\nSource limitation. These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package. Financial statements remain unaudited and consolidated; no borrower-only financial statements, guarantor perimeter or restricted-group financial information are supplied."
+        }
+      ],
+      "sha256": "184e3f3b94460f34d10eff77b6031d016a44867dde39999d189732a86bb6da87"
+    }
+  },
+  "source_ids_currency_free": [
+    "business",
+    "identity",
+    "ratings"
+  ],
+  "source_ids_currency_bearing": [
+    "bridge",
+    "financial",
+    "legal-covenants",
+    "peers"
+  ],
+  "old_to_new_source_sha256": {
+    "USD": {
+      "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4": "1cc2f4baed500aa000aae8c044cfccdcdd3a2ee8e58ea1021def84d124cd65c6",
+      "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429": "38f6e0aaa0a0676f37030ea5b92a46434c3a62c86592d003686788ff15c4a277",
+      "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b": "61720a3515ed0bf7a1d9b99cf4e79a5ddf12aa8ed4a66eef01158306f17ff534",
+      "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1": "be80601dc73963ef9a04a287da6502a1887df1c79df1a316d92b6ede00706936",
+      "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271": "9c88d9ecf79c2614ef1806b0e19e02da7200cb291834703c3a15a8c4541475c3",
+      "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49": "40a399e8f3072c5f765832f97edf4c07e3c7cb7b8b184c41fa19b5d5aa92ece9",
+      "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec": "672cba7c06269802d642dc08791dccfa5302edfb0ff64ea8d0d4138942c64bc5"
+    },
+    "EUR": {
+      "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4": "1cc2f4baed500aa000aae8c044cfccdcdd3a2ee8e58ea1021def84d124cd65c6",
+      "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429": "57211d83949d5ba5148b37b89f0f1e21b3d10e292ca39ef8d62ceac35efa2c23",
+      "13eed2e1bd7f6f85bfcd818cd0f4cd444b1aa7317e0fac9887619c78715e3a2b": "36777ead59547224af1d468396f06e0e117a4a393749b41d8ba99e0f2e4b2694",
+      "e37b2db4c99d3605d95cd16980c13e538643498f8cdb7296832d5fd4881dfae1": "505efd9936fbce7fe15d027b82aa00b3b64c1e5aedb7773492da340073a98639",
+      "be26035373f790749e5aa1d74ae67aa9cb022ec9cccbf58cdedaf95574028271": "9c88d9ecf79c2614ef1806b0e19e02da7200cb291834703c3a15a8c4541475c3",
+      "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49": "40a399e8f3072c5f765832f97edf4c07e3c7cb7b8b184c41fa19b5d5aa92ece9",
+      "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec": "184e3f3b94460f34d10eff77b6031d016a44867dde39999d189732a86bb6da87"
+    }
+  },
+  "runs": [
+    {
+      "label": "R1",
+      "run": {
+        "run_id": "rv-fy2026-usd",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "relative_value",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-MODEL",
+          "CP-1C",
+          "CP-2",
+          "CP-2D",
+          "CP-3",
+          "CP-3C",
+          "CP-3D",
+          "CP-5"
+        ]
+      },
+      "requested_modules_note": "pathway preset",
+      "pack_sources": [
+        "identity",
+        "financial@USD",
+        "peers@USD",
+        "business"
+      ],
+      "pack_currency": "USD",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "research",
+          "pathway": "relative_value",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "fy-2026",
+          "prior_period": "fy-2025",
+          "reporting_currency": "USD"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "f1c13ee5129483523d3da1de8a61b87bcc30d91331c7a9fa1a4a2ffc5a976d04"
+    },
+    {
+      "label": "R2",
+      "run": {
+        "run_id": "dist-q4-2026-eur",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-1A",
+          "CP-2",
+          "CP-2A",
+          "CP-2G",
+          "CP-2H",
+          "CP-4",
+          "CP-4C",
+          "CP-5",
+          "CP-2E",
+          "CP-L10"
+        ]
+      },
+      "requested_modules_note": "pathway preset plus ['CP-2E', 'CP-L10'] through Run.model_copy(update={'requested_modules': ...}); neither is in any preset",
+      "pack_sources": [
+        "identity",
+        "financial@EUR",
+        "business",
+        "legal-covenants@EUR",
+        "ratings"
+      ],
+      "pack_currency": "EUR",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "research",
+          "pathway": "distressed_restructuring",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "q4-2026",
+          "prior_period": "q3-2026",
+          "reporting_currency": "EUR"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "f79b7d11980a73073600f174c27e3b482732cc8ffacd1bf39bd24a0ad9c7f0d8"
+    },
+    {
+      "label": "R3",
+      "run": {
+        "run_id": "earn-q4-2026-eur",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "earnings_update",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-MODEL",
+          "CP-1B",
+          "CP-1D",
+          "CP-5"
+        ]
+      },
+      "requested_modules_note": "pathway preset",
+      "pack_sources": [
+        "identity",
+        "financial@EUR",
+        "bridge@EUR"
+      ],
+      "pack_currency": "EUR",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "earnings",
+          "pathway": "earnings_update",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "q4-2026",
+          "prior_period": "q3-2026",
+          "reporting_currency": "EUR"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "c574c8a785ab35356e00b418d25d0e4f50ee7d06a44029f641097b8848ce26cd"
+    },
+    {
+      "label": "R4",
+      "run": {
+        "run_id": "mismatch-eur-on-usd",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "relative_value",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-MODEL",
+          "CP-1C",
+          "CP-2",
+          "CP-2D",
+          "CP-3",
+          "CP-3C",
+          "CP-3D",
+          "CP-5"
+        ]
+      },
+      "requested_modules_note": "pathway preset",
+      "pack_sources": [
+        "identity",
+        "financial@USD",
+        "peers@USD",
+        "business"
+      ],
+      "pack_currency": "USD",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "research",
+          "pathway": "relative_value",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "fy-2026",
+          "prior_period": "fy-2025",
+          "reporting_currency": "EUR"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "a7cb2af65c7679b5e23df197576b283a09da448f4170379eb05cd452acc32cd9"
+    },
+    {
+      "label": "R5",
+      "run": {
+        "run_id": "base-h2",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-1A",
+          "CP-2",
+          "CP-2A",
+          "CP-2G",
+          "CP-2H",
+          "CP-4",
+          "CP-4C",
+          "CP-5"
+        ]
+      },
+      "requested_modules_note": "pathway preset",
+      "pack_sources": [
+        "identity",
+        "financial@USD",
+        "business",
+        "legal-covenants@USD",
+        "ratings"
+      ],
+      "pack_currency": "USD",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "research",
+          "pathway": "distressed_restructuring",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "h2-2026",
+          "prior_period": "h1-2026",
+          "reporting_currency": "USD"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "d1f53b9f2d6060cf63e84a5933dc161abed0f19f907d7df106e21eeee5108cd3"
+    },
+    {
+      "label": "R5b",
+      "run": {
+        "run_id": "base-q3",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-1A",
+          "CP-2",
+          "CP-2A",
+          "CP-2G",
+          "CP-2H",
+          "CP-4",
+          "CP-4C",
+          "CP-5",
+          "CP-L10",
+          "CP-1B"
+        ]
+      },
+      "requested_modules_note": "pathway preset plus ['CP-L10', 'CP-1B'] through Run.model_copy(update={'requested_modules': ...}); neither is in any preset",
+      "pack_sources": [
+        "identity",
+        "financial@USD",
+        "business",
+        "legal-covenants@USD",
+        "ratings"
+      ],
+      "pack_currency": "USD",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "research",
+          "pathway": "distressed_restructuring",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "q3-2026",
+          "prior_period": "q2-2026",
+          "reporting_currency": "USD"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "84a8cfaafdec5cd404f7ab6f30e8142dab24339499e26c291797ae7f02f8d22d"
+    },
+    {
+      "label": "R6",
+      "run": {
+        "run_id": "rv-fy2026-eur",
+        "issuer_name": "Northbridge Synthetic Group",
+        "issuer_id": "northbridge-synthetic",
+        "as_of": "2027-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "relative_value",
+        "requested_modules": [
+          "CP-0",
+          "CP-1",
+          "CP-MODEL",
+          "CP-1C",
+          "CP-2",
+          "CP-2D",
+          "CP-3",
+          "CP-3C",
+          "CP-3D",
+          "CP-5"
+        ]
+      },
+      "requested_modules_note": "pathway preset",
+      "pack_sources": [
+        "identity",
+        "financial@EUR",
+        "peers@EUR",
+        "business"
+      ],
+      "pack_currency": "EUR",
+      "context": {
+        "schema": "context/1",
+        "run": {
+          "run_type": "research",
+          "pathway": "relative_value",
+          "case_kind": "synthetic",
+          "as_of": "2027-01-10",
+          "current_period": "fy-2026",
+          "prior_period": "fy-2025",
+          "reporting_currency": "EUR"
+        },
+        "identity": {
+          "issuer_name": "Northbridge Synthetic Group",
+          "issuer_id": "northbridge-synthetic",
+          "borrower_name": "",
+          "parent_name": "",
+          "guarantors": [],
+          "aliases": [],
+          "listed_equity": false,
+          "ticker": "",
+          "sector": "",
+          "country": "",
+          "sponsor": ""
+        },
+        "deal_terms": [],
+        "quotes": [],
+        "ratings": [],
+        "valuation": {
+          "peer_source": "cp_dr_public",
+          "basis": "auto",
+          "issuer_market": {
+            "market_cap_m": "",
+            "net_debt_m": "",
+            "ev_m": "",
+            "ebitda_basis": "LTM",
+            "as_of": "",
+            "source": ""
+          },
+          "peers": [],
+          "precedents": [],
+          "user_multiple": {
+            "value": "",
+            "basis": "LTM",
+            "rationale": ""
+          }
+        },
+        "assumptions": {
+          "cp2a": null,
+          "cp2d": null,
+          "cp2e": null,
+          "cp3c": null,
+          "cp3d": null,
+          "cp4c": null
+        },
+        "attachments": {
+          "portfolio_workbook": false,
+          "prior_case": false,
+          "management_bridge": false,
+          "legal_documents": "executed"
+        },
+        "research_questions": []
+      },
+      "context_sha256": "a7cb2af65c7679b5e23df197576b283a09da448f4170379eb05cd452acc32cd9"
+    }
+  ],
+  "default_period_literals_mapped": {
+    "ltm_column": "LTM Q4 25 (2025-01-01 to 2025-12-31)",
+    "ltm_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "t45_period": "LTM Q4 25 · 2025-01-01 to 2025-12-31",
+    "t46_period": "q4-2025 · 2025-10-01 to 2025-12-31",
+    "schedule_period": "q4-2025",
+    "bs_period": "Q4 2025: 2025-12-31",
+    "bs_column": "Q4 2025-12-31",
+    "bridge_basis_line": "Basis: FY2025 (January 1-December 31, 2025)"
+  }
+}

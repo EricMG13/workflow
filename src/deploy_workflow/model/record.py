@@ -24,13 +24,21 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
-from pydantic import ConfigDict, Field, field_serializer, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_serializer,
+    model_validator,
+)
 
 from deploy_vii.contracts import Contract, Hash
 from deploy_workflow.model.pricing import CostStatus, money_text, refusal_values
-from deploy_workflow.model.providers import ErrorKind, ProviderError, parse
+from deploy_workflow.model.providers import ProviderError, parse
 from deploy_workflow.model.redact import KEY_PATTERN, Redactor
 from deploy_workflow.model.turn import (
+    Turn,
     TurnError,
     Usage,
     dump_json,
@@ -42,6 +50,7 @@ AUDIT = "owner-run-audit"  # owner_workflow.AUDIT
 INVOCATIONS = "invocations"
 METHOD_VERSION = "deploy-v-r14"
 _DIGEST = re.compile(r"[0-9a-f]{64}")
+_PROVIDERS: tuple[Any, ...] = ("openai", "anthropic", "openrouter")
 _PREIMAGE_KEYS = frozenset(
     {
         "run_id",
@@ -53,12 +62,6 @@ _PREIMAGE_KEYS = frozenset(
         "method_version",
     }
 )
-_KIND_NAME = {
-    ErrorKind.NOT_SENT: "not_sent",
-    ErrorKind.SENT_CHARGE_KNOWN: "sent_known",
-    ErrorKind.SENT_CHARGE_USAGE: "sent_usage",
-    ErrorKind.SENT_CHARGE_UNKNOWN: "sent_unknown",
-}
 
 
 class RawExists(FileExistsError):
@@ -67,6 +70,25 @@ class RawExists(FileExistsError):
 
 class RawMissing(LookupError):
     """A record has no archived raw body to rebuild its recording from."""
+
+
+class TornLog(RuntimeError):
+    """``calls.jsonl`` does not end in a newline: a crash left half a line. Nothing is appended
+    until a person repairs it; gluing a record onto the torn line would lose both."""
+
+
+class RecordInvalid(ValueError):
+    """A record failed validation. The message names fields and reasons, never the input."""
+
+
+class ExportMismatch(ValueError):
+    """A record and its archived body, or the record itself, do not agree on ``field``."""
+
+    def __init__(self, digest: str, call_index: int, field: str) -> None:
+        super().__init__(f"record {digest}-{call_index} disagrees with its archive on {field}")
+        self.digest = digest
+        self.call_index = call_index
+        self.field = field
 
 
 class AuditCorrupt(ValueError):
@@ -80,6 +102,29 @@ class ToolCallRecord(Contract):
     arguments_sha256: Hash
     result_bytes: int | None = Field(ge=0)
     refusal_code: str | None
+
+
+def _invalid(error: ValidationError) -> RecordInvalid:
+    found = error.errors(include_input=False, include_url=False, include_context=False)
+    return RecordInvalid("; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in found))
+
+
+def _redact(redactor: Redactor, value: Any) -> Any:
+    if isinstance(value, str):
+        return redactor.text(value)
+    if isinstance(value, BaseModel):
+        return type(value)(**_redact(redactor, value.model_dump()))
+    if isinstance(value, dict):
+        return {k: _redact(redactor, v) for k, v in value.items()}
+    if isinstance(value, tuple | list):
+        return tuple(_redact(redactor, v) for v in value)
+    return value
+
+
+def arguments_sha256(arguments: Mapping[str, Any]) -> str:
+    """The one definition of a tool call's ``arguments_sha256``: sha256 of the compact JSON text
+    ``turn.dump_json`` writes for the parsed arguments."""
+    return hashlib.sha256(dump_json(arguments).encode()).hexdigest()
 
 
 def _strings(value: object) -> list[str]:
@@ -143,13 +188,23 @@ class CallRecord(Contract):
 
     @classmethod
     def build(cls, redactor: Redactor, **values: Any) -> CallRecord:
-        """Construct after redacting ``error`` (a string, or an exception formatted with its chain)."""
+        """Construct after redacting every string value: ``error`` (a string, or an exception
+        formatted with its chain) and the provider-supplied ids, models and tool-call fields.
+        A key-shaped value is redacted, not refused, so the call's record can still be written.
+        A validation failure is raised as ``RecordInvalid`` without the input."""
         error = values.get("error")
         if isinstance(error, BaseException):
             values["error"] = redactor.exception(error)
         elif isinstance(error, str):
             values["error"] = redactor.text(error)
-        return cls(**values)
+        clean = {name: _redact(redactor, value) for name, value in values.items()}
+        clean["tool_calls"] = tuple(
+            ToolCallRecord(**c) if isinstance(c, dict) else c for c in clean.get("tool_calls", ())
+        )
+        try:
+            return cls(**clean)
+        except ValidationError as error:
+            raise _invalid(error) from None
 
     @classmethod
     def refused(
@@ -205,15 +260,21 @@ class CallLog:
         self._raw = self._dir / "raw"
 
     def append(self, record: CallRecord) -> None:
-        """Redact the record JSON, then write one fsynced line under an exclusive flock."""
+        """Redact the record JSON, then write one fsynced line under an exclusive flock. A torn
+        tail (no final newline) is refused: ``TornLog``."""
         clean = self._redactor.json_value(record.model_dump(mode="json"))
         data = (json.dumps(clean) + "\n").encode()
         self._dir.mkdir(parents=True, exist_ok=True)
-        fd = os.open(self._calls, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        fd = os.open(self._calls, os.O_RDWR | os.O_APPEND | os.O_CREAT, 0o600)
         try:
             fcntl.flock(fd, fcntl.LOCK_EX)
+            size = os.fstat(fd).st_size
+            if size and os.pread(fd, 1, size - 1) != b"\n":
+                raise TornLog(f"{self._calls.name} ends mid-line; repair it before appending")
             _write_all(fd, data)
             os.fsync(fd)
+            if size == 0:
+                _fsync_dir(self._dir)  # the file is new: make its directory entry durable
         finally:
             os.close(fd)  # closing releases the lock
 
@@ -230,6 +291,9 @@ class CallLog:
         return [json.loads(line) for line in text.splitlines() if line.strip()]
 
     def next_call_index(self, module_id: str, step_id: str, attempt: int) -> int:
+        # ponytail: one writer per (module, step, attempt): the tool loop is sequential, so the
+        # read here and the append later need no common lock. Upgrade when calls of one step can
+        # overlap: read the index and append under one flock.
         taken = [
             r["call_index"]
             for r in self.records()
@@ -237,28 +301,64 @@ class CallLog:
         ]
         return max(taken, default=-1) + 1
 
-    def write_raw(self, digest: str, call_index: int, body: bytes) -> Path:
-        """Archive the redacted body at ``raw/<digest>-<call_index>.json``, create-once."""
+    def _withheld(self, body: bytes, error_class: str | None) -> str | None:
+        """The reason this body is archived as a placeholder, or None when redaction suffices."""
+        if error_class == "KeyReflected":
+            return "KeyReflected"
+        try:
+            body.decode("utf-8")
+        except UnicodeDecodeError:
+            return "InvalidUtf8"
+        if b"\x00" in body:  # UTF-16/32 of ASCII decodes as UTF-8 with NULs; a UTF-8 redactor
+            return "InvalidUtf8"  # cannot see a key in it, and no JSON text holds a raw NUL
+        # A key that is whole only after decoding (JSON escapes, SSE deltas joined) survives the
+        # byte redaction; ask the provider mappers, as the live adapter did, whether one remains.
+        redacted = self._redactor.bytes_(body)
+        for provider in _PROVIDERS:
+            outcome = parse(provider, 200, redacted, {}, self._redactor)
+            if isinstance(outcome, ProviderError) and outcome.error_class == "KeyReflected":
+                return "KeyReflected"
+        return None
+
+    def write_raw(
+        self, digest: str, call_index: int, body: bytes, *, error_class: str | None = None
+    ) -> Path:
+        """Archive the redacted body at ``raw/<digest>-<call_index>.json``, create-once.
+
+        A key-reflected or non-UTF-8 body is withheld: the archive holds the JSON string
+        ``[withheld: <reason>; <n> bytes]``. The file is written and fsynced under a temporary
+        name and linked into place, so a crash leaves no half-written archive."""
         if not _DIGEST.fullmatch(digest):
             raise ValueError("digest must be 64 lowercase hex characters")
         if isinstance(call_index, bool) or not isinstance(call_index, int) or call_index < 0:
             raise ValueError("call_index must be a non-negative integer")
-        text = body.decode("utf-8", errors="replace")
-        try:
-            stored = dump_json(self._redactor.json_value(load_json(text)))
-        except TurnError:  # not JSON (SSE, plain text): keep the decoded text as a JSON string
-            stored = json.dumps(self._redactor.text(text))
-        self._raw.mkdir(parents=True, exist_ok=True)
+        reason = self._withheld(body, error_class)
+        if reason is not None:
+            stored = json.dumps(f"[withheld: {reason}; {len(body)} bytes]")
+        else:
+            text = body.decode("utf-8")
+            try:
+                stored = dump_json(self._redactor.json_value(load_json(text)))
+                if stored.startswith('"'):  # a bare JSON string body: keep its quotes, so export
+                    stored = json.dumps(stored)  # can tell it from a text body (stored unquoted)
+            except (TurnError, RecursionError):  # not JSON, or too deep to walk: keep the text
+                stored = json.dumps(self._redactor.text(text))
+        if not self._raw.exists():
+            self._raw.mkdir(parents=True, exist_ok=True)
+            _fsync_dir(self._dir)
         path = self._raw / f"{digest}-{call_index}.json"
+        descriptor, temporary = tempfile.mkstemp(prefix=".tmp-", dir=self._raw)
         try:
-            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        except FileExistsError:
-            raise RawExists(path.name) from None
-        try:
-            _write_all(fd, stored.encode())
-            os.fsync(fd)
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(stored.encode())
+                stream.flush()
+                os.fsync(stream.fileno())
+            try:
+                os.link(temporary, path)
+            except FileExistsError:
+                raise RawExists(path.name) from None
         finally:
-            os.close(fd)
+            Path(temporary).unlink(missing_ok=True)
         _fsync_dir(self._raw)
         return path
 
@@ -276,6 +376,8 @@ def invocation_preimage(
     prompt_sha256: str,
     method_version: str = METHOD_VERSION,
 ) -> dict[str, Any]:
+    if isinstance(upstream_hashes, str):  # never sorted into characters; validation refuses it
+        upstream_hashes = [upstream_hashes]
     return {
         "run_id": run_id,
         "module_id": module_id,
@@ -293,9 +395,40 @@ def _canonical(preimage: Mapping[str, Any]) -> bytes:
     return json.dumps(preimage, sort_keys=True, separators=(",", ":")).encode()
 
 
+def _text_field(name: str, value: object) -> None:
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"preimage {name} must be a non-empty string")
+    if KEY_PATTERN.search(value):
+        raise ValueError(f"preimage {name} holds key material")
+
+
+def _hash_field(name: str, value: object) -> None:
+    if not isinstance(value, str) or not _DIGEST.fullmatch(value):
+        raise ValueError(f"preimage {name} must be 64 lowercase hex characters")
+
+
+def _checked_canonical(preimage: Mapping[str, Any]) -> bytes:
+    """The canonical bytes of a validated preimage; ``upstream_hashes`` sorted as the digest does."""
+    normal = dict(preimage)
+    hashes = normal.get("upstream_hashes")
+    if isinstance(hashes, list | tuple):
+        normal["upstream_hashes"] = sorted(hashes, key=str)
+    raw = _canonical(normal)
+    for name in ("run_id", "module_id", "step_id", "method_version"):
+        _text_field(name, normal[name])
+    if type(normal["attempt"]) is not int or normal["attempt"] not in (0, 1):
+        raise ValueError("preimage attempt must be 0 or 1")
+    _hash_field("prompt_sha256", normal["prompt_sha256"])
+    if type(normal["upstream_hashes"]) is not list:
+        raise ValueError("preimage upstream_hashes must be a list")
+    for item in normal["upstream_hashes"]:
+        _hash_field("upstream_hashes", item)
+    return raw
+
+
 def invocation_digest(**fields_: Any) -> str:
     """sha256 of the canonical preimage. A call within an attempt keeps it; a new attempt differs."""
-    return hashlib.sha256(_canonical(invocation_preimage(**fields_))).hexdigest()
+    return hashlib.sha256(_checked_canonical(invocation_preimage(**fields_))).hexdigest()
 
 
 class _Store(Protocol):
@@ -324,7 +457,7 @@ def _put_once(folder: Path, name: str, raw: bytes, what: str) -> None:
 
 def retain_preimage(store: _Store, preimage: Mapping[str, Any]) -> str:
     """Write the preimage at ``owner-run-audit/invocations/<digest>``; return the digest."""
-    raw = _canonical(preimage)
+    raw = _checked_canonical(preimage)
     digest = hashlib.sha256(raw).hexdigest()
     _put_once(store.directory / AUDIT / INVOCATIONS, digest, raw, "invocation preimage")
     return digest
@@ -333,52 +466,120 @@ def retain_preimage(store: _Store, preimage: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------- recordings
 
 
-def _error_response(error: ProviderError, status: int | None) -> dict[str, Any]:
-    out: dict[str, Any] = {
-        "kind": _KIND_NAME[error.kind],
-        "error_class": error.error_class,
-        "http_status": error.http_status if error.http_status is not None else status,
+_TRANSPORT_CLASSES = frozenset(
+    {"ConnectTimeout", "IdleTimeout", "OverallTimeout", "TransportError"}
+)
+
+
+def _usage_of(rec: CallRecord) -> dict[str, int | None]:
+    values = {
+        "input_tokens": rec.input_tokens,
+        "cached_read_tokens": rec.cached_read_tokens,
+        "cache_write_tokens": rec.cache_write_tokens,
+        "output_tokens": rec.output_tokens,
+        "reasoning_tokens": rec.reasoning_tokens,
     }
-    if error.usage is not None:
-        out["usage"] = {f.name: getattr(error.usage, f.name) for f in fields(Usage)}
-    if error.billed_usd is not None:
-        out["billed_usd"] = str(error.billed_usd)
-    return out
+    return {f.name: values.get(f.name) for f in fields(Usage)}
+
+
+def _error_response(rec: CallRecord, error_class: str) -> dict[str, Any]:
+    """An error reply from the record's own fields; the raw body is never consulted."""
+    key = (rec.invocation_digest, rec.call_index)
+    unknown = rec.cost_status == "unknown"
+    if rec.http_status is None:
+        if rec.cost_status == "billed":
+            raise ExportMismatch(*key, "cost_status")
+        kind = "sent_unknown" if error_class in _TRANSPORT_CLASSES else "not_sent"
+        if (kind == "sent_unknown") != unknown:
+            raise ExportMismatch(*key, "cost_status")
+        return {"kind": kind, "error_class": error_class, "http_status": None}
+    has_tokens = any(v is not None for v in _usage_of(rec).values())
+    out: dict[str, Any] = {"error_class": error_class, "http_status": rec.http_status}
+    if unknown:
+        out["kind"] = "sent_unknown"
+    elif has_tokens or rec.cost_status == "billed":
+        out["kind"] = "sent_usage"
+        out["usage"] = _usage_of(rec)
+    else:
+        out["kind"] = "sent_known"
+        if not 400 <= rec.http_status <= 499:
+            raise ExportMismatch(*key, "http_status")
+    if rec.cost_status == "billed" and rec.settled_usd is not None:
+        out["billed_usd"] = money_text(rec.settled_usd)
+    return {"kind": out.pop("kind"), **out}
+
+
+def _refuse_forged_error(run: Path, rec: CallRecord, redactor: Redactor) -> None:
+    """An error record's archived body, when there is one, must not parse as an ok turn: a body
+    swapped in for an error record is refused. The response still comes from the record. A
+    ``KeyReflected`` record is exempt: its body, once redacted, can legitimately parse as a turn."""
+    path = run / "raw" / f"{rec.invocation_digest}-{rec.call_index}.json"
+    if rec.error_class == "KeyReflected" or rec.http_status is None:
+        return
+    if not path.is_file() or path.stat().st_size == 0:
+        return
+    body = _archived_body(path, rec)
+    provider: Any = rec.provider
+    if isinstance(parse(provider, rec.http_status, body, {}, redactor), Turn):
+        raise ExportMismatch(rec.invocation_digest, rec.call_index, "outcome")
+
+
+def _archived_body(path: Path, rec: CallRecord) -> bytes:
+    try:
+        stored = load_json(path.read_text(encoding="utf-8"))
+    except (TurnError, UnicodeDecodeError):
+        raise ExportMismatch(rec.invocation_digest, rec.call_index, "raw") from None
+    body = stored.encode() if isinstance(stored, str) else dump_json(stored).encode()
+    return body
+
+
+def _ok_response(run: Path, rec: CallRecord, redactor: Redactor) -> dict[str, Any]:
+    """Re-parse the archived body; it must be a turn that says what the record says."""
+    digest, index = rec.invocation_digest, rec.call_index
+    path = run / "raw" / f"{digest}-{index}.json"
+    if not path.is_file() or path.stat().st_size == 0:
+        raise RawMissing(path.name)
+    body = _archived_body(path, rec)
+    provider: Any = rec.provider
+    if rec.http_status is None:
+        raise ExportMismatch(digest, index, "http_status")
+    outcome = parse(provider, rec.http_status, body, {}, redactor)
+    if not isinstance(outcome, Turn):
+        raise ExportMismatch(digest, index, "outcome")
+    if _usage_of(rec) != {k: getattr(outcome.usage, k) for k in _usage_of(rec)}:
+        raise ExportMismatch(digest, index, "usage")
+    if rec.request_id != outcome.request_id:
+        raise ExportMismatch(digest, index, "request_id")
+    if rec.reported_model != outcome.reported_model:
+        raise ExportMismatch(digest, index, "reported_model")
+    seen = [(c.name, c.arguments_sha256) for c in rec.tool_calls]
+    if seen != [(c.name, arguments_sha256(c.arguments)) for c in outcome.tool_calls]:
+        raise ExportMismatch(digest, index, "tool_calls")
+    return turn_to_json(outcome)
 
 
 def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
-    """Rebuild a recording file from ``calls.jsonl`` plus ``raw/``, re-parsing each archived body
-    with the provider's mapper. Returns the number of lines written. A record with no http status
-    has no body and exports as a ``not_sent`` / ``sent_unknown`` error with ``http_status`` null;
-    any other record without its raw body raises ``RawMissing``. The ``redactor`` is the caller's; this never reads the environment."""
+    """Rebuild a recording file (the ``RecordedAdapter`` line format) from ``calls.jsonl`` plus
+    ``raw/``. Returns the number of lines written.
+
+    An error record (``error_class`` set) exports from its own fields and is never re-parsed. An
+    ok record re-parses its archived body with the provider mapper and must agree with it, else
+    ``ExportMismatch``; a missing or empty body is ``RawMissing``. A null-status record's kind
+    comes from its ``error_class`` and must agree with ``cost_status``. The ``redactor`` is the
+    caller's; this never reads the environment."""
     run = Path(run_dir)
     responses: dict[tuple[str, int], dict[str, Any]] = {}
     for item in CallLog(run, redactor).records():
-        rec = CallRecord.model_validate_json(json.dumps(item))
+        try:
+            rec = CallRecord.model_validate_json(json.dumps(item))
+        except ValidationError as error:
+            raise _invalid(error) from None
         key = (rec.invocation_digest, rec.call_index)
-        if rec.http_status is None:
-            # Ruled format: no status only for not_sent / sent_unknown. An unknown charge means the
-            # request was held and counted (sent_unknown); a computed zero means nothing was sent.
-            if rec.error_class is None:
-                raise ValueError(f"record {key} has no status and no error_class")
-            responses[key] = {
-                "kind": "sent_unknown" if rec.cost_status == "unknown" else "not_sent",
-                "error_class": rec.error_class,
-                "http_status": None,
-            }
-            continue
-        path = run / "raw" / f"{rec.invocation_digest}-{rec.call_index}.json"
-        if not path.is_file():
-            raise RawMissing(path.name)
-        stored = load_json(path.read_text(encoding="utf-8"))
-        body = stored.encode() if isinstance(stored, str) else dump_json(stored).encode()
-        provider: Any = rec.provider
-        outcome = parse(provider, rec.http_status, body, {}, redactor)
-        response = (
-            _error_response(outcome, rec.http_status)
-            if isinstance(outcome, ProviderError)
-            else turn_to_json(outcome)
-        )
+        if rec.error_class is None:
+            response = _ok_response(run, rec, redactor)
+        else:
+            _refuse_forged_error(run, rec, redactor)
+            response = _error_response(rec, rec.error_class)
         if key in responses and dump_json(responses[key]) != dump_json(response):
             raise ValueError(f"conflicting records for {key}")
         responses[key] = response
@@ -404,9 +605,13 @@ __all__ = [
     "AuditCorrupt",
     "CallLog",
     "CallRecord",
+    "ExportMismatch",
     "RawExists",
     "RawMissing",
+    "RecordInvalid",
     "ToolCallRecord",
+    "TornLog",
+    "arguments_sha256",
     "export_recording",
     "invocation_digest",
     "invocation_preimage",

@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import threading
 import traceback
 from datetime import UTC, datetime
@@ -14,12 +15,17 @@ import pytest
 from pydantic import ValidationError
 
 from deploy_workflow.model.adapter import recorded_adapter
+from deploy_workflow.model.providers import ProviderError, parse
 from deploy_workflow.model.record import (
     CallLog,
     CallRecord,
+    ExportMismatch,
     RawExists,
     RawMissing,
+    RecordInvalid,
     ToolCallRecord,
+    TornLog,
+    arguments_sha256,
     export_recording,
     invocation_digest,
     invocation_preimage,
@@ -301,13 +307,16 @@ OPENAI_BODY = {
 }
 
 
+OK_RECORD = record(request_id="resp_1", input_tokens=10, output_tokens=5)
+
+
 def test_export_recording_replays_through_recorded_adapter(tmp_path: Path) -> None:
     run, out = tmp_path / "run", tmp_path / "rec"
     run.mkdir()
     out.mkdir()
     log = CallLog(run, Redactor())
     log.write_raw(DIGEST, 0, json.dumps(OPENAI_BODY).encode())
-    log.append(record())
+    log.append(OK_RECORD)
     export_recording(run, out / "r.jsonl", Redactor())
     model = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
     reply = recorded_adapter(model, out).complete(
@@ -342,14 +351,17 @@ def test_export_recording_error_reply(tmp_path: Path) -> None:
 def test_export_recording_raw_missing(tmp_path: Path) -> None:
     run = tmp_path / "run"
     run.mkdir()
-    CallLog(run, Redactor()).append(record())
+    CallLog(run, Redactor()).append(OK_RECORD)
     with pytest.raises(RawMissing):
         export_recording(run, tmp_path / "r.jsonl", Redactor())
 
 
-@pytest.mark.parametrize("status, kind", [("unknown", "sent_unknown"), ("computed", "not_sent")])
+@pytest.mark.parametrize(
+    "status, kind, error_class",
+    [("unknown", "sent_unknown", "IdleTimeout"), ("computed", "not_sent", "KeyMissing")],
+)
 def test_export_null_status_records_use_the_ruled_format(
-    tmp_path: Path, status: str, kind: str
+    tmp_path: Path, status: str, kind: str, error_class: str
 ) -> None:
     run = tmp_path / "run"
     run.mkdir()
@@ -358,14 +370,14 @@ def test_export_null_status_records_use_the_ruled_format(
             http_status=None,
             cost_status=status,
             settled_usd=None if status == "unknown" else Decimal(0),
-            error_class="IdleTimeout",
+            error_class=error_class,
         )
     )
     out = tmp_path / "r.jsonl"
     assert export_recording(run, out, Redactor()) == 1
     assert json.loads(out.read_text())["response"] == {
         "kind": kind,
-        "error_class": "IdleTimeout",
+        "error_class": error_class,
         "http_status": None,
     }
 
@@ -391,3 +403,419 @@ def test_adapter_reads_null_status_recording(tmp_path: Path) -> None:
         reservation_id="r",
     )
     assert reply.kind == "sent_unknown" and reply.http_status is None
+
+
+# ---------------------------------------------------------------- fix round 1
+
+
+ANTHROPIC = {
+    "provider": "anthropic",
+    "config_id": "opus-medium",
+    "requested_model": "claude-opus-5-5",
+}
+
+
+def sse(*deltas: str) -> str:
+    events: list[dict[str, Any]] = [
+        {
+            "type": "message_start",
+            "message": {"id": "msg_1", "model": "claude-opus-5-5", "usage": {"input_tokens": 3}},
+        },
+        {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
+    ]
+    events += [
+        {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": t}}
+        for t in deltas
+    ]
+    events += [
+        {"type": "content_block_stop", "index": 0},
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "end_turn"},
+            "usage": {"output_tokens": 4},
+        },
+        {"type": "message_stop"},
+    ]
+    return "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events)
+
+
+def archived(path: Path) -> Any:
+    return json.loads(path.read_text())
+
+
+def test_raw_withholds_key_reflected_by_record(tmp_path: Path) -> None:
+    log = CallLog(tmp_path, Redactor())
+    path = log.write_raw(DIGEST, 0, b'{"a": 1}', error_class="KeyReflected")
+    assert archived(path) == "[withheld: KeyReflected; 8 bytes]"
+
+
+def test_raw_withholds_invalid_utf8(tmp_path: Path) -> None:
+    body = SECRET.encode("utf-16-le")
+    path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body, error_class=None)
+    assert archived(path) == f"[withheld: InvalidUtf8; {len(body)} bytes]"
+
+
+def test_raw_withholds_bytes_that_are_not_utf8(tmp_path: Path) -> None:
+    path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, b'{"a": "\xff"}')
+    assert archived(path) == "[withheld: InvalidUtf8; 10 bytes]"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        sse("x sk-or", "-v1-TESTONLY123456 y"),
+        sse("PH").replace("PH", "\\u0073" + SECRET[1:]),
+        sse("PH").replace("PH", "\\u006f" + OPAQUE[1:]),
+    ],
+    ids=["split", "escaped", "escaped-env"],
+)
+def test_raw_withholds_bodies_that_hold_a_key_once_decoded(tmp_path: Path, text: str) -> None:
+    red = Redactor.from_environ({"ANTHROPIC_API_KEY": OPAQUE})
+    path = CallLog(tmp_path, red).write_raw(DIGEST, 0, red.bytes_(text.encode()))
+    stored = archived(path)
+    assert stored.startswith("[withheld: KeyReflected;")
+    again = parse("anthropic", 200, stored.encode(), {}, red)
+    assert not (isinstance(again, ProviderError) and again.error_class == "KeyReflected")
+
+
+def test_raw_survives_a_deeply_nested_body(tmp_path: Path) -> None:
+    body = ("[" * 100000 + "]" * 100000).encode()
+    path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body)
+    assert path.is_file()
+
+
+def test_planted_key_in_sse_is_absent_from_raw(tmp_path: Path) -> None:
+    body = sse(f"k {SECRET}").encode()
+    path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body)
+    assert "TESTONLY123456" not in path.read_text()
+
+
+def test_anthropic_sse_exports_and_replays(tmp_path: Path) -> None:
+    run, out = tmp_path / "run", tmp_path / "rec"
+    run.mkdir()
+    out.mkdir()
+    log = CallLog(run, Redactor())
+    log.write_raw(DIGEST, 0, sse("hel", "lo").encode())
+    log.append(
+        record(
+            **ANTHROPIC,
+            request_id="msg_1",
+            reported_model="claude-opus-5-5",
+            input_tokens=3,
+            output_tokens=4,
+        )
+    )
+    export_recording(run, out / "r.jsonl", Redactor())
+    model = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
+    reply = recorded_adapter(model, out).complete(
+        TurnRequest((), (), 10, "medium"),
+        invocation_digest=DIGEST,
+        call_index=0,
+        reservation_id="r",
+    )
+    assert reply.turn is not None and reply.turn.text == "hello"
+
+
+def test_torn_tail_is_refused(tmp_path: Path) -> None:
+    log = CallLog(tmp_path, Redactor())
+    log.append(record())
+    path = tmp_path / "calls.jsonl"
+    path.write_bytes(path.read_bytes() + b'{"torn')
+    before = path.read_bytes()
+    with pytest.raises(TornLog):
+        log.append(record(call_index=1))
+    assert path.read_bytes() == before
+
+
+def test_raw_is_linked_into_place_without_temp_files(tmp_path: Path) -> None:
+    log = CallLog(tmp_path, Redactor())
+    log.write_raw(DIGEST, 0, b"{}")
+    with pytest.raises(RawExists):
+        log.write_raw(DIGEST, 0, b"{}")
+    assert sorted(p.name for p in (tmp_path / "raw").iterdir()) == [f"{DIGEST}-0.json"]
+
+
+def test_directories_are_fsynced_after_creating_entries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: dict[int, str] = {}
+    synced: list[str] = []
+    real_open, real_fsync = os.open, os.fsync
+
+    def spy_open(p: Any, *a: Any, **k: Any) -> int:
+        fd = real_open(p, *a, **k)
+        opened[fd] = str(p)
+        return fd
+
+    def spy_fsync(fd: int) -> None:
+        synced.append(opened.get(fd, "?"))
+        real_fsync(fd)
+
+    monkeypatch.setattr(os, "open", spy_open)
+    monkeypatch.setattr(os, "fsync", spy_fsync)
+    run = tmp_path / "run"
+    log = CallLog(run, Redactor())
+    log.append(record())
+    log.write_raw(DIGEST, 0, b"{}")
+    assert str(run) in synced and str(run / "raw") in synced
+
+
+def test_empty_crash_left_raw_file_is_raw_missing(tmp_path: Path) -> None:
+    (tmp_path / "raw").mkdir()
+    (tmp_path / "raw" / f"{DIGEST}-0.json").write_bytes(b"")
+    CallLog(tmp_path, Redactor()).append(OK_RECORD)
+    with pytest.raises(RawMissing):
+        export_recording(tmp_path, tmp_path / "o.jsonl", Redactor())
+
+
+# R2: export follows the record
+
+
+def exported(tmp_path: Path, *records: CallRecord, bodies: dict[int, bytes] | None = None) -> Any:
+    run = tmp_path / "run"
+    log = CallLog(run, Redactor())
+    for index, body in (bodies or {}).items():
+        log.write_raw(DIGEST, index, body)
+    for rec in records:
+        log.append(rec)
+    out = tmp_path / "o.jsonl"
+    export_recording(run, out, Redactor())
+    return [json.loads(x)["response"] for x in out.read_text().splitlines()]
+
+
+def test_key_reflected_record_exports_sent_unknown(tmp_path: Path) -> None:
+    body = json.dumps(OPENAI_BODY).encode()
+    (resp,) = exported(
+        tmp_path,
+        record(cost_status="unknown", settled_usd=None, error_class="KeyReflected"),
+        bodies={0: body},
+    )
+    assert (resp["kind"], resp["error_class"], resp["http_status"]) == (
+        "sent_unknown",
+        "KeyReflected",
+        200,
+    )
+
+
+def test_invalid_utf8_error_exports_the_records_kind(tmp_path: Path) -> None:
+    (resp,) = exported(
+        tmp_path,
+        record(http_status=400, cost_status="unknown", settled_usd=None, error_class="Http"),
+        bodies={0: b'{"error": {"message": "bad \xff"}}'},
+    )
+    assert resp["kind"] == "sent_unknown"
+
+
+def test_error_record_with_usage_and_billed_exports_them(tmp_path: Path) -> None:
+    (resp,) = exported(
+        tmp_path,
+        record(
+            http_status=422,
+            cost_status="billed",
+            settled_usd=Decimal("0.5"),
+            error_class="Refusal",
+            input_tokens=7,
+            output_tokens=2,
+        ),
+    )
+    assert resp["kind"] == "sent_usage" and resp["billed_usd"] == "0.5"
+    assert resp["usage"]["input_tokens"] == 7 and resp["usage"]["output_tokens"] == 2
+
+
+def test_error_record_is_not_reparsed_so_no_raw_is_needed(tmp_path: Path) -> None:
+    (resp,) = exported(tmp_path, record(http_status=400, error_class="Http", output_tokens=None))
+    assert resp["kind"] == "sent_known"
+
+
+def test_ok_record_disagreeing_with_raw_is_refused(tmp_path: Path) -> None:
+    body = json.dumps(OPENAI_BODY).encode()
+    cases: list[tuple[dict[str, Any], str]] = [
+        ({"output_tokens": 999}, "usage"),
+        ({"request_id": "other"}, "request_id"),
+        ({"reported_model": "other"}, "reported_model"),
+    ]
+    for over, name in cases:
+        rec = record(request_id="resp_1", input_tokens=10, output_tokens=5)
+        rec = rec.model_copy(update=over)
+        with pytest.raises(ExportMismatch) as caught:
+            exported(tmp_path / name, rec, bodies={0: body})
+        assert caught.value.field == name
+
+
+def test_ok_record_with_a_raw_that_is_not_a_turn_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(ExportMismatch):
+        exported(tmp_path, OK_RECORD, bodies={0: b"not json at all"})
+
+
+def test_ok_record_tool_call_hash_must_match(tmp_path: Path) -> None:
+    body = json.dumps(
+        {
+            **OPENAI_BODY,
+            "output": [
+                {
+                    "type": "function_call",
+                    "call_id": "c1",
+                    "name": "submit",
+                    "arguments": '{"k": 1}',
+                }
+            ],
+        }
+    ).encode()
+    good = ToolCallRecord(
+        name="submit",
+        arguments_sha256=arguments_sha256({"k": 1}),
+        result_bytes=None,
+        refusal_code=None,
+    )
+    base = {"request_id": "resp_1", "input_tokens": 10, "output_tokens": 5}
+    assert exported(tmp_path / "ok", record(**base, tool_calls=(good,)), bodies={0: body})
+    bad = good.model_copy(update={"arguments_sha256": "f" * 64})
+    with pytest.raises(ExportMismatch):
+        exported(tmp_path / "bad", record(**base, tool_calls=(bad,)), bodies={0: body})
+
+
+@pytest.mark.parametrize(
+    "error_class, cost, settled",
+    [("IdleTimeout", "computed", Decimal(0)), ("KeyMissing", "unknown", None)],
+)
+def test_null_status_kind_must_agree_with_cost_status(
+    tmp_path: Path, error_class: str, cost: str, settled: Decimal | None
+) -> None:
+    with pytest.raises(ExportMismatch):
+        exported(
+            tmp_path,
+            record(
+                http_status=None, error_class=error_class, cost_status=cost, settled_usd=settled
+            ),
+        )
+
+
+def test_null_status_billed_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(ExportMismatch):
+        exported(
+            tmp_path,
+            record(
+                http_status=None,
+                error_class="KeyMissing",
+                cost_status="billed",
+                settled_usd=Decimal(1),
+            ),
+        )
+
+
+def test_conflicting_records_for_one_call_are_refused(tmp_path: Path) -> None:
+    body = json.dumps(OPENAI_BODY).encode()
+    null = record(
+        http_status=None, cost_status="unknown", settled_usd=None, error_class="IdleTimeout"
+    )
+    with pytest.raises(ValueError, match="conflicting"):
+        exported(tmp_path, OK_RECORD, null, bodies={0: body})
+
+
+# R3: build redacts every string
+
+
+def test_build_redacts_exact_values_in_every_string_field() -> None:
+    red = Redactor.from_environ({"OPENAI_API_KEY": OPAQUE})
+    rec = CallRecord.build(red, **fields(request_id=f"req {OPAQUE}", reported_model=OPAQUE))
+    assert OPAQUE not in (rec.request_id or "") + (rec.reported_model or "")
+
+
+def test_build_redacts_key_shaped_values_instead_of_refusing() -> None:
+    red = Redactor()
+    tool = ToolCallRecord(
+        name=f"t {SECRET}", arguments_sha256="b" * 64, result_bytes=None, refusal_code=SECRET
+    )
+    rec = CallRecord.build(
+        red,
+        **fields(
+            reported_model=f"x {SECRET}",
+            request_id=SECRET,
+            error_class=f"E {SECRET}",
+            tool_calls=(tool,),
+        ),
+    )
+    assert "TESTONLY123456" not in rec.model_dump_json()
+    assert rec.tool_calls[0].name.startswith("t ")
+
+
+def test_build_surfaces_validation_errors_without_input() -> None:
+    with pytest.raises(RecordInvalid) as caught:
+        CallRecord.build(Redactor(), **fields(http_status="not-an-int", call_index=-1))
+    assert "not-an-int" not in str(caught.value) and "call_index" in str(caught.value)
+
+
+def test_tool_call_record_hides_input_in_errors() -> None:
+    with pytest.raises(ValidationError) as caught:
+        ToolCallRecord(name="n", arguments_sha256=SECRET, result_bytes=None, refusal_code=None)
+    assert "TESTONLY123456" not in str(caught.value)
+    with pytest.raises(ValidationError) as caught:
+        record(
+            tool_calls=(
+                {
+                    "name": "n",
+                    "arguments_sha256": SECRET,
+                    "result_bytes": None,
+                    "refusal_code": None,
+                },
+            )
+        )
+    assert "TESTONLY123456" not in str(caught.value)
+
+
+# R4(e): preimage
+
+
+def test_retain_preimage_canonicalises_like_the_digest(tmp_path: Path) -> None:
+    unsorted = {**invocation_preimage(**PREIMAGE), "upstream_hashes": ["c" * 64, "b" * 64]}
+    assert retain_preimage(SimpleNamespace(directory=tmp_path), unsorted) == digest_of()
+
+
+@pytest.mark.parametrize(
+    "over",
+    [
+        {"upstream_hashes": "cb"},
+        {"attempt": 2},
+        {"attempt": True},
+        {"attempt": "0"},
+        {"upstream_hashes": ["zz"]},
+        {"upstream_hashes": ["B" * 64]},
+        {"prompt_sha256": "d" * 63},
+        {"step_id": SECRET},
+        {"run_id": ""},
+    ],
+)
+def test_preimage_refuses_bad_values(tmp_path: Path, over: dict[str, Any]) -> None:
+    with pytest.raises(ValueError):
+        digest_of(**over)
+    pre = {**invocation_preimage(**PREIMAGE), **over}
+    with pytest.raises(ValueError):
+        retain_preimage(SimpleNamespace(directory=tmp_path), pre)
+
+
+@pytest.mark.parametrize("drop", [True, False])
+def test_retain_preimage_refuses_a_wrong_key_set(tmp_path: Path, drop: bool) -> None:
+    pre = invocation_preimage(**PREIMAGE)
+    if drop:
+        del pre["step_id"]
+    else:
+        pre["extra"] = 1
+    with pytest.raises(ValueError, match="seven"):
+        retain_preimage(SimpleNamespace(directory=tmp_path), pre)
+
+
+def test_bare_json_string_body_round_trips_as_itself(tmp_path: Path) -> None:
+    inner = '{"error":{"message":"x"}}'
+    body = json.dumps(inner).encode()
+    path = CallLog(tmp_path, Redactor()).write_raw(DIGEST, 0, body)
+    assert archived(path) == json.dumps(inner)  # the quotes are kept: not a text body
+
+
+def test_error_record_whose_raw_was_swapped_for_a_turn_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(ExportMismatch) as caught:
+        exported(
+            tmp_path,
+            record(cost_status="unknown", settled_usd=None, error_class="UnparsableReply"),
+            bodies={0: json.dumps(OPENAI_BODY).encode()},
+        )
+    assert caught.value.field == "outcome"

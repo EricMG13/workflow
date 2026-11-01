@@ -89,3 +89,9 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 ## From the Phase 6 end batch A (2026-11-01)
 
 - **Huge exponents overflow in display (pre-existing).** A no-context CP-2D run with an amount like `1E+999999` fails in `compute` → `display.format_value` with `ValueError: Number is too large to display exactly` or `Overflow`, not a named refusal. Same at the parent commit; not a pins defect. Probe: `scratchpad/p6t4-adversary/probe_huge_exponent.py` (4 no-context rows exit 1). Recommendation: bound the exponent at the journal shape check so the run refuses with a named reason before compute.
+
+## From the O3 Task 3b adversary review (2026-11-01)
+
+- **`cap.json` has no integrity check.** Someone with write access to the run directory can edit `cap.json` and resume with the new cap; the resume accepts it. Probe: `scratchpad/o3t3b-adversary/probes/test_q5_identity_and_cap.py::test_info_cap_json_edited_raises_the_cap`. Recommendation: accept (the same writer can edit the reservation markers), or bind the cap into the reservation markers' config id.
+- **A kill between staging and `cap.json`** leaves a run directory that can be neither resumed nor re-run. No spend. Recommendation: the owner deletes it by hand, or a later change writes `cap.json` before staging.
+- **Finishing a sealed run with no `run.json`** (killed after `write_receipt` or after the render). Task 3b fix 1 gives it the named stop `SealedWithoutRunRecord`; finishing it (writing `run.json` from the sealed record) is a follow-up.

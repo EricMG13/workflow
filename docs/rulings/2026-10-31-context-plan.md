@@ -140,3 +140,5 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   row (1-based): `context quote row <n> for facility <facility_id> cannot be cited as one unique span; not used`
   and `context deal terms row <n> for facility <facility_id> cannot be cited as one unique span; not used`
   (Phase 3 oracle re-review: a quote matching two objects is a guessed span, Design 3 :66-68).
+- **B20b (controller, 2026-11-01).** B20a drop gaps render in a module's own limitations exactly as the Design 5
+  named context gaps do (same `Gap (<severity>): ` prefix and severity); the B20a text is the gap description.

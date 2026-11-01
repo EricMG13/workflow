@@ -342,3 +342,8 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
 - **B31a (user, 2026-11-01).** I asked: "Should B31 also cover src/deploy_vii changes beyond the approved list? 1 keep the exceptions, 2 cover them." The user replied "Cover them".
   - A `src/deploy_vii` change that the plan needs is now decided by the controller's recommendation. Each one gets its D12 record and an `mx-adversary` review, is recorded here as "applied recommendation (B31a)", and is named in the controller's next message.
   - The other B31 exceptions are unchanged: new dependencies, permission and config changes, pushes and merges, live or paid calls, and prohibited actions.
+
+## B32. Speed-ups (applied recommendation, B31; 19:26 UTC 2026-11-01)
+
+- **B29 and B30 ship as one release, not two.** They are the same kind of edit, to the same files, and get one golden refresh. This amends B29's and B30's timing rulings. Cost if wrong: one release carries two wording edits instead of one.
+- **Phases 2 and 5 start now, in parallel with O3 Task 6, O3 Task 7 and O6 Task 6.** This replaces "after O3/O4". Both oracles are frozen: Phase 2 at da9f350b and Phase 5 at f6d3c4b3. A pre-flight against HEAD runs first. Tasks that do not write `owner_workflow.py`, `run_pathway.py` or `docs/reuse/manifest.json` go first. Tasks that do write them queue serially behind the in-flight lane on each file (P21; the manifest and the golden have one writer). Cost if wrong: a merge-order conflict on a shared file, caught by the per-task review.

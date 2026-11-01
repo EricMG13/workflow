@@ -75,8 +75,8 @@ jobs:
             echo "no affected fast tests"
             exit 0
           fi
-          # shellcheck disable=SC2086
           rc=0
+          # shellcheck disable=SC2086
           uv run --frozen pytest $files -m "not live" --durations=25 || rc=$?
           if [ "$rc" -eq 5 ]; then
             echo "all selected tests deselected by -m 'not live'"

@@ -17,7 +17,7 @@ cases/.
   1. P is .py under src/, tests/ or cases/: P itself, plus every F with a literal equal to a
      module name of P (dotted name; bare stem for files under tests/).
   2. Every F with a literal containing P, or a literal containing B together with a literal
-     (same F) containing a name in A(P).
+     (same F) containing a name in D(P), every directory of P, the first included.
   3. P non-.py under src/<dir>/...: every .py directly in P's directory.
   4. Seeds still empty and P non-.py: every F with a literal containing a name in A(P).
   5. Seeds still empty: nothing when P is under docs/, work/, .claude/ or ends in .md; else ALL.
@@ -160,7 +160,8 @@ def literals(source: str) -> tuple[str, ...]:
 def seeds_for(path: str, py_files: dict[str, str]) -> set[str]:
     """Files a changed path can affect directly: rules 1-4 of the module docstring."""
     base = path.rsplit("/", 1)[-1]
-    dirs = [d for d in path.split("/")[1:-1] if d]
+    top_dirs = [d for d in path.split("/")[:-1] if d]  # D(P): every directory, first included
+    dirs = top_dirs[1:]  # A(P): without the first component
     lits = {f: literals(src) for f, src in py_files.items()}
     seeds: set[str] = set()
     is_py = path.endswith(".py")
@@ -169,9 +170,9 @@ def seeds_for(path: str, py_files: dict[str, str]) -> set[str]:
         seeds.add(path)
         seeds |= {f for f, ls in lits.items() if mods.intersection(ls)}
     for f, ls in lits.items():
-        if any(path in lit for lit in ls):
-            seeds.add(f)
-        elif any(base in lit for lit in ls) and any(d in lit for lit in ls for d in dirs):
+        named = any(path in lit for lit in ls)
+        split = any(base in lit for lit in ls) and any(d in lit for lit in ls for d in top_dirs)
+        if named or split:
             seeds.add(f)
     if not is_py and path.startswith("src/") and path.count("/") >= 2:
         parent = path.rsplit("/", 1)[0]

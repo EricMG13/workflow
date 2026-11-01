@@ -18,6 +18,7 @@ import io
 import json
 import logging
 import os
+import sys
 import unicodedata
 from collections.abc import Iterator
 from pathlib import Path
@@ -38,7 +39,6 @@ from deploy_workflow.owner_workflow import (
     AUDIT,
     MAX_INPUT_BYTES,
     MAX_JSON_DEPTH,
-    REQUEST_ENVELOPE_DEPTH,
     OwnerFault,
 )
 from deploy_workflow.run_inputs import stage_sources
@@ -737,9 +737,11 @@ def _host_frames() -> dict[str, str]:
     }
 
 
-def test_the_transport_bound_is_derived_from_the_hosts() -> None:
-    assert REQUEST_ENVELOPE_DEPTH == 2
-    assert MAX_JSON_DEPTH > MAX_ARGUMENT_DEPTH + REQUEST_ENVELOPE_DEPTH + 1
+def test_the_parser_guard_lies_above_every_host_frame_and_below_the_parser_limit() -> None:
+    deepest = max(owner._depth_of(json.loads(frame)) for frame in _host_frames().values())
+    assert MAX_JSON_DEPTH == 256 and deepest < MAX_JSON_DEPTH < sys.getrecursionlimit()
+    # H05's own deepest frame (210 argument levels, request depth 212) is one of them
+    assert owner._depth_of(json.loads(_host_frames()["far over the host bound"])) > 200
 
 
 @pytest.mark.parametrize("name", sorted(_host_frames()))
@@ -915,3 +917,106 @@ def test_fill_at_binding_maps_any_os_error_to_identity_mismatch(
     with pytest.raises(WorkflowError) as caught:
         owner.fill_at_binding(stand_in, stand_in, "{}")
     assert caught.value.code == "identity_mismatch"
+
+
+# ----------------------------------- steps with no source session: the transport answers (T6-R12)
+
+
+def _script_to_narrative(root: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """The JSON lines that take a fresh owner workflow to `narrative` (no source session), the
+    read included: the operations of the test world, recorded as the transport would receive them."""
+    lines: list[str] = []
+    cls = owner.OwnerWorkflow
+    real = {n: getattr(cls, n) for n in ("invoke", "read_inputs", "submit_review")}
+
+    def invoke(self: Any, tool: Any, arguments: Any) -> Any:
+        lines.append(json.dumps({"operation": "invoke", "tool": tool, "arguments": arguments}))
+        return real["invoke"](self, tool, arguments)
+
+    def read_inputs(self: Any) -> Any:
+        lines.append(json.dumps({"operation": "read_inputs"}))
+        return real["read_inputs"](self)
+
+    def submit_review(self: Any, payload: Any) -> Any:
+        lines.append(json.dumps({"operation": "submit_review", "payload": payload}))
+        return real["submit_review"](self, payload)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(cls, "invoke", invoke)
+        patch.setattr(cls, "read_inputs", read_inputs)
+        patch.setattr(cls, "submit_review", submit_review)
+        _narrative_world(root).read_inputs()
+    return lines
+
+
+def _levels(count: int) -> str:
+    return (
+        '{"operation":"invoke","tool":"x","arguments":{"q":'
+        + "[" * count
+        + "0"
+        + "]" * count
+        + "}}"
+    )
+
+
+SESSIONLESS_FRAMES = {
+    "tool not a str": '{"operation":"invoke","tool":3,"arguments":{}}',
+    "arguments a list": '{"operation":"invoke","tool":"read_pages","arguments":[1]}',
+    "surrogate tool": '{"operation":"invoke","tool":"\\ud800","arguments":{}}',
+    "surrogate query": '{"operation":"invoke","tool":"search_pack","arguments":{"query":"\\ud800"}}',
+    "surrogate key": '{"operation":"invoke","tool":"x","arguments":{"\\ud800":1}}',
+    "deep 199": _levels(199),
+    "deep 250": _levels(250),
+    "one over the host bound": _levels(MAX_ARGUMENT_DEPTH),  # arguments depth host bound + 1
+}
+
+
+@pytest.mark.parametrize("name", sorted(SESSIONLESS_FRAMES))
+def test_a_frame_the_host_would_refuse_is_refused_by_the_transport_at_a_sessionless_step(
+    name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    script = _script_to_narrative(tmp_path / "record", monkeypatch)
+    workflow, _ = _owner_start(tmp_path / "served")
+    text = "".join(
+        line + "\n" for line in [*script, SESSIONLESS_FRAMES[name], '{"operation":"nope"}']
+    )
+    answers = _serve_lines(workflow, tmp_path, text)  # an internal error would end the stream
+    assert workflow.binding.step_id == "narrative" and workflow._session is None
+    assert len(answers) == len(script) + 2
+    assert answers[-2] == {"status": "refused", "error_code": "bad_arguments"}
+    assert answers[-1]["error_code"] == "not_permitted"
+    assert _internal_faults(workflow) == []
+
+
+def test_a_sessionless_invoke_at_the_host_bound_still_reaches_dispatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    script = _script_to_narrative(tmp_path / "record", monkeypatch)
+    workflow, _ = _owner_start(tmp_path / "served")
+    at_bound = _levels(MAX_ARGUMENT_DEPTH - 1)  # arguments depth equals the host bound
+    answers = _serve_lines(workflow, tmp_path, "".join(line + "\n" for line in [*script, at_bound]))
+    assert answers[-1]["status"] == "refused" and "call_id" in answers[-1]
+
+
+def test_the_unprintable_fallback_is_logged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    class Odd(RuntimeError):
+        def __str__(self) -> str:
+            raise TypeError("no text")
+
+    workflow = _read_world(tmp_path, monkeypatch)
+    _raise_in_inputs(monkeypatch, Odd())
+    with caplog.at_level(logging.ERROR, logger=owner.__name__), pytest.raises(Odd):
+        workflow.read_inputs()
+    logged = [r for r in caplog.records if r.name == owner.__name__ and "Odd" in r.getMessage()]
+    assert logged and logged[0].exc_info is not None and logged[0].exc_info[0] is TypeError
+
+
+def test_a_code_point_above_the_bmp_is_escaped_with_eight_digits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detail = _detail_of(tmp_path, monkeypatch, RuntimeError("a\U000e0001b"))  # a Cf tag character
+    assert detail == "a\\U000e0001b"

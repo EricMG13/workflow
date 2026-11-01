@@ -285,13 +285,15 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
 # G6: the bytes a `read_inputs` body may take: the bound a submitted payload already obeys.
 MAX_INPUT_BYTES: int = MAX_LINE
-# G7: the deepest JSON nesting `serve_json_lines` reads (the request object is depth 1). It sits
-# above anything the host answers itself: the host refuses `arguments` nested past
-# `MAX_ARGUMENT_DEPTH` with a retained receipt (H05), and a frame of that kind, even a far deeper
-# one, must reach it. The request envelope adds two levels (the request and its `arguments`).
-# Past the bound the text is not a request: `bad_arguments`, never a `RecursionError`.
-REQUEST_ENVELOPE_DEPTH: int = 2
-MAX_JSON_DEPTH: int = 3 * MAX_ARGUMENT_DEPTH + REQUEST_ENVELOPE_DEPTH
+# G7: a parser guard, not an argument bound. `serve_json_lines` reads no JSON nested deeper than
+# this (the request object is depth 1); past it the text is not a request: `bad_arguments`, never
+# a `RecursionError`. It lies above H05's deepest frame (`arguments` 210 levels deep, request
+# depth 212), which must reach the host so that the host refuses it with a retained receipt, and
+# well below the json parser's recursion limit. The argument bound is the host's
+# (`MAX_ARGUMENT_DEPTH`); at a step with no source session the transport applies it (`_checked`).
+MAX_JSON_DEPTH: int = 256
+# The host's argument bound in request depth: `arguments` is one level below the request object.
+_HOST_BOUND_REQUEST_DEPTH: int = MAX_ARGUMENT_DEPTH + 1
 # G7: the characters of an error's text an `InternalError` fault keeps.
 MAX_FAULT_DETAIL: int = 500
 _OPTIONAL_FAULT_FIELDS = (
@@ -3641,11 +3643,13 @@ def _request_of(line: str) -> dict[str, Any]:
     return request
 
 
-def _checked(request: dict[str, Any]) -> dict[str, Any]:
+def _checked(request: dict[str, Any], *, sessionless: bool) -> dict[str, Any]:
     """The key set of a known operation, and a `submit_review` payload that can be written as
-    UTF-8, or `bad_arguments`. The shapes of an invoke frame (`tool`, `arguments`) and any lone
-    surrogate inside it are the host's to refuse, with a retained receipt (H05, item 88). An
-    unknown operation is left to the dispatch (`not_permitted`)."""
+    UTF-8, or `bad_arguments`. At a step with a source session the shapes of an invoke frame
+    (`tool`, `arguments`), a lone surrogate inside it and its depth are the host's to refuse, with
+    a retained receipt (H05, item 88). At a step with none there is no host, so `sessionless`
+    makes the transport refuse what the host would (`_host_would_refuse`). An unknown operation
+    is left to the dispatch (`not_permitted`)."""
     keys: dict[str, tuple[str, ...]] = {
         "invoke": ("tool", "arguments"),
         "submit_review": ("payload",),
@@ -3661,7 +3665,21 @@ def _checked(request: dict[str, Any]) -> dict[str, Any]:
         raise WorkflowError("bad_arguments")
     if operation == "submit_review" and not _utf8_text(request["payload"]):
         raise WorkflowError("bad_arguments")
+    if operation == "invoke" and sessionless and _host_would_refuse(request):
+        raise WorkflowError("bad_arguments")
     return request
+
+
+def _host_would_refuse(request: dict[str, Any]) -> bool:
+    """An invoke frame that `host._json_arguments` or its tool-name rule would refuse: `tool` not
+    a `str`, `arguments` not an object, a lone surrogate in `tool` or anywhere in `arguments`, or
+    `arguments` nested past `MAX_ARGUMENT_DEPTH`."""
+    tool, arguments = request["tool"], request["arguments"]
+    if type(tool) is not str or type(arguments) is not dict:
+        return True
+    if _depth_of(request) > _HOST_BOUND_REQUEST_DEPTH:
+        return True
+    return not _utf8_text(tool) or not _utf8_text(json.dumps(arguments, ensure_ascii=False))
 
 
 def _utf8_text(value: object) -> bool:
@@ -3712,7 +3730,7 @@ def serve_json_lines(
             if len(line) > MAX_LINE or not line.endswith("\n"):
                 _drain(reader, line)
                 raise WorkflowError("bad_arguments")
-            request = _checked(_request_of(line))
+            request = _checked(_request_of(line), sessionless=workflow._session is None)
             operation = request.get("operation")
             if operation == "invoke":
                 result = workflow.invoke(request["tool"], request["arguments"])

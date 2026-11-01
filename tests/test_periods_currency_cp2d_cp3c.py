@@ -285,3 +285,13 @@ def test_cp3c_refuses_a_currency_that_is_not_the_runs(tmp_path: Path) -> None:
 
 def test_no_context_keeps_the_default_basis() -> None:
     assert cp2d.run_basis(tc2d.PACK, tc2d.cp1_module(tm2d._operands("positive"))) is DEFAULT_BASIS
+
+
+def test_cp3c_currency_mismatch_is_an_issue_line(tmp_path: Path) -> None:
+    store, _, attempt = tc3.seed(tmp_path)
+    upstream = tc3.upstream_of(store, attempt)
+    submission = tc3.submission_of(store, attempt)
+    eur = replace(DEFAULT_BASIS, currency="EUR", money_unit="EUR m")
+    issues = cp3c.validate_refinancing(submission=submission, upstream=upstream, basis=eur)
+    assert issues == ("Period basis refused: run.reporting_currency EUR, but CP-1 reports USD",)
+    assert cp3c.validate_refinancing(submission=submission, upstream=upstream) == ()

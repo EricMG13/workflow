@@ -70,7 +70,9 @@ from deploy_workflow.owners.period_basis import (
     DEFAULT_BASIS,
     PeriodBasis,
     PeriodRefused,
-    period_basis,
+)
+from deploy_workflow.owners.period_basis import (
+    run_basis as shared_run_basis,
 )
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
@@ -2242,20 +2244,9 @@ def cp2d_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
 
 
 def run_basis(pack: PreparedPack, cp1: Module) -> PeriodBasis:
-    """The run's period and currency strings, read from the pack's context and CP-1's T4.14
-    register; the 2025 USD literals when the pack carries no context. A context with no base
-    period (blank, allowed off earnings runs) keeps those 2025 USD literals too, so a CP-1 of
-    another year fails at selection ("CP-1 offers 0 facts"); a blank base with another reporting
-    currency is refused. Raises `ContextRefused` or `PeriodRefused`."""
-    context = context_facts(pack)
-    if context is not None and not context.run.current_period:
-        if context.run.reporting_currency != DEFAULT_BASIS.currency:
-            raise PeriodRefused(
-                f"run.reporting_currency {context.run.reporting_currency} needs "
-                "a run.current_period (fy or q4 base)"
-            )
-        return DEFAULT_BASIS
-    return period_basis(context, cp1.facts)
+    """The run's period and currency strings from the pack's context and CP-1's T4.14 register:
+    the shared `period_basis.run_basis` rule. Raises `ContextRefused` or `PeriodRefused`."""
+    return shared_run_basis(context_facts(pack), cp1.facts)
 
 
 def _inputs_from(

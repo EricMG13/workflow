@@ -2545,7 +2545,10 @@ def validate_refinancing(
     provenance = _provenance_issues(upstream)
     if provenance:
         return provenance
-    offered = {ref: name for name, ref in select(upstream, basis).refs}
+    try:
+        offered = {ref: name for name, ref in select(upstream, basis).refs}
+    except PeriodRefused as error:
+        return (clipped(("Period basis refused: ", str(error))),)
     return submission_issues(submission=submission, offered=offered)
 
 

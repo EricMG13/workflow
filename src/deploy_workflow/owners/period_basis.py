@@ -258,3 +258,24 @@ def period_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Perio
         raise PeriodRefused(f"CP-1 T4.14 Q4 {year} ends {q4_end}, not at the fiscal year end {end}")
     _check_window(start, end, q4_start)
     return _basis(currency, int(year), start, end, q4_start, q4_id)
+
+
+def run_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> PeriodBasis:
+    """The basis an owner reads for its run (ruling P8-R3): `period_basis`, except for a context
+    with no base period.
+
+    Documented fail-open: a blank `run.current_period` (allowed off earnings runs; every frozen
+    pins-context case has one) with `run.reporting_currency` USD returns `DEFAULT_BASIS`, so the
+    frozen Phase 6 behaviour stays. The guard: the owner then binds the 2025 labels, and a CP-1
+    of another year offers no such fact, so selection refuses ("CP-1 offers 0 facts") rather
+    than labelling 2026 figures as 2025. A blank base with any other currency refuses here."""
+    if context is None:
+        return DEFAULT_BASIS
+    if not context.run.current_period:
+        if context.run.reporting_currency != DEFAULT_CURRENCY.currency:
+            raise PeriodRefused(
+                f"run.current_period is blank and run.reporting_currency is "
+                f"{context.run.reporting_currency}: a non-USD run needs an fy or q4 base"
+            )
+        return DEFAULT_BASIS
+    return period_basis(context, cp1_facts)

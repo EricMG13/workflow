@@ -1550,7 +1550,7 @@
    },
    {
     "id": "relative_value.d",
-    "statement": "d. Name instruments only by a `facility_id` listed under `cp1_facilities`, each once. Every instrument and risk has a basis: its `cp2_refs` (only refs listed under `cp2_rows`), a `{ref|unit}` CP-1 figure or, for an instrument, a `basis.quotes` market quote; a `market_observation` other than none cites a market quote.",
+    "statement": "d. Name instruments only by a `facility_id` listed under `cp1_facilities`, each once. Every instrument and risk has a basis: its `cp2_refs` (only refs listed under `cp2_rows`), a `{ref|unit}` CP-1 figure or, for an instrument, a `basis.quotes` market quote or a context row named in `basis.context_rows`; a `market_observation` other than none cites a market quote or a context row named in `basis.context_rows`.",
     "checks": [
      "fn:deploy_vii.cp3_relative_value:_instrument_issues",
      "fn:deploy_vii.cp3_relative_value:_risk_issues",
@@ -1561,7 +1561,7 @@
    },
    {
     "id": "relative_value.e",
-    "statement": "e. `preference.ordering` lists every instrument's `facility_id` exactly once and nothing else: you may order the issuer's own instruments, most preferred first. Unless its `confidence` is Insufficient Information it cites a market quote; with no observed or indicative evidence it is Insufficient Information and states its `limitation`. Its `confidence` is below High while `confidence_caps` lists any cap.",
+    "statement": "e. `preference.ordering` lists every instrument's `facility_id` exactly once and nothing else: you may order the issuer's own instruments, most preferred first. Unless its `confidence` is Insufficient Information it cites a market quote or a context row named in `basis.context_rows`; with no observed or indicative evidence it is Insufficient Information and states its `limitation`. Its `confidence` is below High while `confidence_caps` lists any cap.",
     "checks": [
      "fn:deploy_vii.cp3_relative_value:_preference_issues",
      "oracle:cp3-cp6:cp3-confidence-high",
@@ -1867,7 +1867,7 @@
    "src/deploy_vii/context_binding.py": "ba5d6285985ccbe13c5d89d0192ba7a634067d926b23943a93e581ff9d469fce",
    "src/deploy_vii/cp1_workflow.py": "966a982d4068bd962df47228ded77f1929b79a1e51624fb7c4cfa9470e1878d3",
    "src/deploy_vii/cp2_synthesis.py": "ac8856fddb71e7ddef9715febeffdeaa88ff9aa34526dd299ecb1cbc92d4d04e",
-   "src/deploy_vii/cp3_relative_value.py": "212950b3291779ba6f716cdf62f960c34502eaeb087c1eaa42c54a3e2e9320c2",
+   "src/deploy_vii/cp3_relative_value.py": "d53035f7368704e750ecaded0985ecdfdb18c86acf8aaa8d60cab371df05e24b",
    "src/deploy_vii/cp4_legal.py": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
    "src/deploy_vii/cp5_integrity.py": "eb3a766f5ed1ff5bb856c64d0e5a477855d421ded57b91279d365c1fa03ea901",
    "src/deploy_vii/cp6_committee.py": "e97d5074292aa29dc93651dedce0dbc734e38d0373a34f769e0cfef65e2196ac",
@@ -1882,7 +1882,7 @@
    "src/deploy_vii/source_context.py": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
    "src/deploy_vii/statement_validation.py": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "373ccd451710c13eb160fd7dcb96784dca2002fc76070d7eb096bcac564a60a2",
+   "src/deploy_workflow/owner_workflow.py": "03fb2914b1c7233a8a673a9e5d40d118e955b1ce9bf965ca5e71df07a8757247",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",

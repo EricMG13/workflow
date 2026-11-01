@@ -15,6 +15,7 @@ matching once O6 changes the prompt (the invocation digest includes the prompt h
 import hashlib
 import importlib
 import json
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -164,6 +165,21 @@ def _figure_bindings(store: Execution, text: str) -> dict[str, tuple[str, str]]:
     }
 
 
+_WHOLE_FIG = re.compile(r'"\{\{FIG:([a-z0-9_]+)\}\}"')
+
+
+def bind_text(text: str, bound: dict[str, tuple[str, str]]) -> str:
+    """Bind ``{{FIG:name}}``: a whole JSON string (an ``upstream_ref``) becomes the bare CP-2 fact
+    id (cases/cp5-owner note: "a CP-2 fact_id"); a marker inside prose becomes ``{fact_id|unit}``
+    as ``s1a_runs.bind_figures`` writes it. An unknown name stays and fails closed."""
+
+    def whole(match: re.Match[str]) -> str:
+        name = match[1]
+        return match[0] if name not in bound else json.dumps(bound[name][0])
+
+    return s1.bind_figures(_WHOLE_FIG.sub(whole, text), bound)
+
+
 class ScriptAdapter:
     """Answers a request from the frozen payloads and records the answer. ``answers`` names the
     steps it will answer; a request for any other step raises ``RecordingMissing`` (nothing was
@@ -209,7 +225,7 @@ class ScriptAdapter:
             return [search, (submit, load_arguments(payload_for(step_id)))]
         # credit_synthesis carries {{FIG:name}}; relative_value is frozen with the same markers
         text = json.dumps(frozen_submissions()["positive"][_SECTION[step_id]])
-        if step_id in ("credit_synthesis", "relative_value"):
+        if "{{FIG:" in text:
             bound = _figure_bindings(Execution(self._execution), text)
             if step_id == "credit_synthesis":  # cross-checked against the step's own read body
                 cp2 = {e["ref"]: e for e in json.loads(reads[0])["cp1_facts"]}
@@ -217,7 +233,7 @@ class ScriptAdapter:
                     entry = cp2.get(fact_id)
                     if entry is None or entry["unit"] != unit:
                         raise RuntimeError(f"FIG {name}: {fact_id} is not offered with {unit}")
-            text = s1.bind_figures(text, bound)
+            text = bind_text(text, bound)
         return [(submit, load_arguments(text))]
 
     def complete(

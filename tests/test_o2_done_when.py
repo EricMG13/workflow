@@ -6,12 +6,13 @@ fresh run directory with the same ``run_id``. The prompt composer is a labelled 
 proves orchestration, not the prompts (O6), and recordings made now stop matching once O6 changes
 the prompt (the digest includes the prompt hash).
 
-``test_stopped_run_fast`` and the other tests run always. The furthest honest walk
-(``test_walk_through_cp1_quality_offline``, about 3.5 minutes, no promotion) settles CP-0 and CP-1
-and stops at CP-1A, whose frozen payload omits the ``context`` source
-(``test_the_frozen_business_context_omits_the_context_source``). No walk reaches CP-8, a receipt or
-a delivery, so no settled-walk, receipt, delivery or B21 test is written: it would fail on the
-oracle. B22 made the statement units extractable (``test_a_text_pack_extracts_its_statement_units``).
+``test_stopped_run_fast`` and the other tests run always. ``test_walk_through_cp1_quality_offline``
+(about 4 minutes, no promotion) settles CP-0 and CP-1 and stops at CP-1A on a missing recording.
+The full walk to the end state is behind ``RUN_PROMOTION`` (``test_end_to_end_offline`` and
+``test_receipt_rejects_model_in_cp5_inputs``): measured by a direct drive, CP-1 takes 105 s,
+publish 72 s, the receipt 107 s and its verify 110 s, so authoring plus replay is over 5 minutes
+(B16). Its end state, read from the walk, is ``stopped`` with ``render: owner_render_scope``: the
+renderer has no delivery scope for this pathway, so no delivery is written.
 """
 
 import http.client
@@ -28,6 +29,7 @@ from typing import Any, NoReturn, cast
 import o2_case
 import pytest
 
+from deploy_vii.contracts import Input
 from deploy_vii.execution import Execution
 from deploy_vii.preparation import load_pack
 from deploy_workflow import financial_workflow
@@ -36,8 +38,9 @@ from deploy_workflow.model import transport as transport_module
 from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.model.record import arguments_sha256
 from deploy_workflow.model.turn import load_arguments
-from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.owner_workflow import OwnerRunReceipt, OwnerWorkflow, verify_owner_run_receipt
 from deploy_workflow.run_inputs import RunOutcome
+from deploy_workflow.workflow import WorkflowError
 
 OFFLINE_KEYS = {
     "case_id",
@@ -336,25 +339,23 @@ def test_the_default_token_bound_stops_the_walk_at_narrative(tmp_path: Path) -> 
     )
 
 
-def test_the_frozen_business_context_omits_the_context_source(tmp_path: Path) -> None:
-    """Pins an oracle gap: CP-1A requires every prepared source assessed once, and the pack has the
-    ``context`` source, but the frozen ``business_context`` payload assesses only the four files
-    (the CP-0 and CP-1 payloads were re-cut with a ``context`` row, this one was not). The step is
-    therefore refused with 'Assess every prepared source exactly once' and the walk cannot pass it."""
+def test_the_frozen_business_context_assesses_every_prepared_source(tmp_path: Path) -> None:
+    """CP-1A requires every prepared source assessed once, ``context`` included. The Task 4c
+    freeze added the ``context`` row to the frozen ``business_context``."""
     _, run_dir = o2_case.stage(tmp_path)
     pack_ids = {s.source_id for s in load_pack(run_dir / "pack").sources}
-    assessed = [
-        s["source_id"] for s in json.loads(o2_case.payload_for("business_context"))["sources"]
-    ]
-    assert pack_ids - set(assessed) == {"context"} and len(assessed) == len(set(assessed))
+    sources = json.loads(o2_case.payload_for("business_context"))["sources"]
+    assessed = [s["source_id"] for s in sources]
+    assert "context" in pack_ids and "context" in assessed
+    assert sorted(assessed) == sorted(pack_ids)  # each prepared source exactly once
 
 
 def test_walk_through_cp1_quality_offline(tmp_path: Path) -> None:
     """CP-0 and CP-1 through its quality step (CP-1 settles offline), authored from the frozen payloads, the frozen
     CP-1 financials and the narrative/readiness the frozen drivers compute from the read inputs
     (``s1a_runs.drive_cp1``); replayed by a plain recorded adapter. The next step (CP-1A
-    business_context) is not answered: the frozen payload is refused by the pack (see
-    ``test_the_frozen_business_context_omits_the_context_source``). Both runs stop there."""
+    business_context) is not answered here (the full walk is the gated test), so both runs stop
+    there with the same reason."""
     steps = o2_case.ALL_STEPS[:6]
     authored = o2_case.author(tmp_path / "authoring", answers=steps)
     replayed = o2_case.replay(tmp_path / "replay", authored.recordings)
@@ -406,6 +407,98 @@ def test_walk_through_cp1_quality_offline(tmp_path: Path) -> None:
     heads = {h.module_id: h.status for h in Execution(replayed.run_dir / "execution").read().heads}
     assert heads["CP-0"] == "restricted" and "CP-1" in heads  # CP-1 settled; CP-1A is open
     assert_replay_equals_authoring(authored, replayed)
+
+
+promotion = pytest.mark.skipif(
+    os.environ.get("RUN_PROMOTION") != "1",
+    reason="full o2 walk: CP-1 105 s, publish 72 s, receipt 107 s, verify 110 s per run, "
+    "authoring plus replay over 5 minutes (B16); deferred to CI",
+)
+END_REASON = "render: owner_render_scope"  # read from the walk: no delivery scope for this pathway
+
+
+@pytest.fixture(scope="module")
+def full_walk(tmp_path_factory: pytest.TempPathFactory) -> tuple[o2_case.Authored, RunOutcome]:
+    """The whole walk, authored and replayed once, shared by the gated tests."""
+    root = tmp_path_factory.mktemp("o2-full")
+    authored = o2_case.author(root / "authoring", answers=o2_case.ALL_STEPS)
+    return authored, o2_case.replay(root / "replay", authored.recordings)
+
+
+def receipt_of(run_dir: Path) -> OwnerRunReceipt:
+    return OwnerRunReceipt.model_validate_json((run_dir / "owner-run.json").read_text())
+
+
+@promotion
+def test_end_to_end_offline(full_walk: tuple[o2_case.Authored, RunOutcome]) -> None:
+    """Every step with a frozen payload is authored and replayed through CP-6, publish inside the
+    walk; CP-8 is refused at its begin (CP-0 did not authorise it), the receipt is sealed and
+    verifies, and the renderer stops the run: it has no delivery scope for this pathway. The end
+    state is read from the walk, not chosen: the Task 4 ruling expected ``owner_render_blocked``."""
+    authored, replayed = full_walk
+    for outcome in (authored.outcome, replayed):
+        assert outcome.outcome == "stopped" and outcome.stopped_reason == END_REASON
+        assert outcome.run_id == o2_case.RUN_ID
+    expected_files = STOPPED_SET | {"publication", "owner-run.json"}  # no delivery, no raw/
+    for run_dir in (authored.run_dir, replayed.run_dir):
+        assert {p.name for p in run_dir.iterdir()} == expected_files
+        receipt = receipt_of(run_dir)
+        verify_owner_run_receipt(
+            Execution(run_dir / "execution"), receipt, publication_directory=run_dir / "publication"
+        )
+        assert receipt.plan == (
+            "CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL", "CP-3", "CP-5", "CP-6", "CP-8"
+        )  # fmt: skip
+        assert [(r.module_id, r.reason) for r in receipt.refusals] == [
+            ("CP-8", "CP-0 has not authorized this consumer's source readiness")
+        ]
+        assert {h.module_id for h in receipt.heads} == set(receipt.plan) - {"CP-8"}
+        assert receipt.model is not None and len(receipt.publications) == 1
+    records = records_of(replayed.run_dir)
+    assert all(r["schema_version"] == "model-call/1" for r in records)
+    assert all(r["cost_status"] == "computed" for r in records)  # a run-ending error would not be
+    steps = [(r["step_id"]) for r in records]
+    expected_steps = [
+        step for step in o2_case.ALL_STEPS for _ in range(2 if step in o2_case.READ_FIRST else 1)
+    ]
+    assert steps == expected_steps
+    body = json.loads((replayed.run_dir / "run.json").read_text())
+    assert body["outcome"] == "stopped" and body["stopped_reason"] == END_REASON
+    assert_replay_equals_authoring(authored, replayed)
+
+
+@promotion
+def test_receipt_rejects_model_in_cp5_inputs(
+    full_walk: tuple[o2_case.Authored, RunOutcome],
+) -> None:
+    """B1/B21: CP-MODEL is no input of CP-5. A sealed receipt whose CP-5 submissions list it as an
+    input is rejected by ``verify_owner_run_receipt`` (``identity_mismatch``)."""
+    _, replayed = full_walk
+    run_dir = replayed.run_dir
+    receipt = receipt_of(run_dir)
+    assert receipt.model is not None
+    model_input = Input(input_id="CP-MODEL", sha256=receipt.model.result_sha256, status="accepted")
+    submissions = []
+    for item in receipt.submissions:
+        if item.binding.binding.module_id == "CP-5":
+            bound = item.binding.binding
+            assert "CP-MODEL" not in [i.input_id for i in bound.inputs]
+            wrapped = item.binding.model_copy(
+                update={
+                    "binding": bound.model_copy(update={"inputs": (*bound.inputs, model_input)})
+                }
+            )
+            item = item.model_copy(update={"binding": wrapped})
+        submissions.append(item)
+    tampered = receipt.model_copy(update={"submissions": tuple(submissions)})
+    assert tampered != receipt
+    with pytest.raises(WorkflowError) as rejected:
+        verify_owner_run_receipt(
+            Execution(run_dir / "execution"),
+            tampered,
+            publication_directory=run_dir / "publication",
+        )
+    assert rejected.value.code == "identity_mismatch"
 
 
 class TrapMapping(Mapping[str, str]):

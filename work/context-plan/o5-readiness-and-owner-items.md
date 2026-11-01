@@ -108,3 +108,28 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 ## From the Phase 4 phase review (2026-11-01)
 
 - **`tests/prompts/test_rules.py` nodes run alone from the repo root fail on `import o2_case`.** `pyproject` sets `pythonpath = ["src", "."]`; pytest's prepend mode adds `tests/` only when a `tests/` file is also collected. Passes with `PYTHONPATH=src:tests`. Recommendation: add `"tests"` to `pythonpath` in `pyproject.toml` (one line), so every node id runs alone.
+
+## O3 Task 4 replay (controller, 2026-11-01)
+
+- **Replayed `call_ids` are partly bound.** Fix b7060bbd binds them to the calls retained at the binding, which refuses any edit inconsistent with the journal. A forger who deletes the call records and also blanks `call_ids` still passes (probe `o3t4-adversary/probes/test_p1d_consistent_call_removal.py`): replay then re-issues 0 of 2 calls. Recommendation: record the step's call ids in the journal's settled step. Cost if left: a tampered earlier run can misstate a rerun's spend and call count, but not its outputs.
+- **The earlier run's flock is not taken.** A rerun can read an earlier run that is still running. Recommendation: `check_replay` refuses when the earlier run's lock is held (non-blocking probe, no new file in the earlier tree).
+- **`replays` and `faults` records are outside `_verify_audit`.** The receipt does not seal them. Recommendation: add both kinds to the sealed set when the receipt format next changes.
+
+## Worktree hygiene (controller, 2026-11-01)
+
+- **Stray formatter edit in `src/deploy_vii/methods/cp1d.md`.** An uncommitted whitespace-only change (comment alignment in its Python code blocks) appeared during the O3 Task 4 fix round. It looks like `ruff format` run on a directory. The controller's `git restore` of it was refused by the permission classifier, so it is still in the worktree, unstaged. Every builder is told never to stage it. Recommendation: the user runs `git restore -- src/deploy_vii/methods/cp1d.md`, or allows the controller to.
+- **Pre-existing mypy errors:** `tests/test_method_cp2g.py:107` and `tests/test_connect_cp2d.py:515` (identical at 9a0e7193).
+- **cp1d.md cause confirmed:** the O3 Task 4 fix builder ran `.venv/bin/ruff format src tests/test_owner_replay.py`. Ruff 0.17.1 formats Python code blocks in Markdown. It restored `earnings.py` and `tools/upstream.py` itself, but its restore of `cp1d.md` was also denied. Every brief now requires ruff to be run with explicit file paths.
+- **ruff ISC004 at `src/deploy_vii/live/prompts.py` ~:1191-1198** (implicit string concatenation), reported by Phase 3 Task 4 Part A as predating it (the adversary confirms at f4e1028a^).
+- **cp1d.md restored** by the controller with `git restore`, on the user's approval (reply "2", 2026-11-01). `src/deploy_vii` has no uncommitted change. (17:41 UTC)
+
+## Phase 6 phase review (controller, 2026-11-01)
+
+- **Pinned values are shown as JSON strings, but the contracts are strict ints.** The pinned-assumptions block renders integer fields as strings (`"horizon_months": "24"`, `"repricing.bps": "400"`), while compose.O6 says to submit "exactly that value". A model that copies the string gets a shape refusal and a repair round. It fails closed and never yields a wrong figure. Recommendation: compose.O6 says "the same number in the field's JSON type", or `pins.form_from_context` renders ints as ints. Cost if left: extra repair rounds on live runs.
+
+## Phase 3 Task 4 Part B review (controller, 2026-11-01)
+
+- **Six CP-3 context-reader sites are listed as PENDING, not as reader problems.** In `cp3_relative_value.py` ~:555-620, `_strings`, `_figure_problems`, `_date_problems`, `_row_problems`, `_identity_problems` and `_array_rows` are reader problems of the context file, whose remedy is a new pack. Recommendation: move them to the non-content subtraction (`rules.py` ~:334, `UNREADABLE`) instead of PENDING.
+- **The CP-3 method text and rules d and e predate `basis.context_rows`.** `src/deploy_vii/methods/cp3.md:31-32`, `CP3_BASIS_RULE` (rule d) and rule e still describe a market basis only as a `basis.quotes` quote, but the validator also accepts `basis.context_rows`. Recommendation: a wording-only `src/deploy_vii` edit naming `basis.context_rows`. It needs a user approval, as B17 item 3 did.
+- **Test modules import other test modules** in `tests/prompts/test_factory.py` and `tests/prompts/test_pinned_block.py` (predates; found by the merge-fix check). Recommendation: move the shared helpers into non-test modules, as `merge_strip.py` did.
+- **`tests/prompts/test_g8.py` ~:143-160 shells out to `git grep`** at cfe37c23 and 0fc6eb35, so it fails on a tree with no git history (an archive, or a shallow clone). PR CI checks out with `fetch-depth: 0`, so CI is fine. Recommendation: keep it, or skip it with a logged reason when there is no history. (Found by the Phase 3 phase review.)

@@ -306,3 +306,13 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
 
   Interleaved lanes whose tasks are approved but whose phase is unfinished are named in the release note.
 - **User decision (relayed by MANAGER, 2026-11-01, the user's reply verbatim: "1").** The first cut may carry the task-approved, phase-pending lanes, gated as proposed: O3/O4 Tasks 1-5; O6 Tasks 1-5 and its end batch; O7a and the frozen O7 oracle; B26. When the cut is valid, MANAGER receives the exact tip, its gate results, the carried and left-out lists, and the `src/deploy_vii` diff list, for the user's merge approval.
+
+## B29. CP-3 method text and rule d name the context-row basis (user, 2026-11-01: "Approved")
+
+- **Approved by the user in this session.** A wording-only edit to two pieces of text so that they name `basis.context_rows` (Python's context rows, cited by id) next to `basis.quotes`:
+  - `src/deploy_vii/methods/cp3.md` (~:26-33), which says market evidence comes only from a `third_party` source, and "copy that row's quote into `basis.quotes`";
+  - `CP3_BASIS_RULE` in `src/deploy_vii/live/prompts.py` (~:597-602, rule d), which names "a `basis.quotes` market quote" as the only market basis.
+
+  No rule, number, table id or validator changes. Each file gets its D12 record. Review: `mx-adversary`, because both texts reach the model (as B17 item 4).
+- **Why:** the Phase 3 phase review (Low 1) found that both texts reach CP-3's live system message and still describe the market basis as `basis.quotes` only, while the validator accepts `basis.context_rows`.
+- **Controller timing ruling:** the edit lands after the first release cut (B28), as its own small release, so that the cut stays exactly as gated. The edit changes CP-3's frozen digest, its rule-list statement `relative_value.d` and the golden. Cost if wrong: CP-3's prompt keeps the old wording until the follow-up merges; live runs are paused.

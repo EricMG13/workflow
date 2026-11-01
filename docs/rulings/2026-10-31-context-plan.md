@@ -240,3 +240,14 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   The answer came through MANAGER. The phase therefore builds now, but it is not released to the PR Manager until the
   user confirms B6a in this session. The memory rule on relays (`deploy-workflow-manager-routing`) covers this.
   Confirmed by the user in this session on 2026-11-01 ("confirm B6a"). Phase 3 can be released once its gates pass.
+
+## B25. Fable is available again (user, 2026-11-01)
+
+The user wrote in this session: "fable is available". This lifts the 2026-10-28 stop on Fable for this plan. The controller ruled on how to use it, by its own recommendation:
+
+- Each phase review from now on (O3+O4, O6, Phase 3, Phase 6 and the later phases) goes to `mx-architect` (Fable 5.1), as does the whole-branch review at the end. So does an `mx-adversary` audit that is refused, as global §1 says.
+- Fable writes no code. A third fix round still goes to `mx-autonomous` for the root cause and then to a fresh `mx-feature` (global §1, owner 2026-10-28). `mx-escalate` is not dispatched.
+- Per-task reviews keep their routing: `mx-precise`, plus `mx-adversary` on sensitive diffs.
+- The phase reviews already done (O1, O5 and O2) are not rerun.
+
+Cost if wrong: higher review spend on the remaining phase reviews. The user can narrow this ruling.

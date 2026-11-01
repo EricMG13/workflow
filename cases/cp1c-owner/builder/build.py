@@ -2317,7 +2317,7 @@ def main():
                 "pack": "financial source missing (cases/financial/manifest.json negative_case); identity only",
                 "submission": "submissions.json refused",
                 "expected": "expected.json cases.refused",
-                "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1C never begun",
+                "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1C begin is refused as a consequence (CP-1 has no head); CP-1C never begun",
             },
         },
         "cp1_fact_selection_rule": {
@@ -2472,11 +2472,17 @@ def main():
             {
                 "module_id": "CP-1",
                 "reason": "str(NotAuthorized): CP-0 has not authorized this consumer's source readiness",
-            }
+                "missing_commands": ["Run CP-1"],
+            },
+            {
+                "module_id": "CP-1C",
+                "reason": "str(ValueError): Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1"],
+            },
         ],
         "attempts": ["CP-0"],
         "heads": ["CP-0"],
-        "cp1c": "never begun (G1 stops the walk after a RefusedBegin)",
+        "cp1c": "never begun: its begin is refused as a consequence of the CP-1 refusal (G3 records a refused begin and the walk goes on; CP-1 has no head, and current_inputs checks the upstream before the CP-0 command)",
         "model_publication": "not planned",
         "receipt": "verifies",
         "must_not_appear": [

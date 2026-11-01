@@ -60127,7 +60127,25 @@
    "refused_begins": [
     {
      "module_id": "CP-1",
-     "reason": "CP-0 has not authorized this consumer's source readiness"
+     "reason": "CP-0 has not authorized this consumer's source readiness",
+     "missing_commands": [
+      "Run CP-1"
+     ]
+    },
+    {
+     "module_id": "CP-2A",
+     "reason": "Required upstream is unrun, stale or blocked",
+     "missing_inputs": [
+      "CP-1"
+     ]
+    },
+    {
+     "module_id": "CP-2G",
+     "reason": "Required upstream is unrun, stale or blocked",
+     "missing_inputs": [
+      "CP-1",
+      "CP-2A"
+     ]
     }
    ],
    "refusal": "cp1_not_authorized",
@@ -60138,7 +60156,7 @@
    "heads": [
     "CP-0"
    ],
-   "later_modules": "CP-2A and CP-2G are never begun (G1 stops the walk after a RefusedBegin); current_inputs for CP-2G would raise ValueError 'Required upstream is unrun, stale or blocked'",
+   "later_modules": "CP-2A and CP-2G are never begun: each begin is refused as a consequence of the CP-1 refusal (G3 records a refused begin and the walk goes on; current_inputs raises ValueError 'Required upstream is unrun, stale or blocked' for CP-2A (CP-1 missing) and for CP-2G (CP-1 and CP-2A missing) before it checks CP-0's command)",
    "model_publication": "not planned",
    "receipt": "verifies",
    "must_not_appear": [

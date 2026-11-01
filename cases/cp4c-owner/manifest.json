@@ -125,7 +125,7 @@
     ]
    },
    "pack": "financial source missing",
-   "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); no later attempt"
+   "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); the CP-2A, CP-4, CP-2G and CP-4C begins are refused as consequences (no CP-1 head); no later attempt"
   },
   "blocked": {
    "run": {

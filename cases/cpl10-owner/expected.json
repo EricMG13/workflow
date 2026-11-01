@@ -6927,7 +6927,18 @@
       {
         "module_id": "CP-1",
         "kind": "not_authorized",
-        "reason": "CP-0 has not authorized this consumer's source readiness"
+        "reason": "CP-0 has not authorized this consumer's source readiness",
+        "missing_commands": [
+          "Run CP-1"
+        ]
+      },
+      {
+        "module_id": "CP-L10",
+        "kind": "blocked",
+        "reason": "Required upstream is unrun, stale or blocked",
+        "missing_inputs": [
+          "CP-1"
+        ]
       }
     ],
     "attempts": [
@@ -6936,7 +6947,7 @@
     "heads": [
       "CP-0"
     ],
-    "cpl10": "never begun (G1 stops the walk after a RefusedBegin: owner_workflow._begin retains the refusal and ends the walk)",
+    "cpl10": "never begun: its begin is refused as a consequence of the CP-1 refusal (G3: owner_workflow._begin retains the refusal and the walk goes on; CP-1 has no head, and current_inputs checks the upstream before the CP-0 command)",
     "model_publication": "not planned",
     "receipt": "verifies",
     "must_not_appear": [
@@ -6948,7 +6959,7 @@
     "status": "lease statement for the build's test, NOT a frozen oracle case",
     "search": "tests/ holds no frozen blocked-CP-1 history for this pack: tests/test_source_tools.py legal_history(root, blocked=True) (lines 683-721) builds one in code on the LEGAL pack (CP-1 attempts 0 and 1, two invalid `source_context` submissions of '{}' each, result status blocked) inside the session fixture `legal_histories`; no tests/*.json fixture exists; tests/test_owner_workflow.py::test_rejected_then_blocked_walk_retains_refusal blocks CP-0, not CP-1",
     "expect": "CP-1 blocked -> store.begin('CP-L10') raises ValueError 'Required upstream is unrun, stale or blocked' (owner_workflow.BLOCKED_EDGE, :78) and a head with status blocked exists -> exactly one RefusedBegin for CP-L10, kind `blocked`, reason that text (owner_workflow._begin :447-456); CP-1 has attempts 0 and 1; no CP-L10 attempt, head or table; receipt verifies",
-    "not_retained": "a missing CP-1 head with no blocked head raises (not a retained refusal; owner_workflow._begin re-raises), which is why the frozen `refused` case above is the CP-1-missing variant"
+    "not_retained": "a missing CP-1 head is retained only when every missing input was itself refused in the same walk or a blocked head exists; the frozen `refused` case above is that consequence variant (CP-1 refused, so the CP-L10 refusal is retained), whereas a missing CP-1 head that nothing refused raises"
   },
   "execution": {
     "plan_order": [

@@ -82,7 +82,7 @@
    "pack": "financial source missing: no pages/hash, extraction blocked, limitation 'Quarterly financial statements were not supplied.' (cases/financial/manifest.json negative_case)",
    "submission": "submissions.json refused.cp0_review (no CP-2A submission exists)",
    "expected": "expected.json refused",
-   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A is never begun"
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A begin is refused as a consequence (CP-1 has no head); CP-2A is never begun"
   },
   "blocked": {
    "run": {

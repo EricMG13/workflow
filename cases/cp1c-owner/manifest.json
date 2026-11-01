@@ -205,7 +205,7 @@
    "pack": "financial source missing (cases/financial/manifest.json negative_case); identity only",
    "submission": "submissions.json refused",
    "expected": "expected.json cases.refused",
-   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1C never begun"
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1C begin is refused as a consequence (CP-1 has no head); CP-1C never begun"
   }
  },
  "cp1_fact_selection_rule": {

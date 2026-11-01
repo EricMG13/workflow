@@ -140,7 +140,7 @@
    "pack": "financial source missing (cases/financial/manifest.json negative_case)",
    "submission": "submissions.json refused",
    "expected": "expected.json cases.refused",
-   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A and CP-2G are never begun"
+   "execution": "CP-0 only; CP-1 begin raises NotAuthorized; the CP-2A and CP-2G begins are refused as consequences (no CP-1 head; no CP-2A head); CP-2A and CP-2G are never begun"
   },
   "blocked": {
    "run": {

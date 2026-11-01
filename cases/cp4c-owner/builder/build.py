@@ -3155,7 +3155,7 @@ def main():
             "refused": {
                 "run": runs["refused"],
                 "pack": "financial source missing",
-                "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); no later attempt",
+                "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); the CP-2A, CP-4, CP-2G and CP-4C begins are refused as consequences (no CP-1 head); no later attempt",
             },
             "blocked": {
                 "run": runs["blocked"],
@@ -3466,7 +3466,28 @@ def main():
             {
                 "module_id": "CP-1",
                 "reason": "CP-0 has not authorized this consumer's source readiness",
-            }
+                "missing_commands": ["Run CP-1"],
+            },
+            {
+                "module_id": "CP-2A",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1"],
+            },
+            {
+                "module_id": "CP-4",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1"],
+            },
+            {
+                "module_id": "CP-2G",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1", "CP-2A"],
+            },
+            {
+                "module_id": "CP-4C",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1", "CP-2A", "CP-4", "CP-2G"],
+            },
         ],
         "refusal": "cp1_not_authorized",
         "attempts": ["CP-0"],

@@ -346,7 +346,9 @@
           "kind": "source",
           "severity": "material",
           "description": "The run context declares executed legal_documents but the pack holds no executed or filed source",
-          "affected_modules": [],
+          "affected_modules": [
+            "CP-0"
+          ],
           "remediation": "Supply the executed legal documents",
           "citations": []
         }

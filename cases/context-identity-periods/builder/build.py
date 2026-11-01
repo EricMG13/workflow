@@ -129,13 +129,13 @@ SUBMISSIONS_B = recut_walk(SNAP_S)
 # P5T3-R7: the positive CP-0 review gains one gap, copied from cases/context-attachments-owner/
 # submissions.json (legal-exec-missing-gap): every ctx-b-* context declares executed
 # legal_documents and pack B holds no legal source. The S1A plan (CP-1, CP-1A, CP-2) has no legal
-# module and the gap validator only admits selected modules or CP-0, so affected_modules is [].
+# module and the gap validator only admits selected modules or CP-0, so affected_modules is ["CP-0"] (P5T3-R9).
 LEGAL_GAP = {
     "gap_id": "legal-documents-missing",
     "kind": "source",
     "severity": "material",
     "description": "The run context declares executed legal_documents but the pack holds no executed or filed source",
-    "affected_modules": [],
+    "affected_modules": ["CP-0"],
     "remediation": "Supply the executed legal documents",
     "citations": [],
 }

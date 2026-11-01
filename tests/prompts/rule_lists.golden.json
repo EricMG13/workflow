@@ -50,7 +50,8 @@
      "fn:deploy_workflow.owners.cp2d:_pin_lines",
      "fn:deploy_workflow.owners.cp2e:_pin_lines",
      "fn:deploy_workflow.owners.cp3c:_pin_lines",
-     "fn:deploy_workflow.owners.cp4c:_pin_lines"
+     "fn:deploy_workflow.owners.cp4c:_pin_lines",
+     "fn:deploy_workflow.owners.cp3d:_pin_lines"
     ]
    },
    {
@@ -198,9 +199,7 @@
      "oracle:cpl10:r04",
      "oracle:cpl10:r05",
      "oracle:cpl10:r06",
-     "fn:deploy_workflow.owners.cpl10:_assessment_issues",
-     "fn:deploy_workflow.owners.cpl10:_claims",
-     "fn:deploy_workflow.owners.cpl10:_item_rows"
+     "fn:deploy_workflow.owners.cpl10:_assessment_issues"
     ]
    },
    {
@@ -214,7 +213,7 @@
    },
    {
     "id": "change_screen.4",
-    "statement": "An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label such as `Q3 2025`), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.",
+    "statement": "An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.",
     "checks": [
      "oracle:cpl10:r08",
      "oracle:cpl10:r09",
@@ -485,15 +484,14 @@
    },
    {
     "id": "decision_ledger.11",
-    "statement": "Each `basis`, `lesson`, `synthesis.text`, absence `reason` and `follow_up` is nonblank text with no digit, no braces or square brackets, not a null spelling, and none of blame, fault, should have, in hindsight, with hindsight, recommend, overweight, underweight, buy, sell, adjust the prior or calibrat.",
+    "statement": "Each `basis`, `lesson`, `synthesis.text`, absence `reason` and `follow_up`, and every `extra_gaps` field (`gap`, `missing_item`, `why_it_matters`, `impact_on_output`, `follow_up`) is nonblank text with no digit, no braces or square brackets, not a null spelling, and none of blame, fault, should have, in hindsight, with hindsight, recommend, overweight, underweight, buy, sell, adjust the prior or calibrat.",
     "checks": [
      "oracle:cp8:r23",
      "oracle:cp8:r24",
      "oracle:cp8:r25",
      "oracle:cp8:r26",
      "oracle:cp8:r27",
-     "fn:deploy_workflow.owners.cp8:_Checker._text",
-     "fn:deploy_workflow.owners.cp8:_Composer._resolved"
+     "fn:deploy_workflow.owners.cp8:_Checker._text"
     ]
    },
    {
@@ -533,7 +531,7 @@
    },
    {
     "id": "downside_pathway.3",
-    "statement": "Submit one to four `scenarios`, and a `threshold` only for a metric among total_leverage, net_leverage and interest_coverage. Every field of the schema is present (`limitation` is null when there is none), no other field appears, `assessment.confidence` is one of the four listed values, and the object is valid JSON.",
+    "statement": "Submit one to four `scenarios`, and each `thresholds` entry's `metric` is one of total_leverage, net_leverage and interest_coverage. Every field of the schema is present (`limitation` is null when there is none), no other field appears, `assessment.confidence` is one of the four listed values, and the object is valid JSON.",
     "checks": [
      "oracle:cp2a:r06",
      "oracle:cp2a:r07",
@@ -578,13 +576,6 @@
     "checks": [
      "oracle:cp2a:v13"
     ]
-   },
-   {
-    "id": "downside_pathway.7",
-    "statement": "A `Stale input` issue means a bound CP-1 input changed after the context was read; no edit to the submission cures it.",
-    "checks": [
-     "oracle:cp2a:v17"
-    ]
    }
   ],
   "earnings_delta": [
@@ -620,12 +611,11 @@
   "earnings_quality": [
    {
     "id": "earnings_quality.1",
-    "statement": "Write exactly one assessment for each add-back of the bridge in the module context, its `addback` the bridge label written exactly, and none for another label. When the pack supplies no bridge, assess no add-back and cite the statements' add-back disclosure in `overall.evidence`; if the bridge source is not ready or its table cannot be read, the step is refused as `Bridge table not found`.",
+    "statement": "Write exactly one assessment for each add-back of the bridge in the module context, its `addback` the bridge label written exactly, and none for another label. When the pack supplies no bridge, assess no add-back and cite the statements' add-back disclosure in `overall.evidence`.",
     "checks": [
      "oracle:cp1d:r01",
      "oracle:cp1d:r02",
      "oracle:cp1d:r13",
-     "oracle:cp1d:r14",
      "oracle:cp1d:r15",
      "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
      "fn:deploy_workflow.owners.cp1d:validation_issues"
@@ -846,8 +836,7 @@
      "fn:deploy_workflow.owners.cp2g:_text_issues",
      "fn:deploy_workflow.owners.cp2g:_run_text_issues",
      "fn:deploy_workflow.owners.cp2g:_limitation_issues",
-     "fn:deploy_workflow.owners.cp2g:content_issues",
-     "fn:deploy_workflow.owners.cp2g:_claims"
+     "fn:deploy_workflow.owners.cp2g:content_issues"
     ]
    },
    {
@@ -855,15 +844,6 @@
     "statement": "`assessment.confidence` is never High, because the driver values are uncited analyst assumptions.",
     "checks": [
      "oracle:cp2g:v13"
-    ]
-   },
-   {
-    "id": "forward_credit_model.8",
-    "statement": "A `Stale input` issue means a bound CP-2A, CP-1D or CP-1 input changed after the context was read; no edit to the submission cures it.",
-    "checks": [
-     "oracle:cp2g:v18",
-     "oracle:cp2g:v19",
-     "oracle:cp2g:v20"
     ]
    }
   ],
@@ -995,7 +975,8 @@
     "statement": "`assessments` holds exactly one row for each `section` (liquidity_runway, maturity_wall, funding_gap), no section missing and none twice. The maturity_wall row lists in `basis_refs` a ref of the T4.18 maturity_date fact from `cp1_facts`.",
     "checks": [
      "oracle:cp2d:section_missing",
-     "oracle:cp2d:section_repeated"
+     "oracle:cp2d:section_repeated",
+     "fn:deploy_workflow.owners.cp2d:submission_issues"
     ]
    },
    {
@@ -1019,8 +1000,7 @@
     "statement": "An assessment of category Insufficient Information states a nonblank `limitation`; an assessment of any other category has a null `limitation`.",
     "checks": [
      "oracle:cp2d:insufficient_without_limitation",
-     "oracle:cp2d:limitation_without_insufficient",
-     "fn:deploy_workflow.owners.cp2d:_claims"
+     "oracle:cp2d:limitation_without_insufficient"
     ]
    }
   ],
@@ -1076,8 +1056,7 @@
     "checks": [
      "oracle:cp2e:debt_currency_and_absence",
      "oracle:cp2e:foreign_share_and_absence",
-     "fn:deploy_workflow.owners.cp2e:_check_fx",
-     "fn:deploy_workflow.owners.cp2e:_fx_claim"
+     "fn:deploy_workflow.owners.cp2e:_check_fx"
     ]
    },
    {
@@ -1086,8 +1065,7 @@
     "checks": [
      "oracle:cp2e:hedge_ratio_and_absence",
      "oracle:cp2e:hedge_ratio_out_of_range",
-     "fn:deploy_workflow.owners.cp2e:_check_hedge",
-     "fn:deploy_workflow.owners.cp2e:_hedge_claim"
+     "fn:deploy_workflow.owners.cp2e:_check_hedge"
     ]
    },
    {
@@ -1098,13 +1076,12 @@
      "oracle:cp2e:rate_shocks_not_increasing",
      "oracle:cp2e:too_many_rate_shocks",
      "oracle:cp2e:fx_shock_too_large",
-     "fn:deploy_workflow.owners.cp2e:_Check.shocks",
-     "fn:deploy_workflow.owners.cp2e:_rate_claims"
+     "fn:deploy_workflow.owners.cp2e:_Check.shocks"
     ]
    },
    {
     "id": "macro_fx.8",
-    "statement": "Give one assessment for each `section` (interest_rate, fx, hedging), none twice; `category` is Documentary Fact, Analyst Interpretation or Insufficient Information, `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote. Every analyst text (assessment `text` and `limitation`, `shock_rationale`, `summary.text`, the hedge `rationale`, `reference_rate`, and every absence `reason` and `follow_up`) is nonblank with no digit; `summary.text` has no reference; and an assessment `text` or `summary.text` uses none of the words recommend, buy, sell, overweight, underweight, downgrade, upgrade or covenant breach.",
+    "statement": "Give one assessment for each `section` (interest_rate, fx, hedging), none twice; `category` is Documentary Fact, Analyst Interpretation or Insufficient Information, `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote. Every analyst text (assessment `text`, `shock_rationale`, `summary.text`, the hedge `rationale`, and every absence `reason` and `follow_up`) is nonblank with no digit; an assessment `limitation` and `rate_basis.reference_rate` are nonblank; `summary.text` has no reference; and an assessment `text` or `summary.text` uses none of the words recommend, buy, sell, overweight, underweight, downgrade, upgrade or covenant breach.",
     "checks": [
      "oracle:cp2e:digit_in_text",
      "oracle:cp2e:prohibited_conclusion",
@@ -1136,7 +1113,8 @@
      "oracle:cp3d:observations_and_absence",
      "oracle:cp3d:duplicate_kind",
      "fn:deploy_workflow.owners.cp3d:_check_observations",
-     "fn:deploy_workflow.owners.cp3d:submission_issues"
+     "fn:deploy_workflow.owners.cp3d:submission_issues",
+     "fn:deploy_workflow.owners.cp3d:_issues"
     ]
    },
    {
@@ -1158,14 +1136,19 @@
    },
    {
     "id": "market_implied.3",
-    "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused.",
+    "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused. All `context_row` observations of one submission name rows of the same facility. A context bid and offer come from one listed row, never one from the context and one from a sheet. Context market evidence is built by Python: cite it only by its row id in `context_row`, never with the `context` source as a `source_id`.",
     "checks": [
-     "fn:deploy_workflow.owners.cp3d:_resolved"
+     "fn:deploy_workflow.owners.cp3d:_resolved",
+     "fn:deploy_workflow.owners.cp3d:_check_facilities",
+     "fn:deploy_workflow.owners.cp3d:_observation_level",
+     "oracle:cp3-context:cp3d-filled-context-row",
+     "oracle:cp3-context:cp3d-unknown-context-row",
+     "oracle:cp3-context:cp3d-mixed-facilities"
     ]
    },
    {
     "id": "market_implied.4",
-    "statement": "`instrument.name` occurs in `instrument.quote`. `terms.maturity` gives exactly one of `date_text` (a Month D, YYYY date occurring in its quote, after the quotation date) and `absence`. `terms.margin` and `terms.amortisation` each give exactly one of their text (`bps_text`, `value_text`, a numeral of at most three integer digits and four decimals, no leading zero, occurring once in its own quote) and `absence`, and the amortisation value is zero. `terms.reference_rate.name` occurs in its quote, and it gives exactly one of `level` (its `percent_text` occurring in the level's own quote) and `absence`.",
+    "statement": "`instrument.name` occurs in `instrument.quote`. `terms.maturity` gives exactly one of `date_text` (a Month D, YYYY date occurring in its quote, after the quotation date) and `absence`. `terms.margin` and `terms.amortisation` each give exactly one of their text (`bps_text`, `value_text`, a numeral of at most three integer digits and four decimals, no leading zero, occurring once in its own quote) and `absence`, and the amortisation value is zero. `terms.reference_rate.name` occurs in its quote, and it gives exactly one of `level` (its `percent_text` occurring in the level's own quote, with no leading zero and at most three integer digits and four decimals) and `absence`.",
     "checks": [
      "oracle:cp3d:maturity_before_quotation",
      "oracle:cp3d:margin_not_in_quote",
@@ -1196,7 +1179,7 @@
    },
    {
     "id": "market_implied.7",
-    "statement": "Every analyst text (`summary.text`, `technicals` text and limitation, `recovery.rationale`, `instrument.name`, `reference_rate.name` and every absence `reason` and `follow_up`) is nonblank, has no digit, and uses none of the words buy, sell, overweight, underweight, recommend, cheap, undervalued, overvalued, outperform or attractive.",
+    "statement": "Every analyst text (`summary.text`, `technicals` text and limitation, `recovery.rationale`, `instrument.name`, `reference_rate.name` and every absence `reason` and `follow_up`) is nonblank, has no digit, and uses none of the words buy, sell, overweight, underweight, recommend, cheap, undervalued, overvalued, outperform or attractive; `summary.text` has no reference.",
     "checks": [
      "oracle:cp3d:digit_in_text",
      "oracle:cp3d:prohibited_conclusion",
@@ -1214,8 +1197,7 @@
      "oracle:cp3d:unread_two_pages_sorted",
      "oracle:cp3d:absence_without_search",
      "oracle:cp3d:term_absence_without_search",
-     "fn:deploy_workflow.owners.cp3d:absence_paths",
-     "fn:deploy_workflow.owners.cp3d:_Composer.missing_inputs"
+     "fn:deploy_workflow.owners.cp3d:absence_paths"
     ]
    }
   ],
@@ -1271,13 +1253,12 @@
    },
    {
     "id": "peer_benchmark.2",
-    "statement": "Write exactly one assessment for each peer listed in `peers.rows` of the module context, its `peer` the row's `label` written exactly, and none for another name or twice. When the peers source is absent, write no assessment; when its table cannot be read, every submission is refused as `Peer table not found`.",
+    "statement": "Write exactly one assessment for each peer listed in `peers.rows` of the module context, its `peer` the row's `label` written exactly, and none for another name or twice. When the peers source is absent, write no assessment.",
     "checks": [
      "oracle:cp1c:r01",
      "oracle:cp1c:r02",
      "oracle:cp1c:r03",
      "oracle:cp1c:r10",
-     "oracle:cp1c:r11",
      "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
      "fn:deploy_workflow.owners.cp1c:calculation_issues"
     ]
@@ -1371,13 +1352,11 @@
    },
    {
     "id": "rating_triggers.2",
-    "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice. If the ratings source's register or trigger terms cannot be read, the step is refused as `Rating register not found` or `Trigger terms not found`.",
+    "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice.",
     "checks": [
      "oracle:cp2h:v01",
      "oracle:cp2h:v02",
      "oracle:cp2h:v03",
-     "oracle:cp2h:s01",
-     "oracle:cp2h:s02",
      "fn:deploy_workflow.owners.cp2h:_view_issues"
     ]
    },
@@ -1408,9 +1387,7 @@
      "fn:deploy_workflow.owners.cp2h:_gap_issues",
      "fn:deploy_workflow.owners.cp2h:_overall_issues",
      "fn:deploy_workflow.owners.cp2h:_limitation",
-     "fn:deploy_workflow.owners.cp2h:phrase_issues",
-     "fn:deploy_workflow.owners.cp2h:_claims",
-     "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
+     "fn:deploy_workflow.owners.cp2h:phrase_issues"
     ]
    },
    {
@@ -1418,14 +1395,6 @@
     "statement": "Cite each quote verbatim under the locator of its page in the ratings source; a quote not on that page is refused.",
     "checks": [
      "oracle:cp2h:v16"
-    ]
-   },
-   {
-    "id": "rating_triggers.6",
-    "statement": "A `Stale input` issue means a bound CP-2G or CP-1 input changed after the context was read; no edit to the submission cures it.",
-    "checks": [
-     "oracle:cp2h:v17",
-     "oracle:cp2h:v18"
     ]
    }
   ],
@@ -1488,7 +1457,7 @@
    },
    {
     "id": "refinancing_risk.3",
-    "statement": "Every analyst text (`repricing.rationale`, the absence `reason` and `follow_up`, and each path's `text`, `credit_implication` and `limitation`) is nonblank, has no digit, states no instrument recommendation or recovery conclusion, no refinancing outcome (`will be refinanced`, `will refinance`, `refinancing is assured`, `refinancing is certain`, `will default`), no `fulcrum` or `headroom is sufficient`, and no compliance word (complies, compliant, compliance, breach, met, satisfied and their forms) within four words of `covenant`.",
+    "statement": "Every analyst text (`repricing.rationale`, the absence `reason` and `follow_up`, and each path's `text`, `credit_implication` and `limitation`) is nonblank, has no digit, states no peer ranking, instrument recommendation or recovery conclusion, no refinancing outcome (`will be refinanced`, `will refinance`, `refinancing is assured`, `refinancing is certain`, `will default`), no `fulcrum` or `headroom is sufficient`, and no compliance word (complies, compliant, compliance, breach, met, satisfied and their forms) within four words of `covenant`.",
     "checks": [
      "oracle:cp3c:digit_in_text",
      "oracle:cp3c:digit_in_rationale",
@@ -1624,7 +1593,7 @@
    },
    {
     "id": "research.4",
-    "statement": "Each question lists in `searched_sources` at least one ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
+    "statement": "Each question lists in `searched_sources` one or more sources, every one a ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
     "checks": [
      "oracle:cpdr:no_searched_source",
      "oracle:cpdr:searched_source_not_in_pack",
@@ -1677,13 +1646,12 @@
      "oracle:cp4c:v01",
      "oracle:cp4c:v02",
      "oracle:cp4c:v06",
-     "fn:deploy_workflow.owners.cp4c:_claim_issues",
-     "fn:deploy_workflow.owners.cp4c:_claims"
+     "fn:deploy_workflow.owners.cp4c:_claim_issues"
     ]
    },
    {
     "id": "restructuring_fulcrum.3",
-    "statement": "A `source_row` claim cites in `amount_quote` the row it reads, quoted verbatim from the `financial` source under its locator, and gives in `period_column` the column of that statement for the claims' balance date (see `statement_rows`); the row must have a number under it, and the claim is above zero. A class with another `amount_source` has a null `amount_quote` and `period_column`.",
+    "statement": "A `source_row` claim cites in `amount_quote` the row it reads, quoted verbatim from the `financial` source under its locator, and gives in `period_column` the `statement_rows` column dated at the end of the `cp1_facts` `period`; the row must have a number under it, and the claim is above zero. A class with another `amount_source` has a null `amount_quote` and `period_column`.",
     "checks": [
      "oracle:cp4c:v03",
      "oracle:cp4c:v04",
@@ -1748,16 +1716,6 @@
      "fn:deploy_workflow.owners.cp4c:_text_fields",
      "fn:deploy_workflow.owners.cp4c:_run_text_issues",
      "fn:deploy_workflow.owners.cp4c:guard_issues"
-    ]
-   },
-   {
-    "id": "restructuring_fulcrum.10",
-    "statement": "A `Stale input` issue means a bound CP-2A, CP-2G, CP-4 or CP-1 input changed after the context was read; no edit to the submission cures it.",
-    "checks": [
-     "oracle:cp4c:v24",
-     "oracle:cp4c:v25",
-     "oracle:cp4c:v26",
-     "oracle:cp4c:v27"
     ]
    }
   ],
@@ -1880,7 +1838,7 @@
    "src/deploy_vii/source_context.py": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
    "src/deploy_vii/statement_validation.py": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "7a61f8e8a0a1ccf507ad1bec915d07b8480a58dab2215a2bf2e46ea2a621cdb5",
+   "src/deploy_workflow/owner_workflow.py": "5cea794e74759c7fbeab612e53236e4dd10724c922b41c00c1cfc52aad0a15e6",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",
@@ -1893,7 +1851,7 @@
    "src/deploy_workflow/owners/cp2h.py": "9fa9ebb713c063d046f6bc727f357b72be3a5963cb271e9495106eca30c81c1f",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
    "src/deploy_workflow/owners/cp3c.py": "7bd54cdb92cbb5b10060227175a0b1ee0e774bda4b8b8412e461ef5d43761fd4",
-   "src/deploy_workflow/owners/cp3d.py": "8fbcda6944a6980a95dcd515058b1923d8eeb2f9e0f5af0fe287fce2ef980fc7",
+   "src/deploy_workflow/owners/cp3d.py": "76e3b8bf17d4063800b36620dc7e4c4fd9ed505608729ac2d4f6443e0476c23a",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
    "src/deploy_workflow/owners/cp4c.py": "19824c5ef61373468c74001fb6652b121f07cae8d72601371528f4ca1650dbf4",
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",

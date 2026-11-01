@@ -1065,11 +1065,10 @@ def _row_citations(
 
 def _position(b: _Book, r: RegisterRow, row: str, cited: Sequence[Citation]) -> None:
     at, label = ("T2R.2", row, "position"), "Position on the combined scale"
-    period = (
-        "Rating date not stated"
-        if r.source == "context" and r.date == NOT_STATED
-        else f"Rating dated {r.date}"
-    )
+    period = "Rating date not stated" if r.date == NOT_STATED else f"Rating dated {r.date}"
+    # the not-stated wording is the context rows' only; a page row keeps the base text
+    if r.source != "context":
+        period = f"Rating dated {r.date}"
     if r.position is None or (r.source == "ratings" and r.scale_line is None):
         reason = (
             f"{possessive(r.agency)} rating is {r.rating.lower()}, "

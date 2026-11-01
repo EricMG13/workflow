@@ -19,7 +19,13 @@ from deploy_workflow.model.adapter import (
     live_adapter,
     recorded_adapter,
 )
-from deploy_workflow.model.transport import InsecureUrl, Request, Response, TransportError
+from deploy_workflow.model.transport import (
+    IdleTimeout,
+    InsecureUrl,
+    Request,
+    Response,
+    TransportError,
+)
 from deploy_workflow.model.turn import (
     Message,
     ModelSpec,
@@ -530,3 +536,97 @@ def test_recorded_deeply_nested_line_is_a_recording_error(tmp_path: Path) -> Non
     write(tmp_path / "rec.jsonl", line(DIGEST, 0, turn_to_json(one_call_turn())), "[" * 100_000)
     with pytest.raises(RecordingError, match="line 2"):
         recorded_adapter(SPEC, tmp_path)
+
+
+# ------------------------------------------------------------------ fix round 2: split key in raw
+
+SPLIT_KEY = "sk-ant-" + "W" * 40
+_SSE_START: list[dict[str, Any]] = [
+    {"type": "message_start", "message": {"id": "m1", "model": "x", "usage": {"input_tokens": 1}}},
+    {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
+    {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {"type": "text_delta", "text": SPLIT_KEY[:5]},
+    },
+    {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {"type": "text_delta", "text": SPLIT_KEY[5:]},
+    },
+]
+_SSE_STOP = {"type": "content_block_stop", "index": 0}
+_SSE_USAGE = {
+    "type": "message_delta",
+    "delta": {"stop_reason": "end_turn"},
+    "usage": {"output_tokens": 2},
+}
+
+
+def _sse(events: list[dict[str, Any]]) -> bytes:
+    return "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
+
+
+def _anthropic_reply(live_ruling: Path, outcome: Response | TransportError) -> AdapterReply:
+    live_ruling.write_text(RULING_TEXT.replace("sol-medium", "opus-medium"), encoding="utf-8")
+    spec = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
+    fake = (
+        FakeTransport(error=outcome)
+        if isinstance(outcome, TransportError)
+        else FakeTransport(outcome)
+    )
+    adapter = live_adapter(
+        spec, live_ruling, transport=fake, environ={"ANTHROPIC_API_KEY": SPLIT_KEY}
+    )
+    return complete(adapter)
+
+
+@pytest.mark.parametrize(
+    "label",
+    ["error_event", "stream_cut", "refusal", "idle_before_usage", "idle_after_usage"],
+)
+def test_live_split_key_absent_from_raw_on_every_reply_path(live_ruling: Path, label: str) -> None:
+    outcomes: dict[str, Response | TransportError] = {
+        "error_event": Response(
+            200,
+            _sse(
+                _SSE_START
+                + [{"type": "error", "error": {"type": "overloaded_error", "message": "busy"}}]
+            ),
+        ),
+        "stream_cut": Response(200, _sse(_SSE_START + [_SSE_STOP, {"type": "message_stop"}])),
+        "refusal": Response(
+            200,
+            _sse(
+                _SSE_START
+                + [
+                    _SSE_STOP,
+                    {**_SSE_USAGE, "delta": {"stop_reason": "refusal"}},
+                    {"type": "message_stop"},
+                ]
+            ),
+        ),
+        "idle_before_usage": IdleTimeout("idle", _sse(_SSE_START)),
+        "idle_after_usage": IdleTimeout("idle", _sse(_SSE_START + [_SSE_STOP, _SSE_USAGE])),
+    }
+    reply = _anthropic_reply(live_ruling, outcomes[label])
+    raw = (reply.raw or b"").decode()
+    texts = [json.loads(ln[6:]) for ln in raw.splitlines() if ln.startswith("data: {")]
+    joined = "".join(e.get("delta", {}).get("text", "") for e in texts)
+    assert SPLIT_KEY not in joined and SPLIT_KEY[5:] not in raw
+    assert reply.kind != "ok"
+
+
+def test_live_clean_sse_keeps_its_raw(live_ruling: Path) -> None:
+    events: list[dict[str, Any]] = [
+        _SSE_START[0],
+        _SSE_START[1],
+        {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "hel"}},
+        {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "lo"}},
+        _SSE_STOP,
+        _SSE_USAGE,
+        {"type": "message_stop"},
+    ]
+    body = _sse(events)
+    reply = _anthropic_reply(live_ruling, Response(200, body))
+    assert reply.kind == "ok" and reply.raw == body

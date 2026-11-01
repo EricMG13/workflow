@@ -407,7 +407,9 @@ class LiveAdapter:
             raw = redactor.bytes_(response.body)
             status = response.status
         finished = self._clock()
-        if isinstance(outcome, ProviderError) and outcome.error_class == "KeyReflected":
+        if (
+            isinstance(outcome, ProviderError) and outcome.error_class == "KeyReflected"
+        ) or _rejoined_key(raw, redactor):
             raw = _REFLECTED_RAW  # a key decodable from the body: no part of it is kept
         if isinstance(outcome, Turn):
             return AdapterReply(
@@ -415,6 +417,15 @@ class LiveAdapter:
                 outcome.usage, outcome.billed_usd,
             )  # fmt: skip
         return _reply_from_error(outcome, raw, status, headers, started, finished)
+
+
+_DELTA_TEXT = re.compile(rb'"(?:text|thinking|partial_json)":\s*"((?:[^"\\]|\\.)*)')
+
+
+def _rejoined_key(raw: bytes | None, redactor: Redactor) -> bool:
+    """Delta strings joined in order, a cut tail included: a key split across them is whole."""
+    joined = "".join(m.decode("utf-8", "replace") for m in _DELTA_TEXT.findall(raw or b""))
+    return redactor.text(joined) != joined
 
 
 def _reply_from_error(

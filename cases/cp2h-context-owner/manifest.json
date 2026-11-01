@@ -1,10 +1,10 @@
 {
  "schema_version": "cp2h-context-owner-cases/1",
  "scope": "Phase 4: CP-2H builds its rating register from the context file's `ratings` rows (S&P, Moody's, Fitch) on a fixed combined scale; trigger terms from an attached `ratings` source",
- "status": "DRAFT 1 prepared by the cp2h-context-owner Task 0 preparer, 2026-11-01; review pending; not frozen, not pinned",
+ "status": "FROZEN 2026-11-01 (ac74bdf3): prepared by a86eb9b2, reviewed by mx-precise a828ec20; pins re-cut in 8a0b39cc",
  "roles": {
   "preparer": "Task 0 preparer (this builder)",
-  "reviewer": null,
+  "reviewer": "mx-precise a828ec20",
   "builder": null
  },
  "raw_rule": "ratings pages: literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (as cases/cp2h-owner). context files: the bytes the form writes (JSON.stringify(o, null, 2) + LF; context-minified.json: JSON.stringify(o) + LF), sha256 of the file bytes, spans line:N via splitlines",

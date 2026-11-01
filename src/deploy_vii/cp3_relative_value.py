@@ -36,13 +36,22 @@ journal's (`execution.settle`). `submit_cp3_step` settles CP-3 as `submit_cp2_st
 needs no registry entry.
 """
 
+import dataclasses
+import json
 import re
 from collections import Counter
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Literal
+from datetime import date
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import (
+    BaseModel,
+    Field,
+    SerializerFunctionWrapHandler,
+    ValidationError,
+    model_serializer,
+)
 
 from deploy_vii import prose
 from deploy_vii.business_context import (
@@ -69,6 +78,7 @@ from deploy_vii.contracts import (
     Module,
     ReportTable,
     Run,
+    Source,
     TableColumn,
     TableRow,
     Text,
@@ -183,6 +193,17 @@ class Basis(Contract):
 
     cp2_refs: tuple[str, ...]
     quotes: tuple[Quote, ...]
+    # Python's context market-evidence rows by id (`c01`, B6): a deliberate default, because every
+    # submission made before the context file was read lacks it. An empty value is left out of the
+    # dump, so a submission and a head without context evidence keep their content hash (N1).
+    context_rows: tuple[str, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def _omit_empty_context_rows(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        if not self.context_rows:
+            data.pop("context_rows", None)
+        return data
 
 
 class Instrument(Contract):
@@ -406,6 +427,445 @@ def cp3_upstream(store: Execution, attempt: Attempt) -> Upstream:
     )
 
 
+# --- the context file's market evidence (B6, B6a) ----------------------------------------------
+# A pack that holds a `context` source (the user's context file, `context/1`) carries quotes and
+# deal-talk rows. Python reads them from the frozen spans, binds each to a CP-1 facility, cites
+# each figure in the context's own text and offers the rows as T3.3 rows `c01...`; the model cites
+# a row by id only (`Basis.context_rows`) and writes or copies no context figure. The engine may
+# not import `deploy_workflow`, so it reads the bytes itself and re-checks only what it uses.
+
+CONTEXT_SOURCE = "context"
+CONTEXT_SCHEMA = "context/1"
+CONTEXT_NUM = r"^\d+(\.\d+)?$"  # `deploy_workflow.context.NUM`; a parity test pins the two
+STALE_DAYS = 30  # a quote more than this many whole days before the run as-of is stale
+UNREADABLE = "context source unreadable: "
+USER_SUPPLIED = "Market evidence rows from the context file are user-supplied figures"
+NOT_STATED = "Not stated"
+CONTEXT_CAP = f"a context quote is more than {STALE_DAYS} days old"
+BY_ROW_ID = "cite it by row id in a basis"
+CONTEXT_ONLY_NOTE = (
+    "Market evidence is the rows in context_market_evidence; cite one only by its row id in "
+    "basis.context_rows; copy no figure"
+)
+QUOTE_FIELDS = ("facility_id", "kind", "bid", "ask", "price", "yield_pct", "spread_bps")
+QUOTE_STRINGS = (*QUOTE_FIELDS, "as_of", "provider")
+QUOTE_FIGURES = (
+    ("bid", "bid {}"),
+    ("ask", "ask {}"),
+    ("price", "price {}"),
+    ("yield_pct", "yield {}%"),
+    ("spread_bps", "spread {} bps"),
+)
+DEAL_STRINGS = (
+    "facility_id",
+    "talk_spread_bps_low",
+    "talk_spread_bps_high",
+    "talk_oid_low",
+    "talk_oid_high",
+    "as_of",
+    "provider",
+)
+DEAL_RANGES = (
+    ("spread talk", "talk_spread_bps_low", "talk_spread_bps_high", " bps"),
+    ("OID talk", "talk_oid_low", "talk_oid_high", ""),
+)
+_ARRAYS = ("quotes", "deal_terms")
+_WS = re.compile(r"[ \t\n\r]*")
+_ISO = re.compile(r"\d{4}-\d{2}-\d{2}")
+_DECODER = json.JSONDecoder()
+
+
+@dataclass(frozen=True)
+class ContextRow:
+    """One Python-built T3.3 row: its id (`c01`...), the quote's kind, the CP-1 facility, the
+    provider and date as the context states them (`as_of` empty when a deal row has none), the
+    Quote cell text, its citations, the Limitation cell text and the stale text (or None)."""
+
+    row_id: str
+    kind: str
+    facility_id: str
+    provider: str
+    as_of: str
+    figures: str
+    citations: tuple[Citation, ...]
+    limitation: str
+    stale: str | None
+
+
+@dataclass(frozen=True)
+class ContextEvidence:
+    """What the pack's context file offers: the rows (in context order, quotes then deal talk),
+    the validator issues of an unreadable file (then no rows) and the own-limitation gaps for the
+    rows that were not used."""
+
+    rows: tuple[ContextRow, ...]
+    issues: tuple[str, ...]
+    gaps: tuple[str, ...]
+
+
+NO_CONTEXT = ContextEvidence((), (), ())
+
+
+@dataclass(frozen=True)
+class _Parsed:
+    text: str
+    quotes: tuple[dict[str, str], ...]
+    deals: tuple[dict[str, str], ...]
+    issues: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _Member:
+    """Where one string member of a row sits in the text: the key's and the value's opening
+    quote, the value's end (after its closing quote) and the row object's `{`."""
+
+    key_start: int
+    value_start: int
+    value_end: int
+    object_start: int
+
+
+@dataclass(frozen=True)
+class _Reading:
+    source: Source
+    parsed: _Parsed
+    members: Mapping[str, _Member]
+    facilities: Collection[str]
+    run_as_of: date
+
+
+def _no_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    found: dict[str, object] = {}
+    for key, value in pairs:
+        if key in found:
+            raise ValueError(f"duplicate key {key!r}")
+        found[key] = value
+    return found
+
+
+def _valid_date(value: str) -> date | None:
+    if _ISO.fullmatch(value) is None:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _strings(path: str, item: object, names: Sequence[str]) -> tuple[dict[str, str], list[str]]:
+    """The named members of one row as text; a missing or non-text member is a problem."""
+    if not isinstance(item, dict):
+        return {}, [f"{path} is not an object"]
+    row: dict[str, str] = {}
+    problems: list[str] = []
+    for name in names:
+        value = item.get(name)
+        if isinstance(value, str):
+            row[name] = value
+        else:
+            problems.append(f"{path}.{name} is {'missing' if name not in item else 'not text'}")
+    return row, problems
+
+
+def _row_problems(path: str, row: Mapping[str, str], run_as_of: date, quote: bool) -> list[str]:
+    """The figures, date and kind of one row against the context's number and date rules."""
+    problems: list[str] = []
+    figures = (
+        [name for name, _ in QUOTE_FIGURES]
+        if quote
+        else [name for _, low, high, _ in DEAL_RANGES for name in (low, high)]
+    )
+    problems += [
+        f"{path}.{name} is not a plain number"
+        for name in figures
+        if row.get(name) and not re.fullmatch(CONTEXT_NUM, row[name], re.ASCII)
+    ]
+    if quote and row.get("kind") not in ("observed", "indicative_talk"):
+        problems.append(f"{path}.kind is not observed or indicative_talk")
+    stated = row.get("as_of", "")
+    if stated or quote:
+        when = _valid_date(stated)
+        if when is None:
+            problems.append(f"{path}.as_of is not an ISO date")
+        elif when > run_as_of:
+            problems.append(f"{path}.as_of {stated} is after the run as-of {run_as_of.isoformat()}")
+    return problems
+
+
+def _read_context(source: Source, run: Run) -> _Parsed:
+    """The context source's quotes and deal rows (only the members CP-3 uses), or the issues that
+    make the file unreadable. `prepare` never calls `load_context`, so every figure, date and
+    identity used is re-checked here; no other form rule is re-applied."""
+    text = "\n".join(span.text for span in source.spans)
+
+    def refused(*problems: str) -> _Parsed:
+        return _Parsed(text, (), (), tuple(UNREADABLE + problem for problem in problems))
+
+    if source.status != "ready":
+        return refused(f"status is {source.status}: {source.limitation}")
+    try:
+        loaded = json.loads(text, object_pairs_hook=_no_duplicates)
+    except json.JSONDecodeError as error:
+        return refused(f"not valid JSON ({error.msg} at line {error.lineno})")
+    except (ValueError, RecursionError) as error:
+        return refused(f"not valid JSON ({error})")
+    if not isinstance(loaded, dict):
+        return refused("the top level is not an object")
+    problems: list[str] = []
+    if loaded.get("schema") != CONTEXT_SCHEMA:
+        problems.append(f"schema is not {CONTEXT_SCHEMA}")
+    identity, found = _strings("identity", loaded.get("identity"), ("issuer_id", "issuer_name"))
+    problems += found
+    problems += [
+        f"identity.{name} differs from the run"
+        for name, ours in (("issuer_id", run.issuer_id), ("issuer_name", run.issuer_name))
+        if name in identity and identity[name] != ours
+    ]
+    rows: dict[str, tuple[dict[str, str], ...]] = {}
+    for array, names in (("quotes", QUOTE_STRINGS), ("deal_terms", DEAL_STRINGS)):
+        items = loaded.get(array)
+        if not isinstance(items, list):
+            problems.append(f"{array} is {'missing' if array not in loaded else 'not a list'}")
+            continue
+        parsed: list[dict[str, str]] = []
+        for index, item in enumerate(items):
+            row, found = _strings(f"{array}[{index}]", item, names)
+            problems += found or _row_problems(
+                f"{array}[{index}]", row, run.as_of, array == "quotes"
+            )
+            parsed.append(row)
+        rows[array] = tuple(parsed)
+    if problems:
+        return refused(*problems)
+    return _Parsed(text, rows["quotes"], rows["deal_terms"], ())
+
+
+def _skip(text: str, at: int) -> int:
+    return _WS.match(text, at).end()  # type: ignore[union-attr]  # `[ \t\n\r]*` always matches
+
+
+def _expect(text: str, at: int, char: str) -> int:
+    if text[at : at + 1] != char:
+        raise ValueError(f"expected {char!r} at offset {at}")
+    return _skip(text, at + 1)
+
+
+def _object_members(text: str, at: int, prefix: str, found: dict[str, _Member]) -> int:
+    """Read the object at `at`; record each string member as `<prefix>.<key>`; return its end."""
+    start = at
+    at = _expect(text, at, "{")
+    while text[at : at + 1] != "}":
+        key, end = _DECODER.raw_decode(text, at)
+        if not isinstance(key, str):
+            raise TypeError(f"member name at offset {at} is not text")
+        key_start, at = at, _expect(text, _skip(text, end), ":")
+        value, end = _DECODER.raw_decode(text, at)
+        if isinstance(value, str):
+            path = f"{prefix}.{key}"
+            if path in found:
+                raise ValueError(f"duplicate member {path}")
+            found[path] = _Member(key_start, at, end, start)
+        at = _skip(text, end)
+        if text[at : at + 1] == ",":
+            at = _skip(text, at + 1)
+        elif text[at : at + 1] != "}":
+            raise ValueError(f"expected ',' or '}}' at offset {at}")
+    return at + 1
+
+
+def _members(text: str) -> dict[str, _Member]:
+    """Every string member of `quotes[i]` and `deal_terms[i]`, by `<array>[i].<field>`. Raises
+    ValueError on text that is not a JSON object."""
+    found: dict[str, _Member] = {}
+    at = _expect(text, _skip(text, 0), "{")
+    while text[at : at + 1] != "}":
+        key, end = _DECODER.raw_decode(text, at)
+        at = _expect(text, _skip(text, end), ":")
+        if key in _ARRAYS and text[at : at + 1] == "[":
+            at = _expect(text, at, "[")
+            index = 0
+            while text[at : at + 1] != "]":
+                if text[at : at + 1] == "{":
+                    end = _object_members(text, at, f"{key}[{index}]", found)
+                else:
+                    _, end = _DECODER.raw_decode(text, at)
+                at, index = _skip(text, end), index + 1
+                if text[at : at + 1] == ",":
+                    at = _skip(text, at + 1)
+            at = _skip(text, at + 1)
+        else:
+            _, end = _DECODER.raw_decode(text, at)
+            at = _skip(text, end)
+        if text[at : at + 1] == ",":
+            at = _skip(text, at + 1)
+        elif text[at : at + 1] != "}":
+            raise ValueError(f"expected ',' or '}}' at offset {at}")
+    return found
+
+
+def _value_offsets(text: str) -> dict[str, int]:
+    """The offset of each row string value's opening `"` in `text`, by `<array>[i].<field>`."""
+    return {path: member.value_start for path, member in _members(text).items()}
+
+
+def _cite(source: Source, text: str, member: _Member) -> Citation | None:
+    """One figure cited in the context's own text (B20, B20a): the member alone on its line, else
+    the text from the row object's `{` through the figure when that is on one line and occurs once
+    in it, else None (never a guessed span)."""
+    line = text.count("\n", 0, member.value_start) + 1
+    span = source.spans[line - 1]
+    own = text[member.key_start : member.value_end]
+    quote = (
+        own
+        if span.text.strip() in (own, own + ",")
+        else text[member.object_start : member.value_end]
+    )
+    if "\n" in quote or span.text.count(quote) != 1 or source.sha256 is None:
+        return None
+    citation = Citation(
+        source_id=CONTEXT_SOURCE, source_sha256=source.sha256, locator=span.locator, quote=quote
+    )
+    return None if citation_issues((citation,), (source,)) else citation
+
+
+def _cite_all(
+    ctx: _Reading, array: str, index: int, fields: Sequence[str]
+) -> tuple[Citation, ...] | None:
+    """The citations of the named figures of one row, in order; None unless every one cites."""
+    cited = [
+        _cite(ctx.source, ctx.parsed.text, ctx.members[f"{array}[{index}].{name}"])
+        for name in fields
+    ]
+    if any(item is None for item in cited):
+        return None
+    return tuple(item for item in cited if item is not None)
+
+
+def _stale_text(facility: str, stated: str, run_as_of: date) -> str | None:
+    when = _valid_date(stated)
+    days = 0 if when is None else (run_as_of - when).days
+    if days <= STALE_DAYS:
+        return None
+    return (
+        f"Stale quote: {facility} quote dated {stated} is {days} days before the run as-of "
+        f"{run_as_of.isoformat()} (limit {STALE_DAYS})"
+    )
+
+
+def _limitation(provider: str, notes: Sequence[str], stated: str, stale: str | None) -> str:
+    """The Limitation cell: the provider, the user-supplied label, any omitted bound and the
+    date note (the stale text, or that a deal row states no date)."""
+    parts = [f"Provider: {provider}" if provider else "Provider not stated", "user-supplied figure"]
+    parts += notes
+    if not stated:
+        parts.append("date not stated")
+    elif stale:
+        parts.append(stale)
+    return "; ".join(parts)
+
+
+def _quote_row(ctx: _Reading, index: int, quote: Mapping[str, str]) -> ContextRow | str:
+    """One quote as a row, or the gap text saying why it is not used."""
+    facility = quote["facility_id"]
+    if facility not in ctx.facilities:
+        return f"context quote for facility {facility} matches no CP-1 facility (T4.18); not used"
+    fields = [name for name, _ in QUOTE_FIGURES if quote[name]]
+    if not fields:
+        return f"context quote for facility {facility} carries no figure; not used"
+    cites = _cite_all(ctx, "quotes", index, fields)
+    if cites is None:
+        return (
+            f"context quote row {index + 1} for facility {facility} cannot be cited as one "
+            "unique span; not used"
+        )
+    shown = ", ".join(label.format(quote[name]) for name, label in QUOTE_FIGURES if quote[name])
+    stale = _stale_text(facility, quote["as_of"], ctx.run_as_of)
+    return ContextRow(
+        "",
+        quote["kind"],
+        facility,
+        quote["provider"],
+        quote["as_of"],
+        f"{facility}: {shown}",
+        cites,
+        _limitation(quote["provider"], (), quote["as_of"], stale),
+        stale,
+    )
+
+
+def _deal_row(ctx: _Reading, index: int, deal: Mapping[str, str]) -> ContextRow | str | None:
+    """One deal-terms row's talk as one `indicative_talk` range row (no midpoint), or the gap
+    text saying why it is not used; None when the row states no talk at all."""
+    facility = deal["facility_id"]
+    if not any(deal[name] for _, low, high, _ in DEAL_RANGES for name in (low, high)):
+        return None
+    if facility not in ctx.facilities:
+        return (
+            f"context deal term for facility {facility} matches no CP-1 facility (T4.18); not used"
+        )
+    shown: list[str] = []
+    fields: list[str] = []
+    notes: list[str] = []
+    for label, low, high, unit in DEAL_RANGES:
+        if deal[low] and deal[high]:
+            shown.append(f"{label} {deal[low]}-{deal[high]}{unit}")
+            fields += [low, high]
+        elif deal[low] or deal[high]:
+            side, value, other = ("lower", deal[low], "an upper")
+            if not deal[low]:
+                side, value, other = "upper", deal[high], "a lower"
+            notes.append(f"{label} {side} bound {value} given without {other} bound; not used")
+    here = f"context deal terms row {index + 1} for facility {facility}"
+    if not shown:
+        return f"{here} carries no complete talk range; not used"
+    cites = _cite_all(ctx, "deal_terms", index, fields)
+    if cites is None:
+        return f"{here} cannot be cited as one unique span; not used"
+    stale = _stale_text(facility, deal["as_of"], ctx.run_as_of)
+    return ContextRow(
+        "",
+        "indicative_talk",
+        facility,
+        deal["provider"],
+        deal["as_of"],
+        f"{facility}: " + "; ".join(shown),
+        cites,
+        _limitation(deal["provider"], notes, deal["as_of"], stale),
+        stale,
+    )
+
+
+def context_evidence(pack: PreparedPack, facilities: Collection[str]) -> ContextEvidence:
+    """The market evidence the pack's `context` source offers, all Python's: each quote and each
+    deal row's talk with a CP-1 facility (`facilities`, T4.18 ids) and a figure that cites as one
+    unique span becomes a row `c01...` (quotes, then deal terms); one that does not is named in
+    `gaps`; an unreadable file is `issues`, never a silent "no evidence". A pack without a
+    `context` source offers `NO_CONTEXT`."""
+    source = next((s for s in pack.sources if s.source_id == CONTEXT_SOURCE), None)
+    if source is None:
+        return NO_CONTEXT
+    parsed = _read_context(source, pack.run)
+    if parsed.issues:
+        return ContextEvidence((), parsed.issues, ())
+    try:
+        members = _members(parsed.text)
+    except (ValueError, TypeError) as error:
+        return ContextEvidence((), (f"{UNREADABLE}cannot locate the figures ({error})",), ())
+    ctx = _Reading(source, parsed, members, facilities, pack.run.as_of)
+    built = [
+        *(_quote_row(ctx, i, quote) for i, quote in enumerate(parsed.quotes)),
+        *(_deal_row(ctx, i, deal) for i, deal in enumerate(parsed.deals)),
+    ]
+    rows: list[ContextRow] = []
+    gaps: list[str] = []
+    for item in built:
+        if isinstance(item, str):
+            gaps.append(f"Gap (Medium): {item}")
+        elif item is not None:
+            rows.append(dataclasses.replace(item, row_id=f"c{len(rows) + 1:02d}"))
+    return ContextEvidence(tuple(rows), (), tuple(gaps))
+
+
 # --- validation ------------------------------------------------------------------------------
 
 _TEXT = (str, str | None)
@@ -503,9 +963,18 @@ class _Evidence:
     kinds: Mapping[QuoteKey, str]
     citations: Mapping[QuoteKey, Citation]
     issues: tuple[str, ...]
+    context: ContextEvidence = NO_CONTEXT
 
     def strength(self) -> frozenset[str]:
-        return frozenset(self.kinds.values()) - {NONE}
+        return (frozenset(self.kinds.values()) | {row.kind for row in self.context.rows}) - {NONE}
+
+    @property
+    def context_kinds(self) -> Mapping[str, str]:
+        return {row.row_id: row.kind for row in self.context.rows}
+
+    @property
+    def context_stale(self) -> bool:
+        return any(row.stale for row in self.context.rows)
 
 
 def _bind_evidence(
@@ -517,10 +986,11 @@ def _bind_evidence(
     indicative talk."""
     digests = {s.source_id: s.sha256 for s in pack.sources if s.status == "ready" and s.sha256}
     market = upstream.market_sources
+    context = context_evidence(pack, upstream.facilities)
     kinds: dict[QuoteKey, str] = {}
     citations: dict[QuoteKey, Citation] = {}
     first: dict[QuoteKey, int] = {}
-    issues: list[str] = []
+    issues: list[str] = list(context.issues)
     for index, row in enumerate(submission.market_evidence):
         # One row per quoted span: a basis quote names its row, so a span quoted twice (under
         # two kinds, say) would leave the row it names to submission order.
@@ -531,6 +1001,9 @@ def _bind_evidence(
             )
         path = f"market_evidence[{index}]"
         quote = row.quote
+        if row.source_id == CONTEXT_SOURCE:
+            issues.append(f"{path}: context market evidence is built by Python; {BY_ROW_ID}")
+            continue
         if row.kind == NONE:
             if quote is not None:
                 issues.append(f"{path}: a none row quotes nothing")
@@ -566,7 +1039,7 @@ def _bind_evidence(
             )
         kinds[_key(quote)] = row.kind
         citations[_key(quote)] = citation
-    return _Evidence(kinds, citations, tuple(dict.fromkeys(issues)))
+    return _Evidence(kinds, citations, tuple(dict.fromkeys(issues)), context)
 
 
 def _basis_issues(
@@ -582,12 +1055,18 @@ def _basis_issues(
         for j, q in enumerate(basis.quotes)
         if _key(q) not in evidence.kinds
     ]
+    issues += [
+        f"{path}.basis.context_rows[{j}]: no context row {row_id}"
+        for j, row_id in enumerate(basis.context_rows)
+        if row_id not in evidence.context_kinds
+    ]
     return issues
 
 
 def _talk_only(basis: Basis, evidence: _Evidence) -> bool:
     kinds = {evidence.kinds.get(_key(quote)) for quote in basis.quotes}
-    return bool(basis.quotes) and kinds <= {"indicative_talk"}
+    kinds |= {evidence.context_kinds.get(row_id) for row_id in basis.context_rows}
+    return bool(basis.quotes or basis.context_rows) and kinds <= {"indicative_talk"}
 
 
 def _level_issues(where: str, text: str) -> list[str]:
@@ -615,9 +1094,10 @@ def _instrument_issues(
             issues.append(f"{path}.facility_id: unknown CP-1 facility {row.facility_id}")
         issues += _basis_issues(path, row.basis, catalogue, evidence)
         market = not _none(row.market_observation)
-        if market and not row.basis.quotes:
+        cites_market = bool(row.basis.quotes or row.basis.context_rows)
+        if market and not cites_market:
             issues.append(f"{path}: a market observation cites a market_evidence quote")
-        if not (row.basis.cp2_refs or row.basis.quotes or _figures(row, bound)):
+        if not (row.basis.cp2_refs or cites_market or _figures(row, bound)):
             issues.append(
                 f"{path}: an instrument cites a CP-2 row, a market_evidence quote or a CP-1 figure"
             )
@@ -653,11 +1133,13 @@ def _preference_issues(
             "preference.confidence: Insufficient Information without observed or indicative "
             "market evidence"
         )
-    if not insufficient and not row.basis.quotes:
+    if not insufficient and not (row.basis.quotes or row.basis.context_rows):
         issues.append("preference: a relative value preference cites a market_evidence quote")
     reasons = list(upstream.caps)
     if strength == {"indicative_talk"}:
         reasons.append("the market evidence is indicative talk only")
+    if evidence.context_stale:
+        reasons.append(CONTEXT_CAP)
     if reasons and row.confidence == "High":
         issues.append(f"preference.confidence: capped below High because {'; '.join(reasons)}")
     if _talk_only(row.basis, evidence):
@@ -799,6 +1281,11 @@ KIND_LABEL: Mapping[str, str] = {
 
 
 @dataclass(frozen=True)
+class _SourceCell(Cell):
+    """A cell that is the context file's own text (Q-X): its fact carries `value_class` source."""
+
+
+@dataclass(frozen=True)
 class _Row:
     row_id: str
     label: str
@@ -846,6 +1333,7 @@ class _Composer:
         each CP-1 figure in reading order."""
         refs = row.cp2_refs if isinstance(row, Risk) else row.basis.cp2_refs
         quotes = () if isinstance(row, Risk) else row.basis.quotes
+        context_rows = () if isinstance(row, Risk) else row.basis.context_rows
         cited = set(refs)
         parts = [
             f"CP-2 {ref} ({item.label})" for ref, item in self.catalogue.items() if ref in cited
@@ -856,13 +1344,22 @@ class _Composer:
             for q in dict.fromkeys(quotes)
         ]
         parts += [
+            f"Market evidence {CONTEXT_SOURCE} {row_id} "
+            f"({KIND_LABEL[self.evidence.context_kinds[row_id]].lower()})"
+            for row_id in dict.fromkeys(context_rows)
+        ]
+        parts += [
             f"CP-1 {fact.label} · {fact.period}" if fact.period else f"CP-1 {fact.label}"
             for fact in _figures(row, self.bound)
         ]
         return Cell("; ".join(parts) or NO_BASIS)
 
-    def cited(self, quotes: Sequence[Quote]) -> tuple[Citation, ...]:
-        return tuple(dict.fromkeys(self.evidence.citations[_key(q)] for q in quotes))
+    def cited(self, basis: Basis) -> tuple[Citation, ...]:
+        """The basis's citations: its market-evidence quotes, then its context rows' figures."""
+        by_id = {row.row_id: row for row in self.evidence.context.rows}
+        market = (self.evidence.citations[_key(q)] for q in basis.quotes)
+        context = (c for row_id in basis.context_rows for c in by_id[row_id].citations)
+        return tuple(dict.fromkeys((*market, *context)))
 
     def _fact(self, table_id: str, row_id: str, field: str, label: str, cell: Cell) -> str:
         fact_id = f"{table_id}.{row_id}.{field}"
@@ -876,7 +1373,13 @@ class _Composer:
                 text=cell.text,
                 status="known" if cell.text is not None else cell.status,
                 citations=cell.citations,
-                value_class="analyst_judgment" if cell.judged else None,
+                value_class=(
+                    "analyst_judgment"
+                    if cell.judged
+                    else "source"
+                    if isinstance(cell, _SourceCell)
+                    else None
+                ),
                 limitation=cell.reason if cell.text is None else None,
             )
         )
@@ -979,7 +1482,7 @@ def _market(submission: RelativeValueSubmission, out: _Composer) -> None:
                 (
                     Cell(row.source_id),
                     Cell(KIND_LABEL[row.kind]),
-                    Cell(quote.quote, citations=out.cited((quote,)))
+                    Cell(quote.quote, citations=(out.evidence.citations[_key(quote)],))
                     if quote is not None
                     else Cell(NONE_STATED),
                     out.said(row.as_of),
@@ -987,6 +1490,20 @@ def _market(submission: RelativeValueSubmission, out: _Composer) -> None:
                 ),
             )
         )
+    rows += [
+        _Row(
+            row.row_id,
+            f"Context market evidence {number}",
+            (
+                Cell(CONTEXT_SOURCE),
+                Cell(KIND_LABEL[row.kind]),
+                _SourceCell(row.figures, citations=row.citations),
+                _SourceCell(row.as_of or NOT_STATED),
+                Cell(row.limitation),
+            ),
+        )
+        for number, row in enumerate(out.evidence.context.rows, 1)
+    ]
     out.table(REGISTERS["T3.3"], rows, required=False)
 
 
@@ -1073,6 +1590,14 @@ def _evidence_limitations(evidence: _Evidence) -> list[str]:
     return []
 
 
+def _context_limitations(evidence: _Evidence) -> list[str]:
+    """Own limitations of the context file's rows: each row not used (named), each stale quote,
+    and that the rows are user-supplied figures (whenever a Python row exists)."""
+    context = evidence.context
+    stale = [row.stale for row in context.rows if row.stale]
+    return [*context.gaps, *stale, *([USER_SUPPLIED] if context.rows else [])]
+
+
 def relative_value(
     pack: PreparedPack, submission: RelativeValueSubmission, upstream: Upstream
 ) -> RelativeValueReport:
@@ -1090,6 +1615,7 @@ def relative_value(
     # Inherited ones (a restricted CP-2's included) are settlement's (`execution.settle`).
     out.limitations.extend(f"Gap ({g.severity}): {out.text(g.gap)}" for g in submission.gaps)
     out.limitations.extend(_evidence_limitations(evidence))
+    out.limitations.extend(_context_limitations(evidence))
     out.limitations.extend(upstream.limits)
     lines = _instruments(submission, offered, out)
     _market(submission, out)
@@ -1127,14 +1653,14 @@ def relative_value(
         Claim(
             claim_id="T3.4.preference",
             text=preference_row.rationale,
-            citations=out.cited(preference_row.basis.quotes),
+            citations=out.cited(preference_row.basis),
             limitation=preference_row.limitation,
         ),
         *(
             Claim(
                 claim_id=f"T3.1.i{index:02d}",
                 text=row.market_observation,
-                citations=out.cited(row.basis.quotes),
+                citations=out.cited(row.basis),
                 limitation=row.limitation,
             )
             for index, row in enumerate(submission.instruments, 1)
@@ -1239,7 +1765,9 @@ def context_block(pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     }
     market = upstream.market_sources
     blocked = upstream.cp2_status == "blocked"
-    return {
+    offered = context_evidence(pack, upstream.facilities)
+    has_context = any(source.source_id == CONTEXT_SOURCE for source in pack.sources)
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
@@ -1313,9 +1841,30 @@ def context_block(pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
             "Quote market evidence only from a source listed in market_evidence_sources; "
             "classify each quote observed or indicative_talk, never talk as a level."
             if market
+            else CONTEXT_ONLY_NOTE
+            if offered.rows
             else "No third_party source: there is no market evidence, so the preference is "
             "Insufficient Information."
         ),
-        "confidence_caps": list(upstream.caps),
+        "confidence_caps": [
+            *upstream.caps,
+            *([CONTEXT_CAP] if any(r.stale for r in offered.rows) else []),
+        ],
         "inherited_limitations": list(upstream.inherited),
     }
+    if has_context:
+        # The rows the model may cite by id (`basis.context_rows`); their figures are shown so it
+        # can choose, never to be copied. `provider` is the user's text.
+        block["context_market_evidence"] = [
+            {
+                "row": row.row_id,
+                "facility_id": row.facility_id,
+                "kind": row.kind,
+                "as_of": row.as_of or NOT_STATED,
+                "provider": row.provider,
+                "stale": row.stale is not None,
+                "figures": row.figures,
+            }
+            for row in offered.rows
+        ]
+    return block

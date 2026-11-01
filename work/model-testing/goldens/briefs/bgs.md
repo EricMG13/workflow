@@ -1,0 +1,13 @@
+# Brief: BGS, relative_value (case_id `bgs-relative-value`)
+- Issuer: B&G Foods, Inc. (CIK 0001278027). Fiscal year ends late December. Cutoff and as_of: 2025-08-04.
+- Periods: FY2024Q3, FY2024Q4, FY2025Q1, FY2025Q2, FY2024. The latest balance sheet is 2025-06-28.
+- Sources: `BGS/` (4 filings).
+- Pathway modules: CP-0, CP-1, CP-MODEL, CP-1C, CP-2, CP-2D, CP-3, CP-3C, CP-3D, CP-5.
+- context.json: run_type `secondary`, pathway `relative_value`. quotes stay empty and go in `needs_user_input`; CP-3 then states Insufficient Information without them.
+- Scope:
+  - **CP-2:** the debt stack at 2025-06-28, per instrument: name, ranking, principal, carrying amount, maturity, coupon or margin. Also revolver commitment, drawn and availability, cash, and the maturity schedule.
+  - **CP-3 and CP-3D:** the fair value per instrument from the fair value note, with its date and level. These are `fair_value` facts, never quotes.
+  - **CP-3C:** call, redemption and repricing terms as disclosed.
+  - **CP-3D:** priority ranking (secured vs unsecured), and the guarantor and collateral description.
+  - **CP-1C:** peers are user input. **CP-2D:** minimum cash and horizon are user input.
+  - **not_golden:** CP-5, CP-MODEL.

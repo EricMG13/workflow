@@ -1,0 +1,106 @@
+{
+  "schema": "context/1",
+  "run": {
+    "run_type": "research",
+    "pathway": "distressed_restructuring",
+    "case_kind": "synthetic",
+    "as_of": "2026-01-10",
+    "current_period": "",
+    "prior_period": "",
+    "reporting_currency": "USD"
+  },
+  "identity": {
+    "issuer_name": "Northbridge Synthetic Group",
+    "issuer_id": "northbridge-synthetic",
+    "borrower_name": "",
+    "parent_name": "",
+    "guarantors": [],
+    "aliases": [],
+    "listed_equity": false,
+    "ticker": "",
+    "sector": "",
+    "country": "",
+    "sponsor": ""
+  },
+  "deal_terms": [],
+  "quotes": [],
+  "ratings": [],
+  "valuation": {
+    "peer_source": "user_comps",
+    "basis": "auto",
+    "issuer_market": {
+      "market_cap_m": "",
+      "net_debt_m": "",
+      "ev_m": "",
+      "ebitda_basis": "LTM",
+      "as_of": "",
+      "source": ""
+    },
+    "peers": [
+      {
+        "name": "Synthetic Peer A (invented)",
+        "ticker": "",
+        "ev_m": "540",
+        "ebitda_m": "60",
+        "as_of": "2025-11-30",
+        "source": "Synthetic comps desk, invented data"
+      },
+      {
+        "name": "Synthetic Peer B (invented)",
+        "ticker": "",
+        "ev_m": "330",
+        "ebitda_m": "55",
+        "as_of": "2025-09-30",
+        "source": "Synthetic comps desk, invented data"
+      },
+      {
+        "name": "Synthetic Peer C (invented)",
+        "ticker": "",
+        "ev_m": "700",
+        "ebitda_m": "100",
+        "as_of": "2025-12-31",
+        "source": "Synthetic comps desk, invented data"
+      },
+      {
+        "name": "Synthetic Peer D (invented)",
+        "ticker": "",
+        "ev_m": "400",
+        "ebitda_m": "50",
+        "as_of": "2024-12-31",
+        "source": "Synthetic comps desk, invented data"
+      },
+      {
+        "name": "Synthetic Peer E (invented)",
+        "ticker": "",
+        "ev_m": "0",
+        "ebitda_m": "10",
+        "as_of": "2025-10-15",
+        "source": "Synthetic comps desk, invented data"
+      }
+    ],
+    "precedents": [],
+    "user_multiple": {
+      "value": "",
+      "basis": "LTM",
+      "rationale": ""
+    }
+  },
+  "assumptions": {
+    "cp2a": null,
+    "cp2d": null,
+    "cp2e": null,
+    "cp3c": null,
+    "cp3d": null,
+    "cp4c": {
+      "ev_multiple": "8.5",
+      "rationale": "Synthetic pin used to test precedence over the CP-1C selection"
+    }
+  },
+  "attachments": {
+    "portfolio_workbook": false,
+    "prior_case": false,
+    "management_bridge": false,
+    "legal_documents": "executed"
+  },
+  "research_questions": []
+}

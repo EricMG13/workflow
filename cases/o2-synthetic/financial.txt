@@ -1,0 +1,131 @@
+NORTHBRIDGE SYNTHETIC GROUP
+Unaudited quarterly and reported FY2025 financial statements
+Published January 10, 2026.
+Reporting basis: IFRS; entity perimeter: consolidated group.
+Currency: USD; amounts in millions. Expenses are presented by function.
+This source reports four discrete calendar 2025 quarters and independently reported FY2025 annual totals for January 1-December 31, 2025 (365 days). No FY2024 annual income statement or prior-year quarterly series is supplied.
+The opening balance is December 31, 2024. The quarters are January 1-March 31 (90 days), April 1-June 30 (91 days), July 1-September 30 (92 days), and October 1-December 31 (92 days).
+Each quarter cost of sales is 15, gross profit is 15, and selling/general/administrative operating expenses including depreciation are 8.75 (7.5 excluding depreciation plus 1.25 depreciation). Other operating expenses are zero. Total operating costs including cost of sales and depreciation are 23.75; these totals are distinct from function-only operating expenses of 8.75.
+FY2025 cost of sales is 60, gross profit is 60, selling/general/administrative operating expenses including depreciation are 35, depreciation is 5, and total operating costs including cost of sales and depreciation are 95.
+No EBITDA adjustments or add-backs occurred in any quarter or FY2025; this disclosure is complete.
+One operating segment, Consolidated Operations, reports revenue of 30 in each quarter and 120 in FY2025; there are no corporate or elimination segments.
+No acquisitions, disposals, net equity movements, equity issuance, equity repurchases, leases, operating lease costs, lease cash payments, lease payments in financing, interest paid in financing, or other investing/financing cash flows occurred in any quarter or FY2025. Each such flow is explicitly zero.
+There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026.
+Cash interest and cash taxes are classified in operating cash flows. Capital expenditure is entirely maintenance investment; growth capex is zero.
+Operational KPIs and source-reported unlevered free cash flow are not disclosed.
+Opening and quarterly/FY closing balance sheets are presented on page 4.
+Restricted cash, short-term investments, other current assets, goodwill, other intangibles, short-term debt, current portion of long-term debt, unsecured debt, subordinated debt, pensions, lease obligations and minority interests are each zero at opening and every quarter/FY end.
+There is no revolving credit facility: RCF commitment and RCF drawings are each zero at opening and every quarter/FY end.
+The complete equity roll-forward in each quarter consists only of net profit 4 and dividends paid (2.25); FY2025 consists only of net profit 16 and dividends paid (9). Other comprehensive income and every other equity movement were zero throughout these periods: no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred.
+NORTHBRIDGE SYNTHETIC GROUP
+IFRS; consolidated group; USD; amounts in millions; unaudited; expenses by function.
+CONSOLIDATED INCOME STATEMENT
+Period  Q1 2025  Q2 2025  Q3 2025  Q4 2025  FY 2025
+Revenue  30  30  30  30  120
+Cost of sales  15  15  15  15  60
+Gross profit  15  15  15  15  60
+Selling general and administrative expenses including depreciation  8.75  8.75  8.75  8.75  35
+Operating expenses excluding cost of sales including depreciation  8.75  8.75  8.75  8.75  35
+Other operating expenses  0  0  0  0  0
+Total operating costs excluding depreciation  22.5  22.5  22.5  22.5  90.0
+Total operating costs including cost of sales and depreciation  23.75  23.75  23.75  23.75  95.00
+Depreciation and amortization  1.25  1.25  1.25  1.25  5.00
+Operating profit EBIT  6.25  6.25  6.25  6.25  25.00
+Reported EBITDA  7.5  7.5  7.5  7.5  30.0
+Adjusted EBITDA  7.5  7.5  7.5  7.5  30.0
+Net interest expense  1.25  1.25  1.25  1.25  5.00
+Interest income  0  0  0  0  0
+Other non-operating income  0  0  0  0  0
+Profit before tax  5  5  5  5  20
+Income tax expense  1  1  1  1  4
+Net profit  4  4  4  4  16
+Exceptionals  0  0  0  0  0
+Share based compensation  0  0  0  0  0
+Operating lease cost  0  0  0  0  0
+NORTHBRIDGE SYNTHETIC GROUP
+IFRS; consolidated group; USD; amounts in millions; unaudited; expenses by function.
+CONSOLIDATED CASH FLOW STATEMENT
+Period  Q1 2025  Q2 2025  Q3 2025  Q4 2025  FY 2025
+Net profit  4  4  4  4  16
+Depreciation and amortization  1.25  1.25  1.25  1.25  5.00
+Operating cash flow before working capital  5.25  5.25  5.25  5.25  21.00
+Working capital cash movement  (0.5)  (0.5)  (0.5)  (0.5)  (2.0)
+Operating cash flow  4.75  4.75  4.75  4.75  19.00
+Maintenance capital expenditure  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)
+Growth capital expenditure  0  0  0  0  0
+Total capital expenditure  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)
+Levered free cash flow  2.25  2.25  2.25  2.25  9.00
+Acquisitions  0  0  0  0  0
+Disposals  0  0  0  0  0
+Net acquisitions and disposals  0  0  0  0  0
+Net cash used in investing  (2.5)  (2.5)  (2.5)  (2.5)  (10.0)
+Debt issuance  1.25  1.25  1.25  1.25  5.00
+Debt repayment  0  0  0  0  0
+Net debt issuance  1.25  1.25  1.25  1.25  5.00
+Equity issuance  0  0  0  0  0
+Equity repurchases  0  0  0  0  0
+Net equity issuance  0  0  0  0  0
+Dividends paid  (2.25)  (2.25)  (2.25)  (2.25)  (9.00)
+Other investing and financing  0  0  0  0  0
+Net cash used in financing  (1)  (1)  (1)  (1)  (4)
+Net change in cash  1.25  1.25  1.25  1.25  5.00
+Opening cash  15.00  16.25  17.50  18.75  15.00
+Closing cash  16.25  17.50  18.75  20.00  20.00
+Cash interest paid  1.25  1.25  1.25  1.25  5.00
+Cash tax paid  1  1  1  1  4
+Cash lease payments  0  0  0  0  0
+Lease payments in financing  0  0  0  0  0
+Interest paid in financing  0  0  0  0  0
+FX effect on cash  0  0  0  0  0
+NORTHBRIDGE SYNTHETIC GROUP
+IFRS; consolidated group; USD; amounts in millions; unaudited; expenses by function.
+CONSOLIDATED BALANCE SHEET
+Period end  Opening 2024-12-31  Q1 2025-03-31  Q2 2025-06-30  Q3 2025-09-30  Q4 2025-12-31  FY 2025-12-31
+Cash and cash equivalents  15  16.25  17.50  18.75  20.00  20.00
+Trade receivables  12  12.75  13.50  14.25  15.00  15.00
+Inventories  8  8.5  9.0  9.5  10.0  10.0
+Total current assets  35  37.50  40.00  42.50  45.00  45.00
+Property plant and equipment  55  56.25  57.50  58.75  60.00  60.00
+Other noncurrent assets  5  5  5  5  5  5
+Total assets  95  98.75  102.50  106.25  110.00  110.00
+Senior secured term debt  45  46.25  47.50  48.75  50.00  50.00
+Total debt  45  46.25  47.50  48.75  50.00  50.00
+Trade payables  17  17.75  18.50  19.25  20.00  20.00
+Other current liabilities  10  10  10  10  10  10
+Total current liabilities  27  27.75  28.50  29.25  30.00  30.00
+Total liabilities  72  74  76  78  80  80
+Shareholders equity  23  24.75  26.50  28.25  30.00  30.00
+Total equity  23  24.75  26.50  28.25  30.00  30.00
+Total liabilities and equity  95  98.75  102.50  106.25  110.00  110.00
+Restricted cash  0  0  0  0  0  0
+Short-term investments  0  0  0  0  0  0
+Other current assets  0  0  0  0  0  0
+Goodwill  0  0  0  0  0  0
+Other intangibles  0  0  0  0  0  0
+Short-term debt  0  0  0  0  0  0
+Current portion of long-term debt  0  0  0  0  0  0
+Unsecured debt  0  0  0  0  0  0
+Subordinated debt  0  0  0  0  0  0
+Pension obligations  0  0  0  0  0  0
+Lease obligations  0  0  0  0  0  0
+Minority interests  0  0  0  0  0  0
+RCF commitment  0  0  0  0  0  0
+RCF drawings  0  0  0  0  0  0
+NORTHBRIDGE SYNTHETIC GROUP
+Complete facility and classification schedule
+Published January 10, 2026. USD millions; consolidated group; IFRS carrying values.
+There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan.
+It is a senior secured term loan, not a lease. No other debt facilities or debt adjustments exist.
+Date                 Carrying value  Principal  Drawn amount  Commitment
+2024-12-31           45              45         45            50
+2025-03-31           46.25           46.25      46.25         50
+2025-06-30           47.5            47.5       47.5          50
+2025-09-30           48.75           48.75      48.75         50
+2025-12-31           50              50         50            50
+The carrying value equals principal and drawn amount; there are no fees, unamortized adjustments or other carrying-value adjustments.
+The facility has floating rate type with SOFR reference rate, spread 0 basis points and floor 0 basis points. Fixed coupon is not applicable. Mandatory annual amortisation is 0; final maturity is December 31, 2029. Cash interest amounts in the quarterly statements are reported cash payments, not a forecast calculation from the terms.
+FY2025 and Q4 share the same December 31, 2025 closing facility balance of 50. No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date.
+Reported EBITDA equals revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization. Each reported quarter and FY2025 use this definition. Adjusted EBITDA equals reported EBITDA because there are no adjustments.
+CFO equals net profit plus depreciation and amortization plus the signed working-capital cash movement.
+Net cash change equals operating cash flow plus net investing cash flow plus net financing cash flow.
+Cash movement equals closing cash less opening cash. Debt movement equals net cash debt issuance with zero noncash change.

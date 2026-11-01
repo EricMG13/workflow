@@ -308,17 +308,19 @@ def _selection(pack: PreparedPack, modules: tuple[str, ...]) -> PreparedPack:
     return PreparedPack(run=Run.model_validate_json(json.dumps(document)), sources=pack.sources)
 
 
-def test_cp5_selection_and_spec_overrides_refuse_before_writing(tmp_path: Path) -> None:
+def test_cp5_selection_is_admitted_and_spec_overrides_refuse_before_writing(
+    tmp_path: Path,
+) -> None:
     pack = runs.make_pack("positive")
-    # On this branch CP-5 has no OWNER_SPECS row; once registered, round 2's rule refuses it
-    # through the CP-5 -> CP-MODEL fan-in (DC-5 open on the CP-MODEL row).
-    with pytest.raises(WorkflowError) as selected:
-        OwnerWorkflow.create(
-            tmp_path / "store",
-            _selection(pack, ("CP-1", "CP-MODEL", "CP-1A", "CP-2", "CP-5")),
-            publication_directory=tmp_path / "model",
-        )
-    assert selected.value.code == "not_permitted"
+    # Formerly refused through the CP-5 -> CP-MODEL fan-in and the ordering rule; O1 G1a removed
+    # both, so the selection opens (CP-5 is planned after the CP-MODEL stop).
+    admitted = OwnerWorkflow.create(
+        tmp_path / "admitted" / "store",
+        _selection(pack, ("CP-1", "CP-MODEL", "CP-1A", "CP-2", "CP-5")),
+        publication_directory=tmp_path / "admitted" / "model",
+    )
+    assert admitted._plan[-2:] == ("CP-MODEL", "CP-5")
+    shutil.rmtree(tmp_path / "admitted")
     assert list(tmp_path.iterdir()) == []
     cp1a, cp2 = OWNER_SPECS["CP-1A"], OWNER_SPECS["CP-2"]
     overrides = {

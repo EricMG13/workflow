@@ -1669,13 +1669,22 @@ def _case_parameters(run: Run) -> tuple[OwnerCaseId, str, str]:
     return selected[run.run_id]
 
 
-def _own_limits(gap: bool) -> tuple[str, ...]:
+_OWNER_PERIMETER_LIMIT = (
+    "Consolidated IFRS financials in USD millions; audit status, borrower, guarantor and "
+    "restricted-group perimeters are not established."
+)
+
+
+def _own_limits(gap: bool, *, owner: bool = False) -> tuple[str, ...]:
+    """CP-1B's own limitations. `owner` is the owner walk (`owners/cp1b`): no checkpoint line (it
+    names the receipt path) and a perimeter line that claims only what the delta core checks (the
+    dimensions), not that the statements are unaudited, which no owner-path check establishes."""
     return (
-        *_COMMON_LIMITS,
+        *((_OWNER_PERIMETER_LIMIT, *_COMMON_LIMITS[1:]) if owner else _COMMON_LIMITS),
         "No year-on-year earnings comparison or broader nonzero earnings qualification."
         if gap
         else "Bounded flat sequential earnings comparison only; no broader nonzero earnings qualification.",
-        _CHECKPOINT_LIMIT,
+        *(() if owner else (_CHECKPOINT_LIMIT,)),
         "Requested FY2024 comparison basis is absent; current FY2025 values remain known. Opening-2024 balance data is not a substituted income comparator."
         if gap
         else "Q3 trailing leverage comparison is unavailable; current Q4 standalone leverage remains valid.",
@@ -1761,8 +1770,36 @@ def _compose(
     attempt: Attempt,
     run: Run,
 ) -> Module:
+    """The receipt path's candidate: the shared composer with the review and participation
+    inputs and the checkpoint limitation."""
+    return compose_delta(
+        producer,
+        report,
+        operands,
+        (
+            Input(input_id="earnings-review", sha256=review.content_hash()),
+            Input(input_id="earnings-participation", sha256=participation.content_hash()),
+        ),
+        _own_limits(report.prior_basis_id is None),
+        attempt,
+        run,
+    )
+
+
+def compose_delta(
+    producer: Module,
+    report: EarningsDeltaReport,
+    operands: tuple[OperandLineage, ...],
+    tail: tuple[Input, ...],
+    own_limits: tuple[str, ...],
+    attempt: Attempt,
+    run: Run,
+) -> Module:
+    """The CP-1B candidate over a CP-1 head and its delta report, for both paths. `tail` is
+    what follows the attempt inputs (the receipt path's review and participation, the owner
+    walk's one `earnings-delta-submission`); `own_limits` is the module's own limitation list,
+    so the checkpoint line belongs to the receipt path only."""
     gap = report.prior_basis_id is None
-    own_limits = _own_limits(gap)
     facts_by_id = {f.fact_id: f for f in producer.facts}
     points = {p.measure_id: p for p in report.points}
     lineage = {p.measure_id: p for p in operands}
@@ -1992,11 +2029,7 @@ def _compose(
         module_id="CP-1B",
         status="candidate",
         attempt=attempt.number,
-        inputs=(
-            *attempt.inputs,
-            Input(input_id="earnings-review", sha256=review.content_hash()),
-            Input(input_id="earnings-participation", sha256=participation.content_hash()),
-        ),
+        inputs=(*attempt.inputs, *tail),
         facts=tuple(facts),
         tables=tuple(tables),
         claims=(claim,),

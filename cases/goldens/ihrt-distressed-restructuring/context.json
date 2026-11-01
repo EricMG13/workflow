@@ -1,0 +1,68 @@
+{
+ "schema": "context/1",
+ "run": {
+  "run_type": "research",
+  "pathway": "distressed_restructuring",
+  "case_kind": "public",
+  "as_of": "2024-12-23",
+  "current_period": "q3-2024",
+  "prior_period": "q2-2024",
+  "reporting_currency": "USD"
+ },
+ "identity": {
+  "issuer_name": "iHeartMedia, Inc.",
+  "issuer_id": "ihrt",
+  "borrower_name": "iHeartCommunications, Inc.",
+  "parent_name": "iHeartMedia, Inc.",
+  "guarantors": [
+   "iHeartMedia Capital I, LLC"
+  ],
+  "aliases": [
+   "iHeartMedia",
+   "iHeartCommunications",
+   "Capital I"
+  ],
+  "listed_equity": true,
+  "ticker": "IHRT",
+  "sector": "audio media company",
+  "country": "US",
+  "sponsor": ""
+ },
+ "deal_terms": [],
+ "quotes": [],
+ "ratings": [],
+ "valuation": {
+  "peer_source": "cp_dr_public",
+  "basis": "auto",
+  "issuer_market": {
+   "market_cap_m": "",
+   "net_debt_m": "",
+   "ev_m": "",
+   "ebitda_basis": "LTM",
+   "as_of": "",
+   "source": ""
+  },
+  "peers": [],
+  "precedents": [],
+  "user_multiple": {
+   "value": "",
+   "basis": "LTM",
+   "rationale": ""
+  }
+ },
+ "assumptions": {
+  "cp2a": null,
+  "cp2d": null,
+  "cp2e": null,
+  "cp3c": null,
+  "cp3d": null,
+  "cp4c": null
+ },
+ "attachments": {
+  "portfolio_workbook": false,
+  "prior_case": false,
+  "management_bridge": false,
+  "legal_documents": "executed"
+ },
+ "research_questions": []
+}

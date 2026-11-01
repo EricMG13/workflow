@@ -1,0 +1,497 @@
+{
+  "note": "Per run: the CP-0 readiness `sources` entry and the CP-1 source_context `sources` entry for the `context` source (every prepared source is assessed exactly once; authority unknown, ruling D2). Pack B additionally adds the borrower entity to the CP-1 review and its scope to the pack-B `identity` assessment (a non-financial source's scopes are not held to the four-strings rule, source_context.py:355-356); this maps the entity to a reporting scope, so no `Entity is not mapped to a reporting scope` gap arises and financial scopes are untouched. pack_sha256 is bound at run time.",
+  "borrower_entity": {
+    "entity_id": "borrower",
+    "name": "Northbridge Holdings LLC",
+    "entity_type": "legal_entity",
+    "roles": [
+      "borrower"
+    ],
+    "fiscal_year_end": null,
+    "citations": [
+      {
+        "source_id": "identity",
+        "source_sha256": "16b1d3bfc16a1e87dd45a738802b3fb1405079f4edaa28aa4c43162153df0b2d",
+        "locator": "page:1",
+        "quote": "The borrower is Northbridge Holdings LLC."
+      }
+    ],
+    "limitations": [
+      "The identity note does not state the borrower's fiscal year end."
+    ]
+  },
+  "borrower_scope_on_identity_assessment": {
+    "scope_id": "borrower-identity",
+    "entity_id": "borrower",
+    "period_label": "Unspecified borrower coverage",
+    "period_kind": "unspecified",
+    "start_date": null,
+    "end_date": null,
+    "currency": null,
+    "unit": null,
+    "entity_perimeter": null,
+    "accounting_basis": null,
+    "citations": [
+      {
+        "source_id": "identity",
+        "source_sha256": "16b1d3bfc16a1e87dd45a738802b3fb1405079f4edaa28aa4c43162153df0b2d",
+        "locator": "page:1",
+        "quote": "The borrower is Northbridge Holdings LLC."
+      }
+    ],
+    "limitations": []
+  },
+  "per_context": {
+    "ctx-match": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "5bd74438b359b69176e7e17b62d7dea6feaa7db97a3125f6776a493b805ac969",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "5bd74438b359b69176e7e17b62d7dea6feaa7db97a3125f6776a493b805ac969",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-fy": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "ad4f1791a44af814ad67bae13a603e028538f6b4184768a19623786464ab8a06",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "ad4f1791a44af814ad67bae13a603e028538f6b4184768a19623786464ab8a06",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-q2031": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "569f239c0a79ec52c910937a625de2e3ecf41baa4a7b131de26ad468e248ac6b",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "569f239c0a79ec52c910937a625de2e3ecf41baa4a7b131de26ad468e248ac6b",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-comma": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "24ba4e0ac05186d3914ace50d0027323566cb1ca0d9cefed4624fda49f0b8a36",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "24ba4e0ac05186d3914ace50d0027323566cb1ca0d9cefed4624fda49f0b8a36",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-l10": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "4efba6886c794e952e06977030ca6830e821671d53c38fbc1b59919aaf737794",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "4efba6886c794e952e06977030ca6830e821671d53c38fbc1b59919aaf737794",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-q3": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "3533c6af5ce729a2674e0de75b990b2bd947d62b2d6166d43050b73b02cf2521",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "3533c6af5ce729a2674e0de75b990b2bd947d62b2d6166d43050b73b02cf2521",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-fy-l10": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "d1c2989b374df9302abbb2d15a2cb7fab2a75d454e98193df951cd8d526ab1b3",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "d1c2989b374df9302abbb2d15a2cb7fab2a75d454e98193df951cd8d526ab1b3",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-b-match": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "c3b241986c0a665237b53c4b36602e48dcd4690c387f4affa43a9348a77a92ba",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "c3b241986c0a665237b53c4b36602e48dcd4690c387f4affa43a9348a77a92ba",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-b-punct": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "b2f126b8266d82f388a7fad70db28d342b427086190407abc8302dbf82eeaa4f",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "b2f126b8266d82f388a7fad70db28d342b427086190407abc8302dbf82eeaa4f",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-b-mismatch": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "10a3855f0ba86f0fd87bc7d777d520b549e4995643edc897246dbe1d4d8f09cf",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "10a3855f0ba86f0fd87bc7d777d520b549e4995643edc897246dbe1d4d8f09cf",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    },
+    "ctx-research": {
+      "cp0_readiness_source": {
+        "source_id": "context",
+        "document_family": "User-supplied run context",
+        "authority": "unknown",
+        "entity": "Northbridge Synthetic Group",
+        "period": "2026-01-10",
+        "version_relationship": "User-supplied form download for this run",
+        "fidelity": "verified",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "limitations": [
+          "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+        ]
+      },
+      "cp1_source_context_source": {
+        "source_id": "context",
+        "classification": "nonfinancial",
+        "document_type": "User-supplied run context",
+        "published_on": "2026-01-10",
+        "evidence_class": "internal",
+        "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+        "analytical_use": "Run settings and user-stated names",
+        "citations": [
+          {
+            "source_id": "context",
+            "source_sha256": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
+            "locator": "line:13",
+            "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+          }
+        ],
+        "event_scan": "unassessed",
+        "event_scan_explanation": "A user-supplied run context is not event evidence"
+      }
+    }
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "schema_version": "cp3-context-owner-cases/1",
+  "scope": "CP-3 and CP-3D market evidence built by Python from the context file's quotes and deal_terms talk (Phase 3)",
+  "status": "prepared, not reviewed, not frozen, not pinned",
+  "pins": {
+    "cases/cp3-cp6-owner/manifest.json": "7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe",
+    "cases/cp3-cp6-owner/submissions.json": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
+    "cases/cp3-cp6-owner/expected.json": "8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f",
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+    "cases/cp3d-owner/expected.json": "8e28b859d56ba51c3d299c0e35c584bbded6ed18a258dee44c217ae4f43da039"
+  },
+  "run": {
+    "run_id": "ctx3-<case>-v1",
+    "issuer_id": "northbridge-synthetic",
+    "issuer_name": "Northbridge Synthetic Group",
+    "as_of": "2026-01-10",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-1",
+      "CP-MODEL",
+      "CP-1A",
+      "CP-2",
+      "CP-3"
+    ],
+    "set": "explicit Run set after preparation_request, as the R3 positive run"
+  },
+  "packs": {
+    "R3+context": {
+      "sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
+        },
+        {
+          "source_id": "business",
+          "name": "Business and ownership note",
+          "status": "ready",
+          "sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49"
+        },
+        {
+          "source_id": "market",
+          "name": "Third-party loan market quotation sheet",
+          "status": "ready",
+          "sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7"
+        },
+        {
+          "source_id": "context",
+          "media_type": "text/plain",
+          "extractor": "utf8-lines/1",
+          "authority": "unknown"
+        }
+      ]
+    },
+    "S1+context": {
+      "sources": [
+        {
+          "source_id": "identity",
+          "name": "Issuer identity and reporting scope note",
+          "status": "ready",
+          "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+        },
+        {
+          "source_id": "financial",
+          "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+          "status": "ready",
+          "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
+        },
+        {
+          "source_id": "business",
+          "name": "Business and ownership note",
+          "status": "ready",
+          "sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49"
+        },
+        {
+          "source_id": "context",
+          "media_type": "text/plain",
+          "extractor": "utf8-lines/1",
+          "authority": "unknown"
+        }
+      ],
+      "note": "the R3 pack without the third_party market source (the context-only case)"
+    }
+  },
+  "contexts": {
+    "observed-and-talk": {
+      "path": "cases/cp3-context-owner/contexts/observed-and-talk.json",
+      "layout": "indent",
+      "run_type": "secondary",
+      "bytes": 1784,
+      "spans": 85,
+      "sha256": "659d7b509ed9b5c0d91381db8eff24d075cd4ff07754ac3ed4dc5fabcad12783"
+    },
+    "talk-only": {
+      "path": "cases/cp3-context-owner/contexts/talk-only.json",
+      "layout": "indent",
+      "run_type": "secondary",
+      "bytes": 1531,
+      "spans": 74,
+      "sha256": "0f4dd912286203907a974c10011319a163c7de291139482de119060b35bf862a"
+    },
+    "stale": {
+      "path": "cases/cp3-context-owner/contexts/stale.json",
+      "layout": "indent",
+      "run_type": "secondary",
+      "bytes": 1777,
+      "spans": 85,
+      "sha256": "c914fe5b2f111053cb3fca14ed4bd97d6ca754ee0c7768a1d98583ac8f792c1d"
+    },
+    "unmatched": {
+      "path": "cases/cp3-context-owner/contexts/unmatched.json",
+      "layout": "indent",
+      "run_type": "secondary",
+      "bytes": 2011,
+      "spans": 96,
+      "sha256": "fae7cbe9692dad65cd65f72e42dcd4d0802130c06ed6993e4fd292ec4a9cf4e6"
+    },
+    "deal-talk": {
+      "path": "cases/cp3-context-owner/contexts/deal-talk.json",
+      "layout": "indent",
+      "run_type": "primary",
+      "bytes": 1723,
+      "spans": 79,
+      "sha256": "7ae8bd750686c210a0f28c0fa84eaad15a4aece246286bf87d0d3e6b18e2a5b6"
+    },
+    "deal-lone-bound": {
+      "path": "cases/cp3-context-owner/contexts/deal-lone-bound.json",
+      "layout": "indent",
+      "run_type": "primary",
+      "bytes": 1720,
+      "spans": 79,
+      "sha256": "2dfe0b8462f13ed9a208ac7834d6d650e16d76c174178fcc54a7da63f3279a12"
+    },
+    "unciteable": {
+      "path": "cases/cp3-context-owner/contexts/unciteable.json",
+      "layout": "minified",
+      "run_type": "secondary",
+      "bytes": 1257,
+      "spans": 1,
+      "sha256": "0b2063435fcd8e051afc33adc4bcdf018e644c51b28ef85c8bf0eed95ac1146c"
+    },
+    "unciteable-deal": {
+      "path": "cases/cp3-context-owner/contexts/unciteable-deal.json",
+      "layout": "minified",
+      "run_type": "primary",
+      "bytes": 1571,
+      "spans": 1,
+      "sha256": "8fb2a5ffef3ce8682bd3ae46fc5fb91cc93183ca1390d1c919a24dd7c84414a8"
+    },
+    "no-quotes": {
+      "path": "cases/cp3-context-owner/contexts/no-quotes.json",
+      "layout": "indent",
+      "run_type": "secondary",
+      "bytes": 1283,
+      "spans": 62,
+      "sha256": "8652528c04e7021b3fa131c975327b5cf0ae0273df090adbde27de3abb046918"
+    },
+    "minified": {
+      "path": "cases/cp3-context-owner/contexts/minified.json",
+      "layout": "minified",
+      "run_type": "secondary",
+      "bytes": 1274,
+      "spans": 1,
+      "sha256": "f04088e74a81efbec0ae4e3b67e1901dd0ea161ed5803e2afe8cd55a8961953c"
+    },
+    "bad-bytes": {
+      "path": "cases/cp3-context-owner/contexts/bad-bytes.json",
+      "layout": "indent",
+      "run_type": "secondary",
+      "bytes": 1531,
+      "spans": 74,
+      "sha256": "a26db84645db17498742e628bd796d6d539af511a741273500134eb3ccd4df7e"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "observed-and-talk",
+      "pack": "R3+context",
+      "context": "observed-and-talk",
+      "run_id": "ctx3-observed-and-talk-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "talk-only",
+      "pack": "R3+context",
+      "context": "talk-only",
+      "run_id": "ctx3-talk-only-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "stale",
+      "pack": "R3+context",
+      "context": "stale",
+      "run_id": "ctx3-stale-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "unmatched",
+      "pack": "R3+context",
+      "context": "unmatched",
+      "run_id": "ctx3-unmatched-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "deal-talk",
+      "pack": "R3+context",
+      "context": "deal-talk",
+      "run_id": "ctx3-deal-talk-v1",
+      "run_type": "primary"
+    },
+    {
+      "case_id": "deal-lone-bound",
+      "pack": "R3+context",
+      "context": "deal-lone-bound",
+      "run_id": "ctx3-deal-lone-bound-v1",
+      "run_type": "primary"
+    },
+    {
+      "case_id": "with-market-row",
+      "pack": "R3+context",
+      "context": "observed-and-talk",
+      "run_id": "ctx3-with-market-row-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "no-quotes",
+      "pack": "R3+context",
+      "context": "no-quotes",
+      "run_id": "ctx3-no-quotes-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "minified",
+      "pack": "R3+context",
+      "context": "minified",
+      "run_id": "ctx3-minified-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "context-only",
+      "pack": "S1+context",
+      "context": "observed-and-talk",
+      "run_id": "ctx3-context-only-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "unciteable",
+      "pack": "R3+context",
+      "context": "unciteable",
+      "run_id": "ctx3-unciteable-v1",
+      "run_type": "secondary"
+    },
+    {
+      "case_id": "unciteable-deal",
+      "pack": "R3+context",
+      "context": "unciteable-deal",
+      "run_id": "ctx3-unciteable-deal-v1",
+      "run_type": "primary"
+    },
+    {
+      "case_id": "bad-bytes",
+      "pack": "R3+context",
+      "context": "bad-bytes",
+      "run_id": "ctx3-bad-bytes-v1",
+      "run_type": "secondary"
+    }
+  ],
+  "outputs": {
+    "README.md": "b3491d2f6732cdda37bb535559a63e60ef980417c013e115f7f2a9f4d34ac48b",
+    "contexts/bad-bytes.json": "a26db84645db17498742e628bd796d6d539af511a741273500134eb3ccd4df7e",
+    "contexts/deal-lone-bound.json": "2dfe0b8462f13ed9a208ac7834d6d650e16d76c174178fcc54a7da63f3279a12",
+    "contexts/deal-talk.json": "7ae8bd750686c210a0f28c0fa84eaad15a4aece246286bf87d0d3e6b18e2a5b6",
+    "contexts/minified.json": "f04088e74a81efbec0ae4e3b67e1901dd0ea161ed5803e2afe8cd55a8961953c",
+    "contexts/no-quotes.json": "8652528c04e7021b3fa131c975327b5cf0ae0273df090adbde27de3abb046918",
+    "contexts/observed-and-talk.json": "659d7b509ed9b5c0d91381db8eff24d075cd4ff07754ac3ed4dc5fabcad12783",
+    "contexts/stale.json": "c914fe5b2f111053cb3fca14ed4bd97d6ca754ee0c7768a1d98583ac8f792c1d",
+    "contexts/talk-only.json": "0f4dd912286203907a974c10011319a163c7de291139482de119060b35bf862a",
+    "contexts/unciteable-deal.json": "8fb2a5ffef3ce8682bd3ae46fc5fb91cc93183ca1390d1c919a24dd7c84414a8",
+    "contexts/unciteable.json": "0b2063435fcd8e051afc33adc4bcdf018e644c51b28ef85c8bf0eed95ac1146c",
+    "contexts/unmatched.json": "fae7cbe9692dad65cd65f72e42dcd4d0802130c06ed6993e4fd292ec4a9cf4e6",
+    "expected.json": "05e1cad21a7672b3e3254ac80a11859fa8797665f986707f5a29d7af32cfbfca",
+    "submissions.json": "e73d7fb25555c24e1c2b4a7fb78dd8158e02165d5844dfe40416e855595aa19d"
+  }
+}

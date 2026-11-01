@@ -1,0 +1,598 @@
+{
+  "schema_version": "context-identity-periods-expected/1",
+  "status": "PREPARED by the Phase 2 Task 0 preparer; independent mx-precise review pending; not frozen, not pinned",
+  "derivation": "Values come from the Phase 2 plan rulings (work/context-plan/reviews/phase-2-plan-review.md Q1-Q4, H1-H3, M1-M5, N1-N3) and the frozen files named in `inputs`; never from the code under test. Texts marked `preparer-fixed` are chosen here (the plan lets Task 0 fix them) and the builder copies them verbatim.",
+  "inputs": {
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "cases/earnings/expected.json": "041e2e05cec282658e28a9f99f1c2e93e6f6d8c2ab17d790aad760676a6c2599",
+    "cases/earnings/manifest.json": "60ed95782648064db7806bb7f0714fe030f9563424df50e17500803a2edfb7ec",
+    "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+    "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+    "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
+    "cases/cpl10-owner/expected.json": "9a6345b5272da3c2f9b20c9055348e9edef2042f9aefbcdd784448e4b908fd63"
+  },
+  "packs": {
+    "E": "byte-identical earnings sources (identity 74fe2ad4..., financial 82d684cc...) + `context`",
+    "E-l10": "pack E sources + `context`; Run set explicitly with requested_modules [CP-L10], pathway credit_snapshot",
+    "B": "cases/snapshot identity (REPLACED by sources/identity-b.json), financial, business + `context`; Run set explicitly"
+  },
+  "reader": {
+    "refused": {
+      "ctx-h": {
+        "exception": "ContextRefused",
+        "problems": [
+          "run.current_period: earnings runs compare quarters or fiscal years only.",
+          "run.prior_period: earnings runs compare quarters or fiscal years only."
+        ],
+        "note": "preparer-fixed: each h-period is its own problem, current first (run_section loops current_period then prior_period); the earlier-than rule does not fire (h1 < h2)"
+      },
+      "ctx-mixed": {
+        "exception": "ContextRefused",
+        "problems": [
+          "run.prior_period: must be the same kind as the current period."
+        ],
+        "note": "preparer-fixed: q4-2025 vs fy-2024; fy-2024 is not an h period; the earlier-than rule skips differing kinds"
+      }
+    },
+    "loads": {
+      "ctx-h-research": "run_type research with h2-2025 / h1-2025 loads (the rule is earnings runs only)",
+      "all_others": [
+        "ctx-match",
+        "ctx-fy",
+        "ctx-q2031",
+        "ctx-comma",
+        "ctx-l10",
+        "ctx-q3",
+        "ctx-fy-l10",
+        "ctx-h-research",
+        "ctx-b-match",
+        "ctx-b-punct",
+        "ctx-b-mismatch",
+        "ctx-research"
+      ]
+    },
+    "not_frozen": "an earnings pair of kinds q and h (one h period) gets only the h problem; a q/h kind-mismatch problem is not asserted"
+  },
+  "form": {
+    "ctx-comma": {
+      "reader_borrower_name": "Northbridge Holdings, LLC",
+      "reader_aliases": [
+        "Northbridge, Inc.",
+        "NBG"
+      ],
+      "reader_guarantors": [
+        "Northbridge Opco, LLC",
+        "Northbridge IP LLC"
+      ],
+      "model_dump_with_schema_equals_file": true,
+      "lines_parser": {
+        "input": "Northbridge, Inc.\nNBG",
+        "items": [
+          "Northbridge, Inc.",
+          "NBG"
+        ]
+      },
+      "lines_parser_crlf": {
+        "input": "Northbridge, Inc.\r\nNBG",
+        "items": [
+          "Northbridge, Inc.",
+          "NBG"
+        ]
+      },
+      "comma_list_parser_unchanged": {
+        "input": "a, b",
+        "items": [
+          "a",
+          "b"
+        ],
+        "fields": "assumption lists keep t:'list'"
+      }
+    }
+  },
+  "cp1b": {
+    "source": "cases/earnings/expected.json positive (E-QOQ-FLAT) and gap (E-NO-YOY); limits are NOT compared",
+    "ctx-match": {
+      "offered_pair": {
+        "prior_period_id": "q3-2025",
+        "current_period_id": "q4-2025"
+      },
+      "case_id": "E-QOQ-FLAT",
+      "days_each": 92,
+      "points": [
+        {
+          "measure_id": "revenue",
+          "prior_value": "30",
+          "current_value": "30",
+          "delta": "0",
+          "growth": "0",
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "known",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "ebitda",
+          "prior_value": "7.5",
+          "current_value": "7.5",
+          "delta": "0",
+          "growth": "0",
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "known",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "adjusted_ebitda",
+          "prior_value": "7.5",
+          "current_value": "7.5",
+          "delta": "0",
+          "growth": "0",
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "known",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "ebitda_margin",
+          "prior_value": "0.25",
+          "current_value": "0.25",
+          "delta": "0",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "PERCENT",
+          "currency": null,
+          "scale": "1",
+          "delta_unit": "PERCENTAGE_POINTS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "cfo_reported",
+          "prior_value": "4.75",
+          "current_value": "4.75",
+          "delta": "0",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "capex",
+          "prior_value": "-2.5",
+          "current_value": "-2.5",
+          "delta": "0",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "fcf",
+          "prior_value": "2.25",
+          "current_value": "2.25",
+          "delta": "0",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "cash_closing",
+          "prior_value": "18.75",
+          "current_value": "20",
+          "delta": "1.25",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "total_debt",
+          "prior_value": "48.75",
+          "current_value": "50",
+          "delta": "1.25",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "net_debt",
+          "prior_value": "30",
+          "current_value": "30",
+          "delta": "0",
+          "growth": null,
+          "prior_status": "known",
+          "current_status": "known",
+          "delta_status": "known",
+          "growth_status": "not_applicable",
+          "unit": "MILLIONS",
+          "currency": "USD",
+          "scale": "1000000",
+          "delta_unit": "MILLIONS",
+          "reason_contains": null
+        },
+        {
+          "measure_id": "total_leverage_reported",
+          "prior_value": null,
+          "current_value": "1.6666666666666666666666666666666666667",
+          "delta": null,
+          "growth": null,
+          "prior_status": "missing",
+          "current_status": "known",
+          "delta_status": "missing",
+          "growth_status": "not_applicable",
+          "unit": "MULTIPLE",
+          "currency": null,
+          "scale": "1",
+          "delta_unit": "MULTIPLE",
+          "reason_contains": "Four complete contiguous quarters"
+        },
+        {
+          "measure_id": "net_leverage_reported",
+          "prior_value": null,
+          "current_value": "1",
+          "delta": null,
+          "growth": null,
+          "prior_status": "missing",
+          "current_status": "known",
+          "delta_status": "missing",
+          "growth_status": "not_applicable",
+          "unit": "MULTIPLE",
+          "currency": null,
+          "scale": "1",
+          "delta_unit": "MULTIPLE",
+          "reason_contains": "Four complete contiguous quarters"
+        }
+      ]
+    },
+    "ctx-fy": {
+      "resolved_current": "fy-2025",
+      "prior_passed_as_context_string": "fy-2024",
+      "gap": {
+        "case_id": "E-NO-YOY",
+        "prior_period_id": "fy-2024",
+        "current_period_id": "fy-2025",
+        "reason": "COMPARATIVE_NOT_SUPPLIED",
+        "all_prior_values": null,
+        "all_delta_values": null,
+        "all_applicable_growth_values": null,
+        "prior_and_delta_status": "missing",
+        "current_revenue": "120",
+        "current_ebitda": "30",
+        "source_locator": "financial page:1 line6",
+        "opening_2024_not_income_comparative": true
+      },
+      "is_refusal": false
+    },
+    "mismatch": {
+      "context": "ctx-match",
+      "submitted": {
+        "prior_period_id": "q2-2025",
+        "current_period_id": "q3-2025"
+      },
+      "issue_code": "context_period_mismatch",
+      "issue_text": "context_period_mismatch: submitted q2-2025 -> q3-2025, context q3-2025 -> q4-2025",
+      "note": "preparer-fixed text; names both pairs (prior -> current)"
+    },
+    "unresolved_current": {
+      "context": "ctx-q2031",
+      "issue_text": "context_period_unresolved: q4-2031"
+    },
+    "no_context_or_empty_periods": "behaviour is O1's; unchanged"
+  },
+  "identity_check": {
+    "rule": "casefold, drop every non-alphanumeric character, collapse; only entities whose roles include `borrower` are compared (T4.2 Entity Role split on '; ')",
+    "cases": {
+      "ctx-match@E": {
+        "outcome": "not_supplied",
+        "gaps": [],
+        "found": []
+      },
+      "ctx-b-match@B": {
+        "outcome": "match",
+        "gaps": [],
+        "found": [
+          "Northbridge Holdings LLC"
+        ]
+      },
+      "ctx-b-punct@B": {
+        "outcome": "match",
+        "gaps": [],
+        "found": [
+          "Northbridge Holdings LLC"
+        ]
+      },
+      "ctx-b-mismatch@B": {
+        "outcome": "mismatch",
+        "gaps": [
+          "borrower_name_mismatch: context names \"Southbridge Holdings LLC\", CP-1 locates \"Northbridge Holdings LLC\""
+        ],
+        "found": [
+          "Northbridge Holdings LLC"
+        ]
+      },
+      "ctx-research@B": {
+        "outcome": "not_supplied",
+        "gaps": [],
+        "found": [
+          "Northbridge Holdings LLC"
+        ]
+      }
+    },
+    "empty_borrower_name": {
+      "outcome": "not_supplied",
+      "gaps": []
+    },
+    "gap_code": "borrower_name_mismatch",
+    "unchanged": "the CP-0 issuer gate (T1.run.identity_gate `confirmed`) and every CP-1 table other than the T4.2/gap-register deltas in `pack_b_cp1_delta`",
+    "pack_b_cp1_delta": {
+      "T4.2": "exactly one added row: Entity Name 'Northbridge Holdings LLC', Entity Role 'borrower', Fiscal Year End null, currency/unit/perimeter/basis null, period label 'Unspecified borrower coverage' (entity-scope / borrower / borrower-identity)",
+      "gap_register": "the gap `No located borrower scope supplied` (source_context.py:577-578) no longer arises; a gap row (kind entity, subject borrower) with the limitation text `The identity note does not state the borrower's fiscal year end.` arises instead (an incomplete entity requires a limitation, validate_source_context); a scope gap (reference borrower-identity) `Unresolved scope: end_date, currency, unit, entity_perimeter, accounting_basis, period_kind` also arises (observed by running validate_source_context/source_context on the pack, not derived from the oracle); guarantor_group and restricted_group gaps remain",
+      "other": "none; financial scopes and facts are untouched"
+    }
+  },
+  "render": {
+    "pack": "B",
+    "delivery_scope": "s1a-credit-snapshot (credit_snapshot, modules CP-1 CP-MODEL CP-1A CP-2)",
+    "section": {
+      "id": "run-context",
+      "title": "Run context",
+      "count_per_page": 1,
+      "groups_in_order": [
+        "CP-0",
+        "CP-1",
+        "CP-1A"
+      ]
+    },
+    "mark_format": "user-supplied (context source, line N); N = 1-based line of the row's key in the frozen context source (locator line:N)",
+    "alias_separator": "; ",
+    "rows": {
+      "ctx-b-match": [
+        {
+          "group": "CP-0",
+          "label": "Borrower",
+          "value": "Northbridge Holdings LLC",
+          "key": "borrower_name",
+          "mark": "user-supplied (context source, line 15)"
+        },
+        {
+          "group": "CP-0",
+          "label": "Aliases",
+          "value": "Northbridge; NBG",
+          "key": "aliases",
+          "mark": "user-supplied (context source, line 18)"
+        },
+        {
+          "group": "CP-1A",
+          "label": "Sector",
+          "value": "Business services",
+          "key": "sector",
+          "mark": "user-supplied (context source, line 24)"
+        },
+        {
+          "group": "CP-1A",
+          "label": "Sponsor",
+          "value": "Fictional Partners",
+          "key": "sponsor",
+          "mark": "user-supplied (context source, line 26)"
+        }
+      ],
+      "ctx-b-punct": [
+        {
+          "group": "CP-0",
+          "label": "Borrower",
+          "value": "Northbridge Holdings, L.L.C.",
+          "key": "borrower_name",
+          "mark": "user-supplied (context source, line 15)"
+        },
+        {
+          "group": "CP-0",
+          "label": "Aliases",
+          "value": "Northbridge; NBG",
+          "key": "aliases",
+          "mark": "user-supplied (context source, line 18)"
+        },
+        {
+          "group": "CP-1A",
+          "label": "Sector",
+          "value": "Business services",
+          "key": "sector",
+          "mark": "user-supplied (context source, line 24)"
+        },
+        {
+          "group": "CP-1A",
+          "label": "Sponsor",
+          "value": "Fictional Partners",
+          "key": "sponsor",
+          "mark": "user-supplied (context source, line 26)"
+        }
+      ],
+      "ctx-b-mismatch": [
+        {
+          "group": "CP-0",
+          "label": "Borrower",
+          "value": "Southbridge Holdings LLC",
+          "key": "borrower_name",
+          "mark": "user-supplied (context source, line 15)"
+        },
+        {
+          "group": "CP-0",
+          "label": "Aliases",
+          "value": "Northbridge; NBG",
+          "key": "aliases",
+          "mark": "user-supplied (context source, line 18)"
+        },
+        {
+          "group": "CP-1A",
+          "label": "Sector",
+          "value": "Business services",
+          "key": "sector",
+          "mark": "user-supplied (context source, line 24)"
+        },
+        {
+          "group": "CP-1A",
+          "label": "Sponsor",
+          "value": "Fictional Partners",
+          "key": "sponsor",
+          "mark": "user-supplied (context source, line 26)"
+        }
+      ],
+      "ctx-research": []
+    },
+    "cp0_row": "issuer Northbridge Synthetic Group and the identity gate word `confirmed` printed beside the borrower and alias rows, unchanged",
+    "cp1_row": "ctx-b-match, ctx-b-punct: `match`; ctx-b-mismatch: the gap text below; ctx-research: the compare result `not_supplied` (fixed text `not_supplied`, no gap)",
+    "ctx-b-mismatch_gap_text": "borrower_name_mismatch: context names \"Southbridge Holdings LLC\", CP-1 locates \"Northbridge Holdings LLC\"",
+    "ctx-research": "a context source always produces the section (plan :258-261): the CP-0 group holds the issuer name and the identity_gate word `confirmed`; the CP-1 group holds the compare result `not_supplied`; no borrower, aliases, sector or sponsor rows",
+    "sponsor_vs_business_source": "ctx-b-match shows sponsor 'Fictional Partners' as user-supplied although the business source says it identifies no financial sponsor; no gap is raised",
+    "no_context_source": "page bytes equal today's delivery bytes",
+    "html_escaping": {
+      "input_name": "<b>",
+      "escaped": "&lt;b&gt;"
+    }
+  },
+  "cpl10": {
+    "source": "cases/cpl10-owner/expected.json cases.positive (sha in `inputs`)",
+    "ctx-l10": {
+      "pathway": "credit_snapshot",
+      "requested_modules": [
+        "CP-L10"
+      ],
+      "quarters": [
+        {
+          "context_period": "q1-2025",
+          "period": "Q1 25: 2025-01-01 to 2025-03-31",
+          "column": "Q1 25 (2025-01-01 to 2025-03-31)",
+          "words": "the first quarter of 2025"
+        },
+        {
+          "context_period": "q2-2025",
+          "period": "Q2 25: 2025-04-01 to 2025-06-30",
+          "column": "Q2 25 (2025-04-01 to 2025-06-30)",
+          "words": "the second quarter of 2025"
+        },
+        {
+          "context_period": "q3-2025",
+          "period": "Q3 25: 2025-07-01 to 2025-09-30",
+          "column": "Q3 25 (2025-07-01 to 2025-09-30)",
+          "words": "the third quarter of 2025"
+        },
+        {
+          "context_period": "q4-2025",
+          "period": "Q4 25: 2025-10-01 to 2025-12-31",
+          "column": "Q4 25 (2025-10-01 to 2025-12-31)",
+          "words": "the fourth quarter of 2025"
+        }
+      ],
+      "rows_unchanged": {
+        "keys_equal_to_cpl10_owner_positive": [
+          "view_topics",
+          "topics",
+          "required_assessments",
+          "counts",
+          "facts",
+          "tables",
+          "claims",
+          "own_limitations",
+          "settled_limitations",
+          "module_status"
+        ],
+        "excluded": "pack hash and run id dependent fields only; the pack differs from the cpl10-owner pack by its extra `context` source"
+      },
+      "cp0_review": "adds the `context` assessment of overlays.json per_context.ctx-l10 (authority unknown); CP-1 source_context likewise"
+    },
+    "ctx-q3": {
+      "quarters_ending_at": [
+        "q4-2024",
+        "q1-2025",
+        "q2-2025",
+        "q3-2025"
+      ],
+      "refusal": "unbound CP-1 operand: q4-2024 (no CP-1 T4.14 period)",
+      "note": "the pack holds no 2024 quarter, so no dates exist for a label; q1-2025 .. q3-2025 resolve"
+    },
+    "ctx-fy-l10": {
+      "step_validation_issue": "CP-L10: context_period_not_quarter",
+      "offers_quarter_list": false
+    },
+    "prior_period": "not used by CP-L10"
+  },
+  "periods_resolution": {
+    "pack_t414_periods": [
+      "opening-2024",
+      "q1-2025",
+      "q2-2025",
+      "q3-2025",
+      "q4-2025",
+      "fy-2025"
+    ],
+    "q2031": "q4-2031 and q3-2031 match no period: current unresolved (CP-1B refuses), prior would be passed on as the context string"
+  },
+  "pack_b_citations": {
+    "identity_old_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+    "identity_new_sha256": "16b1d3bfc16a1e87dd45a738802b3fb1405079f4edaa28aa4c43162153df0b2d",
+    "identity_citations_recut": 21,
+    "identity_citations_with_hash": 14,
+    "prose_strings_edited": 4,
+    "count_note": "the brief says 27; the walk finds this many identity citations (positive and gap) in cases/snapshot/submissions.json",
+    "stale_quote_replaced": {
+      "old": "No borrower, guarantor or restricted-group perimeter is established by this source set.",
+      "new": "No guarantor or restricted-group perimeter is established by this source set."
+    },
+    "snapshot_expected_json_hash_hits_to_substitute": 2
+  },
+  "inherited_gaps": [
+    "Plan table says ctx-research has identity 'as ctx-match' while the Expected-values text says 'empty optional fields': frozen here as EMPTY optional fields (borrower, aliases, sector, sponsor), which serves both the omitted-optional-rows and borrower-not_supplied expectations (the section itself is still rendered).",
+    "Pack B's frozen financial_pack_limitation and the CP-1 entity/review limitations still read 'borrower, guarantor and restricted perimeters unavailable' (a statement about the financial source's perimeters, pinned in cases/financial); beside the new identity borrower line it reads as stale but is left byte-identical.",
+    "The snapshot `business` source says it identifies no financial sponsor; a context sponsor on pack B is user-supplied with no gap (plan ruling).",
+    "Plan 'scope-mapped' is read as: the borrower entity maps to one `unspecified` scope on the identity assessment (not to financial scopes). If the controller means a financial scope, T4.2 and the facts would change and this case needs a ruling.",
+    "Pack E contexts need a `context` assessment in the CP-0 and CP-1 reviews too (every prepared source is assessed once); the existing earnings oracles contain none, so the Task 4 builder must overlay them (overlays.json)."
+  ]
+}

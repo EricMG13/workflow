@@ -188,7 +188,8 @@ def drive_cp3(
 
 
 def through_cp2(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
-    """From a promoted run (CP-1A begun, untouched) to CP-3 active: CP-1A, CP-2 (figures bound)."""
+    """From a promoted run (CP-1A begun, untouched) to the CP-MODEL stop: CP-1A, CP-2 (figures
+    bound). CP-3 is planned after CP-MODEL, so it is not begun until `publish_stop` runs."""
     cp1a = s1.drive_cp1a(workflow, pack, case, text=literal(case, "business_context", pack))
     if cp1a["status"] != "valid":
         raise RuntimeError(f"CP-1A not valid: {cp1a['issues']}")
@@ -196,6 +197,15 @@ def through_cp2(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
     cp2 = s1.drive_cp2(workflow, case, body, text=literal(case, "credit_synthesis"))
     if cp2["status"] != "valid":
         raise RuntimeError(f"CP-2 not valid: {cp2['issues']}")
+
+
+def publish_stop(workflow: OwnerWorkflow) -> None:
+    """Publish CP-MODEL at the stop; the walk resumes with CP-3 active, untouched (O1, G1a)."""
+    if workflow._phase != "walked":
+        raise RuntimeError(f"not at the CP-MODEL stop: {workflow._phase}")
+    published = workflow.publish()
+    if published["status"] != "ok":
+        raise RuntimeError(f"publication refused: {published['error_code']}")
 
 
 def blocked_through_cp2(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> None:
@@ -217,19 +227,21 @@ def blocked_through_cp2(workflow: OwnerWorkflow, pack: PreparedPack, case: str) 
 def reach_cp3(
     case: str, root: Path, *, requested: Sequence[str] | None = None
 ) -> tuple[OwnerWorkflow, PreparedPack]:
-    """From a fresh run to CP-3 active, untouched: CP-0, CP-1, CP-1A and CP-2 settled. A refusal
-    test clones this state, so no call of the CP-3 step has been made."""
+    """From a fresh run to CP-3 active, untouched: CP-0, CP-1, CP-1A and CP-2 settled, CP-MODEL
+    published at the stop. A refusal test clones this state, so no call of the CP-3 step has
+    been made."""
     workflow, pack = promoted(case, root, requested=requested)
     through_cp2(workflow, pack, case)
+    publish_stop(workflow)
     return workflow, pack
 
 
 def close(workflow: OwnerWorkflow, case: str, receipt: Path) -> None:
-    """From CP-3 active to the sealed receipt: CP-3, then CP-MODEL published."""
+    """From CP-3 active (CP-MODEL already published at the stop) to the sealed receipt."""
     cp3 = drive_cp3(workflow, case)
     if cp3["status"] != "valid":
         raise RuntimeError(f"CP-3 not valid: {cp3['issues']}")
-    s1.finish(workflow, receipt)
+    workflow.write_receipt(receipt)
 
 
 def cp3_closed(

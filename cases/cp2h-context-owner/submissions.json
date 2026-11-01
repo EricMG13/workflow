@@ -1,0 +1,3303 @@
+{
+ "schema_version": "cp2h-context-owner-submissions/1",
+ "note": "Literal analyst submissions for the rating_triggers step of the context runs, re-cut from cases/cp2h-owner/submissions.json cases.positive/gap: agencies renamed, every ratings citation re-pointed to the new ratings source hash, the page:1 register-line evidence replaced by a citation of the row's context `rating` value, and the `context` source assessed once in the CP-0 review and the CP-1 source context (authority unknown). {{FIG:name|token}} and {{EVID:..}} placeholders and the pack hash are bound at run time exactly as in the frozen oracle. upstream_step_literals and figures are the frozen ones.",
+ "figures": {
+  "total_leverage_reported": {
+   "metric": "total_leverage_reported",
+   "unit_token": "x"
+  },
+  "net_leverage_reported": {
+   "metric": "net_leverage_reported",
+   "unit_token": "x"
+  }
+ },
+ "upstream_step_literals": {
+  "CP-2A": {
+   "source": {
+    "file": "cases/cp2a-owner/submissions.json",
+    "sha256": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
+    "path": "positive.downside_pathway"
+   },
+   "downside_pathway": {
+    "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+    "scenarios": [
+     {
+      "name": "Moderate downturn",
+      "ebitda_decline": "0.20",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+      "limitation": null
+     },
+     {
+      "name": "Severe downturn with higher rates",
+      "ebitda_decline": "0.40",
+      "interest_increase": "0.20",
+      "category": "Analyst Interpretation",
+      "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+      "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+     },
+     {
+      "name": "Total loss of earnings",
+      "ebitda_decline": "1.00",
+      "interest_increase": "0",
+      "category": "Analyst Interpretation",
+      "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+      "limitation": null
+     }
+    ],
+    "thresholds": [
+     {
+      "metric": "total_leverage",
+      "level": "2.50",
+      "label": "Total leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "net_leverage",
+      "level": "2.00",
+      "label": "Net leverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     },
+     {
+      "metric": "interest_coverage",
+      "level": "2.00",
+      "label": "Interest coverage watch level",
+      "category": "Analyst Interpretation",
+      "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+     }
+    ],
+    "assessment": {
+     "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Scenario sizes and watch levels are analyst assumptions."
+    },
+    "gaps": [
+     {
+      "gap": "No covenant document or maturity schedule is an input to this stress.",
+      "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+      "affected_analysis": "Break-point ranking",
+      "severity": "Material",
+      "action": "Run the covenant owner and compare its tests with the watch levels."
+     }
+    ]
+   },
+   "blocked": {
+    "attempt_0": {
+     "id": "r01",
+     "class": "decline above one",
+     "mutation": "scenarios[0].ebitda_decline = '1.50'",
+     "payload": {
+      "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "scenarios": [
+       {
+        "name": "Moderate downturn",
+        "ebitda_decline": "1.50",
+        "interest_increase": "0",
+        "category": "Analyst Interpretation",
+        "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+        "limitation": null
+       },
+       {
+        "name": "Severe downturn",
+        "ebitda_decline": "0.40",
+        "interest_increase": "0",
+        "category": "Analyst Interpretation",
+        "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+        "limitation": null
+       },
+       {
+        "name": "Severe downturn with higher rates",
+        "ebitda_decline": "0.40",
+        "interest_increase": "0.20",
+        "category": "Analyst Interpretation",
+        "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+        "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+       },
+       {
+        "name": "Total loss of earnings",
+        "ebitda_decline": "1.00",
+        "interest_increase": "0",
+        "category": "Analyst Interpretation",
+        "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+        "limitation": null
+       }
+      ],
+      "thresholds": [
+       {
+        "metric": "total_leverage",
+        "level": "2.50",
+        "label": "Total leverage watch level",
+        "category": "Analyst Interpretation",
+        "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+       },
+       {
+        "metric": "net_leverage",
+        "level": "2.00",
+        "label": "Net leverage watch level",
+        "category": "Analyst Interpretation",
+        "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+       },
+       {
+        "metric": "interest_coverage",
+        "level": "2.00",
+        "label": "Interest coverage watch level",
+        "category": "Analyst Interpretation",
+        "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+       }
+      ],
+      "assessment": {
+       "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+       "category": "Analyst Interpretation",
+       "confidence": "Medium",
+       "limitation": "Scenario sizes and watch levels are analyst assumptions."
+      },
+      "gaps": [
+       {
+        "gap": "No covenant document or maturity schedule is an input to this stress.",
+        "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+        "affected_analysis": "Break-point ranking",
+        "severity": "Material",
+        "action": "Run the covenant owner and compare its tests with the watch levels."
+       }
+      ]
+     }
+    },
+    "attempt_1": {
+     "id": "v13",
+     "class": "confidence High",
+     "mutation": "assessment.confidence = 'High'",
+     "payload": {
+      "base_period": "LTM Q4 25: 2025-01-01 to 2025-12-31",
+      "scenarios": [
+       {
+        "name": "Moderate downturn",
+        "ebitda_decline": "0.20",
+        "interest_increase": "0",
+        "category": "Analyst Interpretation",
+        "rationale": "A moderate fall in volumes lowers earnings from the {{FIG:ebitda_ltm|US$ m}} twelve-month level while debt of {{FIG:total_debt_ltm|US$ m}} and cash interest stay as reported.",
+        "limitation": null
+       },
+       {
+        "name": "Severe downturn",
+        "ebitda_decline": "0.40",
+        "interest_increase": "0",
+        "category": "Analyst Interpretation",
+        "rationale": "A severe fall in volumes cuts earnings by a larger share of the {{FIG:ebitda_ltm|US$ m}} twelve-month level; debt and cash interest stay as reported.",
+        "limitation": null
+       },
+       {
+        "name": "Severe downturn with higher rates",
+        "ebitda_decline": "0.40",
+        "interest_increase": "0.20",
+        "category": "Analyst Interpretation",
+        "rationale": "The severe fall in volumes coincides with a rise in the rate paid on the term loan.",
+        "limitation": "No rate curve or hedging disclosure supports the size of the interest increase."
+       },
+       {
+        "name": "Total loss of earnings",
+        "ebitda_decline": "1.00",
+        "interest_increase": "0",
+        "category": "Analyst Interpretation",
+        "rationale": "A boundary case in which earnings fall to zero; it shows which ratios stop being meaningful and which stay calculable.",
+        "limitation": null
+       }
+      ],
+      "thresholds": [
+       {
+        "metric": "total_leverage",
+        "level": "2.50",
+        "label": "Total leverage watch level",
+        "category": "Analyst Interpretation",
+        "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+       },
+       {
+        "metric": "net_leverage",
+        "level": "2.00",
+        "label": "Net leverage watch level",
+        "category": "Analyst Interpretation",
+        "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+       },
+       {
+        "metric": "interest_coverage",
+        "level": "2.00",
+        "label": "Interest coverage watch level",
+        "category": "Analyst Interpretation",
+        "rationale": "An internal watch level, not a covenant; no covenant source is bound to this run."
+       }
+      ],
+      "assessment": {
+       "rationale": "The credit starts from total leverage of {{FIG:total_leverage_reported|x}}, net leverage of {{FIG:net_leverage_reported|x}}, interest coverage of {{FIG:interest_coverage_reported|x}} and free cash flow of {{FIG:fcf_ltm|US$ m}}; the scenarios test how far earnings can fall before those measures reach the watch levels.",
+       "category": "Analyst Interpretation",
+       "confidence": "High",
+       "limitation": "Scenario sizes and watch levels are analyst assumptions."
+      },
+      "gaps": [
+       {
+        "gap": "No covenant document or maturity schedule is an input to this stress.",
+        "why_it_matters": "The watch levels are the analyst's, so the order in which lenders' own tests are reached may differ from the order shown.",
+        "affected_analysis": "Break-point ranking",
+        "severity": "Material",
+        "action": "Run the covenant owner and compare its tests with the watch levels."
+       }
+      ]
+     }
+    }
+   }
+  },
+  "CP-2G": {
+   "source": {
+    "file": "cases/cp2g-owner/submissions.json",
+    "sha256": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
+    "path": "cases.gap"
+   },
+   "forward_credit_model": {
+    "base_drivers": {
+     "revenue_growth": {
+      "values": [
+       "0.03",
+       "0.03",
+       "0.03"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "Modest growth from the {{FIG:revenue_ltm|US$ m}} twelve-month revenue base, with no price or volume guidance in the source pack.",
+      "limitation": "No management guidance or consensus supports the growth rates."
+     },
+     "ebitda_margin": {
+      "values": [
+       "0.25",
+       "0.26",
+       "0.27"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "The margin starts at the {{FIG:ebitda_margin_ltm|%}} twelve-month level and widens slowly as fixed costs are spread over higher revenue.",
+      "limitation": "Margin expansion is an analyst view; the source pack states no cost programme."
+     },
+     "capex_pct_revenue": {
+      "values": [
+       "0.08",
+       "0.08",
+       "0.08"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "Capital expenditure is held at a steady share of revenue, close to the twelve-month level of {{FIG:capex_to_revenue_ltm|%}}.",
+      "limitation": null
+     },
+     "tax_wc_pct_revenue": {
+      "values": [
+       "0.05",
+       "0.05",
+       "0.05"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "Cash taxes and working capital together stay at the twelve-month share of revenue.",
+      "limitation": null
+     },
+     "interest_rate": {
+      "values": [
+       "0.10",
+       "0.10",
+       "0.10"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "The rate is held at the level implied by twelve-month cash interest on the closing debt of {{FIG:total_debt_ltm|US$ m}}.",
+      "limitation": null
+     },
+     "dividends": {
+      "values": [
+       "5",
+       "5",
+       "5"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "Distributions are cut below the twelve-month level to protect cash; the cut is the analyst's assumption.",
+      "limitation": "No dividend policy is disclosed in the source pack."
+     },
+     "debt_repayment": {
+      "values": [
+       "0",
+       "5",
+       "10"
+      ],
+      "category": "Analyst Interpretation",
+      "rationale": "Repayments start in the second year from surplus cash; they are an analyst assumption, not a mandatory schedule.",
+      "limitation": null
+     }
+    },
+    "downside": {
+     "scenario": "s03",
+     "rationale": "The downside takes the CP-2A scenario with the larger earnings fall and the higher rate, held in every forecast year: earnings fall by its decline and the rate paid rises by its increase.",
+     "limitation": "The shock is persistent and no mitigating action is modelled."
+    },
+    "break_metrics": [
+     {
+      "break_id": "b03",
+      "metric": "total_leverage"
+     },
+     {
+      "break_id": "b04",
+      "metric": "net_leverage"
+     },
+     {
+      "break_id": "b05",
+      "metric": "interest_coverage"
+     }
+    ],
+    "minimum_liquidity": {
+     "amount": "not assessed",
+     "rationale": "The source pack states no minimum liquidity requirement, so none is assumed."
+    },
+    "assessment": {
+     "rationale": "Opening total leverage is {{FIG:total_leverage_reported|x}}; the base case deleverages through retained cash flow and repayments, while the downside reaches the watch levels in the first forecast year and runs short of cash in the second.",
+     "category": "Analyst Interpretation",
+     "confidence": "Low",
+     "limitation": "Earnings quality and minimum liquidity were not assessed."
+    },
+    "gaps": [
+     {
+      "gap": "Earnings quality and minimum liquidity are not inputs to the forecast.",
+      "why_it_matters": "Without them the starting earnings are taken as reported and the liquidity break is not tested.",
+      "affected_analysis": "Starting leverage and liquidity break",
+      "severity": "Material",
+      "action": "Run the earnings-quality owner and assess a minimum liquidity, then rerun the forecast."
+     }
+    ]
+   },
+   "tool_calls": [
+    {
+     "module": "CP-2G",
+     "tool": "read_inputs",
+     "arguments": null
+    }
+   ],
+   "blocked": {
+    "attempt_0": {
+     "id": "r01",
+     "class": "growth not a decimal string",
+     "mutation": "base_drivers.revenue_growth.values[0] = 'three percent'",
+     "payload": {
+      "base_drivers": {
+       "revenue_growth": {
+        "values": [
+         "three percent",
+         "0.03",
+         "0.03"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Modest growth from the {{FIG:revenue_ltm|US$ m}} twelve-month revenue base, with no price or volume guidance in the source pack.",
+        "limitation": "No management guidance or consensus supports the growth rates."
+       },
+       "ebitda_margin": {
+        "values": [
+         "0.25",
+         "0.26",
+         "0.27"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "The margin starts at the {{FIG:ebitda_margin_ltm|%}} twelve-month level and widens slowly as fixed costs are spread over higher revenue.",
+        "limitation": "Margin expansion is an analyst view; the source pack states no cost programme."
+       },
+       "capex_pct_revenue": {
+        "values": [
+         "0.08",
+         "0.08",
+         "0.08"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Capital expenditure is held at a steady share of revenue, close to the twelve-month level of {{FIG:capex_to_revenue_ltm|%}}.",
+        "limitation": null
+       },
+       "tax_wc_pct_revenue": {
+        "values": [
+         "0.05",
+         "0.05",
+         "0.05"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Cash taxes and working capital together stay at the twelve-month share of revenue.",
+        "limitation": null
+       },
+       "interest_rate": {
+        "values": [
+         "0.10",
+         "0.10",
+         "0.10"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "The rate is held at the level implied by twelve-month cash interest on the closing debt of {{FIG:total_debt_ltm|US$ m}}.",
+        "limitation": null
+       },
+       "dividends": {
+        "values": [
+         "5",
+         "5",
+         "5"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Distributions are cut below the twelve-month level to protect cash; the cut is the analyst's assumption.",
+        "limitation": "No dividend policy is disclosed in the source pack."
+       },
+       "debt_repayment": {
+        "values": [
+         "0",
+         "5",
+         "10"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Repayments start in the second year from surplus cash; they are an analyst assumption, not a mandatory schedule.",
+        "limitation": null
+       }
+      },
+      "downside": {
+       "scenario": "s03",
+       "rationale": "The downside takes the CP-2A scenario with the larger earnings fall and the higher rate, held in every forecast year: earnings fall by its decline and the rate paid rises by its increase.",
+       "limitation": "The shock is persistent and no mitigating action is modelled."
+      },
+      "break_metrics": [
+       {
+        "break_id": "b03",
+        "metric": "total_leverage"
+       },
+       {
+        "break_id": "b04",
+        "metric": "net_leverage"
+       },
+       {
+        "break_id": "b05",
+        "metric": "interest_coverage"
+       }
+      ],
+      "minimum_liquidity": {
+       "amount": "10",
+       "rationale": "A working minimum for a business of this size; the source pack states no minimum cash requirement."
+      },
+      "assessment": {
+       "rationale": "Opening total leverage is {{FIG:total_leverage_reported|x}} on reported earnings and {{FIG:total_leverage_supported|x}} on the earnings CP-1D supports; the base case deleverages through retained cash flow and repayments, while the downside reaches the watch levels in the first forecast year and runs short of cash in the second.",
+       "category": "Analyst Interpretation",
+       "confidence": "Medium",
+       "limitation": "Every driver is an analyst assumption without a source citation."
+      },
+      "gaps": [
+       {
+        "gap": "No management guidance, consensus or covenant document is an input to the forecast.",
+        "why_it_matters": "The driver values and the watch levels are the analyst's, so the timing of the first break may differ from lenders' own tests.",
+        "affected_analysis": "Forecast drivers and first-break timing",
+        "severity": "Material",
+        "action": "Add guidance and the covenant package, then rerun the forecast."
+       }
+      ]
+     }
+    },
+    "attempt_1": {
+     "id": "v13",
+     "class": "confidence High",
+     "mutation": "assessment.confidence = 'High'",
+     "payload": {
+      "base_drivers": {
+       "revenue_growth": {
+        "values": [
+         "0.03",
+         "0.03",
+         "0.03"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Modest growth from the {{FIG:revenue_ltm|US$ m}} twelve-month revenue base, with no price or volume guidance in the source pack.",
+        "limitation": "No management guidance or consensus supports the growth rates."
+       },
+       "ebitda_margin": {
+        "values": [
+         "0.25",
+         "0.26",
+         "0.27"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "The margin starts at the {{FIG:ebitda_margin_ltm|%}} twelve-month level and widens slowly as fixed costs are spread over higher revenue.",
+        "limitation": "Margin expansion is an analyst view; the source pack states no cost programme."
+       },
+       "capex_pct_revenue": {
+        "values": [
+         "0.08",
+         "0.08",
+         "0.08"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Capital expenditure is held at a steady share of revenue, close to the twelve-month level of {{FIG:capex_to_revenue_ltm|%}}.",
+        "limitation": null
+       },
+       "tax_wc_pct_revenue": {
+        "values": [
+         "0.05",
+         "0.05",
+         "0.05"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Cash taxes and working capital together stay at the twelve-month share of revenue.",
+        "limitation": null
+       },
+       "interest_rate": {
+        "values": [
+         "0.10",
+         "0.10",
+         "0.10"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "The rate is held at the level implied by twelve-month cash interest on the closing debt of {{FIG:total_debt_ltm|US$ m}}.",
+        "limitation": null
+       },
+       "dividends": {
+        "values": [
+         "5",
+         "5",
+         "5"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Distributions are cut below the twelve-month level to protect cash; the cut is the analyst's assumption.",
+        "limitation": "No dividend policy is disclosed in the source pack."
+       },
+       "debt_repayment": {
+        "values": [
+         "0",
+         "5",
+         "10"
+        ],
+        "category": "Analyst Interpretation",
+        "rationale": "Repayments start in the second year from surplus cash; they are an analyst assumption, not a mandatory schedule.",
+        "limitation": null
+       }
+      },
+      "downside": {
+       "scenario": "s03",
+       "rationale": "The downside takes the CP-2A scenario with the larger earnings fall and the higher rate, held in every forecast year: earnings fall by its decline and the rate paid rises by its increase.",
+       "limitation": "The shock is persistent and no mitigating action is modelled."
+      },
+      "break_metrics": [
+       {
+        "break_id": "b03",
+        "metric": "total_leverage"
+       },
+       {
+        "break_id": "b04",
+        "metric": "net_leverage"
+       },
+       {
+        "break_id": "b05",
+        "metric": "interest_coverage"
+       }
+      ],
+      "minimum_liquidity": {
+       "amount": "10",
+       "rationale": "A working minimum for a business of this size; the source pack states no minimum cash requirement."
+      },
+      "assessment": {
+       "rationale": "Opening total leverage is {{FIG:total_leverage_reported|x}} on reported earnings and {{FIG:total_leverage_supported|x}} on the earnings CP-1D supports; the base case deleverages through retained cash flow and repayments, while the downside reaches the watch levels in the first forecast year and runs short of cash in the second.",
+       "category": "Analyst Interpretation",
+       "confidence": "High",
+       "limitation": "Every driver is an analyst assumption without a source citation."
+      },
+      "gaps": [
+       {
+        "gap": "No management guidance, consensus or covenant document is an input to the forecast.",
+        "why_it_matters": "The driver values and the watch levels are the analyst's, so the timing of the first break may differ from lenders' own tests.",
+        "affected_analysis": "Forecast drivers and first-break timing",
+        "severity": "Material",
+        "action": "Add guidance and the covenant package, then rerun the forecast."
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "cases": {
+  "positive": {
+   "context": "context-positive.json",
+   "ratings_source": "positive",
+   "readiness_review": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "objective": "Historical financial foundation and rating trigger headroom",
+    "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+    "issuer_confirmed": true,
+    "sources": [
+     {
+      "source_id": "identity",
+      "document_family": "Identity note",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Accompanying identity note",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": []
+     },
+     {
+      "source_id": "financial",
+      "document_family": "Quarterly financial statements",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "Four quarters in 2025",
+      "version_relationship": "Unaudited quarterly source",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "document_family": "Agency rating summary",
+      "authority": "third_party",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Summary of fictional agencies' published ratings and trigger terms",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitations": [
+       "Synthetic agency summary naming fictional agencies; not evidence about a real issuer."
+      ]
+     },
+     {
+      "source_id": "context",
+      "document_family": "User-supplied run context",
+      "authority": "unknown",
+      "entity": "Northbridge Synthetic Group",
+      "period": "2026-01-10",
+      "version_relationship": "User-supplied form download for this run",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "1211fc0a6dcb5b90c56ea8df1a6ccb483ff3078e1295f3b6fbe2ca69de9521d5",
+        "locator": "line:13",
+        "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+       }
+      ],
+      "limitations": [
+       "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+      ]
+     }
+    ],
+    "consumers": [
+     {
+      "module_id": "CP-1",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2A",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 EBITDA, cash interest, free cash flow, debt and cash for one base period",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The downside pathway can run on settled CP-1 figures with inherited source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2G",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 operating, cash-flow and debt figures and the CP-2A scenarios and break register, with CP-1D supported earnings where selected",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The forward model can run on settled upstream outputs with inherited source and scope limitations; driver values are analyst assumptions.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2H",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 reported ratios and the CP-2G credit-metric path, with the agencies' published ratings, scale mapping and trigger terms",
+      "source_ids": [
+       "identity",
+       "financial",
+       "ratings"
+      ],
+      "rationale": "The trigger headroom test can run on settled upstream outputs and the located agency summary with explicit limitations; trigger terms and ratings are the agencies' own.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+       "Synthetic agency summary naming fictional agencies; not evidence about a real issuer."
+      ]
+     }
+    ],
+    "gaps": [],
+    "analysis": [
+     {
+      "claim_id": "source-assessment",
+      "text": "Located statements and the agency summary support historical and rating-trigger analysis with limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     }
+    ]
+   },
+   "cp1_source_context": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "entities": [
+     {
+      "entity_id": "issuer",
+      "name": "Northbridge Synthetic Group",
+      "entity_type": "group",
+      "roles": [
+       "issuer"
+      ],
+      "fiscal_year_end": "December 31",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     }
+    ],
+    "sources": [
+     {
+      "source_id": "identity",
+      "classification": "nonfinancial",
+      "document_type": "Identity note",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "Identity only",
+      "analytical_use": "Issuer identity",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "Identity is not event evidence"
+     },
+     {
+      "source_id": "financial",
+      "classification": "financial",
+      "document_type": "Quarterly statements",
+      "published_on": "2026-01-10",
+      "evidence_class": "unaudited_without_auditor",
+      "evidence_rationale": "No auditor report",
+      "analytical_use": "Historical financial analysis",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "scopes": [
+       {
+        "scope_id": "opening-2024",
+        "entity_id": "issuer",
+        "period_label": "opening-2024",
+        "period_kind": "period_end",
+        "start_date": null,
+        "end_date": "2024-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q1-2025",
+        "entity_id": "issuer",
+        "period_label": "q1-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q2-2025",
+        "entity_id": "issuer",
+        "period_label": "q2-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-04-01",
+        "end_date": "2025-06-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q3-2025",
+        "entity_id": "issuer",
+        "period_label": "q3-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-07-01",
+        "end_date": "2025-09-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q4-2025",
+        "entity_id": "issuer",
+        "period_label": "q4-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-10-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "fy-2025",
+        "entity_id": "issuer",
+        "period_label": "fy-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       }
+      ],
+      "event_scan": "no_events_identified",
+      "event_scan_explanation": "Explicit no-event disclosure through as-of",
+      "event_scan_citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "classification": "nonfinancial",
+      "document_type": "Agency rating summary",
+      "published_on": "2026-01-10",
+      "evidence_class": "rating",
+      "evidence_rationale": "Summary of agency ratings and trigger terms; the agencies are fictional",
+      "analytical_use": "Rating trigger terms for CP-2H",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A ratings summary is not event evidence"
+     },
+     {
+      "source_id": "context",
+      "classification": "nonfinancial",
+      "document_type": "User-supplied run context",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+      "analytical_use": "Run settings and user-stated names",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "1211fc0a6dcb5b90c56ea8df1a6ccb483ff3078e1295f3b6fbe2ca69de9521d5",
+        "locator": "line:13",
+        "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A user-supplied run context is not event evidence"
+     }
+    ],
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+   },
+   "cp1_readiness": {
+    "inputs_sha256": "{{INPUTS_SHA256}}",
+    "consumers": [
+     {
+      "entry": "CP-2A",
+      "requirements": [
+       {
+        "requirement": "cash_flow_metrics",
+        "status": "sufficient",
+        "evidence_ids": [
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Twelve-month levered free cash flow is available from the settled statements."
+       },
+       {
+        "requirement": "liquidity_data",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Closing cash is available; there is no revolving facility.",
+        "actions": [
+         "Confirm undrawn committed facilities with the debt schedule."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning applies to the downside stress."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2G",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi revenue, LTM Q4 25 basis}}",
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}",
+         "{{EVID:kpi undrawn_rcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month revenue, EBITDA, free cash flow, debt, cash and undrawn revolver give the forecast its base; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the forward model."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the base the forecast starts from."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2H",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month EBITDA, free cash flow, debt and cash give the reported ratios the triggers are tested against; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the trigger test."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the ratios the triggers are tested against."
+       }
+      ]
+     }
+    ],
+    "note": "The CP-2A and CP-2G consumer entries are the frozen literals of cases/cp2g-owner/submissions.json cases.gap.cp1_readiness, unchanged; CP-2H is new with the CP-2A marker style ({{EVID:kpi <key>, LTM Q4 25 basis}} and {{ALL narrative gap ids}}, bound by cases/cp2a-owner/manifest.json run_time_bindings.cp1_readiness). The kpi keys ebitda, fcf, total_debt and cash_closing are the ones the frozen CP-2G entry already uses. {{INPUTS_SHA256}} is the content hash of the step's prefilled DownstreamInputs."
+   },
+   "rating_triggers": {
+    "views": [
+     {
+      "agency": "S&P",
+      "view": "Downgrade pressure",
+      "category": "Analyst Interpretation",
+      "confidence": "Medium",
+      "rationale": "Total debt to EBITDA leaves {T2R.4.t01.headroom|x} of headroom to the downgrade trigger on the latest reported fiscal year, and the base case widens it. In the downside case the cash interest coverage and free cash flow triggers are both reached in the first forecast year, so the pressure comes from the downside path rather than from today's figures.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  Total debt to EBITDA  Above  2.75x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  EBITDA to cash interest  Below  3.50x"
+       },
+       {
+        "source_id": "context",
+        "source_sha256": "1211fc0a6dcb5b90c56ea8df1a6ccb483ff3078e1295f3b6fbe2ca69de9521d5",
+        "locator": "line:31",
+        "quote": "\"rating\": \"BB\""
+       }
+      ],
+      "limitation": "The downside path rests on an analyst-chosen CP-2A shock and on CP-2G's analyst-assumed drivers."
+     },
+     {
+      "agency": "Moody's",
+      "view": "Stable",
+      "category": "Analyst Interpretation",
+      "confidence": "Low",
+      "rationale": "The net debt to EBITDA downgrade trigger leaves {T2R.4.t04.headroom|x} of headroom on the latest reported fiscal year and is not reached in the base case; in the downside case it is reached from the second forecast year. The upgrade trigger is reached in the base case only in the final forecast year, so an upgrade is not near.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "Moody's  Downgrade  Net debt to EBITDA  Above  2.25x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "Moody's  Upgrade  Net debt to EBITDA  Below  0.50x"
+       },
+       {
+        "source_id": "context",
+        "source_sha256": "1211fc0a6dcb5b90c56ea8df1a6ccb483ff3078e1295f3b6fbe2ca69de9521d5",
+        "locator": "line:38",
+        "quote": "\"rating\": \"Ba3\""
+       }
+      ],
+      "limitation": "Both agencies' terms are read at fiscal year end; sustained-period conditions are not stated in the source."
+     }
+    ],
+    "overall": {
+     "rationale": "On reported figures the issuer starts with {{FIG:total_leverage_reported|x}} total leverage and {{FIG:net_leverage_reported|x}} net leverage, inside every published downgrade trigger. The two agencies' ratings differ by {T2R.8.p01.notches|notches} on the combined scale, and the downside forecast, not the opening position, is what puts a rating review in reach.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Every forecast driver behind the forward headroom is an analyst assumption without a source citation."
+    },
+    "gaps": [
+     {
+      "gap": "No agency report states how long a trigger must be breached before a rating review.",
+      "why_it_matters": "Reaching a trigger in one fiscal year may not be a rating event, so the timing is the earliest possible, not the expected.",
+      "affected_analysis": "Trigger timing and migration view",
+      "severity": "Material",
+      "action": "Obtain the agencies' full criteria and rerun the trigger test."
+     }
+    ]
+   },
+   "tool_calls": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "ratings",
+      "first_page": 3,
+      "last_page": 3
+     },
+     "expect_spans": [
+      {
+       "source_id": "ratings",
+       "locator": "page:3"
+      }
+     ]
+    }
+   ]
+  },
+  "gap": {
+   "context": "context-gap.json",
+   "ratings_source": "gap",
+   "readiness_review": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "objective": "Historical financial foundation and rating trigger headroom",
+    "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+    "issuer_confirmed": true,
+    "sources": [
+     {
+      "source_id": "identity",
+      "document_family": "Identity note",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Accompanying identity note",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": []
+     },
+     {
+      "source_id": "financial",
+      "document_family": "Quarterly financial statements",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "Four quarters in 2025",
+      "version_relationship": "Unaudited quarterly source",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "document_family": "Agency rating summary",
+      "authority": "third_party",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Summary of fictional agencies' published ratings and trigger terms",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitations": [
+       "Synthetic agency summary naming fictional agencies; one threshold is not stated and one rating is withdrawn."
+      ]
+     },
+     {
+      "source_id": "context",
+      "document_family": "User-supplied run context",
+      "authority": "unknown",
+      "entity": "Northbridge Synthetic Group",
+      "period": "2026-01-10",
+      "version_relationship": "User-supplied form download for this run",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "0786d5e035dbcd08c6b2927258210bc7526080942c44407cb7c00b5f58491d0d",
+        "locator": "line:13",
+        "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+       }
+      ],
+      "limitations": [
+       "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+      ]
+     }
+    ],
+    "consumers": [
+     {
+      "module_id": "CP-1",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2A",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 EBITDA, cash interest, free cash flow, debt and cash for one base period",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The downside pathway can run on settled CP-1 figures with inherited source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2G",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 operating, cash-flow and debt figures and the CP-2A scenarios and break register, with CP-1D supported earnings where selected",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The forward model can run on settled upstream outputs with inherited source and scope limitations; driver values are analyst assumptions.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2H",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 reported ratios and the CP-2G credit-metric path, with the agencies' published ratings, scale mapping and trigger terms",
+      "source_ids": [
+       "identity",
+       "financial",
+       "ratings"
+      ],
+      "rationale": "The trigger headroom test can run on settled upstream outputs and the located agency summary with explicit limitations; trigger terms and ratings are the agencies' own.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+       "Synthetic agency summary naming fictional agencies; one threshold is not stated and one rating is withdrawn."
+      ]
+     }
+    ],
+    "gaps": [],
+    "analysis": [
+     {
+      "claim_id": "source-assessment",
+      "text": "Located statements and the agency summary support historical and rating-trigger analysis with limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     }
+    ]
+   },
+   "cp1_source_context": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "entities": [
+     {
+      "entity_id": "issuer",
+      "name": "Northbridge Synthetic Group",
+      "entity_type": "group",
+      "roles": [
+       "issuer"
+      ],
+      "fiscal_year_end": "December 31",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     }
+    ],
+    "sources": [
+     {
+      "source_id": "identity",
+      "classification": "nonfinancial",
+      "document_type": "Identity note",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "Identity only",
+      "analytical_use": "Issuer identity",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "Identity is not event evidence"
+     },
+     {
+      "source_id": "financial",
+      "classification": "financial",
+      "document_type": "Quarterly statements",
+      "published_on": "2026-01-10",
+      "evidence_class": "unaudited_without_auditor",
+      "evidence_rationale": "No auditor report",
+      "analytical_use": "Historical financial analysis",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "scopes": [
+       {
+        "scope_id": "opening-2024",
+        "entity_id": "issuer",
+        "period_label": "opening-2024",
+        "period_kind": "period_end",
+        "start_date": null,
+        "end_date": "2024-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q1-2025",
+        "entity_id": "issuer",
+        "period_label": "q1-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q2-2025",
+        "entity_id": "issuer",
+        "period_label": "q2-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-04-01",
+        "end_date": "2025-06-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q3-2025",
+        "entity_id": "issuer",
+        "period_label": "q3-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-07-01",
+        "end_date": "2025-09-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q4-2025",
+        "entity_id": "issuer",
+        "period_label": "q4-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-10-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "fy-2025",
+        "entity_id": "issuer",
+        "period_label": "fy-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       }
+      ],
+      "event_scan": "no_events_identified",
+      "event_scan_explanation": "Explicit no-event disclosure through as-of",
+      "event_scan_citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "classification": "nonfinancial",
+      "document_type": "Agency rating summary",
+      "published_on": "2026-01-10",
+      "evidence_class": "rating",
+      "evidence_rationale": "Summary of agency ratings and trigger terms; the agencies are fictional",
+      "analytical_use": "Rating trigger terms for CP-2H",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A ratings summary is not event evidence"
+     },
+     {
+      "source_id": "context",
+      "classification": "nonfinancial",
+      "document_type": "User-supplied run context",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+      "analytical_use": "Run settings and user-stated names",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "0786d5e035dbcd08c6b2927258210bc7526080942c44407cb7c00b5f58491d0d",
+        "locator": "line:13",
+        "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A user-supplied run context is not event evidence"
+     }
+    ],
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+   },
+   "cp1_readiness": {
+    "inputs_sha256": "{{INPUTS_SHA256}}",
+    "consumers": [
+     {
+      "entry": "CP-2A",
+      "requirements": [
+       {
+        "requirement": "cash_flow_metrics",
+        "status": "sufficient",
+        "evidence_ids": [
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Twelve-month levered free cash flow is available from the settled statements."
+       },
+       {
+        "requirement": "liquidity_data",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Closing cash is available; there is no revolving facility.",
+        "actions": [
+         "Confirm undrawn committed facilities with the debt schedule."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning applies to the downside stress."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2G",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi revenue, LTM Q4 25 basis}}",
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}",
+         "{{EVID:kpi undrawn_rcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month revenue, EBITDA, free cash flow, debt, cash and undrawn revolver give the forecast its base; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the forward model."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the base the forecast starts from."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2H",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month EBITDA, free cash flow, debt and cash give the reported ratios the triggers are tested against; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the trigger test."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the ratios the triggers are tested against."
+       }
+      ]
+     }
+    ],
+    "note": "The CP-2A and CP-2G consumer entries are the frozen literals of cases/cp2g-owner/submissions.json cases.gap.cp1_readiness, unchanged; CP-2H is new with the CP-2A marker style ({{EVID:kpi <key>, LTM Q4 25 basis}} and {{ALL narrative gap ids}}, bound by cases/cp2a-owner/manifest.json run_time_bindings.cp1_readiness). The kpi keys ebitda, fcf, total_debt and cash_closing are the ones the frozen CP-2G entry already uses. {{INPUTS_SHA256}} is the content hash of the step's prefilled DownstreamInputs."
+   },
+   "rating_triggers": {
+    "views": [
+     {
+      "agency": "S&P",
+      "view": "Stable",
+      "category": "Analyst Interpretation",
+      "confidence": "Low",
+      "rationale": "Total debt to EBITDA leaves {T2R.4.t01.headroom|x} of headroom to the downgrade trigger on the latest reported fiscal year. The free cash flow trigger has no stated threshold, so its headroom cannot be calculated.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  Total debt to EBITDA  Above  2.75x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "28d7ba802b4917f3db9bc928a4740764d54ec065f51092df6f9949bd00d15c51",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  Free cash flow to total debt  Below  Not stated"
+       }
+      ],
+      "limitation": "One of the three published downgrade triggers cannot be tested."
+     },
+     {
+      "agency": "Moody's",
+      "view": "Not assessable",
+      "category": "Insufficient Information",
+      "confidence": "Insufficient Information",
+      "rationale": "The rating is withdrawn and no trigger terms are published, so no migration view is formed for this agency.",
+      "evidence": [
+       {
+        "source_id": "context",
+        "source_sha256": "0786d5e035dbcd08c6b2927258210bc7526080942c44407cb7c00b5f58491d0d",
+        "locator": "line:38",
+        "quote": "\"rating\": \"Withdrawn\""
+       }
+      ],
+      "limitation": "No current rating or trigger terms exist for this agency."
+     }
+    ],
+    "overall": {
+     "rationale": "Only one agency now rates the issuer, so there is no divergence to assess; total leverage is {{FIG:total_leverage_reported|x}} on reported figures.",
+     "category": "Analyst Interpretation",
+     "confidence": "Low",
+     "limitation": "The agency source is incomplete: one threshold is not stated and one agency has withdrawn."
+    },
+    "gaps": [
+     {
+      "gap": "The free cash flow trigger threshold is not stated and the second agency has withdrawn its rating.",
+      "why_it_matters": "Headroom to that trigger and any agency divergence cannot be calculated.",
+      "affected_analysis": "Trigger headroom and agency divergence",
+      "severity": "Material",
+      "action": "Obtain the full agency report and the withdrawal notice, then rerun."
+     }
+    ]
+   },
+   "tool_calls": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "ratings",
+      "first_page": 3,
+      "last_page": 3
+     },
+     "expect_spans": [
+      {
+       "source_id": "ratings",
+       "locator": "page:3"
+      }
+     ]
+    }
+   ]
+  },
+  "outlook_unstated": {
+   "context": "context-outlook-unstated.json",
+   "ratings_source": "positive",
+   "readiness_review": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "objective": "Historical financial foundation and rating trigger headroom",
+    "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+    "issuer_confirmed": true,
+    "sources": [
+     {
+      "source_id": "identity",
+      "document_family": "Identity note",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Accompanying identity note",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": []
+     },
+     {
+      "source_id": "financial",
+      "document_family": "Quarterly financial statements",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "Four quarters in 2025",
+      "version_relationship": "Unaudited quarterly source",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "document_family": "Agency rating summary",
+      "authority": "third_party",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Summary of fictional agencies' published ratings and trigger terms",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitations": [
+       "Synthetic agency summary naming fictional agencies; not evidence about a real issuer."
+      ]
+     },
+     {
+      "source_id": "context",
+      "document_family": "User-supplied run context",
+      "authority": "unknown",
+      "entity": "Northbridge Synthetic Group",
+      "period": "2026-01-10",
+      "version_relationship": "User-supplied form download for this run",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "e37416755a372f5078db549afb5cf34943907230ba9803fef2635dcc3f18be5b",
+        "locator": "line:13",
+        "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+       }
+      ],
+      "limitations": [
+       "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+      ]
+     }
+    ],
+    "consumers": [
+     {
+      "module_id": "CP-1",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2A",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 EBITDA, cash interest, free cash flow, debt and cash for one base period",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The downside pathway can run on settled CP-1 figures with inherited source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2G",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 operating, cash-flow and debt figures and the CP-2A scenarios and break register, with CP-1D supported earnings where selected",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The forward model can run on settled upstream outputs with inherited source and scope limitations; driver values are analyst assumptions.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2H",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 reported ratios and the CP-2G credit-metric path, with the agencies' published ratings, scale mapping and trigger terms",
+      "source_ids": [
+       "identity",
+       "financial",
+       "ratings"
+      ],
+      "rationale": "The trigger headroom test can run on settled upstream outputs and the located agency summary with explicit limitations; trigger terms and ratings are the agencies' own.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+       "Synthetic agency summary naming fictional agencies; not evidence about a real issuer."
+      ]
+     }
+    ],
+    "gaps": [],
+    "analysis": [
+     {
+      "claim_id": "source-assessment",
+      "text": "Located statements and the agency summary support historical and rating-trigger analysis with limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     }
+    ]
+   },
+   "cp1_source_context": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "entities": [
+     {
+      "entity_id": "issuer",
+      "name": "Northbridge Synthetic Group",
+      "entity_type": "group",
+      "roles": [
+       "issuer"
+      ],
+      "fiscal_year_end": "December 31",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     }
+    ],
+    "sources": [
+     {
+      "source_id": "identity",
+      "classification": "nonfinancial",
+      "document_type": "Identity note",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "Identity only",
+      "analytical_use": "Issuer identity",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "Identity is not event evidence"
+     },
+     {
+      "source_id": "financial",
+      "classification": "financial",
+      "document_type": "Quarterly statements",
+      "published_on": "2026-01-10",
+      "evidence_class": "unaudited_without_auditor",
+      "evidence_rationale": "No auditor report",
+      "analytical_use": "Historical financial analysis",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "scopes": [
+       {
+        "scope_id": "opening-2024",
+        "entity_id": "issuer",
+        "period_label": "opening-2024",
+        "period_kind": "period_end",
+        "start_date": null,
+        "end_date": "2024-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q1-2025",
+        "entity_id": "issuer",
+        "period_label": "q1-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q2-2025",
+        "entity_id": "issuer",
+        "period_label": "q2-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-04-01",
+        "end_date": "2025-06-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q3-2025",
+        "entity_id": "issuer",
+        "period_label": "q3-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-07-01",
+        "end_date": "2025-09-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q4-2025",
+        "entity_id": "issuer",
+        "period_label": "q4-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-10-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "fy-2025",
+        "entity_id": "issuer",
+        "period_label": "fy-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       }
+      ],
+      "event_scan": "no_events_identified",
+      "event_scan_explanation": "Explicit no-event disclosure through as-of",
+      "event_scan_citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "classification": "nonfinancial",
+      "document_type": "Agency rating summary",
+      "published_on": "2026-01-10",
+      "evidence_class": "rating",
+      "evidence_rationale": "Summary of agency ratings and trigger terms; the agencies are fictional",
+      "analytical_use": "Rating trigger terms for CP-2H",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A ratings summary is not event evidence"
+     },
+     {
+      "source_id": "context",
+      "classification": "nonfinancial",
+      "document_type": "User-supplied run context",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+      "analytical_use": "Run settings and user-stated names",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "e37416755a372f5078db549afb5cf34943907230ba9803fef2635dcc3f18be5b",
+        "locator": "line:13",
+        "quote": "\"issuer_name\": \"Northbridge Synthetic Group\""
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A user-supplied run context is not event evidence"
+     }
+    ],
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+   },
+   "cp1_readiness": {
+    "inputs_sha256": "{{INPUTS_SHA256}}",
+    "consumers": [
+     {
+      "entry": "CP-2A",
+      "requirements": [
+       {
+        "requirement": "cash_flow_metrics",
+        "status": "sufficient",
+        "evidence_ids": [
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Twelve-month levered free cash flow is available from the settled statements."
+       },
+       {
+        "requirement": "liquidity_data",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Closing cash is available; there is no revolving facility.",
+        "actions": [
+         "Confirm undrawn committed facilities with the debt schedule."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning applies to the downside stress."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2G",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi revenue, LTM Q4 25 basis}}",
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}",
+         "{{EVID:kpi undrawn_rcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month revenue, EBITDA, free cash flow, debt, cash and undrawn revolver give the forecast its base; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the forward model."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the base the forecast starts from."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2H",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month EBITDA, free cash flow, debt and cash give the reported ratios the triggers are tested against; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the trigger test."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the ratios the triggers are tested against."
+       }
+      ]
+     }
+    ],
+    "note": "The CP-2A and CP-2G consumer entries are the frozen literals of cases/cp2g-owner/submissions.json cases.gap.cp1_readiness, unchanged; CP-2H is new with the CP-2A marker style ({{EVID:kpi <key>, LTM Q4 25 basis}} and {{ALL narrative gap ids}}, bound by cases/cp2a-owner/manifest.json run_time_bindings.cp1_readiness). The kpi keys ebitda, fcf, total_debt and cash_closing are the ones the frozen CP-2G entry already uses. {{INPUTS_SHA256}} is the content hash of the step's prefilled DownstreamInputs."
+   },
+   "rating_triggers": {
+    "views": [
+     {
+      "agency": "S&P",
+      "view": "Downgrade pressure",
+      "category": "Analyst Interpretation",
+      "confidence": "Medium",
+      "rationale": "Total debt to EBITDA leaves {T2R.4.t01.headroom|x} of headroom to the downgrade trigger on the latest reported fiscal year, and the base case widens it. In the downside case the cash interest coverage and free cash flow triggers are both reached in the first forecast year, so the pressure comes from the downside path rather than from today's figures.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  Total debt to EBITDA  Above  2.75x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  EBITDA to cash interest  Below  3.50x"
+       },
+       {
+        "source_id": "context",
+        "source_sha256": "e37416755a372f5078db549afb5cf34943907230ba9803fef2635dcc3f18be5b",
+        "locator": "line:31",
+        "quote": "\"rating\": \"BB\""
+       }
+      ],
+      "limitation": "The downside path rests on an analyst-chosen CP-2A shock and on CP-2G's analyst-assumed drivers."
+     },
+     {
+      "agency": "Moody's",
+      "view": "Stable",
+      "category": "Analyst Interpretation",
+      "confidence": "Low",
+      "rationale": "The net debt to EBITDA downgrade trigger leaves {T2R.4.t04.headroom|x} of headroom on the latest reported fiscal year and is not reached in the base case; in the downside case it is reached from the second forecast year. The upgrade trigger is reached in the base case only in the final forecast year, so an upgrade is not near.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "Moody's  Downgrade  Net debt to EBITDA  Above  2.25x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "Moody's  Upgrade  Net debt to EBITDA  Below  0.50x"
+       },
+       {
+        "source_id": "context",
+        "source_sha256": "e37416755a372f5078db549afb5cf34943907230ba9803fef2635dcc3f18be5b",
+        "locator": "line:38",
+        "quote": "\"rating\": \"Ba3\""
+       }
+      ],
+      "limitation": "Both agencies' terms are read at fiscal year end; sustained-period conditions are not stated in the source."
+     }
+    ],
+    "overall": {
+     "rationale": "On reported figures the issuer starts with {{FIG:total_leverage_reported|x}} total leverage and {{FIG:net_leverage_reported|x}} net leverage, inside every published downgrade trigger. The two agencies' ratings differ by {T2R.8.p01.notches|notches} on the combined scale, and the downside forecast, not the opening position, is what puts a rating review in reach.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Every forecast driver behind the forward headroom is an analyst assumption without a source citation."
+    },
+    "gaps": [
+     {
+      "gap": "No agency report states how long a trigger must be breached before a rating review.",
+      "why_it_matters": "Reaching a trigger in one fiscal year may not be a rating event, so the timing is the earliest possible, not the expected.",
+      "affected_analysis": "Trigger timing and migration view",
+      "severity": "Material",
+      "action": "Obtain the agencies' full criteria and rerun the trigger test."
+     }
+    ]
+   },
+   "tool_calls": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "ratings",
+      "first_page": 3,
+      "last_page": 3
+     },
+     "expect_spans": [
+      {
+       "source_id": "ratings",
+       "locator": "page:3"
+      }
+     ]
+    }
+   ]
+  },
+  "minified": {
+   "context": "context-minified.json",
+   "ratings_source": "positive",
+   "readiness_review": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "objective": "Historical financial foundation and rating trigger headroom",
+    "reporting_period": "Reported FY2025, four calendar quarters and opening balance",
+    "issuer_confirmed": true,
+    "sources": [
+     {
+      "source_id": "identity",
+      "document_family": "Identity note",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Accompanying identity note",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": []
+     },
+     {
+      "source_id": "financial",
+      "document_family": "Quarterly financial statements",
+      "authority": "issuer",
+      "entity": "Northbridge Synthetic Group",
+      "period": "Four quarters in 2025",
+      "version_relationship": "Unaudited quarterly source",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "document_family": "Agency rating summary",
+      "authority": "third_party",
+      "entity": "Northbridge Synthetic Group",
+      "period": "January 2026",
+      "version_relationship": "Summary of fictional agencies' published ratings and trigger terms",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitations": [
+       "Synthetic agency summary naming fictional agencies; not evidence about a real issuer."
+      ]
+     },
+     {
+      "source_id": "context",
+      "document_family": "User-supplied run context",
+      "authority": "unknown",
+      "entity": "Northbridge Synthetic Group",
+      "period": "2026-01-10",
+      "version_relationship": "User-supplied form download for this run",
+      "fidelity": "verified",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "f8caaf2324e232f9a2327f560ceb459b4d02d1d516d1276fddbbb0ffc08bd259",
+        "locator": "line:1",
+        "quote": "\"issuer_name\":\"Northbridge Synthetic Group\""
+       }
+      ],
+      "limitations": [
+       "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+      ]
+     }
+    ],
+    "consumers": [
+     {
+      "module_id": "CP-1",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2A",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 EBITDA, cash interest, free cash flow, debt and cash for one base period",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The downside pathway can run on settled CP-1 figures with inherited source and scope limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2G",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 operating, cash-flow and debt figures and the CP-2A scenarios and break register, with CP-1D supported earnings where selected",
+      "source_ids": [
+       "identity",
+       "financial"
+      ],
+      "rationale": "The forward model can run on settled upstream outputs with inherited source and scope limitations; driver values are analyst assumptions.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "module_id": "CP-2H",
+      "readiness": "READY_WITH_LIMITATIONS",
+      "evidence_demand": "Settled CP-1 reported ratios and the CP-2G credit-metric path, with the agencies' published ratings, scale mapping and trigger terms",
+      "source_ids": [
+       "identity",
+       "financial",
+       "ratings"
+      ],
+      "rationale": "The trigger headroom test can run on settled upstream outputs and the located agency summary with explicit limitations; trigger terms and ratings are the agencies' own.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "missing_source": null,
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable.",
+       "Synthetic agency summary naming fictional agencies; not evidence about a real issuer."
+      ]
+     }
+    ],
+    "gaps": [],
+    "analysis": [
+     {
+      "claim_id": "source-assessment",
+      "text": "Located statements and the agency summary support historical and rating-trigger analysis with limitations.",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       },
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+     }
+    ]
+   },
+   "cp1_source_context": {
+    "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+    "entities": [
+     {
+      "entity_id": "issuer",
+      "name": "Northbridge Synthetic Group",
+      "entity_type": "group",
+      "roles": [
+       "issuer"
+      ],
+      "fiscal_year_end": "December 31",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     }
+    ],
+    "sources": [
+     {
+      "source_id": "identity",
+      "classification": "nonfinancial",
+      "document_type": "Identity note",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "Identity only",
+      "analytical_use": "Issuer identity",
+      "citations": [
+       {
+        "source_id": "identity",
+        "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+        "locator": "page:1",
+        "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "Identity is not event evidence"
+     },
+     {
+      "source_id": "financial",
+      "classification": "financial",
+      "document_type": "Quarterly statements",
+      "published_on": "2026-01-10",
+      "evidence_class": "unaudited_without_auditor",
+      "evidence_rationale": "No auditor report",
+      "analytical_use": "Historical financial analysis",
+      "citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "Currency: USD; amounts in millions."
+       }
+      ],
+      "scopes": [
+       {
+        "scope_id": "opening-2024",
+        "entity_id": "issuer",
+        "period_label": "opening-2024",
+        "period_kind": "period_end",
+        "start_date": null,
+        "end_date": "2024-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q1-2025",
+        "entity_id": "issuer",
+        "period_label": "q1-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q2-2025",
+        "entity_id": "issuer",
+        "period_label": "q2-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-04-01",
+        "end_date": "2025-06-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q3-2025",
+        "entity_id": "issuer",
+        "period_label": "q3-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-07-01",
+        "end_date": "2025-09-30",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "q4-2025",
+        "entity_id": "issuer",
+        "period_label": "q4-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-10-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       },
+       {
+        "scope_id": "fy-2025",
+        "entity_id": "issuer",
+        "period_label": "fy-2025",
+        "period_kind": "historical_duration",
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "currency": "USD",
+        "unit": "MILLIONS",
+        "accounting_basis": "IFRS",
+        "entity_perimeter": "consolidated group",
+        "citations": [
+         {
+          "source_id": "financial",
+          "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+          "locator": "page:1",
+          "quote": "The opening balance is December 31, 2024."
+         }
+        ]
+       }
+      ],
+      "event_scan": "no_events_identified",
+      "event_scan_explanation": "Explicit no-event disclosure through as-of",
+      "event_scan_citations": [
+       {
+        "source_id": "financial",
+        "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+        "locator": "page:1",
+        "quote": "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026."
+       }
+      ],
+      "limitations": [
+       "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+      ]
+     },
+     {
+      "source_id": "ratings",
+      "classification": "nonfinancial",
+      "document_type": "Agency rating summary",
+      "published_on": "2026-01-10",
+      "evidence_class": "rating",
+      "evidence_rationale": "Summary of agency ratings and trigger terms; the agencies are fictional",
+      "analytical_use": "Rating trigger terms for CP-2H",
+      "citations": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:1",
+        "quote": "Ratings and outlooks are shown as published on the dates given. Page:2 maps each agency's scale to one combined scale."
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A ratings summary is not event evidence"
+     },
+     {
+      "source_id": "context",
+      "classification": "nonfinancial",
+      "document_type": "User-supplied run context",
+      "published_on": "2026-01-10",
+      "evidence_class": "internal",
+      "evidence_rationale": "User-supplied settings and names; authority unknown (D2)",
+      "analytical_use": "Run settings and user-stated names",
+      "citations": [
+       {
+        "source_id": "context",
+        "source_sha256": "f8caaf2324e232f9a2327f560ceb459b4d02d1d516d1276fddbbb0ffc08bd259",
+        "locator": "line:1",
+        "quote": "\"issuer_name\":\"Northbridge Synthetic Group\""
+       }
+      ],
+      "event_scan": "unassessed",
+      "event_scan_explanation": "A user-supplied run context is not event evidence"
+     }
+    ],
+    "limitations": [
+     "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+    ]
+   },
+   "cp1_readiness": {
+    "inputs_sha256": "{{INPUTS_SHA256}}",
+    "consumers": [
+     {
+      "entry": "CP-2A",
+      "requirements": [
+       {
+        "requirement": "cash_flow_metrics",
+        "status": "sufficient",
+        "evidence_ids": [
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Twelve-month levered free cash flow is available from the settled statements."
+       },
+       {
+        "requirement": "liquidity_data",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Closing cash is available; there is no revolving facility.",
+        "actions": [
+         "Confirm undrawn committed facilities with the debt schedule."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning applies to the downside stress."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2G",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi revenue, LTM Q4 25 basis}}",
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}",
+         "{{EVID:kpi undrawn_rcf, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month revenue, EBITDA, free cash flow, debt, cash and undrawn revolver give the forecast its base; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the forward model."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the base the forecast starts from."
+       }
+      ]
+     },
+     {
+      "entry": "CP-2H",
+      "requirements": [
+       {
+        "requirement": "consumer_specific_cp1_sufficiency",
+        "status": "limited",
+        "evidence_ids": [
+         "{{EVID:kpi ebitda, LTM Q4 25 basis}}",
+         "{{EVID:kpi fcf, LTM Q4 25 basis}}",
+         "{{EVID:kpi total_debt, LTM Q4 25 basis}}",
+         "{{EVID:kpi cash_closing, LTM Q4 25 basis}}"
+        ],
+        "rationale": "Settled twelve-month EBITDA, free cash flow, debt and cash give the reported ratios the triggers are tested against; the statements are unaudited.",
+        "actions": [
+         "Retain the unaudited-statement limitation in the trigger test."
+        ]
+       }
+      ],
+      "gaps": [
+       {
+        "gap_ids": [
+         "{{ALL narrative gap ids}}"
+        ],
+        "relevance": "relevant",
+        "evidence_ids": [],
+        "rationale": "Every retained source and context warning bears on the reliability of the ratios the triggers are tested against."
+       }
+      ]
+     }
+    ],
+    "note": "The CP-2A and CP-2G consumer entries are the frozen literals of cases/cp2g-owner/submissions.json cases.gap.cp1_readiness, unchanged; CP-2H is new with the CP-2A marker style ({{EVID:kpi <key>, LTM Q4 25 basis}} and {{ALL narrative gap ids}}, bound by cases/cp2a-owner/manifest.json run_time_bindings.cp1_readiness). The kpi keys ebitda, fcf, total_debt and cash_closing are the ones the frozen CP-2G entry already uses. {{INPUTS_SHA256}} is the content hash of the step's prefilled DownstreamInputs."
+   },
+   "rating_triggers": {
+    "views": [
+     {
+      "agency": "S&P",
+      "view": "Downgrade pressure",
+      "category": "Analyst Interpretation",
+      "confidence": "Medium",
+      "rationale": "Total debt to EBITDA leaves {T2R.4.t01.headroom|x} of headroom to the downgrade trigger on the latest reported fiscal year, and the base case widens it. In the downside case the cash interest coverage and free cash flow triggers are both reached in the first forecast year, so the pressure comes from the downside path rather than from today's figures.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  Total debt to EBITDA  Above  2.75x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "S&P  Downgrade  EBITDA to cash interest  Below  3.50x"
+       },
+       {
+        "source_id": "context",
+        "source_sha256": "f8caaf2324e232f9a2327f560ceb459b4d02d1d516d1276fddbbb0ffc08bd259",
+        "locator": "line:1",
+        "quote": "{\"agency\":\"S&P\",\"scope\":\"issuer\",\"rating\":\"BB\""
+       }
+      ],
+      "limitation": "The downside path rests on an analyst-chosen CP-2A shock and on CP-2G's analyst-assumed drivers."
+     },
+     {
+      "agency": "Moody's",
+      "view": "Stable",
+      "category": "Analyst Interpretation",
+      "confidence": "Low",
+      "rationale": "The net debt to EBITDA downgrade trigger leaves {T2R.4.t04.headroom|x} of headroom on the latest reported fiscal year and is not reached in the base case; in the downside case it is reached from the second forecast year. The upgrade trigger is reached in the base case only in the final forecast year, so an upgrade is not near.",
+      "evidence": [
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "Moody's  Downgrade  Net debt to EBITDA  Above  2.25x"
+       },
+       {
+        "source_id": "ratings",
+        "source_sha256": "e823f9732cd8a225cea5a54da1a0fca2444973a8c93c67c10b7901d169c5c666",
+        "locator": "page:3",
+        "quote": "Moody's  Upgrade  Net debt to EBITDA  Below  0.50x"
+       },
+       {
+        "source_id": "context",
+        "source_sha256": "f8caaf2324e232f9a2327f560ceb459b4d02d1d516d1276fddbbb0ffc08bd259",
+        "locator": "line:1",
+        "quote": "{\"agency\":\"Moody's\",\"scope\":\"issuer\",\"rating\":\"Ba3\""
+       }
+      ],
+      "limitation": "Both agencies' terms are read at fiscal year end; sustained-period conditions are not stated in the source."
+     }
+    ],
+    "overall": {
+     "rationale": "On reported figures the issuer starts with {{FIG:total_leverage_reported|x}} total leverage and {{FIG:net_leverage_reported|x}} net leverage, inside every published downgrade trigger. The two agencies' ratings differ by {T2R.8.p01.notches|notches} on the combined scale, and the downside forecast, not the opening position, is what puts a rating review in reach.",
+     "category": "Analyst Interpretation",
+     "confidence": "Medium",
+     "limitation": "Every forecast driver behind the forward headroom is an analyst assumption without a source citation."
+    },
+    "gaps": [
+     {
+      "gap": "No agency report states how long a trigger must be breached before a rating review.",
+      "why_it_matters": "Reaching a trigger in one fiscal year may not be a rating event, so the timing is the earliest possible, not the expected.",
+      "affected_analysis": "Trigger timing and migration view",
+      "severity": "Material",
+      "action": "Obtain the agencies' full criteria and rerun the trigger test."
+     }
+    ]
+   },
+   "tool_calls": [
+    {
+     "tool": "read_inputs",
+     "arguments": null
+    },
+    {
+     "tool": "read_pages",
+     "arguments": {
+      "source_id": "ratings",
+      "first_page": 3,
+      "last_page": 3
+     },
+     "expect_spans": [
+      {
+       "source_id": "ratings",
+       "locator": "page:3"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "refusal_payload": "composer-only refusals use cases.positive.rating_triggers"
+}

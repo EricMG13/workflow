@@ -58,7 +58,8 @@ ALIAS = ["CP-1", "CP-MODEL", "CP-1A", "CP-2", "CP-3B"]
 
 
 class Closed:
-    """One case: the promoted state, the CP-3-active template, and the closed run cloned from it."""
+    """One case: the promoted state, the CP-MODEL-stop template (CP-3 follows the publication),
+    and the closed run cloned from it."""
 
     def __init__(self, case: str, root: Path) -> None:
         self.case = case
@@ -67,6 +68,7 @@ class Closed:
         runs.through_cp2(self.template, self.pack, case)
         self.root = root / "closed"
         workflow = s1.clone_workflow(self.template, self.root)
+        runs.publish_stop(workflow)
         runs.close(workflow, case, self.root / "owner-receipt.json")
         self.store = Execution(self.root / "store")
         self.receipt = OwnerRunReceipt.model_validate_json(
@@ -77,7 +79,10 @@ class Closed:
         self.bindings = runs.cp1_bindings(self.store, list(ORACLE["submissions"]["figures"]))
 
     def fork(self, name: str) -> OwnerWorkflow:
-        return s1.clone_workflow(self.template, self.root.parent / name)
+        """A clone of the template, CP-MODEL published into its own directory: CP-3 active."""
+        workflow = s1.clone_workflow(self.template, self.root.parent / name)
+        runs.publish_stop(workflow)
+        return workflow
 
 
 @pytest.fixture(scope="module", params=CASES)
@@ -490,6 +495,7 @@ def blocked(closed_positive: Closed, tmp_path_factory: pytest.TempPathFactory) -
     root = tmp_path_factory.mktemp("blocked")
     workflow = s1.clone_workflow(closed_positive.promoted, root / "run")
     runs.blocked_through_cp2(workflow, closed_positive.pack, "positive")
+    runs.publish_stop(workflow)
     holder.root = root / "run"
     runs.close(workflow, "positive", holder.root / "owner-receipt.json")
     holder.store = Execution(holder.root / "store")

@@ -21,8 +21,9 @@ from deploy_vii.contracts import Contract, Identifier, Run, Status, Text
 
 EdgeRule = Literal["block", "restricted"]
 
-# CP-5 follows every selected analyst, CP-MODEL included (DC-5); challenge, exports and OS do not.
-_NOT_CP5_FAN_IN = frozenset({"CP-5", "CP-6", "CP-8", "CP-MEMO", "CP-OS"})
+# CP-5 follows every selected analyst except CP-MODEL, a stop in the owner walk (user ruling B1,
+# D12); challenge, exports and OS do not.
+_NOT_CP5_FAN_IN = frozenset({"CP-5", "CP-6", "CP-8", "CP-MEMO", "CP-MODEL", "CP-OS"})
 
 
 class Responsibility(Contract):
@@ -65,7 +66,8 @@ def dependencies(requested: tuple[str, ...]) -> dict[str, set[str]]:
         for module_id in selected
     }
     if "CP-5" in selected:
-        # QA follows every selected analyst; challenge and exports follow QA.
+        # QA follows every selected analyst except CP-MODEL (a stop in the owner walk, D12);
+        # challenge and exports follow QA.
         remaining["CP-5"] |= selected - _NOT_CP5_FAN_IN
 
     return remaining

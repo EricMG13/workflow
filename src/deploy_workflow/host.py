@@ -587,14 +587,12 @@ def _submission_schema(module_id: str, step_id: str) -> type[Contract]:
     """The schema a settled producer's retained submission is re-parsed under, chosen by the
     producer's module (rulings round 10 item 2, H1 F1): `STEPS` for a live-contract module's own
     step; the registered G1-X core's `SCHEMAS` for an owner-only module whose only step it is.
-    Anything else (CP-1B `earnings_delta`, a core not registered, another module's step) has no
+    Anything else (a core not registered, another module's step) has no
     authentication rule here and is refused `not_permitted` before any payload is read."""
     from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
 
     schema: object
-    try:
-        step_chain(module_id)
-    except ValueError:
+    if owner_workflow._owner_only(module_id):
         core = owner_workflow._CORES.get(module_id)
         schemas = getattr(core, "SCHEMAS", None)
         if (
@@ -602,7 +600,7 @@ def _submission_schema(module_id: str, step_id: str) -> type[Contract]:
             or step_id in STEPS
             or not isinstance(schemas, Mapping)
         ):
-            raise SourceError("not_permitted") from None
+            raise SourceError("not_permitted")
         schema = schemas.get(step_id)
     else:
         definition = STEPS.get(step_id)

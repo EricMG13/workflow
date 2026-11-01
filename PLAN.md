@@ -404,3 +404,14 @@ source/gap context. Model is not selected and no publication/download is invente
 Disjoint leaf implementation is admitted and active;
 full runtime requires accepted B1/A4 public implementations. Three actual fresh
 cases and native proof remain unverified, with broader PLAN still active.
+
+## Outstanding — run context file consumption (user, 2026-10-31)
+
+Plan approved; Phase 1 built: [docs/superpowers/plans/2026-10-31-context-file-consumption.md](docs/superpowers/plans/2026-10-31-context-file-consumption.md)
+(spec docs/CONTEXT-FILE-PROPOSAL.md; form docs/templates/context-form.html; decisions D1-D5
+as recommended). The workflow reads `context.json` into `Run` and the frozen pack; no module
+consumes its other settings yet (Phases 2-8).
+
+- [x] Phase 1 foundation: `deploy_workflow.context` reader, pack preparation, frozen-pack reader, CP-0 acceptance, run guide (Tasks 1-5). Branch `claude/context-consumption-phase-1-d4ab14` (2026-10-31), sent to the PR manager; Phase 1 rulings R-P1a-d in the plan; cross-plan review record `work/context-plan/cross-plan-review-2026-10-31.md`.
+- [ ] Part B orchestration O1-O7 (gaps G1-G11 from the Codex findings review; prerequisite for model testing; approved 2026-10-31, CP-DR decisions OD1-OD12; amended 2026-10-31 after the cross-plan review, R1-R7, and after the Part B review against 7c28060b, `work/context-plan/part-b-review-2026-10-31.md`; amendments await the user's review).
+- [ ] Phases 2-8 module consumers (identity/periods, market evidence, ratings, attachments/modes, pinned assumptions, valuation, periods/currency), each after its questions, oracle and lease.

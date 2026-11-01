@@ -1,0 +1,14 @@
+# Brief: NATL, portfolio_decision (case_id `natl-portfolio-decision`)
+- Issuer: NCR Atleos Corporation (CIK 0001974138). Calendar fiscal year. Cutoff and as_of: 2025-11-06.
+- Periods: FY2024Q4, FY2025Q1, FY2025Q2, FY2025Q3, FY2024. The latest balance sheet is 2025-09-30.
+- Sources: `NATL/` (4 10-Qs, the FY2024 10-K/A filed 2025-11-05, and the restated credit agreement of September 2025).
+- Pathway modules: CP-0, CP-1, CP-MODEL, CP-2, CP-3, CP-5, CP-6, CP-8.
+- context.json: run_type `research`, pathway `portfolio_decision`.
+  - attachments.portfolio_workbook and prior_case stay false.
+  - Both go in `needs_user_input`: CP-8 requires a prior case, and portfolio holdings, NAV and limits are user-supplied.
+- Scope:
+  - **Restatement:** what the 10-K/A restated (periods, nature, affected line items) as text facts with evidence. Codex's financial gold already carries original-versus-revised values, so do not duplicate them.
+  - **CP-2:** the debt stack at 2025-09-30 per instrument (principal, carrying amount, maturity, rate, ranking), revolver commitment, drawn and availability, and cash.
+  - **CP-2 and CP-4 terms** from the September 2025 restated credit agreement: facilities, commitments, maturity, pricing, financial covenants (type and level), and the effective date.
+  - **CP-3:** quotes are user input.
+  - **not_golden:** CP-5, CP-6, CP-MODEL. **CP-8** is user input.

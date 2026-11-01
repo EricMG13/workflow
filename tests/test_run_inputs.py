@@ -1,0 +1,453 @@
+"""Call-shape checks and source staging for run_pathway (O2 Task 2). Offline; no key read."""
+
+import os
+import signal
+from decimal import Decimal
+from pathlib import Path
+from typing import Any, Self
+
+import pytest
+
+from deploy_vii.preparation import MAX_BYTES, load_pack, prepare
+from deploy_workflow.context import ContextRefused
+from deploy_workflow.html_text import UndecodableHtml, convert_html
+from deploy_workflow.model import adapter as adapter_module
+from deploy_workflow.model.adapter import (
+    LiveAdapter,
+    LivePauseInForce,
+    RecordedAdapter,
+    live_adapter,
+)
+from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.run_inputs import (
+    AdapterRefused,
+    BadCap,
+    BadIdentifier,
+    BadSourceId,
+    CaseSource,
+    ConfigMismatch,
+    CpDrNotBuilt,
+    DuplicateSource,
+    PathwayMismatch,
+    RunDirExists,
+    RunDirInvalid,
+    SourceTooLarge,
+    SourceUnreadable,
+    StagedSourceChanged,
+    UnsupportedMedia,
+    check_arguments,
+    read_capped,
+    stage_sources,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
+HTML = b"<html><body><table><tr><td>Revenue</td><td>1,234</td></tr></table></body></html>"
+RULING = "lifts: live-provider-pause\nby: user\ndate: 2026-11-01\nconfigs: sol-medium\n"
+
+
+class ScriptAdapter:
+    """A live-calling duck type that reports no ruling: must be refused by exact type."""
+
+    config_id = "sol-medium"
+    ruling = None
+
+    def complete(self, *args: object, **kwargs: object) -> object:
+        raise AssertionError("never called")
+
+
+class SubRecorded(RecordedAdapter):
+    pass
+
+
+@pytest.fixture
+def args(tmp_path: Path) -> dict[str, Any]:
+    src = tmp_path / "in"
+    src.mkdir()
+    (src / "a.html").write_bytes(HTML)
+    (src / "b.txt").write_bytes(b"plain text\n")
+    return {
+        "case_id": "case-1",
+        "sources": [
+            CaseSource("s1", src / "a.html", "text/html"),
+            CaseSource("s2", src / "b.txt", "text/plain"),
+        ],
+        "context": ROOT / "cases/context/research-minimal.json",
+        "pathway": "credit_snapshot",
+        "model": MODEL,
+        "adapter": RecordedAdapter(MODEL, {}),
+        "cap_usd": Decimal(1),
+        "run_dir": tmp_path / "run",
+        "run_id": "run-1",
+    }
+
+
+def refused(args: dict[str, Any], error: type[Exception], **change: Any) -> None:
+    args = {**args, **change}
+    with pytest.raises(error):
+        check_arguments(**args)
+    assert not os.path.lexists(args["run_dir"])
+
+
+def test_valid_arguments_check_and_do_not_write(args: dict[str, Any]) -> None:
+    checked = check_arguments(**args)
+    assert [f.filename for f in checked.files] == ["s1.txt", "s2.txt", "context.json"]
+    assert checked.gate is None
+    assert not args["run_dir"].exists()
+
+
+def test_existing_run_dir_refused(args: dict[str, Any]) -> None:
+    args["run_dir"].mkdir()
+    with pytest.raises(RunDirExists):
+        check_arguments(**args)
+    assert list(args["run_dir"].iterdir()) == []
+
+
+def test_dangling_symlink_run_dir_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    link = tmp_path / "dangling"
+    link.symlink_to(tmp_path / "nowhere")
+    with pytest.raises(RunDirExists):
+        check_arguments(**{**args, "run_dir": link})
+    assert not (tmp_path / "nowhere").exists()
+
+
+def test_missing_parent_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    refused(args, RunDirInvalid, run_dir=tmp_path / "no" / "run")
+
+
+def test_duck_typed_adapter_with_no_ruling_refused(args: dict[str, Any]) -> None:
+    refused(args, AdapterRefused, adapter=ScriptAdapter())
+
+
+def test_subclass_of_recorded_adapter_refused(args: dict[str, Any]) -> None:
+    refused(args, AdapterRefused, adapter=SubRecorded(MODEL, {}))
+
+
+def test_config_mismatch_refused(args: dict[str, Any]) -> None:
+    other = ModelSpec("sol-high", "openai", "gpt-6.1-sol", "high")
+    refused(args, ConfigMismatch, adapter=RecordedAdapter(other, {}))
+
+
+@pytest.mark.parametrize("cap", [Decimal(0), Decimal(-1), Decimal("NaN"), Decimal("Infinity")])
+def test_bad_cap_refused(args: dict[str, Any], cap: Decimal) -> None:
+    refused(args, BadCap, cap_usd=cap)
+
+
+def test_float_cap_refused(args: dict[str, Any]) -> None:
+    refused(args, BadCap, cap_usd=1.0)
+
+
+@pytest.mark.parametrize("field", ["case_id", "run_id"])
+def test_bad_case_or_run_id_refused(args: dict[str, Any], field: str) -> None:
+    refused(args, BadIdentifier, **{field: "bad id"})
+
+
+def test_pathway_mismatch_refused(args: dict[str, Any]) -> None:
+    refused(args, PathwayMismatch, pathway="covenant_refinancing")
+
+
+def test_bad_context_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    bad = tmp_path / "bad.json"
+    bad.write_bytes(b"{}")
+    refused(args, ContextRefused, context=bad)
+
+
+@pytest.mark.parametrize("bad", ["bad id", "a/b", "../x", ""])
+def test_bad_source_id_refused(args: dict[str, Any], bad: str) -> None:
+    args["sources"][0] = CaseSource(bad, args["sources"][0].path, "text/html")
+    refused(args, BadSourceId)
+
+
+def test_reserved_source_id_case_variant_refused(args: dict[str, Any]) -> None:
+    args["sources"][0] = CaseSource("CONTEXT", args["sources"][0].path, "text/html")
+    refused(args, DuplicateSource)
+
+
+def test_reserved_source_id_refused(args: dict[str, Any]) -> None:
+    args["sources"][0] = CaseSource("context", args["sources"][0].path, "text/html")
+    refused(args, BadSourceId)
+
+
+@pytest.mark.parametrize("second", ["s1", "S1"])
+def test_duplicate_source_id_refused_after_casefold(args: dict[str, Any], second: str) -> None:
+    args["sources"][1] = CaseSource(second, args["sources"][1].path, "text/plain")
+    refused(args, DuplicateSource)
+
+
+def test_unsupported_media_refused(args: dict[str, Any]) -> None:
+    args["sources"][1] = CaseSource("s2", args["sources"][1].path, "text/csv")
+    refused(args, UnsupportedMedia)
+
+
+def test_undecodable_html_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    bad = tmp_path / "bad.html"
+    bad.write_bytes(b"<p>caf\xe9</p>")
+    args["sources"][0] = CaseSource("s1", bad, "text/html")
+    refused(args, UndecodableHtml)
+
+
+def test_cp_dr_refused(args: dict[str, Any]) -> None:
+    refused(args, CpDrNotBuilt, cp_dr=True)
+
+
+def test_over_cap_source_refused_and_read_is_bounded(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    big = tmp_path / "big.txt"
+    with big.open("wb") as handle:
+        handle.truncate(MAX_BYTES + 1)
+    sizes: list[int] = []
+    real = os.fdopen
+
+    class Spy:
+        def __init__(self, inner: Any) -> None:
+            self.inner = inner
+
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            self.inner.close()
+
+        def fileno(self) -> int:
+            return int(self.inner.fileno())
+
+        def read(self, size: int = -1) -> bytes:
+            sizes.append(size)
+            return bytes(self.inner.read(size))
+
+    monkeypatch.setattr(os, "fdopen", lambda fd, mode: Spy(real(fd, mode)))
+    args["sources"][1] = CaseSource("s2", big, "text/plain")
+    refused(args, SourceTooLarge)
+    assert sizes and max(sizes) == MAX_BYTES + 1 and -1 not in sizes
+
+
+def test_directory_source_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    args["sources"][1] = CaseSource("s2", tmp_path, "text/plain")
+    refused(args, SourceUnreadable)
+
+
+def test_fifo_source_refused_without_blocking(args: dict[str, Any], tmp_path: Path) -> None:
+    fifo = tmp_path / "pipe"
+    os.mkfifo(fifo)
+    args["sources"][1] = CaseSource("s2", fifo, "text/plain")
+    previous = signal.signal(signal.SIGALRM, lambda *_: pytest.fail("blocked on a FIFO"))
+    signal.alarm(5)
+    try:
+        refused(args, SourceUnreadable)
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
+
+
+def test_missing_source_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    args["sources"][1] = CaseSource("s2", tmp_path / "gone.txt", "text/plain")
+    refused(args, SourceUnreadable)
+
+
+def test_read_capped_returns_bytes(tmp_path: Path) -> None:
+    path = tmp_path / "f"
+    path.write_bytes(b"abc")
+    assert read_capped(path) == b"abc"
+
+
+def test_real_ruling_makes_live_adapter_raise() -> None:
+    with pytest.raises(LivePauseInForce):
+        live_adapter(MODEL, ROOT / "docs/rulings/2026-10-31-context-plan.md")
+
+
+def test_live_adapter_gate_is_read_once_from_the_adapter(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "rulings"
+    root.mkdir()
+    ruling = root / "lift.md"
+    ruling.write_text(RULING, encoding="utf-8")
+    monkeypatch.setattr(adapter_module, "LIVE_RULINGS_ROOT", root)
+    adapter = live_adapter(MODEL, ruling, environ={})
+    assert type(adapter) is LiveAdapter
+    # a later check against a different default root must not matter: the gate is the adapter's
+    monkeypatch.setattr(adapter_module, "LIVE_RULINGS_ROOT", tmp_path / "elsewhere")
+    checked = check_arguments(**{**args, "adapter": adapter})
+    assert checked.gate == adapter.gate
+    assert not args["run_dir"].exists()
+
+
+def test_stage_positive(args: dict[str, Any]) -> None:
+    checked = check_arguments(**args)
+    stage_sources(checked, args["run_dir"])
+    sources = args["run_dir"] / "sources"
+    assert sorted(p.name for p in sources.iterdir()) == ["context.json", "s1.txt", "s2.txt"]
+    assert (sources / "s1.txt").read_bytes() == convert_html(HTML).text.encode()
+    assert (sources / "s2.txt").read_bytes() == b"plain text\n"
+    pack = load_pack(args["run_dir"] / "pack")
+    assert [s.source_id for s in pack.sources] == ["s1", "s2", "context"]
+    assert next(s for s in pack.sources if s.source_id == "context").media_type == "text/plain"
+    assert all(s.status == "ready" for s in pack.sources)
+
+
+def test_stage_uses_the_bytes_read_not_a_second_read(args: dict[str, Any]) -> None:
+    checked = check_arguments(**args)
+    args["sources"][1].path.write_bytes(b"changed after the check\n")
+    stage_sources(checked, args["run_dir"])
+    assert (args["run_dir"] / "sources" / "s2.txt").read_bytes() == b"plain text\n"
+
+
+def test_lost_mkdir_race_writes_nothing(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked = check_arguments(**args)
+    other = args["run_dir"]
+    other.mkdir()
+
+    def lost(path: Any, *a: Any, **k: Any) -> None:
+        raise FileExistsError(path)
+
+    monkeypatch.setattr(os, "mkdir", lost)
+    with pytest.raises(RunDirExists):
+        stage_sources(checked, other)
+    assert list(other.iterdir()) == []
+
+
+def test_file_replaced_before_prepare_is_a_fault(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked = check_arguments(**args)
+    real = prepare
+
+    def swapping(request: Any, root: Path, destination: Path) -> Any:
+        (root / "s1.txt").write_bytes(b"tampered\n")
+        return real(request, root, destination)
+
+    monkeypatch.setattr("deploy_workflow.run_inputs.prepare", swapping)
+    with pytest.raises(StagedSourceChanged, match="prepare: source s1 changed"):
+        stage_sources(checked, args["run_dir"])
+    assert not (args["run_dir"] / "pack").exists()
+
+
+def test_file_vanished_before_prepare_is_a_fault(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked = check_arguments(**args)
+    real = prepare
+
+    def vanishing(request: Any, root: Path, destination: Path) -> Any:
+        (root / "s2.txt").unlink()
+        return real(request, root, destination)
+
+    monkeypatch.setattr("deploy_workflow.run_inputs.prepare", vanishing)
+    with pytest.raises(StagedSourceChanged, match="source s2 changed"):
+        stage_sources(checked, args["run_dir"])
+    assert not (args["run_dir"] / "pack").exists()
+
+
+def test_non_ready_status_with_matching_sha_is_a_fault(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked = check_arguments(**args)
+    real = prepare
+
+    def downgrading(request: Any, root: Path, destination: Path) -> Any:
+        pack = real(request, root, destination)
+        first = pack.sources[0].model_copy(update={"status": "unreadable", "limitation": "x"})
+        return pack.model_copy(update={"sources": (first, *pack.sources[1:])})
+
+    monkeypatch.setattr("deploy_workflow.run_inputs.prepare", downgrading)
+    with pytest.raises(StagedSourceChanged, match="source s1 changed"):
+        stage_sources(checked, args["run_dir"])
+    assert not (args["run_dir"] / "pack").exists()
+
+
+@pytest.mark.parametrize(
+    ("data", "media"),
+    [
+        (b"", "text/plain"),
+        (b"  \n\n", "text/plain"),
+        (b"not a pdf", "application/pdf"),
+        (b"not a zip", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        (b"<html><body></body></html>", "text/html"),
+    ],
+)
+def test_unready_source_refused_before_any_write(
+    args: dict[str, Any], tmp_path: Path, data: bytes, media: str
+) -> None:
+    bad = tmp_path / "bad.bin"
+    bad.write_bytes(data)
+    args["sources"][1] = CaseSource("s2", bad, media)
+    refused(args, SourceUnreadable)
+
+
+def test_nul_in_a_path_is_unreadable(args: dict[str, Any], tmp_path: Path) -> None:
+    nul = Path(str(tmp_path) + "/a\x00b")
+    refused(args, SourceUnreadable, context=nul)
+    args["sources"][1] = CaseSource("s2", nul, "text/plain")
+    refused(args, SourceUnreadable)
+
+
+def test_staged_files_are_private(args: dict[str, Any]) -> None:
+    stage_sources(check_arguments(**args), args["run_dir"])
+    for path in (args["run_dir"] / "sources").iterdir():
+        assert path.stat().st_mode & 0o777 == 0o600
+
+
+def test_converted_html_over_cap_refused(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    big = tmp_path / "big.html"
+    big.write_bytes(b"<meta charset=windows-1252><p>" + b"\xe9" * 1900 + b"</p>")
+    monkeypatch.setattr("deploy_workflow.run_inputs.MAX_BYTES", 2500)
+    args["sources"][0] = CaseSource("s1", big, "text/html")
+    refused(args, SourceTooLarge)
+
+
+def test_read_capped_refuses_a_device() -> None:
+    with pytest.raises(SourceUnreadable):
+        read_capped(Path("/dev/null"))
+
+
+def test_every_staged_file_carries_the_hash_of_the_bytes_read(args: dict[str, Any]) -> None:
+    """HTML is staged converted: ``sha256`` is the converted bytes', ``original_sha256`` the file's."""
+    import hashlib
+
+    checked = check_arguments(**args)
+    html, text, context = checked.files
+    assert html.original_sha256 == hashlib.sha256(HTML).hexdigest()
+    assert html.sha256 == hashlib.sha256(html.data).hexdigest() != html.original_sha256
+    assert text.original_sha256 == text.sha256 == hashlib.sha256(b"plain text\n").hexdigest()
+    raw = (ROOT / "cases/context/research-minimal.json").read_bytes()
+    assert context.original_sha256 == context.sha256 == hashlib.sha256(raw).hexdigest()
+
+
+def test_a_hard_link_planted_at_a_staging_path_is_refused_and_the_victim_survives(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A racer links a victim at ``sources/s1.txt`` between the mkdir and the write: ``resolve``
+    cannot see a hard link, so ``O_EXCL`` is the only defence (kills the no-``O_EXCL`` mutant)."""
+    checked = check_arguments(**args)
+    victim = tmp_path / "victim.txt"
+    victim.write_bytes(b"keep\n")
+    real_mkdir = os.mkdir
+
+    def planting(path: Any, *a: Any, **k: Any) -> None:
+        real_mkdir(path, *a, **k)
+        if str(path).endswith("sources"):
+            os.link(victim, os.path.join(path, "s1.txt"))
+
+    monkeypatch.setattr(os, "mkdir", planting)
+    with pytest.raises(FileExistsError):
+        stage_sources(checked, args["run_dir"])
+    assert victim.read_bytes() == b"keep\n"
+
+
+def test_the_run_dir_is_private(args: dict[str, Any]) -> None:
+    old = os.umask(0o022)
+    try:
+        stage_sources(check_arguments(**args), args["run_dir"])
+    finally:
+        os.umask(old)
+    assert args["run_dir"].stat().st_mode & 0o777 == 0o700
+
+
+def test_a_staged_file_carries_the_callers_media_type(args: dict[str, Any]) -> None:
+    checked = check_arguments(**args)
+    assert [f.media_type for f in checked.files] == ["text/html", "text/plain", "text/plain"]

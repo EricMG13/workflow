@@ -11,8 +11,8 @@ diffs too) → phase gate → PR Manager.
 
 | Phase | Plan file | State | Commits | Sent to PR Manager |
 |---|---|---|---|---|
-| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | complete: phase gate passed (52ee9de4), phase review approved, Lows 675221a9 | 5a00d7be..675221a9 (16 commits, list in PR Manager hand-off) | 2026-11-01, hold merge until O5 gate |
-| O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | building: Task 1 fix 2 in re-review; Task 2 fix 1 re-reviewed (M ModelSpec refusal open), fix 2 pending; Task 3/6 briefs amended for SentChargeUsage | a40986ec, 345c47d6, 44c9a8b2, 96b7526f, 61220cb9 | — |
+| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | complete: phase gate passed (52ee9de4), phase review approved, Lows 675221a9 | 5a00d7be..675221a9 (16 commits, list in PR Manager hand-off) | 2026-11-01, merge hold lifted (O5 gate passed) |
+| O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | complete: phase gate c38407a0, phase review fix 2605b745 approved; 2 Lows parked for the end-of-plan batch (O5 ledger 06:26); readiness/owner list work/context-plan/o5-readiness-and-owner-items.md | a40986ec..2605b745 (interleaved with O1 Lows and plan amendments) | 2026-11-01 |
 | O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | plan approved 5032faaa (2 rounds; new oracle cases/o2-synthetic) | — | — |
 | O3+O4 | docs/superpowers/plans/2026-10-31-part-b-o3-o4.md | plan approved (2 rounds) + N1 amendment (identity rebinding, whole-pack equality) | — | — |
 | O6 | docs/superpowers/plans/2026-10-31-part-b-o6.md | plan approved (2 rounds) | — | — |

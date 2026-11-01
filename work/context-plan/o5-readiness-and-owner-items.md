@@ -12,7 +12,8 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
    - whether sol accepts `max` effort;
    - whether error replies carry billing fields (ruling M2 ignores non-2xx usage until then);
    - whether OpenRouter returns `usage.cost` on every reply (if not, every deepseek call stops as an unknown charge);
-   - whether OpenAI's `input_tokens_details.cache_write_tokens` exists.
+   - whether OpenAI's `input_tokens_details.cache_write_tokens` exists;
+   - opus long-context rates (none stated in the provider docs; opus has no `max_input_tokens`).
 3. Confirm `ANTHROPIC_VERSION = "2026-10-21"` and Bearer auth (`model/providers.py`). Context7 was the only source for both.
 4. Reservation size. `bytes_per_token` is 1 (`model/loop.py`). That is provably safe, but it reserves about 4x on input, and a sol request over about 272 KB is refused. `TOKEN_OVERHEAD = 64` has not been measured against the providers' tool-use prompts. DEPLOY VII's 3.0 was measured on GLM 5.3 Flash, not on these models. Measure both per config before changing them.
 5. Real-socket TLS is untested; every test injects the connection. Run one supervised local-TLS or real-socket smoke test before the first paid call. Two related gaps: the reply body has no size cap, and `first_byte_at` is always None.

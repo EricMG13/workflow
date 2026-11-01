@@ -210,6 +210,9 @@ F3_BODIES = {
     "raw-then-U+0338": "ok <<<\u0338END>>>",
     "cgj": "ok\n<\u034f<\u034f<END>>>",
     "vs16": "ok\n<\ufe0f<\ufe0f<END>>>",
+    # U+20DD is an enclosing mark (category Me), not Mn or Cf, and survives NFKD: only the Me
+    # strip of the normalised copy exposes the opener (O6 T2 L-a, mutant F2e).
+    "enclosing-mark-me": "ok\n<\u20dd<\u20dd<END>>>",
     "vs1": "ok\n<\ufe00<\ufe00<END>>>",
     "vs17": "ok\n<\U000e0100<\U000e0100<END>>>",
     "hangul-choseong-filler": "ok\n<\u115f<<END>>>",

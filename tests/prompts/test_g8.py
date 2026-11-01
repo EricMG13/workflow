@@ -8,7 +8,7 @@ import re
 import pytest
 from prompt_support import request_for
 
-from deploy_vii.contracts import PATHWAY_MODULES
+from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_vii.live.prompts import STEP_CONTRACTS
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import live_consumers
@@ -43,9 +43,9 @@ def g8_line(system: str) -> str:
     return next(line for line in system.splitlines() if line.startswith(f"[{G8_RULE_ID}] "))
 
 
-def planned_system(pack: PreparedPack, preset: str) -> tuple[PreparedPack, str]:
+def planned_system(pack: PreparedPack, preset: PathwayId) -> tuple[PreparedPack, str]:
     run = pack.run.model_copy(
-        update={"pathway": preset, "requested_modules": PATHWAY_MODULES[preset]}  # type: ignore[index]
+        update={"pathway": preset, "requested_modules": PATHWAY_MODULES[preset]}
     )
     planned = pack.model_copy(update={"run": run})
     return planned, compose(request_for("source_readiness", planned, context=None))[0].text
@@ -53,7 +53,7 @@ def planned_system(pack: PreparedPack, preset: str) -> tuple[PreparedPack, str]:
 
 @pytest.mark.parametrize("preset", sorted(PATHWAY_MODULES))
 def test_the_cp0_prompt_states_exactly_the_planned_modules_in_plan_order(
-    pack: PreparedPack, preset: str
+    pack: PreparedPack, preset: PathwayId
 ) -> None:
     planned, system = planned_system(pack, preset)
     expected = live_consumers(planned)
@@ -72,7 +72,7 @@ def test_the_statement_is_the_ruled_sentence(pack: PreparedPack) -> None:
     assert module_set_statement(planned) == (
         f"The planned modules are exactly {listed}. Write one consumer judgment for each. "
         'Python writes "Run <id>" for READY or READY_WITH_LIMITATIONS; any lower readiness '
-        "refuses that module in this run, and every module that requires it."
+        "refuses that module in this run, and every planned module that depends on it."
     )
 
 
@@ -89,7 +89,9 @@ def test_the_g8_rule_is_in_the_list_and_its_statement_is_in_every_cp0_message(
     assert by_id[G8_RULE_ID].statement == G8_STATEMENT
     assert list(by_id)[-1] == G8_RULE_ID  # appended, nothing renumbered
     for preset in PATHWAY_MODULES:
-        assert G8_STATEMENT in g8_line(planned_system(pack, preset)[1])
+        planned, system = planned_system(pack, preset)
+        assert G8_STATEMENT in g8_line(system)
+        assert g8_line(system) == f"[{G8_RULE_ID}] {module_set_statement(planned)}"
 
 
 @pytest.mark.parametrize("step_id", sorted(STEP_CONTRACTS))
@@ -100,6 +102,21 @@ def test_every_composed_rule_carries_its_token(pack: PreparedPack, step_id: str)
     assert next(line for line in system.splitlines() if "compose.5]" in line).startswith(
         "[compose.5] 5. "
     )
+
+
+@pytest.mark.parametrize("step_id", sorted(STEP_CONTRACTS))
+def test_every_token_is_followed_by_its_own_rules_statement(
+    pack: PreparedPack, step_id: str
+) -> None:
+    """A swapped or stray token names a rule whose statement does not follow it (O6 T5 L1)."""
+    system = compose(request_for(step_id, pack))[0].text
+    own = {r.id: r.statement for r in rules.load_rules("compose")}
+    tokened = [line for line in system.splitlines() if TOKEN.match(line)]
+    assert len(tokened) >= 9
+    for line in tokened:
+        rule_id, rest = line[1:].split("] ", 1)
+        assert rule_id in own, line
+        assert own[rule_id] in rest, line
 
 
 @pytest.mark.parametrize("step_id", sorted(STEP_CONTRACTS))

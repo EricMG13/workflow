@@ -16,7 +16,7 @@ G8_RULE_ID = "source_readiness.g8"
 G8_STATEMENT = (
     'Write one consumer judgment for each. Python writes "Run <id>" for READY or '
     "READY_WITH_LIMITATIONS; any lower readiness refuses that module in this run, and every "
-    "module that requires it."
+    "planned module that depends on it."
 )
 
 

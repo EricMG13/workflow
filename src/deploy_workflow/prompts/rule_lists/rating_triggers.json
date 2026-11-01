@@ -57,7 +57,7 @@
   },
   {
    "id": "rating_triggers.5",
-   "statement": "Cite each quote verbatim under the locator of its page in the ratings source; a quote not on that page is refused.",
+   "statement": "Cite each quote verbatim: a context row at its `line:N` in the `context` source, and an agency-source row under the locator of its page in the ratings source; a quote not at that locator is refused.",
    "checks": [
     "oracle:cp2h:v16"
    ]

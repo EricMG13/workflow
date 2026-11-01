@@ -706,6 +706,18 @@ def test_dirty_paths_names_only_uncommitted_pinned_files(tmp_path: Path) -> None
     assert rules.dirty_paths([tmp_path / "a.py", tmp_path / "b.py"], root=tmp_path) == ["b.py"]
 
 
+def test_dirty_paths_names_an_untracked_pinned_file(tmp_path: Path) -> None:
+    """O6 T3 I-b: a pinned file no commit holds yet is as dirty as an edited one."""
+    (tmp_path / "a.py").write_text("x = 1\n")
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-q", "-m", "c")
+    (tmp_path / "new.py").write_text("z = 1\n")
+    (tmp_path / "other.py").write_text("not pinned\n")
+    pinned = [tmp_path / "a.py", tmp_path / "new.py"]
+    assert rules.dirty_paths(pinned, root=tmp_path) == ["new.py"]
+
+
 def test_the_golden_is_not_refreshed_or_written_from_a_dirty_tree(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

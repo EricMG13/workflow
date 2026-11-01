@@ -767,16 +767,23 @@ class DirtyTree(RuntimeError):
 
 
 def dirty_paths(paths: list[Path], root: Path = ROOT) -> list[str]:
-    """The paths (relative to ``root``) with uncommitted changes against HEAD, staged or not."""
+    """The paths (relative to ``root``) with uncommitted changes against HEAD, staged or not, or
+    that no commit holds yet (untracked and not ignored)."""
     relative = [p.relative_to(root).as_posix() for p in paths]
-    done = subprocess.run(
-        ["git", "diff", "HEAD", "--name-only", "--", *relative],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return sorted(done.stdout.split())
+    found: set[str] = set()
+    for args in (
+        ["diff", "HEAD", "--name-only"],
+        ["ls-files", "--others", "--exclude-standard"],
+    ):
+        done = subprocess.run(
+            ["git", *args, "--", *relative],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        found.update(done.stdout.split())
+    return sorted(found)
 
 
 def _require_clean() -> None:

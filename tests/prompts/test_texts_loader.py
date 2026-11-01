@@ -118,7 +118,7 @@ FROZEN: dict[str, str] = {
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
     "relative_value": ("b8693476b0f4e65871ddb987d1288c2a2f24641ee24a68eb90b4fa1c13454f52"),
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
-    "source_readiness": ("2c2f595691b8cd8e7e31dd2b7f447fc50d9b0e4ecb409907c9115bef1d644ea0"),
+    "source_readiness": ("f79002b0b6dba89b493fdd93f8baf1c8aa914bd71102370c1d0a6e6fca62f2b6"),
 }
 
 

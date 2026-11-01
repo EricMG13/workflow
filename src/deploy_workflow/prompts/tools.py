@@ -90,6 +90,12 @@ def offered_schema(spec: StepSpec) -> dict[str, Any]:
     models = _models(spec.schema)
     _exact_nulls(schema["properties"], spec.schema)
     for name, definition in schema.get("$defs", {}).items():
+        if name not in models:
+            raise PromptError(
+                f"schema definition {name!r} of step {spec.step_id} is not a model class "
+                "reachable from its schema (an Enum or another non-model type), so its nulls "
+                "cannot be made exact"
+            )
         _exact_nulls(definition.get("properties", {}), models[name])
     return schema
 

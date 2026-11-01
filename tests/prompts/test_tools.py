@@ -156,3 +156,21 @@ def test_f1_the_other_nullable_fields_keep_their_other_types() -> None:
     assert {"type": "string"} in offered["$defs"]["SourceAssessment"]["properties"]["entity"][
         "anyOf"
     ]
+
+
+def test_a_defs_entry_that_is_not_a_model_is_a_named_error_not_a_keyerror() -> None:
+    """O6 T2 Info: a CP-0 schema holding an Enum has a ``$defs`` entry no model class carries; the
+    refusal names it (a ``PromptError``) instead of a bare ``KeyError``."""
+    from dataclasses import replace
+    from enum import Enum
+
+    from deploy_vii.contracts import Contract
+
+    class Colour(Enum):
+        RED = "red"
+
+    class WithEnum(Contract):
+        colour: Colour = Colour.RED
+
+    with pytest.raises(PromptError, match="Colour"):
+        offered_schema(replace(cp0_spec(), schema=WithEnum))

@@ -214,7 +214,14 @@ def price_usage(
 
 
 def computed_usd(provider: str | None, price: ModelPrice, usage: Usage) -> Decimal | None:
-    """The token-based charge, or None when a needed count is absent or inconsistent."""
+    """The token-based charge, or None when a needed count is absent or inconsistent. Input over
+    the context the table has rates for is unknown: it is never priced at the standard rates."""
+    if (
+        price.max_input_tokens is not None
+        and usage.input_tokens is not None
+        and usage.input_tokens > price.max_input_tokens
+    ):
+        return None
     if provider == "anthropic":
         return _anthropic(price, usage)
     if provider == "openrouter" and usage.cache_write_tokens:

@@ -16,6 +16,7 @@ from deploy_workflow.model.pricing import (
     ContextTooLong,
     ModelPrice,
     NoPrice,
+    Priced,
     PricingError,
     computed_usd,
     money_text,
@@ -178,9 +179,6 @@ def test_error_reply_usage_is_charged_like_a_200() -> None:
     got = price_usage("sol-medium", Usage(input_tokens=1000, output_tokens=90000))
     assert got.cost_status == "computed"
     assert got.usd == (1000 * D(2) + 90000 * D(10)) / 10**6
-    no_cached = price_usage("sol-medium", Usage(input_tokens=1000, output_tokens=90000))
-    assert no_cached.cost_status == "computed"
-    assert no_cached.usd == got.usd
 
 
 def test_inconsistent_inclusive_counts_are_unknown() -> None:
@@ -194,3 +192,25 @@ def test_money_text_and_refusal_values() -> None:
     assert refusal_values() == (D(0), D(0), "computed")
     with pytest.raises(PricingError):
         money_text(D("NaN"))
+
+
+def test_sol_usage_over_272k_input_is_unknown_not_standard_rate() -> None:
+    at_limit = Usage(input_tokens=272_000, cached_read_tokens=0, output_tokens=10)
+    assert price_usage("sol-medium", at_limit).cost_status == "computed"
+    over = Usage(input_tokens=272_001, cached_read_tokens=0, output_tokens=10)
+    assert price_usage("sol-high", over) == Priced(None, "unknown")
+    assert price_usage("sol-high", over, offline=True) == Priced(None, "unknown")
+
+
+def test_negative_amounts_are_refused() -> None:
+    with pytest.raises(PricingError):
+        ModelPrice(input=D(-1), cache_write=D(1), output=D(1))
+    with pytest.raises(PricingError):
+        price_usage("deepseek-max", Usage(input_tokens=1, output_tokens=1), D(-1))
+
+
+def test_offline_openrouter_cache_write_is_unknown() -> None:
+    usage = Usage(input_tokens=100, cached_read_tokens=0, cache_write_tokens=10, output_tokens=1)
+    assert price_usage("deepseek-max", usage, offline=True) == Priced(None, "unknown")
+    clean = Usage(input_tokens=100, cached_read_tokens=0, cache_write_tokens=0, output_tokens=1)
+    assert price_usage("deepseek-max", clean, offline=True).cost_status == "computed"

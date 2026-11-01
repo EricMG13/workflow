@@ -19,6 +19,12 @@ Stops: an unknown charge or an overrun stops the run (``RunStopped``). The one e
 single ``retry_of`` reserve naming an unknown hold that the caller marked ``retryable`` (5xx or
 cut stream); that retry lifts the stop of the hold it names, the hold itself stays counted. An
 overrun is never retryable.
+
+The stop for an unknown charge ``c`` lifts only when the retry naming it (``retry_of == c``) has
+settled with a number (not unknown, not an overrun). A retry is used once it is reserved. A retry
+is refused while any overrun, any other unresolved unknown or any crash-left marker stands. A
+crash-left id is cleared only by ``settle(id, actual)``, never by ``release``. A failed marker
+write sets a sticky stop.
 """
 
 from __future__ import annotations
@@ -27,11 +33,12 @@ import json
 import os
 import re
 import threading
+from collections.abc import Iterable
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Context, Decimal, Inexact, InvalidOperation
 from pathlib import Path
 
-from deploy_workflow.model.pricing import money_text, refusal_values
+from deploy_workflow.model.pricing import money_text, price_of, refusal_values
 
 __all__ = [
     "Budget",
@@ -48,6 +55,8 @@ __all__ = [
 AUDIT = "owner-run-audit"  # owner_workflow.AUDIT
 RESERVATIONS = "reservations"
 _SETTLED = ".settled"
+# Money sums must be exact: a sum wider than the context raises instead of rounding.
+_EXACT = Context(prec=120, traps=[InvalidOperation, Inexact])
 _ID = re.compile(r"[A-Za-z0-9_-]+")
 
 
@@ -118,11 +127,27 @@ def _write_once(path: Path, payload: dict[str, object]) -> None:
         os.fsync(fd)
     finally:
         os.close(fd)
-    dir_fd = os.open(path.parent, os.O_RDONLY)
+    _fsync_dir(path.parent)
+
+
+def _fsync_dir(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY)
     try:
-        os.fsync(dir_fd)
+        os.fsync(fd)
     finally:
-        os.close(dir_fd)
+        os.close(fd)
+
+
+def _make_dirs(target: Path) -> None:
+    """mkdir -p, then fsync the parent of every directory this call created."""
+    missing: list[Path] = []
+    probe = target
+    while not probe.exists():
+        missing.append(probe)
+        probe = probe.parent
+    for directory in reversed(missing):
+        directory.mkdir()
+        _fsync_dir(directory.parent)
 
 
 def _decimal_text(name: str, value: object) -> Decimal:
@@ -150,11 +175,14 @@ class Budget:
     def __init__(self, cap_usd: Decimal, run_dir: Path) -> None:
         self._cap = _decimal("cap_usd", cap_usd)
         self._dir = Path(run_dir) / AUDIT / RESERVATIONS
+        # ponytail: single-process runner. Add an exclusive flock on owner-run-audit/ if a second
+        # process can share an Execution dir (two Budgets over one dir are not coordinated).
         self._lock = threading.Lock()
         self._holds: dict[str, _Hold] = {}
         self._settled: dict[str, _Settlement] = {}
         self._crash_left: set[str] = set()
-        self._dir.mkdir(parents=True, exist_ok=True)
+        self._faulted = False
+        _make_dirs(self._dir)
         self._load()
 
     def _load(self) -> None:
@@ -212,20 +240,48 @@ class Budget:
             return tuple(sorted(c for c in self._holds if c not in self._settled))
 
     def _reserved(self) -> Decimal:
-        return sum((h.usd for c, h in self._holds.items() if c not in self._settled), Decimal(0))
+        return self._sum(h.usd for c, h in self._holds.items() if c not in self._settled)
 
     def _spent(self) -> Decimal:
-        return sum((s.usd for s in self._settled.values()), Decimal(0))
+        return self._sum(s.usd for s in self._settled.values())
+
+    @staticmethod
+    def _sum(values: Iterable[Decimal]) -> Decimal:
+        total = Decimal(0)
+        for value in values:
+            total = _EXACT.add(total, value)
+        return total
 
     def _retried(self) -> set[str]:
         return {h.retry_of for h in self._holds.values() if h.retry_of is not None}
 
-    def _stopped(self) -> bool:
-        retried = self._retried()
-        return bool(self._crash_left) or any(
-            s.status == "overrun" or (s.status == "unknown" and c not in retried)
-            for c, s in self._settled.items()
-        )
+    def _resolved(self) -> set[str]:
+        """Unknown charges whose retry settled with a number."""
+        return {
+            h.retry_of
+            for c, h in self._holds.items()
+            if h.retry_of is not None
+            and c in self._settled
+            and self._settled[c].status == "settled"
+        }
+
+    def _stops(self, *, except_unknown: str | None = None) -> str | None:
+        """Why the run is stopped, or None."""
+        if self._faulted:
+            return "a marker write failed"
+        if self._crash_left:
+            return "a reservation left unsettled by a crash"
+        resolved = self._resolved()
+        for call_id, settlement in self._settled.items():
+            if settlement.status == "overrun":
+                return f"{call_id!r} overran its reservation"
+            if (
+                settlement.status == "unknown"
+                and call_id not in resolved
+                and call_id != except_unknown
+            ):
+                return f"{call_id!r} has an unknown charge"
+        return None
 
     # -- operations -------------------------------------------------------------------
 
@@ -236,30 +292,44 @@ class Budget:
         amount = _decimal("usd", usd)
         if not isinstance(config_id, str) or not config_id:
             raise BudgetError("config_id must be a non-empty string")
+        price_of(config_id)  # NoPrice for a configuration the table does not cover
         with self._lock:
             if retry_of is None:
-                if self._stopped():
-                    raise RunStopped("an unknown charge or an overrun stopped the run")
+                reason = self._stops()
+                if reason is not None:
+                    raise RunStopped(f"the run is stopped: {reason}")
             else:
                 self._check_retry(_call_id(retry_of))
-            if self._reserved() + self._spent() + amount > self._cap:
+            committed = _EXACT.add(_EXACT.add(self._reserved(), self._spent()), amount)
+            if committed > self._cap:
                 raise BudgetExhausted(
                     f"reserving {money_text(amount)} passes the cap {money_text(self._cap)}"
                 )
-            _write_once(
+            self._write(
                 self._dir / call_id,
                 {"usd": str(amount), "config_id": config_id, "retry_of": retry_of},
             )
             self._holds[call_id] = _Hold(amount, config_id, retry_of)
 
     def _check_retry(self, retry_of: str) -> None:
-        if self._crash_left:
-            raise RunStopped("a reservation left unsettled by a crash stopped the run")
         if self._retried():
             raise RetryUsed("the run's one retry was already taken")
+        reason = self._stops(except_unknown=retry_of)
+        if reason is not None:
+            raise RunStopped(f"a retry is refused: {reason}")
         settlement = self._settled.get(retry_of)
         if settlement is None or settlement.status != "unknown" or not settlement.retryable:
             raise RunStopped(f"{retry_of!r} is not a retryable unknown-charge hold")
+
+    def _write(self, path: Path, payload: dict[str, object]) -> None:
+        """A failed write after the create-once file may exist leaves unknown state: stop."""
+        try:
+            _write_once(path, payload)
+        except DuplicateCall:
+            raise
+        except OSError:
+            self._faulted = True
+            raise
 
     def settle(self, call_id: str, actual: Decimal | None, *, retryable: bool = False) -> None:
         """Replace the hold with ``actual`` (releasing the difference), or with ``None`` keep
@@ -284,6 +354,10 @@ class Budget:
         call_id = _call_id(call_id)
         with self._lock:
             self._open_hold(call_id)
+            if call_id in self._crash_left:
+                raise RunStopped(
+                    f"{call_id!r} may have been sent; settle it with its actual charge"
+                )
             self._record(call_id, _Settlement("released", Decimal(0), False))
 
     def _open_hold(self, call_id: str) -> _Hold:
@@ -295,7 +369,7 @@ class Budget:
         return hold
 
     def _record(self, call_id: str, settlement: _Settlement) -> None:
-        _write_once(
+        self._write(
             self._dir / (call_id + _SETTLED),
             {
                 "status": settlement.status,

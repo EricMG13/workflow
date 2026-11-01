@@ -16,6 +16,7 @@ from deploy_workflow.model.budget import (
     RetryUsed,
     RunStopped,
 )
+from deploy_workflow.model.pricing import NoPrice
 
 D = Decimal
 CFG = "sol-medium"
@@ -131,7 +132,7 @@ def test_new_budget_recomputes_from_markers(tmp_path: Path) -> None:
     again = Budget(D("1"), tmp_path)
     assert (again.reserved, again.spent) == (D("0.25"), D("0.1"))
     assert again.unsettled == ("a",)
-    again.release("a")
+    again.settle("a", D("0.1"))
     with pytest.raises(DuplicateCall):
         _reserve(again, "a", "0.1")
 
@@ -189,6 +190,7 @@ def test_inputs_are_validated(tmp_path: Path) -> None:
 
 
 def test_marker_is_fsynced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    budget = Budget(D("1"), tmp_path)
     synced: list[int] = []
     real = os.fsync
 
@@ -197,7 +199,7 @@ def test_marker_is_fsynced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
         real(fd)
 
     monkeypatch.setattr(os, "fsync", recording_fsync)
-    _reserve(Budget(D("1"), tmp_path), "a", "0.1")
+    _reserve(budget, "a", "0.1")
     assert len(synced) == 2  # the file and its directory
 
 
@@ -214,7 +216,7 @@ def test_crash_left_unsettled_marker_stops_the_run(tmp_path: Path) -> None:
         _reserve(again, "b", "0.1", retry_of="a")
     with pytest.raises(RunStopped):  # a legitimate retryable hold does not lift the crash stop
         _reserve(again, "b", "0.1", retry_of="ok")
-    again.release("a")  # the operator clears it
+    again.settle("a", D("0.1"))  # the operator clears it
     _reserve(again, "b", "0.1", retry_of="ok")
 
 
@@ -222,3 +224,165 @@ def test_in_flight_reservation_does_not_stop_the_same_run(tmp_path: Path) -> Non
     b = Budget(D("1"), tmp_path)
     _reserve(b, "a", "0.1")
     _reserve(b, "b", "0.1")
+
+
+def test_release_refuses_a_crash_left_id(tmp_path: Path) -> None:
+    _reserve(Budget(D("1"), tmp_path), "a", "0.9")
+    again = Budget(D("1"), tmp_path)
+    with pytest.raises(RunStopped):
+        again.release("a")
+    assert again.reserved == D("0.9")
+    again.settle("a", None)  # unknown keeps it counted and the run stopped
+    assert again.spent == D("0.9")
+    with pytest.raises(RunStopped):
+        _reserve(again, "b", "0.05")
+
+
+def _unknown_then_retry(tmp_path: Path) -> Budget:
+    b = Budget(D("1"), tmp_path)
+    _reserve(b, "a", "0.1")
+    b.settle("a", None, retryable=True)
+    _reserve(b, "r", "0.1", retry_of="a")
+    return b
+
+
+def test_stop_lifts_only_when_the_retry_settles_with_a_number(tmp_path: Path) -> None:
+    b = _unknown_then_retry(tmp_path)
+    with pytest.raises(RunStopped):  # retry still in flight
+        _reserve(b, "n1", "0.1")
+    b.release("r")  # retry never sent
+    with pytest.raises(RunStopped):
+        _reserve(b, "n2", "0.1")
+    with pytest.raises(RetryUsed):  # reserved once means used
+        _reserve(b, "r2", "0.1", retry_of="a")
+    with pytest.raises(RunStopped):
+        _reserve(Budget(D("1"), tmp_path), "n3", "0.1")
+
+
+def test_retry_settled_unknown_or_overrun_keeps_the_stop(tmp_path: Path) -> None:
+    b = _unknown_then_retry(tmp_path)
+    b.settle("r", None)
+    with pytest.raises(RunStopped):
+        _reserve(b, "n", "0.1")
+    other = _unknown_then_retry(tmp_path / "o")
+    with pytest.raises(OverrunStop):
+        other.settle("r", D("0.2"))
+    with pytest.raises(RunStopped):
+        _reserve(other, "n", "0.1")
+
+
+def test_retry_settled_with_a_number_lifts_the_stop(tmp_path: Path) -> None:
+    b = _unknown_then_retry(tmp_path)
+    b.settle("r", D("0.05"))
+    _reserve(b, "n", "0.1")
+    b.settle("n", D("0.1"))
+    _reserve(Budget(D("1"), tmp_path), "n2", "0.1")
+
+
+def _stopped_by_overrun_and_unknown(tmp_path: Path, other: str) -> Budget:
+    b = Budget(D("1"), tmp_path)
+    _reserve(b, "a", "0.1")
+    _reserve(b, "b", "0.1")
+    b.settle("a", None, retryable=True)
+    if other == "overrun":
+        with pytest.raises(OverrunStop):
+            b.settle("b", D("0.3"))
+    else:
+        b.settle("b", None)
+    return b
+
+
+@pytest.mark.parametrize("other", ["overrun", "unknown"])
+def test_retry_is_refused_while_another_stop_stands(tmp_path: Path, other: str) -> None:
+    b = _stopped_by_overrun_and_unknown(tmp_path, other)
+    for budget in (b, Budget(D("1"), tmp_path)):
+        with pytest.raises(RunStopped):
+            _reserve(budget, "r", "0.1", retry_of="a")
+
+
+def test_retry_is_admitted_when_nothing_else_stands(tmp_path: Path) -> None:
+    b = Budget(D("1"), tmp_path)
+    _reserve(b, "a", "0.1")
+    b.settle("a", None, retryable=True)
+    again = Budget(D("1"), tmp_path)
+    _reserve(again, "x", "0.1", retry_of="a")  # nothing else stands: admitted
+
+
+def test_write_failure_sets_a_sticky_stop(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    b = Budget(D("1"), tmp_path)
+    _reserve(b, "a", "0.1")
+    real = os.fsync
+
+    def failing(fd: int) -> None:
+        if os.path.isdir(f"/dev/fd/{fd}"):
+            raise OSError(5, "EIO")
+        real(fd)
+
+    monkeypatch.setattr(os, "fsync", failing)
+    with pytest.raises(OSError):
+        b.settle("a", D("0.3"))
+    monkeypatch.setattr(os, "fsync", real)
+    with pytest.raises(RunStopped):
+        _reserve(b, "n", "0.85")
+    with pytest.raises(RunStopped):
+        _reserve(b, "r", "0.1", retry_of="a")
+
+
+def test_reserve_write_failure_sets_a_sticky_stop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    b = Budget(D("1"), tmp_path)
+    real = os.fsync
+
+    def failing(fd: int) -> None:
+        raise OSError(5, "EIO")
+
+    monkeypatch.setattr(os, "fsync", failing)
+    with pytest.raises(OSError):
+        _reserve(b, "a", "0.1")
+    monkeypatch.setattr(os, "fsync", real)
+    with pytest.raises(RunStopped):
+        _reserve(b, "b", "0.1")
+
+
+def test_directories_created_are_fsynced_into_their_parents(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    inodes: list[int] = []
+    real = os.fsync
+
+    def recording(fd: int) -> None:
+        inodes.append(os.fstat(fd).st_ino)
+        real(fd)
+
+    monkeypatch.setattr(os, "fsync", recording)
+    Budget(D("1"), tmp_path)
+    audit = tmp_path / "owner-run-audit"
+    assert {tmp_path.stat().st_ino, audit.stat().st_ino} <= set(inodes)
+
+
+def test_cap_comparison_is_exact(tmp_path: Path) -> None:
+    b = Budget(D("1"), tmp_path)
+    _reserve(b, "a", "0.5")
+    with pytest.raises(BudgetExhausted):
+        _reserve(b, "b", "0.5000000000000000000000000000001")
+    c = Budget(D("1"), tmp_path / "full")
+    _reserve(c, "a", "1")
+    with pytest.raises(BudgetExhausted):
+        _reserve(c, "t", "1E-40")
+
+
+def test_reserve_refuses_an_unpriced_config(tmp_path: Path) -> None:
+    b = Budget(D("1"), tmp_path)
+    with pytest.raises(NoPrice):
+        b.reserve("a", D("0.1"), config_id="opus-high")
+    assert not (_marker_dir(tmp_path) / "a").exists()
+
+
+def test_settled_marker_with_an_unknown_status_fails_closed(tmp_path: Path) -> None:
+    _reserve(Budget(D("1"), tmp_path), "a", "0.1")
+    (_marker_dir(tmp_path) / "a.settled").write_text(
+        json.dumps({"status": "paid", "usd": "0", "retryable": False})
+    )
+    with pytest.raises(BudgetError):
+        Budget(D("1"), tmp_path)

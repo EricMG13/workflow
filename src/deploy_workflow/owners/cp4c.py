@@ -1023,12 +1023,16 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
 
 
 def _gap_label_issues(sub: RestructuringSubmission) -> list[str]:
-    """A gap line joins the own limitations beside Python's pinned line, so a model-written copy
-    of that line is refused (P6-P13, shared with CP-3D)."""
+    """A gap line, a claim name and a valuation label join the own limitations beside Python's
+    pinned line, so a model-written copy of that line in any of them is refused (P6-P13, shared
+    with CP-3D). The valuation label is lowercased there; the normaliser folds case."""
+    fields = (
+        *((f"gaps[{i}].gap", g.gap) for i, g in enumerate(sub.gaps)),
+        *((f"claims[{i}].name", c.name) for i, c in enumerate(sub.claims)),
+        *((f"valuation[{i}].label", v.label) for i, v in enumerate(sub.valuation)),
+    )
     return [
-        f"gaps[{i}].gap: {PIN_LABEL_FORGED}"
-        for i, g in enumerate(sub.gaps)
-        if pin_label_forged(MODULE_ID, g.gap)
+        f"{path}: {PIN_LABEL_FORGED}" for path, text in fields if pin_label_forged(MODULE_ID, text)
     ]
 
 

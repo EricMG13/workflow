@@ -74,9 +74,9 @@
   },
   {
    "id": "downside_pathway.7",
-   "statement": "Do not write Python's pinned-shock-size line in a gap, in any case or spacing; Python adds that line when shock sizes are pinned.",
+   "statement": "Do not write Python's pinned-shock-size line in a gap or a threshold label, in any case or spacing; Python adds that line when shock sizes are pinned.",
    "checks": [
-    "fn:deploy_workflow.owners.cp2a:validate"
+    "fn:deploy_workflow.owners.cp2a:_gap_label_issues"
    ]
   }
  ]

@@ -502,3 +502,24 @@ def test_a_gap_cannot_carry_the_pinned_label(
     assert f"gaps[{len(payload['gaps']) - 1}].gap: {cp3d.PIN_LABEL_FORGED}" in _issues(
         store, attempt
     )
+
+
+@pytest.mark.parametrize("field", ["claim_name", "valuation_label"])
+def test_a_claim_name_or_valuation_label_cannot_carry_the_pinned_label(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    """Both are interpolated into Python limitation sentences (round 2 M1-b)."""
+    store, _, attempt = _seed(tmp_path, monkeypatch, None, "gap")
+    payload = tm._bind_all(copy.deepcopy(tm._payload("gap")), "gap")
+    line = pinned_line("CP-4C")
+    if field == "claim_name":
+        index = next(
+            i for i, c in enumerate(payload["claims"]) if c["amount_source"] == "not_stated"
+        )
+        payload["claims"][index]["name"] = line
+        path = f"claims[{index}].name"
+    else:
+        payload["valuation"][0]["label"] = line
+        path = "valuation[0].label"
+    connect._submit(store, attempt, json.dumps(payload))
+    assert f"{path}: {cp3d.PIN_LABEL_FORGED}" in _issues(store, attempt)

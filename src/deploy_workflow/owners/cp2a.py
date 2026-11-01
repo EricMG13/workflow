@@ -701,9 +701,23 @@ def validate(inputs: Inputs) -> tuple[str, ...]:
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
             path = f"gaps[{n}].{name}"
             issues += _prose_issues(path, getattr(gap, name), bound, inputs.names)
-        if pin_label_forged(MODULE_ID, gap.gap):  # the gap text joins the limitations (P6-P13)
-            issues.append(f"gaps[{n}].gap: {PIN_LABEL_FORGED}")
+    issues += _gap_label_issues(sub)
     return tuple(dict.fromkeys(issues))
+
+
+def _gap_label_issues(sub: DownsideSubmission) -> list[str]:
+    """A gap line and a threshold label join the own limitations beside Python's pinned line, so
+    a model-written copy of that line in either is refused (P6-P13, shared with CP-3D)."""
+    found = [
+        f"gaps[{n}].gap: {PIN_LABEL_FORGED}"
+        for n, g in enumerate(sub.gaps)
+        if pin_label_forged(MODULE_ID, g.gap)
+    ]
+    return found + [
+        f"thresholds[{n}].label: {PIN_LABEL_FORGED}"
+        for n, t in enumerate(sub.thresholds)
+        if pin_label_forged(MODULE_ID, t.label)
+    ]
 
 
 # --- composition ------------------------------------------------------------------------------

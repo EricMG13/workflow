@@ -100,7 +100,7 @@
   },
   {
    "id": "restructuring_fulcrum.10",
-   "statement": "Do not write Python's pinned-multiple line in a gap, in any case or spacing; Python adds that line when a multiple is pinned.",
+   "statement": "Do not write Python's pinned-multiple line in a gap, a claim name or a valuation label, in any case or spacing; Python adds that line when a multiple is pinned.",
    "checks": [
     "fn:deploy_workflow.owners.cp4c:_gap_label_issues"
    ]

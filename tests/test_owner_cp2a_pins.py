@@ -320,3 +320,22 @@ def test_a_gap_that_only_mentions_pins_is_not_refused(
     cp2a.submit(store, attempt.ticket_id, cp2a.STEP_ID, json.dumps(payload), None)
     done = next(a for a in store.read().attempts if a.ticket_id == attempt.ticket_id)
     assert not [i for i in done.issues if PIN_LABEL_FORGED in i]
+
+
+@pytest.mark.parametrize(
+    ("metric", "level"), [("total_leverage", "0.0001"), ("interest_coverage", "999999")]
+)
+def test_a_threshold_label_cannot_carry_the_pinned_label(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, metric: str, level: str
+) -> None:
+    """A threshold label is interpolated into a Python limitation sentence (round 2 M1-b)."""
+    store, _, facts = _seed(tmp_path, monkeypatch, None)
+    payload = _payload("no_context", facts)
+    first = copy.deepcopy(payload["thresholds"][0])
+    first.update({"metric": metric, "level": level, "label": pinned_line("CP-2A")})
+    payload["thresholds"] = [first, *payload["thresholds"]][:3]
+    attempt = store.begin(cp2a.MODULE_ID)
+    cp2a.submit(store, attempt.ticket_id, cp2a.STEP_ID, json.dumps(payload), None)
+    done = next(a for a in store.read().attempts if a.ticket_id == attempt.ticket_id)
+    assert "thresholds[0].label: " + PIN_LABEL_FORGED in done.issues
+    assert not [h for h in store.read().heads if h.module_id == cp2a.MODULE_ID]

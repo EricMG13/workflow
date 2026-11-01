@@ -191,6 +191,8 @@ class MarketContext:
     context_observations: Mapping[str, Observation] = field(default_factory=dict)
     context_facilities: Mapping[str, str] = field(default_factory=dict)
     context_dates: Mapping[str, date] = field(default_factory=dict)
+    # row id -> the index of the `quotes[i]` it came from: a bid and an offer pair only within one
+    context_quote_rows: Mapping[str, int] = field(default_factory=dict)
     # One `context source unreadable: <reason>` per reason the file cannot be used, in order.
     context_errors: tuple[str, ...] = ()
 
@@ -253,6 +255,16 @@ SINGLE_DEALER_CONTEXT = (
     "Single dealer quotation from the context file (user-supplied); trading activity is not read"
 )
 # quote kind -> (observation kind, quote field) in offer order
+BY_PYTHON = "context market evidence is built by Python; cite it by row id"
+PAIR_ISSUE = (
+    "observations[{i}] and observations[{j}]: a context bid or offer must pair with the other "
+    "side of the same context quote row"
+)
+SINGLE_ONE_SIDE_CONTEXT = (
+    "Single dealer quotation from the context file (user-supplied) with only the {side} "
+    "observed; trading activity is not read"
+)
+TALK_FROM_CONTEXT = "Indicative talk from the context file (user-supplied)."
 _OFFERED: Mapping[str, tuple[tuple[str, str], ...]] = {
     "observed": (("bid", "bid"), ("offer", "ask")),
     "indicative_talk": (("indicative_talk", "price"),),
@@ -270,14 +282,15 @@ class _Offers:
     observations: Mapping[str, Observation]
     facilities: Mapping[str, str]
     dates: Mapping[str, date]
+    quote_rows: Mapping[str, int]
     errors: tuple[str, ...]
 
 
-_NO_OFFERS = _Offers({}, {}, {}, ())
+_NO_OFFERS = _Offers({}, {}, {}, {}, ())
 
 
 def _refused(*problems: str) -> _Offers:
-    return _Offers({}, {}, {}, tuple(UNREADABLE + problem for problem in problems))
+    return _Offers({}, {}, {}, {}, tuple(UNREADABLE + problem for problem in problems))
 
 
 def _quote_offers(source: Source, index: int, quote: ContextQuote) -> list[Observation]:
@@ -317,23 +330,30 @@ def context_offers(pack: PreparedPack) -> _Offers:
     try:
         _readable(pack)  # before any span is indexed
         facts = context_facts(pack)
+        if facts is None:
+            return _NO_OFFERS
+        return _offers_of(pack, facts.quotes)
     except ContextTextError as error:
         return _refused(str(error))
     except ContextRefused as refused:
         return _refused(*refused.problems)
-    if facts is None:
-        return _NO_OFFERS
+
+
+def _offers_of(pack: PreparedPack, quotes: Sequence[ContextQuote]) -> _Offers:
+    """The observations of the loaded quotes, in context order (ids `o01`...)."""
     source = next(s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID)
     observations: dict[str, Observation] = {}
     facilities: dict[str, str] = {}
     dates: dict[str, date] = {}
-    for index, quote in enumerate(facts.quotes):
+    quote_rows: dict[str, int] = {}
+    for index, quote in enumerate(quotes):
         for built in _quote_offers(source, index, quote):
             row = f"o{len(observations) + 1:02d}"
             observations[row] = built.model_copy(update={"context_row": row})
             facilities[row] = quote.facility_id
             dates[row] = date.fromisoformat(quote.as_of)
-    return _Offers(observations, facilities, dates, ())
+            quote_rows[row] = index
+    return _Offers(observations, facilities, dates, quote_rows, ())
 
 
 def _standalone(o: Observation) -> bool:
@@ -362,6 +382,18 @@ def expand_context_rows(
         return submission
     expanded = tuple(_expanded(o, context) for o in submission.observations)
     return submission.model_copy(update={"observations": expanded})
+
+
+def _talk_label(submission: MarketImpliedSubmission, said: Sequence[str]) -> list[str]:
+    """The user-supplied label for a context talk when no single-dealer line already says it."""
+    from_context = any(
+        o.kind == "indicative_talk" and o.context_row is not None for o in submission.observations
+    )
+    return (
+        [TALK_FROM_CONTEXT]
+        if from_context and not any("(user-supplied)" in x for x in said)
+        else []
+    )
 
 
 def _stale_lines(submission: MarketImpliedSubmission, context: MarketContext | None) -> list[str]:
@@ -784,6 +816,9 @@ def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | Non
         out.add(f"{path}: kind {o.kind} is not one of bid, offer, indicative_talk")
         return None
     unlisted = o.context_row is None  # a listed context row is Python's, not the sheet's
+    if unlisted and o.source_id == CONTEXT_SOURCE_ID:  # whatever CP-0 classes the source
+        out.add(f"{path}: {BY_PYTHON}")
+        return None
     if unlisted and o.source_id in out.context.pages and o.source_id not in out.context.third_party:
         out.add(f"{path}: source {o.source_id} is not a third_party source (CP-0 T3)")
         return None
@@ -855,8 +890,25 @@ def _check_observation(
         dates[o.kind] = parsed
 
 
+def _side_rows(
+    sub: MarketImpliedSubmission, context: MarketContext
+) -> dict[str, tuple[int, int | None]]:
+    """For the first bid and the first offer: its position and the context quote row it came from
+    (None for a sheet observation). Empty when a side names an unlisted row."""
+    sides: dict[str, tuple[int, int | None]] = {}
+    for i, o in enumerate(sub.observations):
+        if o.kind in ("bid", "offer") and o.kind not in sides:
+            listed = _listed(o, context) if o.context_row is not None else None
+            if o.context_row is not None and listed is None:
+                return {}  # the unlisted row has its own issue
+            row = None if listed is None else context.context_quote_rows[listed.context_row or ""]
+            sides[o.kind] = (i, row)
+    return sides
+
+
 def _check_facilities(sub: MarketImpliedSubmission, out: _Issues) -> None:
-    """All observations of a submission share one context facility (ruling Q2)."""
+    """All observations of a submission share one context facility (ruling Q2). A context bid and
+    offer are one quote row's (P3-P21): never a context side with a sheet side, nor two rows."""
     facilities = {
         out.context.context_facilities[o.context_row]
         for o in sub.observations
@@ -864,6 +916,12 @@ def _check_facilities(sub: MarketImpliedSubmission, out: _Issues) -> None:
     }
     if len(facilities) > 1:
         out.add(MIXED_FACILITIES)
+        return
+    sides = _side_rows(sub, out.context)
+    if len(sides) == 2:
+        (i, bid), (j, offer) = sides["bid"], sides["offer"]
+        if (bid is not None or offer is not None) and bid != offer:
+            out.add(PAIR_ISSUE.format(i=i, j=j))
 
 
 def _check_observations(sub: MarketImpliedSubmission, out: _Issues) -> date | None:
@@ -1879,9 +1937,11 @@ def absence_paths(submission: MarketImpliedSubmission) -> tuple[str, ...]:
 def _single_dealer(sub: MarketImpliedSubmission) -> list[str]:
     """Ruling 6b C1: the single-dealer limitation, keyed on the observed sides only."""
     sides = [k for k in ("bid", "offer") if any(o.kind == k for o in sub.observations)]
+    from_context = any(o.context_row is not None and o.kind in sides for o in sub.observations)
     if len(sides) == 2:
-        from_context = any(o.context_row is not None and o.kind in sides for o in sub.observations)
         return [SINGLE_DEALER_CONTEXT if from_context else SINGLE_DEALER_SHEET]
+    if sides and from_context:
+        return [SINGLE_ONE_SIDE_CONTEXT.format(side=sides[0])]
     if sides:
         return [
             (
@@ -1904,7 +1964,9 @@ def own_limitations(
             "No third-party market quotation source is in the pack, so no market level is shown"
         )
     else:
-        out += _single_dealer(sub)
+        said = _single_dealer(sub)
+        out += said
+        out += _talk_label(sub, said)
     out += _stale_lines(sub, context)
     out += [x.limitation for x in sub.technicals if x.limitation]
     if any(o.kind == "indicative_talk" for o in sub.observations):
@@ -2176,6 +2238,7 @@ def upstream_of(*, pack: PreparedPack, cp0: Module) -> Upstream:
         context_observations=offers.observations,
         context_facilities=offers.facilities,
         context_dates=offers.dates,
+        context_quote_rows=offers.quote_rows,
         context_errors=offers.errors,
     )
     return Upstream(context, tuple(dict.fromkeys((*cp0.limitations, *cp0.inherited_limitations))))

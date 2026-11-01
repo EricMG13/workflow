@@ -28,6 +28,7 @@ CITED_ARRAYS: tuple[str, ...] = ("quotes", "deal_terms")  # Phase 4 appends "rat
 STALE_DAYS = 30  # a quote more than this many whole days before the run as-of is stale
 UNREADABLE = "context source unreadable: "
 
+_BOM = "not valid JSON (Unexpected UTF-8 BOM (decode using utf-8-sig) at line 1)"
 _SPACE = " \t\n\r"
 _DECODER = json.JSONDecoder()
 
@@ -37,7 +38,7 @@ class ContextTextError(ValueError):
 
 
 @dataclass(frozen=True)
-class Member:
+class _Member:
     """Where one string member of a row sits in the text: the key's and the value's opening quote,
     the offset after the value's closing quote, and the row object's `{`."""
 
@@ -54,7 +55,10 @@ def context_text(source: Source) -> str:
         raise ContextTextError(f"media type is {source.media_type}, not text/plain")
     if any("\n" in span.text for span in source.spans):
         raise ContextTextError("a span holds more than one line")
-    return "\n".join(span.text for span in source.spans)
+    text = "\n".join(span.text for span in source.spans)
+    if text.startswith("\ufeff"):  # the json module's own refusal, worded as the engine words it
+        raise ContextTextError(_BOM)
+    return text
 
 
 class _Walk:
@@ -63,7 +67,7 @@ class _Walk:
     def __init__(self, text: str) -> None:
         self.text = text
         self.at = 0
-        self.found: dict[str, Member] = {}
+        self.found: dict[str, _Member] = {}
         self.arrays: set[str] = set()
 
     def peek(self) -> str:
@@ -75,17 +79,22 @@ class _Walk:
 
     def expect(self, char: str) -> None:
         if self.peek() != char:
-            raise ValueError(f"expected {char!r} at offset {self.at}")
+            raise ContextTextError(f"expected {char!r} at offset {self.at}")
         self.at += 1
         self.skip()
 
     def value(self) -> object:
-        decoded, self.at = _DECODER.raw_decode(self.text, self.at)
+        try:
+            decoded, self.at = _DECODER.raw_decode(self.text, self.at)
+        except json.JSONDecodeError as error:
+            raise ContextTextError(
+                f"not valid JSON ({error.msg} at line {error.lineno})"
+            ) from error
         return decoded
 
     def key(self) -> str:
         if self.peek() != '"':
-            raise ValueError(f"member name at offset {self.at} is not text")
+            raise ContextTextError(f"member name at offset {self.at} is not text")
         name: str
         name, self.at = _DECODER.raw_decode(self.text, self.at)
         return name
@@ -96,8 +105,10 @@ class _Walk:
         if self.peek() == ",":
             self.at += 1
             self.skip()
+            if self.peek() == close:
+                raise ContextTextError(f"trailing comma before {close!r} at offset {self.at}")
         elif self.peek() != close:
-            raise ValueError(f"expected ',' or {close!r} at offset {self.at}")
+            raise ContextTextError(f"expected ',' or {close!r} at offset {self.at}")
 
     def row(self, prefix: str) -> None:
         start = self.at
@@ -111,14 +122,14 @@ class _Walk:
             if isinstance(self.value(), str):
                 path = f"{prefix}.{name}"
                 if path in self.found:
-                    raise ValueError(f"duplicate member {path}")
-                self.found[path] = Member(key_start, value_start, self.at, start)
+                    raise ContextTextError(f"duplicate member {path}")
+                self.found[path] = _Member(key_start, value_start, self.at, start)
             self.after("}")
         self.at += 1
 
     def array(self, name: str) -> None:
         if name in self.arrays:
-            raise ValueError(f"{name} appears more than once")
+            raise ContextTextError(f"{name} appears more than once")
         self.arrays.add(name)
         self.expect("[")
         index = 0
@@ -132,7 +143,7 @@ class _Walk:
         self.at += 1
         self.skip()
 
-    def top(self) -> dict[str, Member]:
+    def top(self) -> dict[str, _Member]:
         self.skip()
         self.expect("{")
         while self.peek() != "}":
@@ -144,22 +155,26 @@ class _Walk:
             else:
                 self.value()
             self.after("}")
+        self.at += 1
+        self.skip()
+        if self.at != len(self.text):
+            raise ContextTextError(f"text after the top-level object at offset {self.at}")
         return self.found
 
 
-def members(text: str) -> dict[str, Member]:
+def _members(text: str) -> dict[str, _Member]:
     """Every string member of the rows of the cited arrays, by `<array>[i].<field>`. Raises
-    `ValueError` on text that is not a JSON object."""
+    `ContextTextError` on text that is not a JSON object."""
     return _Walk(text).top()
 
 
 def value_offsets(text: str) -> dict[str, int]:
     """The offset of each row string value's opening `"` in `text`, by `<array>[i].<field>`.
-    Raises `ValueError` on text that is not a JSON object."""
-    return {path: member.value_start for path, member in members(text).items()}
+    Raises `ContextTextError` on text that is not a JSON object."""
+    return {path: member.value_start for path, member in _members(text).items()}
 
 
-def _cite_member(source: Source, text: str, member: Member) -> Citation | None:
+def _cite_member(source: Source, text: str, member: _Member) -> Citation | None:
     """One figure's citation, or None when no single span of the file holds it uniquely."""
     if "\\" in text[member.value_start : member.value_end] or source.sha256 is None:
         return None
@@ -185,17 +200,17 @@ def _cite_member(source: Source, text: str, member: Member) -> Citation | None:
 def cite(source: Source, path: str) -> Citation | None:
     """The citation of the figure at `path` (`quotes[0].bid`): locator `line:<n>`, the quote as
     the file writes it. None when the figure cannot be cited as one unique span. Raises
-    `ContextTextError` for a source that cannot be read by line, `ValueError` for text that is not
-    a JSON object and `KeyError` for a path that is not a string member of a cited row."""
+    `ContextTextError` for a source that cannot be read by line or text that is not a JSON object
+    and `KeyError` for a path that is not a string member of a cited row."""
     text = context_text(source)
-    return _cite_member(source, text, members(text)[path])
+    return _cite_member(source, text, _members(text)[path])
 
 
 def cite_all(source: Source, paths: Sequence[str]) -> tuple[Citation, ...] | None:
     """The citations of the figures at `paths`, in order; None unless every one cites. The text is
     walked once. Errors as `cite`."""
     text = context_text(source)
-    found = members(text)
+    found = _members(text)
     cited: list[Citation] = []
     for path in paths:
         citation = _cite_member(source, text, found[path])

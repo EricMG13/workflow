@@ -16,7 +16,7 @@ from typing import Any, cast
 
 import pytest
 
-from deploy_vii.contracts import Run, Source, Span
+from deploy_vii.contracts import Fact, Run, Source, Span
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.owners import cp3d
 
@@ -38,6 +38,17 @@ SINGLE_NEW = (
     "Single dealer quotation from the context file (user-supplied); trading activity is not read"
 )
 UNREADABLE = "context source unreadable: "
+BY_PYTHON = "context market evidence is built by Python; cite it by row id"
+PAIR = (
+    "observations[{i}] and observations[{j}]: a context bid or offer must pair with the other "
+    "side of the same context quote row"
+)
+TALK_LABEL = "Indicative talk from the context file (user-supplied)."
+SINGLE_ONE_SIDE = (
+    "Single dealer quotation from the context file (user-supplied) with only the {side} "
+    "observed; trading activity is not read"
+)
+BOM_ISSUE = "not valid JSON (Unexpected UTF-8 BOM (decode using utf-8-sig) at line 1)"
 
 # The frozen CP-3D positive at HEAD before this change (N1: a no-context submission and its report
 # keep their hashes).
@@ -221,7 +232,8 @@ def test_the_talk_period_reads_the_row_date_not_the_page() -> None:
     """P3-P9: `published` keyed by (source, locator) is never fed context lines."""
     up = upstream("observed-and-talk")
     assert up.context.published == base._context("positive").published
-    assert up.context.context_dates["o03"] == date(2026, 1, 10)
+    oracle = EXP["positive_observed_and_talk"]["context_dates"]
+    assert up.context.context_dates["o03"] == date.fromisoformat(oracle["o03"])
 
 
 @pytest.mark.parametrize("case", ["cp3d-filled-context-row", "cp3d-unknown-context-row"])
@@ -289,9 +301,7 @@ def test_context_not_third_party_ok_only_when_listed() -> None:
         {**o.model_dump(), "context_row": None} for o in up.context.context_observations.values()
     ]
     refused = issues_of(submission(written_out), up)
-    assert refused == [
-        f"observations[{i}]: source context is not a third_party source (CP-0 T3)" for i in range(3)
-    ]
+    assert refused == [f"observations[{i}]: {BY_PYTHON}" for i in range(3)]
 
 
 def test_other_sources_keep_third_party_rule() -> None:
@@ -409,10 +419,7 @@ def test_single_dealer_text_for_context() -> None:
     both = cp3d.own_limitations(submission(by_row("o01", "o02", "o03")), up.context)
     assert both[0] == SINGLE_NEW and SINGLE_OLD not in both
     one_side = cp3d.own_limitations(submission(by_row("o01", "o03")), up.context)
-    assert one_side[0] == (
-        "Single dealer quotation with only the bid observed; trading activity in the "
-        "period to the quotation date is not read"
-    )
+    assert one_side[0] == SINGLE_ONE_SIDE.format(side="bid")
     assert SINGLE_NEW not in one_side
     talk_only = cp3d.own_limitations(submission(by_row("o03")), up.context)
     assert SINGLE_NEW not in talk_only and SINGLE_OLD not in talk_only
@@ -447,3 +454,244 @@ def test_a_context_pack_leaves_the_sheet_report_unchanged_but_for_the_context_pa
     assert with_context.tables == without.tables
     assert with_context.claims == without.claims
     assert with_context.own_limitations == without.own_limitations
+
+
+# --- fix round 1 -------------------------------------------------------------------------------
+
+
+def third_party_context_upstream(name: str = "observed-and-talk") -> cp3d.Upstream:
+    """CP-0 classes the `context` source third_party (the F3 bypass)."""
+    fact = Fact(fact_id="T3.context.authority", label="T3.context.authority", text="third_party")
+    cp0 = conn._cp0("positive")
+    cp0 = cp0.model_copy(update={"facts": (*cp0.facts, fact)})
+    return cp3d.upstream_of(pack=context_pack(name), cp0=cp0)
+
+
+def test_a_model_written_context_observation_is_refused_whatever_cp0_says() -> None:
+    up = third_party_context_upstream()
+    assert "context" in up.context.third_party
+    sheet = POSITIVE["observations"]
+    by_hand = {
+        "kind": "indicative_talk",
+        "source_id": "context",
+        "locator": "line:33",
+        "quote": '"yield_pct": "8.25"',
+        "level_text": "8.25",
+        "as_of_text": None,
+        "context_row": None,
+    }
+    assert issues_of(submission([sheet[0], sheet[1], by_hand]), up) == [
+        f"observations[2]: {BY_PYTHON}"
+    ]
+    copied = {**up.context.context_observations["o03"].model_dump(), "context_row": None}
+    assert issues_of(submission([sheet[0], sheet[1], copied]), up) == [
+        f"observations[2]: {BY_PYTHON}"
+    ]
+    assert issues_of(submission(by_row("o01", "o02", "o03")), up) == []
+
+
+def test_a_context_bid_and_offer_must_come_from_one_quote_row() -> None:
+    up = upstream("observed-and-talk")
+    sheet = POSITIVE["observations"]
+    assert issues_of(submission([by_row("o01")[0], sheet[1]]), up) == [PAIR.format(i=0, j=1)]
+    assert issues_of(submission([sheet[0], by_row("o02")[0]]), up) == [PAIR.format(i=0, j=1)]
+    assert issues_of(submission([by_row("o02")[0], by_row("o01")[0]]), up) == []
+    sheet_pair_with_talk = [sheet[0], sheet[1], by_row("o03")[0]]
+    assert issues_of(submission(sheet_pair_with_talk), up) == []
+
+
+def test_two_context_rows_never_pair() -> None:
+    d = json.loads((CASE / "contexts/observed-and-talk.json").read_text())
+    d["quotes"].append({**d["quotes"][0], "bid": "98.40", "ask": "98.90", "provider": "Dealer C"})
+    up = cp3d.upstream_of(
+        pack=context_pack("observed-and-talk", json.dumps(d, indent=2).encode()),
+        cp0=conn._cp0("positive"),
+    )
+    ids = {(o.kind, o.level_text): r for r, o in up.context.context_observations.items()}
+    bid, offer = ids[("bid", "98.50")], ids[("offer", "98.90")]
+    assert issues_of(submission(by_row_in(up, bid, offer)), up) == [PAIR.format(i=0, j=1)]
+    own, other = ids[("bid", "98.40")], ids[("offer", "98.90")]
+    assert issues_of(submission(by_row_in(up, own, other)), up) == []
+
+
+def by_row_in(up: cp3d.Upstream, *rows: str) -> list[dict[str, Any]]:
+    return [
+        {
+            "kind": up.context.context_observations[r].kind,
+            "source_id": "",
+            "locator": "",
+            "quote": "",
+            "level_text": "",
+            "as_of_text": None,
+            "context_row": r,
+        }
+        for r in rows
+    ]
+
+
+def test_a_cross_row_pair_in_two_facilities_is_only_a_facility_issue() -> None:
+    up = upstream("unmatched")
+    assert issues_of(submission(REFUSALS["cp3d-mixed-facilities"]["observations"]), up) == [
+        "observations mix context facilities"
+    ]
+
+
+def test_context_labels_name_the_user_supplied_file() -> None:
+    up = upstream("observed-and-talk")
+    sheet = POSITIVE["observations"]
+    one_bid = cp3d.own_limitations(submission(by_row("o01")), up.context)
+    assert one_bid[0] == SINGLE_ONE_SIDE.format(side="bid")
+    one_offer = cp3d.own_limitations(submission(by_row("o02")), up.context)
+    assert one_offer[0] == SINGLE_ONE_SIDE.format(side="offer")
+    talk_only = cp3d.own_limitations(submission(by_row("o03")), up.context)
+    assert TALK_LABEL in talk_only
+    with_sheet = cp3d.own_limitations(
+        submission([sheet[0], sheet[1], by_row("o03")[0]]), up.context
+    )
+    assert with_sheet[0] == SINGLE_OLD and TALK_LABEL in with_sheet
+    full = cp3d.own_limitations(submission(by_row("o01", "o02", "o03")), up.context)
+    assert TALK_LABEL not in full  # the context pair line already says it
+    bid_and_talk = cp3d.own_limitations(submission(by_row("o01", "o03")), up.context)
+    assert bid_and_talk[0] == SINGLE_ONE_SIDE.format(side="bid") and TALK_LABEL not in bid_and_talk
+    sheet_talk = cp3d.own_limitations(base._submission(POSITIVE), up.context)
+    assert TALK_LABEL not in sheet_talk
+
+
+def test_a_double_bom_context_is_a_named_issue() -> None:
+    raw = b"\xef\xbb\xbf" + (CASE / "contexts/observed-and-talk.json").read_bytes()
+    one = cp3d.upstream_of(pack=context_pack("observed-and-talk", raw), cp0=conn._cp0("positive"))
+    assert one.context.context_errors == ()  # preparation strips one BOM
+    two_raw = b"\xef\xbb\xbf" + raw
+    two = cp3d.upstream_of(
+        pack=context_pack("observed-and-talk", two_raw), cp0=conn._cp0("positive")
+    )
+    assert two.context.context_errors == (UNREADABLE + BOM_ISSUE,)
+    assert two.context.context_observations == {}
+    assert issues_of(submission(by_row("o01")), two) == [UNREADABLE + BOM_ISSUE]
+
+
+def test_a_file_the_walk_refuses_is_a_named_issue(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The walk's own failures are the named `ContextTextError`, caught where the offers are built."""
+    from deploy_workflow import context_cites
+
+    def refuse(*_: object) -> None:
+        raise context_cites.ContextTextError("expected ',' or ']' at offset 7")
+
+    monkeypatch.setattr(cp3d, "cite_all", refuse)
+    up = upstream("observed-and-talk")
+    assert up.context.context_errors == (UNREADABLE + "expected ',' or ']' at offset 7",)
+
+
+# --- properties the first round left unpinned (mutants D04, D19, D29, D29b, D36, D39, D56) ----
+
+
+def test_a_row_with_an_uncitable_unoffered_figure_is_not_offered() -> None:
+    """D04: B20a covers yield and spread, which are never offered."""
+    good = (CASE / "contexts/observed-and-talk.json").read_bytes()
+    bad = good.replace(
+        b'"yield_pct": "8.25",\n      "spread_bps": "340",',
+        b'"yield_pct": "8.25", "spread_bps": "340",',
+    )
+    assert bad != good
+    data = cp3d.context_observations_data(
+        cp3d.upstream_of(pack=context_pack("observed-and-talk", bad), cp0=conn._cp0("positive"))
+    )
+    assert [(d["row"], d["kind"]) for d in data] == [("o01", "indicative_talk")]
+    shared_empty = good.replace(
+        b'"yield_pct": "",\n      "spread_bps": "335",', b'"yield_pct": "", "spread_bps": "335",'
+    )
+    assert shared_empty != good
+    data = cp3d.context_observations_data(
+        cp3d.upstream_of(
+            pack=context_pack("observed-and-talk", shared_empty), cp0=conn._cp0("positive")
+        )
+    )
+    assert [d["kind"] for d in data] == ["bid", "offer"]  # the talk row's spread cannot cite
+
+
+def test_empty_figures_sharing_a_line_block_nothing() -> None:
+    good = (CASE / "contexts/observed-and-talk.json").read_bytes()
+    packed = good.replace(b'"bid": "",\n      "ask": "",', b'"bid": "", "ask": "",')
+    assert packed != good
+    up = cp3d.upstream_of(pack=context_pack("observed-and-talk", packed), cp0=conn._cp0("positive"))
+    assert [d["kind"] for d in cp3d.context_observations_data(up)] == [
+        "bid",
+        "offer",
+        "indicative_talk",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("figure", "issue"),
+    [
+        ("250", "level must be above 0 and at most 200"),
+        ("098.50", "level_text 098.50 must have no leading zero"),
+        ("98.12345", "level_text 98.12345 must have at most four decimal places"),
+    ],
+)
+def test_the_range_and_shape_checks_still_run_on_a_listed_row(figure: str, issue: str) -> None:
+    """D29b: a listed row skips only third_party, label and as_of; the figure rules still run."""
+    good = (CASE / "contexts/observed-and-talk.json").read_bytes()
+    raw = good.replace(b'"bid": "98.50"', f'"bid": "{figure}"'.encode())
+    raw = raw.replace(b'"ask": "99.00"', b'"ask": "999.00"')
+    up = cp3d.upstream_of(pack=context_pack("observed-and-talk", raw), cp0=conn._cp0("positive"))
+    assert issues_of(submission(by_row("o01")), up) == [f"observations[0]: {issue}"]
+
+
+def test_a_listed_figure_must_still_occur_once_in_its_quote() -> None:
+    """D29 and the stated fail-safe: a minified bid == ask makes the anchored quote hold the
+    number twice, and the offered observation is refused, never accepted with a guessed span."""
+    d = json.loads((CASE / "contexts/observed-and-talk.json").read_text())
+    d["quotes"][0]["ask"] = "98.50"
+    raw = json.dumps(d, separators=(",", ":")).encode()
+    up = cp3d.upstream_of(pack=context_pack("observed-and-talk", raw), cp0=conn._cp0("positive"))
+    assert issues_of(submission(by_row("o01", "o02")), up) == [
+        "observations[1]: level_text 98.50 does not occur in the quote"
+    ]
+
+
+def test_a_context_row_after_a_sheet_observation_is_expanded() -> None:
+    """D19: expansion tests every observation, not just the first."""
+    up = upstream("observed-and-talk")
+    sheet = POSITIVE["observations"]
+    mixed = submission([sheet[0], by_row("o03")[0]])
+    expanded = cp3d.expand_context_rows(mixed, up.context)
+    assert expanded.observations[0] == mixed.observations[0]
+    assert expanded.observations[1] == up.context.context_observations["o03"]
+
+
+def test_context_errors_come_first_among_the_issues() -> None:
+    """D36."""
+    up = upstream("bad-bytes")
+    entry = base.MUTATIONS["entries"][0]
+    sub = base._submission(base._edited(POSITIVE, entry["edits"]))
+    got = list(cp3d.submission_issues(submission=sub, context=up.context))
+    assert got[:2] == list(up.context.context_errors) and entry["issue"] in got[2:]
+
+
+def test_a_sheet_pair_with_a_context_talk_keeps_the_sheet_text() -> None:
+    """D39: only a context bid or offer changes the single-dealer text."""
+    up = upstream("observed-and-talk")
+    sheet = POSITIVE["observations"]
+    sub = submission([sheet[0], sheet[1], by_row("o03")[0]])
+    assert issues_of(sub, up) == []
+    assert cp3d.own_limitations(sub, up.context)[0] == SINGLE_OLD
+
+
+def test_a_sheet_only_submission_on_a_stale_context_gets_no_stale_line() -> None:
+    """D56."""
+    d = json.loads((CASE / "contexts/observed-and-talk.json").read_text())
+    for q in d["quotes"]:
+        q["as_of"] = "2025-11-01"
+    up = cp3d.upstream_of(
+        pack=context_pack("observed-and-talk", json.dumps(d, indent=2).encode()),
+        cp0=conn._cp0("positive"),
+    )
+    own = cp3d.own_limitations(base._submission(POSITIVE), up.context)
+    assert not [x for x in own if x.startswith("Stale")]
+    stale = cp3d.own_limitations(submission(by_row("o01", "o02")), up.context)
+    want = (
+        "Stale quote: term-loan quote dated 2025-11-01 is 70 days before the run as-of "
+        "2026-01-10 (limit 30)"
+    )
+    assert [x for x in stale if x.startswith("Stale")] == [want]

@@ -6,6 +6,7 @@ The interface is fixed by ruling P3-P19 (`CITED_ARRAYS`, `STALE_DAYS`, `context_
 locators and quotes over every context file of the case `cases/cp3-context-owner`.
 """
 
+import inspect
 import json
 import re
 from pathlib import Path
@@ -106,8 +107,63 @@ def test_value_offsets_ignores_a_cited_name_that_is_not_an_array() -> None:
 
 
 def test_a_repeated_array_is_refused() -> None:
-    with pytest.raises(ValueError, match="quotes"):
+    with pytest.raises(cites.ContextTextError, match=r"^quotes appears more than once$"):
         cites.value_offsets('{"quotes": [{"bid": "1"}], "quotes": [{"bid": "2"}]}')
+
+
+def test_a_repeated_member_is_refused() -> None:
+    with pytest.raises(cites.ContextTextError, match=r"^duplicate member quotes\[0\]\.bid$"):
+        cites.value_offsets('{"quotes": [{"bid": "1", "bid": "2"}]}')
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"quotes": [{"bid": "1"}], }',
+        '{"quotes": [{"bid": "1",}]}',
+        '{"quotes": [{"bid": "1"},]}',
+        '{"quotes": [{"bid": "1"}]} trailing',
+        '{"quotes": [{"bid": "1"}]',
+        "\ufeff{}",
+    ],
+)
+def test_invalid_json_is_a_named_error_for_every_entry_point(text: str) -> None:
+    with pytest.raises(json.JSONDecodeError):
+        json.loads(text)
+    with pytest.raises(cites.ContextTextError):
+        cites.value_offsets(text)
+    with pytest.raises(cites.ContextTextError):
+        cites.cite(raw_source(text), "quotes[0].bid")
+
+
+def test_a_leading_bom_reads_as_the_json_modules_own_wording() -> None:
+    with pytest.raises(json.JSONDecodeError) as error:
+        json.loads("\ufeff{}")
+    want = f"not valid JSON ({error.value.msg} at line {error.value.lineno})"
+    with pytest.raises(cites.ContextTextError) as ours:
+        cites.context_text(raw_source("\ufeff{}"))
+    assert str(ours.value) == want
+
+
+def test_the_public_surface_is_the_ruled_one() -> None:
+    public = {
+        n
+        for n, v in vars(cites).items()
+        if not n.startswith("_")
+        and not inspect.ismodule(v)
+        and getattr(v, "__module__", cites.__name__) == cites.__name__
+    }
+    public |= {"CITED_ARRAYS", "STALE_DAYS", "UNREADABLE"}
+    assert public == {
+        "CITED_ARRAYS",
+        "STALE_DAYS",
+        "UNREADABLE",
+        "ContextTextError",
+        "context_text",
+        "value_offsets",
+        "cite",
+        "cite_all",
+    }
 
 
 def test_cite_alone_on_its_line_cites_the_member() -> None:

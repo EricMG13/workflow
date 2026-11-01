@@ -169,3 +169,28 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   then a model can cite a `line:N` it never read; the quote must still match the line exactly. The controller
   rulings recorded with it (O2 Task 7): `MAX_LINES_PER_EXTRACT` 200 (a real filing's last statement unit fails
   closed), and `live/prompts.py` still says "page" (before O6 live runs).
+- **B23 (controller, applied recommendation, 2026-11-01): G3 keeps today's refused deliveries.** O3 Task 1
+  (0a83d2b8) continues the walk after a refusal, as the approved plan says. The plan missed that six frozen module
+  oracles pin the old stop-at-first-refusal walk: `cases/{cp1c,cp2a,cp2g,cp2h,cp4c,cpl10}-owner/expected.json`
+  give `refused_begins == ['CP-1']` and "never begun". Five refused deliveries also break:
+  `test_owner_rendering.py::test_genuine_deferred_refused_cases` for cp1c, cp2a, cp2g, cp2h and cp4c. The
+  downstream refusals carry `BLOCKED_EDGE`, so `owner_rendering.py:662` refuses them (mx-adversary a62b849b).
+  The ruling has three parts.
+  1. The renderer keeps the exact pre-G3 deliveries and renders nothing new. A `refused` outcome renders only
+     when all of the following hold:
+     - no publication exists;
+     - every refusal is either a non-`BLOCKED_EDGE` refusal, or a consequence refusal (`BLOCKED_EDGE` whose
+       `missing_inputs` are all modules refused in the same receipt);
+     - every head belongs to a module planned before the first refusal.
+
+     Any other `BLOCKED_EDGE` refusal stays `owner_render_blocked`. A refused run where a later module settled
+     stays `owner_render_outcome`. That covers distressed CP-2G/CP-2H, which is still the user's call as a
+     report with named gaps. The change goes in `_outcome_rules`.
+  2. The `refused` blocks of every module oracle whose walk G3 changes are re-cut. Each re-cut is derived from
+     `dependencies()`, CP-0's commands and `Execution.begin`'s check order, with no value read back from the code
+     under test. Each has a separate preparer, an independent `mx-precise` review and an `mx-scaffold` freeze;
+     none of them is the Task 1 builder.
+  3. Then the module tests are adapted to the frozen oracles.
+
+  Not chosen: leaving the five deliveries broken, and narrowing G3 (contract amendment 2). Cost if wrong: one
+  renderer rule and six oracle re-cuts to revert. The Modules session owns these oracles and is told.

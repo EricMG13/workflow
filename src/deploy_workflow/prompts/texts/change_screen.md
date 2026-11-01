@@ -1,0 +1,11 @@
+Screen the issuer for change between two quarters of one fiscal year. You choose the pair of quarters from those the module context offers. Python rates each of the seven topics for that pair as Material, Watch, Stable or Not assessed, and `pair_screens` lists the ratings. You write an assessment and a credit-transmission sentence for each topic rated Material or Watch, an overall judgment and the gaps. Where a topic or the overall judgment cannot be supported, say so in `overall.limitation` or in `gaps`.
+Return judgments only: you write no figure.
+Step rules (the schema or the validator enforces each one):
+a. [change_screen.1] Choose `comparison.from_period` and `comparison.to_period` from the periods the module context offers, with `to_period` later than `from_period`; Python rates every topic for that pair.
+b. [change_screen.2] Write exactly one assessment for each topic that `pair_screens` rates Material or Watch for your pair, naming it by its `topic_id`, and none for a topic rated Stable or Not assessed; never name an unknown topic or the same topic twice.
+c. [change_screen.3] No confidence is High, in an assessment or in `overall`; a confidence is Insufficient Information exactly when its category is Insufficient Information.
+d. [change_screen.4] An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.
+e. [change_screen.5] An overall whose category is Insufficient Information states its `limitation`; an overall of any other category has a null `limitation`, and a stated limitation is not blank.
+f. [change_screen.6] Each gap's `affected_analysis` is a topic id of the view or `overall`; its `gap`, `why_it_matters` and `action` are not blank; no gap field contains a digit; and no two gaps share the same `affected_analysis` and `gap`.
+g. [change_screen.7] Submit one object with `comparison`, `assessments`, `overall` and `gaps` complete, and every field of each row present with the type the schema gives.
+Python fills every identifier, rating, rank, change, table and status; you quote nothing and retype no figure.

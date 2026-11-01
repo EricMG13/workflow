@@ -151,5 +151,9 @@
   "cases/periods-currency-owner/expected.json": "bb3427be84c69ffa495fb08b276705c21e8fcff149225aa7f39b686606229817",
   "cases/periods-currency-owner/manifest.json": "2fda7460450e7eb7ba04445aadbf8be4700458c80ca58b3dbe0b882afd6a1e51",
   "cases/periods-currency-owner/submissions.json": "422b87717911236a1634157ce7e9c736eb03c4b6b140775277fb302309081ece",
+  "cases/pins-context-owner/builder/build.py": "8629909d4b0b0838c4d87a5697de029d8d984211eed819d4bd4ac38ff113a20b",
+  "cases/pins-context-owner/expected.json": "f2e7ef35fc42ca9605f4e210bbd4dfe9cda6aa7e3144af44b447ee5bc4d42aa8",
+  "cases/pins-context-owner/manifest.json": "79f84c3e123d70e5189737a9c5ee5ec1cfe2848b7ff59b8cc6adc6344b60f668",
+  "cases/pins-context-owner/submissions.json": "d32e8522ede32df6e969afe2ea01f31984496c131c5517a4088575af0f99494a",
   "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
 }

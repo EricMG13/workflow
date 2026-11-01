@@ -272,7 +272,7 @@
           "sha256": "per context file (manifest.json contexts)"
         }
       },
-      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here"
+      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here. The lists are bound at run time."
     },
     "CP-2D": {
       "base": {
@@ -482,7 +482,7 @@
           "sha256": "per context file (manifest.json contexts)"
         }
       },
-      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here"
+      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here. The lists are bound at run time."
     },
     "CP-2E": {
       "base": {
@@ -7639,7 +7639,7 @@
           "sha256": "per context file (manifest.json contexts)"
         }
       },
-      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here"
+      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here. The lists are bound at run time."
     },
     "CP-3C": {
       "base": {
@@ -7884,7 +7884,7 @@
           "sha256": "per context file (manifest.json contexts)"
         }
       },
-      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here"
+      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here. CP-3C also inherits the pinned line of its upstream CP-2D (its submission equals the pin, so CP-2D emits its own pinned line; execution.py:346-367). The lists are bound at run time."
     },
     "CP-3D": {
       "base": {
@@ -8367,7 +8367,7 @@
           "sha256": "per context file (manifest.json contexts)"
         }
       },
-      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here"
+      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here. The lists are bound at run time."
     },
     "CP-4C": {
       "base": {
@@ -15867,7 +15867,7 @@
           "sha256": "per context file (manifest.json contexts)"
         }
       },
-      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here"
+      "inherited_limitations_note": "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle (cases/context-identity-periods) and are not enumerated here. CP-4C also inherits the pinned line of its upstream CP-2A (its submission equals the pin, so CP-2A emits its own pinned line; execution.py:346-367). The lists are bound at run time."
     }
   },
   "concerns": [

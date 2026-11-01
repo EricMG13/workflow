@@ -1768,11 +1768,17 @@ for mid, key, _p in MODULES:
         "limitation": None,
         "sha256": "per context file (manifest.json contexts)",
     }
+    upstream = {
+        "cp3c": " CP-3C also inherits the pinned line of its upstream CP-2D (its submission equals the pin, so CP-2D emits its own pinned line; execution.py:346-367).",
+        "cp4c": " CP-4C also inherits the pinned line of its upstream CP-2A (its submission equals the pin, so CP-2A emits its own pinned line; execution.py:346-367).",
+    }.get(key, "")
     exp["inherited_limitations_note"] = (
         "a module's inherited limitations are the CP-0 head limitations (then CP-0's inherited) minus its own, so every context "
         "run gains the CP-0 context limitation there (cp2e and cp3d freeze the list; for cp2a, cp2d, cp3c and cp4c it is bound at "
         "run time and gains the same entry); CP-1's own context rows and limitation come from the Phase 2 oracle "
-        "(cases/context-identity-periods) and are not enumerated here"
+        "(cases/context-identity-periods) and are not enumerated here."
+        + upstream
+        + " The lists are bound at run time."
     )
 
 # --------------------------------------------------------------------------------------------------

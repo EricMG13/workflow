@@ -362,7 +362,7 @@
     "context-distressed_restructuring.json": "57237f32c72ddbab92ce77345b268b96f2d65618fcaff26fc791fecb39c24c47",
     "context-relative_value-no-cp3d.json": "ded13153a0de5cdbb16dcb44d4cfcb1373edf74afc0999cce28487467273c098",
     "context-relative_value.json": "d1bc8623583acf71976f4cddd781a6fa68595935c4afaeb0842281479c7639f4",
-    "expected.json": "92427d19fa67f89a7029a1ec250b1f0279d5918011c0a1a71dfa569addecbbfa",
+    "expected.json": "f2e7ef35fc42ca9605f4e210bbd4dfe9cda6aa7e3144af44b447ee5bc4d42aa8",
     "submissions.json": "d32e8522ede32df6e969afe2ea01f31984496c131c5517a4088575af0f99494a"
   },
   "files_sha256_note": "sha256 of every other file this builder writes (manifest.json and builder/build.py are pinned by PINS.json at the freeze)"

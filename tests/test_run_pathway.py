@@ -558,6 +558,7 @@ def test_a_non_terminal_refused_publication_stops_with_its_code_and_no_receipt(
     assert seen["result"]["status"] == "refused" and code
     assert outcome.outcome == "stopped"
     assert outcome.stopped_reason == f"publish: {code}"
+    assert outcome.spent_usd == SPENT  # the budget's spend so far, not zero
     assert not (args["run_dir"] / "owner-run.json").exists()
     assert run_json(args["run_dir"])["stopped_reason"] == f"publish: {code}"
 
@@ -779,3 +780,42 @@ def test_the_redacting_stream_is_closed_when_the_run_ends(
     monkeypatch.setattr(Redactor, "redact_stream", keep)
     run_pathway(**args)
     assert len(streams) == 2 and all(stream.closed for stream in streams)  # outer and inner
+
+
+def test_the_harness_path_labels_an_unchanged_html_conversion_text_html(
+    args: dict[str, Any],
+) -> None:
+    """The label is the caller's media type, not ``sha256 != original_sha256``: HTML whose
+    conversion changes nothing keeps ``text/html`` and a non-null ``converted_sha256``."""
+    args["sources"][0].path.write_bytes(b"plain\n")
+    checked = check_arguments(**args)
+    assert checked.files[0].sha256 == checked.files[0].original_sha256
+    stage_sources(checked, args["run_dir"])
+    rp._run_pathway(checked, args["run_dir"], args["adapter"])
+    html = run_json(args["run_dir"])["sources"][0]
+    assert html["media_type"] == "text/html"
+    assert html["converted_sha256"] == hashlib.sha256(b"plain\n").hexdigest()
+
+
+def test_the_phase_accessor_mirrors_the_private_phase_across_a_walk(args: dict[str, Any]) -> None:
+    """O5 Q6: ``phase`` is a read-only view of the walk's phase (here: create, a valid submit,
+    then a refused publication that ends the walk)."""
+    checked = check_arguments(**args)
+    run_dir: Path = args["run_dir"]
+    run_dir.mkdir()
+    pack = fw.make_pack(True)
+    workflow = OwnerWorkflow.create(
+        run_dir / "execution", pack, publication_directory=run_dir / "publication"
+    )
+    assert checked.files  # the arguments are real; the walk below uses the gap pack
+    seen = [workflow.phase]
+    assert workflow.phase == workflow._phase == "analytical"
+    fw.read_sources(workflow, gap=True)
+    assert workflow.submit_review(fw.readiness(pack, gap=True))["status"] == "valid"
+    seen.append(workflow.phase)
+    assert workflow.publish()["status"] == "refused"
+    seen.append(workflow.phase)
+    assert seen[-1] == workflow._phase
+    assert len(set(seen)) > 1  # the accessor moved with the walk
+    with pytest.raises(AttributeError):
+        workflow.phase = "complete"  # type: ignore[misc]

@@ -1105,6 +1105,11 @@ class OwnerWorkflow:
         return self._spec
 
     @property
+    def phase(self) -> str:
+        """The walk's phase (analytical, walked, complete or failed); read-only (O5 Q6)."""
+        return self._phase
+
+    @property
     def _refused(self) -> bool:
         """Publication is terminal (H1): CP-MODEL's required producer has no settled head."""
         snapshot = self._store.read()

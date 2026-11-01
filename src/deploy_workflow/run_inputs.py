@@ -124,13 +124,15 @@ class RunOutcome:
 class StagedFile:
     """One file to stage: the bytes that were read (or converted) and their sha256.
     ``original_sha256`` is the hash of the bytes read before any conversion (equal to ``sha256``
-    unless the source was HTML)."""
+    unless the source was HTML). ``media_type`` is the caller's (``text/html`` for a converted
+    source), so a label never has to be inferred from the hashes."""
 
     source_id: str
     filename: str
     data: bytes
     sha256: str
     original_sha256: str
+    media_type: str
 
 
 @dataclass(frozen=True)
@@ -256,6 +258,7 @@ def check_arguments(
                 data,
                 hashlib.sha256(data).hexdigest(),
                 hashlib.sha256(raw).hexdigest(),
+                item.media_type,
             )
         )
         pack_request = SourceRequest.model_validate(
@@ -275,6 +278,7 @@ def check_arguments(
             context_raw,
             hashlib.sha256(context_raw).hexdigest(),
             hashlib.sha256(context_raw).hexdigest(),
+            "text/plain",
         )
     )
     return CheckedRun(
@@ -306,7 +310,7 @@ def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
     ``sources/`` and build the pack from that single root into ``pack.unverified``, renamed to ``pack`` only after
     every pack hash equals the staged hash (a fault leaves no ``pack``)."""
     try:
-        os.mkdir(run_dir)
+        os.mkdir(run_dir, 0o700)  # private: pack/originals and pack.json are written under it
     except FileExistsError:
         raise RunDirExists(f"{run_dir} already exists") from None
     sources = run_dir / "sources"

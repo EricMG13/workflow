@@ -51,7 +51,6 @@ from deploy_workflow.owner_workflow import (
     verify_owner_run_receipt,
 )
 from deploy_workflow.run_inputs import (
-    _SUFFIX,
     HTML_MEDIA,
     CaseSource,
     CheckedRun,
@@ -67,7 +66,6 @@ from deploy_workflow.workflow import WorkflowError
 MAX_OUTPUT_TOKENS = 32_768
 
 PromptFactory = Callable[[PreparedPack], PromptFor]
-_MEDIA_OF_SUFFIX = {suffix: media for media, suffix in _SUFFIX.items()}
 
 
 class NoPrompt(Exception):
@@ -138,26 +136,17 @@ def _source_entries(
 
 def _staged_entries(checked: CheckedRun, run_dir: Path) -> tuple[dict[str, Any], ...]:
     """The entries when the caller's paths are not known (the authoring harness): the staged
-    files. A file whose staged hash differs from its original was converted from HTML."""
-    entries: list[dict[str, Any]] = []
-    for item in checked.files:
-        converted = item.sha256 != item.original_sha256
-        if item.source_id == "context":
-            media = "text/plain"
-        elif converted:
-            media = HTML_MEDIA
-        else:
-            media = _MEDIA_OF_SUFFIX[Path(item.filename).suffix]
-        entries.append(
-            {
-                "source_id": item.source_id,
-                "path": str(run_dir / "sources" / item.filename),
-                "sha256": item.original_sha256,
-                "media_type": media,
-                "converted_sha256": item.sha256 if converted else None,
-            }
-        )
-    return tuple(entries)
+    files, labelled by the media type the caller gave each (``text/html`` means converted)."""
+    return tuple(
+        {
+            "source_id": item.source_id,
+            "path": str(run_dir / "sources" / item.filename),
+            "sha256": item.original_sha256,
+            "media_type": item.media_type,
+            "converted_sha256": item.sha256 if item.media_type == HTML_MEDIA else None,
+        }
+        for item in checked.files
+    )
 
 
 def _fsync_directory(directory: Path) -> None:
@@ -267,8 +256,8 @@ def _drive(workflow: OwnerWorkflow, loop: ToolLoop, pack: PreparedPack) -> str |
     published = workflow.publish()
     if published["next_step"] is not None:
         loop.run()
-    # The walk's phase has no public reader yet (O5 Q6); "complete" means the walk ended.
-    elif published["status"] != "ok" and workflow._phase != "complete":
+    # "complete" means the walk ended.
+    elif published["status"] != "ok" and workflow.phase != "complete":
         return f"publish: {published['error_code']}"
     return None
 

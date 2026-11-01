@@ -241,9 +241,24 @@ def test_charset_sniff_stops_at_4096_bytes() -> None:
         convert_html(outside)
 
 
+def _best_time(count: int) -> float:
+    raw = b"<p>Revenue <b>1,234</b> rose" * count
+    best = float("inf")
+    for _ in range(3):
+        started = time.monotonic()
+        converted = convert_html(raw)
+        best = min(best, time.monotonic() - started)
+        assert converted.line_count == count
+    return best
+
+
 def test_many_unclosed_paragraphs_convert_in_linear_time() -> None:
-    raw = b"<p>Revenue <b>1,234</b> rose" * 20000
-    started = time.monotonic()
-    converted = convert_html(raw)
-    assert time.monotonic() - started < 2.0
-    assert converted.line_count == 20000
+    # Doubling the input must not much more than double the time (quadratic would be about 4x).
+    assert _best_time(40000) / _best_time(20000) < 3
+
+
+def test_mismatched_end_tag_pops_to_the_match_not_just_the_top() -> None:
+    # Pins the stack semantics: the end tag closes everything above its match (pop-top-only
+    # and count=1 mutants of handle_endtag leave the hidden div open and swallow the x).
+    assert _text('<div style="display:none"><span>h</div>x') == "x\n"
+    assert _text('<div style="display:none"><div>h</div></div>x') == "x\n"

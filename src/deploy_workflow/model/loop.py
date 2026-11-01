@@ -74,8 +74,10 @@ ToolsFor = Callable[[OwnerBinding, StepSpec], tuple[ToolSpec, ...]]
 
 
 class StepStopped(Exception):
-    """The run stopped. ``reason`` is the error class of the call that stopped it; ``detail`` is
-    redacted text. Raised ``from None``: no raw exception is chained to it."""
+    """The run stopped. ``reason`` is the stop's cause name: the error class of the call, or, for
+    an adapter exception, the exception type (for example ``RecordingMissing``), which may differ
+    from the record's ``error_class`` (``AdapterError``). ``detail`` is redacted text. Raised
+    ``from None``: no raw exception is chained to it."""
 
     def __init__(self, reason: str, detail: str = "") -> None:
         super().__init__(f"{reason}: {detail}" if detail else reason)
@@ -555,7 +557,9 @@ class ToolLoop:
         settled, status, retryable, overrun = self._settle(call_id, reply, usage)
         if failure is not None:  # the raw write or the handling itself failed: settled, recorded
             # After an ok reply this is a loop stop (record.LOOP_STOPS) so the run still exports.
-            error_class = "BadTurn" if reply.kind == "ok" else type(failure).__name__
+            error_class = (
+                "BadTurn" if reply.kind == "ok" else (reply.error_class or type(failure).__name__)
+            )  # a non-ok reply keeps the provider's class; the failure's type stays in ``message``
             message = self._redactor.exception(failure)
             stop = (error_class, self._named(failure))
         elif stop is not None:

@@ -22,6 +22,8 @@ REPO = Path(__file__).resolve().parents[1]
 CORPUS = Path("/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1")
 EXCEPTIONS = REPO / "cases/goldens/line-exceptions.json"
 HEAD = 90
+MAX_QUOTE_EXCEPTIONS = 83  # shrink-only: lower these when the list shrinks, never raise them
+MAX_PRINTED_UNPLACED = 2
 Key = tuple[str, str, str, str]
 
 
@@ -45,6 +47,16 @@ def _entry(case_id: str, fact_id: str, source_id: str, quote: str) -> dict[str, 
 
 def _key(entry: dict[str, str]) -> Key:
     return (entry["case_id"], entry["fact_id"], entry["source_id"], entry["quote_sha256"])
+
+
+def _line_misses(check: Any, ev: dict[str, str], lines: list[str]) -> tuple[bool, bool]:
+    """(quote misses, printed misses): True where the normalised text fits no single line."""
+    quote = check.normalise(ev["quote"])
+    printed = check.normalise(ev["printed"])
+    return (
+        not any(quote in line for line in lines),
+        not any(printed in line for line in lines),
+    )
 
 
 def _scan() -> tuple[list[dict[str, str]], list[dict[str, str]], int, int]:
@@ -71,12 +83,11 @@ def _scan() -> tuple[list[dict[str, str]], list[dict[str, str]], int, int]:
                     continue
                 checked += 1
                 quote = check.normalise(ev["quote"])
-                printed = check.normalise(ev["printed"])
                 entry = _entry(data["case_id"], fact["fact_id"], ev["source_id"], quote)
-                found = lines[ev["source_id"]]
-                if not any(quote in line for line in found):
+                quote_missed, printed_missed = _line_misses(check, ev, lines[ev["source_id"]])
+                if quote_missed:
                     quote_misses.append(entry)
-                if not any(printed in line for line in found):
+                if printed_missed:
                     printed_misses.append(entry)
     return quote_misses, printed_misses, checked, pdf
 
@@ -140,6 +151,15 @@ def test_printed_split_across_two_lines_is_a_miss() -> None:
     assert any("1,2" in line for line in lines)
 
 
+def test_printed_check_flags_a_value_split_across_lines_without_the_corpus() -> None:
+    check = _check_py()
+    split = convert_html(b"<p>Net debt 1,2</p><p>34 million</p>").text.splitlines()
+    whole = convert_html(b"<p>Net debt 1,234 million</p>").text.splitlines()
+    ev = {"quote": "Net debt", "printed": "1,234"}
+    assert _line_misses(check, ev, split) == (False, True)  # the quote fits a line; printed splits
+    assert _line_misses(check, ev, whole) == (False, False)
+
+
 def test_goldens_inside_one_line_with_fixed_exception_list() -> None:
     if not CORPUS.is_dir():
         pytest.skip("public corpus directory absent (artifacts/public-corpus/v1)")
@@ -156,4 +176,13 @@ def test_goldens_inside_one_line_with_fixed_exception_list() -> None:
     ceiling = len(listed["quote_misses"]) + len(listed["printed_unplaced"])
     if len(quote_misses) + len(printed_misses) > ceiling:
         problems.append(f"misses exceed the ceiling of {ceiling}")
+    # Shrink-only: the committed list may fall below these, never rise above them.
+    if len(listed["quote_misses"]) > MAX_QUOTE_EXCEPTIONS:
+        problems.append(
+            f"exceptions grew past {MAX_QUOTE_EXCEPTIONS}: {len(listed['quote_misses'])}"
+        )
+    if len(listed["printed_unplaced"]) > MAX_PRINTED_UNPLACED:
+        problems.append(
+            f"printed_unplaced grew past {MAX_PRINTED_UNPLACED}: {len(listed['printed_unplaced'])}"
+        )
     assert not problems, "\n".join(problems)

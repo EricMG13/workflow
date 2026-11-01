@@ -416,3 +416,38 @@ def test_every_staged_file_carries_the_hash_of_the_bytes_read(args: dict[str, An
     assert text.original_sha256 == text.sha256 == hashlib.sha256(b"plain text\n").hexdigest()
     raw = (ROOT / "cases/context/research-minimal.json").read_bytes()
     assert context.original_sha256 == context.sha256 == hashlib.sha256(raw).hexdigest()
+
+
+def test_a_hard_link_planted_at_a_staging_path_is_refused_and_the_victim_survives(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A racer links a victim at ``sources/s1.txt`` between the mkdir and the write: ``resolve``
+    cannot see a hard link, so ``O_EXCL`` is the only defence (kills the no-``O_EXCL`` mutant)."""
+    checked = check_arguments(**args)
+    victim = tmp_path / "victim.txt"
+    victim.write_bytes(b"keep\n")
+    real_mkdir = os.mkdir
+
+    def planting(path: Any, *a: Any, **k: Any) -> None:
+        real_mkdir(path, *a, **k)
+        if str(path).endswith("sources"):
+            os.link(victim, os.path.join(path, "s1.txt"))
+
+    monkeypatch.setattr(os, "mkdir", planting)
+    with pytest.raises(FileExistsError):
+        stage_sources(checked, args["run_dir"])
+    assert victim.read_bytes() == b"keep\n"
+
+
+def test_the_run_dir_is_private(args: dict[str, Any]) -> None:
+    old = os.umask(0o022)
+    try:
+        stage_sources(check_arguments(**args), args["run_dir"])
+    finally:
+        os.umask(old)
+    assert args["run_dir"].stat().st_mode & 0o777 == 0o700
+
+
+def test_a_staged_file_carries_the_callers_media_type(args: dict[str, Any]) -> None:
+    checked = check_arguments(**args)
+    assert [f.media_type for f in checked.files] == ["text/html", "text/plain", "text/plain"]

@@ -1,0 +1,991 @@
+{
+  "schema_version": "cp3-context-owner-submissions/1",
+  "note": "Literal CP-3 relative_value submissions for the context cases. Each is a deep copy of the R3 positive relative_value (cases/cp3-cp6-owner/submissions.json#positive.relative_value) with market_evidence [] and basis.context_rows citing Python's rows by id, except no-quotes/bad-bytes (the R3 positive verbatim) and with-market-row (the R3 market rows kept, context rows added). {{FIG:name}} marks a CP-1 figure reference bound mechanically after the CP-1 head exists, as in the R3 file. Texts differ from R3 only where the evidence differs (talk-only, stale, unmatched, deal-talk).",
+  "base": {
+    "path": "cases/cp3-cp6-owner/submissions.json",
+    "sha256": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
+    "selector": "positive.relative_value"
+  },
+  "cases": {
+    "observed-and-talk": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01",
+              "c02"
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01",
+            "c02"
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "talk-only": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "Dealer talk is the only market evidence for the loan and is talk, not a quotation or a trade.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01"
+            ]
+          },
+          "limitation": "Indicative dealer talk only, no quotation and no reported trade, so there is no observed level"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the dealer talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01"
+          ]
+        },
+        "confidence": "Low",
+        "limitation": "Dealer talk only and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "Dealer talk is the only market evidence, so the level it describes can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only dealer talk and no observed quotation or traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "stale": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "Two user-supplied dealer quotations are the only observed levels and the older one is stale, so neither is treated as a current market level.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01",
+              "c02"
+            ]
+          },
+          "limitation": "User-supplied dealer quotations, one of them stale, and no reported trade, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotations and the CP-2 low-leverage view are consistent with fair compensation, but one quotation is stale, so the preference is provisional.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01",
+            "c02"
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "Two user-supplied quotations, one stale, and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only two user-supplied dealer quotations, one of them stale, and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "unmatched": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One user-supplied dealer quotation sits just below par and is the only observed level that matches the loan.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01"
+            ]
+          },
+          "limitation": "A single user-supplied dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01"
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One user-supplied dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one usable dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "deal-talk": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "Arranger price talk is the only market evidence and is talk, not a quotation or a trade.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01"
+            ]
+          },
+          "limitation": "Arranger price talk only, no quotation and no reported trade, so there is no observed level"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the arranger price talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01"
+          ]
+        },
+        "confidence": "Low",
+        "limitation": "Price talk only and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "Arranger price talk is the only market evidence, so the pricing it describes can move before the loan is placed",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only arranger price talk and no observed quotation or traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "deal-lone-bound": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "Arranger price talk is the only market evidence and is talk, not a quotation or a trade.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01"
+            ]
+          },
+          "limitation": "Arranger price talk only, no quotation and no reported trade, so there is no observed level"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the arranger price talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01"
+          ]
+        },
+        "confidence": "Low",
+        "limitation": "Price talk only and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "Arranger price talk is the only market evidence, so the pricing it describes can move before the loan is placed",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only arranger price talk and no observed quotation or traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "with-market-row": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [
+              {
+                "source_id": "market",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              },
+              {
+                "source_id": "market",
+                "locator": "page:2",
+                "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+              }
+            ],
+            "context_rows": [
+              "c01",
+              "c02"
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [
+        {
+          "source_id": "market",
+          "kind": "observed",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:1",
+            "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+          },
+          "as_of": "January 9, 2026",
+          "limitation": "Single dealer quotation, not a traded price"
+        },
+        {
+          "source_id": "market",
+          "kind": "indicative_talk",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:2",
+            "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+          },
+          "as_of": "January 10, 2026",
+          "limitation": "Dealer talk, not a quotation or a trade"
+        }
+      ],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [
+            {
+              "source_id": "market",
+              "locator": "page:1",
+              "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+            },
+            {
+              "source_id": "market",
+              "locator": "page:2",
+              "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+            }
+          ],
+          "context_rows": [
+            "c01",
+            "c02"
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "no-quotes": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [
+              {
+                "source_id": "market",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              },
+              {
+                "source_id": "market",
+                "locator": "page:2",
+                "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+              }
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [
+        {
+          "source_id": "market",
+          "kind": "observed",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:1",
+            "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+          },
+          "as_of": "January 9, 2026",
+          "limitation": "Single dealer quotation, not a traded price"
+        },
+        {
+          "source_id": "market",
+          "kind": "indicative_talk",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:2",
+            "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+          },
+          "as_of": "January 10, 2026",
+          "limitation": "Dealer talk, not a quotation or a trade"
+        }
+      ],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [
+            {
+              "source_id": "market",
+              "locator": "page:1",
+              "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+            },
+            {
+              "source_id": "market",
+              "locator": "page:2",
+              "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+            }
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "minified": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01",
+              "c02"
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01",
+            "c02"
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "context-only": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [],
+            "context_rows": [
+              "c01",
+              "c02"
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [],
+          "context_rows": [
+            "c01",
+            "c02"
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    },
+    "bad-bytes": {
+      "instruments": [
+        {
+          "facility_id": "term-loan",
+          "fundamental_view": "The only instrument is a senior secured term loan, and with total leverage of {{FIG:total_leverage_reported}}, net leverage of {{FIG:net_leverage_reported}} and interest cover of {{FIG:interest_coverage_reported}} the CP-2 view supports a moderate, provisional credit assessment for it.",
+          "market_observation": "One dealer quotation sits just below par and is the only observed level; indicative dealer talk sits a little higher and is talk, not a quotation.",
+          "basis": {
+            "cp2_refs": [
+              "T2.11.r01",
+              "T2.1.assessment",
+              "T2.7.s01"
+            ],
+            "quotes": [
+              {
+                "source_id": "market",
+                "locator": "page:1",
+                "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+              },
+              {
+                "source_id": "market",
+                "locator": "page:2",
+                "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+              }
+            ]
+          },
+          "limitation": "A single dealer quotation, no reported trade and one instrument, so the level is not a market consensus"
+        }
+      ],
+      "market_evidence": [
+        {
+          "source_id": "market",
+          "kind": "observed",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:1",
+            "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+          },
+          "as_of": "January 9, 2026",
+          "limitation": "Single dealer quotation, not a traded price"
+        },
+        {
+          "source_id": "market",
+          "kind": "indicative_talk",
+          "quote": {
+            "source_id": "market",
+            "locator": "page:2",
+            "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+          },
+          "as_of": "January 10, 2026",
+          "limitation": "Dealer talk, not a quotation or a trade"
+        }
+      ],
+      "preference": {
+        "ordering": [
+          "term-loan"
+        ],
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "basis": {
+          "cp2_refs": [
+            "T2.1.assessment",
+            "T2.7.s01"
+          ],
+          "quotes": [
+            {
+              "source_id": "market",
+              "locator": "page:1",
+              "quote": "Dealer quotation on January 9, 2026: bid 98.50 and offer 99.25, expressed as a percentage of par."
+            },
+            {
+              "source_id": "market",
+              "locator": "page:2",
+              "quote": "Dealers describe the indicative fair value of the Northbridge Term Loan as around 99.75."
+            }
+          ]
+        },
+        "confidence": "Medium",
+        "limitation": "One dealer quotation and one instrument, so the preference is provisional"
+      },
+      "risks": [
+        {
+          "risk": "Thin market evidence",
+          "mechanic": "One dealer quotation and dealer talk are the only market evidence, so the observed level can move without a trade",
+          "implication": "Relative value conclusions stay provisional until more quotations or trades are available",
+          "severity": "Material",
+          "cp2_refs": [
+            "T2.11.r01"
+          ]
+        }
+      ],
+      "gaps": [
+        {
+          "gap": "Only one dealer quotation and no traded price",
+          "why_it_matters": "The observed level may not be a market consensus",
+          "affected_analysis": "Market observation and security selection",
+          "severity": "Material",
+          "action": "Obtain further dated dealer quotations or a trade record"
+        },
+        {
+          "gap": "Only one instrument exists, so no intra-issuer comparison is possible",
+          "why_it_matters": "Relative value across the capital structure cannot be assessed",
+          "affected_analysis": "Security selection",
+          "severity": "Minor",
+          "action": "Revisit if the issuer adds debt instruments"
+        }
+      ]
+    }
+  },
+  "refusal_mutations": {
+    "note": "Each entry edits a deep copy of cases.<case> (paths use dots and [i]; 'set' replaces the value)",
+    "entries": [
+      {
+        "id": "ctx-observed-and-talk-high",
+        "case": "observed-and-talk",
+        "edits": [
+          [
+            "set",
+            "preference.confidence",
+            "High"
+          ]
+        ]
+      },
+      {
+        "id": "ctx-talk-only-high",
+        "case": "talk-only",
+        "edits": [
+          [
+            "set",
+            "preference.confidence",
+            "High"
+          ]
+        ]
+      },
+      {
+        "id": "ctx-deal-talk-high",
+        "case": "deal-talk",
+        "edits": [
+          [
+            "set",
+            "preference.confidence",
+            "High"
+          ]
+        ]
+      },
+      {
+        "id": "ctx-stale-high",
+        "case": "stale",
+        "edits": [
+          [
+            "set",
+            "preference.confidence",
+            "High"
+          ]
+        ]
+      },
+      {
+        "id": "context-row-submitted",
+        "case": "observed-and-talk",
+        "edits": [
+          [
+            "set",
+            "market_evidence",
+            [
+              {
+                "source_id": "context",
+                "kind": "none",
+                "quote": null,
+                "as_of": "Not stated",
+                "limitation": "Entered by the model"
+              }
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "context-quote-cited",
+        "case": "observed-and-talk",
+        "edits": [
+          [
+            "set",
+            "instruments[0].basis.quotes",
+            [
+              {
+                "source_id": "context",
+                "locator": "line:32",
+                "quote": "\"price\": \"98.75\""
+              }
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "unknown-context-row",
+        "case": "observed-and-talk",
+        "edits": [
+          [
+            "set",
+            "instruments[0].basis.context_rows",
+            [
+              "c01",
+              "c07"
+            ]
+          ]
+        ]
+      },
+      {
+        "id": "talk-level-wording",
+        "case": "talk-only",
+        "edits": [
+          [
+            "set",
+            "preference.rationale",
+            "The loan trades at 99.25 on dealer talk."
+          ]
+        ]
+      }
+    ]
+  }
+}

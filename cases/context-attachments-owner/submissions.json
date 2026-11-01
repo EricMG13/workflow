@@ -1,6 +1,6 @@
 {
   "schema_version": "context-attachments-owner-submissions/1",
-  "note": "Literal inputs per case: the CP-0 readiness review (pack_sha256 bound at run time) and, for the three draft cases that reach CP-4, the CP-4 legal_covenants payload. The review pieces for identity, financial, the CP-1 consumer and the CP-4 consumer are copied from cases/cp4-owner/submissions.json#positive.readiness_review (pinned); the CP-4 payload is cases/cp4-owner/submissions.json#positive.legal_covenants unchanged (draft-cited-other appends one capacity row quoting `identity`).",
+  "note": "Literal inputs per case: the CP-0 readiness review (pack_sha256 bound at run time) and, for the three draft cases that reach CP-4, the CP-4 legal_covenants payload. The review pieces for identity, financial, the CP-1 consumer and the CP-4 consumer are copied from cases/cp4-owner/submissions.json#positive.readiness_review (pinned); the CP-4 payloads derive from cases/cp4-owner/submissions.json#positive.legal_covenants (see cp4_source per case).",
   "frozen_inputs": {
     "cases/cp4-owner/expected.json": {
       "sha256": "1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78"
@@ -1022,7 +1022,7 @@
           {
             "module_id": "CP-4",
             "readiness": "BLOCKED",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [],
             "rationale": "No legal source is in the pack, so covenant terms cannot be interpreted",
             "citations": [],
@@ -1154,7 +1154,7 @@
           {
             "module_id": "CP-4",
             "readiness": "BLOCKED",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [],
             "rationale": "No legal source is in the pack, so covenant terms cannot be interpreted",
             "citations": [],
@@ -1174,6 +1174,282 @@
               "CP-4"
             ],
             "remediation": "Supply the executed legal documents",
+            "citations": []
+          }
+        ],
+        "analysis": [
+          {
+            "claim_id": "source-assessment",
+            "text": "Located statements and the supplied sources support historical analysis with limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          }
+        ]
+      }
+    },
+    "legal-draft-missing": {
+      "cp0_review": {
+        "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+        "objective": "Attachment and legal-document consumption check over the supplied sources",
+        "reporting_period": "Reported FY2025, test date December 31, 2025",
+        "issuer_confirmed": true,
+        "sources": [
+          {
+            "source_id": "identity",
+            "document_family": "Identity note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Accompanying identity note",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "financial",
+            "document_family": "Quarterly financial statements",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "Four quarters in 2025",
+            "version_relationship": "Unaudited quarterly source",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "source_id": "context",
+            "document_family": "User-supplied run context",
+            "authority": "unknown",
+            "entity": "Northbridge Synthetic Group",
+            "period": "2026-01-10",
+            "version_relationship": "User-supplied form download for this run",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "context",
+                "source_sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+                "locator": "line:13",
+                "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+              }
+            ],
+            "limitations": [
+              "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+            ]
+          }
+        ],
+        "consumers": [
+          {
+            "module_id": "CP-1",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+            "source_ids": [
+              "identity",
+              "financial"
+            ],
+            "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-4",
+            "readiness": "BLOCKED",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
+            "source_ids": [],
+            "rationale": "No legal source is in the pack, so covenant terms cannot be interpreted",
+            "citations": [],
+            "missing_source": "legal-covenants",
+            "limitations": [
+              "No legal source is in the pack"
+            ]
+          }
+        ],
+        "gaps": [],
+        "analysis": [
+          {
+            "claim_id": "source-assessment",
+            "text": "Located statements and the supplied sources support historical analysis with limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitation": "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+          }
+        ]
+      }
+    },
+    "legal-draft-missing-gap": {
+      "cp0_review": {
+        "pack_sha256": "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>",
+        "objective": "Attachment and legal-document consumption check over the supplied sources",
+        "reporting_period": "Reported FY2025, test date December 31, 2025",
+        "issuer_confirmed": true,
+        "sources": [
+          {
+            "source_id": "identity",
+            "document_family": "Identity note",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "January 2026",
+            "version_relationship": "Accompanying identity note",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              }
+            ],
+            "limitations": []
+          },
+          {
+            "source_id": "financial",
+            "document_family": "Quarterly financial statements",
+            "authority": "issuer",
+            "entity": "Northbridge Synthetic Group",
+            "period": "Four quarters in 2025",
+            "version_relationship": "Unaudited quarterly source",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "source_id": "context",
+            "document_family": "User-supplied run context",
+            "authority": "unknown",
+            "entity": "Northbridge Synthetic Group",
+            "period": "2026-01-10",
+            "version_relationship": "User-supplied form download for this run",
+            "fidelity": "verified",
+            "citations": [
+              {
+                "source_id": "context",
+                "source_sha256": "e086e1c6d65046be31412b144e3262279874e2feb1631a507839c8e94abbbc58",
+                "locator": "line:13",
+                "quote": "\"issuer_name\": \"Northbridge Synthetic Group\","
+              }
+            ],
+            "limitations": [
+              "User-supplied run context: its names, periods and figures are the user's statements; CP-0 classifies its authority as unknown and does not verify them against issuer sources."
+            ]
+          }
+        ],
+        "consumers": [
+          {
+            "module_id": "CP-1",
+            "readiness": "READY_WITH_LIMITATIONS",
+            "evidence_demand": "Located historical statements, facility terms, definitions and scope",
+            "source_ids": [
+              "identity",
+              "financial"
+            ],
+            "rationale": "The selected historical owner method can run with explicit source and scope limitations.",
+            "citations": [
+              {
+                "source_id": "identity",
+                "source_sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+                "locator": "page:1",
+                "quote": "Northbridge Synthetic Group is the issuer and consolidated group."
+              },
+              {
+                "source_id": "financial",
+                "source_sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+                "locator": "page:1",
+                "quote": "Currency: USD; amounts in millions."
+              }
+            ],
+            "missing_source": null,
+            "limitations": [
+              "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+            ]
+          },
+          {
+            "module_id": "CP-4",
+            "readiness": "BLOCKED",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
+            "source_ids": [],
+            "rationale": "No legal source is in the pack, so covenant terms cannot be interpreted",
+            "citations": [],
+            "missing_source": "legal-covenants",
+            "limitations": [
+              "No legal source is in the pack"
+            ]
+          }
+        ],
+        "gaps": [
+          {
+            "gap_id": "legal-documents-draft-missing",
+            "kind": "source",
+            "severity": "material",
+            "description": "The run context declares draft legal_documents but the pack holds no draft source",
+            "affected_modules": [
+              "CP-4"
+            ],
+            "remediation": "Supply the draft legal documents",
             "citations": []
           }
         ],
@@ -1246,24 +1522,24 @@
             ]
           },
           {
-            "source_id": "legal-covenants",
+            "source_id": "legal-draft",
             "document_family": "Draft term loan covenant terms",
             "authority": "draft",
             "entity": "Northbridge Synthetic Group",
-            "period": "Effective December 31, 2025",
-            "version_relationship": "Draft restatement as declared by the run context; not a signed instrument",
+            "period": "Draft terms tested from December 31, 2025",
+            "version_relationship": "Unsigned draft restatement, as declared by the run context",
             "fidelity": "verified",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
-              "Declared draft by the run context; the page text describes itself as an executed restatement, so execution is not established."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+              "Declared draft by the run context; the page text states that no party has signed it."
             ]
           },
           {
@@ -1319,22 +1595,22 @@
           {
             "module_id": "CP-4",
             "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [
-              "legal-covenants"
+              "legal-draft"
             ],
             "rationale": "The covenant terms can be interpreted with explicit limits: only selected provisions are supplied",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "missing_source": null,
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
             ]
           }
         ],
@@ -1357,8 +1633,8 @@
                 "quote": "Currency: USD; amounts in millions."
               },
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
@@ -1370,25 +1646,25 @@
       "cp4_legal_covenants": {
         "documents": [
           {
-            "source_id": "legal-covenants",
-            "document_family": "Term loan covenant terms, current restatement",
+            "source_id": "legal-draft",
+            "document_family": "Draft term loan covenant terms, unsigned restatement",
             "governing_entity": "Northbridge Synthetic Group as Borrower, for the IFRS consolidated Group",
-            "date_or_amendment": "Executed December 30, 2025; effective December 31, 2025; no amendment or waiver through January 10, 2026",
+            "date_or_amendment": "Unsigned draft; no party has signed it and its terms may change before signing",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:1",
-                "quote": "Execution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026."
+                "quote": "Draft status: this synthetic restatement is an unsigned draft; no party has signed it, and its terms may change before signing."
               }
             ],
-            "limitation": "Selected executed terms only; security, guarantee, default, cure and voting terms are omitted"
+            "limitation": "Selected draft terms only; security, guarantee, default, cure and voting terms are omitted"
           }
         ],
         "covenants": [
           {
             "name": "Maximum net leverage ratio",
             "kind": "maintenance",
-            "document_id": "legal-covenants",
+            "document_id": "legal-draft",
             "clause": "Clause 3.1",
             "definition_text": "Covenant Net Debt is Covenant Debt less Eligible Cash, where Covenant Debt is the Group's total debt at IFRS carrying value excluding finance and operating lease obligations (Clause 2.1 and Clause 2.2); Covenant EBITDA is the Group's reported EBITDA over the trailing twelve months ending on the test date, with no adjustments, add-backs or pro-forma changes (Clause 2.3)",
             "test_formula": "Covenant Net Debt divided by Covenant EBITDA, tested at each calendar quarter end",
@@ -1404,17 +1680,17 @@
             "period_scope": "Every calendar quarter end from December 31, 2025; the December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:2",
                 "quote": "Covenant Debt means the Group's total debt at IFRS carrying value excluding both finance and operating lease obligations, with no other exclusions or pro-forma adjustments."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:2",
                 "quote": "Covenant EBITDA means the Group's reported EBITDA: revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization, over the trailing twelve months ending on the test date."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:2",
                 "quote": "The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025."
               }
@@ -1429,7 +1705,7 @@
             "conditions": "None stated beyond the facility terms",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "Existing drawings under Northbridge Term Loan are permitted."
               }
@@ -1442,12 +1718,12 @@
             "conditions": "Prior written consent of every lender; no automatic additional debt basket is provided",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "Additional debt or an increase in that facility's commitment requires prior written consent of every lender."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "No additional automatic debt basket is provided by these selected terms."
               }
@@ -1460,12 +1736,12 @@
             "conditions": "Fair market value; no mandatory prepayment from proceeds is required",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "Asset sales must be for fair market value."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided."
               }
@@ -1481,7 +1757,7 @@
             "severity": "Material",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided."
               }
@@ -1494,7 +1770,7 @@
             "severity": "Material",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:1",
                 "quote": "Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
               }
@@ -1507,12 +1783,12 @@
           "basis": "Clause 1.4 and the source limitation on page 3 name the omitted protections",
           "citations": [
             {
-              "source_id": "legal-covenants",
+              "source_id": "legal-draft",
               "locator": "page:1",
               "quote": "Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
             },
             {
-              "source_id": "legal-covenants",
+              "source_id": "legal-draft",
               "locator": "page:3",
               "quote": "These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package."
             }
@@ -1529,7 +1805,7 @@
           }
         ]
       },
-      "cp4_source": "cases/cp4-owner/submissions.json#positive.legal_covenants (cites legal-covenants only)"
+      "cp4_source": "positive.legal_covenants re-pointed at legal-draft, documents[0] restated on the draft bytes"
     },
     "draft-wrong-context": {
       "cp0_review": {
@@ -1577,24 +1853,24 @@
             ]
           },
           {
-            "source_id": "legal-covenants",
+            "source_id": "legal-draft",
             "document_family": "Draft term loan covenant terms",
             "authority": "draft",
             "entity": "Northbridge Synthetic Group",
-            "period": "Effective December 31, 2025",
-            "version_relationship": "Draft restatement as declared by the run context; not a signed instrument",
+            "period": "Draft terms tested from December 31, 2025",
+            "version_relationship": "Unsigned draft restatement, as declared by the run context",
             "fidelity": "verified",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
-              "Declared draft by the run context; the page text describes itself as an executed restatement, so execution is not established."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+              "Declared draft by the run context; the page text states that no party has signed it."
             ]
           },
           {
@@ -1650,22 +1926,22 @@
           {
             "module_id": "CP-4",
             "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [
-              "legal-covenants"
+              "legal-draft"
             ],
             "rationale": "The covenant terms can be interpreted with explicit limits: only selected provisions are supplied",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "missing_source": null,
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
             ]
           }
         ],
@@ -1700,8 +1976,8 @@
                 "quote": "Currency: USD; amounts in millions."
               },
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
@@ -1757,24 +2033,24 @@
             ]
           },
           {
-            "source_id": "legal-covenants",
+            "source_id": "legal-draft",
             "document_family": "Draft term loan covenant terms",
             "authority": "draft",
             "entity": "Northbridge Synthetic Group",
-            "period": "Effective December 31, 2025",
-            "version_relationship": "Draft restatement as declared by the run context; not a signed instrument",
+            "period": "Draft terms tested from December 31, 2025",
+            "version_relationship": "Unsigned draft restatement, as declared by the run context",
             "fidelity": "verified",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
-              "Declared draft by the run context; the page text describes itself as an executed restatement, so execution is not established."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+              "Declared draft by the run context; the page text states that no party has signed it."
             ]
           }
         ],
@@ -1810,22 +2086,22 @@
           {
             "module_id": "CP-4",
             "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [
-              "legal-covenants"
+              "legal-draft"
             ],
             "rationale": "The covenant terms can be interpreted with explicit limits: only selected provisions are supplied",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "missing_source": null,
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
             ]
           }
         ],
@@ -1848,8 +2124,8 @@
                 "quote": "Currency: USD; amounts in millions."
               },
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
@@ -1905,24 +2181,24 @@
             ]
           },
           {
-            "source_id": "legal-covenants",
+            "source_id": "legal-draft",
             "document_family": "Draft term loan covenant terms",
             "authority": "draft",
             "entity": "Northbridge Synthetic Group",
-            "period": "Effective December 31, 2025",
-            "version_relationship": "Draft restatement as declared by the run context; not a signed instrument",
+            "period": "Draft terms tested from December 31, 2025",
+            "version_relationship": "Unsigned draft restatement, as declared by the run context",
             "fidelity": "verified",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
-              "Declared draft by the run context; the page text describes itself as an executed restatement, so execution is not established."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+              "Declared draft by the run context; the page text states that no party has signed it."
             ]
           },
           {
@@ -1978,22 +2254,22 @@
           {
             "module_id": "CP-4",
             "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [
-              "legal-covenants"
+              "legal-draft"
             ],
             "rationale": "The covenant terms can be interpreted with explicit limits: only selected provisions are supplied",
             "citations": [
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "missing_source": null,
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
             ]
           }
         ],
@@ -2016,8 +2292,8 @@
                 "quote": "Currency: USD; amounts in millions."
               },
               {
-                "source_id": "legal-covenants",
-                "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+                "source_id": "legal-draft",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
@@ -2029,25 +2305,25 @@
       "cp4_legal_covenants": {
         "documents": [
           {
-            "source_id": "legal-covenants",
-            "document_family": "Term loan covenant terms, current restatement",
+            "source_id": "legal-draft",
+            "document_family": "Draft term loan covenant terms, unsigned restatement",
             "governing_entity": "Northbridge Synthetic Group as Borrower, for the IFRS consolidated Group",
-            "date_or_amendment": "Executed December 30, 2025; effective December 31, 2025; no amendment or waiver through January 10, 2026",
+            "date_or_amendment": "Unsigned draft; no party has signed it and its terms may change before signing",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:1",
-                "quote": "Execution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. It became effective on December 31, 2025 and remains operative without amendment or waiver through January 10, 2026."
+                "quote": "Draft status: this synthetic restatement is an unsigned draft; no party has signed it, and its terms may change before signing."
               }
             ],
-            "limitation": "Selected executed terms only; security, guarantee, default, cure and voting terms are omitted"
+            "limitation": "Selected draft terms only; security, guarantee, default, cure and voting terms are omitted"
           }
         ],
         "covenants": [
           {
             "name": "Maximum net leverage ratio",
             "kind": "maintenance",
-            "document_id": "legal-covenants",
+            "document_id": "legal-draft",
             "clause": "Clause 3.1",
             "definition_text": "Covenant Net Debt is Covenant Debt less Eligible Cash, where Covenant Debt is the Group's total debt at IFRS carrying value excluding finance and operating lease obligations (Clause 2.1 and Clause 2.2); Covenant EBITDA is the Group's reported EBITDA over the trailing twelve months ending on the test date, with no adjustments, add-backs or pro-forma changes (Clause 2.3)",
             "test_formula": "Covenant Net Debt divided by Covenant EBITDA, tested at each calendar quarter end",
@@ -2063,17 +2339,17 @@
             "period_scope": "Every calendar quarter end from December 31, 2025; the December 31, 2025 test uses closing net debt and trailing twelve-month Covenant EBITDA on the Group perimeter",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:2",
                 "quote": "Covenant Debt means the Group's total debt at IFRS carrying value excluding both finance and operating lease obligations, with no other exclusions or pro-forma adjustments."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:2",
                 "quote": "Covenant EBITDA means the Group's reported EBITDA: revenue less cost of sales less function-only operating expenses including depreciation plus depreciation and amortization, over the trailing twelve months ending on the test date."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:2",
                 "quote": "The Borrower shall maintain the ratio of Covenant Net Debt to Covenant EBITDA at not more than 4.00x, tested at every calendar quarter end from December 31, 2025."
               }
@@ -2088,7 +2364,7 @@
             "conditions": "None stated beyond the facility terms",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "Existing drawings under Northbridge Term Loan are permitted."
               }
@@ -2101,12 +2377,12 @@
             "conditions": "Prior written consent of every lender; no automatic additional debt basket is provided",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "Additional debt or an increase in that facility's commitment requires prior written consent of every lender."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "No additional automatic debt basket is provided by these selected terms."
               }
@@ -2119,12 +2395,12 @@
             "conditions": "Fair market value; no mandatory prepayment from proceeds is required",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "Asset sales must be for fair market value."
               },
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided."
               }
@@ -2153,7 +2429,7 @@
             "severity": "Material",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:3",
                 "quote": "The Borrower is not required by these selected terms to apply asset-sale proceeds to mandatory debt prepayment, and no asset-sale sweep is provided."
               }
@@ -2166,7 +2442,7 @@
             "severity": "Material",
             "citations": [
               {
-                "source_id": "legal-covenants",
+                "source_id": "legal-draft",
                 "locator": "page:1",
                 "quote": "Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
               }
@@ -2179,12 +2455,12 @@
           "basis": "Clause 1.4 and the source limitation on page 3 name the omitted protections",
           "citations": [
             {
-              "source_id": "legal-covenants",
+              "source_id": "legal-draft",
               "locator": "page:1",
               "quote": "Security enforcement, guarantee coverage, events of default, cure rights, voting and other protections are not supplied; no overall lender-protection conclusion may be inferred from their absence."
             },
             {
-              "source_id": "legal-covenants",
+              "source_id": "legal-draft",
               "locator": "page:3",
               "quote": "These are selected current executed terms, not a complete legal package. Obtain the omitted protections named in Clause 1.4 before rating the overall lender-protection package."
             }
@@ -2201,7 +2477,7 @@
           }
         ]
       },
-      "cp4_source": "positive.legal_covenants plus capacity[3] quoting `identity` (CP-0 authority issuer)"
+      "cp4_source": "the draft-ok payload plus capacity[3] quoting `identity` (CP-0 authority issuer)"
     },
     "draft-uncited": {
       "cp0_review": {
@@ -2273,20 +2549,20 @@
             "document_family": "Draft term loan covenant terms",
             "authority": "draft",
             "entity": "Northbridge Synthetic Group",
-            "period": "Effective December 31, 2025",
-            "version_relationship": "Draft restatement as declared by the run context; not a signed instrument",
+            "period": "Draft terms tested from December 31, 2025",
+            "version_relationship": "Unsigned draft restatement, as declared by the run context",
             "fidelity": "verified",
             "citations": [
               {
                 "source_id": "legal-draft",
-                "source_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c",
+                "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
                 "locator": "page:1",
                 "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
               }
             ],
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
-              "Declared draft by the run context; the page text describes itself as an executed restatement, so execution is not established."
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+              "Declared draft by the run context; the page text states that no party has signed it."
             ]
           },
           {
@@ -2342,7 +2618,7 @@
           {
             "module_id": "CP-4",
             "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+            "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
             "source_ids": [
               "legal-covenants",
               "legal-draft"
@@ -2358,7 +2634,8 @@
             ],
             "missing_source": null,
             "limitations": [
-              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
+              "Selected executed terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported.",
+              "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; no overall lender-protection rating supported."
             ]
           }
         ],
@@ -2553,7 +2830,7 @@
           }
         ]
       },
-      "cp4_source": "cases/cp4-owner/submissions.json#positive.legal_covenants (cites legal-covenants only)"
+      "cp4_source": "cases/cp4-owner/submissions.json#positive.legal_covenants unchanged (cites legal-covenants only; legal-draft stays uncited)"
     },
     "mismatch": {
       "cp0_review": {
@@ -2920,17 +3197,17 @@
         ]
       },
       {
-        "source_id": "legal-covenants",
+        "source_id": "legal-draft",
         "classification": "nonfinancial",
         "document_type": "Draft term loan covenant terms",
-        "published_on": "2025-12-30",
+        "published_on": "2026-01-10",
         "evidence_class": "lender_sponsor",
-        "evidence_rationale": "Declared draft by the run context; not audited financial evidence",
+        "evidence_rationale": "Declared draft by the run context and unsigned; not audited financial evidence",
         "analytical_use": "Agreement-specific Borrower, Group perimeter, facility and covenant definitions for CP-4",
         "citations": [
           {
-            "source_id": "legal-covenants",
-            "source_sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "source_id": "legal-draft",
+            "source_sha256": "ae98fda3249655a38da98d37d5a3a2e35cd7fab4baa5eff1bc96418ed01c612e",
             "locator": "page:1",
             "quote": "Clause 1.1. Borrower means Northbridge Synthetic Group, the issuer named in the Issuer identity and reporting scope note."
           }

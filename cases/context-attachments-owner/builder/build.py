@@ -59,8 +59,8 @@ def norm(s):
 ISSUER_ID, ISSUER_NAME, AS_OF = "northbridge-synthetic", "Northbridge Synthetic Group", "2026-01-10"
 MISMATCH_AS_OF = "2026-01-11"
 DRAFT_LIMITATION = (
-    "Legal documents in this run are drafts, not executed or filed instruments; "
-    "covenant terms may change before signing."
+    "One or more legal documents in this run are drafts, not executed or filed instruments; "
+    "their covenant terms may change before signing."
 )
 # Task 0 table (abs-refused): field order and the id each field names (plan Task 3 ATTACHMENT_IDS).
 ATTACHMENT_IDS = (
@@ -74,6 +74,10 @@ def absent_issue(field, source_id):
     return f"attachments.{field}: source '{source_id}' is declared but not in the pack; add a source gap naming it"
 
 
+DRAFT_MISSING_ISSUE = (
+    "attachments.legal_documents: 'draft' documents are declared but no source is assessed draft; "
+    "add a source gap naming legal_documents"
+)
 EXEC_MISSING_ISSUE = (
     "attachments.legal_documents: 'executed' documents are declared but no source is assessed "
     "executed or filed; add a source gap naming legal_documents"
@@ -182,16 +186,45 @@ POS = next(c for c in CP4M["cases"] if c["case_id"] == "legal-current-matching-d
 GAPC = next(c for c in CP4M["cases"] if c["case_id"] == "legal-current-missing-ebitda-definition")
 BASE = {s["source_id"]: deepcopy(s) for s in POS["pack_sources"]}  # identity, financial, legal-covenants
 assert list(BASE) == ["identity", "financial", "legal-covenants"]
-LEGAL_DRAFT_SRC = deepcopy(GAPC["pack_sources"][2])  # the other frozen legal bytes, id changed
-assert LEGAL_DRAFT_SRC["source_id"] == "legal-covenants"
-LEGAL_DRAFT_SRC["source_id"] = "legal-draft"
-LEGAL_DRAFT_SRC["origin"] = (
-    "cases/cp4-owner/manifest.json:101-135 (gap case legal source, bytes unchanged), source_id changed "
-    "so a draft source can sit beside the executed one"
-)
-
 fin_src = {s["source_id"]: s for s in FIN["sources"]}
 leg_case = {c["case_id"]: c for c in LEG["cases"]}
+_POS_PAGES = [dict(p) for p in leg_case["legal-current-matching-definition"]["legal_source"]["pages"]]
+_OLD_TITLE = "Synthetic executed Northbridge Term Loan covenant terms, current restatement"
+_NEW_TITLE = "Synthetic draft Northbridge Term Loan covenant terms, unsigned restatement"
+_OLD_ATTEST = (
+    "Execution attestation: the Borrower and all lenders signed this restatement on December 30, 2025. "
+    "It became effective on December 31, 2025 and remains operative without amendment or waiver "
+    "through January 10, 2026."
+)
+DRAFT_ATTEST = (
+    "Draft status: this synthetic restatement is an unsigned draft; no party has signed it, "
+    "and its terms may change before signing."
+)
+_p1 = _POS_PAGES[0]["text"]
+assert _p1.count(_OLD_TITLE) == 1 and _p1.count(_OLD_ATTEST) == 1
+_POS_PAGES[0]["text"] = _p1.replace(_OLD_TITLE, _NEW_TITLE).replace(_OLD_ATTEST, DRAFT_ATTEST)
+DRAFT_PAGES = _POS_PAGES  # page:1 changed in two places; page:2 and page:3 byte-identical to the frozen source
+DRAFT_BYTES = "\f".join(p["text"] for p in DRAFT_PAGES).encode("utf-8")  # U+000C joins pages (cp4-owner raw_rule)
+DRAFT_SHA = sha(DRAFT_BYTES)
+assert DRAFT_SHA == page_sha(DRAFT_PAGES)
+DRAFT_PKG_LIM = (
+    "Selected draft terms only; omitted security, guarantees, default/cure/voting terms; "
+    "no overall lender-protection rating supported."
+)
+LEGAL_DRAFT_SRC = deepcopy(BASE["legal-covenants"])
+LEGAL_DRAFT_SRC.update(
+    {
+        "source_id": "legal-draft",
+        "name": "Synthetic draft Northbridge Term Loan covenant terms",
+        "sha256": DRAFT_SHA,
+        "limitation": DRAFT_PKG_LIM,
+        "file": f"{CASE}/legal-draft.txt",
+        "origin": (
+            "preparer-written: cases/legal/manifest.json#cases[legal-current-matching-definition].legal_source pages "
+            "with only the page:1 title line and the execution-attestation sentence replaced (no frozen byte edited)"
+        ),
+    }
+)
 PAGES = {
     "identity": {p["locator"]: p["text"] for p in fin_src["identity"]["pages"]},
     "financial": {p["locator"]: p["text"] for p in fin_src["financial"]["pages"]},
@@ -199,10 +232,7 @@ PAGES = {
         p["locator"]: p["text"]
         for p in leg_case["legal-current-matching-definition"]["legal_source"]["pages"]
     },
-    "legal-draft": {
-        p["locator"]: p["text"]
-        for p in leg_case["legal-current-missing-ebitda-definition"]["legal_source"]["pages"]
-    },
+    "legal-draft": {p["locator"]: p["text"] for p in DRAFT_PAGES},
     "bridge": {"line:2": BRIDGE_LINE},
 }
 SHA = {sid: s["sha256"] for sid, s in {**BASE, "legal-draft": LEGAL_DRAFT_SRC}.items()}
@@ -210,7 +240,9 @@ SHA["bridge"] = BRIDGE_SHA
 for sid in ("identity", "financial"):
     assert page_sha(fin_src[sid]["pages"]) == SHA[sid]
 assert page_sha(leg_case["legal-current-matching-definition"]["legal_source"]["pages"]) == SHA["legal-covenants"]
-assert page_sha(leg_case["legal-current-missing-ebitda-definition"]["legal_source"]["pages"]) == SHA["legal-draft"]
+assert page_sha(DRAFT_PAGES) == SHA["legal-draft"]
+for _loc in ("page:2", "page:3"):
+    assert PAGES["legal-draft"][_loc] == PAGES["legal-covenants"][_loc]
 
 LIMIT_FIN = BASE["financial"]["limitation"]
 LEGAL_LIM = BASE["legal-covenants"]["limitation"]
@@ -222,10 +254,7 @@ CTX_LIMIT = (
     "User-supplied run context: its names, periods and figures are the user's statements; "
     "CP-0 classifies its authority as unknown and does not verify them against issuer sources."
 )
-DRAFT_NOTE = (
-    "Declared draft by the run context; the page text describes itself as an executed restatement, "
-    "so execution is not established."
-)
+DRAFT_NOTE = "Declared draft by the run context; the page text states that no party has signed it."
 
 
 def cite(sid, locator, quote):
@@ -314,11 +343,11 @@ def a_legal(sid, authority):
         "document_family": "Draft term loan covenant terms",
         "authority": "draft",
         "entity": ISSUER_NAME,
-        "period": "Effective December 31, 2025",
-        "version_relationship": "Draft restatement as declared by the run context; not a signed instrument",
+        "period": "Draft terms tested from December 31, 2025",
+        "version_relationship": "Unsigned draft restatement, as declared by the run context",
         "fidelity": "verified",
         "citations": [cite(sid, "page:1", BORROWER)],
-        "limitations": [LEGAL_LIM, DRAFT_NOTE],
+        "limitations": [DRAFT_PKG_LIM, DRAFT_NOTE],
     }
 
 
@@ -366,13 +395,16 @@ def consumer_cp4(legal_ids):
     c = deepcopy(C_CP4)
     c["source_ids"] = list(legal_ids)
     c["citations"] = [cite(legal_ids[0], "page:1", BORROWER)]
+    if "legal-draft" in legal_ids:
+        c["evidence_demand"] = "Located covenant clauses, definitions, thresholds and permissions"
+        c["limitations"] = [*c["limitations"], DRAFT_PKG_LIM] if legal_ids[0] != "legal-draft" else [DRAFT_PKG_LIM]
     return c
 
 
 C_CP4_BLOCKED = {
     "module_id": "CP-4",
     "readiness": "BLOCKED",
-    "evidence_demand": "Located executed covenant clauses, definitions, thresholds and permissions",
+    "evidence_demand": "Located covenant clauses, definitions, thresholds and permissions",
     "source_ids": [],
     "rationale": "No legal source is in the pack, so covenant terms cannot be interpreted",
     "citations": [],
@@ -465,6 +497,13 @@ EXEC_GAP = gap(
     ["CP-4"],
 )
 assert "legal_documents" in EXEC_GAP["description"]
+DRAFT_GAP = gap(
+    "legal-documents-draft-missing",
+    "The run context declares draft legal_documents but the pack holds no draft source",
+    "Supply the draft legal documents",
+    ["CP-4"],
+)
+assert "legal_documents" in DRAFT_GAP["description"]
 WRONG_CTX_GAP = gap(
     "legal-documents-unconfirmed",
     "The run context does not declare draft legal_documents, so no executed source is confirmed for the legal source",
@@ -481,6 +520,8 @@ CTX_OF = {  # case -> context file
     "none-declared": "context-none",
     "legal-exec-missing": "context-executed",
     "legal-exec-missing-gap": "context-executed",
+    "legal-draft-missing": "context-draft",
+    "legal-draft-missing-gap": "context-draft",
     "draft-ok": "context-draft",
     "draft-wrong-context": "context-executed",
     "draft-wrong-context-no-context": None,
@@ -489,7 +530,7 @@ CTX_OF = {  # case -> context file
     "mismatch": "context-mismatch",
 }
 LEGAL_EXEC = (("legal-covenants", "executed"),)
-LEGAL_DRAFT = (("legal-covenants", "draft"),)
+LEGAL_DRAFT = (("legal-draft", "draft"),)
 PACK_SIDS = {  # ordered source ids; context last (prepare appends it, context.py preparation_request)
     "abs-refused": ["identity", "financial", "legal-covenants"],
     "abs-gap-ok": ["identity", "financial", "legal-covenants"],
@@ -498,10 +539,12 @@ PACK_SIDS = {  # ordered source ids; context last (prepare appends it, context.p
     "none-declared": ["identity", "financial", "legal-covenants"],
     "legal-exec-missing": ["identity", "financial"],
     "legal-exec-missing-gap": ["identity", "financial"],
-    "draft-ok": ["identity", "financial", "legal-covenants"],
-    "draft-wrong-context": ["identity", "financial", "legal-covenants"],
-    "draft-wrong-context-no-context": ["identity", "financial", "legal-covenants"],
-    "draft-cited-other": ["identity", "financial", "legal-covenants"],
+    "draft-ok": ["identity", "financial", "legal-draft"],
+    "draft-wrong-context": ["identity", "financial", "legal-draft"],
+    "draft-wrong-context-no-context": ["identity", "financial", "legal-draft"],
+    "draft-cited-other": ["identity", "financial", "legal-draft"],
+    "legal-draft-missing": ["identity", "financial"],
+    "legal-draft-missing-gap": ["identity", "financial"],
     "draft-uncited": ["identity", "financial", "legal-covenants", "legal-draft"],
     "mismatch": ["identity", "financial", "legal-covenants"],
 }
@@ -516,7 +559,11 @@ def pack_for(case):
             out.append(bridge_source(False))
         else:
             spec = deepcopy(frozen(sid))
-            spec["built_by"] = "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+            spec["built_by"] = (
+                "preparer legal-draft.txt (pages split on U+000C), Source with spans = the pages, no media_type"
+                if sid == "legal-draft"
+                else "frozen cases/cp4-owner pack source (Source with spans = the pages, no media_type)"
+            )
             out.append(spec)
     if CTX_OF[case]:
         out.append(ctx_source(CTX_OF[case]))
@@ -531,6 +578,8 @@ REVIEWS = {
     "none-declared": std("context-none", legal=LEGAL_EXEC),
     "legal-exec-missing": std("context-executed", legal=(), cp4=C_CP4_BLOCKED),
     "legal-exec-missing-gap": std("context-executed", legal=(), cp4=C_CP4_BLOCKED, gaps=[EXEC_GAP]),
+    "legal-draft-missing": std("context-draft", legal=(), cp4=C_CP4_BLOCKED),
+    "legal-draft-missing-gap": std("context-draft", legal=(), cp4=C_CP4_BLOCKED, gaps=[DRAFT_GAP]),
     "draft-ok": std("context-draft", legal=LEGAL_DRAFT),
     "draft-wrong-context": std("context-executed", legal=LEGAL_DRAFT, gaps=[WRONG_CTX_GAP]),
     "draft-wrong-context-no-context": std(None, legal=LEGAL_DRAFT, with_context=False),
@@ -557,9 +606,49 @@ CP4_EXTRA_BASKET = {
     "limitation": None,
 }
 assert norm(CP4_EXTRA_BASKET["citations"][0]["quote"]) in norm(PAGES["identity"]["page:1"])
-CP4_OTHER = deepcopy(CP4_BASE)
+
+
+def _rename(obj):
+    if isinstance(obj, dict):
+        return {k: ("legal-draft" if k in ("source_id", "document_id") and v == "legal-covenants" else _rename(v)) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_rename(v) for v in obj]
+    return obj
+
+
+# The draft payload: the frozen positive payload re-pointed at `legal-draft`; documents[0] restated on the draft bytes.
+CP4_DRAFT = _rename(CP4_BASE)
+CP4_DRAFT["documents"][0].update(
+    {
+        "document_family": "Draft term loan covenant terms, unsigned restatement",
+        "date_or_amendment": "Unsigned draft; no party has signed it and its terms may change before signing",
+        "citations": [{"source_id": "legal-draft", "locator": "page:1", "quote": DRAFT_ATTEST}],
+        "limitation": "Selected draft terms only; security, guarantee, default, cure and voting terms are omitted",
+    }
+)
+_DOC_TEXT = " ".join(str(CP4_DRAFT["documents"][0][k]) for k in ("document_family", "date_or_amendment", "limitation"))
+assert "xecuted" not in _DOC_TEXT
+
+
+def _walk_quotes(obj):
+    if isinstance(obj, dict):
+        if set(obj) == {"source_id", "locator", "quote"}:
+            yield obj
+        else:
+            for v in obj.values():
+                yield from _walk_quotes(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _walk_quotes(v)
+
+
+for _q in _walk_quotes(CP4_DRAFT):
+    assert _q["source_id"] != "legal-covenants"
+    assert norm(_q["quote"]) in norm(PAGES[_q["source_id"]][_q["locator"]]), _q
+assert CP4_DRAFT["covenants"][0]["document_id"] == "legal-draft"
+CP4_OTHER = deepcopy(CP4_DRAFT)
 CP4_OTHER["capacity"].append(CP4_EXTRA_BASKET)
-assert len(CP4_BASE["capacity"]) == 3 and len(CP4_OTHER["capacity"]) == 4
+assert len(CP4_DRAFT["capacity"]) == 3 and len(CP4_OTHER["capacity"]) == 4
 assert list(CP4_BASE) == ["documents", "covenants", "capacity", "red_flags", "protection_score", "gaps"]
 
 # CP-1 source_context for the end-to-end draft run (Task 4): the frozen positive one, the legal entry
@@ -567,8 +656,15 @@ assert list(CP4_BASE) == ["documents", "covenants", "capacity", "red_flags", "pr
 CP1_SC = deepcopy(CP4S["positive"]["cp1_source_context"])
 _legal_entry = CP1_SC["sources"][2]
 assert _legal_entry["source_id"] == "legal-covenants"
-_legal_entry["document_type"] = "Draft term loan covenant terms"
-_legal_entry["evidence_rationale"] = "Declared draft by the run context; not audited financial evidence"
+_legal_entry.update(
+    {
+        "source_id": "legal-draft",
+        "document_type": "Draft term loan covenant terms",
+        "published_on": AS_OF,
+        "evidence_rationale": "Declared draft by the run context and unsigned; not audited financial evidence",
+        "citations": [cite("legal-draft", "page:1", BORROWER)],
+    }
+)
 CP1_SC["sources"].append(
     {
         "source_id": "context",
@@ -590,8 +686,7 @@ SUBMISSIONS = {
         "Literal inputs per case: the CP-0 readiness review (pack_sha256 bound at run time) and, for the three "
         "draft cases that reach CP-4, the CP-4 legal_covenants payload. The review pieces for identity, financial, "
         "the CP-1 consumer and the CP-4 consumer are copied from cases/cp4-owner/submissions.json#positive.readiness_review "
-        "(pinned); the CP-4 payload is cases/cp4-owner/submissions.json#positive.legal_covenants unchanged "
-        "(draft-cited-other appends one capacity row quoting `identity`)."
+        "(pinned); the CP-4 payloads derive from cases/cp4-owner/submissions.json#positive.legal_covenants (see cp4_source per case)."
     ),
     "frozen_inputs": {rel: {"sha256": digest} for rel, digest in sorted(PINS.items())},
     "run_time_bindings": {"pack_sha256": PLACEHOLDER},
@@ -600,17 +695,24 @@ SUBMISSIONS = {
 }
 for case in CTX_OF:
     entry = {"cp0_review": REVIEWS[case]}
-    if case in ("draft-ok", "draft-uncited"):
+    if case == "draft-ok":
+        entry["cp4_legal_covenants"] = CP4_DRAFT
+        entry["cp4_source"] = "positive.legal_covenants re-pointed at legal-draft, documents[0] restated on the draft bytes"
+    if case == "draft-uncited":
         entry["cp4_legal_covenants"] = CP4_BASE
-        entry["cp4_source"] = "cases/cp4-owner/submissions.json#positive.legal_covenants (cites legal-covenants only)"
+        entry["cp4_source"] = "cases/cp4-owner/submissions.json#positive.legal_covenants unchanged (cites legal-covenants only; legal-draft stays uncited)"
     if case == "draft-cited-other":
         entry["cp4_legal_covenants"] = CP4_OTHER
-        entry["cp4_source"] = "positive.legal_covenants plus capacity[3] quoting `identity` (CP-0 authority issuer)"
+        entry["cp4_source"] = "the draft-ok payload plus capacity[3] quoting `identity` (CP-0 authority issuer)"
     SUBMISSIONS["cases"][case] = entry
 
 # --- expected (hand-derived; tags P precheck refusal, V validate_review, M module output) ------
 CP4_OWN = CP4E["positive"]["CP-4"]["own_limitations"]
 assert len(CP4_OWN) == 2
+
+
+assert CP4_OWN[0].startswith("Gap (") and CP4_OWN[1].startswith("Basket capacity amounts")
+OWN_ORDER = [CP4_OWN[0], DRAFT_LIMITATION, CP4_OWN[1]]
 
 
 def t3(case):
@@ -662,18 +764,19 @@ EXPECTED_CASES = {
         "P": {"issues": []},
         "V": {"issues": [], "note": "today a shape error on authority 'draft'; Task 1 admits it for a draft context"},
         "M": {
-            "CP-0": {"T3.legal-covenants.authority": "draft", "other_T3": {"identity": "issuer", "financial": "issuer", "context": "unknown"}},
+            "CP-0": {"T3.legal-draft.authority": "draft", "other_T3": {"identity": "issuer", "financial": "issuer", "context": "unknown"}},
             "CP-4": {
                 "admitted": True,
-                "legal_sources": ["legal-covenants"],
+                "legal_sources": ["legal-draft"],
                 "own_limitations": {
+                    "exact_order": OWN_ORDER,
                     "contains_once": DRAFT_LIMITATION,
                     "also_contains": CP4_OWN,
-                    "source": "the frozen cases/cp4-owner expected.json positive.CP-4.own_limitations (the same CP-4 payload) plus DRAFT_LIMITATION appended (plan Task 2: after the gap limitations; dedup)",
+                    "source": "the frozen cases/cp4-owner expected.json positive.CP-4.own_limitations (same gap and capacity text) with DRAFT_LIMITATION placed right after the gap limitations (plan Task 2, cp4_legal.py:1442), before the capacity limitation; dedup",
                     "total_count": 3,
                 },
                 "T4D.1": {
-                    "legal-covenants": {"CP-0 authority": "draft", "Eligible for CP-4 citation": "Yes", "Cited by CP-4": "Yes"},
+                    "legal-draft": {"CP-0 authority": "draft", "Eligible for CP-4 citation": "Yes", "Cited by CP-4": "Yes"},
                     "identity": {"CP-0 authority": "issuer", "Eligible for CP-4 citation": "No", "Cited by CP-4": "No"},
                     "financial": {"CP-0 authority": "issuer", "Eligible for CP-4 citation": "No", "Cited by CP-4": "No"},
                     "context": {"CP-0 authority": "unknown", "Eligible for CP-4 citation": "No", "Cited by CP-4": "No"},
@@ -682,14 +785,24 @@ EXPECTED_CASES = {
             },
         },
     },
+    "legal-draft-missing": {
+        "P": {"issues": [DRAFT_MISSING_ISSUE], "journaled_steps": 0, "attempt_consumed": False},
+        "V": "not reached",
+        "M": None,
+    },
+    "legal-draft-missing-gap": {
+        "P": {"issues": [], "note": "same pack, context and sources as legal-draft-missing, plus one `source` gap whose description contains legal_documents"},
+        "V": {"issues": []},
+        "M": {"T3": t3("legal-draft-missing-gap"), "T5_gap_ids": [DRAFT_GAP["gap_id"]]},
+    },
     "draft-wrong-context": {
         "P": {"issues": [], "why": "the context declares `executed`; the review assesses no executed or filed source, but its `source` gap names legal_documents, so the executed rule passes; all attachments are false"},
-        "V": {"issues": [DRAFT_WRONG_CONTEXT.format(source_id="legal-covenants")]},
+        "V": {"issues": [DRAFT_WRONG_CONTEXT.format(source_id="legal-draft")]},
         "M": None,
     },
     "draft-wrong-context-no-context": {
         "P": {"issues": [], "why": "no context source: context_facts returns None, the precheck gives ()"},
-        "V": {"issues": [DRAFT_WRONG_CONTEXT.format(source_id="legal-covenants")]},
+        "V": {"issues": [DRAFT_WRONG_CONTEXT.format(source_id="legal-draft")]},
         "M": None,
     },
     "draft-cited-other": {
@@ -701,8 +814,8 @@ EXPECTED_CASES = {
                     NOT_LEGAL_ISSUE.format(path="capacity[3]", source_id="identity", authority="issuer")
                 ],
                 "wording": "frozen (plan Q2): the text keeps 'executed or filed'; `is not an executed, filed or draft source` is NOT used",
-                "journal": "the CP-4 step is rejected; the legal documents row still cites legal-covenants (draft) and is not among the issues",
-                "not_among_issues": "documents[0] / the covenant rows quoting legal-covenants",
+                "journal": "the CP-4 step is rejected; the legal documents row still cites legal-draft (draft) and is not among the issues",
+                "not_among_issues": "documents[0] / the covenant rows quoting legal-draft",
             }
         },
     },
@@ -712,7 +825,7 @@ EXPECTED_CASES = {
         "M": {
             "CP-0": {"T3": t3("draft-uncited")},
             "CP-4": {
-                "own_limitations": {"contains_once": DRAFT_LIMITATION, "also_contains": CP4_OWN, "total_count": 3},
+                "own_limitations": {"exact_order": OWN_ORDER, "contains_once": DRAFT_LIMITATION, "also_contains": CP4_OWN, "total_count": 3},
                 "T4D.1": {
                     "legal-covenants": {"CP-0 authority": "executed", "Eligible for CP-4 citation": "Yes", "Cited by CP-4": "Yes"},
                     "legal-draft": {"CP-0 authority": "draft", "Eligible for CP-4 citation": "Yes", "Cited by CP-4": "No"},
@@ -744,6 +857,7 @@ EXPECTED = {
     "texts": {
         "absent_template": "attachments.<field>: source '<id>' is declared but not in the pack; add a source gap naming it",
         "legal_executed_missing": EXEC_MISSING_ISSUE,
+        "legal_draft_missing": DRAFT_MISSING_ISSUE,
         "context_refused_prefix": "Context refused: ",
         "draft_wrong_context": DRAFT_WRONG_CONTEXT,
         "not_legal_source (frozen, cp4_legal.py:476-478)": NOT_LEGAL_ISSUE,
@@ -753,7 +867,6 @@ EXPECTED = {
     "max_issues": 4,
     "cases": EXPECTED_CASES,
     "not_frozen_here": [
-        "the 'draft' declared but no draft-assessed source issue text (no case in the Task 0 table; the plan gives no wording)",
         "the Task 1 (h) `Context source cannot be classified <authority>` and (d) `Draft authority refused, context invalid: <first problem>` lines belong to the Task 1 tests, which use these packs",
     ],
 }
@@ -763,6 +876,7 @@ files = {}
 for cid, data in CTX_BYTES.items():
     files[f"{cid}.json"] = data
 files["bridge.txt"] = BRIDGE_BYTES
+files["legal-draft.txt"] = DRAFT_BYTES
 files["submissions.json"] = dumps(SUBMISSIONS).encode("utf-8")
 files["expected.json"] = dumps(EXPECTED).encode("utf-8")
 
@@ -779,23 +893,24 @@ MANIFEST = {
     "schema_version": "context-attachments-owner-cases/1",
     "scope": "Phase 5 Task 0 oracle: declared attachments (CP-0 precheck) and the draft-documents mode",
     "status": "prepared by preparer; not reviewed; not frozen; not pinned (cases/PINS.json and pins.py PATTERNS are changed at the freeze step)",
-    "pack_rule": "Packs are built through prepare with Run(requested_modules=('CP-4',)): the frozen identity, financial and legal sources as cases/cp4-owner pack_sources (no source bytes edited); the `context` source from context-*.json and the `bridge` source from bridge.txt via SourceRequest(media_type='text/plain'). preparation_request is not used (the credit_snapshot preset is CP-0, CP-1, CP-MODEL, CP-1A, CP-2, CP-4, ... contracts.py:49-51; the walk is sequential so a preset run would need CP-1A and CP-2 inputs this case does not freeze). Each context repeats run.as_of, issuer and pathway or context_facts refuses (context.py:756-769) except `mismatch`, which breaks run.as_of on purpose.",
+    "pack_rule": "Packs are built through prepare with Run(requested_modules=('CP-4',)): the frozen identity, financial and legal sources as cases/cp4-owner pack_sources (no frozen source bytes edited); the `legal-draft` source is built like them (spans = the pages of legal-draft.txt split on U+000C, no media_type, sha256 = sha256 of the file); the `context` source from context-*.json and the `bridge` source from bridge.txt via SourceRequest(media_type='text/plain'). preparation_request is not used (the credit_snapshot preset is CP-0, CP-1, CP-MODEL, CP-1A, CP-2, CP-4, ... contracts.py:49-51; the walk is sequential so a preset run would need CP-1A and CP-2 inputs this case does not freeze). Each context repeats run.as_of, issuer and pathway or context_facts refuses (context.py:756-769) except `mismatch`, which breaks run.as_of on purpose.",
     "raw_rule": "context files are the literal bytes the form writes (json indent 2, LF, trailing LF); the `context` source sha256 is sha256 of those bytes, spans line:N via splitlines",
-    "pattern_note": "cases/pins.py PATTERNS (cases/pins.py:20-30) do not match context-*.json or bridge.txt (M2): their sha256 is recorded below and a test re-hashes each file against it",
+    "pattern_note": "cases/pins.py PATTERNS (cases/pins.py:20-30) do not match context-*.json, bridge.txt or legal-draft.txt (M2): their sha256 is recorded below and a test re-hashes each file against it",
     "frozen_inputs": {
         **{rel: {"sha256": digest, "role": role} for (rel, digest), role in zip(
             sorted(PINS.items()),
             [
                 "cases/cp4-owner/expected.json: positive.CP-4.own_limitations (the two CP-4 limitations a draft run adds to)",
-                "cases/cp4-owner/manifest.json:52-86 pack_sources of the positive case (identity, financial, legal-covenants); :101-135 the gap legal source reused as legal-draft",
+                "cases/cp4-owner/manifest.json:52-77 pack_sources of the positive case (identity, financial, legal-covenants); the gap case's :101-126 sources are no longer used",
                 "cases/cp4-owner/submissions.json: positive.readiness_review pieces, cp1_source_context, legal_covenants",
                 "cases/financial/manifest.json: identity and financial pages",
-                "cases/legal/manifest.json: legal pages (positive and missing-definition bytes)",
+                "cases/legal/manifest.json: legal pages (positive bytes; legal-draft.txt derives from them)",
             ],
             strict=True,
         )},
         **{f"{CASE}/{cid}.json": {"sha256": CTX_SHA[cid], "role": "context file (M2: not covered by PINS PATTERNS)"} for cid in sorted(CTX_BYTES)},
         f"{CASE}/bridge.txt": {"sha256": BRIDGE_SHA, "role": "bridge source bytes (M2: not covered by PINS PATTERNS)"},
+        f"{CASE}/legal-draft.txt": {"sha256": DRAFT_SHA, "role": "preparer-written draft legal source: positive legal pages joined by U+000C, only the page:1 title line and execution-attestation sentence replaced (M2: not covered by PINS PATTERNS)"},
     },
     "contexts": {
         cid: {

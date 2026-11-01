@@ -6,10 +6,11 @@
     "V": "validate_review (reached only when the precheck passes)",
     "M": "module output"
   },
-  "draft_limitation": "Legal documents in this run are drafts, not executed or filed instruments; covenant terms may change before signing.",
+  "draft_limitation": "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
   "texts": {
     "absent_template": "attachments.<field>: source '<id>' is declared but not in the pack; add a source gap naming it",
     "legal_executed_missing": "attachments.legal_documents: 'executed' documents are declared but no source is assessed executed or filed; add a source gap naming legal_documents",
+    "legal_draft_missing": "attachments.legal_documents: 'draft' documents are declared but no source is assessed draft; add a source gap naming legal_documents",
     "context_refused_prefix": "Context refused: ",
     "draft_wrong_context": "Draft authority needs a context that declares draft legal documents: {source_id}",
     "not_legal_source (frozen, cp4_legal.py:476-478)": "{path}: {source_id} is not an executed or filed source (CP-0 authority {authority}, or the source is not ready)",
@@ -137,7 +138,7 @@
       },
       "M": {
         "CP-0": {
-          "T3.legal-covenants.authority": "draft",
+          "T3.legal-draft.authority": "draft",
           "other_T3": {
             "identity": "issuer",
             "financial": "issuer",
@@ -147,19 +148,24 @@
         "CP-4": {
           "admitted": true,
           "legal_sources": [
-            "legal-covenants"
+            "legal-draft"
           ],
           "own_limitations": {
-            "contains_once": "Legal documents in this run are drafts, not executed or filed instruments; covenant terms may change before signing.",
+            "exact_order": [
+              "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
+              "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+              "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
+            ],
+            "contains_once": "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
             "also_contains": [
               "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
               "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
             ],
-            "source": "the frozen cases/cp4-owner expected.json positive.CP-4.own_limitations (the same CP-4 payload) plus DRAFT_LIMITATION appended (plan Task 2: after the gap limitations; dedup)",
+            "source": "the frozen cases/cp4-owner expected.json positive.CP-4.own_limitations (same gap and capacity text) with DRAFT_LIMITATION placed right after the gap limitations (plan Task 2, cp4_legal.py:1442), before the capacity limitation; dedup",
             "total_count": 3
           },
           "T4D.1": {
-            "legal-covenants": {
+            "legal-draft": {
               "CP-0 authority": "draft",
               "Eligible for CP-4 citation": "Yes",
               "Cited by CP-4": "Yes"
@@ -184,6 +190,36 @@
         }
       }
     },
+    "legal-draft-missing": {
+      "P": {
+        "issues": [
+          "attachments.legal_documents: 'draft' documents are declared but no source is assessed draft; add a source gap naming legal_documents"
+        ],
+        "journaled_steps": 0,
+        "attempt_consumed": false
+      },
+      "V": "not reached",
+      "M": null
+    },
+    "legal-draft-missing-gap": {
+      "P": {
+        "issues": [],
+        "note": "same pack, context and sources as legal-draft-missing, plus one `source` gap whose description contains legal_documents"
+      },
+      "V": {
+        "issues": []
+      },
+      "M": {
+        "T3": {
+          "identity": "issuer",
+          "financial": "issuer",
+          "context": "unknown"
+        },
+        "T5_gap_ids": [
+          "legal-documents-draft-missing"
+        ]
+      }
+    },
     "draft-wrong-context": {
       "P": {
         "issues": [],
@@ -191,7 +227,7 @@
       },
       "V": {
         "issues": [
-          "Draft authority needs a context that declares draft legal documents: legal-covenants"
+          "Draft authority needs a context that declares draft legal documents: legal-draft"
         ]
       },
       "M": null
@@ -203,7 +239,7 @@
       },
       "V": {
         "issues": [
-          "Draft authority needs a context that declares draft legal documents: legal-covenants"
+          "Draft authority needs a context that declares draft legal documents: legal-draft"
         ]
       },
       "M": null
@@ -221,8 +257,8 @@
             "capacity[3]: identity is not an executed or filed source (CP-0 authority issuer, or the source is not ready)"
           ],
           "wording": "frozen (plan Q2): the text keeps 'executed or filed'; `is not an executed, filed or draft source` is NOT used",
-          "journal": "the CP-4 step is rejected; the legal documents row still cites legal-covenants (draft) and is not among the issues",
-          "not_among_issues": "documents[0] / the covenant rows quoting legal-covenants"
+          "journal": "the CP-4 step is rejected; the legal documents row still cites legal-draft (draft) and is not among the issues",
+          "not_among_issues": "documents[0] / the covenant rows quoting legal-draft"
         }
       }
     },
@@ -245,7 +281,12 @@
         },
         "CP-4": {
           "own_limitations": {
-            "contains_once": "Legal documents in this run are drafts, not executed or filed instruments; covenant terms may change before signing.",
+            "exact_order": [
+              "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
+              "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+              "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
+            ],
+            "contains_once": "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
             "also_contains": [
               "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
               "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
@@ -282,7 +323,6 @@
     }
   },
   "not_frozen_here": [
-    "the 'draft' declared but no draft-assessed source issue text (no case in the Task 0 table; the plan gives no wording)",
     "the Task 1 (h) `Context source cannot be classified <authority>` and (d) `Draft authority refused, context invalid: <first problem>` lines belong to the Task 1 tests, which use these packs"
   ]
 }

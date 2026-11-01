@@ -166,6 +166,17 @@ def _check_currency(
     return _currency(wanted)
 
 
+def _row_currency(wanted: str, period_id: str, row: Mapping[str, Fact]) -> None:
+    """A matched period row states the run currency itself: known and equal, or refuse."""
+    fact = row.get("currency")
+    if fact is None or fact.status != "known" or not fact.text:
+        raise PeriodRefused(
+            f"run.reporting_currency {wanted}, but CP-1 T4.14 period {period_id} has no known currency"
+        )
+    if fact.text != wanted:
+        raise PeriodRefused(f"run.reporting_currency {wanted}, but CP-1 reports {fact.text}")
+
+
 def currency_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> CurrencyBasis:
     """The run's currency, checked against CP-1's T4.14 `currency`; any base kind, blank included."""
     if context is None:
@@ -209,6 +220,8 @@ def period_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Perio
     register = _period_register(cp1_facts)
     currency = _check_currency(context, register)
     fy_id, q4_id = _one(register, f"fy-{year}"), _one(register, f"q4-{year}")
+    for period_id in (fy_id, q4_id):
+        _row_currency(currency.currency, period_id, register[period_id])
     start, end = _row_dates(fy_id, register[fy_id])
     q4_start, q4_end = _row_dates(q4_id, register[q4_id])
     if q4_end != end:

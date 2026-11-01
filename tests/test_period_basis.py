@@ -148,19 +148,44 @@ def test_other_base_kinds_refused(period: str) -> None:
 
 
 def test_missing_or_duplicate_period_rows_refused() -> None:
-    fy, q4 = _calendar()[:6], _calendar()[6:]
-    with pytest.raises(PeriodRefused):
+    fy, q4 = _calendar()[:7], _calendar()[7:]
+    with pytest.raises(PeriodRefused, match="no single period for fy-2026"):
         period_basis(_context("fy-2026"), q4)
-    with pytest.raises(PeriodRefused):
+    with pytest.raises(PeriodRefused, match="no single period for fy-2026"):
         period_basis(
             _context("fy-2026"),
             q4 + _row("r3", "FY2", "FY", "2026", None, "2026-01-01", "2026-12-31") + fy,
         )
-    with pytest.raises(PeriodRefused):
+    with pytest.raises(PeriodRefused, match="no single period for q4-2026"):
         period_basis(_context("fy-2026"), fy)
     shifted = [*fy, *_row("r2", "Q4", "QUARTER", "2026", "4", "2026-09-01", "2026-11-30")]
-    with pytest.raises(PeriodRefused):
+    with pytest.raises(PeriodRefused, match="not at the fiscal year end"):
         period_basis(_context("fy-2026"), shifted)
+
+
+@pytest.mark.parametrize("row_id", ["r1", "r2"])
+@pytest.mark.parametrize("how", ["absent", "not_known"])
+def test_matched_row_without_known_currency_refused(row_id: str, how: str) -> None:
+    facts = []
+    for fact in _calendar():
+        if fact.row_id == row_id and fact.field == "currency":
+            if how == "absent":
+                continue
+            fact = fact.model_copy(
+                update={"status": "missing", "text": None, "limitation": "not stated"}
+            )
+        facts.append(fact)
+    with pytest.raises(PeriodRefused, match="has no known currency"):
+        period_basis(_context("fy-2026"), facts)
+
+
+def test_matched_row_with_other_currency_refused() -> None:
+    facts = [
+        f.model_copy(update={"text": "EUR"}) if f.row_id == "r1" and f.field == "currency" else f
+        for f in _calendar()
+    ]
+    with pytest.raises(PeriodRefused, match="reporting_currency USD, but CP-1 reports"):
+        period_basis(_context("fy-2026"), facts)
 
 
 def test_currency_mismatch_refused() -> None:
@@ -217,21 +242,21 @@ def _load(name: str) -> Any:
 
 
 def _oracle_facts(rows: list[dict[str, Any]]) -> list[Fact]:
-    """The pinned T4.14 rows as CP-1 facts: a blank or null value is a not_applicable fact."""
+    """The pinned T4.14 rows as CP-1 facts, each from its cell's text and status."""
     facts = []
     for number, row in enumerate(rows):
-        for name, value in row.items():
-            blank = value is None or value == ""
+        for name, cell in row.items():
+            known = cell["status"] == "known"
             facts.append(
                 Fact(
                     fact_id=f"t414-{number}-{name}",
-                    label=f"{row['period_id']} {name}",
+                    label=f"{row['period_id']['text']} {name}",
                     table_id="T4.14",
                     row_id=f"row{number}",
                     field=name,
-                    text=None if blank else str(value),
-                    status="not_applicable" if blank else "known",
-                    limitation="blank in the pinned row" if blank else None,
+                    text=cell["text"],
+                    status=cell["status"],
+                    limitation=None if known else f"{cell['status']} in the pinned row",
                 )
             )
     return facts

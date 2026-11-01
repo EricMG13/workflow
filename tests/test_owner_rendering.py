@@ -18,13 +18,13 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -3541,3 +3541,205 @@ def test_genuine_deferred_s1a_gap_must_not_appear(tmp_path: Path) -> None:
                 assert cell["text"].strip() not in {"", "0", "N/A", "TBD"}
     strengths = " ".join(_line_text(line) for line in blocks["strengths-weaknesses"]["lines"])
     assert "High" not in strengths
+
+
+# ---------------------------------------------------------------------------------------------
+# Run context section (Phase 2 Task 5). The answer key is the frozen oracle
+# `cases/context-identity-periods/expected.json#render`; no expected value is written here.
+# ---------------------------------------------------------------------------------------------
+
+IDP = ROOT / "cases" / "context-identity-periods"
+RENDER_KEY = json.loads((IDP / "expected.json").read_text(encoding="utf-8"))["render"]
+_ROW = re.compile(
+    r'<li data-group="([^"]*)" data-key="([^"]*)"><span class="label">(.*?)</span>: '
+    r'<span class="value">(.*?)</span> <span class="mark">(.*?)</span></li>'
+)
+GATE = {"issuer": "Northbridge Synthetic Group", "identity_gate": "confirmed"}
+T42_BORROWER = [("Northbridge Holdings LLC", ("borrower",))]
+
+
+def _ctx_source(name: str) -> tuple[Any, tuple[Any, ...]]:
+    from deploy_vii.contracts import Span
+    from deploy_workflow.context import load_context
+
+    raw = (IDP / "contexts" / f"{name}.json").read_bytes()
+    spans = tuple(
+        Span(locator=f"line:{i}", text=line)
+        for i, line in enumerate(raw.decode("utf-8").splitlines(), 1)
+    )
+    return load_context(raw), spans
+
+
+def _section(
+    name: str,
+    *,
+    cp0: Mapping[str, str] = GATE,
+    t42: Sequence[tuple[str, tuple[str, ...]]] = T42_BORROWER,
+    update: dict[str, str] | None = None,
+) -> str:
+    context, spans = _ctx_source(name)
+    if update:
+        context = context.model_copy(
+            update={"identity": context.identity.model_copy(update=update)}
+        )
+    return g2.run_context_section(context, spans, cp0, t42)
+
+
+def _marked_rows(section: str) -> list[dict[str, str]]:
+    return [
+        {
+            "group": g,
+            "label": html_lib.unescape(label),
+            "value": html_lib.unescape(value),
+            "key": k,
+            "mark": html_lib.unescape(mark),
+        }
+        for g, k, label, value, mark in _ROW.findall(section)
+    ]
+
+
+@pytest.mark.parametrize("name", ["ctx-b-match", "ctx-b-punct", "ctx-b-mismatch"])
+def test_run_context_rows_equal_the_oracle_rows(name: str) -> None:
+    assert _marked_rows(_section(name)) == RENDER_KEY["rows"][name]
+
+
+def test_run_context_section_shape_and_group_order() -> None:
+    section = _section("ctx-b-match")
+    assert section.startswith(f'<section id="{RENDER_KEY["section"]["id"]}" class="banner" ')
+    assert section.count("<section") == 1 and section.endswith("</section>")
+    assert f"<h2>{RENDER_KEY['section']['title']}</h2>" in section
+    groups = re.findall(r'<h3 data-group="([^"]*)">', section)
+    assert groups == RENDER_KEY["section"]["groups_in_order"]
+
+
+def test_run_context_alias_separator_and_mark_format_come_from_the_key() -> None:
+    aliases = next(r for r in _marked_rows(_section("ctx-b-match")) if r["key"] == "aliases")
+    assert RENDER_KEY["alias_separator"].join(["Northbridge", "NBG"]) == aliases["value"]
+    assert re.fullmatch(r"user-supplied \(context source, line \d+\)", aliases["mark"])
+
+
+def test_empty_optional_fields_section_has_cp0_and_cp1_groups_only() -> None:
+    section = _section("ctx-research")
+    assert _marked_rows(section) == RENDER_KEY["rows"]["ctx-research"]
+    assert re.findall(r'<h3 data-group="([^"]*)">', section) == ["CP-0", "CP-1"]
+    assert GATE["issuer"] in section and f">{GATE['identity_gate']}<" in section
+    assert "not_supplied" in section
+    assert "borrower_name_mismatch" not in section
+
+
+def test_mismatch_prints_gap_and_leaves_the_gate_word() -> None:
+    section = _section("ctx-b-mismatch")
+    assert html_lib.escape(RENDER_KEY["ctx-b-mismatch_gap_text"]) in section
+    assert f">{GATE['identity_gate']}<" in section
+
+
+def test_match_prints_match_and_no_gap() -> None:
+    for name in ("ctx-b-match", "ctx-b-punct"):
+        section = _section(name)
+        assert ">match<" in section and "borrower_name_mismatch" not in section
+
+
+def test_run_context_html_is_escaped() -> None:
+    hostile = RENDER_KEY["html_escaping"]
+    section = _section(
+        "ctx-b-match",
+        update={"borrower_name": hostile["input_name"], "sector": '<img src=x onerror="1">'},
+        cp0={"issuer": "<i>Acme</i>", "identity_gate": "<u>"},
+        t42=[("<script>x</script>", ("borrower",))],
+    )
+    assert hostile["escaped"] in section
+    for raw in ("<b>", "<img", "<i>", "<u>", "<script>"):
+        assert raw not in section
+    assert "&lt;script&gt;x&lt;/script&gt;" in section
+
+
+def test_run_context_mark_line_is_the_line_of_the_key_in_the_source() -> None:
+    context, spans = _ctx_source("ctx-b-match")
+    rows = {
+        r["key"]: r["mark"] for r in _marked_rows(g2.run_context_section(context, spans, GATE, []))
+    }
+    for key, mark in rows.items():
+        line = int(re.search(r"line (\d+)", mark).group(1))  # type: ignore[union-attr]
+        assert spans[line - 1].text.lstrip().startswith(f'"{key}"')
+
+
+def test_t42_adapter_maps_str_none_and_tuple_role_cells_to_tuples() -> None:
+    def fact(row: str, field: str, text: str | None) -> Fact:
+        return Fact(
+            fact_id=f"T4.2.{row}.{field}",
+            label=field,
+            table_id="T4.2",
+            row_id=row,
+            field=field,
+            text=text,
+            status="known" if text else "missing",
+            limitation=None if text else "not stated",
+        )
+
+    module = SimpleNamespace(
+        facts=(
+            fact("a", "field_0", "Alpha"),
+            fact("a", "field_1", "issuer; borrower"),
+            fact("b", "field_0", "Beta"),
+            fact("b", "field_1", None),
+            fact("c", "field_1", "borrower"),
+        )
+    )
+    assert g2._t42_entities(cast(Any, module)) == [("Alpha", ("issuer; borrower",)), ("Beta", ())]
+    assert g2._t42_entities(None) == []
+
+
+# The four delivery-level REDs need a pack-B `s1a-credit-snapshot` delivery over a real CP-1
+# promotion carrying a `context` source (11-26 minutes): deferred under RUN_PROMOTION (ruling
+# P2-P10, B16). `_context_delivery` is owned by the pack-B fixture (P2-P13, Task 6); until it
+# exists the gated tests skip with that reason rather than fake a delivery.
+_PROMOTION = pytest.mark.skipif(
+    os.environ.get("RUN_PROMOTION") != "1", reason="real CP-1 promotion, 11-26 min; deferred"
+)
+
+
+def _context_delivery(tmp_path: Path, context_name: str | None) -> tuple[Path, Path, Path, Path]:
+    builder = getattr(importlib.import_module("s1a_runs"), "s1a_closed_with_context", None)
+    if builder is None:
+        pytest.skip("pack-B context delivery builder (P2-P13, Task 6) is not built")
+    store, receipt, model = builder("positive", tmp_path / "run", context_name)
+    _, destination = _render_ok(tmp_path, store, receipt, model)
+    return store, receipt, model, destination
+
+
+@_PROMOTION
+def test_run_context_section_for_matching_context(tmp_path: Path) -> None:
+    *_, destination = _context_delivery(tmp_path, "ctx-b-match")
+    text = (destination / "report.html").read_text(encoding="utf-8")
+    assert text.count('<section id="run-context"') == 1
+    assert text.count(BANNER_ANCHOR + '<section id="delivery-scope-banner"') == 1
+    rows = _marked_rows(text[text.index('<section id="run-context"') :])
+    assert rows == RENDER_KEY["rows"]["ctx-b-match"]
+    assert "user-supplied" in rows[0]["mark"]
+
+
+@_PROMOTION
+def test_mismatch_prints_gap(tmp_path: Path) -> None:
+    *_, destination = _context_delivery(tmp_path, "ctx-b-mismatch")
+    text = (destination / "report.html").read_text(encoding="utf-8")
+    assert html_lib.escape(RENDER_KEY["ctx-b-mismatch_gap_text"]) in text
+    assert f">{GATE['identity_gate']}<" in text
+
+
+@_PROMOTION
+def test_no_context_page_bytes_unchanged(tmp_path: Path) -> None:
+    *_, destination = _context_delivery(tmp_path, None)
+    text = (destination / "report.html").read_text(encoding="utf-8")
+    assert "run-context" not in text
+    assert text.count(BANNER_ANCHOR + '<section id="delivery-scope-banner"') == 1
+
+
+@_PROMOTION
+def test_edited_section_fails_verify(tmp_path: Path) -> None:
+    store, receipt, model, destination = _context_delivery(tmp_path, "ctx-b-match")
+    page = destination / "report.html"
+    raw = page.read_bytes()
+    at = raw.index(b'<section id="run-context"') + len(b'<section id="run-context"')
+    page.write_bytes(raw[:at] + raw[at:].replace(b"Northbridge", b"Northbridgf", 1))
+    with pytest.raises(ValueError, match=r"^owner_render_delivery$"):
+        g2.verify_owner_rendered_slice(store, receipt, model, destination)

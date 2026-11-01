@@ -22,7 +22,7 @@ import os
 import shutil
 import stat
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -41,15 +41,19 @@ from deploy_vii.contracts import (
     Hash,
     Identifier,
     Module,
+    ModuleView,
     PathwayId,
     Run,
+    Span,
     Text,
     View,
 )
 from deploy_vii.execution import Execution, Head, Qualification
 from deploy_vii.registry import idle_statuses, modules
 from deploy_vii.report_view import Block, build, pathways
+from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, RunContext, context_facts
 from deploy_workflow.financial_workflow import FILES, ModelPublication
+from deploy_workflow.identity_check import compare
 from deploy_workflow.owner_workflow import (
     BLOCKED_EDGE,
     OwnerRunReceipt,
@@ -686,6 +690,103 @@ def _outcome_rules(
     return outcome
 
 
+_USER_SUPPLIED = "user-supplied (context source, line {line})"
+_ALIAS_SEPARATOR = "; "
+_CP0_FIELDS = frozenset({"issuer", "identity_gate"})
+
+
+def _key_line(spans: Sequence[Span], key: str) -> int:
+    """The line of ``key`` inside the context's ``identity`` object, from the frozen spans."""
+    inside = False
+    for span in spans:
+        text = span.text.lstrip()
+        inside = inside or text.startswith('"identity"')
+        name, _, number = span.locator.partition(":")
+        if inside and text.startswith(f'"{key}"') and name == "line" and number.isdigit():
+            return int(number)
+    raise _refusal("owner_render_context")
+
+
+def _context_row(group: str, key: str, label: str, value: str, line: int | None) -> str:
+    mark = (
+        f' <span class="mark">{escape(_USER_SUPPLIED.format(line=line))}</span>'
+        if line is not None
+        else ""
+    )
+    attrs = (
+        f'data-group="{group}" data-key="{key}"' if line is not None else f'data-group="{group}"'
+    )
+    return (
+        f'<li {attrs}><span class="label">{escape(label)}</span>: '
+        f'<span class="value">{escape(value)}</span>{mark}</li>'
+    )
+
+
+def run_context_section(
+    context: RunContext,
+    spans: Sequence[Span],
+    cp0_fields: Mapping[str, str],
+    t42_cells: Sequence[tuple[str, tuple[str, ...]]],
+) -> str:
+    """The escaped "Run context" section: CP-0, CP-1 and CP-1A rows, each user-supplied value
+    marked with the context source line of its key. Empty fields are omitted. Pure."""
+    identity = context.identity
+    check = compare(context, t42_cells)
+
+    def supplied(group: str, key: str, label: str, value: str) -> list[str]:
+        return [_context_row(group, key, label, value, _key_line(spans, key))] if value else []
+
+    cp0 = [
+        _context_row(
+            "CP-0", "issuer", "Issuer", cp0_fields.get("issuer", identity.issuer_name), None
+        )
+    ]
+    if "identity_gate" in cp0_fields:
+        cp0.append(
+            _context_row(
+                "CP-0", "identity_gate", "Identity gate", cp0_fields["identity_gate"], None
+            )
+        )
+    cp0 += supplied("CP-0", "borrower_name", "Borrower", identity.borrower_name)
+    cp0 += supplied("CP-0", "aliases", "Aliases", _ALIAS_SEPARATOR.join(identity.aliases))
+    result = check.gaps[0] if check.gaps else check.outcome
+    cp1 = [_context_row("CP-1", "borrower_name_check", "Borrower name check", result, None)]
+    if check.found:
+        cp1.append(
+            _context_row(
+                "CP-1",
+                "entities",
+                "Borrower entities located",
+                _ALIAS_SEPARATOR.join(check.found),
+                None,
+            )
+        )
+    cp1a = supplied("CP-1A", "sector", "Sector", identity.sector)
+    cp1a += supplied("CP-1A", "sponsor", "Sponsor", identity.sponsor)
+    groups = "".join(
+        f'<h3 data-group="{name}">{name}</h3><ul>{"".join(rows)}</ul>'
+        for name, rows in (("CP-0", cp0), ("CP-1", cp1), ("CP-1A", cp1a))
+        if rows
+    )
+    return f'<section id="run-context" class="banner" role="note"><h2>Run context</h2>{groups}</section>'
+
+
+def _t42_entities(module: ModuleView | None) -> list[tuple[str, tuple[str, ...]]]:
+    """``(name, roles)`` per CP-1 T4.2 row; a role cell is text or absent, never a sequence."""
+    if module is None:
+        return []
+    cells: dict[str, dict[str, str | None]] = {}
+    for fact in module.facts:
+        if fact.table_id == "T4.2" and fact.field in ("field_0", "field_1"):
+            cells.setdefault(fact.row_id, {})[fact.field] = fact.text
+    return [
+        (name, (role,) if isinstance(role, str) and role else ())
+        for row in cells.values()
+        if (name := row.get("field_0"))
+        for role in (row.get("field_1"),)
+    ]
+
+
 def _capture(
     execution_directory: Path, receipt_path: Path, publication_directory: Path | None
 ) -> _Capture:
@@ -712,6 +813,10 @@ def _capture(
         head_modules = {head.module_id: store.head_module(head) for head in snapshot.heads}
     except (ValueError, OSError) as error:
         raise _store_failure(error) from error
+    try:
+        context = context_facts(pack)
+    except ContextRefused as error:
+        raise _refusal("owner_render_context") from error
     if (
         snapshot.content_hash() != receipt.snapshot_sha256
         or pack.content_hash() != receipt.pack_sha256
@@ -769,9 +874,20 @@ def _capture(
         '<section id="delivery-scope-banner" class="banner" role="note" '
         f'data-delivery-scope="{scope.scope_id}">{escape(scope.banner[outcome])}</section>'
     )
+    shown_modules = {m.module_id: m for m in view.modules if m.status in SHOWN_STATUSES}
+    if context is not None:
+        source = next(s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID)
+        cp0 = shown_modules.get("CP-0")
+        cp0_fields = {
+            f.field: f.text
+            for f in (cp0.facts if cp0 else ())
+            if f.table_id == "T1" and f.row_id == "run" and f.field in _CP0_FIELDS and f.text
+        }
+        banner += run_context_section(
+            context, source.spans, cp0_fields, _t42_entities(shown_modules.get("CP-1"))
+        )
     html_bytes = page.replace(_ANCHOR, _ANCHOR + banner, 1).encode("utf-8")
     payload = _payload_of(page)
-    shown_modules = {m.module_id: m for m in view.modules if m.status in SHOWN_STATUSES}
     blocks: dict[str, Block] = {b.block_id: b for b in report.blocks}
     payload_blocks = {b["block_id"]: b for b in payload["report"]["blocks"]}
     sections = _sections(scope, outcome, blocks, payload_blocks, shown_modules, heads, head_modules)

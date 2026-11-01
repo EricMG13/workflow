@@ -294,6 +294,10 @@ def test_cp2d_is_enabled_and_pinned(pack: PreparedPack) -> None:
     enabled_and_pinned_by_default("CP-2D", pack)
 
 
+def test_cp2e_is_enabled_and_pinned(pack: PreparedPack) -> None:
+    enabled_and_pinned_by_default("CP-2E", pack)
+
+
 # ------------------------------------------------------------------------------ the guard
 
 Runner = Callable[[Path, pytest.MonkeyPatch], list[str]]

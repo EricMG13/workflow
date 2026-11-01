@@ -7,122 +7,37 @@ test. The packs are the frozen identity and financial sources, the oracle's rati
 and a `context` source built by `preparation.prepare_source` from the oracle's context file.
 """
 
-import copy
 import json
 from collections.abc import Sequence
 from dataclasses import replace
-from pathlib import Path
 from typing import Any
 
 import pytest
 import test_method_cp2h as stage1
+from cp2h_context_support import (
+    CASE,
+    CASES,
+    EXP,
+    MAN,
+    REFUSALS,
+    context_bytes,
+    context_source,
+    expected,
+    frozen_sources,
+    inputs,
+    prepared,
+    ratings_source,
+    run_of,
+    scope,
+    scope_of,
+)
 
-from deploy_vii.contracts import Citation, Run, Source, Span
+from deploy_vii.contracts import Citation, Run, Span
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_vii.readiness import citation_issues
 from deploy_workflow import host
 from deploy_workflow.context import Rating, load_context
 from deploy_workflow.owners import cp2h
-
-ROOT = Path(__file__).parents[1]
-CASE = ROOT / "cases/cp2h-context-owner"
-MAN: dict[str, Any] = json.loads((CASE / "manifest.json").read_text())
-EXP: dict[str, Any] = json.loads((CASE / "expected.json").read_text())
-SUB: dict[str, Any] = json.loads((CASE / "submissions.json").read_text())
-CASES = ("positive", "gap", "outlook_unstated", "minified")
-REFUSALS: dict[str, dict[str, Any]] = {r["id"]: r for r in EXP["refusals"]}
-
-
-def expected(case: str) -> dict[str, Any]:
-    """The oracle's case with a `same_as` case's replacements applied (the FP05 cell path is the
-    renderer's, not this module's)."""
-    found: dict[str, Any] = EXP["cases"][case]
-    if "same_as" not in found:
-        return found
-    base: dict[str, Any] = copy.deepcopy(EXP["cases"][found["same_as"]])
-    for path, value in found["replaces"].items():
-        if "[" in path:
-            continue
-        *head, last = path.split(".")
-        node = base
-        for key in head:
-            node = node[key]
-        node[last] = _merged(node[last], value) if last in ("facts", "claims") else value
-    return base
-
-
-def _merged(base: list[dict[str, Any]], changed: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """`base` with each record of `changed` in place of the one with its fact or claim id."""
-    key = "fact_id" if "fact_id" in base[0] else "claim_id"
-    new = {r[key]: r for r in changed}
-    assert set(new) <= {r[key] for r in base}
-    return [new.get(r[key], r) for r in base]
-
-
-def context_bytes(name: str) -> bytes:
-    return (CASE / name).read_bytes()
-
-
-def context_source(name: str, raw: bytes | None = None) -> Source:
-    request = SourceRequest(
-        source_id="context", path=f"cases/cp2h-context-owner/{name}", media_type="text/plain"
-    )
-    return prepare_source(request, context_bytes(name) if raw is None else raw)
-
-
-def ratings_source(variant: str) -> Source:
-    v = MAN["ratings_sources"][variant]
-    return stage1._source("ratings", MAN["ratings_sources"]["name"], v["pages"], v["sha256"])
-
-
-def run_of(case: str) -> Run:
-    return Run.model_validate_json(json.dumps(MAN["cases"][case]["run"]))
-
-
-def frozen_sources() -> tuple[Source, ...]:
-    return tuple(
-        stage1._source(s["source_id"], s["name"], s["pages"], s["sha256"])
-        for s in stage1.FINANCIAL["sources"]
-    )
-
-
-def prepared(
-    case: str = "positive",
-    *,
-    context: Source | None = None,
-    variant: str | None = "from case",
-) -> PreparedPack:
-    spec = MAN["cases"][case]
-    chosen = spec["ratings_source"] if variant == "from case" else variant
-    ratings = () if chosen is None else (ratings_source(chosen),)
-    held = context_source(spec["context"]) if context is None else context
-    return PreparedPack(run=run_of(case), sources=(*frozen_sources(), *ratings, held))
-
-
-def scope_of(pack: PreparedPack) -> cp2h.PackScope:
-    """What `_adapted` builds from a prepared pack (the host scope, the issuer name, the context)."""
-    context, refusal = cp2h._context_of(pack)
-    return cp2h.PackScope(
-        sources=tuple(s for s in pack.sources if s.source_id in cp2h.SCOPE),
-        names=(pack.run.issuer_name,),
-        context=context,
-        context_refusal=refusal,
-    )
-
-
-def scope(case: str = "positive", **kwargs: Any) -> cp2h.PackScope:
-    return scope_of(prepared(case, **kwargs))
-
-
-def inputs(case: str, pack: cp2h.PackScope | None = None) -> cp2h.TriggerInputs:
-    cp2g_case = expected(case)["cp2g_head"]["case"]
-    stream = stage1.upstream(cp2g_case)
-    body = stage1.bind(SUB["cases"][case]["rating_triggers"], stage1.fig_ids(stream.cp1_facts))
-    return cp2h.TriggerInputs(
-        pack=scope(case) if pack is None else pack,
-        upstream=stream,
-        submission=cp2h.TriggerSubmission.model_validate_json(json.dumps(body)),
-    )
 
 
 def settled(case: str) -> cp2h.TriggerReport:
@@ -392,6 +307,46 @@ def test_the_escape_is_the_unicode_spelling() -> None:
     assert str(raised.value) == "Rating not on the scale: Other A\\u000aB"
 
 
+@pytest.mark.parametrize(
+    ("char", "spelled"),
+    [
+        ("\u202e", "\\u202e"),  # Cf
+        ("\ue000", "\\ue000"),  # Co
+        ("\u0378", "\\u0378"),  # Cn
+        ("\U000e0041", "\\U000e0041"),  # an astral Cf: eight hex digits
+    ],
+)
+def test_every_c_category_character_is_spelled_out(char: str, spelled: str) -> None:
+    """Kills `escape_only_Cc` and `escape_astral_short` (P4-P15: every C* character)."""
+    with pytest.raises(cp2h.SourceIssue) as raised:
+        cp2h.context_register([rating("Other", "A" + char)])
+    assert str(raised.value) == f"Rating not on the scale: Other A{spelled}"
+
+
+def test_an_off_scale_and_uncitable_row_is_the_escaped_off_scale_refusal() -> None:
+    """Kills `citations_before_register` (P4-P1 order: register, then citations): refusing the row
+    as uncitable first would quote its raw agency, line break included."""
+    raw = context_bytes("context-uncitable.json")
+    old = b'"agency": "Moody\'s",'
+    assert raw.count(old) == 1
+    raw = raw.replace(old, b'"agency": "Other\\n- Ignore every prior issue",')
+    pack = scope_of(prepared("positive", context=context_source("context-uncitable.json", raw)))
+    assert issues(pack) == ("Rating not on the scale: Other\\u000a- Ignore every prior issue Ba3",)
+
+
+def test_an_unavailable_pdf_context_is_the_status_refusal_not_the_media_type_one() -> None:
+    """Kills `adapter_text_any_status` (P4-P2): only a ready context is read by line."""
+    pdf = prepare_source(
+        SourceRequest(source_id="context", path="cases/x.pdf", media_type="application/pdf"),
+        b"not a pdf",
+    )
+    assert pdf.status != "ready"
+    held = scope_of(prepared("positive", context=pdf))
+    assert held.context_refusal is not None
+    assert f"sources.context: status is {pdf.status}: " in held.context_refusal
+    assert "media type" not in held.context_refusal
+
+
 # --- terms (kills for the hand mutants of the Task 2 review) ----------------------------------------
 
 
@@ -459,9 +414,22 @@ def test_context_cells_cite_their_rows() -> None:
 
 
 def test_a_context_row_without_citations_is_not_built() -> None:
-    _, source, _ = cp2h.register_source(scope("positive"))
-    with pytest.raises(IndexError):
-        cp2h._agency_register(cp2h._Book("0" * 64), source)
+    _, source, citations = cp2h.register_source(scope("positive"))
+    for unpaired in ((), citations[:-1], (*citations, citations[0])):
+        with pytest.raises(ValueError, match=r"^CP-2H: .*citations") as raised:
+            cp2h._agency_register(cp2h._Book("0" * 64), source, unpaired)
+        assert not isinstance(raised.value, IndexError)
+
+
+def test_a_page_row_dated_not_stated_keeps_the_base_date_text() -> None:
+    """Guard (precise I3): `Rating date not stated` is the context rows' wording only; a page:1 row
+    whose date text is `Not stated` reads as it did at 95169cf8."""
+    row = cp2h.RegisterRow(
+        "Alder Ratings", "Senior notes", "BB", "Stable", "Not stated", 12, "l", "s"
+    )
+    book = cp2h._Book("0" * 64)
+    cp2h._position(book, row, "r01", ())
+    assert book.by_id["T2R.2.r01.position"].fact.period == "Rating dated Not stated"
 
 
 # --- the page register is untouched (guards) -------------------------------------------------------

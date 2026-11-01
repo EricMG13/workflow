@@ -20,8 +20,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
 
+import cp2h_context_support as wiring
 import pytest
-import test_cp2h_context_wiring as wiring
 import test_method_cp2g as cp2g_stage1
 import test_method_cp2h as stage1
 import view_tree

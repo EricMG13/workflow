@@ -1065,7 +1065,11 @@ def _row_citations(
 
 def _position(b: _Book, r: RegisterRow, row: str, cited: Sequence[Citation]) -> None:
     at, label = ("T2R.2", row, "position"), "Position on the combined scale"
-    period = "Rating date not stated" if r.date == NOT_STATED else f"Rating dated {r.date}"
+    period = (
+        "Rating date not stated"
+        if r.source == "context" and r.date == NOT_STATED
+        else f"Rating dated {r.date}"
+    )
     if r.position is None or (r.source == "ratings" and r.scale_line is None):
         reason = (
             f"{possessive(r.agency)} rating is {r.rating.lower()}, "
@@ -1095,11 +1099,21 @@ def _position(b: _Book, r: RegisterRow, row: str, cited: Sequence[Citation]) -> 
         )
 
 
+def _paired(source: RatingsSource, citations: Sequence[RowCitations]) -> None:
+    if any(r.source == "context" for r in source.register) and len(citations) != len(
+        source.register
+    ):
+        raise ValueError(
+            f"CP-2H: {len(citations)} context citations for {len(source.register)} rating rows"
+        )
+
+
 def _agency_register(
     b: _Book, source: RatingsSource, citations: Sequence[RowCitations] = ()
 ) -> dict[str, str]:
     """T2R.2 source facts; the row id of each agency. `citations` are the context rows' (one per
     register row, from `register_source`); a page row cites its page lines."""
+    _paired(source, citations)
     rows: dict[str, str] = {}
     for n, r in enumerate(source.register, 1):
         row = f"r{n:02d}"

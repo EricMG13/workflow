@@ -576,6 +576,13 @@
     "checks": [
      "oracle:cp2a:v13"
     ]
+   },
+   {
+    "id": "downside_pathway.7",
+    "statement": "Do not write Python's pinned-shock-size line in a gap or a threshold label, in any case or spacing; Python adds that line when shock sizes are pinned.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp2a:_gap_label_issues"
+    ]
    }
   ],
   "earnings_delta": [
@@ -1740,6 +1747,13 @@
      "fn:deploy_workflow.owners.cp4c:_run_text_issues",
      "fn:deploy_workflow.owners.cp4c:guard_issues"
     ]
+   },
+   {
+    "id": "restructuring_fulcrum.10",
+    "statement": "Do not write Python's pinned-multiple line in a gap, a claim name or a valuation label, in any case or spacing; Python adds that line when a multiple is pinned.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp4c:_gap_label_issues"
+    ]
    }
   ],
   "source_context": [
@@ -1858,32 +1872,32 @@
    "src/deploy_vii/cp5_integrity.py": "eb3a766f5ed1ff5bb856c64d0e5a477855d421ded57b91279d365c1fa03ea901",
    "src/deploy_vii/cp6_committee.py": "e97d5074292aa29dc93651dedce0dbc734e38d0373a34f769e0cfef65e2196ac",
    "src/deploy_vii/downstream_readiness.py": "29c71a90df07d1eed7df2903b30211377a77588fa7f564d09389d6d47c11dbdd",
-   "src/deploy_vii/financial_contracts.py": "5881b5287e8c871c078d7f64cb9c14bb191b107b556930308aa226a5d191d8a9",
+   "src/deploy_vii/financial_contracts.py": "527090d4c2a6ed38f21eb5e2022d7508a1b2421f07240e31bb58e6a4695a375b",
    "src/deploy_vii/financial_validation.py": "91b5ef7d52ad8cb87c0627c5c794b1f6014ab8257bb3b7cd57ca22f8ff220c28",
    "src/deploy_vii/live/tools.py": "a5451e47977f7f57d56c3563dfa7e1ef7f9eef24d59d668b90ea5295aaac3ece",
    "src/deploy_vii/narrative.py": "d766f0fae83bb40a5cf20b91bbce279c61137177752d9e3bf455544739972ebf",
    "src/deploy_vii/prose.py": "8dcb2a51ba1865970fca7c17dba2fb8a8657e4a8bfae4679ffd5c7b6823cbbef",
    "src/deploy_vii/quality.py": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",
    "src/deploy_vii/readiness.py": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
-   "src/deploy_vii/source_context.py": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
-   "src/deploy_vii/statement_validation.py": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
+   "src/deploy_vii/source_context.py": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
+   "src/deploy_vii/statement_validation.py": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "6841007217f8543f5614b52a69d07cbe6e18d5423c184dbcc699894be692c67d",
+   "src/deploy_workflow/owner_workflow.py": "373ccd451710c13eb160fd7dcb96784dca2002fc76070d7eb096bcac564a60a2",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",
    "src/deploy_workflow/owners/cp1d.py": "2a8bebd72aa10358104948ede3ca8e7d36476a6453b32d38efed29e6c41fb90d",
    "src/deploy_workflow/owners/cp2.py": "902dea0e690a9054b06e064d1b3636367a6a8c02ff75d5ae9c746bf4fdf085e2",
-   "src/deploy_workflow/owners/cp2a.py": "4868c65b8b9305f0cb3b27c84b7fcb76a6580bda97744330cff442b62934325c",
+   "src/deploy_workflow/owners/cp2a.py": "6a490337508132ad58c303af767a3dc2330ed6147d710bd6ee20ce538ceec815",
    "src/deploy_workflow/owners/cp2d.py": "cc7a462168e7498c0af4facc5197b32a0ee2f0054a6b5ecc03a1657bbfca7423",
    "src/deploy_workflow/owners/cp2e.py": "88b87ae65766ac5368096967c538d88127e98f4ef4b9cb9ff0916c55657a2732",
    "src/deploy_workflow/owners/cp2g.py": "71c06be61716570408bfed1913c5f8853bb8010c5a96f61554b61f84923e4bdb",
    "src/deploy_workflow/owners/cp2h.py": "6c631c63645bfd1a2009aa13c93d99994670f48d521ab34bc96959a771bf4349",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
    "src/deploy_workflow/owners/cp3c.py": "6ce5989769711e1f978f300a205e0fd80a5ac8a011c9f2eee5831210cb7cdb0b",
-   "src/deploy_workflow/owners/cp3d.py": "da9a9e5a6835d05ff331bd84b01cdc40e8bc2d5ee9f3ce9dd76c151acfefea5e",
+   "src/deploy_workflow/owners/cp3d.py": "50a541d29c3b2ed73d506c587ec054bfd4e8b30655260a2cf3d0a129499228bc",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
-   "src/deploy_workflow/owners/cp4c.py": "4fec1bf89e5744c23ea5becfdf90ead8407d9ef2c6a5ba6973a04d18fd71bed8",
+   "src/deploy_workflow/owners/cp4c.py": "2744a09e104c1cb5b1a480544f3cef23a560936530bc44912e7c479f516a48e0",
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",

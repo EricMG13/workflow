@@ -597,8 +597,9 @@ CP3_TALK_RULE = (
 CP3_BASIS_RULE = (
     "Name instruments only by a `facility_id` listed under `cp1_facilities`, each once. Every "
     "instrument and risk has a basis: its `cp2_refs` (only refs listed under `cp2_rows`), a "
-    "`{ref|unit}` CP-1 figure or, for an instrument, a `basis.quotes` market quote; a "
-    "`market_observation` other than none cites a market quote."
+    "`{ref|unit}` CP-1 figure or, for an instrument, a `basis.quotes` market quote or a context "
+    "row named in `basis.context_rows`; a `market_observation` other than none cites a market "
+    "quote."
 )
 CP3_PREFERENCE_RULE = (
     "`preference.ordering` lists every instrument's `facility_id` exactly once and nothing else: "

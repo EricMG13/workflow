@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from b29_strip import B29_SPANS, undo_b29
 from merge_strip import undo_merged_contract
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
 
@@ -99,6 +100,8 @@ def test_existing_is_the_contracts_plus_the_text_stems() -> None:
 # gives the old message. relative_value was re-frozen by Phase 3 Task 4 (the CP3_EVIDENCE_RULE
 # reword, B17 item 3); tests/prompts/test_context_evidence.py keeps its old digest and shows that
 # putting back the old rule text and removing the evidence block gives the old message.
+# relative_value was re-frozen again by B29 (the method text and rule d name `basis.context_rows`);
+# test_the_b29_wording_is_the_only_change_to_the_frozen_message keeps the previous digest.
 # financials and narrative were re-frozen by the O6 merge integration (ruling M-R1: the merged
 # restricted-cash change in their contract text and schema); test_the_merged_restricted_cash_change_
 # is_the_only_change keeps their old digests and shows that undoing exactly it gives the old message.
@@ -131,6 +134,29 @@ def test_the_merged_restricted_cash_change_is_the_only_change_to_the_frozen_mess
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_MERGE_FROZEN[step]
 
 
+# The answer key (B29): relative_value's digest before the CP-3 method text and rule d named
+# `basis.context_rows` (the FROZEN value from the O3 release cut e1d8b5a2). Never edited.
+PRE_B29_FROZEN: dict[str, str] = {
+    "relative_value": "dc90b63a7ee77bd4482fdadba8b6e25a5492951897753e2e4a828af3ea9dd729",
+}
+
+
+@pytest.mark.parametrize("step", sorted(PRE_B29_FROZEN))
+def test_the_b29_wording_is_the_only_change_to_the_frozen_message(
+    pack: PreparedPack, step: str
+) -> None:
+    messages = compose(request_for(step, pack))
+    system, user = messages[0], messages[1]
+    body = json.dumps([[system.role, undo_b29(step, system.text)], [user.role, user.text]])
+    assert hashlib.sha256(body.encode()).hexdigest() == PRE_B29_FROZEN[step]
+
+
+def test_the_b29_strip_removes_only_spans_the_message_holds(pack: PreparedPack) -> None:
+    for step, spans in B29_SPANS.items():
+        system = compose(request_for(step, pack))[0].text
+        assert all(system.count(span) == count for span, count, _ in spans)
+
+
 FROZEN: dict[str, str] = {
     "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
     "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
@@ -141,7 +167,7 @@ FROZEN: dict[str, str] = {
     "narrative": ("3e8d87b8f6e5085f539e94e7184db2e89feb7cc45b4e03e897925dca24d819f7"),
     "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
-    "relative_value": ("dc90b63a7ee77bd4482fdadba8b6e25a5492951897753e2e4a828af3ea9dd729"),
+    "relative_value": ("fe12a09cfc3b8c3b37a9f27961b7feb192f4fb3a59a1a1653ba952b9cc399b0b"),
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
     "source_readiness": ("f79002b0b6dba89b493fdd93f8baf1c8aa914bd71102370c1d0a6e6fca62f2b6"),
 }

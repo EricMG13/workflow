@@ -7,6 +7,7 @@ import re
 import subprocess
 
 import pytest
+from b29_strip import undo_b29
 from merge_strip import MERGE_REV, MERGE_SPANS, PRE_MERGE_REV, SPAN_TOKENS, undo_merged_contract
 from prompt_support import OLD_EVIDENCE_RULE, request_for
 
@@ -136,6 +137,8 @@ def test_the_tokens_and_the_g8_block_are_the_only_change_to_the_frozen_message(
     system = system.replace(CP3_EVIDENCE_RULE, OLD_EVIDENCE_RULE)
     # M-R1: undo the merged restricted-cash ids, for financials and narrative only.
     system = undo_merged_contract(step_id, system)
+    # B29: undo the context-row basis wording in CP-3's method text and rule d.
+    system = undo_b29(step_id, system)
     body = json.dumps([[messages[0].role, system], [messages[1].role, messages[1].text]])
     assert hashlib.sha256(body.encode()).hexdigest() == OLD_FROZEN[step_id]
 

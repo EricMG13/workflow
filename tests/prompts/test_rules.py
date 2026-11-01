@@ -634,6 +634,7 @@ LIMITS = {
     "fn:deploy_workflow.owners.cp2d:check_cp1_totals",
     "fn:deploy_workflow.owners.cp4c:_Book.cells",
     "fn:deploy_vii.readiness:absent_page_ranges",
+    "fn:deploy_workflow.owners.cp3d:_issues",
 }
 
 

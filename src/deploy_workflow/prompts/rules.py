@@ -407,6 +407,7 @@ NOT_ISSUE_SITES: Mapping[str, str] = {
     "refuses nothing (the citation check that uses them is the refusal)",
     "fn:deploy_workflow.owners.cp4c:_Book.cells": "settles lineage citations (a fail-closed "
     "invariant, no validator issue)",
+    "fn:deploy_workflow.owners.cp3d:_issues": "joins the content and pin issue sets",
 }
 
 # --- ast: issue sites reachable from the entry -----------------------------------------------

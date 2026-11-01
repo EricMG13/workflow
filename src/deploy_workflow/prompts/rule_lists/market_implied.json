@@ -7,8 +7,7 @@
     "oracle:cp3d:observations_and_absence",
     "oracle:cp3d:duplicate_kind",
     "fn:deploy_workflow.owners.cp3d:_check_observations",
-    "fn:deploy_workflow.owners.cp3d:submission_issues",
-    "fn:deploy_workflow.owners.cp3d:_issues"
+    "fn:deploy_workflow.owners.cp3d:submission_issues"
    ]
   },
   {
@@ -30,7 +29,7 @@
   },
   {
    "id": "market_implied.3",
-   "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused. All `context_row` observations of one submission name rows of the same facility. A context bid and offer come from one listed row, never one from the context and one from a sheet. Context market evidence is built by Python: cite it only by its row id in `context_row`, never with the `context` source as a `source_id`.",
+   "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused. All `context_row` observations of one submission name rows of the same facility. A context bid and offer are the two listed rows of one context quote (same facility and date), never one from the context and one from a sheet. Context market evidence is built by Python: cite it only by its row id in `context_row`, never with the `context` source as a `source_id`.",
    "checks": [
     "fn:deploy_workflow.owners.cp3d:_resolved",
     "fn:deploy_workflow.owners.cp3d:_check_facilities",

@@ -23,6 +23,7 @@ PATTERNS = (
     "cases/*-owner/expected.json",
     "cases/*-owner/*-view-tree.json",
     "cases/*-owner/builder/build.py",
+    "cases/cp2h-context-owner/context-*.json",
     "cases/charts/*-expected.json",
     "cases/charts/expected.json",
     "cases/charts/builder/*.py",

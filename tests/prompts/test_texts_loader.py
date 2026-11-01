@@ -11,6 +11,7 @@ import pytest
 from b29_strip import B29_SPANS, undo_b29
 from b30_strip import B30_SPANS, undo_b30
 from merge_strip import undo_merged_contract
+from p5_strip import undo_p5
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
@@ -186,6 +187,24 @@ def test_the_b30_strip_removes_only_spans_the_message_holds(pack: PreparedPack) 
         assert all(system.count(span) == count for span, count, _ in spans)
 
 
+# The answer key (Phase 5 Task 1, P5T1-R6): source_readiness's digest before the draft and context
+# authority line `[source_readiness.p5]` joined the CP-0 message (the FROZEN value after B30).
+# Never edited.
+PRE_P5T1_FROZEN: dict[str, str] = {
+    "source_readiness": "f79002b0b6dba89b493fdd93f8baf1c8aa914bd71102370c1d0a6e6fca62f2b6",
+}
+
+
+@pytest.mark.parametrize("step", sorted(PRE_P5T1_FROZEN))
+def test_the_p5_line_is_the_only_change_to_the_frozen_message(
+    pack: PreparedPack, step: str
+) -> None:
+    messages = compose(request_for(step, pack))
+    system, user = messages[0], messages[1]
+    body = json.dumps([[system.role, undo_p5(step, system.text)], [user.role, user.text]])
+    assert hashlib.sha256(body.encode()).hexdigest() == PRE_P5T1_FROZEN[step]
+
+
 FROZEN: dict[str, str] = {
     "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
     "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
@@ -198,7 +217,7 @@ FROZEN: dict[str, str] = {
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
     "relative_value": ("f3b1aba5daffca2ebeebe195f6bb4daab5115994007ab6561cba2629928b1c30"),
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
-    "source_readiness": ("f79002b0b6dba89b493fdd93f8baf1c8aa914bd71102370c1d0a6e6fca62f2b6"),
+    "source_readiness": ("cf819db26dab80a34951dde352cb95f10bb38fb1ce01684e293bd856d3ccb743"),
 }
 
 

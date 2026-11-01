@@ -54,6 +54,7 @@ compose_module = importlib.import_module("deploy_workflow.prompts.compose")
 NEW = tuple(s for s in inventory() if s not in EXISTING)
 ORCHESTRATOR = re.compile(r"^O\d\. ")
 COMPOSE_TOKEN = re.compile(r"^\[compose\.[A-Za-z0-9]+\] ")  # O6-P21
+P5_PREFIX = "[source_readiness.p5] "  # Phase 5 Task 1: CP-0's authority rule, composer-owned
 G8_PREFIX = "[source_readiness.g8] "  # Task 5: CP-0's planned-module block, composer-owned
 
 
@@ -85,6 +86,7 @@ def stripped(system: str, step_id: str) -> list[str]:
         if line != index
         and not line.startswith("5. ")
         and not line.startswith(G8_PREFIX)
+        and not line.startswith(P5_PREFIX)
         and not ORCHESTRATOR.match(line)
     ]
 

@@ -10,6 +10,7 @@ import pytest
 from b29_strip import undo_b29
 from b30_strip import undo_b30
 from merge_strip import MERGE_REV, MERGE_SPANS, PRE_MERGE_REV, SPAN_TOKENS, undo_merged_contract
+from p5_strip import undo_p5
 from prompt_support import OLD_EVIDENCE_RULE, request_for
 
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
@@ -132,6 +133,7 @@ def test_the_tokens_and_the_g8_block_are_the_only_change_to_the_frozen_message(
     messages = compose(request_for(step_id, pack))
     system = messages[0].text
     if step_id == "source_readiness":
+        system = undo_p5(step_id, system)  # Phase 5 Task 1 (P5T1-R6): the draft authority line
         system = system.replace(g8_line(system) + "\n", "")
     system = TOKEN.sub("", system)
     # Phase 3 Task 4 (B17 item 3): CP-3's evidence rule was reworded; put the old text back.

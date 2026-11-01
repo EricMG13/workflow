@@ -53,6 +53,7 @@ from deploy_workflow.prompts.fence import (
     untrusted_evidence_block,
 )
 from deploy_workflow.prompts.g8 import G8_RULE_ID, module_set_statement
+from deploy_workflow.prompts.p5 import P5_RULE_ID, P5_STATEMENT
 from deploy_workflow.prompts.tools import model_schema, offered_schema, tool_names
 
 __all__ = [
@@ -309,9 +310,12 @@ def _system(request: PromptRequest, contract: str, pins_present: bool) -> str:
         orchestrator.append(_tag("O5", O5_LINE_LOCATORS))
     if pins_present:
         orchestrator.append(_tag("O6", O6_PINS))
-    # G8: only CP-0 judges the run's planned modules.
+    # G8 and P5: only CP-0 judges the run's planned modules and assigns source authority.
     g8 = (
-        [f"[{G8_RULE_ID}] {module_set_statement(request.pack)}"]
+        [
+            f"[{G8_RULE_ID}] {module_set_statement(request.pack)}",
+            f"[{P5_RULE_ID}] {P5_STATEMENT}",
+        ]
         if step_id == "source_readiness"
         else []
     )

@@ -152,3 +152,12 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   `cases/o2-synthetic` (its CP-0 covers the prepared pack). Per-preset CP-0 oracles for the other presets are a
   follow-up for the owner. Cost if wrong: receipt verification for five presets stays unproven until those
   oracles exist.
+- **B22 `line:N` locators in the live tools (user, 2026-11-01: "Approve line:N").** Adds to B1:
+  `src/deploy_vii/live/tools.py` `read_pages`, `extract_statements` and the citation check
+  (`unread_citation_issues`) accept the `line:N` locators of a prepared text pack as well as `page:N`.
+  Found by O2 Task 5: a text or HTML source cannot pass CP-1 `financials` through `run_pathway`
+  (`tools.py:103`, `:398`, `:423`). The change carries a D12 `post_import_patches` record and an
+  `mx-adversary` review. Afterwards a new oracle, from a separate preparer with an independent `mx-precise`
+  review, gives the CP-1 tool-loop payloads (`financials`, `narrative`, `readiness`, `quality`), re-cut from
+  the frozen figures with no invented value. O2 Task 5 then adds the settled walk with receipt and render,
+  and the B21 receipt tests.

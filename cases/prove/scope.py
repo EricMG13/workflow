@@ -44,7 +44,7 @@ def _regex(pattern: str) -> re.Pattern[str]:
     body = "".join(
         ".*" if part == "**" else "[^/]*" if part == "*" else re.escape(part) for part in parts
     )
-    return re.compile(body)
+    return re.compile(body, re.DOTALL)
 
 
 def _match(path: str, patterns: tuple[str, ...]) -> bool:

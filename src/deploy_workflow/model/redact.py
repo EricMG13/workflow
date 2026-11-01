@@ -16,14 +16,56 @@ REPLACEMENT = "[redacted]"
 KEY_ENV_NAMES = ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY")
 KEY_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
 _KEY_PATTERN_BYTES = re.compile(KEY_PATTERN.pattern.encode("ascii"))
+_TRAILING_KEY_RUN = re.compile(r"[A-Za-z0-9_-]*$")
+
+
+def _suffixed(key: Any, n: int) -> Any:
+    if isinstance(key, str):
+        return f"{key}#{n}"
+    if isinstance(key, bytes):
+        return key + f"#{n}".encode("ascii")
+    if isinstance(key, tuple):
+        return (*key, f"#{n}")
+    return (key, f"#{n}")
+
+
+def _replace_spans[T: (str, bytes)](value: T, spans: list[tuple[int, int]], marker: T) -> T:
+    """Replace the union of ``spans`` (overlaps merged) in ``value`` once each."""
+    out: list[T] = []
+    pos = 0
+    cur_start = cur_end = -1
+    for start, end in sorted(spans):
+        if start < cur_end:
+            cur_end = max(cur_end, end)
+            continue
+        if cur_end >= 0:
+            out.append(value[pos:cur_start])
+            out.append(marker)
+            pos = cur_end
+        cur_start, cur_end = start, end
+    if cur_end >= 0:
+        out.append(value[pos:cur_start])
+        out.append(marker)
+        pos = cur_end
+    out.append(value[pos:])
+    return value[:0].join(out)
 
 
 class Redactor:
     def __init__(self, exact_values: Iterable[str] = ()) -> None:
-        values = sorted({v for v in exact_values if v}, key=lambda v: (-len(v), v))
-        self._exact = re.compile("|".join(re.escape(v) for v in values)) if values else None
+        self._values = sorted({v for v in exact_values if v}, key=lambda v: (-len(v), v))
+        # A lookahead finds every occurrence, including ones that overlap an earlier match.
+        self._exact = (
+            re.compile("(?=(" + "|".join(re.escape(v) for v in self._values) + "))")
+            if self._values
+            else None
+        )
         self._exact_bytes = (
-            re.compile(b"|".join(re.escape(v.encode("utf-8")) for v in values)) if values else None
+            re.compile(
+                b"(?=(" + b"|".join(re.escape(v.encode("utf-8")) for v in self._values) + b"))"
+            )
+            if self._values
+            else None
         )
 
     @classmethod
@@ -31,29 +73,58 @@ class Redactor:
         return cls(environ[name] for name in KEY_ENV_NAMES if environ.get(name))
 
     def text(self, value: str) -> str:
+        spans = [m.span() for m in KEY_PATTERN.finditer(value)]
         if self._exact is not None:
-            value = self._exact.sub(REPLACEMENT, value)
-        return KEY_PATTERN.sub(REPLACEMENT, value)
+            spans += [m.span(1) for m in self._exact.finditer(value)]
+        return _replace_spans(value, spans, REPLACEMENT)
 
     def bytes_(self, value: bytes) -> bytes:
+        spans = [m.span() for m in _KEY_PATTERN_BYTES.finditer(value)]
         if self._exact_bytes is not None:
-            value = self._exact_bytes.sub(REPLACEMENT.encode("ascii"), value)
-        return _KEY_PATTERN_BYTES.sub(REPLACEMENT.encode("ascii"), value)
+            spans += [m.span(1) for m in self._exact_bytes.finditer(value)]
+        return _replace_spans(bytes(value), spans, REPLACEMENT.encode("ascii"))
+
+    def _hold_from(self, text: str) -> int:
+        """Index from which ``text`` might still be the start of a key: the trailing run of
+        key characters, or a tail that is a prefix of an exact value."""
+        hold = len(text) - len(_TRAILING_KEY_RUN.search(text).group())  # type: ignore[union-attr]
+        for value in self._values:
+            for n in range(min(len(value), len(text)), 0, -1):
+                if text.endswith(value[:n]):
+                    hold = min(hold, len(text) - n)
+                    break
+        return hold
+
+    def _key(self, key: Any) -> Any:
+        if isinstance(key, str):
+            return self.text(key)
+        if isinstance(key, bytes):
+            return self.bytes_(key)
+        if isinstance(key, tuple):
+            return tuple(self._key(k) for k in key)
+        if isinstance(key, frozenset):
+            return frozenset(self._key(k) for k in key)
+        return key
 
     def json_value(self, value: Any) -> Any:
-        """Redact keys and string values, nested. Keys that collide once redacted get a suffix."""
+        """Redact keys and values, nested, including bytes, tuples and sets. Keys that
+        collide once redacted get a suffix, so no entry is dropped."""
         if isinstance(value, str):
             return self.text(value)
+        if isinstance(value, bytes):
+            return self.bytes_(value)
         if isinstance(value, Mapping):
             out: dict[Any, Any] = {}
             for key, item in value.items():
-                new_key = self.text(key) if isinstance(key, str) else key
+                new_key = self._key(key)
                 base, n = new_key, 1
                 while new_key in out:
                     n += 1
-                    new_key = f"{base}#{n}"
+                    new_key = _suffixed(base, n)
                 out[new_key] = self.json_value(item)
             return out
+        if isinstance(value, set | frozenset):
+            return type(value)(self._key(item) for item in value)
         if isinstance(value, list | tuple):
             return [self.json_value(item) for item in value]
         return value
@@ -67,8 +138,10 @@ class Redactor:
 
 
 class _RedactingStream(io.TextIOBase):
-    """Line-buffered writer: a partial line is held until a newline or flush, so a key
-    split across writes is still seen whole."""
+    """Line-buffered writer. A partial line is held until a newline; flush() writes only the
+    part that cannot be the start of a key (the trailing key-character run and any tail that
+    is a prefix of an exact value stay held), so a key split by a flush is still seen whole.
+    close() writes everything."""
 
     def __init__(self, redactor: Redactor, target: TextIO) -> None:
         self._redactor = redactor
@@ -87,12 +160,21 @@ class _RedactingStream(io.TextIOBase):
         return len(s)
 
     def flush(self) -> None:
-        if self._pending:
-            self._target.write(self._redactor.text(self._pending))
-            self._pending = ""
+        cut = self._redactor._hold_from(self._pending)
+        if cut:
+            self._target.write(self._redactor.text(self._pending[:cut]))
+            self._pending = self._pending[cut:]
         self._target.flush()
+
+    def __del__(self) -> None:
+        # No implicit write on garbage collection: the target may already be closed.
+        # Callers close() the stream to emit a held tail.
+        pass
 
     def close(self) -> None:
         if not self.closed:
-            self.flush()
+            if self._pending:
+                self._target.write(self._redactor.text(self._pending))
+                self._pending = ""
+            self._target.flush()
         super().close()

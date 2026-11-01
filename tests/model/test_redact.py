@@ -31,7 +31,7 @@ def test_regex_only_redactor_catches_known_shapes() -> None:
     assert r.text("sk-" + "a" * 20) == "[redacted]"
     assert r.text("sk-" + "a" * 19) == "sk-" + "a" * 19
     assert r.text("risk-or-x") == "risk-or-x"
-    assert KEY_PATTERN.pattern.startswith(r"\b(sk-(or|ant|proj)-")
+    assert KEY_PATTERN.pattern == r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})"
 
 
 def test_chain_cause_redacted() -> None:
@@ -115,6 +115,8 @@ def test_stream_redacts_value_split_across_writes_and_flush() -> None:
     stream.write("key abc1")
     stream.write("23XYZ tail")
     stream.flush()
+    assert buf.getvalue() == "key [redacted] "
+    stream.close()
     assert buf.getvalue() == "key [redacted] tail"
 
 
@@ -124,3 +126,56 @@ def test_property_value_never_survives(t: str, v: str) -> None:
         return
     assert v not in Redactor([v]).text(t)
     assert v not in Redactor([v]).text(t + v + t)
+
+
+def test_stream_flush_holds_regex_key_split_by_flush() -> None:
+    buf = io.StringIO()
+    stream = Redactor().redact_stream(buf)
+    for chunk in ["The key is ", "sk-or-v1-", "TESTONLY", "abcdef0123", "456789", "\n"]:
+        print(chunk, end="", file=stream, flush=True)
+    assert buf.getvalue() == "The key is [redacted]\n"
+
+
+def test_stream_flush_holds_exact_value_prefix() -> None:
+    buf = io.StringIO()
+    stream = Redactor(["abc 123 XYZ"]).redact_stream(buf)
+    stream.write("key abc 12")
+    stream.flush()
+    assert "abc" not in buf.getvalue()
+    stream.write("3 XYZ\n")
+    assert buf.getvalue() == "key [redacted]\n"
+
+
+def test_stream_flush_emits_safe_text_and_close_emits_held() -> None:
+    buf = io.StringIO()
+    stream = Redactor().redact_stream(buf)
+    stream.write("hello world, sk-or")
+    stream.flush()
+    assert buf.getvalue() == "hello world, "
+    stream.write("-v1-TESTONLYabcdef")
+    stream.close()
+    assert buf.getvalue() == "hello world, [redacted]"
+
+
+def test_overlapping_exact_values_leave_no_fragment() -> None:
+    out = Redactor(["TESTONLYaaaa", "aaaaSECRETTAILzzzzzzzz"]).text(
+        "x TESTONLYaaaaSECRETTAILzzzzzzzz y"
+    )
+    assert out == "x [redacted] y"
+
+
+def test_exact_inside_regex_key_redacts_whole_key() -> None:
+    out = Redactor(["TESTONLYmid0"]).text("auth sk-or-v1-TESTONLYmid0KEYSUFFIXabc123 z")
+    assert out == "auth [redacted] z"
+    assert (
+        Redactor(["TESTONLYmid0"]).bytes_(b"sk-or-v1-TESTONLYmid0KEYSUFFIXabc123") == b"[redacted]"
+    )
+
+
+def test_json_value_non_json_types_are_redacted() -> None:
+    r = Redactor(["abc123XYZ"])
+    assert r.json_value({"b": b"k abc123XYZ"}) == {"b": b"k [redacted]"}
+    assert r.json_value({b"abc123XYZ": 1}) == {b"[redacted]": 1}
+    assert r.json_value({("abc123XYZ", "q"): 1}) == {("[redacted]", "q"): 1}
+    assert r.json_value({"s": {"abc123XYZ", "ok"}}) == {"s": {"[redacted]", "ok"}}
+    assert r.json_value(("abc123XYZ", b"abc123XYZ")) == ["[redacted]", b"[redacted]"]

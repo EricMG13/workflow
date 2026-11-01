@@ -2078,6 +2078,24 @@
       "sha256": "b9b846432b65db8112b7bc0ba078445b5447b658c4beb00cf7994fcfffaf2c6c",
       "reason": "B17 item 3 (docs/rulings, user-approved), Phase 3 Task 4: wording-only reword of CP3_EVIDENCE_RULE in the relative_value contract: a basis refers to Python's context rows by id (basis.context_rows) and never copies their figures; basis.quotes still repeats a market_evidence row's quote, for third_party rows only. No other contract text changes.",
       "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (task-4-addendum.md P3T4-R1, task-4a-report.md); mx-adversary ac7b8cfa (Phase 3 Task 4 Part A)"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3.md",
+      "imported_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "prior_project_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "project_commit": "e7d2c02baba0054c0e591809fe62d05158ff8e76",
+      "sha256": "36d84f1d9985abbf5b141054dd678434c4e6cbabcbecd0e1d12dd98d1436bc83",
+      "reason": "B29 (docs/rulings/2026-10-31-context-plan.md, user-approved): wording-only sentence in the market-evidence paragraph: a run with a context file also offers Python's context rows, which a basis cites by row id in basis.context_rows and never copies; the third_party/basis.quotes sentences are unchanged. No rule, number or table id added.",
+      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b29-brief.md, b29-report.md); mx-adversary review (both texts reach the model)"
+    },
+    {
+      "destination": "src/deploy_vii/live/prompts.py",
+      "imported_sha256": "fc291aee064f9f54c837094e5365601b1ee795259d0f81250d68960a428d87b5",
+      "prior_project_sha256": "b9b846432b65db8112b7bc0ba078445b5447b658c4beb00cf7994fcfffaf2c6c",
+      "project_commit": "e7d2c02baba0054c0e591809fe62d05158ff8e76",
+      "sha256": "eeb599d9b7de576e803eacb6daa216629e469c5b4dd5437ac07fa5cb030feae7",
+      "reason": "B29 (docs/rulings, user-approved): wording-only edit to CP3_BASIS_RULE (rule d): the market basis is a basis.quotes market quote or a context row named in basis.context_rows, as the validator (_basis_issues, _cites_market) accepts. No other contract text changes.",
+      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b29-brief.md, b29-report.md); mx-adversary review (both texts reach the model)"
     }
   ],
   "local_patch_lineage": [

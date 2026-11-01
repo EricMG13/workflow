@@ -323,6 +323,79 @@ def test_upstream_mismatch_reaches_downstream_modules(
     }
 
 
+@pytest.fixture
+def modules_pass(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, frozenset[str]]]:
+    """Isolates ``score_run``'s composition (rendered, outcome, upstream wiring) from Task 7's
+    module rules. The wrapper calls the real scorer, records (module_id, upstream mismatches)
+    and returns the real ``ModuleScore`` with ``passed`` forced True. Test-only: pathway.py has
+    no such seam. The real G1 gap run cannot give every module a pass under the strict rules
+    (CP-MODEL never runs); the slow ``good_run`` tests are the unforced CI evidence."""
+    calls: list[tuple[str, frozenset[str]]] = []
+    real = scoring_module.score_module
+
+    def forced(module: Any, module_id: str, status: str, *args: Any) -> Any:
+        calls.append((module_id, args[2]))  # case, mapping, upstream_mismatches
+        return real(module, module_id, status, *args).model_copy(update={"passed": True})
+
+    monkeypatch.setattr(pathway_module, "score_module", forced)
+    return calls
+
+
+def test_composition_passes_when_settled_rendered_and_modules_pass(
+    gap_run: Path, modules_pass: list[tuple[str, frozenset[str]]]
+) -> None:
+    case, mapping = _gap_case()
+    score = score_run(gap_run, case, mapping)
+    assert [c[0] for c in modules_pass] == ["CP-0", "CP-1", "CP-MODEL"]
+    assert all(m.passed for m in score.modules)
+    assert score.outcome == "settled" and score.rendered is True
+    assert score.passed is True
+
+
+def test_composition_tamper_is_the_only_cause(
+    gap_copy: Path, modules_pass: list[tuple[str, frozenset[str]]]
+) -> None:
+    case, mapping = _gap_case()
+    report = gap_copy / "delivery" / "report.html"
+    raw = bytearray(report.read_bytes())
+    raw[len(raw) // 2] ^= 0x01
+    report.write_bytes(bytes(raw))
+    score = score_run(gap_copy, case, mapping)
+    assert all(m.passed for m in score.modules) and score.outcome == "settled"
+    assert score.rendered is False and score.passed is False
+
+
+def test_composition_stopped_outcome_is_the_only_cause(
+    gap_copy: Path, modules_pass: list[tuple[str, frozenset[str]]]
+) -> None:
+    case, mapping = _gap_case()
+    body = json.loads((gap_copy / "run.json").read_text())
+    body.update(outcome="stopped", stopped_reason="render: owner_render_scope")
+    (gap_copy / "run.json").write_text(json.dumps(body))
+    assert (gap_copy / "owner-run.json").is_file()  # the receipt stays
+    score = score_run(gap_copy, case, mapping)
+    assert all(m.passed for m in score.modules) and score.rendered is True
+    assert score.outcome == "stopped" and score.passed is False
+
+
+def test_inherited_upstream_arrives_at_the_downstream_module(
+    gap_run: Path, modules_pass: list[tuple[str, frozenset[str]]]
+) -> None:
+    """The recording shows CP-0's mismatched fact_id reaching CP-1 and CP-MODEL. The fast run has
+    no downstream module with a head (CP-1 is refused, CP-MODEL never ran), so the scorer's
+    ``inherited`` outcome is not reproduced here; the real-result variant needs the slow run."""
+    facts = [_golden_fact(OBJECTIVE, "known", "Something else entirely", "text")]
+    case = _case(GAP_CASE, "credit_snapshot", facts)
+    mapping = _mapping(GAP_CASE, [_entry(OBJECTIVE, "run", "objective")])
+    score = score_run(gap_run, case, mapping)
+    assert score.modules[0].facts[0].outcome == "mismatch"
+    assert dict(modules_pass) == {
+        "CP-0": frozenset(),
+        "CP-1": frozenset({OBJECTIVE}),
+        "CP-MODEL": frozenset({OBJECTIVE}),
+    }
+
+
 def test_reads_outcome_and_mode_from_run_json(gap_copy: Path) -> None:
     case, mapping = _gap_case()
     body = json.loads((gap_copy / "run.json").read_text())

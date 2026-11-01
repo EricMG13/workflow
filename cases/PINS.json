@@ -105,5 +105,13 @@
   "cases/cpos-owner/expected.json": "c0f93ab07e33c933fc5964e25cbac541addc35d830ab77ea3685003c665bfd0b",
   "cases/cpos-owner/manifest.json": "4a0e3ef61bd0a07973815679a56507f1b68dc814a56776984a83fbcd9552686b",
   "cases/cpos-owner/submissions.json": "cfbcdd4d5e294e81fb3bf52f9109f2469496ffb392e6e7884d267151a2fa636e",
+  "cases/o2-synthetic/builder/build.py": "1c605fca0109fa173389bdfa1a9f18ee095f88529377887a13c023ade3e9e078",
+  "cases/o2-synthetic/business.txt": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
+  "cases/o2-synthetic/context.json": "9e85d95ba4d701532552c51213bca992604e8217e3a4c20376623957565012dd",
+  "cases/o2-synthetic/financial.txt": "7f981c9ed026e33cd7553c929ef8c9f40782c5d2b05ce842e4b0a84c1520d405",
+  "cases/o2-synthetic/identity.txt": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+  "cases/o2-synthetic/manifest.json": "027a3a8abfddc26e46e104b6ece54b847fec5dce0006ffeb4fec442cb9c64fc6",
+  "cases/o2-synthetic/market.txt": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
+  "cases/o2-synthetic/submissions.json": "9e41f088ff10aa048d36076727a88ab61b6ced997f9e2f2226263f0b79511092",
   "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
 }

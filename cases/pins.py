@@ -30,6 +30,9 @@ PATTERNS = (
     "cases/context-identity-periods/contexts/*.json",
     "cases/context-identity-periods/sources/*.json",
     "cases/context-identity-periods/builder/build.py",
+    "cases/o2-synthetic/*.json",
+    "cases/o2-synthetic/*.txt",
+    "cases/o2-synthetic/builder/build.py",
     "src/deploy_vii/methodology.json",
 )
 

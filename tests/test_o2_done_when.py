@@ -6,10 +6,12 @@ fresh run directory with the same ``run_id``. The prompt composer is a labelled 
 proves orchestration, not the prompts (O6), and recordings made now stop matching once O6 changes
 the prompt (the digest includes the prompt hash).
 
-``test_stopped_run_fast`` runs always. The full walk is not here: the prepared text pack cannot
-pass CP-1 ``financials`` with a frozen payload (no financials payload exists in the oracle; B22 made
-the statement units extractable, see ``test_a_text_pack_extracts_its_statement_units``), so no frozen
-payload sequence reaches CP-8. That gap is reported, not worked around.
+``test_stopped_run_fast`` and the other tests run always. The furthest honest walk
+(``test_walk_through_cp1_quality_offline``, about 3.5 minutes, no promotion) settles CP-0 and CP-1
+and stops at CP-1A, whose frozen payload omits the ``context`` source
+(``test_the_frozen_business_context_omits_the_context_source``). No walk reaches CP-8, a receipt or
+a delivery, so no settled-walk, receipt, delivery or B21 test is written: it would fail on the
+oracle. B22 made the statement units extractable (``test_a_text_pack_extracts_its_statement_units``).
 """
 
 import http.client
@@ -35,6 +37,7 @@ from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.model.record import arguments_sha256
 from deploy_workflow.model.turn import load_arguments
 from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.run_inputs import RunOutcome
 
 OFFLINE_KEYS = {
     "case_id",
@@ -292,52 +295,15 @@ def test_stopped_run_fast(tmp_path: Path) -> None:
     assert time.monotonic() - started < 300  # B16: under five minutes, no CP-1 promotion
 
 
-def test_end_to_end_offline(tmp_path: Path) -> None:
-    """The furthest honest walk: every step with a frozen payload (CP-0, CP-1 source_context) is
-    authored and replayed; the next step, CP-1 financials, has no frozen payload and no
-    recording, so both runs stop there. The settled walk with receipt and render waits on a user
-    decision about ``line:N`` support in vii ``live/tools.py`` (see ``blocker``)."""
-    authored = o2_case.author(
-        tmp_path / "authoring", answers=("source_readiness", "source_context")
-    )
-    replayed = o2_case.replay(tmp_path / "replay", authored.recordings)
-    for outcome in (authored.outcome, replayed):
-        assert outcome.outcome == "stopped"
-        assert outcome.stopped_reason is not None
-        assert outcome.stopped_reason.startswith("RecordingMissing: no recording for digest ")
-        assert outcome.run_id == o2_case.RUN_ID
-    assert replayed.stopped_reason == authored.outcome.stopped_reason
-    assert {p.name for p in replayed.run_dir.iterdir()} == STOPPED_SET
-    assert {p.name for p in authored.run_dir.iterdir()} == STOPPED_SET
-    records = records_of(replayed.run_dir)
-    assert [(r["module_id"], r["step_id"]) for r in records] == [
-        ("CP-0", "source_readiness"),
-        ("CP-1", "source_context"),
-        ("CP-1", "financials"),
-    ]
-    assert [c["name"] for c in records[1]["tool_calls"]] == [
-        "search_pack",
-        "search_pack",
-        "submit_source_context",
-    ]
-    assert [r["cost_status"] for r in records] == ["computed", "computed", "unknown"]
-    assert all(r["schema_version"] == "model-call/1" for r in records)
-    searches = [  # the frozen drivers' searches (tests/s1a_runs.py:305-307)
-        {"query": "subsequent", "source_id": "financial"},
-        {"query": "acquisition", "source_id": "business"},
-    ]
-    assert [c["arguments_sha256"] for c in records[1]["tool_calls"][:2]] == [
-        arguments_sha256(item) for item in searches
-    ]
-    frozen = load_arguments(o2_case.payload_for("source_context"))
-    assert records[1]["tool_calls"][2]["arguments_sha256"] == arguments_sha256(frozen)
-    # the replay's calls.jsonl equals the authoring run's, field for field, apart from timing
-    expected = records_of(authored.run_dir)
+def assert_replay_equals_authoring(authored: o2_case.Authored, replayed: RunOutcome) -> None:
+    """The replay's calls.jsonl equals the authoring run's, field for field, apart from timing
+    (and a traceback's frames: adapter code differs; its final line is equal), and the two
+    run.json files agree apart from each run's own staged source paths."""
+    records, expected = records_of(replayed.run_dir), records_of(authored.run_dir)
     for group in (records, expected):
         for record in group:
             for key in TIMESTAMPS:
                 record.pop(key)
-    # the one field that differs is a traceback's frames (adapter code); its final line is equal
     assert [r["error"].splitlines()[-1] if r["error"] else None for r in records] == [
         r["error"].splitlines()[-1] if r["error"] else None for r in expected
     ]
@@ -348,13 +314,99 @@ def test_end_to_end_offline(tmp_path: Path) -> None:
     bodies = [
         json.loads((d / "run.json").read_text()) for d in (authored.run_dir, replayed.run_dir)
     ]
-    for body in bodies:  # the staged path of each source is under its own run directory
+    for body in bodies:
         for entry in body["sources"]:
             entry.pop("path")
     assert bodies[0] == bodies[1]  # same case, run_id, sources, outcome and reason
     assert set(bodies[1]) == OFFLINE_KEYS and bodies[1]["mode"] == "offline"
+
+
+def test_the_default_token_bound_stops_the_walk_at_narrative(tmp_path: Path) -> None:
+    """Pins today's behaviour: ``run_pathway`` builds its ToolLoop with ``bytes_per_token`` 1, which
+    sizes the narrative step's second request (the read body is about 669 KB) above the model's
+    listed context, so a run stops there with ``ContextTooLong``. A product gap, reported."""
+    authored = o2_case.author(tmp_path, answers=o2_case.ALL_STEPS[:4])
+    assert authored.outcome.stopped_reason is not None
+    assert authored.outcome.stopped_reason.startswith("ContextTooLong: ")
+    last = records_of(authored.run_dir)[-1]
+    assert (last["step_id"], last["call_index"], last["error_class"]) == (
+        "narrative",
+        1,
+        "ContextTooLong",
+    )
+
+
+def test_the_frozen_business_context_omits_the_context_source(tmp_path: Path) -> None:
+    """Pins an oracle gap: CP-1A requires every prepared source assessed once, and the pack has the
+    ``context`` source, but the frozen ``business_context`` payload assesses only the four files
+    (the CP-0 and CP-1 payloads were re-cut with a ``context`` row, this one was not). The step is
+    therefore refused with 'Assess every prepared source exactly once' and the walk cannot pass it."""
+    _, run_dir = o2_case.stage(tmp_path)
+    pack_ids = {s.source_id for s in load_pack(run_dir / "pack").sources}
+    assessed = [
+        s["source_id"] for s in json.loads(o2_case.payload_for("business_context"))["sources"]
+    ]
+    assert pack_ids - set(assessed) == {"context"} and len(assessed) == len(set(assessed))
+
+
+def test_walk_through_cp1_quality_offline(tmp_path: Path) -> None:
+    """CP-0 and CP-1 through its quality step (CP-1 settles offline), authored from the frozen payloads, the frozen
+    CP-1 financials and the narrative/readiness the frozen drivers compute from the read inputs
+    (``s1a_runs.drive_cp1``); replayed by a plain recorded adapter. The next step (CP-1A
+    business_context) is not answered: the frozen payload is refused by the pack (see
+    ``test_the_frozen_business_context_omits_the_context_source``). Both runs stop there."""
+    steps = o2_case.ALL_STEPS[:6]
+    bound = o2_case.TEST_BYTES_PER_TOKEN
+    authored = o2_case.author(tmp_path / "authoring", answers=steps, bytes_per_token=bound)
+    replayed = o2_case.replay(tmp_path / "replay", authored.recordings, bytes_per_token=bound)
+    for outcome in (authored.outcome, replayed):
+        assert outcome.outcome == "stopped"
+        assert outcome.stopped_reason is not None
+        assert outcome.stopped_reason.startswith("RecordingMissing: no recording for digest ")
+        assert outcome.run_id == o2_case.RUN_ID
+    assert replayed.stopped_reason == authored.outcome.stopped_reason
+    for run_dir in (authored.run_dir, replayed.run_dir):
+        assert {p.name for p in run_dir.iterdir()} == STOPPED_SET
+    records = records_of(replayed.run_dir)
+    assert [(r["module_id"], r["step_id"]) for r in records] == [
+        ("CP-0", "source_readiness"),
+        ("CP-1", "source_context"),
+        ("CP-1", "financials"),
+        ("CP-1", "narrative"),
+        ("CP-1", "narrative"),
+        ("CP-1", "readiness"),
+        ("CP-1", "readiness"),
+        ("CP-1", "quality"),
+        ("CP-1", "quality"),
+        ("CP-1A", "business_context"),
+    ]
+    assert [r["cost_status"] for r in records] == ["computed"] * 9 + ["unknown"]
+    assert all(r["schema_version"] == "model-call/1" for r in records)
+    assert [c["name"] for c in records[1]["tool_calls"]] == [
+        "search_pack",
+        "search_pack",
+        "submit_source_context",
+    ]
+    searches = [  # the frozen drivers' searches (tests/s1a_runs.py:305-307)
+        {"query": "subsequent", "source_id": "financial"},
+        {"query": "acquisition", "source_id": "business"},
+    ]
+    assert [c["arguments_sha256"] for c in records[1]["tool_calls"][:2]] == [
+        arguments_sha256(item) for item in searches
+    ]
+    frozen = load_arguments(o2_case.payload_for("source_context"))
+    assert records[1]["tool_calls"][2]["arguments_sha256"] == arguments_sha256(frozen)
+    financials = o2_case.frozen_financials()
+    assert [c["name"] for c in records[2]["tool_calls"]] == [
+        *(item["tool"] for item in financials["tool_calls"]),
+        "submit_financials",
+    ]
+    assert records[2]["tool_calls"][-1]["arguments_sha256"] == arguments_sha256(
+        financials["submission"]
+    )
     heads = {h.module_id: h.status for h in Execution(replayed.run_dir / "execution").read().heads}
-    assert heads == {"CP-0": "restricted"}  # CP-1 is open at financials: no head yet
+    assert heads["CP-0"] == "restricted" and "CP-1" in heads  # CP-1 settled; CP-1A is open
+    assert_replay_equals_authoring(authored, replayed)
 
 
 class TrapMapping(Mapping[str, str]):

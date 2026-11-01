@@ -448,7 +448,8 @@ class PackTools:
     def extract_statements(self, raw: Mapping[str, Any]) -> str:
         """The statement lines of the named pages of one declared source, as SOURCE blocks
         (task 8.10b); every page returned is recorded as extracted, which `seen` counts as read.
-        A refused call records nothing."""
+        On a line source (B22) it takes `line:N-M` ranges instead. A refused call records
+        nothing."""
         _arguments(raw, ("source_id", "locators"))
         source_id = self._source(raw["source_id"])
         locators = raw["locators"]
@@ -1094,10 +1095,10 @@ def seen_tables(
     tools: PackTools, seen: Seen, context: SourceContextReview
 ) -> tuple[ExtractedTable, ...]:
     """The extracted tables `extracted_coverage` reads for one `financials` submit (task 8.12):
-    one per `page:N` span (per `line:N-M` range of a line source, B22) of a financial source of `context` (`classification: financial`) that
-    the model had been shown by then (`seen.read`: through `read_pages` or
-    `extract_statements`), in pack then page order. Never a page the model was not shown, so
-    the work is bounded by what the step read, never the whole filing."""
+    one per `page:N` span (per `line:N-M` range of a line source, B22) of a financial source of
+    `context` (`classification: financial`) that the model had been shown by then (`seen.read`:
+    through `read_pages` or `extract_statements`), in pack then page order. Never a page the
+    model was not shown, so the work is bounded by what the step read, never the whole filing."""
     financial = {item.source_id for item in context.sources if item.classification == "financial"}
     tables: list[ExtractedTable] = []
     for source_id, source in tools.ready.items():

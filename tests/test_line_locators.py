@@ -19,7 +19,9 @@ from deploy_vii.contracts import Span
 from deploy_vii.live import tools as live_tools
 from deploy_vii.live.tools import PackTools, ToolError, seen_tables
 from deploy_vii.preparation import PreparedPack, load_pack
+from deploy_workflow import financial_workflow as fw
 from deploy_workflow.model.adapter import recorded_adapter
+from deploy_workflow.workflow import SourceEvidence
 
 FIN = "financial"
 make_pack: Any = page_fixture.make_pack
@@ -187,3 +189,151 @@ def test_seen_tables_returns_the_rebased_range_table(pack: PreparedPack) -> None
     assert (first.lines[0].line_no, first.lines[0].locator) == (24, "line:24")
     assert first.lines[0].label == "Revenue"
     assert first.headers == ("Period  Q1 2025  Q2 2025  Q3 2025  Q4 2025  FY 2025",)
+
+
+H_IS, H_BS = "CONSOLIDATED INCOME STATEMENT", "CONSOLIDATED BALANCE SHEET"
+HEADER = "Period  Q1 2025  Q2 2025  Q3 2025  Q4 2025  FY 2025"
+ROWS = ["Revenue  30  30  30  30  120", "Cost of sales  15  15  15  15  60"]
+UNMEASURED = "Statement extraction is unmeasured; empty tables do not establish coverage"
+NOT_EXTRACTED = "Financials must extract every located statement page in this epoch"
+
+
+def _with_spans(spans: list[Span]) -> PreparedPack:
+    base: PreparedPack = make_pack()
+    return base.model_copy(
+        update={
+            "sources": tuple(
+                s.model_copy(update={"spans": tuple(spans)}) if s.source_id == FIN else s
+                for s in base.sources
+            )
+        }
+    )
+
+
+def _line_spans(lines: list[str]) -> list[Span]:
+    return [Span(locator=f"line:{i}", text=text) for i, text in enumerate(lines, 1)]
+
+
+def _issues(
+    monkeypatch: pytest.MonkeyPatch, pack: PreparedPack, *, extract_all: bool = True
+) -> tuple[dict[str, str], list[str]]:
+    """`_statement_units` of the financial source and `_evidence_issues` after extracting each."""
+    financial = next(s for s in pack.sources if s.source_id == FIN)
+    units = fw._statement_units(financial.spans)
+    tools = PackTools(pack, sources=(FIN,))
+    if extract_all:
+        for locator in units:
+            tools.extract_statements({"source_id": FIN, "locators": [locator]})
+    evidence = SourceEvidence(
+        read=tuple(sorted(tools.read)), extracted=tuple(sorted(tools.extracted))
+    )
+    context = o2_case.payload_for("source_context")
+    store = SimpleNamespace(
+        read=lambda: SimpleNamespace(
+            attempts=[SimpleNamespace(ticket_id="t", steps=[SimpleNamespace(payload_sha256="c")])]
+        ),
+        payload=lambda _sha: context,
+        pack=lambda: pack,
+    )
+    monkeypatch.setattr(
+        fw,
+        "FinancialSubmission",
+        SimpleNamespace(
+            model_validate_json=lambda _s: SimpleNamespace(financial=SimpleNamespace(books=[]))
+        ),
+    )
+    binding = SimpleNamespace(step_id="financials", ticket_id="t")
+    return units, list(fw._evidence_issues(cast(Any, store), cast(Any, binding), "x", evidence))
+
+
+def test_adjacent_headings_form_one_unit_that_is_measured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:  # L1
+    pack = _with_spans(_line_spans([H_IS, H_IS, HEADER, *ROWS]))
+    units, issues = _issues(monkeypatch, pack)
+    assert list(units) == ["line:1-5"]
+    assert UNMEASURED not in issues and NOT_EXTRACTED not in issues
+
+
+def test_a_unit_runs_to_the_line_before_the_next_non_adjacent_heading() -> None:
+    spans = _line_spans([H_IS, H_IS, HEADER, ROWS[0], H_BS, H_BS, HEADER, ROWS[1]])
+    assert list(fw._statement_units(spans)) == ["line:1-4", "line:5-8"]
+
+
+def _numbered_pack(count: int) -> PreparedPack:
+    return _with_spans(_line_spans([f"Row {n}  1  2" for n in range(1, count + 1)]))
+
+
+def _extract(pack: PreparedPack, locators: list[str]) -> PackTools:
+    tools = PackTools(pack, sources=(FIN,))
+    tools.extract_statements({"source_id": FIN, "locators": locators})
+    return tools
+
+
+def test_an_extract_of_exactly_the_line_cap_passes_and_one_more_is_refused() -> None:  # L2
+    cap = live_tools.MAX_LINES_PER_EXTRACT
+    pack = _numbered_pack(cap + 10)
+    tools = _extract(pack, [f"line:1-{cap // 2}", f"line:{cap // 2 + 1}-{cap}"])
+    assert (FIN, f"line:1-{cap // 2}") in tools.extracted
+    with pytest.raises(ToolError, match=f"at most {cap} lines"):
+        _extract(pack, [f"line:1-{cap // 2}", f"line:{cap // 2 + 1}-{cap + 1}"])
+
+
+def test_exactly_the_range_cap_passes_and_one_more_is_refused() -> None:  # L2
+    cap = live_tools.MAX_PAGES_PER_EXTRACT
+    pack = _numbered_pack(cap + 1)
+    tools = _extract(pack, [f"line:{n}-{n}" for n in range(1, cap + 1)])
+    assert {loc for _, loc in tools.extracted if "-" in loc} == {
+        f"line:{n}-{n}" for n in range(1, cap + 1)
+    }
+    with pytest.raises(ToolError, match=f"at most {cap} ranges"):
+        _extract(pack, [f"line:{n}-{n}" for n in range(1, cap + 2)])
+
+
+def test_a_valid_range_then_one_failing_in_the_table_records_nothing() -> None:  # L2
+    tools = PackTools(_numbered_pack(10), sources=(FIN,))
+    with pytest.raises(ToolError, match="line:11"):
+        tools.extract_statements({"source_id": FIN, "locators": ["line:1-3", "line:9-12"]})
+    assert evidence(tools) == (set(), set(), set(), [])
+
+
+def _mixed_pack(*locators: str) -> PreparedPack:
+    return _with_spans(
+        [
+            Span(locator=loc, text=f"{H_IS}" if n == 0 else "Revenue  1  2")
+            for n, loc in enumerate(locators)
+        ]
+    )
+
+
+@pytest.mark.parametrize("locators", [("line:1", "sheet:A", "line:2"), ("page:1", "line:2")])
+def test_a_mixed_source_takes_the_page_or_other_path(locators: tuple[str, ...]) -> None:  # L3
+    pack = _mixed_pack(*locators)
+    tools = PackTools(pack, sources=(FIN,))
+    assert FIN not in tools.lines
+    with pytest.raises(ToolError, match="locators must be a list of page:N locators"):
+        tools.extract_statements({"source_id": FIN, "locators": ["line:1-2"]})
+    financial = next(s for s in pack.sources if s.source_id == FIN)
+    assert fw._statement_units(financial.spans) == {locators[0]: H_IS}
+
+
+def test_a_row_whose_caption_names_no_statement_takes_the_unit_heading_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:  # L4
+    """Under a statement heading every row has a caption (the heading itself is one), so the
+    fallback to the unit's heading text shows on a row whose caption names no statement."""
+    lines = [H_IS, "OPERATING ITEMS", HEADER, *ROWS]
+    pack = _with_spans(_line_spans(lines))
+    seen: list[tuple[str | None, str, str | None]] = []
+    real = fw._statement
+
+    def spy(caption: str | None, text: str) -> str | None:
+        seen.append((caption, text, real(caption, text)))
+        return real(caption, text)
+
+    monkeypatch.setattr(fw, "_statement", spy)
+    _issues(monkeypatch, pack)
+    assert real("OPERATING ITEMS", "") is None
+    assert {(caption, text, kind) for caption, text, kind in seen} == {
+        ("OPERATING ITEMS", "\n".join(lines), "IS")
+    }

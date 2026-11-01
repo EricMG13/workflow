@@ -359,18 +359,17 @@ def _statement_units(spans: Sequence[Span]) -> dict[str, str]:
 
     A source with a `page:N` span, or with any other kind of span, has one unit per
     statement-heading span (its locator, its text). A line source (every span `line:N`) has one
-    unit per statement-heading line K, `line:K-E`, E being the line before the next heading or the
-    source's last line; its text is those lines joined by newlines."""
+    unit per statement-heading line K, `line:K-E`, E being the line before the next heading that
+    does not directly follow another heading line, or the source's last line. A heading line
+    directly followed by another heading line starts one unit with it. A unit's text is its lines
+    joined by newlines."""
     numbered = {
         int(m.group(1)): span for span in spans if (m := _LINE_LOCATOR.fullmatch(span.locator))
     }
-    if (
-        not spans
-        or len(numbered) != len(spans)
-        or any(s.locator.startswith("page:") for s in spans)
-    ):
+    if not spans or len(numbered) != len(spans):
         return {s.locator: s.text for s in spans if STATEMENT_HEADING.search(s.text)}
-    headings = [n for n in sorted(numbered) if STATEMENT_HEADING.search(numbered[n].text)]
+    marked = {n for n in numbered if STATEMENT_HEADING.search(numbered[n].text)}
+    headings = [n for n in sorted(marked) if n - 1 not in marked]
     last = max(numbered)
     ends = [*(n - 1 for n in headings[1:]), last]
     return {

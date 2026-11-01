@@ -292,7 +292,7 @@ def applicable(request: PromptRequest) -> list[rules.Rule]:
             request.spec.sources and compose_module._is_line_source(request.pack)
         ):
             continue
-        if rule.when == "pins" and request.module_id not in compose_module.PINS_ENABLED:
+        if rule.when == "pins" and compose_module.request_pin_form(request) is None:
             continue
         out.append(rule)
     return out
@@ -334,7 +334,7 @@ def test_the_conditional_composer_rules_bind_only_where_their_condition_holds(
     readiness = request_for("source_readiness", pack)  # a source step on a line pack
     ids = {r.id for r in applicable(readiness)}
     assert "compose.O5" in ids and "compose.O4" not in ids
-    assert "compose.O6" not in ids and compose_module.PINS_ENABLED == frozenset()
+    assert "compose.O6" not in ids and "CP-0" not in compose_module.PINS_ENABLED
 
 
 def test_o6_binds_when_the_module_is_enabled(

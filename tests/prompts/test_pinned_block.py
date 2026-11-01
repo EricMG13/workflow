@@ -95,10 +95,14 @@ def context_pack(base: PreparedPack, name: str, *, sentinel: bool = False) -> Pr
 
 
 def messages(
-    pack: PreparedPack, module: str, *, context: RunContext | None | str = "from-pack"
+    pack: PreparedPack,
+    module: str,
+    *,
+    context: RunContext | None | str = "from-pack",
+    issues: tuple[str, ...] = (),
 ) -> tuple[Message, ...]:
     msgs: tuple[Message, ...] = compose_module.compose(
-        request_for(STEPS[module], pack, context=context)
+        request_for(STEPS[module], pack, context=context, issues=issues)
     )
     return msgs
 
@@ -235,6 +239,58 @@ def test_composing_with_a_pin_leaves_the_environment_alone(
     assert dict(os.environ) == before
 
 
+# ----------------------------------------------------------- enabling a module (one per commit)
+
+TEXTS = Path(compose_module.__file__).parent / "texts"
+# A submission that differs from the context pin, so the owner's issue line carries the pin.
+DIFFERING = {
+    "CP-2A": {"scenarios": [{"ebitda_decline": "0.3", "interest_increase": "0.1"}] * 4},
+    "CP-2D": {"horizon_months": "12", "minimum_cash.amount": "5"},
+    "CP-2E": {"rate_shocks_bp": ["50"], "fx_shocks_percent": ["5"]},
+    "CP-3C": {"repricing.bps": "150"},
+    "CP-3D": {"recovery.percent_text": "45"},
+    "CP-4C": {"valuation[*].multiple": ["5.5", "6.5", "7.5"]},
+}
+ABSOLUTE = re.compile(r"retype no figure|are your assumptions")
+WITHIN_RANGE = "within the schema's range"
+
+
+def text_admits_the_pin(module: str) -> None:
+    """The step's absolute sentences and its B27 `choose within the schema's range` sentence name
+    the pinned-assumptions block as the exception (the O6 rule wins)."""
+    text = (TEXTS / f"{STEPS[module]}.md").read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if ABSOLUTE.search(line):
+            assert "pinned-assumptions" in line, line[:120]
+    after = text.split(WITHIN_RANGE)[1][:200]
+    assert "pinned-assumptions" in after, after
+    # Python's pinned label is Python's: the text never tells the model to write it.
+    assert owner_pins.pinned_line(module) not in text
+
+
+def enabled_and_pinned_by_default(module: str, pack: PreparedPack) -> None:
+    """With the real `PINS_ENABLED`: the prompt holds the module's block and O6, and a repair turn
+    on a differing pin holds the same block and O6 beside the REPAIR line that quotes the pin."""
+    assert module in compose_module.PINS_ENABLED
+    ctx = context_pack(pack, CONTEXTS[module])
+    facts = context_facts(ctx)
+    assert facts is not None
+    form = owner_pins.form_from_context(module, facts)
+    system, user = parts(messages(ctx, module))
+    assert pinned_body(user) == form and O6_PINS in system
+    lines = owner_pins.pin_issues(module, ctx, DIFFERING[module])
+    assert lines and all(line.startswith("assumptions.") for line in lines)
+    r_system, r_user = parts(messages(ctx, module, issues=tuple(lines)))
+    assert pinned_body(r_user) == form and O6_PINS in r_system
+    repair = r_user[r_user.index("<<<REPAIR") :]
+    assert all(json.dumps(line) in repair for line in lines)
+    text_admits_the_pin(module)
+
+
+def test_cp2a_is_enabled_and_pinned(pack: PreparedPack) -> None:
+    enabled_and_pinned_by_default("CP-2A", pack)
+
+
 # ------------------------------------------------------------------------------ the guard
 
 Runner = Callable[[Path, pytest.MonkeyPatch], list[str]]
@@ -288,6 +344,7 @@ def enabled_without_a_pin_check(
     for module in sorted(enabled):
         prefix = f"assumptions.{module.lower().replace('-', '')}."
         runner = owners.get(module)
+        (tmp / module).mkdir()
         lines = [] if runner is None else runner(tmp / module, mp)
         if not any(line.startswith(prefix) for line in lines):
             unchecked.append(module)

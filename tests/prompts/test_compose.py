@@ -544,7 +544,7 @@ FORM = {"scenarios[0].ebitda_decline": "24680.13", "hedge_ratio.percent_text": "
 
 
 def test_pins_are_gated_off_until_a_module_is_enabled(pack: PreparedPack) -> None:
-    assert compose_module.PINS_ENABLED == frozenset()
+    assert "CP-1A" not in compose_module.PINS_ENABLED
     assert pinned_assumptions_block("CP-1A", FORM) is None
     user = user_of(compose(request_for("business_context", pack, pins=FORM)))
     assert "pinned-assumptions" not in user and "24680.13" not in user

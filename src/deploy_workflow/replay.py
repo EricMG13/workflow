@@ -39,6 +39,7 @@ from deploy_workflow.owner_workflow import (
     OwnerFault,
     OwnerSubmission,
     OwnerWorkflow,
+    _fill,
 )
 from deploy_workflow.run_inputs import (
     CheckedRun,
@@ -46,6 +47,7 @@ from deploy_workflow.run_inputs import (
     StagedSourceChanged,
     stage_sources,
 )
+from deploy_workflow.workflow import WorkflowError
 
 # (module, step) -> the payload fields rewritten to the rerun's own value, each only when it holds
 # the earlier run's own value. Nothing wider (ruling N1, T4-R4). The fields sit in the object at
@@ -116,6 +118,16 @@ class ReplayRecord(Contract):
     payload_sha256: Hash
     snapshot_sha256: Hash
     rebound: tuple[Rebound, ...] = ()
+
+
+class ReplayLive(Contract):
+    """One ``replays`` audit record for a module that was to be replayed but runs live, and why
+    (never a silent gap). Written before the module's first live step."""
+
+    schema_version: Literal["replay-live/1"] = "replay-live/1"
+    earlier_run_id: Identifier
+    module_id: Identifier
+    reason: Text
 
 
 @dataclass(frozen=True)
@@ -190,6 +202,54 @@ class _Earlier:
         ]
         return max(found, key=lambda s: s.sequence, default=None)
 
+    def bound_submission(self, attempt: Attempt, step_id: str) -> OwnerSubmission | None:
+        """The valid submission of the step, bound to the journal: its stored payload and output
+        are the digests the settled attempt's step holds, its raw payload fills to that stored
+        payload, and its call ids are the calls retained at its binding. A record that disagrees
+        means the earlier run is inconsistent and the rerun is refused (``ReplayRefused``)."""
+        chosen = self.valid_submission(attempt.ticket_id, step_id)
+        step = next((s for s in attempt.steps if s.step_id == step_id), None)
+        if chosen is None or step is None:
+            return None
+        where = f"{attempt.module_id} {step_id}"
+        if chosen.stored_payload_sha256 != step.payload_sha256:
+            raise ReplayRefused(
+                f"{where}: the retained submission's stored payload differs from the journal's"
+            )
+        if chosen.step_output_sha256 != step.output_sha256:
+            raise ReplayRefused(
+                f"{where}: the retained submission's output differs from the journal's"
+            )
+        self._check_raw_payload(chosen, step.payload_sha256, where)
+        if chosen.binding.call_ids != self._call_ids_at(chosen):
+            raise ReplayRefused(
+                f"{where}: the retained submission's call ids differ from the retained calls"
+            )
+        return chosen
+
+    def _check_raw_payload(self, chosen: OwnerSubmission, journal_sha: str, where: str) -> None:
+        """The retained raw payload, filled by the journal's own rules at the submission's binding,
+        is the stored payload the journal settled. (A raw payload that cannot be read is left to
+        ``payload``, which rejects it when the step is replayed.)"""
+        binding = chosen.binding.binding
+        try:
+            raw = self.payload(chosen.binding.payload_sha256, binding.module_id, binding.step_id)
+        except ReplayRejected:
+            return
+        try:
+            stored = _fill(self.store, binding, raw)[0]
+        except (ValueError, WorkflowError):
+            raise ReplayRefused(
+                f"{where}: the retained payload cannot be filled as the journal did"
+            ) from None
+        if _sha256(stored.encode()) != journal_sha:
+            raise ReplayRefused(f"{where}: the retained payload is not the one the journal settled")
+
+    def _call_ids_at(self, submission: OwnerSubmission) -> tuple[str, ...]:
+        """The ids of the calls retained at the submission's own binding, in sequence order."""
+        calls = [c for c in self.calls.values() if c.binding == submission.binding.binding]
+        return tuple(c.call_id for c in sorted(calls, key=lambda c: c.sequence))
+
     def payload(self, digest: str, module: str, step: str) -> str:
         path = self.directory / "execution" / AUDIT / "payloads" / digest
         try:
@@ -208,6 +268,8 @@ class _Earlier:
         for step in OWNER_SPECS[module_id].steps:
             if self.valid_submission(attempt.ticket_id, step.step_id) is None:
                 return f"the earlier run holds no valid submission of step {step.step_id}"
+        for step in OWNER_SPECS[module_id].steps:
+            self.bound_submission(attempt, step.step_id)
         return None
 
 
@@ -305,8 +367,9 @@ def check_replay(
         raise ReplayRefused("a rerun needs replay_from and a non-empty repaired set, together")
     if not (replay_from / "execution").is_dir():
         raise ReplayRefused(f"{replay_from} holds no retained execution/")
-    if replay_from.resolve() == run_dir.resolve():
-        raise ReplayRefused("replay_from is the new run directory")
+    here, there = run_dir.resolve(), replay_from.resolve()
+    if here == there or here in there.parents or there in here.parents:
+        raise ReplayRefused("the run directory and the earlier run directory contain one another")
     retained = _Earlier(replay_from)
     if retained.snapshot.run.run_id == checked.run_id:
         raise ReplayRefused("the rerun needs a run_id other than the earlier run's")
@@ -402,11 +465,11 @@ def _replay_calls(
 
 
 def _replay_step(
-    workflow: OwnerWorkflow, retained: _Earlier, ticket_id: str, execution: Path
+    workflow: OwnerWorkflow, retained: _Earlier, attempt: Attempt, execution: Path
 ) -> None:
     binding = workflow.binding
     module, step = binding.module_id, binding.step_id
-    submission = retained.valid_submission(ticket_id, step)
+    submission = retained.bound_submission(attempt, step)
     if submission is None:
         raise ReplayRejected(module, step, ("the earlier run holds no valid submission",))
     earlier_sha = submission.binding.payload_sha256
@@ -436,6 +499,17 @@ def _replay_step(
     )
 
 
+def journal_unreplayable(plan: ReplayPlan, execution: Path) -> None:
+    """Record each module that was to be replayed but runs live, with the reason, before any
+    live step (``replays/``, beside the records of the replayed steps)."""
+    for module_id, reason in plan.unreplayable:
+        _write_record(
+            execution,
+            REPLAYS,
+            ReplayLive(earlier_run_id=plan.earlier_run_id, module_id=module_id, reason=reason),
+        )
+
+
 def replay_module(
     workflow: OwnerWorkflow, earlier: Path, module_id: str, *, execution: Path
 ) -> None:
@@ -447,13 +521,15 @@ def replay_module(
     attempt = _settled_attempt(retained.snapshot, module_id)
     if attempt is None:
         raise ReplayRejected(module_id, "-", ("the earlier run holds no settled valid attempt",))
+    for planned in OWNER_SPECS[module_id].steps:  # every step bound to the journal before a write
+        retained.bound_submission(attempt, planned.step_id)
     seen: set[str] = set()
     while workflow.phase == "analytical" and workflow.binding.module_id == module_id:
         step = workflow.binding.step_id
         if step in seen:
             raise ReplayRejected(module_id, step, ("the step came back after a valid submission",))
         seen.add(step)
-        _replay_step(workflow, retained, attempt.ticket_id, execution)
+        _replay_step(workflow, retained, attempt, execution)
 
 
 __all__ = [
@@ -462,6 +538,7 @@ __all__ = [
     "Rebound",
     "ReplayDiverged",
     "ReplayError",
+    "ReplayLive",
     "ReplayPackChanged",
     "ReplayPlan",
     "ReplayRecord",
@@ -469,6 +546,7 @@ __all__ = [
     "ReplayRejected",
     "check_replay",
     "check_same_pack",
+    "journal_unreplayable",
     "plan_replay",
     "replay_module",
 ]

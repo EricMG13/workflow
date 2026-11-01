@@ -62,6 +62,7 @@ from deploy_workflow.replay import (
     ReplayRefused,
     ReplayRejected,
     check_replay,
+    journal_unreplayable,
     replay_module,
 )
 from deploy_workflow.run_inputs import (
@@ -154,10 +155,16 @@ def _single_writer(run_dir: Path) -> Iterator[None]:
         os.close(fd)  # closing releases the lock
 
 
-def _create_cap(run_dir: Path, cap_usd: Decimal, mode: str) -> None:
+def _create_cap(
+    run_dir: Path, cap_usd: Decimal, mode: str, replayed_from_run: str | None = None
+) -> None:
     """Record the run's cap and mode, create-once (P2, R18): a resume can neither raise nor lower
-    the cap, nor change from offline to live or back."""
-    data = (json.dumps({"cap_usd": money_text(cap_usd), "mode": mode}) + "\n").encode()
+    the cap, nor change from offline to live or back. A rerun after repair also records the earlier
+    run's id here, so a plain resume of it is refused (F1-R3); an ordinary run's file is unchanged."""
+    record: dict[str, str] = {"cap_usd": money_text(cap_usd), "mode": mode}
+    if replayed_from_run is not None:
+        record["replayed_from_run"] = replayed_from_run
+    data = (json.dumps(record) + "\n").encode()
     try:
         fd = os.open(
             run_dir / CAP_FILE,
@@ -183,6 +190,17 @@ def _retained_identity(run_dir: Path) -> tuple[Decimal, str]:
     if not cap.is_finite() or mode not in ("live", "offline"):  # sNaN would raise on comparison
         raise ResumeRefused(f"{run_dir / CAP_FILE} is missing or unreadable")
     return cap, str(mode)
+
+
+def _refuse_rerun(run_dir: Path) -> None:
+    """A rerun after repair is not resumed as an ordinary run (it would drive the module it was to
+    replay live): ``cap.json`` names the earlier run it replays (F1-R3). Reads only."""
+    try:
+        recorded = json.loads((run_dir / CAP_FILE).read_text()).get("replayed_from_run")
+    except (OSError, ValueError, AttributeError):
+        return  # unreadable or absent: `_check_identity` refuses it with its own reason
+    if recorded is not None:
+        raise ResumeRefused(f"{run_dir} is a rerun after repair of {recorded}: it is not resumed")
 
 
 def _check_cap_and_mode(checked: CheckedRun, run_dir: Path) -> None:
@@ -247,6 +265,7 @@ _FAULTS = (
     WorkflowError,
     NoPrompt,
     PromptError,
+    ReplayRefused,
     ReplayError,
     ReplayPackChanged,
 )
@@ -574,6 +593,8 @@ def _drive_and_finish(
     A rerun after repair (``replay``) replays the modules the plan names and drives the rest."""
     redactor, execution = meta.redactor, run_dir / "execution"
     try:
+        if replay is not None:
+            journal_unreplayable(replay, execution)
         loop = ToolLoop(
             workflow,
             adapter,
@@ -757,7 +778,12 @@ def run_pathway(
         # The directory was created by the exclusive mkdir above, so two fresh runs never share one;
         # the lock follows at once, before the first record of the run (the cap) is written.
         with _single_writer(run_dir):
-            _create_cap(run_dir, checked.cap_usd, _mode_of(adapter))
+            _create_cap(
+                run_dir,
+                checked.cap_usd,
+                _mode_of(adapter),
+                None if replay is None else replay.earlier_run_id,
+            )
             return _run_pathway(checked, run_dir, adapter, entries=entries, replay=replay)
 
 
@@ -789,6 +815,7 @@ def _resume_pathway(
     if not run_dir.is_dir():
         raise RunDirInvalid(f"{run_dir} is not an existing run directory")
     with _single_writer(run_dir):
+        _refuse_rerun(run_dir)
         _check_identity(checked, run_dir, redactor)
         return _run_pathway(checked, run_dir, adapter, entries=entries, resume=True)
 

@@ -16,6 +16,7 @@ import os
 import shutil
 import socket
 from collections.abc import Callable
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, NoReturn
@@ -324,7 +325,11 @@ def replay_cp0(root: Path, earlier: Path) -> tuple[OwnerWorkflow, Path]:
 
 
 def replay_records(run_dir: Path) -> list[ReplayRecord]:
-    return [ReplayRecord.model_validate_json(p.read_bytes()) for p in audit(run_dir, "replays")]
+    return [
+        ReplayRecord.model_validate_json(p.read_bytes())
+        for p in audit(run_dir, "replays")
+        if json.loads(p.read_bytes())["schema_version"] == "replay/1"
+    ]
 
 
 def submissions(run_dir: Path) -> list[OwnerSubmission]:
@@ -500,26 +505,72 @@ def reject(tmp_path: Path, copy: Path) -> tuple[ReplayRejected, Path]:
     return caught.value, run_dir
 
 
-def test_a_payload_the_validator_refuses_is_rejected_and_journaled(
-    tmp_path: Path, earlier_run: Path
+def test_a_payload_the_rerun_validator_refuses_is_rejected_and_journaled(
+    tmp_path: Path, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    copy = copy_of(earlier_run, tmp_path)
-    edit_payload(copy, lambda p: p.update(consumers=[{"consumer_id": "no-such-module"}]))
-    error, run_dir = reject(tmp_path, copy)
-    assert (error.module, error.step) == ("CP-0", "source_readiness") and error.issues
+    """Only the allowlisted fields are rebound: with none, the earlier pack hash reaches the
+    validator, which refuses it. (A journal-consistent earlier run, so nothing is forged.)"""
+    monkeypatch.setattr(replay, "REBOUND_FIELDS", {})
+    error, run_dir = reject(tmp_path, earlier_run)
+    assert (error.module, error.step) == ("CP-0", "source_readiness")
+    assert "does not bind the current prepared pack" in " ".join(error.issues)
     (fault,) = [OwnerFault.model_validate_json(p.read_bytes()) for p in audit(run_dir, "faults")]
     assert (fault.code, fault.kind) == ("replay_rejected", "submissions")
     assert replay_records(run_dir) == []
 
 
-def test_a_cp0_payload_naming_another_pack_is_rejected_not_rewritten(
-    tmp_path: Path, earlier_run: Path
+@pytest.mark.parametrize(
+    "forge",
+    [
+        lambda p: p.update(pack_sha256="1" * 64),
+        lambda p: p.update(objective="An objective the earlier run never settled"),
+    ],
+    ids=["pack-hash", "objective"],
+)
+def test_a_forged_valid_payload_is_refused_before_any_write(
+    forge: Callable[[dict[str, Any]], None], tmp_path: Path, earlier_run: Path
 ) -> None:
-    """Only the earlier run's own pack hash is rebound: any other value reaches the validator."""
+    """F1-R1: the raw payload, filled as the journal did, must be the stored payload the earlier
+    journal settled. A forged one makes the earlier run inconsistent: the rerun is refused."""
     copy = copy_of(earlier_run, tmp_path)
-    edit_payload(copy, lambda p: p.update(pack_sha256="1" * 64))
-    error, _ = reject(tmp_path, copy)
-    assert "does not bind the current prepared pack" in " ".join(error.issues)
+    edit_payload(copy, forge)
+    workflow, run_dir = new_workflow(tmp_path / "rerun")
+    with pytest.raises(ReplayRefused, match="CP-0 source_readiness: the retained payload"):
+        replay.replay_module(workflow, copy, "CP-0", execution=run_dir / "execution")
+    assert submissions(run_dir) == [] and audit(run_dir, "calls") == []
+    checked, other = checked_run(tmp_path / "check", RERUN_ID)
+    with pytest.raises(ReplayRefused, match="CP-0 source_readiness"):
+        replay.check_replay(checked, other, copy, frozenset({"CP-1"}))
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda s: {"stored_payload_sha256": "3" * 64}, "stored payload differs"),
+        (lambda s: {"step_output_sha256": "4" * 64}, "output differs"),
+        (lambda s: {"binding": s.binding.model_copy(update={"call_ids": ()})}, "call ids differ"),
+        (
+            lambda s: {
+                "binding": s.binding.model_copy(update={"call_ids": s.binding.call_ids[::-1]})
+            },
+            "call ids differ",
+        ),
+    ],
+    ids=["stored", "output", "no-calls", "call-order"],
+)
+def test_a_submission_the_journal_does_not_bind_is_refused_naming_the_digest(
+    change: Callable[[OwnerSubmission], dict[str, Any]],
+    message: str,
+    tmp_path: Path,
+    earlier_run: Path,
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    (sub,) = submissions(copy)
+    swap_record(copy, "submissions", sub, sub.model_copy(update=change(sub)))
+    checked, run_dir = checked_run(tmp_path / "rerun", RERUN_ID)
+    with pytest.raises(ReplayRefused, match=f"CP-0 source_readiness: .*{message}"):
+        replay.check_replay(checked, run_dir, copy, frozenset({"CP-1"}))
+    assert not run_dir.exists()
 
 
 def test_a_payload_edited_on_disk_is_rejected(tmp_path: Path, earlier_run: Path) -> None:
@@ -777,11 +828,10 @@ def test_a_diverged_replay_stops_the_run_as_replay_diverged(
 
 
 def test_a_rejected_replay_stops_the_run_as_replay_rejected(
-    tmp_path: Path, earlier_run: Path
+    tmp_path: Path, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    copy = copy_of(earlier_run, tmp_path)
-    edit_payload(copy, lambda p: p.update(consumers=[{"consumer_id": "no-such-module"}]))
-    outcome = rerun_public(tmp_path / "rerun", copy)
+    monkeypatch.setattr(replay, "REBOUND_FIELDS", {})
+    outcome = rerun_public(tmp_path / "rerun", earlier_run)
     reason = run_json(outcome.run_dir)["stopped_reason"]
     assert reason.startswith("ReplayRejected: CP-0 source_readiness: ")
     assert not reason.startswith("workflow:")
@@ -796,7 +846,6 @@ def test_a_rejected_replay_stops_the_run_as_replay_rejected(
         "missing-replay-from",
         "replay-from-is-run-dir",
         "same-run-id",
-        "resume",
         "changed-source",
     ],
 )
@@ -814,8 +863,6 @@ def test_a_refused_rerun_writes_nothing(case: str, tmp_path: Path, earlier_run: 
         earlier = root / "run"
     elif case == "same-run-id":
         extra["run_id"] = EARLIER_ID
-    elif case == "resume":
-        extra["resume"] = True
     else:
         changed = tmp_path / "business-changed.txt"
         changed.write_text(o2_case.case_sources()[2].path.read_text() + "One more sentence.\n")
@@ -827,6 +874,313 @@ def test_a_refused_rerun_writes_nothing(case: str, tmp_path: Path, earlier_run: 
     with pytest.raises(RunInputError):
         rerun_public(root, earlier, **extra)
     assert not (root / "run").exists()
+
+
+def test_a_rerun_asked_to_resume_is_refused_and_the_run_dir_is_untouched(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    """A rerun is a fresh run: ``resume`` with ``replay_from`` is a ReplayRefused, on a run
+    directory that exists (the refusal is not the missing directory's)."""
+    first = rerun_public(tmp_path / "rerun", earlier_run)
+    before = tree_hash(first.run_dir)
+    with pytest.raises(ReplayRefused, match="not a resume"):
+        run_pathway(
+            case_id=o2_case.CASE_ID,
+            sources=o2_case.case_sources(),
+            context=o2_case.CASE / "context.json",
+            pathway=o2_case.PATHWAY,
+            model=o2_case.MODEL,
+            adapter=recorded_adapter(o2_case.MODEL, tmp_path / "rerun" / "check-recordings"),
+            cap_usd=o2_case.CAP,
+            run_dir=first.run_dir,
+            run_id=RERUN_ID,
+            resume=True,
+            replay_from=earlier_run,
+            repaired=frozenset({"CP-1"}),
+        )
+    assert tree_hash(first.run_dir) == before
+
+
+class Kill(BaseException):
+    """The process is killed: nothing in the run catches it."""
+
+
+def killed_rerun(
+    tmp_path: Path, earlier: Path, monkeypatch: pytest.MonkeyPatch, where: str
+) -> tuple[Path, Any]:
+    root = tmp_path / "rerun"
+    checked, run_dir = checked_run(root, RERUN_ID)
+    if where == "invoke":
+
+        def boom(self: Any, *args: Any, **kwargs: Any) -> Any:
+            raise Kill()
+
+        monkeypatch.setattr(OwnerWorkflow, "invoke", boom)
+    else:  # after CP-0's replayed submission settled, at its replays record
+        real = replay._write_record
+
+        def after(execution: Path, kind: str, value: Any) -> None:
+            if kind == replay.REPLAYS:
+                raise Kill()
+            real(execution, kind, value)
+
+        monkeypatch.setattr(replay, "_write_record", after)
+    with pytest.raises(Kill):
+        rerun_public(root, earlier)
+    monkeypatch.undo()
+    return run_dir, checked
+
+
+@pytest.mark.parametrize("where", ["invoke", "after-settle"])
+def test_a_killed_rerun_is_not_resumed_as_an_ordinary_run(
+    where: str, tmp_path: Path, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F1-R3: ``cap.json`` (create-once, the first record) names the earlier run; a plain resume
+    is refused before any write or call, whatever the kill point."""
+    run_dir, checked = killed_rerun(tmp_path, earlier_run, monkeypatch, where)
+    assert json.loads((run_dir / "cap.json").read_text())["replayed_from_run"] == EARLIER_ID
+    before = tree_hash(run_dir)
+    with pytest.raises(rp.ResumeRefused, match="rerun after repair"):
+        run_pathway(
+            case_id=o2_case.CASE_ID,
+            sources=o2_case.case_sources(),
+            context=o2_case.CASE / "context.json",
+            pathway=o2_case.PATHWAY,
+            model=o2_case.MODEL,
+            adapter=checked.adapter,
+            cap_usd=o2_case.CAP,
+            run_dir=run_dir,
+            run_id=checked.run_id,
+            resume=True,
+        )
+    assert tree_hash(run_dir) == before and not (run_dir / "run.json").exists()
+
+
+@pytest.mark.parametrize("inside", ["run-dir-in-earlier", "earlier-in-run-dir"])
+def test_nested_run_and_earlier_directories_are_refused(
+    inside: str, tmp_path: Path, earlier_run: Path
+) -> None:
+    before = {str(p.relative_to(earlier_run)) for p in earlier_run.rglob("*")}
+    checked, _ = checked_run(tmp_path / "chk", RERUN_ID)
+    run_dir = earlier_run / "rerun" if inside == "run-dir-in-earlier" else earlier_run.parent
+    with pytest.raises(ReplayRefused, match="contain one another"):
+        replay.check_replay(checked, run_dir, earlier_run, frozenset({"CP-1"}))
+    assert {str(p.relative_to(earlier_run)) for p in earlier_run.rglob("*")} == before
+
+
+def test_a_refusal_after_the_first_write_stops_the_run_under_its_own_name(
+    tmp_path: Path, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    real = replay.check_replay
+
+    def check_then_tear(*args: Any) -> Any:
+        found = real(*args)
+        path = audit(copy, "calls")[0]  # torn after the check, before the replay reads it
+        path.write_text(path.read_text() + " ")
+        return found
+
+    monkeypatch.setattr(rp, "check_replay", check_then_tear)
+    outcome = rerun_public(tmp_path / "rerun", copy)
+    assert outcome.outcome == "stopped"
+    assert run_json(outcome.run_dir)["stopped_reason"].startswith("ReplayRefused: ")
+
+
+def test_a_module_that_was_to_replay_but_runs_live_is_journaled_with_its_reason(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    planned = replay.plan_replay(earlier_run, PLANNED, frozenset({"CP-3"}))
+    outcome = rerun_public(tmp_path / "rerun", earlier_run, repaired=frozenset({"CP-3"}))
+    live = [
+        replay.ReplayLive.model_validate_json(p.read_bytes())
+        for p in audit(outcome.run_dir, "replays")
+        if json.loads(p.read_bytes())["schema_version"] == "replay-live/1"
+    ]
+    assert sorted((r.module_id, r.reason) for r in live) == sorted(planned.unreplayable)
+    assert {r.earlier_run_id for r in live} == {EARLIER_ID} and live
+
+
+# ---------------------------------------------------------------------------------- strength
+# tests that pin the eligibility rules, the submission choice and the call comparison
+
+
+def with_snapshot(monkeypatch: pytest.MonkeyPatch, change: Callable[[Any], Any]) -> None:
+    """Every ``_Earlier`` reads a snapshot that ``change`` has edited (the files stay as they are)."""
+    real = replay._Earlier.__init__
+
+    def init(self: Any, path: Path) -> None:
+        real(self, path)
+        self.snapshot = change(self.snapshot)
+
+    monkeypatch.setattr(replay._Earlier, "__init__", init)
+
+
+def cp0_goes_live(earlier: Path) -> str:
+    found = replay.plan_replay(earlier, PLANNED, frozenset({"CP-3"}))
+    assert "CP-0" in found.live
+    return dict(found.unreplayable)["CP-0"]
+
+
+@pytest.mark.parametrize("status", ["stale", "blocked"])
+def test_a_cp0_head_that_is_not_settled_goes_live(
+    status: str, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def change(snapshot: Any) -> Any:
+        heads = tuple(
+            h.model_copy(update={"status": status}) if h.module_id == "CP-0" else h
+            for h in snapshot.heads
+        )
+        return snapshot.model_copy(update={"heads": heads})
+
+    with_snapshot(monkeypatch, change)
+    assert "no settled, valid attempt" in cp0_goes_live(earlier_run)
+
+
+@pytest.mark.parametrize(
+    "update",
+    [{"issues": ("an issue",)}, {"status": "pending"}],
+    ids=["issues", "pending"],
+)
+def test_an_attempt_with_issues_or_still_pending_is_not_a_settled_attempt(
+    update: dict[str, Any], earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def change(snapshot: Any) -> Any:
+        attempts = tuple(
+            a.model_copy(update=update) if a.module_id == "CP-0" else a for a in snapshot.attempts
+        )
+        return snapshot.model_copy(update={"attempts": attempts})
+
+    with_snapshot(monkeypatch, change)
+    assert "no settled, valid attempt" in cp0_goes_live(earlier_run)
+
+
+def test_a_module_with_a_step_the_earlier_run_never_submitted_goes_live(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    (sub,) = submissions(copy)
+    (copy / "execution" / AUDIT / "submissions" / sub.content_hash()).unlink()
+    assert "no valid submission of step source_readiness" in cp0_goes_live(copy)
+
+
+@pytest.mark.parametrize("field", ["as_of", "issuer_id", "requested_modules"])
+def test_a_changed_run_field_is_refused(field: str, earlier_run: Path) -> None:
+    pack = load_pack(earlier_run / "pack")
+    value = {
+        "as_of": pack.run.as_of - timedelta(days=1),
+        "issuer_id": "another-issuer",
+        "requested_modules": pack.run.requested_modules[:1],
+    }[field]
+    changed = pack.model_copy(update={"run": pack.run.model_copy(update={field: value})})
+    with pytest.raises(ReplayPackChanged):
+        replay.check_same_pack(pack, changed)
+
+
+def test_a_record_filed_under_the_wrong_name_is_torn(tmp_path: Path, earlier_run: Path) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    path = audit(copy, "calls")[0]
+    path.rename(path.with_name("f" * 64))  # its bytes are its own; its name is not its digest
+    checked, run_dir = checked_run(tmp_path / "rerun", RERUN_ID)
+    with pytest.raises(ReplayRefused, match="torn"):
+        replay.check_replay(checked, run_dir, copy, frozenset({"CP-1"}))
+
+
+def add_submission(copy: Path, **update: Any) -> None:
+    """File one more submission beside the valid one, a copy changed by ``update``."""
+    sub = next(s for s in submissions(copy) if s.disposition == "valid" and s.sequence == 1)
+    extra = sub.model_copy(update=update)
+    (copy / "execution" / AUDIT / "submissions" / extra.content_hash()).write_bytes(
+        extra.model_dump_json().encode()
+    )
+
+
+def check(copy: Path, tmp_path: Path) -> replay.ReplayPlan:
+    checked, run_dir = checked_run(tmp_path / "rerun", RERUN_ID)
+    return replay.check_replay(checked, run_dir, copy, frozenset({"CP-1"}))
+
+
+def test_an_invalid_or_other_ticket_submission_is_never_the_one_replayed(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    (sub,) = submissions(copy)
+    add_submission(
+        copy, disposition="invalid", sequence=sub.sequence + 1, stored_payload_sha256="5" * 64
+    )
+    other = sub.binding.model_copy(
+        update={"binding": sub.binding.binding.model_copy(update={"ticket_id": "another-ticket"})}
+    )
+    add_submission(copy, binding=other, sequence=sub.sequence + 2, stored_payload_sha256="6" * 64)
+    assert check(copy, tmp_path).replayed == ("CP-0",)  # both are ignored; the real one binds
+
+
+@pytest.mark.parametrize("offset", [1, -1], ids=["later", "earlier"])
+def test_the_latest_valid_submission_is_the_one_replayed_and_it_must_bind(
+    offset: int, tmp_path: Path, earlier_run: Path
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    (sub,) = submissions(copy)
+    add_submission(copy, sequence=sub.sequence + offset, stored_payload_sha256="7" * 64)
+    if offset > 0:  # a later valid record that the journal does not bind is chosen, and refused
+        with pytest.raises(ReplayRefused, match="stored payload differs"):
+            check(copy, tmp_path)
+    else:  # an earlier one is not the latest: ignored
+        assert check(copy, tmp_path).replayed == ("CP-0",)
+
+
+@pytest.mark.parametrize(
+    "update",
+    [{"status": "refused", "error_code": "not_permitted"}, {"error_code": "other_code"}],
+    ids=["status", "error-code"],
+)
+def test_a_call_answered_with_another_status_or_code_diverges(
+    update: dict[str, Any], tmp_path: Path, earlier_run: Path
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    calls = [OwnerCall.model_validate_json(p.read_bytes()) for p in audit(copy, "calls")]
+    target = next(c for c in calls if c.tool == "read_pages")
+    swap_record(copy, "calls", target, target.model_copy(update=update))
+    workflow, run_dir = new_workflow(tmp_path / "rerun")
+    with pytest.raises(ReplayDiverged):
+        replay.replay_module(workflow, copy, "CP-0", execution=run_dir / "execution")
+
+
+def test_a_call_id_the_earlier_run_does_not_hold_is_rejected(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    workflow, run_dir = new_workflow(tmp_path / "rerun")
+    retained = replay._Earlier(earlier_run)
+    (sub,) = submissions(earlier_run)
+    lost = sub.model_copy(
+        update={"binding": sub.binding.model_copy(update={"call_ids": ("no-such-call",)})}
+    )
+    with pytest.raises(ReplayRejected, match="a retained call is missing"):
+        replay._replay_calls(workflow, retained, lost, run_dir / "execution")
+    assert audit(run_dir, "calls") == []
+
+
+def test_a_module_with_no_settled_attempt_cannot_be_replayed(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    workflow, run_dir = new_workflow(tmp_path / "rerun")
+    with pytest.raises(ReplayRejected, match="no settled valid attempt"):
+        replay.replay_module(workflow, earlier_run, "CP-1", execution=run_dir / "execution")
+
+
+def test_a_step_that_comes_back_after_a_valid_submission_is_rejected(
+    tmp_path: Path, earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workflow, run_dir = new_workflow(tmp_path / "rerun")
+    steps: list[str] = []
+
+    def stay(wf: Any, retained: Any, attempt: Any, execution: Path) -> None:
+        steps.append(wf.binding.step_id)
+        assert len(steps) < 4, "the replay loops on one step"
+
+    monkeypatch.setattr(replay, "_replay_step", stay)
+    with pytest.raises(ReplayRejected, match="came back"):
+        replay.replay_module(workflow, earlier_run, "CP-0", execution=run_dir / "execution")
+    assert steps == ["source_readiness"]
 
 
 # ================================================================================== gated

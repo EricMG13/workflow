@@ -302,6 +302,10 @@ def test_cp3c_is_enabled_and_pinned(pack: PreparedPack) -> None:
     enabled_and_pinned_by_default("CP-3C", pack)
 
 
+def test_cp3d_is_enabled_and_pinned(pack: PreparedPack) -> None:
+    enabled_and_pinned_by_default("CP-3D", pack)
+
+
 # ------------------------------------------------------------------------------ the guard
 
 Runner = Callable[[Path, pytest.MonkeyPatch], list[str]]

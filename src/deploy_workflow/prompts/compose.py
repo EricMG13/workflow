@@ -35,7 +35,7 @@ from deploy_vii.live.tools import EXTRACT, READ, SEARCH
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import extraction_coverage, live_consumers
 from deploy_vii.registry import modules
-from deploy_workflow.context import ContextRefused, RunContext
+from deploy_workflow.context import RunContext
 from deploy_workflow.financial_workflow import MAX_CALLS
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import StepSpec
@@ -116,7 +116,7 @@ O6_PINS = (
 
 # Phase 6 enables a module here when the owner's pin check for it lands; empty until then, so
 # no pin reaches a prompt that the owner would not yet check (H4).
-PINS_ENABLED: frozenset[str] = frozenset({"CP-2A", "CP-2D", "CP-2E", "CP-3C"})
+PINS_ENABLED: frozenset[str] = frozenset({"CP-2A", "CP-2D", "CP-2E", "CP-3C", "CP-3D"})
 PINS_ID = "pinned-assumptions"
 REPAIR_ID = "prior-validation-issues"
 ROWS_ID = "context-rows"
@@ -182,19 +182,19 @@ def pinned_assumptions_block(module_id: str, form: Mapping[str, JsonValue] | Non
 
 def request_pin_form(request: PromptRequest) -> Mapping[str, JsonValue] | None:
     """The form the step's own module pins, for the pinned-assumptions block: ``request.pins`` when
-    the caller supplied one, else what the owner reads from the pack's frozen context
-    (``pins.submission_form``, the form the owner's validator compares a submission with). ``None``
-    while the module is not enabled, has no pin slice, or the context pins nothing. A context the
-    run cannot read is refused, as the factory refuses it."""
+    the caller supplied one, else what the owner reads from the request's frozen run context
+    (``pins.form_from_context``, the core of ``pins.submission_form``, so the form is the one the
+    owner's validator compares a submission with). ``compose`` stays pure over the request: it
+    never re-reads the pack, and a request with no context pins nothing. ``None`` while the module
+    is not enabled, has no pin slice, or the context pins nothing."""
     if request.pins is not None:
         return request.pins
     # Only a module with a pin slice has an owner pin; an id outside it pins nothing.
     if not pin_enabled(request.module_id) or request.module_id not in owner_pins._SLICES:
         return None
-    try:
-        return owner_pins.submission_form(request.module_id, request.pack)
-    except ContextRefused as error:
-        raise RunContextRefused(str(error)) from error
+    if request.context is None:
+        return None
+    return owner_pins.form_from_context(request.module_id, request.context)
 
 
 def _is_line_source(pack: PreparedPack) -> bool:

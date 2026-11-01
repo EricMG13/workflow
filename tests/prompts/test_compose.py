@@ -511,6 +511,9 @@ def test_m6_no_sentinel_or_path_reaches_any_message(
         patched.setattr(os, "environ", _Exploding())
         messages = compose(request_for(step_id, pack, context=ctx))
     joined = "\n".join(m.text for m in messages)
+    # Phase 6 Task 9: an enabled module's own pins are the one allowed place, inside the one
+    # pinned-assumptions block (test_pinned_block.py checks that block holds no more than the pins).
+    joined = re.sub(r"<<<CONTEXT id=pinned-assumptions .*?<<<END>>>", "", joined, flags=re.DOTALL)
     leaked = [s for s in sentinels if s in joined]
     assert not leaked, leaked
     assert not ABSOLUTE.search(joined)

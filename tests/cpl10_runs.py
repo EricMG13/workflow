@@ -16,11 +16,12 @@ from pathlib import Path
 from typing import Any
 
 from deploy_vii.contracts import Run
-from deploy_vii.preparation import PreparedPack
+from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.owner_workflow import OwnerWorkflow
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases" / "cpl10-owner"
+CONTEXT_CASE = ROOT / "cases" / "context-identity-periods"
 POSITIVE, LIMITED = "positive", "limited"
 EVID = re.compile(r"\{\{EVID:kpi ([a-z_]+), quarter ([1-4])\}\}")
 ALL_GAPS = "{{ALL narrative gap ids}}"
@@ -37,16 +38,66 @@ def oracle() -> dict[str, Any]:
     }
 
 
-def make_pack() -> PreparedPack:
-    """The financial pack (identity + financial, unchanged) under the CP-L10 case's run."""
-    run = Run.model_validate_json(json.dumps(oracle()["manifest"]["run"]))
-    return PreparedPack(run=run, sources=_fw().make_pack().sources)
+def _context_oracle() -> dict[str, Any]:
+    return {
+        name: json.loads((CONTEXT_CASE / f"{name}.json").read_text())
+        for name in ("manifest", "overlays")
+    }
+
+
+def make_pack(context: str | None = None) -> PreparedPack:
+    """The financial pack (identity + financial, unchanged) under the CP-L10 case's run.
+
+    With `context` (a name under `cases/context-identity-periods/contexts`, e.g. `ctx-l10`) the
+    pack also holds that run context as its `context` source, under the oracle's run for it.
+    """
+    if context is None:
+        run = Run.model_validate_json(json.dumps(oracle()["manifest"]["run"]))
+        return PreparedPack(run=run, sources=_fw().make_pack().sources)
+    spec = _context_oracle()["manifest"]["contexts"][context]
+    run = Run.model_validate_json(json.dumps({k: v for k, v in spec["run"].items() if k != "set"}))
+    raw = (CONTEXT_CASE / spec["file"]).read_bytes()
+    held = prepare_source(
+        SourceRequest(
+            source_id="context",
+            path=f"cases/context-identity-periods/{spec['file']}",
+            media_type="text/plain",
+        ),
+        raw,
+    )
+    return PreparedPack(run=run, sources=(*_fw().make_pack().sources, held))
+
+
+def _context_name(pack: PreparedPack) -> str | None:
+    """The oracle context a pack holds (matched by its run id), or None without a context."""
+    if not any(s.source_id == "context" for s in pack.sources):
+        return None
+    contexts = _context_oracle()["manifest"]["contexts"]
+    name: str = next(n for n, spec in contexts.items() if spec["run"]["run_id"] == pack.run.run_id)
+    return name
+
+
+def _with_context_source(document: dict[str, Any], pack: PreparedPack, key: str) -> None:
+    """Append the oracle overlay's assessment of the `context` source (every prepared source is
+    assessed exactly once); a pack without a context is left unchanged."""
+    name = _context_name(pack)
+    if name is not None:
+        overlay = _context_oracle()["overlays"]["per_context"][name][key]
+        document["sources"].append(overlay)
 
 
 def cp0_literal(pack: PreparedPack) -> str:
     """The financial CP-0 literal with the CP-L10 consumer row next to the unchanged CP-1 row."""
     document = json.loads(_fw().readiness(pack))
     document["consumers"].append(oracle()["submissions"]["cp0_consumer_row_cpl10"])
+    _with_context_source(document, pack, "cp0_readiness_source")
+    return json.dumps(document)
+
+
+def cp1_context_literal(pack: PreparedPack) -> str:
+    """The financial CP-1 source-context literal, plus the context source's assessment."""
+    document = json.loads(_fw().context(pack))
+    _with_context_source(document, pack, "cp1_source_context_source")
     return json.dumps(document)
 
 
@@ -93,8 +144,8 @@ def _quarter_labels() -> list[str]:
     return [columns[f"Q{n}"]["label"] for n in range(1, 5)]
 
 
-def start(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
-    pack = make_pack()
+def start(root: Path, context: str | None = None) -> tuple[OwnerWorkflow, PreparedPack]:
+    pack = make_pack(context)
     return OwnerWorkflow.create(root / "store", pack), pack
 
 
@@ -110,7 +161,7 @@ def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack) -> None:
     for page in (("identity", 1), ("financial", 1)):
         workflow.invoke("read_pages", {"source_id": page[0], "first_page": 1, "last_page": 1})
     workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
-    submit_valid(workflow, fw.context(pack))
+    submit_valid(workflow, cp1_context_literal(pack))
     fw.financial_reads(workflow)
     submit_valid(workflow, json.dumps(fw.financials(pack)))
     read = workflow.read_inputs()
@@ -148,9 +199,9 @@ def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack) -> None:
     submit_valid(workflow, json.dumps(review))
 
 
-def promoted(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+def promoted(root: Path, context: str | None = None) -> tuple[OwnerWorkflow, PreparedPack]:
     """CP-0 and CP-1 settled; CP-L10 begun and untouched. The slow part."""
-    workflow, pack = start(root)
+    workflow, pack = start(root, context)
     drive_cp0(workflow, pack)
     drive_cp1(workflow, pack)
     return workflow, pack

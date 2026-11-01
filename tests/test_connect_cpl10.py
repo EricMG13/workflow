@@ -323,6 +323,7 @@ def test_adapter_returns_the_stage_one_upstream(settled: Path) -> None:
         "cp1_result_sha256",
         "cp1_facts",
         "inherited_limitations",
+        "quarters",  # Phase 2: the offered quarters; the default is the historical four
     ]
 
 

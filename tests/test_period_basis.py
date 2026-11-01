@@ -5,7 +5,11 @@ Synthetic CP-1 T4.14 facts, no pack. The default is today's 2025 literals.
 
 from __future__ import annotations
 
+import dataclasses
+import json
 from datetime import date
+from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -201,3 +205,57 @@ def test_register_refuses_ambiguous_rows() -> None:
 def test_no_currency_rows_refused() -> None:
     with pytest.raises(PeriodRefused, match="currency"):
         currency_basis(_context("q3-2026"), [])
+
+
+_CASE = Path(__file__).resolve().parents[1] / "cases" / "periods-currency-owner"
+# The oracle pins CP-2E's own basis in the same block; it is not a PeriodBasis field (P8-P18).
+_NOT_PERIOD_BASIS = {"cp2e_periods"}
+
+
+def _load(name: str) -> Any:
+    return json.loads((_CASE / name).read_text(encoding="utf-8"))
+
+
+def _oracle_facts(rows: list[dict[str, Any]]) -> list[Fact]:
+    """The pinned T4.14 rows as CP-1 facts: a blank or null value is a not_applicable fact."""
+    facts = []
+    for number, row in enumerate(rows):
+        for name, value in row.items():
+            blank = value is None or value == ""
+            facts.append(
+                Fact(
+                    fact_id=f"t414-{number}-{name}",
+                    label=f"{row['period_id']} {name}",
+                    table_id="T4.14",
+                    row_id=f"row{number}",
+                    field=name,
+                    text=None if blank else str(value),
+                    status="not_applicable" if blank else "known",
+                    limitation="blank in the pinned row" if blank else None,
+                )
+            )
+    return facts
+
+
+def _plain(value: object) -> object:
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, tuple):
+        return list(value)
+    return value
+
+
+@pytest.mark.parametrize(("run", "currency"), [("R1", "USD"), ("R2", "EUR")])
+def test_period_basis_equals_oracle_block(run: str, currency: str) -> None:
+    pinned = _load("t414.json")["contexts"][run]
+    key = _load("expected.json")["period_basis"][currency]
+    settings = _load("submissions.json")["contexts"][run]["run"]
+    context = _context(settings["current_period"], settings["reporting_currency"])
+    basis = period_basis(context, _oracle_facts(pinned["rows"]))
+    wanted = {name: value for name, value in key.items() if name not in _NOT_PERIOD_BASIS}
+    assert wanted
+    for name, value in wanted.items():
+        assert _plain(getattr(basis, name)) == value, name
+    own = {f.name for f in dataclasses.fields(basis)}
+    own |= {"year_labels", "not_reached_text", "balance_date_text"}
+    assert own == set(wanted)

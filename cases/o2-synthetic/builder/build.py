@@ -178,6 +178,21 @@ def compose(
     gap = copy.deepcopy(cp8["gaps"][0])
     readiness["consumers"].append(row)
     readiness["gaps"].append(gap)
+    # P5T3-R7: the context declares executed legal_documents and the pack holds no legal source.
+    # Gap copied from cases/context-attachments-owner/submissions.json (legal-exec-missing-gap).
+    # The portfolio_decision plan has no legal module and validate_review admits only selected
+    # modules or CP-0, so affected_modules is empty.
+    readiness["gaps"].append(
+        {
+            "gap_id": "legal-documents-missing",
+            "kind": "source",
+            "severity": "material",
+            "description": "The run context declares executed legal_documents but the pack holds no executed or filed source",
+            "affected_modules": [],
+            "remediation": "Supply the executed legal documents",
+            "citations": [],
+        }
+    )
 
     recut = Recut(pages, pack, hashes)
     out = {name: recut.walk(value) for name, value in out.items()}
@@ -346,6 +361,7 @@ def build(out_dir: Path) -> None:
             "pack_sha256 placeholder bound to the pack hash above",
             "readiness_review: added source row for `context` (own cited line)",
             "cp1_source_context: added source row for `context` (own cited line), required by validate_source_context (every prepared source assessed once)",
+            "readiness_review: added gap legal-documents-missing (P5T3-R7), copied from cases/context-attachments-owner/submissions.json legal-exec-missing-gap with affected_modules empty (the plan has no legal module; validate_review admits only selected modules or CP-0)",
             "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied and the rationale rewritten to what this pack holds: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack",
         ],
         "dropped_modules": {

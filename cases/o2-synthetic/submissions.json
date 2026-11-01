@@ -340,6 +340,15 @@
           ],
           "remediation": "Supply the Prior Case record accepted at Approval",
           "citations": []
+        },
+        {
+          "gap_id": "legal-documents-missing",
+          "kind": "source",
+          "severity": "material",
+          "description": "The run context declares executed legal_documents but the pack holds no executed or filed source",
+          "affected_modules": [],
+          "remediation": "Supply the executed legal documents",
+          "citations": []
         }
       ],
       "analysis": [

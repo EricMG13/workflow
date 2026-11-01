@@ -804,3 +804,16 @@ def test_context_run_rows_unchanged(
     assert list(module.limitations) == want["settled_limitations"]
     assert module.status == result.status == want["module_status"]
     shutil.rmtree(tmp_path / "store")
+
+
+def test_a_long_refused_context_is_clipped_where_it_is_built(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pack = runs.make_pack("ctx-l10")
+    other = pack.run.model_copy(update={"issuer_name": "X" * 5000})
+    store, _ = _store_for(
+        tmp_path, "long", pack.model_copy(update={"run": other}), _t414_register()
+    )
+    issues = cpl10._validate_step(store, store.pack(), _pending(store)).issues
+    assert len(issues) == 1 and issues[0].startswith("CP-L10: Context refused: ")
+    assert len(issues[0]) <= len("CP-L10: ") + 600

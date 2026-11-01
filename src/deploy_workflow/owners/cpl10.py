@@ -49,6 +49,7 @@ from deploy_vii.execution import (
     Head,
     Qualification,
     StepValidation,
+    clipped,
     inherited_limitations,
     text_sha256,
 )
@@ -1313,7 +1314,7 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
     try:
         context = context_facts(store.pack(snapshot))
     except ContextRefused as error:
-        raise UpstreamError(f"Context refused: {error}") from error
+        raise UpstreamError(clipped(("Context refused: ", str(error)))) from error
     current = "" if context is None else context.run.current_period
     context_issue = None
     try:

@@ -316,3 +316,16 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
   No rule, number, table id or validator changes. Each file gets its D12 record. Review: `mx-adversary`, because both texts reach the model (as B17 item 4).
 - **Why:** the Phase 3 phase review (Low 1) found that both texts reach CP-3's live system message and still describe the market basis as `basis.quotes` only, while the validator accepts `basis.context_rows`.
 - **Controller timing ruling:** the edit lands after the first release cut (B28), as its own small release, so that the cut stays exactly as gated. The edit changes CP-3's frozen digest, its rule-list statement `relative_value.d` and the golden. Cost if wrong: CP-3's prompt keeps the old wording until the follow-up merges; live runs are paused.
+
+## B30. CP-3's market-observation, preference and Basis wording name the context-row basis (user, 2026-11-01)
+
+- **Approved by the user.** The question went to MANAGER, which relayed the user's "Both approved". The user then confirmed "1" (the full version) in this session.
+- **What is approved.** A wording-only edit that names `basis.context_rows` alongside the market quote in four places:
+  - the second clause of rule d (`CP3_BASIS_RULE`, `src/deploy_vii/live/prompts.py` ~:597-603);
+  - rule e (`CP3_PREFERENCE_RULE`, ~:604-610);
+  - the `market_observation` sentence in `src/deploy_vii/methods/cp3.md` (~:31-33);
+  - the `Basis` docstring and a schema description for `context_rows` in `src/deploy_vii/cp3_relative_value.py` (~:190-200).
+- **What does not change.** No rule, number, table id, field, default or validator logic. The refusal messages (~:1103, ~:1153, ~:1202) stay as they are.
+- **Records and review.** Each file gets its D12 record. Review is by `mx-adversary`.
+- **Why:** B29's review found M1, which predates B29. In a context-only run, a model that reads "cites a market quote" literally writes "none" and Insufficient Information. The validator accepts that output, even though it is weaker than `cases/cp3-context-owner/expected.json#cp3/context-only`.
+- **Controller timing ruling:** B30 ships as its own release after B29. B29, O3 Task 6 and B30 share one golden refresh. Cost if wrong: one wording revert and a re-freeze.

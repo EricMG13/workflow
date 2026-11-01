@@ -1,7 +1,8 @@
 """Pathway presets against the owner walk (Part B O1; user ruling B1).
 
 Task 1 (G1a): CP-5's fan-in excludes CP-MODEL, so CP-MODEL is a stop in the walk and an
-analytical module may follow it. The other four presets are asserted in Task 4.
+analytical module may follow it. Task 3 (G1c): CP-1B is an owner-only core, so `earnings_update`
+is admitted too. The other presets are asserted in Task 4.
 """
 
 import datetime as dt
@@ -15,6 +16,7 @@ from deploy_vii.registry import dependencies, edge_rule
 from deploy_workflow import owner_workflow as ow
 
 PLANS = {
+    "earnings_update": ("CP-0", "CP-1", "CP-1B", "CP-MODEL", "CP-1D", "CP-5"),
     "relative_value": (
         "CP-0",
         "CP-1",
@@ -50,7 +52,7 @@ def test_cp5_fan_in_excludes_cp_model() -> None:
 
 
 @pytest.mark.parametrize("pathway", sorted(PLANS))
-def test_check_specs_admits_relative_value_and_covenant_refinancing(
+def test_check_specs_admits_earnings_relative_value_and_covenant_refinancing(
     pathway: str, tmp_path: Path
 ) -> None:
     run = Run(

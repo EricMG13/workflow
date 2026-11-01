@@ -100,6 +100,7 @@ from deploy_workflow.financial_workflow import (
 from deploy_workflow.host import SourceSession
 from deploy_workflow.owners import (
     cp1a,
+    cp1b,
     cp1c,
     cp1d,
     cp2,
@@ -128,6 +129,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-0",
         "CP-1",
         "CP-1A",
+        "CP-1B",
         "CP-2",
         "CP-3D",
         "CP-DR",
@@ -166,6 +168,7 @@ _CORES: dict[str, ModuleType] = {
     "CP-3C": cp3c,
     "CP-2H": cp2h,
     "CP-4C": cp4c,
+    "CP-1B": cp1b,
 }
 _QUALIFICATION = {
     "CP-1": PROMOTED,
@@ -189,6 +192,7 @@ _QUALIFICATION = {
     "CP-2H": cp2h.QUALIFICATION,
     "CP-4C": cp4c.QUALIFICATION,
     "CP-6": cp6.QUALIFICATION,
+    "CP-1B": cp1b.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -212,6 +216,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-2H": cp2h.probe,
     "CP-4C": cp4c.probe,
     "CP-6": cp6.probe,
+    "CP-1B": cp1b.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -232,6 +237,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "rating_triggers": cp2h.view,
     "restructuring_fulcrum": cp4c.view,
     "committee_challenge": cp6.view,
+    "earnings_delta": cp1b.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -256,6 +262,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-2H": cp2h.ENTRY_VALIDATOR,
     "CP-4C": cp4c.ENTRY_VALIDATOR,
     "CP-6": cp6.ENTRY_VALIDATOR,
+    "CP-1B": cp1b.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -585,6 +592,13 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="analytical",
             publish=None,
         ),
+        "CP-1B": OwnerSpec(
+            module_id="CP-1B",
+            steps=(step("earnings_delta", cp1b.EarningsDeltaOwnerReview, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
     }
 
 
@@ -739,15 +753,24 @@ def _result_attempt(snapshot: ExecutionSnapshot, head: Head) -> Attempt:
     return attempt
 
 
+def _owner_only(module_id: str) -> bool:
+    """Whether the module is served by an owner core: it has no registered step chain, or one
+    whose `shared_live` is false (CP-1B's chain is registered for its pinned step name only, not
+    as a live contract)."""
+    try:
+        return not step_chain(module_id).shared_live
+    except ValueError:
+        return True
+
+
 def _sequence(module_id: str) -> tuple[str, ...]:
     """The module's journal step sequence: its live step contract, or its owner core's
-    `STEP_IDS` where `step_chain` has none (G1-X §2). An owner-only module without a core is a
+    `STEP_IDS` where it is owner-only (G1-X §2). An owner-only module without a core is a
     registration error and raises `KeyError` (`_check_specs` refuses it before any run)."""
-    try:
+    if not _owner_only(module_id):
         return step_chain(module_id).steps
-    except ValueError:
-        steps: tuple[str, ...] = tuple(_CORES[module_id].STEP_IDS)
-        return steps
+    steps: tuple[str, ...] = tuple(_CORES[module_id].STEP_IDS)
+    return steps
 
 
 def _owner_historical(store: Execution, binding: OwnerBinding) -> _FrozenExecution:
@@ -899,7 +922,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
 
     The entry is the one `submit_review` and `_entry_outcome` dispatch for the module:
     `cp0_review` for CP-0, `model_payload` for any other live-contract module, `owner_core` for
-    an owner-only one (`step_chain` raises "has no live step contract"). Every module but CP-0
+    an owner-only one (`_owner_only`: no step chain, or one that is not `shared_live`). Every module but CP-0
     and CP-1 has an `_ENTRY_VALIDATORS` row (§2). A live-contract module keeps its registry
     chain and the chain's pack and extraction tools. An owner-only module has a registered,
     complete core: `STEP_IDS` (nonempty and distinct, as `Execution.submit_step` requires) are
@@ -912,10 +935,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
     the financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
     take."""
     core = _CORES.get(module_id)
-    try:
-        chain: StepChain | None = step_chain(module_id)
-    except ValueError:
-        chain = None
+    chain: StepChain | None = None if _owner_only(module_id) else step_chain(module_id)
     entry = (
         "owner_core" if chain is None else "cp0_review" if module_id == "CP-0" else "model_payload"
     )

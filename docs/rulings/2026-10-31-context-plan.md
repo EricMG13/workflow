@@ -119,3 +119,10 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   gaps; USD runs byte-identical; `mx-adversary`. Without it the label change cannot settle a non-USD run
   (review `work/context-plan/reviews/b17-amendments-review.md` finding 1). Cost if wrong: one line reverted
   and non-USD runs return to the `cp1b_currency_label_fixed` refusal.
+- **B19 (controller, 2026-11-01): the owner-path CP-1B accepts only pairs its fixed prose is true of.** The shared
+  earnings composer's E-* wording names q3-2025→q4-2025 (flat) and FY2024 absent→FY2025 (O1 Task 3 reviews,
+  `work/context-plan/reviews/o1-task3-review.md` M1, mx-adversary H1/M2). O1 fails closed: the owner core accepts
+  (q3-2025, q4-2025) only when every T1B.1 delta is zero, and (fy-2024 absent, fy-2025) as the one missing-prior
+  pair; every other pair is refused with issue `unsupported_pair`; the view lists exactly the accepted pairs.
+  Phase 2 Task 4 gains a step: generalise the composer prose from the report's own pair, periods and deltas
+  before the owner path widens its pairs. Cost if wrong: owner runs refuse pairs until Phase 2 Task 4 lands.

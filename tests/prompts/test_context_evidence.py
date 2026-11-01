@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 from b29_strip import undo_b29
+from b30_strip import undo_b30
 from prompt_support import CP3_MODULE_CONTEXT, OLD_EVIDENCE_RULE, request_for
 
 from deploy_vii.live import prompts as live_prompts
@@ -235,6 +236,7 @@ def test_relative_value_old_digest_is_the_new_message_less_the_reword_and_the_bl
     system, user = rv_messages(pack)
     assert system.count(new_rule) == 1
     system = system.replace(new_rule, OLD_EVIDENCE_RULE)
+    system = undo_b30("relative_value", system)  # B30: the context-row basis wording
     system = undo_b29("relative_value", system)  # B29: the context-row basis wording
     (body,) = blocks(user, BLOCK_ID)
     block = re.search(

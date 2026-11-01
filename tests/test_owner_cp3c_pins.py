@@ -209,9 +209,9 @@ def test_pin_lines_follow_the_stale_only_and_provenance_only_returns(
     pin = tuple(EXPECTED["cases"]["differs"]["issues"])
     refused = "Required upstream is unrun, stale or blocked"
     stale = replace(good, current=refused)
-    assert cp3c._lines(pack, submission, stale) == (f"Stale inputs: {refused}", *pin)
+    assert cp3c._issues(pack, submission, stale) == (f"Stale inputs: {refused}", *pin)
     forged = replace(good, cp1=good.cp1.model_copy(update={"limitations": ("another",)}))
-    assert cp3c._lines(pack, submission, forged) == (
+    assert cp3c._issues(pack, submission, forged) == (
         "Upstream CP-1: the supplied module is not the bound input",
         *pin,
     )
@@ -238,7 +238,7 @@ def test_a_context_that_differs_from_the_run_is_one_refusal_line_after_the_conte
     payload = _payload(store, attempt, "match")
     payload["repricing"]["bps"] = 5000
     bad = cp3c.RefinancingRiskSubmission.model_validate_json(json.dumps(payload))
-    got = cp3c._lines(other, bad, upstream)
+    got = cp3c._issues(other, bad, upstream)
     assert got[0] == tm.EXPECTED["refusals"]["step_up_over_limit"]
     assert got[1:] == tuple(refused)
 

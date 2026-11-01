@@ -2551,7 +2551,7 @@ def _pin_lines(pack: PreparedPack, submission: RefinancingRiskSubmission) -> tup
         return (clipped(("Context refused: ", str(error))),)
 
 
-def _lines(
+def _issues(
     pack: PreparedPack, submission: RefinancingRiskSubmission, upstream: Upstream
 ) -> tuple[str, ...]:
     """The content issues, then the pin lines (also after the stale-only and provenance-only
@@ -2695,11 +2695,11 @@ def refinancing_risk(
 ) -> RefinancingRiskReport:
     """The composed CP-3C tables, facts, claims and own limitations of a valid submission;
     raises ValueError on any validation issue."""
-    issues = _lines(pack, submission, upstream)
+    issues = _issues(pack, submission, upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
     selection = select(upstream)
-    # `_lines` raised on a refused context, so `pins_of` cannot raise here.
+    # `_issues` raised on a refused context, so `pins_of` cannot raise here.
     pinned = pins_of(MODULE_ID, pack) is not None
     result = compute(replace(_inputs_from(upstream, selection, submission), pinned=pinned))
     facts = [_cell_fact(c, selection) for t in result.tables for r in t.rows for c in r.cells]
@@ -2814,7 +2814,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     upstream = cp3c_upstream(store=store, attempt=attempt)
-    issues = _lines(pack, submission, upstream)
+    issues = _issues(pack, submission, upstream)
     if issues:
         return StepValidation(issues=issues)
     report = refinancing_risk(pack=pack, submission=submission, upstream=upstream)

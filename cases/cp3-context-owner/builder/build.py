@@ -262,12 +262,10 @@ def cites_minified(cid):
                 assert row_text.count(m) == 1
                 anchored = row_text[: row_text.index(m) + len(m)]
                 if text.count(anchored) != 1:
-                    # a residual collision (B20): another row of this section opens with the same text.
-                    # The earlier row keeps it; the later row (higher index) is dropped into a gap.
-                    if any(r.startswith(anchored) for r in prev_rows):
-                        COLLIDES[(cid, section, idx)] = True
-                    else:
-                        assert any(r.startswith(anchored) for r in later_rows), "repeat is not a row prefix"
+                    # a residual collision (B20a): another row of this section opens with the same text, so the
+                    # quote matches two objects (a guessed span): every colliding row is dropped into a gap.
+                    assert any(r.startswith(anchored) for r in prev_rows + later_rows), "repeat is not a row prefix"
+                    COLLIDES[(cid, section, idx)] = True
                 assert text[start : start + len(anchored)] == anchored or (cid, section, idx) in COLLIDES
                 out[(section, idx, key)] = (1, anchored)
     return out
@@ -308,7 +306,7 @@ def python_evidence(cid):
             continue
         supplied = [k for k in QFIELDS if q[k]]
         if (cid, "quotes", i) in COLLIDES and supplied:
-            own.append(f"context quote for facility {fid} cannot be cited as one unique span; not used")
+            own.append(f"context quote row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
             continue
         if not supplied:
             own.append(f"Gap (Medium): context quote for facility {fid} carries no figure; not used")
@@ -349,7 +347,7 @@ def python_evidence(cid):
             elif d[lo] or d[hi]:
                 lone.append((label, lo if d[lo] else hi, d[lo] or d[hi]))
         if (cid, "deal_terms", i) in COLLIDES and pieces:
-            own.append(f"context deal terms for facility {fid} cannot be cited as one unique span; not used")
+            own.append(f"context deal terms row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
             continue
         if not pieces:
             continue
@@ -520,10 +518,27 @@ SUBS = {
     "no-quotes": deepcopy(RV),
     "minified": submission(["c01", "c02"]),
     "context-only": submission(["c01", "c02"]),
-    "unciteable": submission(["c01"], **TXT["unmatched"]),
-    "unciteable-deal": submission(["c01"], **TXT["deal-talk"]),
+    "unciteable": None,
+    "unciteable-deal": None,
     "bad-bytes": deepcopy(RV),
 }
+NO_USABLE = "No usable market evidence in the pack"
+R3_GAP_RV = R3_S["gap"]["relative_value"]
+
+
+def no_row_submission():
+    """Both unciteable contexts leave Python no row: the R3 gap submission (a none row, no basis quote,
+    Insufficient Information) with its 'no third-party source' sentence made true for this pack."""
+    s = deepcopy(R3_GAP_RV)
+    old = "No third-party market source in the pack"
+    assert s["market_evidence"][0]["limitation"] == old and s["gaps"][0]["gap"] == old
+    s["market_evidence"][0]["limitation"] = NO_USABLE
+    s["gaps"][0]["gap"] = NO_USABLE
+    return s
+
+
+SUBS["unciteable"] = no_row_submission()
+SUBS["unciteable-deal"] = no_row_submission()
 assert SUBS["no-quotes"] == RV
 assert "context_rows" not in json.dumps(SUBS["no-quotes"])
 assert SUBS["with-market-row"]["market_evidence"] == R3_ROWS
@@ -819,25 +834,45 @@ assert _lone["quote_cell"] == "term-loan: OID talk 99.0-99.5" and len(_lone["cit
 _lim = CASES_EXPECTED["deal-lone-bound"]["t33_rows"][0]["facts"][4]
 _lim["text"] = LONE_LIMITATION
 
-CASES_EXPECTED["unciteable"]["unciteable"] = {
-    "kind": "residual key collision with different content (B20): both quote objects open with the same text through ask; they differ only later (as_of, provider)",
-    "dropped_rows": ["quotes[1]"],
-    "gap_limitations": ["context quote for facility term-loan cannot be cited as one unique span; not used"],
-    "python_rows": ["c01"],
-    "c01_from": "quotes[0] (the earlier row keeps the text; its two citations are the shared prefix, so they are not unique in the line)",
-    "c01_cite_quotes": CASES_EXPECTED["unciteable"]["t33_rows"][0]["facts"][2]["cite_quotes"],
-}
-CASES_EXPECTED["unciteable-deal"]["unciteable"] = {
-    "kind": "residual key collision (B20): both deal objects are equal through talk_oid_high; they differ only in as_of and provider",
-    "dropped_rows": ["deal_terms[1]"],
-    "gap_limitations": ["context deal terms for facility term-loan cannot be cited as one unique span; not used"],
-    "python_rows": ["c01"],
-    "c01_from": "deal_terms[0]",
-    "c01_cite_quotes": CASES_EXPECTED["unciteable-deal"]["t33_rows"][0]["facts"][2]["cite_quotes"],
-}
-for _c, _g in (("unciteable", "quote"), ("unciteable-deal", "deal terms")):
-    assert CASES_EXPECTED[_c]["unciteable"]["gap_limitations"][0] in CASES_EXPECTED[_c]["own_limitations"]["members"]
-    assert len(CASES_EXPECTED[_c]["t33_rows"]) == 1
+R3_GAP = R3_E["gap"]["CP-3"]
+for _c, _sec, _what in (("unciteable", "quotes", "quote"), ("unciteable-deal", "deal_terms", "deal terms")):
+    _gaps = [f"context {_what} row {n} for facility term-loan cannot be cited as one unique span; not used" for n in (1, 2)]
+    assert EVIDENCE[_c] == ([], _gaps)
+    sub = SUBS[_c]
+    own = (
+        [f"Gap ({g['severity']}): {g['gap']}" for g in sub["gaps"]]
+        + ["No observed or indicative market evidence: relative value is not assessed",
+           "Relative value preference is Insufficient Information: " + sub["preference"]["limitation"]]
+        + _gaps
+    )
+    CASES_EXPECTED[_c] = {
+        "context": f"contexts/{_c}.json",
+        "pack": "R3+context",
+        "submission": f"submissions.json#cases.{_c}",
+        "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped",
+        "strength": [],
+        "python_rows": [],
+        "t33_row_order": ["m01"],
+        "dropped_rows": [f"{_sec}[0]", f"{_sec}[1]"],
+        "gap_limitations": _gaps,
+        "own_limitations": {"members": own, "order": "not pinned (membership and count)"},
+        "own_limitations_count": len(own),
+        "user_supplied_limitation_present": False,
+        "no_python_row_consequences": "no c-row, no user-supplied label, strength is empty: the submission is the R3 gap submission (a `none` market row, no basis quote, Insufficient Information); Design 2/5 add only the two gap limitations",
+        "report_equals_r3_gap_except": {
+            "source": f"{R3E}#gap.CP-3 (tables, claims)",
+            "changed_cells": {
+                "T3.3.m01.limitation": NO_USABLE,
+                "T3.10.g01.gap": NO_USABLE,
+            },
+            "differs": ["pack_sha256 (the pack gained a source)", "own limitations: R3 gap's three plus the two gap_limitations, with the g01 text changed"],
+            "claims": R3_GAP["claims"],
+            "t34_confidence": "Insufficient Information",
+        },
+        "cap_issue_note": "no High-cap mutation: the preference is Insufficient Information, so no cap string applies",
+        "context_block": {"context_market_evidence": [], "confidence_caps": [CAP_CP2]},
+    }
+    assert "Gap (Critical): " + NO_USABLE in own
 
 # stale positive: the exact-30 row carries no stale text
 assert "Stale quote" not in CASES_EXPECTED["stale"]["t33_rows"][0]["facts"][4]["text"]

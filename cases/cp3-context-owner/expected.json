@@ -2591,201 +2591,58 @@
       "context": "contexts/unciteable.json",
       "pack": "R3+context",
       "submission": "submissions.json#cases.unciteable",
-      "strength": [
-        "observed"
-      ],
-      "python_rows": [
-        "c01"
-      ],
+      "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped",
+      "strength": [],
+      "python_rows": [],
       "t33_row_order": [
-        "c01"
+        "m01"
       ],
-      "t33_rows": [
-        {
-          "row_id": "c01",
-          "label": "Context market evidence 1",
-          "facts": [
-            {
-              "fact_id": "T3.3.c01.source",
-              "column": "Source",
-              "text": "context",
-              "status": "known",
-              "cites": [],
-              "value_class": null,
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.kind",
-              "column": "Kind",
-              "text": "Observed",
-              "status": "known",
-              "cites": [],
-              "value_class": null,
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.quote",
-              "column": "Quote",
-              "text": "term-loan: bid 98.50, ask 99.00",
-              "status": "known",
-              "cites": [
-                [
-                  "context",
-                  "line:1"
-                ],
-                [
-                  "context",
-                  "line:1"
-                ]
-              ],
-              "cite_quotes": [
-                "{\"facility_id\":\"term-loan\",\"kind\":\"observed\",\"bid\":\"98.50\"",
-                "{\"facility_id\":\"term-loan\",\"kind\":\"observed\",\"bid\":\"98.50\",\"ask\":\"99.00\""
-              ],
-              "value_class": "source",
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.as_of",
-              "column": "As of",
-              "text": "2026-01-09",
-              "status": "known",
-              "cites": [],
-              "value_class": "source",
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.limitation",
-              "column": "Limitation",
-              "text": "Provider: Dealer A; user-supplied figure",
-              "status": "known",
-              "cites": [],
-              "value_class": null,
-              "limitation": null
-            }
-          ]
-        }
+      "dropped_rows": [
+        "quotes[0]",
+        "quotes[1]"
+      ],
+      "gap_limitations": [
+        "context quote row 1 for facility term-loan cannot be cited as one unique span; not used",
+        "context quote row 2 for facility term-loan cannot be cited as one unique span; not used"
       ],
       "own_limitations": {
         "members": [
-          "Gap (Material): Only one usable dealer quotation and no traded price",
-          "Gap (Minor): Only one instrument exists, so no intra-issuer comparison is possible",
-          "context quote for facility term-loan cannot be cited as one unique span; not used",
-          "Market evidence rows from the context file are user-supplied figures"
+          "Gap (Critical): No usable market evidence in the pack",
+          "No observed or indicative market evidence: relative value is not assessed",
+          "Relative value preference is Insufficient Information: No observed or indicative market evidence reached CP-3",
+          "context quote row 1 for facility term-loan cannot be cited as one unique span; not used",
+          "context quote row 2 for facility term-loan cannot be cited as one unique span; not used"
         ],
-        "order": "gaps, evidence label, then context items; the order of the context items is not pinned"
+        "order": "not pinned (membership and count)"
       },
-      "own_limitations_count": 4,
-      "user_supplied_limitation_present": true,
-      "t31_i01_changed_cells": {
-        "T3.1.i01.market_observation": "One user-supplied dealer quotation sits just below par and is the only observed level that matches the loan.",
-        "T3.1.i01.basis": "CP-2 T2.1.assessment (Credit assessment); CP-2 T2.7.s01 (Strength 1); CP-2 T2.11.r01 (Risk 1); Market evidence context c01 (observed); CP-1 <label and period of FIG:total_leverage_reported>; CP-1 <label and period of FIG:net_leverage_reported>; CP-1 <label and period of FIG:interest_coverage_reported>",
-        "T3.1.i01.limitation": "A single user-supplied dealer quotation, no reported trade and one instrument, so the level is not a market consensus",
-        "other_cells": "equal to the R3 positive T3.1 facts (facility_id, fundamental_view)"
-      },
-      "t34_changed_cells": {
-        "T3.4.preference.rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
-        "T3.4.preference.confidence": "Medium",
-        "T3.4.preference.basis": "CP-2 T2.1.assessment (Credit assessment); CP-2 T2.7.s01 (Strength 1); Market evidence context c01 (observed)",
-        "T3.4.preference.limitation": "One user-supplied dealer quotation and one instrument, so the preference is provisional",
-        "other_cells": "equal to the R3 positive T3.4 ordering fact"
-      },
-      "claims": [
-        {
-          "claim_id": "T3.4.preference",
-          "text": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
-          "limitation": "One user-supplied dealer quotation and one instrument, so the preference is provisional",
-          "cites": [
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ]
-          ]
+      "own_limitations_count": 5,
+      "user_supplied_limitation_present": false,
+      "no_python_row_consequences": "no c-row, no user-supplied label, strength is empty: the submission is the R3 gap submission (a `none` market row, no basis quote, Insufficient Information); Design 2/5 add only the two gap limitations",
+      "report_equals_r3_gap_except": {
+        "source": "cases/cp3-cp6-owner/expected.json#gap.CP-3 (tables, claims)",
+        "changed_cells": {
+          "T3.3.m01.limitation": "No usable market evidence in the pack",
+          "T3.10.g01.gap": "No usable market evidence in the pack"
         },
-        {
-          "claim_id": "T3.1.i01",
-          "text": "One user-supplied dealer quotation sits just below par and is the only observed level that matches the loan.",
-          "limitation": "A single user-supplied dealer quotation, no reported trade and one instrument, so the level is not a market consensus",
-          "cites": [
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ]
-          ]
-        }
-      ],
-      "claims_cite_note": "each claim cites every cited row's citations in basis order (Design 4: out.cited counts context rows); the market-row citations come first where the basis quotes them",
-      "unchanged_from_r3_positive": [
-        "T3.9 risks (r01, mechanic edited only where noted in submissions.json)",
-        "T3.10 gaps",
-        "cp1_references",
-        "cp3.relative_value front-page table follows the changed text"
-      ],
-      "cp6_catalogue_t33": {
-        "T3.3.c01": "Context market evidence 1"
+        "differs": [
+          "pack_sha256 (the pack gained a source)",
+          "own limitations: R3 gap's three plus the two gap_limitations, with the g01 text changed"
+        ],
+        "claims": [
+          {
+            "claim_id": "T3.4.preference",
+            "text": "With no market evidence the relative value of the instrument is not assessed, although the CP-2 view is unchanged.",
+            "limitation": "No observed or indicative market evidence reached CP-3",
+            "cites": []
+          }
+        ],
+        "t34_confidence": "Insufficient Information"
       },
-      "cp6_reads": "T3.3 `kind` facts only (cp6_committee.py:575); Python rows carry the same fact fields as model rows",
+      "cap_issue_note": "no High-cap mutation: the preference is Insufficient Information, so no cap string applies",
       "context_block": {
-        "pack_source_authority": {
-          "identity": "issuer",
-          "financial": "issuer",
-          "business": "issuer",
-          "market": "third_party",
-          "context": "unknown"
-        },
-        "pack_sources_context_entry": {
-          "source_id": "context",
-          "name": "cases/cp3-context-owner/contexts/unciteable.json",
-          "status": "ready",
-          "authority": "unknown"
-        },
-        "market_evidence_sources": [
-          {
-            "source_id": "market",
-            "name": "Third-party loan market quotation sheet",
-            "spans": 2
-          }
-        ],
-        "market_evidence_note": "Quote market evidence only from a source listed in market_evidence_sources; classify each quote observed or indicative_talk, never talk as a level.",
-        "context_market_evidence": [
-          {
-            "row": "c01",
-            "facility_id": "term-loan",
-            "kind": "observed",
-            "as_of": "2026-01-09",
-            "provider": "Dealer A",
-            "stale": false,
-            "figures": "term-loan: bid 98.50, ask 99.00"
-          }
-        ],
+        "context_market_evidence": [],
         "confidence_caps": [
           "CP-2 is restricted"
-        ],
-        "note_scope": "Design 8 states the context-only wording; with a third_party source in the pack the R3 note is read as unchanged (preparer's reading, see report)"
-      },
-      "unciteable": {
-        "kind": "residual key collision with different content (B20): both quote objects open with the same text through ask; they differ only later (as_of, provider)",
-        "dropped_rows": [
-          "quotes[1]"
-        ],
-        "gap_limitations": [
-          "context quote for facility term-loan cannot be cited as one unique span; not used"
-        ],
-        "python_rows": [
-          "c01"
-        ],
-        "c01_from": "quotes[0] (the earlier row keeps the text; its two citations are the shared prefix, so they are not unique in the line)",
-        "c01_cite_quotes": [
-          "{\"facility_id\":\"term-loan\",\"kind\":\"observed\",\"bid\":\"98.50\"",
-          "{\"facility_id\":\"term-loan\",\"kind\":\"observed\",\"bid\":\"98.50\",\"ask\":\"99.00\""
         ]
       }
     },
@@ -2793,230 +2650,58 @@
       "context": "contexts/unciteable-deal.json",
       "pack": "R3+context",
       "submission": "submissions.json#cases.unciteable-deal",
-      "strength": [
-        "indicative_talk"
-      ],
-      "python_rows": [
-        "c01"
-      ],
+      "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped",
+      "strength": [],
+      "python_rows": [],
       "t33_row_order": [
-        "c01"
+        "m01"
       ],
-      "t33_rows": [
-        {
-          "row_id": "c01",
-          "label": "Context market evidence 1",
-          "facts": [
-            {
-              "fact_id": "T3.3.c01.source",
-              "column": "Source",
-              "text": "context",
-              "status": "known",
-              "cites": [],
-              "value_class": null,
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.kind",
-              "column": "Kind",
-              "text": "Indicative talk",
-              "status": "known",
-              "cites": [],
-              "value_class": null,
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.quote",
-              "column": "Quote",
-              "text": "term-loan: spread talk 325-350 bps; OID talk 99.0-99.5",
-              "status": "known",
-              "cites": [
-                [
-                  "context",
-                  "line:1"
-                ],
-                [
-                  "context",
-                  "line:1"
-                ],
-                [
-                  "context",
-                  "line:1"
-                ],
-                [
-                  "context",
-                  "line:1"
-                ]
-              ],
-              "cite_quotes": [
-                "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\"",
-                "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\",\"talk_spread_bps_high\":\"350\"",
-                "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\",\"talk_spread_bps_high\":\"350\",\"talk_oid_low\":\"99.0\"",
-                "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\",\"talk_spread_bps_high\":\"350\",\"talk_oid_low\":\"99.0\",\"talk_oid_high\":\"99.5\""
-              ],
-              "value_class": "source",
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.as_of",
-              "column": "As of",
-              "text": "2026-01-08",
-              "status": "known",
-              "cites": [],
-              "value_class": "source",
-              "limitation": null
-            },
-            {
-              "fact_id": "T3.3.c01.limitation",
-              "column": "Limitation",
-              "text": "Provider: Lead arranger; user-supplied figure",
-              "status": "known",
-              "cites": [],
-              "value_class": null,
-              "limitation": null
-            }
-          ]
-        }
+      "dropped_rows": [
+        "deal_terms[0]",
+        "deal_terms[1]"
+      ],
+      "gap_limitations": [
+        "context deal terms row 1 for facility term-loan cannot be cited as one unique span; not used",
+        "context deal terms row 2 for facility term-loan cannot be cited as one unique span; not used"
       ],
       "own_limitations": {
         "members": [
-          "Gap (Material): Only arranger price talk and no observed quotation or traded price",
-          "Gap (Minor): Only one instrument exists, so no intra-issuer comparison is possible",
-          "Market evidence is indicative talk only, not an observed market level",
-          "context deal terms for facility term-loan cannot be cited as one unique span; not used",
-          "Market evidence rows from the context file are user-supplied figures"
+          "Gap (Critical): No usable market evidence in the pack",
+          "No observed or indicative market evidence: relative value is not assessed",
+          "Relative value preference is Insufficient Information: No observed or indicative market evidence reached CP-3",
+          "context deal terms row 1 for facility term-loan cannot be cited as one unique span; not used",
+          "context deal terms row 2 for facility term-loan cannot be cited as one unique span; not used"
         ],
-        "order": "gaps, evidence label, then context items; the order of the context items is not pinned"
+        "order": "not pinned (membership and count)"
       },
       "own_limitations_count": 5,
-      "user_supplied_limitation_present": true,
-      "t31_i01_changed_cells": {
-        "T3.1.i01.market_observation": "Arranger price talk is the only market evidence and is talk, not a quotation or a trade.",
-        "T3.1.i01.basis": "CP-2 T2.1.assessment (Credit assessment); CP-2 T2.7.s01 (Strength 1); CP-2 T2.11.r01 (Risk 1); Market evidence context c01 (indicative talk); CP-1 <label and period of FIG:total_leverage_reported>; CP-1 <label and period of FIG:net_leverage_reported>; CP-1 <label and period of FIG:interest_coverage_reported>",
-        "T3.1.i01.limitation": "Arranger price talk only, no quotation and no reported trade, so there is no observed level",
-        "other_cells": "equal to the R3 positive T3.1 facts (facility_id, fundamental_view)"
-      },
-      "t34_changed_cells": {
-        "T3.4.preference.rationale": "With one instrument the ordering is trivial; the arranger price talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
-        "T3.4.preference.confidence": "Low",
-        "T3.4.preference.basis": "CP-2 T2.1.assessment (Credit assessment); CP-2 T2.7.s01 (Strength 1); Market evidence context c01 (indicative talk)",
-        "T3.4.preference.limitation": "Price talk only and one instrument, so the preference is provisional",
-        "other_cells": "equal to the R3 positive T3.4 ordering fact"
-      },
-      "claims": [
-        {
-          "claim_id": "T3.4.preference",
-          "text": "With one instrument the ordering is trivial; the arranger price talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
-          "limitation": "Price talk only and one instrument, so the preference is provisional",
-          "cites": [
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ]
-          ]
+      "user_supplied_limitation_present": false,
+      "no_python_row_consequences": "no c-row, no user-supplied label, strength is empty: the submission is the R3 gap submission (a `none` market row, no basis quote, Insufficient Information); Design 2/5 add only the two gap limitations",
+      "report_equals_r3_gap_except": {
+        "source": "cases/cp3-cp6-owner/expected.json#gap.CP-3 (tables, claims)",
+        "changed_cells": {
+          "T3.3.m01.limitation": "No usable market evidence in the pack",
+          "T3.10.g01.gap": "No usable market evidence in the pack"
         },
-        {
-          "claim_id": "T3.1.i01",
-          "text": "Arranger price talk is the only market evidence and is talk, not a quotation or a trade.",
-          "limitation": "Arranger price talk only, no quotation and no reported trade, so there is no observed level",
-          "cites": [
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ],
-            [
-              "context",
-              "line:1"
-            ]
-          ]
-        }
-      ],
-      "claims_cite_note": "each claim cites every cited row's citations in basis order (Design 4: out.cited counts context rows); the market-row citations come first where the basis quotes them",
-      "unchanged_from_r3_positive": [
-        "T3.9 risks (r01, mechanic edited only where noted in submissions.json)",
-        "T3.10 gaps",
-        "cp1_references",
-        "cp3.relative_value front-page table follows the changed text"
-      ],
-      "cp6_catalogue_t33": {
-        "T3.3.c01": "Context market evidence 1"
+        "differs": [
+          "pack_sha256 (the pack gained a source)",
+          "own limitations: R3 gap's three plus the two gap_limitations, with the g01 text changed"
+        ],
+        "claims": [
+          {
+            "claim_id": "T3.4.preference",
+            "text": "With no market evidence the relative value of the instrument is not assessed, although the CP-2 view is unchanged.",
+            "limitation": "No observed or indicative market evidence reached CP-3",
+            "cites": []
+          }
+        ],
+        "t34_confidence": "Insufficient Information"
       },
-      "cp6_reads": "T3.3 `kind` facts only (cp6_committee.py:575); Python rows carry the same fact fields as model rows",
+      "cap_issue_note": "no High-cap mutation: the preference is Insufficient Information, so no cap string applies",
       "context_block": {
-        "pack_source_authority": {
-          "identity": "issuer",
-          "financial": "issuer",
-          "business": "issuer",
-          "market": "third_party",
-          "context": "unknown"
-        },
-        "pack_sources_context_entry": {
-          "source_id": "context",
-          "name": "cases/cp3-context-owner/contexts/unciteable-deal.json",
-          "status": "ready",
-          "authority": "unknown"
-        },
-        "market_evidence_sources": [
-          {
-            "source_id": "market",
-            "name": "Third-party loan market quotation sheet",
-            "spans": 2
-          }
-        ],
-        "market_evidence_note": "Quote market evidence only from a source listed in market_evidence_sources; classify each quote observed or indicative_talk, never talk as a level.",
-        "context_market_evidence": [
-          {
-            "row": "c01",
-            "facility_id": "term-loan",
-            "kind": "indicative_talk",
-            "as_of": "2026-01-08",
-            "provider": "Lead arranger",
-            "stale": false,
-            "figures": "term-loan: spread talk 325-350 bps; OID talk 99.0-99.5"
-          }
-        ],
+        "context_market_evidence": [],
         "confidence_caps": [
           "CP-2 is restricted"
-        ],
-        "note_scope": "Design 8 states the context-only wording; with a third_party source in the pack the R3 note is read as unchanged (preparer's reading, see report)"
-      },
-      "unciteable": {
-        "kind": "residual key collision (B20): both deal objects are equal through talk_oid_high; they differ only in as_of and provider",
-        "dropped_rows": [
-          "deal_terms[1]"
-        ],
-        "gap_limitations": [
-          "context deal terms for facility term-loan cannot be cited as one unique span; not used"
-        ],
-        "python_rows": [
-          "c01"
-        ],
-        "c01_from": "deal_terms[0]",
-        "c01_cite_quotes": [
-          "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\"",
-          "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\",\"talk_spread_bps_high\":\"350\"",
-          "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\",\"talk_spread_bps_high\":\"350\",\"talk_oid_low\":\"99.0\"",
-          "{\"facility_id\":\"term-loan\",\"instrument\":\"Northbridge Term Loan\",\"currency\":\"USD\",\"size_m\":\"\",\"tenor_years\":\"\",\"talk_spread_bps_low\":\"325\",\"talk_spread_bps_high\":\"350\",\"talk_oid_low\":\"99.0\",\"talk_oid_high\":\"99.5\""
         ]
       }
     },

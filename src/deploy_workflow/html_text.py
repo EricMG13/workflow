@@ -60,9 +60,11 @@ HIDDEN = re.compile(r"display\s*:\s*none", re.IGNORECASE)
 ZERO_WIDTH_CHARS = "\u200b‌‍⁠﻿"
 _ZERO_WIDTH = dict.fromkeys(map(ord, ZERO_WIDTH_CHARS))
 
-# The line rule (Q1): tags that start and end a line. Every other BLOCK tag emits a space.
-# A different ruling is a one-line change here.
-LINE_TAGS = frozenset({"tr", "p"})
+# The line rule (Q1, ruled by the controller: "no div"): tags that start and end a line. Every
+# other BLOCK tag, including div, emits a space. Chosen over tr+p for 83 vs 81 misses but a longest
+# line of 108,282 vs 961,460 characters and finer locators (21,911 vs 17,056 lines); see
+# work/context-plan/reviews/o2-line-rule-measurement.md. A different ruling is a one-line change here.
+LINE_TAGS = frozenset({"p", "tr", "li", "br", "h1", "h2", "h3", "h4", "h5", "h6"})
 
 _SNIFF_BYTES = 4096
 _CHARSET = re.compile(rb"""(?:charset|encoding)\s*=\s*["']?\s*([A-Za-z0-9_.:\-]+)""", re.IGNORECASE)

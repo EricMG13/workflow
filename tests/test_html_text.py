@@ -16,8 +16,8 @@ from deploy_workflow.html_text import UndecodableHtml, convert_html
 
 REPO = Path(__file__).resolve().parents[1]
 CORPUS = Path("/Users/ericguei/Documents/Deploy Workflow/artifacts/public-corpus/v1")
-# Quotes not inside one line for the chosen rule (tr + p), measured in the task-1 note.
-RECORDED_MISSES = 81
+# Quotes not inside one line for the chosen rule (no div), measured in the task-1 note.
+RECORDED_MISSES = 83
 
 
 def _check_py() -> Any:
@@ -45,7 +45,7 @@ def test_inline_spans_do_not_split_a_number() -> None:
     assert _text(html) == "(1,234)\n"
 
 
-def test_skipped_and_hidden_elements_dropped_div_is_a_space() -> None:
+def test_skipped_and_hidden_elements_dropped() -> None:
     html = (
         "<head><title>T</title></head><body>x<script>y</script><style>z</style>"
         '<div style="display: none">h</div>w</body>'
@@ -213,3 +213,7 @@ def test_corpus_goldens_decode_and_recorded_misses() -> None:
                     misses += 1
     assert total > 0
     assert misses == RECORDED_MISSES
+
+
+def test_div_is_a_space_not_a_line_break() -> None:
+    assert _text("<div>A</div><div>B</div>") == "A B\n"

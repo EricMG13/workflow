@@ -51,9 +51,10 @@
     "fn:deploy_workflow.owners.cp3d:_check_recovery",
     "fn:deploy_workflow.owners.cp3d:_check_technicals",
     "fn:deploy_workflow.owners.cp3d:_check_terms",
+    "fn:deploy_workflow.owners.cp3d:_label_ok",
     "fn:deploy_workflow.owners.cp3d:_observation_date",
     "fn:deploy_workflow.owners.cp3d:_observation_level",
-    "fn:deploy_workflow.owners.cp3d:_single_dealer",
+    "fn:deploy_workflow.owners.cp3d:_resolved",
     "fn:deploy_workflow.owners.cp3d:absence_paths",
     "fn:deploy_workflow.owners.cp3d:own_limitations",
     "fn:deploy_workflow.owners.cp3d:submission_issues"

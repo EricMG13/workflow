@@ -40,7 +40,6 @@
    "checks": [
     "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
     "fn:deploy_workflow.owners.cp1d:_blank_issues",
-    "fn:deploy_workflow.owners.cp1d:_bounded",
     "fn:deploy_workflow.owners.cp1d:_bridge_issues",
     "fn:deploy_workflow.owners.cp1d:_model_text_issues",
     "fn:deploy_workflow.owners.cp1d:_rule_issues",

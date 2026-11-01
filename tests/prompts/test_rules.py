@@ -270,7 +270,8 @@ def test_the_draft_is_the_extractor_output_before_the_statements_are_written(
     draft = rules.extract_checks(step_id)
     drafted = {c for r in draft["rules"] for c in r["checks"]}
     committed = {c for r in rules.load_rules(step_id) for c in r.checks}
-    assert drafted <= committed
+    composer = {c for r in rules.load_rules(rules.COMPOSE) for c in r.checks}
+    assert drafted <= committed | composer
     assert all(r["statement"] == "" for r in draft["rules"])
 
 
@@ -483,7 +484,7 @@ def test_non_content_checks_are_subtracted_and_never_in_a_list() -> None:
 
 
 def test_a_non_content_function_takes_no_submission() -> None:
-    allowed = {"upstream", "pack", "inputs", "bound", "current", "evidence"}
+    allowed = {"upstream", "pack", "inputs", "bound", "current"}
     for check in rules.NON_CONTENT:
         module, _, qualname = check.removeprefix("fn:").rpartition(":")
         function = rules.function_node(module, qualname)
@@ -554,3 +555,92 @@ def test_an_oracle_name_both_nested_and_top_level_is_refused() -> None:
 def test_a_rule_whose_checks_are_not_a_list_is_a_type_error() -> None:
     with pytest.raises(TypeError, match="checks"):
         rules.rule_from({"id": "x.1", "statement": "s", "checks": "fn:a:b"})
+
+
+# --- fix round 2 ---------------------------------------------------------------------------------
+
+LIMITS = {
+    "fn:deploy_vii.cp3_relative_value:Upstream.limits",
+    "fn:deploy_vii.cp3_relative_value:_evidence_limitations",
+    "fn:deploy_workflow.owners.cp1c:_bounded",
+    "fn:deploy_workflow.owners.cp1d:_bounded",
+    "fn:deploy_workflow.owners.cp3c:_names",
+    "fn:deploy_workflow.owners.cp3d:_single_dealer",
+}
+
+
+def test_not_issue_sites_hold_the_helpers_and_are_not_non_content() -> None:
+    assert set(rules.NOT_ISSUE_SITES) == LIMITS
+    assert not set(rules.NOT_ISSUE_SITES) & set(rules.NON_CONTENT)
+    assert all(why.strip() for why in rules.NOT_ISSUE_SITES.values())
+    for step_id in STEPS:
+        assert not set(rules.NOT_ISSUE_SITES) & rules.needed_checks(step_id), step_id
+        listed = {c for r in rules.load_rules(step_id) for c in r.checks}
+        assert not listed & set(rules.NOT_ISSUE_SITES), step_id
+
+
+@pytest.mark.parametrize("step_id", NEW)
+def test_a_check_the_composer_carries_is_not_drafted_into_a_step(step_id: str) -> None:
+    composer = {c for r in rules.load_rules(rules.COMPOSE) for c in r.checks}
+    drafted = {c for r in rules.extract_checks(step_id)["rules"] for c in r["checks"]}
+    assert not drafted & composer, sorted(drafted & composer)
+    assert not {c for r in rules.load_rules(step_id) for c in r.checks} & {
+        c for r in rules.load_rules(rules.COMPOSE) for c in r.checks if c.endswith(":_pin_lines")
+    }
+
+
+def test_a_returned_issue_without_prose_in_an_issue_named_function_is_a_site() -> None:
+    module, step_id = "deploy_vii.cp4_legal", "legal_covenants"
+    new = "def _probe_issues(x):\n    return [x.reason]"
+    mutated = _mutated(module, new, "_probe_issues(0)", "validate_covenant_interpretation")
+    needed = rules.needed_checks(step_id, {module: mutated})
+    assert f"fn:{module}:_probe_issues" in needed
+    empty = "def _probe_issues(x):\n    return []"
+    mutated = _mutated(module, empty, "_probe_issues(0)", "validate_covenant_interpretation")
+    assert f"fn:{module}:_probe_issues" not in rules.needed_checks(step_id, {module: mutated})
+
+
+def test_the_run_text_issue_functions_are_covered() -> None:
+    for step_id, module in (
+        ("forward_credit_model", "cp2g"),
+        ("rating_triggers", "cp2h"),
+    ):
+        check = f"fn:deploy_workflow.owners.{module}:_run_text_issues"
+        assert check in rules.needed_checks(step_id)
+        assert check in covered_by(step_id)
+
+
+def _git(root: Path, *args: str) -> None:
+    import subprocess
+
+    subprocess.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", *args],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+
+
+def test_dirty_paths_names_only_uncommitted_pinned_files(tmp_path: Path) -> None:
+    (tmp_path / "a.py").write_text("x = 1\n")
+    (tmp_path / "b.py").write_text("y = 1\n")
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-q", "-m", "c")
+    assert rules.dirty_paths([tmp_path / "a.py", tmp_path / "b.py"], root=tmp_path) == []
+    (tmp_path / "b.py").write_text("y = 2\n")
+    assert rules.dirty_paths([tmp_path / "a.py", tmp_path / "b.py"], root=tmp_path) == ["b.py"]
+
+
+def test_the_golden_is_not_refreshed_or_written_from_a_dirty_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(rules, "dirty_paths", lambda paths, root=rules.ROOT: ["src/x/dirty.py"])
+    target = tmp_path / "golden.json"
+    target.write_text(GOLDEN.read_text(encoding="utf-8"), encoding="utf-8")
+    with pytest.raises(rules.DirtyTree, match="src/x/dirty.py"):
+        rules.refresh_sha256(target)
+    with pytest.raises(rules.DirtyTree, match="src/x/dirty.py"):
+        rules.write_golden(tmp_path / "new.json")
+    assert target.read_text(encoding="utf-8") == GOLDEN.read_text(encoding="utf-8")
+    assert not (tmp_path / "new.json").exists()

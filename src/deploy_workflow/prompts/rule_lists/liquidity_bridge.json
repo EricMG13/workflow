@@ -25,8 +25,7 @@
    "checks": [
     "fn:deploy_workflow.owners.cp2d:_claims",
     "fn:deploy_workflow.owners.cp2d:_facility_limitations",
-    "fn:deploy_workflow.owners.cp2d:_limitations",
-    "fn:deploy_workflow.owners.cp2d:_pin_lines"
+    "fn:deploy_workflow.owners.cp2d:_limitations"
    ]
   }
  ]

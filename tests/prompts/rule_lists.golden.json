@@ -469,7 +469,6 @@
     "statement": "",
     "checks": [
      "fn:deploy_workflow.owners.cp2a:_name_issues",
-     "fn:deploy_workflow.owners.cp2a:_pin_lines",
      "fn:deploy_workflow.owners.cp2a:_prose_issues",
      "fn:deploy_workflow.owners.cp2a:_scenario_issues",
      "fn:deploy_workflow.owners.cp2a:_threshold_issues",
@@ -537,7 +536,6 @@
     "checks": [
      "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
      "fn:deploy_workflow.owners.cp1d:_blank_issues",
-     "fn:deploy_workflow.owners.cp1d:_bounded",
      "fn:deploy_workflow.owners.cp1d:_bridge_issues",
      "fn:deploy_workflow.owners.cp1d:_model_text_issues",
      "fn:deploy_workflow.owners.cp1d:_rule_issues",
@@ -682,6 +680,7 @@
      "fn:deploy_workflow.owners.cp2g:_claims",
      "fn:deploy_workflow.owners.cp2g:_limitation_issues",
      "fn:deploy_workflow.owners.cp2g:_own_limitations",
+     "fn:deploy_workflow.owners.cp2g:_run_text_issues",
      "fn:deploy_workflow.owners.cp2g:_text_issues",
      "fn:deploy_workflow.owners.cp2g:content_issues"
     ]
@@ -824,8 +823,7 @@
     "checks": [
      "fn:deploy_workflow.owners.cp2d:_claims",
      "fn:deploy_workflow.owners.cp2d:_facility_limitations",
-     "fn:deploy_workflow.owners.cp2d:_limitations",
-     "fn:deploy_workflow.owners.cp2d:_pin_lines"
+     "fn:deploy_workflow.owners.cp2d:_limitations"
     ]
    }
   ],
@@ -898,7 +896,6 @@
      "fn:deploy_workflow.owners.cp2e:_check_text",
      "fn:deploy_workflow.owners.cp2e:_fx_claim",
      "fn:deploy_workflow.owners.cp2e:_hedge_claim",
-     "fn:deploy_workflow.owners.cp2e:_pin_lines",
      "fn:deploy_workflow.owners.cp2e:_rate_claims",
      "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
     ]
@@ -956,9 +953,10 @@
      "fn:deploy_workflow.owners.cp3d:_check_recovery",
      "fn:deploy_workflow.owners.cp3d:_check_technicals",
      "fn:deploy_workflow.owners.cp3d:_check_terms",
+     "fn:deploy_workflow.owners.cp3d:_label_ok",
      "fn:deploy_workflow.owners.cp3d:_observation_date",
      "fn:deploy_workflow.owners.cp3d:_observation_level",
-     "fn:deploy_workflow.owners.cp3d:_single_dealer",
+     "fn:deploy_workflow.owners.cp3d:_resolved",
      "fn:deploy_workflow.owners.cp3d:absence_paths",
      "fn:deploy_workflow.owners.cp3d:own_limitations",
      "fn:deploy_workflow.owners.cp3d:submission_issues"
@@ -1049,7 +1047,6 @@
     "statement": "",
     "checks": [
      "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
-     "fn:deploy_workflow.owners.cp1c:_bounded",
      "fn:deploy_workflow.owners.cp1c:_citation_issues",
      "fn:deploy_workflow.owners.cp1c:_content_issues",
      "fn:deploy_workflow.owners.cp1c:_limitations",
@@ -1141,8 +1138,10 @@
      "fn:deploy_workflow.owners.cp2h:_overall_issues",
      "fn:deploy_workflow.owners.cp2h:_own_limitations",
      "fn:deploy_workflow.owners.cp2h:_prose",
+     "fn:deploy_workflow.owners.cp2h:_run_text_issues",
      "fn:deploy_workflow.owners.cp2h:_view_issues",
-     "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
+     "fn:deploy_workflow.owners.cp2h:_with_upstream_citations",
+     "fn:deploy_workflow.owners.cp2h:phrase_issues"
     ]
    }
   ],
@@ -1211,7 +1210,6 @@
     "id": "refinancing_risk.2",
     "statement": "",
     "checks": [
-     "fn:deploy_workflow.owners.cp3c:_names",
      "fn:deploy_workflow.owners.cp3c:submission_issues"
     ]
    }
@@ -1376,6 +1374,7 @@
      "fn:deploy_workflow.owners.cp4c:_fulcrum_issues",
      "fn:deploy_workflow.owners.cp4c:_own_limitations",
      "fn:deploy_workflow.owners.cp4c:_plan_issues",
+     "fn:deploy_workflow.owners.cp4c:_run_text_issues",
      "fn:deploy_workflow.owners.cp4c:_source_row_issues",
      "fn:deploy_workflow.owners.cp4c:_text_fields",
      "fn:deploy_workflow.owners.cp4c:content_issues",
@@ -1515,7 +1514,7 @@
    "src/deploy_workflow/owners/cp2h.py": "9fa9ebb713c063d046f6bc727f357b72be3a5963cb271e9495106eca30c81c1f",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
    "src/deploy_workflow/owners/cp3c.py": "40bd79794531c51fe43f4acf9ebdad0da0b6b75b4ae9b38ca6db9d02a8383c0d",
-   "src/deploy_workflow/owners/cp3d.py": "27a84621c0dccc189654c86eb1715b1296384e9e611b30f5437d22e256a1f29f",
+   "src/deploy_workflow/owners/cp3d.py": "8fbcda6944a6980a95dcd515058b1923d8eeb2f9e0f5af0fe287fce2ef980fc7",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
    "src/deploy_workflow/owners/cp4c.py": "9ea7820df084c0792a57d952d33b3dc9a9ab3d70803baee017dbbaa3c9918793",
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",

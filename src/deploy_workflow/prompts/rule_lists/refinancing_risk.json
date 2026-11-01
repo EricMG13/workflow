@@ -27,7 +27,6 @@
    "id": "refinancing_risk.2",
    "statement": "",
    "checks": [
-    "fn:deploy_workflow.owners.cp3c:_names",
     "fn:deploy_workflow.owners.cp3c:submission_issues"
    ]
   }

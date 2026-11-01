@@ -24,6 +24,7 @@ import importlib
 import importlib.util
 import json
 import re
+import subprocess
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from functools import cache
@@ -32,9 +33,11 @@ from typing import Any
 
 __all__ = [
     "COMPOSE",
+    "DirtyTree",
     "Rule",
     "check_exists",
     "core_sources",
+    "dirty_paths",
     "extract_checks",
     "file_sha256",
     "golden_document",
@@ -48,6 +51,7 @@ __all__ = [
     "rule_ids",
     "sha256_section",
     "step_ids",
+    "write_golden",
 ]
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -322,7 +326,7 @@ def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
 # O6-P18: checks the model cannot repair. An upstream-binding check (a stale or blocked bound input,
 # a module that is not the bound one) is cured by a rerun, and the function takes no submission
 # (a test proves it); a "limitations" function writes Python's own limitation text and refuses
-# nothing. Both are subtracted from what a rule must carry. {check: reason}.
+# nothing is moved to NOT_ISSUE_SITES. Subtracted from what a rule must carry. {check: reason}.
 UPSTREAM = "upstream binding: stale or blocked bound input; the remedy is a rerun, not a rewrite"
 OWN_TEXT = "Python's own limitation text, not a refusal of anything the model wrote"
 NON_CONTENT: Mapping[str, str] = {
@@ -344,8 +348,18 @@ NON_CONTENT: Mapping[str, str] = {
     "fn:deploy_workflow.owners.cp2h:stale_issues": UPSTREAM,
     "fn:deploy_workflow.owners.cp3c:_provenance_issues": UPSTREAM,
     "fn:deploy_workflow.owners.cp4c:stale_issues": UPSTREAM,
+}
+
+# Functions the site scan reaches that refuse nothing: Python's own limitation text, a truncation of
+# an issue list, bound reference names. They are not content checks and not upstream binding, so
+# the no-submission test does not apply. {check: reason}; the list may only shrink.
+NOT_ISSUE_SITES: Mapping[str, str] = {
     "fn:deploy_vii.cp3_relative_value:Upstream.limits": OWN_TEXT,
     "fn:deploy_vii.cp3_relative_value:_evidence_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp1c:_bounded": "truncates an issue list (listed_issues)",
+    "fn:deploy_workflow.owners.cp1d:_bounded": "truncates an issue list (listed_issues)",
+    "fn:deploy_workflow.owners.cp3c:_names": "builds bound reference names",
+    "fn:deploy_workflow.owners.cp3d:_single_dealer": "Python's own limitation text",
 }
 
 # --- ast: issue sites reachable from the entry -----------------------------------------------
@@ -413,11 +427,15 @@ def _has_prose(node: ast.AST) -> bool:
     )
 
 
+def _named_issues(function: _Function) -> bool:
+    return function.name.endswith(("_issues", "_problems"))
+
+
 def _issue_like(function: _Function) -> bool:
     """A function that returns issues: named ``*_issues`` or ``*_problems``, or annotated to
     return a sequence or iterator of ``str``. A composer of other text is left out."""
     note = ast.unparse(function.returns) if function.returns else ""
-    return function.name.endswith(("_issues", "_problems")) or bool(_STR_SEQUENCE.match(note))
+    return _named_issues(function) or bool(_STR_SEQUENCE.match(note))
 
 
 def _added(node: ast.AST) -> bool:
@@ -436,11 +454,22 @@ def _added(node: ast.AST) -> bool:
     )
 
 
-def _returned(node: ast.AST) -> bool:
-    """A ``return`` or ``yield`` of a sequence or f-string that holds a sentence."""
+def _non_empty(node: ast.AST) -> bool:
+    """A sequence or comprehension that holds something."""
+    if isinstance(node, (ast.List, ast.Tuple)):
+        return bool(node.elts)
+    return isinstance(node, (ast.ListComp, ast.GeneratorExp, ast.JoinedStr))
+
+
+def _returned(node: ast.AST, *, prose: bool) -> bool:
+    """A ``return`` or ``yield`` of a non-empty sequence; in a function not named for issues it
+    must also hold a sentence."""
     if not isinstance(node, (ast.Return, ast.Yield)) or node.value is None:
         return False
-    return any(isinstance(n, _SEQ) and _has_prose(n) for n in ast.walk(node.value))
+    return any(
+        isinstance(n, _SEQ) and _non_empty(n) and (not prose or _has_prose(n))
+        for n in ast.walk(node.value)
+    )
 
 
 def _validation(node: ast.AST) -> bool:
@@ -456,9 +485,10 @@ def _validation(node: ast.AST) -> bool:
 def _sites(function: _Function) -> int:
     """Issue sites in one function. Coverage is per function: a new check inside a function a rule
     already carries is not seen here, only by the sha256 pins of the golden file (L2)."""
-    returns = _issue_like(function)
+    returns, named = _issue_like(function), _named_issues(function)
     return sum(
-        _added(n) or _validation(n) or (returns and _returned(n)) for n in ast.walk(function)
+        _added(n) or _validation(n) or (returns and _returned(n, prose=not named))
+        for n in ast.walk(function)
     )
 
 
@@ -517,15 +547,22 @@ def issue_functions(module: str, entry: str, source: str | None = None) -> dict[
     return {name: n for name, n in sorted(counted.items()) if n}
 
 
+def _composer_checks() -> set[str]:
+    """What a ``compose.*`` rule carries (for example the pin lines of ``compose.O6``): a step's
+    list does not repeat it."""
+    return {c for rule in load_rules(COMPOSE) for c in rule.checks}
+
+
 def site_checks(step_id: str, sources: Mapping[str, str] | None = None) -> tuple[str, ...]:
     """The ``fn:`` checks the step's validator needs: every reachable function with a site, less
-    the ``NON_CONTENT`` ones. ``sources`` maps a module name to replacement text (the mutation probe)."""
+    the ``NON_CONTENT`` and ``NOT_ISSUE_SITES`` ones and what a ``compose.*`` rule carries. ``sources`` maps a module name to replacement text (the mutation probe)."""
     out: list[str] = []
     for entry in ENTRIES[step_id]:
         module, qualname = entry.split(":")
         found = issue_functions(module, qualname, (sources or {}).get(module))
         out.extend(f"fn:{module}:{q}" for q in found)
-    return tuple(c for c in dict.fromkeys(out) if c not in NON_CONTENT)
+    excluded = set(NON_CONTENT) | set(NOT_ISSUE_SITES) | _composer_checks()
+    return tuple(c for c in dict.fromkeys(out) if c not in excluded)
 
 
 # --- CP-1B's code-defined refusals (it has no oracle) -----------------------------------------
@@ -611,9 +648,9 @@ def _fn_modules(names: tuple[str, ...]) -> set[Path]:
     }
 
 
-def sha256_section() -> dict[str, dict[str, str]]:
-    """The sha256 of every core (a step's entry modules, each owner module and each module an
-    ``fn:`` check names) and of every oracle file the checks read."""
+def _pinned() -> tuple[list[Path], list[Path]]:
+    """``(cores, oracles)``: the files the golden pins (a step's entry modules, each owner module,
+    each module an ``fn:`` check names; each oracle file the checks read)."""
     names = (COMPOSE, *step_ids())
     cores = (
         {p for step in step_ids() for p in core_sources(step)}
@@ -621,10 +658,44 @@ def sha256_section() -> dict[str, dict[str, str]]:
         | _fn_modules(names)
     )
     oracles = {oracle_path(o.case) for specs in ORACLES.values() for o in specs}
+    return sorted(cores), sorted(oracles)
+
+
+def sha256_section() -> dict[str, dict[str, str]]:
+    """The sha256 of every pinned core and oracle file."""
+    cores, oracles = _pinned()
     return {
-        "cores": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in sorted(cores)},
-        "oracles": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in sorted(oracles)},
+        "cores": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in cores},
+        "oracles": {p.relative_to(ROOT).as_posix(): file_sha256(p) for p in oracles},
     }
+
+
+class DirtyTree(RuntimeError):
+    """A pinned file has uncommitted changes, so a golden taken now would pin text that no commit
+    holds."""
+
+
+def dirty_paths(paths: list[Path], root: Path = ROOT) -> list[str]:
+    """The paths (relative to ``root``) with uncommitted changes against HEAD, staged or not."""
+    relative = [p.relative_to(root).as_posix() for p in paths]
+    done = subprocess.run(
+        ["git", "diff", "HEAD", "--name-only", "--", *relative],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return sorted(done.stdout.split())
+
+
+def _require_clean() -> None:
+    cores, oracles = _pinned()
+    dirty = dirty_paths([*cores, *oracles])
+    if dirty:
+        raise DirtyTree(
+            "pinned files have uncommitted changes; commit them (or wait for their lane) first: "
+            + ", ".join(dirty)
+        )
 
 
 def golden_document() -> dict[str, Any]:
@@ -648,9 +719,18 @@ def refresh_sha256(path: Path) -> None:
     lane runs this after it changes a core and re-runs the coverage tests, in its own commit:
     ``python -c "from pathlib import Path; from deploy_workflow.prompts import rules;
     rules.refresh_sha256(Path('tests/prompts/rule_lists.golden.json'))"``. A change to a rule
-    is not a refresh; it goes to the rule-list process."""
+    is not a refresh; it goes to the rule-list process. It refuses while any pinned file is dirty
+    (G4)."""
+    _require_clean()
     document = json.loads(path.read_text(encoding="utf-8"))
     document["sha256"] = sha256_section()
+    path.write_text(json.dumps(document, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def write_golden(path: Path) -> None:
+    """Write the whole golden file (rules and sha256); refuses while any pinned file is dirty."""
+    _require_clean()
+    document = golden_document()
     path.write_text(json.dumps(document, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 

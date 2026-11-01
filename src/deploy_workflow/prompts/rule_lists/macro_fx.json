@@ -68,7 +68,6 @@
     "fn:deploy_workflow.owners.cp2e:_check_text",
     "fn:deploy_workflow.owners.cp2e:_fx_claim",
     "fn:deploy_workflow.owners.cp2e:_hedge_claim",
-    "fn:deploy_workflow.owners.cp2e:_pin_lines",
     "fn:deploy_workflow.owners.cp2e:_rate_claims",
     "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
    ]

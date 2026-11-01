@@ -55,6 +55,7 @@
     "fn:deploy_workflow.owners.cp4c:_fulcrum_issues",
     "fn:deploy_workflow.owners.cp4c:_own_limitations",
     "fn:deploy_workflow.owners.cp4c:_plan_issues",
+    "fn:deploy_workflow.owners.cp4c:_run_text_issues",
     "fn:deploy_workflow.owners.cp4c:_source_row_issues",
     "fn:deploy_workflow.owners.cp4c:_text_fields",
     "fn:deploy_workflow.owners.cp4c:content_issues",

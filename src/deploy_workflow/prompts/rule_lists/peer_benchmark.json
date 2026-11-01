@@ -40,7 +40,6 @@
    "statement": "",
    "checks": [
     "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
-    "fn:deploy_workflow.owners.cp1c:_bounded",
     "fn:deploy_workflow.owners.cp1c:_citation_issues",
     "fn:deploy_workflow.owners.cp1c:_content_issues",
     "fn:deploy_workflow.owners.cp1c:_limitations",

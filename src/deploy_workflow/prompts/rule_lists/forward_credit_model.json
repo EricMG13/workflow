@@ -50,6 +50,7 @@
     "fn:deploy_workflow.owners.cp2g:_claims",
     "fn:deploy_workflow.owners.cp2g:_limitation_issues",
     "fn:deploy_workflow.owners.cp2g:_own_limitations",
+    "fn:deploy_workflow.owners.cp2g:_run_text_issues",
     "fn:deploy_workflow.owners.cp2g:_text_issues",
     "fn:deploy_workflow.owners.cp2g:content_issues"
    ]

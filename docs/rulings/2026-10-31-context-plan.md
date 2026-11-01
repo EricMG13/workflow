@@ -74,3 +74,10 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   fields as usual. Where another file pins its hash (`cases/PINS.json`, leases), the re-pin runs through
   the oracle process in the same commit. Cost if wrong: one manifest shape the PR Manager may ask to
   change (no test reads `post_import_patches` today).
+- **B15 Test time (user, 2026-11-01: "test are taking too long").** Narrows B3. Per task: only the brief's
+  affected tests, without `RUN_PROMOTION=1`, one run at a time (no duplicate or parallel copies of the same
+  files); the gated tests are reported deferred (`gates-first-pass=n/a`). The promotion-gated tests and the
+  hours-long files (`test_owner_workflow.py`, `test_owner_s1a.py`, `test_financial_workflow.py` full) run once
+  per phase, by the controller, on a frozen export, before the full suite and the PR Manager hand-off.
+  O1 Task 1 at 4725c3b6: presets, order, workflow and financial passed with `RUN_PROMOTION=1`; cp3, cp4, cpos,
+  rendering, s1a were stopped and wait for the O1 phase gate.

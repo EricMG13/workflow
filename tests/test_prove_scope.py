@@ -3,6 +3,8 @@
 import importlib.util
 import os
 import pathlib
+import shutil
+import stat
 import subprocess
 import sys
 
@@ -176,3 +178,31 @@ def test_newline_paths_classify() -> None:
     assert scope.classify(".github/workflows/a\nb.yml") == "ORACLE"
     assert scope.classify("cases/a\nb.json") == "ORACLE"
     assert scope.classify("docs/superpowers/plans/a\nb.md") == "PLAN"
+
+
+def test_range_listing_does_not_need_rev_list_z(tmp_path: pathlib.Path) -> None:
+    """An older git rejects `rev-list -z` (exit 129); scope must not depend on it."""
+    real = shutil.which("git")
+    assert real is not None
+    shim_dir = tmp_path / "bin"
+    shim_dir.mkdir()
+    shim = shim_dir / "git"
+    shim.write_text(
+        '#!/bin/sh\ncase " $* " in *" rev-list "*" -z "*)'
+        f' echo "usage: git rev-list" >&2; exit 129;; esac\nexec "{real}" "$@"\n',
+        encoding="utf-8",
+    )
+    shim.chmod(shim.stat().st_mode | stat.S_IXUSR)
+    repo, base = make_repo(tmp_path)
+    commit(repo, "src/a.py")
+    env = {**ENV, "PATH": f"{shim_dir}{os.pathsep}{ENV['PATH']}"}
+    done = subprocess.run(
+        [sys.executable, "-I", str(SCRIPT), base, "HEAD"],
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr
+    assert "scope: 1 commits checked, 0 violations" in done.stdout

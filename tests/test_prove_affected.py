@@ -196,3 +196,54 @@ def test_non_ascii_path_is_not_quoted(repo: pathlib.Path) -> None:
         {"docs/é.csv": "a\n", "tests/test_uni.py": "P = ROOT / 'docs/é.csv'\n"},
     )
     assert select(repo, {"docs/é.csv": "b\n"}) == ["tests/test_uni.py"]
+
+
+def test_work_path_not_selected_by_substring_of_unrelated_literal(repo: pathlib.Path) -> None:
+    add_base(repo, {"work/bld/ledger.md": "l\n", "tests/test_bldr.py": "K = 'bldr_targets'\n"})
+    assert select(repo, {"work/bld/ledger.md": "m\n"}) == []
+
+
+def test_docs_path_ignores_literal_naming_only_basename_extension(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "docs/rx/manifest.json": "{}\n",
+            "tests/test_man.py": "M = 'cases/fin/manifest.json'\nN = 'docstring'\n",
+        },
+    )
+    assert select(repo, {"docs/rx/manifest.json": '{"a": 1}\n'}) == []
+
+
+def test_docs_path_named_only_in_docstring_selects_nothing(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "docs/X-LEASE.md": "l\n",
+            "src/pkg/noted.py": '"""Implements docs/X-LEASE.md."""\n',
+            "tests/test_noted.py": "from pkg import noted\n",
+        },
+    )
+    assert select(repo, {"docs/X-LEASE.md": "m\n"}) == []
+
+
+def test_docs_path_read_by_glob_or_full_path_literal_selects_readers(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "docs/rl/r.md": "r\n",
+            "tests/test_glob.py": "FILES = (ROOT / 'docs' / 'rl').glob('*')\n",
+            "tests/test_named.py": "P = 'docs/rl/r.md'\n",
+        },
+    )
+    assert select(repo, {"docs/rl/r.md": "s\n"}) == ["tests/test_glob.py", "tests/test_named.py"]
+
+
+def test_docs_top_file_read_by_segment_literals_selects_reader(repo: pathlib.Path) -> None:
+    add_base(
+        repo,
+        {
+            "docs/L-NOTE.md": "n\n",
+            "tests/test_note.py": "P = ROOT / 'docs' / 'L-NOTE.md'\n",
+        },
+    )
+    assert select(repo, {"docs/L-NOTE.md": "o\n"}) == ["tests/test_note.py"]

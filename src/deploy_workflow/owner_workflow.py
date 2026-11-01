@@ -1795,6 +1795,12 @@ def _verify_chain(
         )
         for p in receipt.publications
     ]
+    # The receipt lists begins and publications in chain order: `_verify_walk` reads "the next
+    # begin" and "the first publication" from these lists, so a reordering would move a refusal.
+    for listed in (receipt.begins, receipt.publications):
+        places = [position[item.snapshot_before_sha256] for item in listed]
+        if places != sorted(places):
+            raise WorkflowError("identity_mismatch")
     transitions.sort(key=lambda item: item[:2])
     # The walk order is bound (F2): modules planned before the publisher, then its publications,
     # then modules planned after it; a later module begun before the stop breaks the sequence.

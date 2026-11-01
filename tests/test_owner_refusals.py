@@ -133,8 +133,11 @@ def test_refused_begin_omits_empty_missing_fields_and_bounds_them() -> None:
 DISTRESSED = ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4", "CP-4C", "CP-5")
 
 
-def _snapshot(settled: tuple[str, ...], runnable: tuple[str, ...]) -> ExecutionSnapshot:
-    """`settled` modules have an accepted head; CP-0's commands authorise `runnable`."""
+def _snapshot(
+    settled: tuple[str, ...], runnable: tuple[str, ...], **status: str
+) -> ExecutionSnapshot:
+    """`settled` modules have an accepted head (`status` overrides one module's); CP-0's
+    commands authorise `runnable`."""
     run = Run(
         run_id="refusals-test",
         issuer_id="issuer",
@@ -147,7 +150,7 @@ def _snapshot(settled: tuple[str, ...], runnable: tuple[str, ...]) -> ExecutionS
     heads = tuple(
         Head(
             module_id=m,
-            status="accepted",
+            status=status.get(m.replace("-", "_"), "accepted"),  # type: ignore[arg-type]
             result_sha256=ZERO,
             inputs=(),
             commands=commands if m == "CP-0" else (),
@@ -347,6 +350,191 @@ def test_a_faults_file_next_to_the_audit_kinds_does_not_break_the_audit(
     faults.mkdir()
     (faults / "x").write_text("{}")
     assert _verdict(tmp_path, receipt) == "accepted"
+
+
+# --- verifier rules pinned one by one (mx-precise mutants, adversary Medium) ---------------------
+
+
+def _chain(root: Path) -> list[Any]:
+    store = owner.Execution(root / "store")
+    snapshots = [store.read()]
+    while snapshots[-1].parent is not None:
+        snapshots.append(owner._snapshot(store, snapshots[-1].parent))
+    return snapshots[::-1]
+
+
+def _raw_receipt(workflow: Any, root: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """A receipt the walk verifier has not seen: `write_receipt`'s own check is lifted so a rule
+    can be tested alone (the rule under test is called directly by the test)."""
+    monkeypatch.setattr(owner, "_verify", lambda *args, **kwargs: None)
+    return workflow.write_receipt(root / "receipt.json")
+
+
+def test_reordered_begins_cannot_move_the_refusal_later(
+    fake: SimpleNamespace, tmp_path: Path
+) -> None:
+    """Adversary Medium: `receipt.begins` in another order than the chain moved the refusal's
+    "next begin" to a later snapshot, and the receipt verified. Begins (and publications) must be
+    in chain order."""
+    workflow = _walk(fake, tmp_path, ORDER)
+    workflow.read_inputs()
+    assert workflow.submit_review(g1x._sourced())["status"] == "invalid"  # cited page unread
+    g1x._drive(workflow)  # attempt 1 settles
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    assert _verdict(tmp_path, receipt) == "accepted"
+    a0, a1 = [b for b in receipt.begins if b.module_id == A]
+    refusal = receipt.refusals[0]
+    assert refusal.snapshot_sha256 == a0.snapshot_before_sha256
+    assert a1.snapshot_before_sha256 != a0.snapshot_before_sha256
+    others = tuple(b for b in receipt.begins if b.module_id != A)
+    late = refusal.model_copy(update={"snapshot_sha256": a1.snapshot_before_sha256})
+    g1x._swap(tmp_path, "refused-begin", refusal, late)
+    forged = receipt.model_copy(update={"begins": (*others, a1, a0), "refusals": (late,)})
+    g1x._reseal(tmp_path, forged)
+    assert _verdict(tmp_path, forged) == "identity_mismatch"
+
+
+def test_begins_follow_plan_order_among_non_refused_modules(
+    fake: SimpleNamespace, tmp_path: Path
+) -> None:
+    workflow = _completed(fake, tmp_path)
+    receipt = workflow.write_receipt(tmp_path / "receipt.json")
+    chain = _chain(tmp_path)
+    owner._verify_chain(receipt, chain, None, ORDER)  # the real plan order passes
+    swapped = ("CP-0", A, "CP-1", B)  # the journal begins CP-1 before A
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_chain(receipt, chain, None, swapped)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_module_both_settled_and_refused_is_rejected(
+    fake: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A has a head; a refusal for it on the expected snapshot is rejected by the walk rule alone
+    (`_verify_refusal` lifted). The settled-xor-refused "both" half and the refused-with-attempt
+    check overlap: a head implies an attempt, so either rejects this."""
+    workflow = _completed(fake, tmp_path)
+    receipt = _raw_receipt(workflow, tmp_path, monkeypatch)
+    store = owner.Execution(tmp_path / "store")
+    final = store.read().content_hash()
+    claim = receipt.refusals[0].model_copy(update={"module_id": A, "snapshot_sha256": final})
+    forged = receipt.model_copy(update={"refusals": (*receipt.refusals, claim)})
+    monkeypatch.setattr(owner, "_verify_refusal", lambda *args: None)
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_walk(store, forged, ("CP-0", "CP-1", B, A), ORDER, None)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_refused_module_with_an_attempt_is_rejected(
+    fake: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A was begun (attempt 0 rejected, no head yet) and a refusal for it is claimed on the
+    expected snapshot: a refusal is a begin that never happened, so the attempt rejects it."""
+    workflow = _walk(fake, tmp_path, ORDER)
+    workflow.read_inputs()
+    assert workflow.submit_review(g1x._sourced())["status"] == "invalid"
+    workflow._phase = "complete"  # forge: end the walk with A unsettled
+    receipt = _raw_receipt(workflow, tmp_path, monkeypatch)
+    store = owner.Execution(tmp_path / "store")
+    claim = receipt.refusals[0].model_copy(
+        update={"module_id": A, "snapshot_sha256": store.read().content_hash()}
+    )
+    forged = receipt.model_copy(update={"refusals": (*receipt.refusals, claim)})
+    monkeypatch.setattr(owner, "_verify_refusal", lambda *args: None)
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_walk(store, forged, ("CP-0", "CP-1", B, A), ORDER, None)
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_a_refusal_for_a_module_outside_the_analytical_walk_is_rejected(
+    fake: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """CP-MODEL is planned but is the publisher, never begun: a refusal for it is not a refused
+    begin. The check is alone (`_verify_refusal` lifted) on the snapshot the walk would expect."""
+    workflow = _completed(fake, tmp_path)
+    receipt = _raw_receipt(workflow, tmp_path, monkeypatch)
+    store = owner.Execution(tmp_path / "store")
+    planned = ("CP-0", "CP-1", B, A, "CP-MODEL")
+    claim = receipt.refusals[0].model_copy(
+        update={"module_id": "CP-MODEL", "snapshot_sha256": store.read().content_hash()}
+    )
+    forged = receipt.model_copy(update={"refusals": (*receipt.refusals, claim)})
+    monkeypatch.setattr(owner, "_verify_refusal", lambda *args: None)
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_walk(store, forged, ("CP-0", "CP-1", B, A), planned, "CP-MODEL")
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_verify_refusal_rejects_a_blocked_edge_miss_that_is_not_retainable() -> None:
+    """CP-2 lacks CP-1, which is unrun (no blocked head) and not a refused module: the refusal
+    recomputes exactly but is a defect, not a retained refusal (G7). With CP-1 refused it holds."""
+    before = _snapshot(("CP-0", "CP-1A"), ("CP-2",))
+    error = _error(before, "CP-2")
+    inputs, commands = owner._missing_inputs(before, "CP-2", error)
+    assert (inputs, commands) == (("CP-1",), ())
+    refusal = owner.RefusedBegin(
+        module_id="CP-2",
+        snapshot_sha256=ZERO,
+        reason=str(error),
+        missing_inputs=inputs,
+        missing_commands=commands,
+    )
+    owner._verify_refusal(before, refusal, {"CP-1"})  # a consequence of a refused CP-1
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_refusal(before, refusal, set())
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_verify_refusal_rejects_an_edited_reason() -> None:
+    before = _snapshot(("CP-0", "CP-1A"), ("CP-2",))
+    error = _error(before, "CP-2")
+    inputs, commands = owner._missing_inputs(before, "CP-2", error)
+    forged = owner.RefusedBegin(
+        module_id="CP-2",
+        snapshot_sha256=ZERO,
+        reason="Required upstream is somewhere else",
+        missing_inputs=inputs,
+        missing_commands=commands,
+    )
+    with pytest.raises(WorkflowError) as caught:
+        owner._verify_refusal(before, forged, {"CP-1"})
+    assert caught.value.code == "identity_mismatch"
+
+
+def test_retainable_needs_a_blocked_head_or_every_missing_input_refused() -> None:
+    plain = _snapshot(("CP-0", "CP-1A"), ("CP-2",))
+    assert owner._retainable(plain, ("CP-1",), set()) is False
+    assert owner._retainable(plain, ("CP-1",), {"CP-1"}) is True
+    assert owner._retainable(plain, ("CP-1", "CP-3"), {"CP-1"}) is False  # one is not refused
+    assert owner._retainable(plain, (), {"CP-1"}) is False  # nothing missing is no consequence
+    blocked = _snapshot(("CP-0", "CP-1A", "CP-1"), ("CP-2",), CP_1="blocked")
+    assert owner._retainable(blocked, ("CP-1",), set()) is True
+
+
+def test_a_plain_upstream_unrun_error_still_propagates_from_the_walk(
+    fake: SimpleNamespace, tmp_path: Path
+) -> None:
+    """G7: CP-1C needs CP-1, which was never run and is not a refused module and no head is
+    blocked: the begin's ValueError is a defect and propagates, no refusal is recorded."""
+    fake.monkeypatch.setattr(owner, "plan", lambda requested: ("CP-0", B))
+    pack = order_tests._financial_pack(B)
+    workflow = owner.OwnerWorkflow.create(
+        tmp_path / "store", pack, specs=owner.OWNER_SPECS, publication_directory=tmp_path / "model"
+    )
+    financial.read_sources(workflow)
+    with pytest.raises(ValueError, match=owner.BLOCKED_EDGE):
+        workflow.submit_review(_review(pack))
+    assert workflow._refusals == []
+
+
+def test_missing_inputs_counts_a_blocked_head_only_under_a_restricted_edge() -> None:
+    """CP-5's edge from CP-1 is restricted: a blocked CP-1 is usable, so not missing; a restricted
+    head is usable too. CP-4 is unrun, so it is the only miss."""
+    runnable = ("CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4", "CP-4C", "CP-5")
+    settled = ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4C")
+    before = _snapshot(settled, runnable, CP_1="blocked", CP_2="restricted")
+    error = _error(before, "CP-5")
+    assert owner._missing_inputs(before, "CP-5", error) == (("CP-4",), ())
 
 
 # --- deferred: needs CP-5 settled (slow) ---------------------------------------------------------

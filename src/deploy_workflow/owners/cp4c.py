@@ -2820,7 +2820,8 @@ def restructuring(
     issues = _lines(pack, submission, upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
-    # `_lines` raised on a refused context, so `pins_of` cannot raise here.
+    # `_lines` returns the `Context refused:` line for a refused context and `restructuring`
+    # raises on it above, so `pins_of` cannot raise here.
     pinned = pins_of(MODULE_ID, pack) is not None
     result = compute(replace(_inputs(pack, submission, upstream), pinned=pinned))
     cells = {c.fact.fact_id: c.fact for c in result.cells}

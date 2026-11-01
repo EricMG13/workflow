@@ -280,8 +280,12 @@ def test_only_context_refused_is_caught(tmp_path: Path, monkeypatch: pytest.Monk
         raise ValueError("not a context refusal")
 
     monkeypatch.setattr(cp4c, "pin_issues", boom)
-    with pytest.raises(ValueError, match="not a context refusal"):
+    with pytest.raises(ValueError) as caught:
         cp4c.restructuring(pack=pack, submission=_submission(payload), upstream=upstream)
+    assert str(caught.value) == "not a context refusal"
+    with pytest.raises(ValueError) as again:
+        cp4c._pin_lines(pack, _submission(payload))
+    assert str(again.value) == "not a context refusal"
     with pytest.raises(ValueError, match="not a context refusal"):
         connect._submit(store, attempt, json.dumps(payload))
 
@@ -384,7 +388,7 @@ def test_no_context_or_no_pin_equals_the_frozen_base_oracle(
 
 
 # --- the label on every path that composes the own limitations ----------------------------------------
-@pytest.mark.parametrize("case", tm.RUNS)
+@pytest.mark.parametrize("case", tm.CASES)
 def test_the_label_is_last_on_every_base_fixture(case: str) -> None:
     inputs = tm._inputs(case)
     base = cp4c.compute(inputs)
@@ -435,3 +439,49 @@ def test_no_cp2a_pinned_line_when_the_context_does_not_pin_cp2a(
     module = _settled_module(store, attempt)
     assert _carried(module, CP2A_PINNED) == 0 and _carried(module, PINNED) == 1
     assert pins.pins_of("CP-2A", store.pack()) is None
+
+
+# --- review kills (Task 8 fix 1) --------------------------------------------------------------------
+def test_the_index_is_the_submitted_position(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Rotated cases: the line names the submitted position, not the case-id order."""
+    store, pack, attempt = _seed(tmp_path, monkeypatch, CONTEXT, "positive")
+    payload = _payload("match")
+    cases = payload["valuation"]
+    for case, text in zip(cases, ("4.0", "3.5", "4.00"), strict=True):
+        case["multiple"] = text
+    payload["valuation"] = [cases[1], cases[2], cases[0]]
+    line = "assumptions.cp4c.ev_multiple (valuation[0].multiple): pinned 4; submitted 3.5"
+    assert cp4c._pin_lines(pack, _submission(payload)) == (line,)
+    connect._submit(store, attempt, json.dumps(payload))
+    issues = _issues(store, attempt)
+    assert issues[-1] == line
+    assert sum(i.startswith("assumptions.cp4c") for i in issues) == 1
+
+
+def _junk(pack: PreparedPack) -> PreparedPack:
+    """The pack whose context source has every pinned figure junk: a real, long refusal."""
+    src = next(s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID)
+    doc = json.loads("\n".join(s.text for s in src.spans))
+    a = doc["assumptions"]
+    for sc in a["cp2a"]["scenarios"]:
+        sc["ebitda_decline_pct"] = sc["interest_increase_pct"] = "x"
+    a["cp2d"]["horizon_months"] = a["cp2d"]["minimum_cash_m"] = "x"
+    a["cp3c"]["repricing_bps"] = a["cp3d"]["recovery_pct"] = a["cp4c"]["ev_multiple"] = "x"
+    span = src.spans[0].model_copy(update={"text": json.dumps(doc, indent=2)})
+    rest = tuple(s for s in pack.sources if s.source_id != CONTEXT_SOURCE_ID)
+    return PreparedPack(run=pack.run, sources=(*rest, src.model_copy(update={"spans": (span,)})))
+
+
+def test_a_long_real_refusal_is_clipped_at_the_bound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, pack, attempt = _run(tmp_path, monkeypatch, "match")
+    done = connect._finished(store, attempt)
+    bad = _junk(pack)
+    out = cp4c.ENTRY_VALIDATOR(store, bad, done)
+    (line,) = out.issues
+    assert out.output is None and line.startswith("Context refused: assumptions.cp2a.")
+    assert len(line) == MAX_ISSUE_CHARS and line.endswith("…")
+    assert cp4c._pin_lines(bad, _submission(_payload("match"))) == (line,)

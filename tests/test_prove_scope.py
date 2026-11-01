@@ -150,3 +150,29 @@ def test_glob_star_stays_in_one_segment() -> None:
     assert scope.classify("cases/a/b/c.json") == "ORACLE"
     assert scope.classify("docs/sub/X-LEASE.md") == "NEUTRAL"
     assert scope.classify("docs/superpowers/plans/a/b.md") == "PLAN"
+
+
+def test_newline_path_workflow_fails_builder_role(tmp_path: pathlib.Path) -> None:
+    repo, base = make_repo(tmp_path)
+    commit(repo, "src/a.py", ".github/workflows/a\nb.yml")
+    done = run(repo, "--role", "builder", base, "HEAD")
+    assert done.returncode == 1
+    assert "ORACLE in --role builder" in done.stdout
+
+
+def test_newline_path_oracle_in_mixed_commit_fails_per_commit(tmp_path: pathlib.Path) -> None:
+    repo, base = make_repo(tmp_path)
+    commit(repo, "src/a.py", "cases/a\nb.json")
+    done = run(repo, base, "HEAD")
+    assert done.returncode == 1
+    assert "ORACLE in per-commit" in done.stdout
+
+
+def test_newline_paths_classify() -> None:
+    spec = importlib.util.spec_from_file_location("scope", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    scope = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scope)
+    assert scope.classify(".github/workflows/a\nb.yml") == "ORACLE"
+    assert scope.classify("cases/a\nb.json") == "ORACLE"
+    assert scope.classify("docs/superpowers/plans/a\nb.md") == "PLAN"

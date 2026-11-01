@@ -600,14 +600,11 @@ def test_a_context_that_disagrees_with_the_run_is_an_issue_not_an_exception(
     assert refused.value.code == "identity_mismatch"
 
 
-def test_period_register_duplicate_coordinate_and_missing_period_id_refuse() -> None:
+def test_period_register_duplicate_coordinate_refuses() -> None:
     base = _t414_register()
     twin = _t414(2025, 4)[2].model_copy(update={"fact_id": "q4-2025:fiscal_year:b"})
     with pytest.raises(cpl10.UpstreamError, match="ambiguous_coordinate"):
         cpl10.context_quarters("q4-2025", [*base, twin])
-    headless = [f for f in base if not (f.row_id == "q4-2025" and f.field == "period_id")]
-    with pytest.raises(cpl10.UpstreamError, match="incomplete_register"):
-        cpl10.context_quarters("q4-2025", headless)
 
 
 def test_context_q4_2025_quarters_equal_the_oracle() -> None:

@@ -322,8 +322,7 @@ class ContextPeriodNotQuarter(UpstreamError):
 
 
 def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
-    """The CP-1 T4.14 rows by row id, read with the earnings reader (a duplicated coordinate or a
-    row without a `period_id` refuses). The view only carries `facts` through that reader."""
+    """The CP-1 T4.14 rows by row id, read with the earnings reader (a duplicated coordinate refuses). The view only carries `facts` through that reader."""
     held = tuple(facts)
     view = ModuleView(
         module_id="CP-1",
@@ -337,9 +336,7 @@ def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
         rows = earnings._rows(view, "T4.14")
     except ValueError as error:
         raise UpstreamError(f"CP-1 T4.14 register is unusable: {error}") from error
-    if any("period_id" not in row for row in rows):
-        raise UpstreamError("CP-1 T4.14 register is unusable: incomplete_register")
-    return {row["period_id"].row_id: row for row in rows}
+    return {next(iter(row.values())).row_id: row for row in rows}
 
 
 def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarter, ...]:

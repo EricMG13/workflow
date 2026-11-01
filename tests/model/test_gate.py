@@ -206,7 +206,7 @@ def turn_request() -> TurnRequest:
     return TurnRequest((Message("user", "hi"),), (), 100, "medium")
 
 
-def test_good_ruling_construction_touches_nothing_and_complete_reads_one_variable(
+def test_good_ruling_construction_touches_nothing_and_complete_reads_the_three_key_variables_once(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root, path = ruling(tmp_path)
@@ -216,7 +216,7 @@ def test_good_ruling_construction_touches_nothing_and_complete_reads_one_variabl
     class Counting(Mapping[str, str]):
         def __getitem__(self, key: str) -> str:
             reads.append(key)
-            return "sk-test-fake-value-0123456789"
+            return f"sk-test-fake-{key.lower()}-0123456789"
 
         def __iter__(self) -> Iterator[str]:
             raise AssertionError("iterated")
@@ -236,8 +236,13 @@ def test_good_ruling_construction_touches_nothing_and_complete_reads_one_variabl
         reply = adapter.complete(
             turn_request(), invocation_digest="d" * 64, call_index=0, reservation_id="r"
         )
-    assert reply.kind == "ok"
-    assert reads == ["OPENAI_API_KEY"]
+        assert reply.kind == "ok"
+        assert set(reads) == {"OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY"}
+        before = list(reads)
+        adapter.complete(
+            turn_request(), invocation_digest="d" * 64, call_index=1, reservation_id="r"
+        )
+        assert reads == before  # a second complete reads no variable
     assert os_trap.touched == []
 
 

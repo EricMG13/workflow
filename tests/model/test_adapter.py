@@ -256,7 +256,17 @@ def test_live_empty_key_is_not_sent_and_names_the_variable(live_ruling: Path) ->
     reply = complete(adapter)
     assert reply.kind == "not_sent" and reply.error_class == "KeyMissing"
     assert reply.message is not None and "OPENAI_API_KEY" in reply.message
+    assert "sk-" not in repr(reply)
     assert fake.requests == []
+
+
+def test_live_redacts_every_provider_key_by_exact_value(live_ruling: Path) -> None:
+    other = "plainvalue-anthropic-key-9876"  # no key shape: only an exact-value match can catch it
+    env = {"OPENAI_API_KEY": FAKE_KEY, "ANTHROPIC_API_KEY": other}
+    fake = FakeTransport(Response(500, f"oops {other}".encode()))
+    reply = complete(live_adapter(SPEC, live_ruling, transport=fake, environ=env))
+    assert reply.raw is not None and other.encode() not in reply.raw
+    assert other not in repr(reply) and FAKE_KEY not in repr(reply)
 
 
 def test_live_absent_key_is_not_sent(live_ruling: Path) -> None:

@@ -3,7 +3,7 @@
 ``complete`` sends at most one request and never retries or resends: resend (the 402 wait,
 repair, transient retry) belongs to the loop. A recorded adapter has ``ruling is None`` and reads
 no environment. A live adapter runs ``check_live_gate`` first, before it touches any environment
-mapping or builds a ``Redactor``; only the first ``complete`` reads the one key variable.
+mapping or builds a ``Redactor``; only the first ``complete`` reads the three key variables.
 
 The gate is a tripwire against an accidental live call, not an authenticator: a file that
 says ``by: user`` proves nothing about who wrote it.
@@ -303,13 +303,18 @@ class LiveAdapter:
         self._transport = transport
         self._environ = environ  # None: os.environ, read only at the first complete
         self._clock = clock
+        self._cached: tuple[str, str | None, Redactor] | None = None
 
-    def _read_key(self) -> tuple[str, str | None]:
-        name = KEY_VARIABLES[self._model.provider]
-        environ = self._environ
-        if environ is None:
-            environ = os.environ
-        return name, environ.get(name) or None
+    def _credentials(self) -> tuple[str, str | None, Redactor]:
+        """The key variable's name and value and the redactor, read once from the mapping on
+        the first call (after the gate passed at construction) and kept for later calls. The
+        redactor covers all three provider keys by exact value."""
+        if self._cached is None:
+            environ = os.environ if self._environ is None else self._environ
+            name = KEY_VARIABLES[self._model.provider]
+            redactor = Redactor.from_environ(environ)
+            self._cached = (name, environ.get(name) or None, redactor)
+        return self._cached
 
     def complete(
         self,
@@ -319,15 +324,14 @@ class LiveAdapter:
         call_index: int,
         reservation_id: str,
     ) -> AdapterReply:
-        """Send one request; never retry. The key is read here, once, and only this variable."""
+        """Send one request; never retry. The key variables are read on the first call only."""
         started = self._clock()
-        name, key = self._read_key()
+        name, key, redactor = self._credentials()
         if key is None:
             return AdapterReply(
                 "not_sent", None, None, None, "KeyMissing", None, started, self._clock(),
                 message=f"{name} is not set or empty",
             )  # fmt: skip
-        redactor = Redactor.from_environ({name: key})
         try:
             built = build(self._model, request, key)
         except ProviderConfigError as error:

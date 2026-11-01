@@ -27,7 +27,7 @@ from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.context import RunContext, context_facts
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owners import pins as owner_pins
-from deploy_workflow.prompts.compose import O6_PINS, PINS_ID
+from deploy_workflow.prompts.compose import O6_PINS, PINS_ID, TEXTS_DIR
 
 compose_module = importlib.import_module("deploy_workflow.prompts.compose")
 
@@ -241,9 +241,8 @@ def test_composing_with_a_pin_leaves_the_environment_alone(
 
 # ----------------------------------------------------------- enabling a module (one per commit)
 
-TEXTS = Path(compose_module.__file__).parent / "texts"
 # A submission that differs from the context pin, so the owner's issue line carries the pin.
-DIFFERING = {
+DIFFERING: dict[str, dict[str, Any]] = {
     "CP-2A": {"scenarios": [{"ebitda_decline": "0.3", "interest_increase": "0.1"}] * 4},
     "CP-2D": {"horizon_months": "12", "minimum_cash.amount": "5"},
     "CP-2E": {"rate_shocks_bp": ["50"], "fx_shocks_percent": ["5"]},
@@ -258,7 +257,7 @@ WITHIN_RANGE = "within the schema's range"
 def text_admits_the_pin(module: str) -> None:
     """The step's absolute sentences and its B27 `choose within the schema's range` sentence name
     the pinned-assumptions block as the exception (the O6 rule wins)."""
-    text = (TEXTS / f"{STEPS[module]}.md").read_text(encoding="utf-8")
+    text = (TEXTS_DIR / f"{STEPS[module]}.md").read_text(encoding="utf-8")
     for line in text.splitlines():
         if ABSOLUTE.search(line):
             assert "pinned-assumptions" in line, line[:120]
@@ -289,6 +288,10 @@ def enabled_and_pinned_by_default(module: str, pack: PreparedPack) -> None:
 
 def test_cp2a_is_enabled_and_pinned(pack: PreparedPack) -> None:
     enabled_and_pinned_by_default("CP-2A", pack)
+
+
+def test_cp2d_is_enabled_and_pinned(pack: PreparedPack) -> None:
+    enabled_and_pinned_by_default("CP-2D", pack)
 
 
 # ------------------------------------------------------------------------------ the guard

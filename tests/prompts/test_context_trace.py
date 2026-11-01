@@ -9,7 +9,8 @@ hold for every step:
 1. the system message never changes with the context values;
 2. no sentinel appears in the user message more often than its original value did, except the
    O6-P24 allowance: `quotes[i].facility_id` and `quotes[i].as_of` inside the `context-rows`
-   CONTEXT block of `market_implied`.
+   CONTEXT block of `market_implied`; and, for an enabled module (Phase 6 Task 9), the
+   `assumptions.<module>` values inside that step's own `pinned-assumptions` CONTEXT block.
 
 The pack carries the context as its own `context` source, so `context-rows` is built for
 `market_implied` (the shared o2 pack has no quotes). The whole grid (every readable context
@@ -24,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from prompt_support import CP3_MODULE_CONTEXT, request_for
+from prompt_support import CP3_MODULE_CONTEXT, module_of, request_for
 
 from deploy_vii.contracts import Run
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
@@ -145,13 +146,18 @@ def block_of(text: str, pos: int) -> tuple[str, str] | None:
     return None
 
 
-def outside(user: str, pat: re.Pattern[str], leaf: Path_) -> int:
-    """Occurrences of the sentinel outside the O6-P24 allowance."""
-    allowed = leaf[0] == "quotes" and leaf[-1] in ALLOWED
+def outside(user: str, pat: re.Pattern[str], leaf: Path_, step: str) -> int:
+    """Occurrences of the sentinel outside the allowances: the O6-P24 rows, and the step's own
+    module's pins inside the `pinned-assumptions` block (no other module's, no other block)."""
+    rows = leaf[0] == "quotes" and leaf[-1] in ALLOWED
+    own = leaf[0] == "assumptions" and leaf[1] == module_of(step).lower().replace("-", "")
     count = 0
     for m in pat.finditer(user):
-        in_rows = block_of(user, m.start()) == ("CONTEXT", "context-rows")
-        count += 0 if (allowed and in_rows) else 1
+        block = block_of(user, m.start())
+        ok = (rows and block == ("CONTEXT", "context-rows")) or (
+            own and block == ("CONTEXT", "pinned-assumptions")
+        )
+        count += 0 if ok else 1
     return count
 
 
@@ -183,7 +189,7 @@ def trace_file(
             out.leaks.append(f"{path.name} {step}: the system message differs with the context")
         for value, leaf in kept.items():
             pat = re.compile(rf"(?<![\w.]){re.escape(value)}(?![\w])")
-            if outside(user1, pat, leaf) > outside(user0, pat, leaf):
+            if outside(user1, pat, leaf, step) > outside(user0, pat, leaf, step):
                 out.leaks.append(f"{path.name} {step}: {leaf} {value!r} outside the allowance")
 
 

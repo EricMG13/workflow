@@ -220,3 +220,18 @@ Roles (B2):
 - the O7b-1 builder: another fresh mx-feature.
 
 All four are distinct agents.
+
+## 11. Controller rulings on the preparer's concerns (2026-11-01, after d0f948e1)
+
+1. **The Q14 brief hash.** "Brief hash unchanged" in v2 is withdrawn. The brief binds `run_id` and the anchors (O7a `ResearchBrief`), so a new run has a new hash. The oracle pins:
+   - the identical questions, as-of, cutoff and evidence list;
+   - the fact that the hash differs.
+2. **Run-time hashes (Q3).** Pinning them as markers plus byte templates and template sha256s is accepted.
+3. **Oracle-declared shapes.** The research submission shape, the research-manifest shape and the 40 → 32 lock reading (2 context + 30 of 38 model questions kept, dropped from the tail) are accepted as oracle-declared. O7b-1 matches them.
+   - `CutoffViolation` uses the locator as its `item_id`, because a refused item has no ev id. Accepted.
+   - An item's `sha256` must equal the sha256 that `prepare` records for that `ev-<n>` `text/plain` source. The oracle reviewer checks that the preparer's page-join derivation gives the same value as prepare's hashing rule for a single-page text source. If it does not, the derivation is a finding.
+4. **The v1 `not_found` on valuation context.** It stands only if the question text itself asks for a trading level or spread. Otherwise the reviewer asks for a cleaner not-found question.
+5. **`CpDrNotAnchored` must be added to `_FAULTS`.** This is an O7b-1 requirement.
+6. Pinning the fence refusal by its suffix is accepted.
+7. The CP-1 readiness entry for CP-DR stays `not_verified`. O7b-1 validates it.
+8. Rendering and tamper recipes are outside this brief and are not pinned.

@@ -14,13 +14,14 @@ its own ``complete``, and this module's text is redacted by the key pattern alon
 """
 
 import contextlib
+import fcntl
 import json
 import os
 import sys
 import time
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Context, Decimal, Inexact, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -44,16 +45,19 @@ from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.turn import Message, ModelSpec
 from deploy_workflow.owner_rendering import render_owner_slice, verify_owner_rendered_slice
 from deploy_workflow.owner_workflow import (
+    AUDIT,
     OWNER_SPECS,
     OwnerBinding,
     OwnerWorkflow,
     StepSpec,
+    TornAudit,
     verify_owner_run_receipt,
 )
 from deploy_workflow.run_inputs import (
     HTML_MEDIA,
     CaseSource,
     CheckedRun,
+    RunDirInvalid,
     RunInputError,
     RunOutcome,
     StagedSourceChanged,
@@ -67,6 +71,34 @@ from deploy_workflow.workflow import WorkflowError
 MAX_OUTPUT_TOKENS = 32_768
 
 PromptFactory = Callable[[PreparedPack], PromptFor]
+
+
+class RunDirBusy(RunInputError):
+    """Another ``run_pathway`` holds this run directory's lock (single writer, R9a)."""
+
+    code = "run_dir_busy"
+
+
+class ResumeRefused(RunInputError):
+    """A resume is refused before it writes: the directory is not a resumable run (N1, P3)."""
+
+    code = "resume_refused"
+
+
+class ResumeMismatch(ResumeRefused):
+    """The arguments of a resume are not those the run began with (N1)."""
+
+    code = "resume_mismatch"
+
+
+class CapExists(RunInputError):
+    """``cap.json`` is create-once (P2): a second create is refused."""
+
+    code = "cap_exists"
+
+
+CAP_FILE = "cap.json"
+_EXACT_ADD = Context(prec=120, traps=[Inexact, InvalidOperation]).add
 
 
 class NoPrompt(Exception):
@@ -90,6 +122,94 @@ def _default_prompt_for(pack: PreparedPack) -> PromptFor:
         return composer(binding, spec, issues)
 
     return prompt_for
+
+
+@contextlib.contextmanager
+def _single_writer(run_dir: Path) -> Iterator[None]:
+    """Hold an exclusive, non-blocking ``flock`` on ``run_dir`` itself for the whole run, fresh or
+    resumed (R9a): no lock file is written, and the kernel drops the lock if the process dies.
+    A second ``run_pathway`` on the directory is refused (``RunDirBusy``) before it writes."""
+    # ponytail: ``flock`` is advisory; a network filesystem, or a process that never calls
+    # ``run_pathway``, is not excluded (the ceiling of ``CallLog``'s lock too). Upgrade path:
+    # ``OwnerWorkflow`` holds the lock for its own store, so every writer is excluded.
+    fd = os.open(run_dir, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RunDirBusy(f"{run_dir} is held by another run_pathway") from None
+        yield
+    finally:
+        os.close(fd)  # closing releases the lock
+
+
+def _create_cap(run_dir: Path, cap_usd: Decimal) -> None:
+    """Record the run's cap, create-once (P2): a resume can neither raise nor lower it."""
+    data = (json.dumps({"cap_usd": money_text(cap_usd)}) + "\n").encode()
+    try:
+        fd = os.open(
+            run_dir / CAP_FILE,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW,
+            0o600,
+        )
+    except FileExistsError:
+        raise CapExists(f"{run_dir / CAP_FILE} already exists") from None
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    _fsync_directory(run_dir)
+
+
+def _retained_cap(run_dir: Path) -> Decimal:
+    try:
+        loaded = json.loads((run_dir / CAP_FILE).read_text())
+        return Decimal(loaded["cap_usd"])
+    except (OSError, ValueError, KeyError, TypeError, ArithmeticError):
+        raise ResumeRefused(f"{run_dir / CAP_FILE} is missing or unreadable") from None
+
+
+def _retained_configs(run_dir: Path, redactor: Redactor) -> tuple[set[tuple[str, ...]], set[str]]:
+    """What the run recorded of itself: the (run_id, case_id, pathway) of every ``calls.jsonl``
+    line and every ``config_id`` it and the reservation markers name."""
+    markers = run_dir / "execution" / AUDIT / "reservations"
+    identities: set[tuple[str, ...]] = set()
+    configs: set[str] = set()
+    for record in CallLog(run_dir, redactor).records():
+        identities.add((record["run_id"], record["case_id"], record["pathway"]))
+        configs.add(record["config_id"])
+    if markers.is_dir():
+        for path in sorted(markers.iterdir()):
+            if not path.name.endswith(".settled"):
+                configs.add(json.loads(path.read_text())["config_id"])
+    return identities, configs
+
+
+def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> None:
+    """N1: a resume is the run it continues. Reads only: refused here, nothing has been written.
+    ``run_id``, ``pathway`` and the staged sources against the retained pack, ``config_id`` against
+    the retained calls and reservation markers, ``cap_usd`` against the create-once ``cap.json``."""
+    if (run_dir / "run.json").exists():
+        raise ResumeRefused(f"{run_dir} already holds run.json: the run is finished")
+    try:
+        pack = load_pack(run_dir / "pack")
+    except (OSError, ValueError) as error:
+        raise ResumeRefused(f"prepare: {error}") from None
+    if (pack.run.run_id, pack.run.pathway) != (checked.run_id, checked.pathway):
+        raise ResumeMismatch("run_id or pathway is not the staged run's")
+    held = {s.source_id: s.sha256 for s in pack.sources}
+    if any(held.get(item.source_id) != item.sha256 for item in checked.files):
+        raise ResumeMismatch("the sources are not the staged run's")
+    if _retained_cap(run_dir) != checked.cap_usd:
+        raise ResumeMismatch("cap_usd is not the cap the run began with")
+    try:
+        identities, configs = _retained_configs(run_dir, redactor)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise ResumeRefused(f"the retained calls are unreadable: {type(error).__name__}") from None
+    if identities - {(checked.run_id, checked.case_id, checked.pathway)}:
+        raise ResumeMismatch("case_id is not the run's")
+    if configs - {checked.model.config_id}:
+        raise ResumeMismatch("config_id is not the run's")
 
 
 _FAULTS = (StepStopped, BudgetError, RecordingMissing, WorkflowError, NoPrompt, PromptError)
@@ -254,6 +374,12 @@ def _drive(workflow: OwnerWorkflow, loop: ToolLoop, pack: PreparedPack) -> str |
     )
     if not has_publisher:
         return None
+    return _publish_and_go_on(workflow, loop)
+
+
+def _publish_and_go_on(workflow: OwnerWorkflow, loop: ToolLoop) -> str | None:
+    """``publish`` at the publisher's stop, then the rest of the walk; the stop reason of a
+    refusal that leaves the walk open, else ``None``."""
     published = workflow.publish()
     if published["next_step"] is not None:
         loop.run()
@@ -263,48 +389,122 @@ def _drive(workflow: OwnerWorkflow, loop: ToolLoop, pack: PreparedPack) -> str |
     return None
 
 
+def _drive_resumed(workflow: OwnerWorkflow, loop: ToolLoop) -> str | None:
+    """Continue a resumed walk from where ``open()`` left it, by the phase it reports (never by
+    polling ``state()``): steps while a module is active, ``publish`` once at the publisher's stop,
+    nothing when the walk already ended. A publication that failed mid-cleanup is not retried."""
+    if workflow.phase == "analytical":
+        loop.run()
+    if workflow.phase == "walked":
+        return _publish_and_go_on(workflow, loop)
+    if workflow.phase == "failed":
+        return "resume: the publication left the walk failed"
+    return None
+
+
+def _enter(run_dir: Path, pack: PreparedPack, resume: bool) -> OwnerWorkflow:
+    """Create the workflow over a fresh run directory, or reopen the killed run's."""
+    execution, publication = run_dir / "execution", run_dir / "publication"
+    if resume:
+        return OwnerWorkflow.open(execution, publication_directory=publication)
+    return OwnerWorkflow.create(execution, pack, publication_directory=publication)
+
+
+def _prior_spend(checked: CheckedRun, execution: Path) -> Decimal:
+    """What the run's reservations already cost, for a stop before the loop's budget exists:
+    zero for a run that has none."""
+    if not (execution / AUDIT / "reservations").is_dir():
+        return Decimal(0)
+    return Budget(checked.cap_usd, execution).spent
+
+
+def _opened(
+    checked: CheckedRun, run_dir: Path, pack: PreparedPack, resume: bool
+) -> OwnerWorkflow | _Fault:
+    """The workflow, or the fault that stops the run. A ``TornAudit`` is mapped before the generic
+    ``workflow: <code>`` (P6, F6), so it never surfaces as ``workflow: identity_mismatch``."""
+    execution = run_dir / "execution"
+    try:
+        return _enter(run_dir, pack, resume)
+    except TornAudit:
+        return _Fault("TornAudit", _prior_spend(checked, execution))
+    except WorkflowError as error:
+        return _Fault(f"workflow: {error.code}", _prior_spend(checked, execution))
+
+
+def _held(budget: Budget, resume: bool) -> _Fault | None:
+    """B10: on a resume, a reservation with no settlement may have been sent, its charge unknown.
+    The run stops before any step (the model is not called, nothing is published) and the hold is
+    counted once in the spend."""
+    if not resume or not budget.unsettled:
+        return None
+    return _Fault(
+        "RunStopped: a reservation left unsettled by a crash: " + ", ".join(budget.unsettled),
+        _EXACT_ADD(budget.spent, budget.reserved),
+    )
+
+
+def _drive_and_finish(
+    checked: CheckedRun,
+    run_dir: Path,
+    adapter: ModelAdapter,
+    prompt_for: PromptFactory,
+    meta: _Meta,
+    pack: PreparedPack,
+    workflow: OwnerWorkflow,
+    budget: Budget,
+    resume: bool,
+) -> RunOutcome | _Fault:
+    """The loop over the workflow, ``publish`` at the stop, then the receipt and ``run.json``."""
+    redactor, execution = meta.redactor, run_dir / "execution"
+    try:
+        loop = ToolLoop(
+            workflow,
+            adapter,
+            budget,
+            CallLog(run_dir, redactor),
+            prompt_for(pack),
+            contract_tools_for,
+            redactor,
+            time.time,
+            time.sleep,
+            execution=Execution(execution),
+            spec=checked.model,
+            case_id=checked.case_id,
+            pathway=checked.pathway,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+            resumed=resume,
+        )
+        refused = _drive_resumed(workflow, loop) if resume else _drive(workflow, loop, pack)
+        if refused is not None:
+            return _Fault(refused, budget.spent)
+        return _finish_run(workflow, run_dir, meta, budget)
+    except _FAULTS as fault:
+        return _Fault(_fault_reason(fault, redactor), budget.spent)
+
+
 def _stages(
     checked: CheckedRun,
     run_dir: Path,
     adapter: ModelAdapter,
     prompt_for: PromptFactory,
     meta: _Meta,
+    resume: bool = False,
 ) -> RunOutcome | _Fault:
-    redactor, execution = meta.redactor, run_dir / "execution"
     try:
         pack = load_pack(run_dir / "pack")
     except ValueError as error:
         return _Fault(f"prepare: {error}", Decimal(0))
-    try:
-        workflow = OwnerWorkflow.create(
-            execution, pack, publication_directory=run_dir / "publication"
-        )
-    except WorkflowError as error:
-        return _Fault(f"workflow: {error.code}", Decimal(0))
-    budget = Budget(checked.cap_usd, execution)
-    loop = ToolLoop(
-        workflow,
-        adapter,
-        budget,
-        CallLog(run_dir, redactor),
-        prompt_for(pack),
-        contract_tools_for,
-        redactor,
-        time.time,
-        time.sleep,
-        execution=Execution(execution),
-        spec=checked.model,
-        case_id=checked.case_id,
-        pathway=checked.pathway,
-        max_output_tokens=MAX_OUTPUT_TOKENS,
+    workflow = _opened(checked, run_dir, pack, resume)
+    if isinstance(workflow, _Fault):
+        return workflow
+    budget = Budget(checked.cap_usd, run_dir / "execution")
+    held = _held(budget, resume)
+    if held is not None:
+        return held
+    return _drive_and_finish(
+        checked, run_dir, adapter, prompt_for, meta, pack, workflow, budget, resume
     )
-    try:
-        refused = _drive(workflow, loop, pack)
-        if refused is not None:
-            return _Fault(refused, budget.spent)
-        return _finish_run(workflow, run_dir, meta, budget)
-    except _FAULTS as fault:
-        return _Fault(_fault_reason(fault, redactor), budget.spent)
 
 
 def _walk(
@@ -313,8 +513,9 @@ def _walk(
     adapter: ModelAdapter,
     prompt_for: PromptFactory,
     meta: _Meta,
+    resume: bool = False,
 ) -> RunOutcome:
-    result = _stages(checked, run_dir, adapter, prompt_for, meta)
+    result = _stages(checked, run_dir, adapter, prompt_for, meta, resume)
     if isinstance(result, _Fault):
         return _stop(run_dir, meta, result.reason, result.spent)
     return result
@@ -338,8 +539,10 @@ def _run_pathway(
     prompt_for: PromptFactory = _default_prompt_for,
     *,
     entries: tuple[dict[str, Any], ...] | None = None,
+    resume: bool = False,
 ) -> RunOutcome:
-    """Run the walk over a staged ``run_dir``. No adapter-type check here (``check_arguments``
+    """Run the walk over a staged ``run_dir``; ``resume`` reopens the killed run's workflow
+    instead of creating one. No adapter-type check here (``check_arguments``
     owns it), so the authoring harness can drive it with a test adapter. While it runs, stderr
     passes through the redactor."""
     redactor = Redactor()
@@ -350,7 +553,7 @@ def _run_pathway(
         redactor,
     )
     with _redacted_stderr(redactor):
-        return _walk(checked, run_dir, adapter, prompt_for, meta)
+        return _walk(checked, run_dir, adapter, prompt_for, meta, resume)
 
 
 def _stage(
@@ -387,9 +590,13 @@ def run_pathway(
     run_dir: Path,
     run_id: str,
     cp_dr: bool = False,
+    resume: bool = False,
 ) -> RunOutcome:
     """Check, stage, run, with stderr redacted throughout. A refused argument raises and writes
     nothing; a named fault after the first write returns a ``stopped`` outcome with ``run.json``.
+    ``resume=True`` continues a killed run in its existing ``run_dir`` (it must hold no
+    ``run.json``): nothing is staged, and the identity checks (N1) raise before anything is
+    written. The directory's ``flock`` is held for the whole run, fresh or resumed (R9a).
     Any other exception propagates and leaves ``run_dir`` without ``run.json``, with one
     exception of O5's: a failure inside a model tool call is caught by the loop and stops the run
     as a named ``StepStopped``."""
@@ -406,12 +613,42 @@ def run_pathway(
             run_dir=run_dir,
             run_id=run_id,
             cp_dr=cp_dr,
+            resume=resume,
         )
         entries = _source_entries(checked, sources, context)
+        if resume:
+            return _resume_pathway(checked, run_dir, adapter, entries, redactor)
         staged = _stage(checked, run_dir, entries, type(adapter) is LiveAdapter, redactor)
         if staged is not None:
             return staged
-        return _run_pathway(checked, run_dir, adapter, entries=entries)
+        # The directory was created by the exclusive mkdir above, so two fresh runs never share one;
+        # the lock follows at once, before the first record of the run (the cap) is written.
+        with _single_writer(run_dir):
+            _create_cap(run_dir, checked.cap_usd)
+            return _run_pathway(checked, run_dir, adapter, entries=entries)
 
 
-__all__ = ["NoPrompt", "run_pathway"]
+def _resume_pathway(
+    checked: CheckedRun,
+    run_dir: Path,
+    adapter: ModelAdapter,
+    entries: tuple[dict[str, Any], ...],
+    redactor: Redactor,
+) -> RunOutcome:
+    """Continue the killed run in ``run_dir`` (G5, N1, P3): refused, writing nothing, unless the
+    directory exists, holds no ``run.json`` and was begun with these arguments; no staging."""
+    if not run_dir.is_dir():
+        raise RunDirInvalid(f"{run_dir} is not an existing run directory")
+    with _single_writer(run_dir):
+        _check_identity(checked, run_dir, redactor)
+        return _run_pathway(checked, run_dir, adapter, entries=entries, resume=True)
+
+
+__all__ = [
+    "CapExists",
+    "NoPrompt",
+    "ResumeMismatch",
+    "ResumeRefused",
+    "RunDirBusy",
+    "run_pathway",
+]

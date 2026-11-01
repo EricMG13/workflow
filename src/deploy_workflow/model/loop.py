@@ -290,8 +290,10 @@ def _dt(seconds: float | None) -> datetime | None:
 
 
 class ToolLoop:
-    """One loop per run: it is not resumable (its digests, retry flag and call counts live in
-    memory), so a restarted run builds a new ToolLoop over a fresh run directory."""
+    """One loop per run. Its digests, retry flag and call counts live in memory, so a restarted
+    run builds a new ToolLoop; ``resumed=True`` seeds the active step's counts and invocation
+    digest from the workflow's retained state and ``calls.jsonl`` (O3 Task 3b). The retry flag is
+    not seeded: the budget refuses a second retry from its markers (``RetryUsed``)."""
 
     def __init__(
         self,
@@ -311,6 +313,7 @@ class ToolLoop:
         pathway: str,
         max_output_tokens: int,
         bytes_per_token: Decimal = Decimal(1),
+        resumed: bool = False,
     ) -> None:
         if adapter.config_id != spec.config_id:
             raise ValueError("the adapter and the model spec name different configurations")
@@ -325,6 +328,41 @@ class ToolLoop:
         self._digests: dict[tuple[str, str], str] = {}
         self._counts: Counter[tuple[str, str, str]] = Counter()
         self._retry_used = False
+        self._first_issues: tuple[str, ...] = ()
+        self._seed(resumed)
+
+    def _seed(self, resumed: bool) -> None:
+        """Take over a run another process began. One ``state()`` read, here and nowhere else in
+        the loop: the active step's used counts (so the caps still bind) and, from
+        ``calls.jsonl``, the invocation digest its earlier calls were sent under (so a resumed
+        step keeps its digest and ``call_index`` continues from the file). The issues of a
+        resubmission ``open()`` made go into the first prompt of the step it re-activated."""
+        if not resumed:
+            return
+        state = self._workflow.state()
+        if state.step_id is None:  # the walk is at a stop: no step to take over
+            return
+        binding = self._workflow.binding
+        key = (binding.ticket_id, binding.step_id)
+        for kind, used in (
+            ("invoke", state.invokes_used),
+            (READ_INPUTS, state.reads_used),
+            ("submit_review", state.submits_used),
+        ):
+            self._counts[(*key, kind)] = used
+        digests = {
+            r["invocation_digest"]
+            for r in self._log.records()
+            if (r["module_id"], r["step_id"], r["attempt"])
+            == (binding.module_id, binding.step_id, binding.attempt)
+        }
+        if len(digests) > 1:
+            raise ValueError("calls.jsonl holds more than one invocation digest for the step")
+        if digests:
+            self._digests[key] = digests.pop()
+        resubmitted = self._workflow.resumed_submission
+        if resubmitted is not None and resubmitted["status"] == "invalid":
+            self._first_issues = tuple(resubmitted["issues"])
 
     # -- the run ---------------------------------------------------------------------
 
@@ -344,7 +382,7 @@ class ToolLoop:
         binding, spec = self._workflow.binding, self._workflow.spec
         snapshot = self._execution.read()
         attempt = next(a for a in snapshot.attempts if a.ticket_id == binding.ticket_id)
-        issues = repair_prompt(snapshot, attempt, binding.step_id).issues
+        issues = self._issues(snapshot, attempt, binding.step_id)
         opening = self._prompt_for(binding, spec, issues)
         tools = self._tools_for(binding, spec)
         if spec.inputs != "none" and all(t.name != READ_INPUTS for t in tools):
@@ -365,6 +403,14 @@ class ToolLoop:
             outcome = done.validated.outcome
             if outcome is not None and outcome["status"] != "refused":
                 return outcome
+
+    def _issues(
+        self, snapshot: ExecutionSnapshot, attempt: Attempt, step_id: str
+    ) -> tuple[str, ...]:
+        """The issues for the step's opening prompt: the journal's repair issues, or on a resumed
+        run's first step those of the resubmission ``open()`` made (I3), once."""
+        issues, self._first_issues = self._first_issues, ()
+        return issues or repair_prompt(snapshot, attempt, step_id).issues
 
     def _digest(self, binding: OwnerBinding, opening: tuple[Message, ...]) -> str:
         """The invocation digest of (step, attempt): computed and retained once, from the first

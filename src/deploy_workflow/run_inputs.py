@@ -217,10 +217,13 @@ def check_arguments(
     run_dir: Path,
     run_id: str,
     cp_dr: bool = False,
+    resume: bool = False,
 ) -> CheckedRun:
     """Every call-shape check, in order, before any write. Raises a ``RunInputError``
-    subclass, ``ContextRefused`` or ``UndecodableHtml``; never writes."""
-    _check_run_dir(run_dir)
+    subclass, ``ContextRefused`` or ``UndecodableHtml``; never writes. ``resume`` skips the
+    check that ``run_dir`` is new: ``run_pathway`` checks a run directory it resumes itself."""
+    if not resume:
+        _check_run_dir(run_dir)
     gate = _check_adapter(adapter, model)
     if not (isinstance(cap_usd, Decimal) and cap_usd.is_finite() and cap_usd > 0):
         raise BadCap(f"cap_usd {cap_usd!r} is not a finite Decimal above zero")

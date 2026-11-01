@@ -26,15 +26,18 @@ from _pack import (
     ready_submit,
     submit,
     tool_call,
+    tools_for,
 )
 
 from deploy_vii.execution import Execution
 from deploy_workflow.model import adapter as adapter_module
 from deploy_workflow.model import loop as loop_module
 from deploy_workflow.model.adapter import AdapterReply, recorded_adapter
-from deploy_workflow.model.budget import RunStopped
+from deploy_workflow.model.budget import Budget, RunStopped
 from deploy_workflow.model.loop import (
+    RepairPrompt,
     StepStopped,
+    ToolLoop,
     contract_prompt_for,
     contract_tools_for,
     read_inputs_tool,
@@ -42,6 +45,7 @@ from deploy_workflow.model.loop import (
 )
 from deploy_workflow.model.record import (
     LOOP_STOPS,
+    CallLog,
     ExportMismatch,
     arguments_sha256,
     export_recording,
@@ -49,6 +53,7 @@ from deploy_workflow.model.record import (
 from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.transport import Response
 from deploy_workflow.model.turn import ModelSpec, Usage, dump_json
+from deploy_workflow.owner_workflow import OwnerWorkflow
 
 CONFIG = SPEC.config_id
 
@@ -939,3 +944,142 @@ def test_a_non_ok_reply_whose_raw_write_fails_keeps_the_provider_class(
     assert record["error_class"] == "ProviderServerError"
     assert stop.reason == "ProviderServerError" and "OSError" in stop.detail
     assert "OSError" in record["error"] and record["http_status"] == 502
+
+
+# ---------------------------------------------------------------- resume (O3 Task 3b: P4, P18, I3)
+
+
+class _Kill(BaseException):
+    """A process killed: not an Exception, so nothing in the run catches it."""
+
+
+def _killed_after_one_turn(root: Path, monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
+    """The first turn runs (a page read, settled and recorded); the process dies as the second
+    reservation is about to be made. The records of the first process."""
+    rig = make_rig(root, [ok(read_identity())])
+    real = Budget.reserve
+    seen = [0]
+
+    def reserve(self: Budget, *a: Any, **k: Any) -> None:
+        seen[0] += 1
+        if seen[0] == 2:
+            raise _Kill()
+        real(self, *a, **k)
+
+    monkeypatch.setattr(Budget, "reserve", reserve)
+    with pytest.raises(_Kill):
+        rig.loop.run()
+    monkeypatch.setattr(Budget, "reserve", real)
+    return rig.records()
+
+
+def _resumed(root: Path, script: list[Any], prompts: Any = prompt_for) -> tuple[ToolLoop, Any]:
+    workflow = OwnerWorkflow.open(root / "store", publication_directory=root / "model")
+    adapter = ScriptedAdapter(script)
+    redactor = Redactor()
+    sleeps: list[float] = []
+    loop = ToolLoop(
+        workflow,
+        adapter,
+        Budget(Decimal(1), root / "store"),
+        CallLog(root / "run", redactor),
+        prompts,
+        tools_for,
+        redactor,
+        lambda: 100.0,
+        sleeps.append,
+        execution=Execution(root / "store"),
+        spec=SPEC,
+        case_id="case-1",
+        pathway="owner",
+        max_output_tokens=4000,
+        resumed=True,
+    )
+    return loop, adapter
+
+
+def test_a_resumed_step_keeps_its_digest_and_continues_call_index_from_the_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (first,) = _killed_after_one_turn(tmp_path, monkeypatch)
+    assert first["call_index"] == 0
+
+    def other_prompts(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
+        return prompt_for(binding, spec, issues)[:1] + prompt_for(binding, spec, ("elsewhere",))[1:]
+
+    loop, adapter = _resumed(tmp_path, [ok(gap_submit())], other_prompts)
+    assert loop.run()[-1]["status"] == "valid"
+    # a recomputed digest would differ (the opening prompt differs); the file's is kept
+    assert [(s.digest, s.call_index) for s in adapter.sent] == [(first["invocation_digest"], 1)]
+    records = CallLog(tmp_path / "run", Redactor()).records()
+    assert [r["call_index"] for r in records] == [0, 1] and records[0] == first
+
+
+def test_a_resumed_step_keeps_its_used_counts_so_the_caps_still_bind(tmp_path: Path) -> None:
+    workflow, _ = owner_start(tmp_path)
+    for _ in range(16):
+        assert workflow.invoke(
+            "read_pages", {"source_id": "identity", "first_page": 1, "last_page": 1}
+        )
+    del workflow
+    loop, adapter = _resumed(tmp_path, [ok(read_identity()), ok(gap_submit())])
+    with pytest.raises(StepStopped) as caught:
+        loop.run()
+    assert caught.value.reason == "CallLimit"  # the 17th invoke, counted from the retained 16
+    assert len(adapter.sent) == 1
+
+
+def test_a_resumed_loop_reads_state_once_and_the_first_prompt_carries_the_resubmission_issues(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """I3: `open()` finished an invalid validation the kill interrupted; the issues it returned
+    reach the first prompt of the re-activated step, and only that prompt."""
+    workflow, pack = owner_start(tmp_path, gap=False)
+    fw.read_sources(workflow)
+    from deploy_vii import cp0_workflow
+
+    real = cp0_workflow._validate_review
+    calls = [0]
+
+    def once(*a: Any, **k: Any) -> Any:
+        calls[0] += 1
+        if calls[0] == 1:
+            raise RuntimeError("probe: killed during validation")
+        return real(*a, **k)
+
+    monkeypatch.setattr(cp0_workflow, "_validate_review", once)
+    bad = json.loads(fw.readiness(pack)) | {"issuer_confirmed": False}
+    with pytest.raises(RuntimeError):
+        workflow.submit_review(json.dumps(bad))
+    del workflow
+    seen: list[tuple[str, ...]] = []
+
+    def prompts(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
+        seen.append(issues)
+        return prompt_for(binding, spec, issues)
+
+    reads = [0]
+    real_state = OwnerWorkflow.state
+
+    def counting(self: OwnerWorkflow) -> Any:
+        reads[0] += 1
+        return real_state(self)
+
+    monkeypatch.setattr(OwnerWorkflow, "state", counting)
+    script = [
+        ok(read_identity(), read_financial(), ready_submit()),
+        failed("sent_known", "ProviderRejected", 400),
+    ]
+    loop, _ = _resumed(tmp_path, script, prompts)
+    resubmitted = loop._workflow.resumed_submission
+    assert resubmitted is not None and resubmitted["status"] == "invalid"
+    expected = tuple(resubmitted["issues"])
+    assert expected  # the invalid validation's issues
+    # the journal's own repair issues are made empty: the first prompt can only have the
+    # resubmission's
+    monkeypatch.setattr(
+        loop_module, "repair_prompt", lambda snapshot, attempt, step: RepairPrompt((), "none", None)
+    )
+    with pytest.raises(StepStopped):  # the repair attempt is valid; the next module's step asks
+        loop.run()
+    assert seen[0] == expected and seen[1:] == [()] and reads[0] == 1  # the issues, once

@@ -67,7 +67,7 @@ OFFLINE_KEYS = {
     "outcome",
     "stopped_reason",
 }
-STOPPED_SET = {"sources", "pack", "execution", "calls.jsonl", "run.json"}
+STOPPED_SET = {"sources", "pack", "execution", "calls.jsonl", "run.json", "cap.json"}
 
 
 @pytest.fixture(autouse=True)
@@ -834,3 +834,329 @@ def test_the_phase_accessor_mirrors_the_private_phase_across_a_walk(args: dict[s
     assert len(set(seen)) > 1  # the accessor moved with the walk
     with pytest.raises(AttributeError):
         workflow.phase = "complete"  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------- resume (O3 Task 3b: G5, N1, R9a)
+
+pack_helpers: Any = importlib.import_module("tests.model._pack")
+
+
+class Kill(BaseException):
+    """A process killed: not an Exception, so nothing in the run catches it."""
+
+
+def scripted_complete(
+    monkeypatch: pytest.MonkeyPatch, replies: list[Any]
+) -> list[tuple[str, int, str]]:
+    """The provider double: each request takes the next reply (or raises it). What was sent."""
+    sent: list[tuple[str, int, str]] = []
+    queue = list(replies)
+
+    def complete(
+        self: object,
+        request: object,
+        *,
+        invocation_digest: str,
+        call_index: int,
+        reservation_id: str,
+    ) -> Any:
+        sent.append((invocation_digest, call_index, reservation_id))
+        item = queue.pop(0)
+        if isinstance(item, BaseException):
+            raise item
+        return item
+
+    monkeypatch.setattr(RecordedAdapter, "complete", complete)
+    return sent
+
+
+def kill_at_reserve(monkeypatch: pytest.MonkeyPatch, nth: int) -> None:
+    """The process dies as the nth reservation of the run is about to be made."""
+    real = Budget.reserve
+    seen = [0]
+
+    def reserve(self: Budget, *a: Any, **k: Any) -> None:
+        seen[0] += 1
+        if seen[0] == nth:
+            raise Kill()
+        real(self, *a, **k)
+
+    monkeypatch.setattr(Budget, "reserve", reserve)
+
+
+def read_s1() -> Any:
+    return pack_helpers.ok(
+        pack_helpers.tool_call("read_pages", source_id="s1", first_page=1, last_page=1)
+    )
+
+
+@pytest.fixture
+def killed(args: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """A fresh run killed between two model calls: the first call is settled and recorded, the
+    second reservation is never made. The run directory holds no ``run.json``."""
+    scripted_complete(monkeypatch, [read_s1()])
+    real = Budget.reserve
+    kill_at_reserve(monkeypatch, 2)
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    monkeypatch.setattr(Budget, "reserve", real)
+    assert not (args["run_dir"] / "run.json").exists()
+    return args
+
+
+def calls_of(run_dir: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in (run_dir / "calls.jsonl").read_text().splitlines()]
+
+
+def test_a_fresh_run_creates_cap_json_once(killed: dict[str, Any]) -> None:
+    run_dir = killed["run_dir"]
+    assert json.loads((run_dir / "cap.json").read_text()) == {"cap_usd": "1"}
+    with pytest.raises(rp.CapExists):
+        rp._create_cap(run_dir, Decimal(2))
+    assert json.loads((run_dir / "cap.json").read_text()) == {"cap_usd": "1"}
+
+
+def test_resume_continues_call_index_and_digest_and_counts_the_spend_once(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    (first,) = calls_of(run_dir)
+    assert (first["call_index"], first["cost_status"]) == (0, "computed")
+
+    def not_called(*a: object, **k: object) -> NoReturn:
+        raise AssertionError("a resume stages nothing")
+
+    monkeypatch.setattr(rp, "stage_sources", not_called)
+    monkeypatch.setattr(run_inputs_module, "_check_run_dir", not_called)
+    sent = scripted_complete(
+        monkeypatch, [pack_helpers.failed("sent_known", "ProviderRejected", 400)]
+    )
+    outcome = run_pathway(**killed, resume=True)
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("ProviderRejected")
+    assert [(s[0], s[1]) for s in sent] == [(first["invocation_digest"], 1)]
+    records = calls_of(run_dir)
+    assert [r["call_index"] for r in records] == [0, 1]  # appended, never rewritten
+    assert records[0] == first
+    assert outcome.spent_usd == Decimal(first["settled_usd"])  # the first call, counted once
+    markers = [
+        p
+        for p in (run_dir / "execution/owner-run-audit/reservations").iterdir()
+        if not p.name.endswith(".settled")
+    ]
+    assert len(markers) == 2
+    assert run_json(run_dir)["stopped_reason"] == outcome.stopped_reason
+
+
+def test_a_reservation_left_by_a_crash_stops_the_resume_and_sends_nothing(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scripted_complete(monkeypatch, [Kill()])  # dies inside complete: the hold may have been sent
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    run_dir: Path = args["run_dir"]
+    (marker,) = (run_dir / "execution/owner-run-audit/reservations").iterdir()
+    held = Decimal(json.loads(marker.read_text())["usd"])
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == []
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None and "unsettled by a crash" in outcome.stopped_reason
+    assert outcome.spent_usd == held  # counted once
+    assert run_json(run_dir)["outcome"] == "stopped"
+
+
+def test_a_held_unknown_charge_stops_the_resume_and_sends_nothing(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scripted_complete(
+        monkeypatch, [pack_helpers.failed("sent_unknown", "ProviderServerError", 502)]
+    )
+    kill_at_reserve(monkeypatch, 2)  # the retry is never reserved
+    real = Budget.reserve
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    monkeypatch.setattr(Budget, "reserve", real)
+    run_dir: Path = args["run_dir"]
+    (first,) = calls_of(run_dir)
+    assert first["cost_status"] == "unknown"
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == []
+    assert outcome.stopped_reason is not None and outcome.stopped_reason.startswith("RunStopped")
+    assert outcome.spent_usd == Decimal(first["reserved_usd"])  # the hold, counted once
+
+
+def test_a_torn_audit_ends_the_resume_as_torn_audit_not_as_a_workflow_code(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    (first,) = calls_of(run_dir)
+    (run_dir / "execution/owner-run-audit/calls" / ("0" * 64)).write_text("{}")
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**killed, resume=True)
+    assert outcome.outcome == "stopped" and outcome.stopped_reason == "TornAudit"
+    assert run_json(run_dir)["stopped_reason"] == "TornAudit"
+    assert outcome.spent_usd == Decimal(first["settled_usd"])
+    assert sent == []
+
+
+def test_a_resume_without_a_run_dir_or_over_a_finished_run_is_refused_untouched(
+    args: dict[str, Any],
+) -> None:
+    with pytest.raises(run_inputs_module.RunDirInvalid):
+        run_pathway(**args, resume=True)
+    assert not os.path.lexists(args["run_dir"])
+    assert run_pathway(**args).outcome == "stopped"  # RecordingMissing: run.json is written
+    before = files_under(args["run_dir"])
+    with pytest.raises(rp.ResumeRefused):
+        run_pathway(**args, resume=True)
+    assert files_under(args["run_dir"]) == before
+
+
+HIGH = ModelSpec("sol-high", "openai", "gpt-6.1-sol", "high")
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"cap_usd": Decimal(2)},
+        {"cap_usd": Decimal("0.5")},
+        {"run_id": "run-2"},
+        {"case_id": "case-2"},
+        {"model": HIGH},
+    ],
+    ids=["cap-raised", "cap-lowered", "run_id", "case_id", "config_id"],
+)
+def test_a_resume_with_other_arguments_is_refused_before_anything_changes(
+    killed: dict[str, Any], tmp_path: Path, change: dict[str, Any]
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    before = files_under(run_dir)
+    other = {**killed, **change}
+    if "model" in change:
+        other["adapter"] = recorded_adapter(HIGH, tmp_path / "recordings")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**other, resume=True)
+    assert files_under(run_dir) == before
+
+
+def test_a_resume_with_another_pathway_is_refused_before_anything_changes(
+    killed: dict[str, Any], tmp_path: Path
+) -> None:
+    context = json.loads((ROOT / "cases/context/research-minimal.json").read_text())
+    context["run"]["pathway"] = "earnings_update"
+    other_context = tmp_path / "other-context.json"
+    other_context.write_text(json.dumps(context))
+    run_dir: Path = killed["run_dir"]
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(
+            **{**killed, "context": other_context, "pathway": "earnings_update"}, resume=True
+        )
+    assert files_under(run_dir) == before
+
+
+def test_a_second_run_pathway_on_a_held_run_dir_is_refused_before_it_writes(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    seen: list[BaseException] = []
+
+    def second(self: object, *a: object, **k: object) -> Any:
+        before = files_under(run_dir)
+        try:
+            run_pathway(**killed, resume=True)
+        except rp.RunDirBusy as error:
+            seen.append(error)
+        assert files_under(run_dir) == before
+        return pack_helpers.failed("sent_known", "ProviderRejected", 400)
+
+    monkeypatch.setattr(RecordedAdapter, "complete", second)
+    outcome = run_pathway(**killed, resume=True)
+    assert outcome.outcome == "stopped" and len(seen) == 1
+    again = scripted_complete(monkeypatch, [])
+    with pytest.raises(rp.ResumeRefused):  # the lock is released with the run; run.json now exists
+        run_pathway(**killed, resume=True)
+    assert again == []
+
+
+def test_a_fresh_run_holds_the_lock_too(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[BaseException] = []
+
+    def second(self: object, *a: object, **k: object) -> Any:
+        try:
+            run_pathway(**args, resume=True)
+        except rp.RunDirBusy as error:
+            seen.append(error)
+        return pack_helpers.failed("sent_known", "ProviderRejected", 400)
+
+    monkeypatch.setattr(RecordedAdapter, "complete", second)
+    assert run_pathway(**args).outcome == "stopped" and len(seen) == 1
+
+
+def test_a_resume_reads_state_once_and_never_polls_it_while_it_drives(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A poller on `state()` makes the mutators fail `not_permitted` (Task 2, I1): the one read is
+    the loop's seed, before the first request."""
+    reads: list[str] = []
+    real = OwnerWorkflow.state
+
+    def counting(self: OwnerWorkflow) -> Any:
+        reads.append("state")
+        return real(self)
+
+    monkeypatch.setattr(OwnerWorkflow, "state", counting)
+    scripted_complete(monkeypatch, [pack_helpers.failed("sent_known", "ProviderRejected", 400)])
+    assert run_pathway(**killed, resume=True).outcome == "stopped"
+    assert reads == ["state"]
+
+
+def test_a_resume_of_a_run_killed_before_any_call_still_checks_run_id_and_sources(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No `calls.jsonl` and no marker to compare with: the staged pack alone refuses."""
+    scripted_complete(monkeypatch, [])
+    kill_at_reserve(monkeypatch, 1)
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    run_dir: Path = args["run_dir"]
+    assert not (run_dir / "calls.jsonl").exists()
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**{**args, "run_id": "run-2"}, resume=True)
+    (args["sources"][1].path).write_bytes(b"other text\n")  # the caller's file changed since
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+    assert files_under(run_dir) == before
+
+
+class PhaseWorkflow:
+    def __init__(self, phase: str) -> None:
+        self.phase, self.published = phase, 0
+
+    def publish(self) -> dict[str, Any]:
+        self.published += 1
+        self.phase = "complete"
+        return {"status": "ok", "error_code": None, "next_step": None}
+
+
+@pytest.mark.parametrize(
+    ("phase", "runs", "published", "reason"),
+    [
+        ("analytical", 1, 0, None),
+        ("walked", 0, 1, None),
+        ("complete", 0, 0, None),
+        ("failed", 0, 0, "resume: the publication left the walk failed"),
+    ],
+)
+def test_a_resumed_walk_continues_by_the_phase_open_reports(
+    phase: str, runs: int, published: int, reason: str | None
+) -> None:
+    workflow, loop = PhaseWorkflow(phase), CountingLoop()
+    assert rp._drive_resumed(workflow, loop) == reason  # type: ignore[arg-type]
+    assert (loop.runs, workflow.published) == (runs, published)

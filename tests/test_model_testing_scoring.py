@@ -171,11 +171,11 @@ def test_scale_mismatch_is_a_mismatch() -> None:
 
 def test_fewer_golden_decimals() -> None:
     # golden 92.2 percent; module 92.21 -> half-up to one place is 92.2
-    score, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.21"), unit="percent")
+    score, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.9221"), unit="PERCENT")
     assert score.facts[0].outcome == "match"
-    score, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.25"), unit="percent")
+    score, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.9225"), unit="PERCENT")
     assert score.facts[0].outcome == "mismatch"  # 92.25 rounds half-up to 92.3
-    score, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.15"), unit="percent")
+    score, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.9215"), unit="PERCENT")
     assert score.facts[0].outcome == "match"  # half-up, not banker's: 92.15 -> 92.2
 
 
@@ -294,9 +294,11 @@ def test_honest_gap_passes() -> None:
     score = _score(blocked, case, mapping, head="blocked")
     assert score.facts[0].outcome == "missing_in_output"
     assert score.passed is True
-    # every mapped fact non-known and a limitation
+    # an accepted head gets no honest-gap pass (A-I1, spec 7.4)
     gap = _module([_fact(entry, status="missing")], limitations=("not stated",))
-    assert _score(gap, case, mapping).passed is True
+    lazy = _score(gap, case, mapping)
+    assert lazy.facts[0].outcome == "missing_in_output"
+    assert lazy.passed is False
     # no limitation: fails
     assert (
         _score(
@@ -446,3 +448,175 @@ def test_scale_property(value: Decimal, scale: str | None) -> None:
     for amount, fscale in ((units, Decimal(1)), (value, Decimal(1).scaleb(exp))):
         module = _module([_fact(entry, amount=amount, scale=fscale)])
         assert _score(module, case, mapping).facts[0].outcome == "match"
+
+
+# ---- fix round 1 ----------------------------------------------------------------------
+
+
+def test_percent_unit_is_a_fraction() -> None:
+    # A-H1: PERCENT / decimal_fraction hold a decimal fraction (display.py "percent takes a
+    # decimal fraction"); decimal_percent holds points.
+    ok, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.922"), unit="PERCENT")
+    assert ok.facts[0].outcome == "match"
+    assert ok.facts[0].expected == "92.2"
+    assert ok.facts[0].observed == "92.2"
+    bad, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.2"), unit="PERCENT")
+    assert bad.facts[0].outcome == "mismatch"
+    frac, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("0.922"), unit="decimal_fraction")
+    assert frac.facts[0].outcome == "match"
+    pts, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.2"), unit="decimal_percent")
+    assert pts.facts[0].outcome == "match"
+
+
+def test_unit_scale_disagreement_is_mismatch() -> None:
+    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(3900000000), unit="MILLIONS")
+    assert score.facts[0].outcome == "mismatch"
+    assert "MILLIONS" in (score.facts[0].observed or "")
+    assert score.passed is False
+    agree, _, _ = _one(
+        IHRT_BILLIONS, IHRT, amount=Decimal(3900), unit="MILLIONS", scale=Decimal(1000000)
+    )
+    assert agree.facts[0].outcome == "match"
+
+
+def test_unit_class_must_agree_with_golden() -> None:
+    pct_as_money, _, _ = _one(IHRT_PCT, IHRT, amount=Decimal("92.2"), unit="USD")
+    assert pct_as_money.facts[0].outcome == "mismatch"
+    money_as_pct, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(39), unit="PERCENT")
+    assert money_as_pct.facts[0].outcome == "mismatch"
+
+
+def test_duplicate_locator_is_mismatch() -> None:
+    case = _case(IHRT, IHRT_BILLIONS)
+    entry = _entry(IHRT_BILLIONS, "CP-2")
+    good = _fact(entry, amount=Decimal(3900000000))
+    wrong = _fact(entry, fact_id="other", amount=Decimal(7100000000))
+    score = _score(_module([good, wrong]), case, _mapping(case, [entry]))
+    assert score.facts[0].outcome == "mismatch"
+    assert score.facts[0].observed == "2 facts at one locator"
+    assert score.passed is False
+
+
+def test_duplicate_locator_with_value_against_missing_is_invented() -> None:
+    case = _case(NATL, NATL_TERM_B)
+    entry = _entry(NATL_TERM_B, "CP-2")
+    gap = _fact(entry, status="missing")
+    value = _fact(entry, fact_id="other", amount=Decimal(320), scale=Decimal(1000000))
+    score = _score(_module([gap, value]), case, _mapping(case, [entry]))
+    assert score.facts[0].outcome == "invented"
+    assert score.passed is False
+
+
+def test_absent_module_never_passes() -> None:
+    case = _case(NATL, NATL_TERM_B)
+    mapping = _mapping(case, [_entry(NATL_TERM_B, "CP-2")])
+    for head in ("absent", "refused"):
+        assert _score(None, case, mapping, head=head).passed is False
+        assert _score(None, case, mapping, head=head, refusal=("", "  ")).passed is False
+    case = _case(IHRT, IHRT_BILLIONS)
+    judged = _mapping(case, [_entry(IHRT_BILLIONS, "CP-5")], modules=("CP-5",))
+    for head in ("absent", "refused"):
+        assert _score(None, case, judged, head=head, module_id="CP-5").passed is False
+    # everything pending
+    pend = _score(None, case, _mapping(case, []), head="absent", module_id="CP-2")
+    assert pend.passed is False
+
+
+def test_blank_limitations_do_not_count() -> None:
+    case = _case(IHRT, IHRT_BILLIONS)
+    entry = _entry(IHRT_BILLIONS, "CP-2")
+    mapping = _mapping(case, [entry])
+    blank = _module([], limitations=("", "   "))
+    assert _score(blank, case, mapping, head="blocked").passed is False
+    real = _module([], limitations=("", "source missing"))
+    assert _score(real, case, mapping, head="blocked").passed is True
+
+
+def test_blank_fact_limitation_does_not_make_conflict_ok() -> None:
+    case = _case(LTH, LTH_CONFLICT)
+    entry = _entry(LTH_CONFLICT, "CP-2")
+    module = _module([_fact(entry, amount=Decimal(277500000), limitation="  ")])
+    assert _score(module, case, _mapping(case, [entry])).facts[0].outcome == "mismatch"
+
+
+def test_refused_with_module_still_checks_provenance() -> None:
+    case = _case(NATL, NATL_TERM_B)
+    entry = _entry(NATL_TERM_B, "CP-2")
+    mapping = _mapping(case, [entry])
+    untraced = _module([_fact(entry, traced=False, amount=Decimal(320), scale=Decimal(1000000))])
+    score = _score(untraced, case, mapping, head="refused", refusal=("portfolio_workbook",))
+    assert score.facts[0].outcome == "invented"
+    assert score.untraced != ()
+    assert score.passed is False
+
+
+def test_refused_with_module_turns_only_missing_into_gap_ok() -> None:
+    case = _case(IHRT, IHRT_BILLIONS)
+    entry = _entry(IHRT_BILLIONS, "CP-2")
+    score = _score(
+        _module([]), case, _mapping(case, [entry]), head="refused", refusal=("portfolio_workbook",)
+    )
+    assert score.facts[0].outcome == "gap_ok"
+    assert score.passed is True
+
+
+def test_conflict_date_never_takes_a_bare_number() -> None:
+    case = _case(IHRT, "CP-4.exchange_dates.Exchange.press_release_date")
+    entry = _entry("CP-4.exchange_dates.Exchange.press_release_date", "CP-4")
+    mapping = _mapping(case, [entry], modules=("CP-4",))
+    num = _module([_fact(entry, amount=Decimal(23), unit="x", limitation="two dates")], "CP-4")
+    assert _score(num, case, mapping, module_id="CP-4").facts[0].outcome == "mismatch"
+    txt = _module([_fact(entry, text="2024-12-23", limitation="two dates")], "CP-4")
+    assert _score(txt, case, mapping, module_id="CP-4").facts[0].outcome == "conflict_ok"
+
+
+def test_printed_number_parsing() -> None:
+    from deploy_workflow.model_testing import scoring
+
+    golden = {"value_type": "decimal", "scale": "units"}
+
+    def fact(amount: str) -> Fact:
+        return Fact(
+            fact_id="x",
+            label="x",
+            amount=Decimal(amount),
+            unit="USD",
+            period="2025-06-30",
+        )
+
+    assert scoring._printed_matches("(175,000,000)", fact("-175000000"), golden)
+    assert not scoring._printed_matches("(175,000,000)", fact("175000000"), golden)
+    assert scoring._printed_matches("$175 million", fact("175000000"), golden)
+    assert scoring._printed_matches("$1.5 Billion", fact("1500000000"), golden)
+    assert not scoring._printed_matches("$175 million", fact("175"), golden)
+
+
+def test_aliases_never_apply_to_dates_and_dates_compare_as_dates() -> None:
+    date_id = "CP-4.exchange_dates.Exchange.press_release_date"
+    golden = _golden(IHRT)
+    known = next(f for f in golden["facts"] if f["value_type"] == "date" and f["status"] == "known")
+    case = _case(IHRT, known["fact_id"])
+    iso = known["value"]
+    parsed = date.fromisoformat(iso)
+    named = f"{parsed.strftime('%B')} {parsed.day}, {parsed.year}"
+    entry = _entry(known["fact_id"], known["module"], subject_aliases=("Other Date",))
+    mapping = _mapping(case, [entry], modules=(known["module"],))
+    for text, outcome in (
+        (iso, "match"),
+        (named, "match"),
+        ("Other Date", "mismatch"),
+        ("junk", "mismatch"),
+    ):
+        module = _module([_fact(entry, text=text)], known["module"])
+        got = _score(module, case, mapping, module_id=known["module"]).facts[0].outcome
+        assert got == outcome, text
+    assert date_id  # the conflicting date fact exists in the corpus
+
+
+def test_unknown_head_status_is_refused() -> None:
+    import pytest
+
+    case = _case(IHRT, IHRT_BILLIONS)
+    mapping = _mapping(case, [_entry(IHRT_BILLIONS, "CP-2")])
+    with pytest.raises(ValueError, match="head_status"):
+        _score(None, case, mapping, head="bogus")

@@ -1,0 +1,76 @@
+{
+ "rules": [
+  {
+   "id": "business_context.a",
+   "statement": "a. `sources`: exactly one assessment for each source_id listed under `sources` in the CONTEXT block, and no other. prepared-pack is the CONTEXT block, not a source.",
+   "checks": [
+    "fn:deploy_vii.business_context:_source_issues"
+   ]
+  },
+  {
+   "id": "business_context.b",
+   "statement": "b. Each citation names a SOURCE block's id, copies one `locator=` value from that block exactly (for example page:1: no brackets, ranges or notes) and quotes a verbatim substring of that span's text. Runs of whitespace and line breaks may be written as one space and curly quotes or dashes in ASCII; every other character is copied exactly, and the quote must be in the span its locator names. Copy a run that is contiguous in the SOURCE block as printed; never reassemble a sentence across interleaved table text. Never continue a quote onto the next page.",
+   "checks": [
+    "fn:deploy_vii.business_context:_bind",
+    "fn:deploy_vii.business_context:validate_business_context",
+    "fn:deploy_vii.readiness:citation_issues"
+   ]
+  },
+  {
+   "id": "business_context.c",
+   "statement": "c. The CONTEXT block states each source's extraction coverage. Never call a page or locator absent when that coverage lists it. This holds for every text field.",
+   "checks": [
+    "fn:deploy_vii.business_context:validate_business_context",
+    "fn:deploy_vii.readiness:absence_issues"
+   ]
+  },
+  {
+   "id": "business_context.d",
+   "statement": "d. Every text field is run text: digits only in period labels (`FY2025`, `Q3 2025`), filing and section labels (`10-K`, `Item 7A`, `page:12`) and the issuer's name. A figure is written only as `{ref|unit}` with a `ref` and `unit` listed under `cp1_facts` in the CONTEXT block; with no `cp1_facts`, write no figure at all. Never a bare number, never a `[ref]` chip; a figure belongs in a citation's quote, not in the text. A range or list of items uses a joiner the validator admits: `Items 10-14`, `Items 7, 7A`, `Items 7/7A` or `Items 7 and 8`; a range written with the word `to` is read as a bare figure and rejected.",
+   "checks": [
+    "fn:deploy_vii.business_context:validate_business_context",
+    "fn:deploy_vii.prose:issues"
+   ]
+  },
+  {
+   "id": "business_context.e",
+   "statement": "e. Every fact row carries one `category`: Documentary Fact, Management Language or Analyst Interpretation rows cite located evidence; an Insufficient Information row states its `limitation` and may cite nothing. Every credit translation cites its evidence unless its confidence is Insufficient Information (then it states its limitation). A source assessed above Insufficient cites its content. An unavailable source is assessed Insufficient. A source assessment cites only its own source. An available (Yes or Partial) disclosure item cites where it is disclosed.",
+   "checks": [
+    "fn:deploy_vii.business_context:_row_issues",
+    "fn:deploy_vii.business_context:_shape_issues",
+    "fn:deploy_vii.business_context:register_rule_issues"
+   ]
+  },
+  {
+   "id": "business_context.f",
+   "statement": "f. `conflicts`: when sources disagree, one entry quotes each conflicting span (at least two citations); it is logged, not reconciled. A source that contradicts itself is one `conflicts` entry quoting both spans: the validator needs two citations, not two sources. A `conflict_id` is letters with `_` `.` `:` or `-`; a credit translation's `countervailing_conflict_ids` name logged conflicts only.",
+   "checks": [
+    "fn:deploy_vii.business_context:_row_issues",
+    "fn:deploy_vii.business_context:_shape_issues"
+   ]
+  },
+  {
+   "id": "business_context.g",
+   "statement": "g. No peer ranking, no instrument recommendation and no recovery conclusion in any text field (for example: ranks above peers, top quartile, we recommend, the notes would recover, expected recovery); recovery prospects as a credit mechanic and an operating recovery (visitation will recover) are allowed, a recommendation only as a cited Documentary Fact or Management Language row (the board's recommendation to holders), and a peer claim such as best-in-class only as a cited Management Language row.",
+   "checks": [
+    "fn:deploy_vii.business_context:prohibited_issues",
+    "fn:deploy_vii.business_context:validate_business_context"
+   ]
+  },
+  {
+   "id": "business_context.h",
+   "statement": "h. `consumers`: exactly one judgment for each module id listed under `consumers` in the CONTEXT block, and no other; its title and purpose there say what it needs from CP-1A. Its `citations` quote what backs the handoff and its `flag_topics` name the `topic` of each behaviour flag it carries forward (either may be empty).",
+   "checks": [
+    "fn:deploy_vii.business_context:_consumer_issues"
+   ]
+  },
+  {
+   "id": "business_context.i",
+   "statement": "i. `company` states business_description, country and sector once each. A behaviour flag states `behaviour_type`, `amount_funding_source` and `legal_capacity_link`; a governance topic leaves them null and is never Extraction-Oriented. When no behaviour type fits, set `behaviour_type` to `other`; a flag informs a dimension's score only when it names a `dimension`, so set one if the row bears on it; a type you chose by reading rather than the source naming it is an Analyst Interpretation row. An operating driver's `measure` is null exactly when its status is Not disclosed. At least one credit translation populates evidence, risk mechanic and credit implication.",
+   "checks": [
+    "fn:deploy_vii.business_context:_governance_issues",
+    "fn:deploy_vii.business_context:_shape_issues"
+   ]
+  }
+ ]
+}

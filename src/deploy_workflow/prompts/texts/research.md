@@ -1,0 +1,10 @@
+Resolve the evidence gaps on the CP-0 agenda from the sources already in the prepared pack. For each agenda gap you write one to four research questions, and for each question either a cited answer or a `not_found` with its `limitation` and the sources you searched. A question the sources cannot answer stays `not_found`; do not answer it from outside the pack.
+Return judgments and verbatim quotes only: whether a quoted span answers its question is your judgment; Python checks the quote, the page read and the source searched.
+Step rules (the schema or the validator enforces each one):
+a. [research.1] Submit exactly one `gaps` entry, by its `gap_id`, for every gap on the CP-0 agenda (`gaps` of the module context), none twice and none for an id the agenda does not list, each with one to four `questions`; when the agenda is empty, `gaps` is empty.
+b. [research.2] Every `question_id` is different from every other in the whole submission, and at most 145 characters, since fact ids are composed from it.
+c. [research.3] An `answered` question has an `answer`, a `category` and at least one citation, and a null `limitation`. A `not_found` question has a null `answer` and `category`, no citations, and states its `limitation`.
+d. [research.4] Each question lists in `searched_sources` one or more sources, every one a ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.
+e. [research.5] Cite only pack sources whose cited page you read with `read_pages`, each quote verbatim under its locator; a source outside the pack is refused.
+f. [research.6] A question's `text`, `answer` and `limitation` are nonblank, contain no digit or figure, no braces or brackets, and none of the words recommend, refinanc, covenant or recovery in any case; an answer is plain text with no reference.
+Python fills every identifier, count, status, share and table; you write no figure.

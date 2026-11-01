@@ -33,9 +33,9 @@ OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "cases" / "cp
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/context/research-minimal.json": "c09646df4743d845f6b972558bb92c288f0335c1d4959ddd0fb2a1bf39bfbcca",
-    "cases/cp2h-owner/manifest.json": "ff74170b7e69824be7e323789f244773465b7ad12eadff237aba7c3563877587",
+    "cases/cp2h-owner/manifest.json": "c90a653ded83087ad092f4830229c091bfa798d093f36d328a3d9b929504e591",
     "cases/cp2h-owner/submissions.json": "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e",
-    "cases/cp2h-owner/expected.json": "d0d0310087cfed3bc1ca9c90d1bcd4b54960f0da3b29b449997e80459c14fae6",
+    "cases/cp2h-owner/expected.json": "851abf7dc71237cb9e300b4cd20c962d17b27186df28ee12543f395f19261d4c",
     "cases/cp2h-owner/cp2h-view-tree.json": "3fb8cf29e73431ac2be72f168d26f72d830c475d42590032a49d5a466b5e0728",
 }
 RAW = {}
@@ -943,8 +943,8 @@ def main():
     manifest = {
         "schema_version": "cp2h-context-owner-cases/1",
         "scope": "Phase 4: CP-2H builds its rating register from the context file's `ratings` rows (S&P, Moody's, Fitch) on a fixed combined scale; trigger terms from an attached `ratings` source",
-        "status": "DRAFT 1 prepared by the cp2h-context-owner Task 0 preparer, 2026-11-01; review pending; not frozen, not pinned",
-        "roles": {"preparer": "Task 0 preparer (this builder)", "reviewer": None, "builder": None},
+        "status": "FROZEN 2026-11-01 (ac74bdf3): prepared by a86eb9b2, reviewed by mx-precise a828ec20; pins re-cut in 8a0b39cc",
+        "roles": {"preparer": "Task 0 preparer (this builder)", "reviewer": "mx-precise a828ec20", "builder": None},
         "raw_rule": "ratings pages: literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (as cases/cp2h-owner). context files: the bytes the form writes (JSON.stringify(o, null, 2) + LF; context-minified.json: JSON.stringify(o) + LF), sha256 of the file bytes, spans line:N via splitlines",
         "inputs_pinned": PINS,
         "financial_baseline": {

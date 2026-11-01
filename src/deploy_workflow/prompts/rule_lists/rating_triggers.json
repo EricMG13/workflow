@@ -1,0 +1,66 @@
+{
+ "rules": [
+  {
+   "id": "rating_triggers.1",
+   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. `views` has at least one entry; each `view` is Downgrade pressure, Stable, Upgrade potential or Not assessable, `category` and `confidence` take only their listed values, and every view lists at least one `evidence` citation with its `source_id`, `locator` and `quote`.",
+   "checks": [
+    "oracle:cp2h:r01",
+    "oracle:cp2h:r02",
+    "oracle:cp2h:r03",
+    "oracle:cp2h:r04",
+    "oracle:cp2h:r05",
+    "oracle:cp2h:r06",
+    "oracle:cp2h:r07",
+    "oracle:cp2h:r08",
+    "oracle:cp2h:r09"
+   ]
+  },
+  {
+   "id": "rating_triggers.2",
+   "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice.",
+   "checks": [
+    "oracle:cp2h:v01",
+    "oracle:cp2h:v02",
+    "oracle:cp2h:v03",
+    "fn:deploy_workflow.owners.cp2h:_view_issues"
+   ]
+  },
+  {
+   "id": "rating_triggers.3",
+   "statement": "No view's `confidence`, and not `overall.confidence`, is High, because forward headroom rests on analyst-assumed drivers.",
+   "checks": [
+    "oracle:cp2h:v08",
+    "oracle:cp2h:v09"
+   ]
+  },
+  {
+   "id": "rating_triggers.4",
+   "statement": "Every `rationale` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in the module context (`cp1_facts`, the `triggers` thresholds or the `cp2g` rows), closed and non-empty, and never a reference to a value that is not settled. A `limitation` is plain text: no figure and no reference. Write no peer ranking, instrument recommendation or recovery conclusion, no rating call (`will be downgraded`, `will be upgraded`, `will downgrade`, `will upgrade`, `is certain to be`, `our rating`, `we rate`, `shadow rating`, `implied rating`) and no probability weighting (`probability-weighted`, `expected value` and similar).",
+   "checks": [
+    "oracle:cp2h:v04",
+    "oracle:cp2h:v05",
+    "oracle:cp2h:v06",
+    "oracle:cp2h:v07",
+    "oracle:cp2h:v10",
+    "oracle:cp2h:v11",
+    "oracle:cp2h:v12",
+    "oracle:cp2h:v13",
+    "oracle:cp2h:v14",
+    "oracle:cp2h:v15",
+    "fn:deploy_workflow.owners.cp2h:_prose",
+    "fn:deploy_workflow.owners.cp2h:_run_text_issues",
+    "fn:deploy_workflow.owners.cp2h:_gap_issues",
+    "fn:deploy_workflow.owners.cp2h:_overall_issues",
+    "fn:deploy_workflow.owners.cp2h:_limitation",
+    "fn:deploy_workflow.owners.cp2h:phrase_issues"
+   ]
+  },
+  {
+   "id": "rating_triggers.5",
+   "statement": "Cite each quote verbatim: a context row at its `line:N` in the `context` source, and an agency-source row under the locator of its page in the ratings source; a quote not at that locator is refused.",
+   "checks": [
+    "oracle:cp2h:v16"
+   ]
+  }
+ ]
+}

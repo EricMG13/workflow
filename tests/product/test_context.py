@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 import json
 import re
 from decimal import Decimal
@@ -12,6 +13,7 @@ from typing import Any
 import pytest
 
 from deploy_workflow.context import (
+    ASSUMPTION_LIMITS,
     NUM,
     PERIOD,
     SCHEMA,
@@ -399,6 +401,89 @@ INVALID_CASES: list[tuple[dict[str, Any], str, str]] = [
     ({"assumptions.cp3d": pin(recovery_pct="100")}, "assumptions.cp3d.recovery_pct", "below 100"),
     ({"assumptions.cp4c": pin(ev_multiple="0")}, "assumptions.cp4c.ev_multiple", "above 0"),
     (
+        {
+            "assumptions.cp2a": pin(
+                scenarios=[{"ebitda_decline_pct": "20.123", "interest_increase_pct": "5"}]
+            )
+        },
+        "assumptions.cp2a.scenarios[0].ebitda_decline_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {
+            "assumptions.cp2a": pin(
+                scenarios=[{"ebitda_decline_pct": "20", "interest_increase_pct": "5.001"}]
+            )
+        },
+        "assumptions.cp2a.scenarios[0].interest_increase_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp3c": pin(repricing_bps="50.5")},
+        "assumptions.cp3c.repricing_bps",
+        "enter a whole number.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100"], fx_shocks_pct=["10.5"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.fx_shocks_pct",
+        '"10.5": enter a whole number.',
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["200", "100"], fx_shocks_pct=["10"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.rate_shocks_bps",
+        "values must increase.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100", "100"], fx_shocks_pct=["10"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.rate_shocks_bps",
+        "values must increase.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100"], fx_shocks_pct=["20", "10"], hedge_ratio_pct=""
+            )
+        },
+        "assumptions.cp2e.fx_shocks_pct",
+        "values must increase.",
+    ),
+    (
+        {
+            "assumptions.cp2e": pin(
+                rate_shocks_bps=["100"], fx_shocks_pct=["10"], hedge_ratio_pct="60.123"
+            )
+        },
+        "assumptions.cp2e.hedge_ratio_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp4c": pin(ev_multiple="100.123")},
+        "assumptions.cp4c.ev_multiple",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp3d": pin(recovery_pct="65.123")},
+        "assumptions.cp3d.recovery_pct",
+        "use at most 2 decimal places.",
+    ),
+    (
+        {"assumptions.cp4c": pin(ev_multiple="8.555")},
+        "assumptions.cp4c.ev_multiple",
+        "use at most 2 decimal places.",
+    ),
+    (
         {"assumptions.cp4c": {"ev_multiple": "6", "rationale": ""}},
         "assumptions.cp4c.rationale",
         "required",
@@ -570,6 +655,101 @@ def test_form_output_loads(name: str) -> None:
     assert {"schema": SCHEMA, **load_context(raw).model_dump(mode="json")} == json.loads(raw)
 
 
+_PIN_OK = [
+    (
+        "assumptions.cp2a",
+        pin(scenarios=[{"ebitda_decline_pct": "20.12", "interest_increase_pct": "5.5"}]),
+    ),
+    ("assumptions.cp3c", pin(repricing_bps="50")),
+    (
+        "assumptions.cp2e",
+        pin(rate_shocks_bps=["100", "200"], fx_shocks_pct=["10", "20"], hedge_ratio_pct="60.12"),
+    ),
+    ("assumptions.cp3d", pin(recovery_pct="65.12")),
+    ("assumptions.cp4c", pin(ev_multiple="8.55")),
+]
+
+
+@pytest.mark.parametrize(("path", "value"), _PIN_OK)
+def test_pins_at_submission_precision_load(path: str, value: dict[str, Any]) -> None:
+    load_context(json.dumps(with_changes({path: value})).encode())
+
+
+def test_pinned_contexts_of_the_owner_oracle_load() -> None:
+    files = sorted((REPO / "cases/pins-context-owner").glob("context-*.json"))
+    assert files
+    for f in files:
+        load_context(f.read_bytes())
+
+
+_SPEC = re.compile(r"\['(\w+)',\{((?:[^{}]|\{[^{}]*\})*)\}\]")
+
+
+def _form_spec(html: str, field: str) -> dict[str, str]:
+    found = [m for m in _SPEC.finditer(html) if m[1] == field]
+    assert len(found) == 1, field
+    body = found[0][2]
+    item = re.search(r"item:\{([^{}]*)\}", body)
+    if item:
+        body = item[1] + "," + re.sub(r"item:\{[^{}]*\}", "", body)
+    return dict(kv.split(":", 1) for kv in body.split(",") if kv)
+
+
+def _bound(spec: dict[str, str], key: str) -> str | None:
+    return None if key not in spec else str(Decimal(spec[key]))
+
+
+@pytest.mark.parametrize("key", sorted(ASSUMPTION_LIMITS))
+def test_form_limits_equal_reader_table(key: str) -> None:
+    limit = ASSUMPTION_LIMITS[key]
+    spec = _form_spec(FORM.read_text(), key.split(".")[1])
+    assert (spec.get("int") == "true") == limit.whole, key
+    assert (int(spec["dp"]) if "dp" in spec else None) == limit.places, key
+    assert (spec.get("req") == "true") == limit.req, key
+    got = tuple(_bound(spec, k) for k in ("min", "minEx", "max", "maxEx"))
+    want = tuple(
+        None if v is None else str(Decimal(v))
+        for v in (limit.low, limit.low_excl, limit.high, limit.high_excl)
+    )
+    assert got == want, key
+
+
+def test_form_messages_present() -> None:
+    html = FORM.read_text()
+    assert "use at most ' + r.dp + ' decimal places." in html
+    assert "values must increase." in html
+
+
+def test_limits_table_covers_every_pin_field() -> None:
+    assert {k.split(".")[0] for k in ASSUMPTION_LIMITS} == {
+        "cp2a",
+        "cp2d",
+        "cp2e",
+        "cp3c",
+        "cp3d",
+        "cp4c",
+    }
+
+
+def _cp2e_problems(rate: list[str]) -> tuple[str, ...]:
+    pins = pin(rate_shocks_bps=rate, fx_shocks_pct=["10"], hedge_ratio_pct="")
+    with pytest.raises(ContextRefused) as caught:
+        load_context(json.dumps(with_changes({"assumptions.cp2e": pins})).encode())
+    return tuple(p for p in caught.value.problems if "rate_shocks_bps" in p)
+
+
+def test_unparseable_item_gets_no_increase_line() -> None:
+    assert _cp2e_problems(["abc", "100"]) == (
+        'assumptions.cp2e.rate_shocks_bps: "abc": enter a plain number such as 1250 or 99.5.',
+    )
+
+
+def test_descending_list_is_one_increase_line() -> None:
+    assert _cp2e_problems(["300", "200", "100"]) == (
+        "assumptions.cp2e.rate_shocks_bps: values must increase.",
+    )
+
+
 def test_form_regexes_match_reader() -> None:
     html = FORM.read_text()
     assert f"const NUM = /{NUM}/, SNUM = /{SNUM}/;" in html
@@ -584,3 +764,40 @@ def test_golden_contexts_exist() -> None:
 @pytest.mark.parametrize("case", sorted(p.parent.name for p in GOLDENS.glob("*/context.json")))
 def test_golden_contexts_load(case: str) -> None:
     load_context((GOLDENS / case / "context.json").read_bytes())
+
+
+def _rate_problems(rate: list[str]) -> list[str]:
+    try:
+        raw = with_changes(
+            {
+                "assumptions.cp2e": pin(
+                    rate_shocks_bps=rate, fx_shocks_pct=["10"], hedge_ratio_pct=""
+                )
+            }
+        )
+        load_context(json.dumps(raw).encode())
+    except ContextRefused as error:
+        return [p for p in error.problems if "rate_shocks_bps" in p]
+    return []
+
+
+@pytest.mark.parametrize(
+    ("change", "rate", "refused"),
+    [
+        ({"req": False}, [], False),
+        ({"req": True}, [], True),
+        ({"high": None, "high_excl": "1000"}, ["1000"], True),
+        ({"high": None, "high_excl": "1000"}, ["999"], False),
+        ({"low": None, "low_excl": "1"}, ["1"], True),
+        ({"low": None, "low_excl": "1"}, ["2"], False),
+    ],
+)
+def test_shock_lists_honour_every_field_of_their_limits_row(
+    monkeypatch: pytest.MonkeyPatch, change: dict[str, Any], rate: list[str], refused: bool
+) -> None:
+    """The reader's shock check reads `req`, `low_excl` and `high_excl` of the table row, as the
+    single-number fields do, not only `whole`, `places`, `low` and `high`."""
+    key = "cp2e.rate_shocks_bps"
+    row = dataclasses.replace(ASSUMPTION_LIMITS[key], **change)
+    monkeypatch.setitem(ASSUMPTION_LIMITS, key, row)
+    assert bool(_rate_problems(rate)) is refused

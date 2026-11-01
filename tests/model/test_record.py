@@ -630,6 +630,27 @@ def test_error_record_with_usage_and_billed_exports_them(tmp_path: Path) -> None
     assert resp["usage"]["input_tokens"] == 7 and resp["usage"]["output_tokens"] == 2
 
 
+def test_billed_error_record_with_foreign_negative_zero_exports_zero(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    log = CallLog(run, Redactor())
+    log.append(
+        record(
+            http_status=400,
+            error_class="Http",
+            output_tokens=None,
+            cost_status="billed",
+            settled_usd=Decimal("0.5"),
+        )
+    )
+    calls = run / "calls.jsonl"
+    foreign = json.loads(calls.read_text())
+    foreign["settled_usd"] = "-0"  # not product-written: the serializer writes zero as "0"
+    calls.write_text(json.dumps(foreign) + "\n")
+    out = tmp_path / "o.jsonl"
+    export_recording(run, out, Redactor())
+    assert json.loads(out.read_text())["response"]["billed_usd"] == "0"
+
+
 def test_error_record_is_not_reparsed_so_no_raw_is_needed(tmp_path: Path) -> None:
     (resp,) = exported(tmp_path, record(http_status=400, error_class="Http", output_tokens=None))
     assert resp["kind"] == "sent_known"
@@ -1061,3 +1082,118 @@ def test_adapter_error_record_exports_sent_unknown(tmp_path: Path) -> None:
         "AdapterError",
         None,
     )
+
+
+_KEYISH = "sk-proj-ZZZZZZSECRETKEY"
+
+
+def _invalid_text(**over: Any) -> str:
+    with pytest.raises(RecordInvalid) as caught:
+        CallRecord.build(Redactor(), **fields(**over))
+    return str(caught.value)
+
+
+def test_unexpected_field_name_never_reaches_error_text() -> None:
+    text = _invalid_text(**{_KEYISH: 1})
+    assert "ZZZZZZ" not in text and "unexpected field" in text
+
+
+def test_nested_unexpected_name_and_value_never_reach_error_text() -> None:
+    nested = {"name": "n", "arguments_sha256": "b" * 64, "result_bytes": None,
+              "refusal_code": None, _KEYISH: 1}  # fmt: skip
+    text = _invalid_text(tool_calls=(nested,))
+    assert "ZZZZZZ" not in text and "unexpected field" in text
+    assert "keysk-proj-ZZZZZZSECRETKEY" not in _invalid_text(**{"keysk-proj-ZZZZZZSECRETKEY": 1})
+    assert "ZZZZZZ" not in _invalid_text(http_status=_KEYISH)
+
+
+def test_invalid_from_json_line_hides_key_shaped_field_name() -> None:
+    body = json.loads(record().model_dump_json())
+    body[_KEYISH] = 1
+    with pytest.raises(ValidationError) as caught:
+        CallRecord.model_validate_json(json.dumps(body))
+    from deploy_workflow.model.record import _invalid
+
+    assert "ZZZZZZ" not in str(_invalid(caught.value))
+
+
+@pytest.mark.parametrize("bad", ["-5", "-0.01", "-1E+999999"])
+@pytest.mark.parametrize("name", ["reserved_usd", "settled_usd"])
+def test_negative_money_refused(name: str, bad: str) -> None:
+    with pytest.raises(ValidationError):
+        record(**{name: Decimal(bad)})
+    with pytest.raises(RecordInvalid):
+        CallRecord.build(Redactor(), **fields(**{name: Decimal(bad)}))
+
+
+def test_negative_zero_money_is_accepted_as_zero() -> None:
+    # Decision: -0 equals 0, so it passes the lower bound and is written as zero.
+    rec = record(reserved_usd=Decimal("-0"), settled_usd=Decimal("-0"))
+    assert rec.reserved_usd == 0 and rec.settled_usd == 0
+
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_attempt_refuses_booleans(flag: bool) -> None:
+    with pytest.raises(ValidationError):
+        record(attempt=flag)
+    body = json.loads(record().model_dump_json())
+    body["attempt"] = flag
+    with pytest.raises(ValidationError):
+        CallRecord.model_validate_json(json.dumps(body))
+
+
+def test_strings_is_public_and_old_name_is_an_alias() -> None:
+    from deploy_workflow.model import record as module
+
+    assert module.strings({"a": ["x", ("y",)], "b": 1}) == ["x", "y"]
+    assert module._strings is module.strings
+
+
+@pytest.mark.parametrize("zero", ["-0", "-0.00", "-0E+3", "0.00"])
+def test_zero_money_is_written_as_plain_zero(zero: str) -> None:
+    body = json.loads(
+        record(reserved_usd=Decimal(zero), settled_usd=Decimal(zero)).model_dump_json()
+    )
+    assert (body["reserved_usd"], body["settled_usd"]) == ("0", "0")
+
+
+def test_attempt_accepts_only_exact_int() -> None:
+    class Flag(int):
+        pass
+
+    for bad in (Flag(1), True, 0.0, "0"):
+        with pytest.raises(ValidationError):
+            record(attempt=bad)
+    assert record(attempt=1).attempt == 1
+
+
+def test_record_invalid_has_no_chained_exception() -> None:
+    with pytest.raises(RecordInvalid) as caught:
+        CallRecord.build(Redactor(), **fields(**{_KEYISH: 1}))
+    assert caught.value.__context__ is None and caught.value.__cause__ is None
+
+
+def test_export_record_invalid_has_no_chained_exception(tmp_path: Path) -> None:
+    body = json.loads(record().model_dump_json())
+    body[_KEYISH] = 1
+    (tmp_path / "calls.jsonl").write_text(json.dumps(body) + "\n")
+    with pytest.raises(RecordInvalid) as caught:
+        export_recording(tmp_path, tmp_path / "o.jsonl", Redactor())
+    assert caught.value.__context__ is None and caught.value.__cause__ is None
+    assert "ZZZZZZ" not in str(caught.value)
+
+
+def test_strings_is_exported() -> None:
+    from deploy_workflow.model import record as module
+
+    assert "strings" in module.__all__
+
+
+def test_nested_extra_field_location_is_exact() -> None:
+    body = json.loads(record(tool_calls=(TOOL,)).model_dump_json())
+    body["tool_calls"][0][_KEYISH] = 1
+    with pytest.raises(ValidationError) as caught:
+        CallRecord.model_validate_json(json.dumps(body))
+    from deploy_workflow.model.record import _invalid
+
+    assert str(_invalid(caught.value)).startswith("tool_calls.0.unexpected field: ")

@@ -438,9 +438,12 @@ CASES = {
         POS_RUN,
         {"CP-0": "restricted", "CP-1": "restricted", "CP-MODEL": "restricted"},
         "S1a acceptance A3c receipt: CP-0 does not command CP-1A, so CP-1A is refused at begin (no head) "
-        "and the walk stops (S1a Q3 b); CP-2 never begins; CP-MODEL publishes.",
-        "derived from docs/S1A-OWNER-RUN-LEASE.md rev 3 R3-1 and Q3(b); CP-2 unrun rests on the "
-        "stop-after-refusal rule and on execution.current_inputs refusing an unrun required upstream",
+        "and the walk goes on (G3, ruling B23a): the CP-2 begin is refused as a consequence (CP-1A has no head, "
+        "missing_inputs CP-1A, retained because CP-1A was refused in the walk), CP-2 never begins; the walk then "
+        "reaches CP-MODEL, which publishes.",
+        "derived from docs/S1A-OWNER-RUN-LEASE.md rev 3 R3-1 and Q3(b); CP-2 unrun rests on "
+        "execution.current_inputs refusing an unrun required upstream (CP-2 requires CP-0, CP-1 and CP-1A, and "
+        "CP-1A has no head) and on the G3 walk rule that a refused begin is recorded and the walk goes on",
     ),
 }
 

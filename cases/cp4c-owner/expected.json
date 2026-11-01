@@ -35564,7 +35564,42 @@
    "refused_begins": [
     {
      "module_id": "CP-1",
-     "reason": "CP-0 has not authorized this consumer's source readiness"
+     "reason": "CP-0 has not authorized this consumer's source readiness",
+     "missing_commands": [
+      "Run CP-1"
+     ]
+    },
+    {
+     "module_id": "CP-2A",
+     "reason": "Required upstream is unrun, stale or blocked",
+     "missing_inputs": [
+      "CP-1"
+     ]
+    },
+    {
+     "module_id": "CP-4",
+     "reason": "Required upstream is unrun, stale or blocked",
+     "missing_inputs": [
+      "CP-1"
+     ]
+    },
+    {
+     "module_id": "CP-2G",
+     "reason": "Required upstream is unrun, stale or blocked",
+     "missing_inputs": [
+      "CP-1",
+      "CP-2A"
+     ]
+    },
+    {
+     "module_id": "CP-4C",
+     "reason": "Required upstream is unrun, stale or blocked",
+     "missing_inputs": [
+      "CP-1",
+      "CP-2A",
+      "CP-4",
+      "CP-2G"
+     ]
     }
    ],
    "refusal": "cp1_not_authorized",

@@ -2051,6 +2051,33 @@
       "sha256": "a5451e47977f7f57d56c3563dfa7e1ef7f9eef24d59d668b90ea5295aaac3ece",
       "reason": "B22 Lows: docstrings",
       "review": "work/context-plan/reviews/b22-tools-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "prior_project_sha256": "6c80484307aef1d6c6d3b17d7432f642fdd4b11f0a3db2b26cdb3cbf8f5a9f7f",
+      "project_commit": "decf34e7ae529a9e2082331ab627fc6471eae54a",
+      "sha256": "212950b3291779ba6f716cdf62f960c34502eaeb087c1eaa42c54a3e2e9320c2",
+      "reason": "B6/B6a (docs/rulings/2026-10-31-context-plan.md): Python builds CP-3 market evidence from the pack's context source (quotes and deal_terms talk): context_evidence reader and citations, Basis.context_rows (omitted from the dump when empty), T3.3 rows c01.., staleness cap, context CONTEXT-block rows.",
+      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (task-1 mx-precise a48aede9 and mx-adversary a19a45fe reviews, then fix round 1: task-1-fix1-brief.md, task-1-report.md)"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2h.md",
+      "imported_sha256": "9e8099872e669f71a1f3ee28dde9d4d24713d2fe26ee0fc88dc054003115d618",
+      "prior_project_sha256": "9e8099872e669f71a1f3ee28dde9d4d24713d2fe26ee0fc88dc054003115d618",
+      "project_commit": "e30c06ba2eab2a813047b72519dc03decaaf39c0",
+      "sha256": "689c7af104f61460539f0d2d7812dd4295b07c0ffe26ead8b1d390ddeaba7d92",
+      "reason": "repo-authored (not in files[]): B9 (docs/rulings/2026-10-31-context-plan.md), Phase 4: wording-only edits so the method text names the context ratings path (ratings and outlooks from the context file's ratings rows, fixed combined-scale table, context in the adapter sources, row citations, register state and source_id); no rule, number or table id added.",
+      "review": ".superpowers/sdd/2026-10-31-phase-4-ratings/ (task-4 mx-feature review)"
+    },
+    {
+      "destination": "src/deploy_vii/live/prompts.py",
+      "imported_sha256": "fc291aee064f9f54c837094e5365601b1ee795259d0f81250d68960a428d87b5",
+      "prior_project_sha256": "fc291aee064f9f54c837094e5365601b1ee795259d0f81250d68960a428d87b5",
+      "project_commit": "f4e1028ac6211358f1d07f86d5bfe56ef6a28829",
+      "sha256": "b9b846432b65db8112b7bc0ba078445b5447b658c4beb00cf7994fcfffaf2c6c",
+      "reason": "B17 item 3 (docs/rulings, user-approved), Phase 3 Task 4: wording-only reword of CP3_EVIDENCE_RULE in the relative_value contract: a basis refers to Python's context rows by id (basis.context_rows) and never copies their figures; basis.quotes still repeats a market_evidence row's quote, for third_party rows only. No other contract text changes.",
+      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (task-4-addendum.md P3T4-R1, task-4a-report.md); mx-adversary ac7b8cfa (Phase 3 Task 4 Part A)"
     }
   ],
   "local_patch_lineage": [

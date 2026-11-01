@@ -121,8 +121,12 @@ authority `unknown`. Start the existing workflow with the produced pack as
 described in the section above; that section's frozen slice still accepts only its
 own exact module selection.
 
-No module reads the context yet beyond `Run`: the other settings in the file are
-carried in the pack but are not consumed until Phases 2-8 of the context-file plan.
+CP-3 reads the context's `quotes` and deal talk as market evidence; CP-3D reads
+`quotes` only, not deal talk. A quote older than 30 days is stale. A quote whose
+facility id is unknown is a gap.
+
+No other module reads the context beyond `Run`: the other settings in the file are
+carried in the pack but are not consumed until the remaining phases of the context-file plan.
 
 ## Verify and deliver a sealed financial slice
 

@@ -394,3 +394,52 @@ def test_a_sum_wider_than_the_context_is_a_budget_error_and_writes_nothing(tmp_p
     with pytest.raises(BudgetError, match="money sum not exact"):
         _reserve(b, "b", "1")
     assert not (_marker_dir(tmp_path) / "b").exists()
+
+
+def test_stop_reason_and_settled_calls_read_the_state_without_changing_it(tmp_path: Path) -> None:
+    b = Budget(Decimal(1), tmp_path)
+    assert b.stop_reason is None and list(b.settled_calls) == []
+    _reserve(b, "b-call", "0.1")
+    _reserve(b, "a-call", "0.1")
+    _reserve(b, "freed", "0.1")
+    b.settle("b-call", Decimal("0.05"))
+    b.release("freed")
+    assert list(b.settled_calls) == [
+        "b-call"
+    ]  # released holds were never sent; open ones are unsettled
+    assert b.stop_reason is None or "unsettled" in b.stop_reason
+    again = Budget(Decimal(1), tmp_path)  # a-call is crash-left at load
+    assert list(again.settled_calls) == ["b-call"]
+    assert again.stop_reason is not None and "crash" in again.stop_reason
+    again.settle("a-call", None)
+    assert list(again.settled_calls) == ["a-call", "b-call"]  # an unknown charge was sent
+    assert again.stop_reason is not None and "'a-call' has an unknown charge" in again.stop_reason
+
+
+@pytest.mark.parametrize("unknown_id", ["a", "b"])
+def test_stop_kind_names_an_overrun_before_an_unknown_in_any_id_order(
+    tmp_path: Path, unknown_id: str
+) -> None:
+    """L7 (3b): the kind is not the first settled id in sorted order; an overrun wins."""
+    over_id = "b" if unknown_id == "a" else "a"
+    b = Budget(D("1"), tmp_path)
+    assert b.stop_kind is None
+    _reserve(b, unknown_id, "0.1")
+    _reserve(b, over_id, "0.1")
+    b.settle(unknown_id, None, retryable=True)
+    assert b.stop_kind == "unknown"
+    with pytest.raises(OverrunStop):
+        b.settle(over_id, D("0.3"))
+    assert b.stop_kind == "overrun"
+    assert Budget(D("1"), tmp_path).stop_kind == "overrun"  # from the markers, after a restart
+
+
+def test_stop_kind_names_the_unknown_and_the_crash_left_stop(tmp_path: Path) -> None:
+    b = Budget(D("1"), tmp_path / "unknown")
+    _reserve(b, "u", "0.1")
+    b.settle("u", None)
+    assert (b.stop_kind, b.stop_reason) == ("unknown", "'u' has an unknown charge")
+    c = Budget(D("1"), tmp_path / "crash")
+    _reserve(c, "x", "0.1")
+    assert c.stop_kind is None  # in flight in its own run
+    assert Budget(D("1"), tmp_path / "crash").stop_kind == "crash_left"

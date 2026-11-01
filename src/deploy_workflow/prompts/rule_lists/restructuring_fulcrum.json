@@ -1,0 +1,109 @@
+{
+ "rules": [
+  {
+   "id": "restructuring_fulcrum.1",
+   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries.",
+   "checks": [
+    "oracle:cp4c:r01",
+    "oracle:cp4c:r02",
+    "oracle:cp4c:r03",
+    "oracle:cp4c:r04",
+    "oracle:cp4c:r05",
+    "oracle:cp4c:r06",
+    "oracle:cp4c:r07",
+    "oracle:cp4c:r08",
+    "oracle:cp4c:r09",
+    "oracle:cp4c:r10",
+    "oracle:cp4c:r11",
+    "oracle:cp4c:r12",
+    "oracle:cp4c:r13"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.2",
+   "statement": "Every claim has a different `class_id`. A class is secured_debt exactly when its `amount_source` is cp1_total_debt, and CP-1 must show the facility as both secured and senior for any class to be secured_debt. Exactly one class is secured_debt and its `rank` is lower than every other class's (it ranks first).",
+   "checks": [
+    "oracle:cp4c:v01",
+    "oracle:cp4c:v02",
+    "oracle:cp4c:v06",
+    "fn:deploy_workflow.owners.cp4c:_claim_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.3",
+   "statement": "A `source_row` claim cites in `amount_quote` the row it reads, quoted verbatim from the `financial` source under its locator, and gives in `period_column` the `statement_rows` column dated at the end of the `cp1_facts` `period`; the row must have a number under it, and the claim is above zero. A class with another `amount_source` has a null `amount_quote` and `period_column`.",
+   "checks": [
+    "oracle:cp4c:v03",
+    "oracle:cp4c:v04",
+    "oracle:cp4c:v05",
+    "fn:deploy_workflow.owners.cp4c:_source_row_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.4",
+   "statement": "Every `support` quote cites only the `financial` or `legal-covenants` source, verbatim under its locator.",
+   "checks": [
+    "oracle:cp4c:v07",
+    "oracle:cp4c:v08"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.5",
+   "statement": "`valuation`, `fulcrum` and `plan` each hold the cases in order, the first with `case_id` v01, the second v02, and so on.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp4c:content_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.6",
+   "statement": "Each `fulcrum` entry's `class_ids` are claim class ids (or `equity`), none twice, and are exactly the class or classes where Python's waterfall puts the value break for that case; where the value break is not determinable, `class_ids` is empty.",
+   "checks": [
+    "oracle:cp4c:v09",
+    "oracle:cp4c:v10",
+    "oracle:cp4c:v11",
+    "fn:deploy_workflow.owners.cp4c:_fulcrum_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.7",
+   "statement": "Each `plan` entry gives one treatment for every claim class and for `equity`, each once; every treatment must fit the waterfall result of its class in that case: Paid in full for a class recovered in full, Receives reorganised equity for a partial recovery, No recovery for none; for `equity`, Equity retained when value remains and No recovery when none; Not determined only where that result is not determined.",
+   "checks": [
+    "oracle:cp4c:v12",
+    "oracle:cp4c:v14",
+    "fn:deploy_workflow.owners.cp4c:_plan_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.8",
+   "statement": "`assessment.confidence` is never High, because multiples, ranks and plan treatment are uncited analyst assumptions.",
+   "checks": [
+    "oracle:cp4c:v13"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.9",
+   "statement": "A class `name` and valuation `label` are one line with no bare figure and no braces or brackets. Every `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts` or `cp2g_facts`, closed and non-empty. No text states a peer ranking, an instrument recommendation, outcome certainty (`recovery is guaranteed`, `recovery is assured`, `recovery is certain`, `guaranteed recovery`, `assured recovery`, `plan will be confirmed`, `confirmation is assured`, `confirmation is certain`) or probability weighting (`probability-weighted`, `probability of`, `expected value` and similar).",
+   "checks": [
+    "oracle:cp4c:v15",
+    "oracle:cp4c:v16",
+    "oracle:cp4c:v17",
+    "oracle:cp4c:v18",
+    "oracle:cp4c:v19",
+    "oracle:cp4c:v20",
+    "oracle:cp4c:v21",
+    "oracle:cp4c:v22",
+    "oracle:cp4c:v23",
+    "fn:deploy_workflow.owners.cp4c:_text_fields",
+    "fn:deploy_workflow.owners.cp4c:_run_text_issues",
+    "fn:deploy_workflow.owners.cp4c:guard_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.10",
+   "statement": "Do not write Python's pinned-multiple line in a gap, a claim name or a valuation label, in any case or spacing; Python adds that line when a multiple is pinned.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp4c:_gap_label_issues"
+   ]
+  }
+ ]
+}

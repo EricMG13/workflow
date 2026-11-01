@@ -33,12 +33,12 @@ D = Decimal
 
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "cases/cp2a-owner/manifest.json": "5219f063dcb130b38b8059397a73ff890ccb14ef03f8c2a6188b971dce7ead1a",
+    "cases/cp2a-owner/manifest.json": "099bfec94b1a7ab19df98646d528ece0871bb411bf45ce79b0d5250677eb3672",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
-    "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
-    "cases/cp1d-owner/manifest.json": "07dd8530a7f53aa5fe2c1b4840554c0fc6392e26e53bf01ad2858458ecdfe955",
+    "cases/cp2a-owner/expected.json": "f6b22e02a196b8c621908f365ebbfacc4e7c5d6425d3cb842a99e164409ee66f",
+    "cases/cp1d-owner/manifest.json": "10f483811c692d985b59487afcbbb73a0451f9dc6ddb8b7f7c0c799e36db26ad",
     "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
-    "cases/cp1d-owner/expected.json": "8880a2c59a92604ea40e2f2d80e899ed45450d1094388e950ef7015637e2f993",
+    "cases/cp1d-owner/expected.json": "5abf5ec4aeaaac520fee35a86bbeeea0d5782b7fdf424316803849fb3688df94",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 
@@ -1506,7 +1506,7 @@ def main():
             "cp1d_blocked": {"run": runs["cp1d_blocked"], "pack": "identity + financial + bridge", "submission": "submissions.json cases.cp1d_blocked (positive-derived: minimum liquidity 10, an assessment that names no CP-1D figure)", "expected": "expected.json cases.cp1d_blocked",
                              "execution": "closed run: CP-1D settles blocked (CP-1D refusals r06 twice); CP-2A positive; CP-2G begins under the restricted edge with Input CP-1D status blocked"},
             "refused": {"run": runs["refused"], "pack": "financial source missing (cases/financial/manifest.json negative_case)", "submission": "submissions.json refused", "expected": "expected.json cases.refused",
-                        "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A and CP-2G are never begun"},
+                        "execution": "CP-0 only; CP-1 begin raises NotAuthorized; the CP-2A and CP-2G begins are refused as consequences (no CP-1 head; no CP-2A head); CP-2A and CP-2G are never begun"},
             "blocked": {"run": runs["blocked"], "pack": "same pack as gap", "submission": "submissions.json refusals r01 (attempt 0) then v13 (attempt 1)", "expected": "expected.json cases.blocked",
                         "execution": "closed run to CP-2A, then CP-2G attempt 0 invalid (rejected) and attempt 1 invalid (blocked)"},
             "cp2a_blocked": {"run": runs["cp2a_blocked"], "pack": "same pack as gap", "submission": "cases/cp2a-owner/submissions.json refusals r01 then v13 for CP-2A", "expected": "expected.json cases.cp2a_blocked",
@@ -1696,11 +1696,13 @@ def main():
         "cp0": {"rows": ["submissions.json refused.cp0_consumer_row_cp1", "submissions.json refused.cp0_consumer_row_cp2a", "submissions.json refused.cp0_consumer_row_cp2g"],
                 "gap_row": "submissions.json refused.gap_row", "validator_issues": [], "settled_status": "restricted",
                 "T8_commands": [["CP-1", "DO NOT RUN"], ["CP-2A", "DO NOT RUN"], ["CP-2G", "DO NOT RUN"]]},
-        "refused_begins": [{"module_id": "CP-1", "reason": "CP-0 has not authorized this consumer's source readiness"}],
+        "refused_begins": [{"module_id": "CP-1", "reason": "CP-0 has not authorized this consumer's source readiness", "missing_commands": ["Run CP-1"]},
+                           {"module_id": "CP-2A", "reason": "Required upstream is unrun, stale or blocked", "missing_inputs": ["CP-1"]},
+                           {"module_id": "CP-2G", "reason": "Required upstream is unrun, stale or blocked", "missing_inputs": ["CP-1", "CP-2A"]}],
         "refusal": "cp1_not_authorized",
         "refusal_note": "the 'refusal' field of the financial-review-outcome/1 returned by the CP-0 submit that settles CP-0 and triggers the CP-1 begin (owner_workflow.py:649 the _advance after CP-0 finishes, :658-663 the outcome, :670-674 _refusal_code: module 'CP-1' -> 'cp1', kind 'not_authorized'); the refusal is retained (:443-479) and the receipt verifier re-runs current_inputs (:884-897)",
         "attempts": ["CP-0"], "heads": ["CP-0"],
-        "later_modules": "CP-2A and CP-2G are never begun (G1 stops the walk after a RefusedBegin); current_inputs for CP-2G would raise ValueError 'Required upstream is unrun, stale or blocked'",
+        "later_modules": "CP-2A and CP-2G are never begun: each begin is refused as a consequence of the CP-1 refusal (G3 records a refused begin and the walk goes on; current_inputs raises ValueError 'Required upstream is unrun, stale or blocked' for CP-2A (CP-1 missing) and for CP-2G (CP-1 and CP-2A missing) before it checks CP-0's command)",
         "model_publication": "not planned", "receipt": "verifies",
         "must_not_appear": ["a CP-2A or CP-2G ticket, attempt, head or table", "a forecast value of 0 standing for a missing one"],
     }

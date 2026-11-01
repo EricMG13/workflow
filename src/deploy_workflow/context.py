@@ -8,6 +8,7 @@ below is copied from it. Numbers stay strings in the model; ``amount`` turns one
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime as dt
 import functools
 import json
@@ -15,6 +16,7 @@ import re
 import sys
 from collections.abc import Callable, Sequence
 from decimal import Decimal
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
 
@@ -353,6 +355,34 @@ def load_context(raw: bytes) -> RunContext:
 # ---------------------------------------------------------------------------- value rules
 
 
+@dataclasses.dataclass(frozen=True)
+class Limit:
+    """One pinned assumption's value limits: the single copy the reader uses and the form test reads."""
+
+    req: bool = False
+    whole: bool = False
+    places: int | None = None
+    low: str | None = None
+    low_excl: str | None = None
+    high: str | None = None
+    high_excl: str | None = None
+
+
+# Keyed "<module>.<field>"; a shock list's limit is the limit of each of its items.
+ASSUMPTION_LIMITS: dict[str, Limit] = {
+    "cp2a.ebitda_decline_pct": Limit(req=True, places=2, low="0", high="100"),
+    "cp2a.interest_increase_pct": Limit(req=True, places=2, low="0", high="100"),
+    "cp2d.horizon_months": Limit(req=True, whole=True, low="1", high="60"),
+    "cp2d.minimum_cash_m": Limit(req=True, low="0"),
+    "cp2e.rate_shocks_bps": Limit(req=True, whole=True, low="1", high="1000"),
+    "cp2e.fx_shocks_pct": Limit(req=True, whole=True, low="1", high="50"),
+    "cp2e.hedge_ratio_pct": Limit(places=2, low="0", high="100"),
+    "cp3c.repricing_bps": Limit(req=True, whole=True, low="0", high="1000"),
+    "cp3d.recovery_pct": Limit(req=True, places=2, low="0", high_excl="100"),
+    "cp4c.ev_multiple": Limit(req=True, places=2, low_excl="0", high="99.99"),
+}
+
+
 class _Rules:
     """The form's ``build()`` rules over a well-shaped context; collects every problem."""
 
@@ -378,6 +408,7 @@ class _Rules:
         req: bool = False,
         signed: bool = False,
         whole: bool = False,
+        places: int | None = None,
         low: str | None = None,
         low_excl: str | None = None,
         high: str | None = None,
@@ -387,9 +418,12 @@ class _Rules:
             if req:
                 self.bad(path, "required.")
             return
-        message = _num_message(value, signed, whole, low, low_excl, high, high_excl)
+        message = _num_message(value, signed, whole, places, low, low_excl, high, high_excl)
         if message:
             self.bad(path, message)
+
+    def limited(self, path: str, value: str, key: str) -> None:
+        self.number(path, value, **dataclasses.asdict(ASSUMPTION_LIMITS[key]))
 
     def date(self, path: str, value: str, req: bool = False, after: bool = False) -> None:
         if value == "":
@@ -411,15 +445,30 @@ class _Rules:
         elif not _match(_CURRENCY, value):
             self.bad(path, "use three uppercase letters, such as USD.")
 
-    def shocks(self, path: str, items: tuple[str, ...], high: str, whole: bool) -> None:
-        if not items:
+    def shocks(self, path: str, items: tuple[str, ...], key: str) -> None:
+        limit = ASSUMPTION_LIMITS[key]
+        if not items and limit.req:
             self.bad(path, "required.")
         if len(items) > 3:
             self.bad(path, "give at most 3 values.")
-        for item in items:
-            message = _num_message(item, False, whole, "1", None, high, None)
+        messages = [
+            _num_message(
+                item,
+                False,
+                limit.whole,
+                limit.places,
+                limit.low,
+                limit.low_excl,
+                limit.high,
+                limit.high_excl,
+            )
+            for item in items
+        ]
+        for item, message in zip(items, messages, strict=True):
             if message:
                 self.bad(path, f'"{item}": {message}')
+        if not any(messages) and any(Decimal(a) >= Decimal(b) for a, b in pairwise(items)):
+            self.bad(path, "values must increase.")
 
     def not_above(self, path: str, low: str, high: str, message: str) -> None:
         if _match(NUM, low) and _match(NUM, high) and Decimal(low) > Decimal(high):
@@ -590,50 +639,37 @@ class _Rules:
                 self.bad("assumptions.cp2a.scenarios", "add 1 to 4 scenarios.")
             for i, s in enumerate(a.cp2a.scenarios):
                 p = f"assumptions.cp2a.scenarios[{i}]"
-                self.number(
-                    f"{p}.ebitda_decline_pct", s.ebitda_decline_pct, req=True, low="0", high="100"
+                self.limited(
+                    f"{p}.ebitda_decline_pct", s.ebitda_decline_pct, "cp2a.ebitda_decline_pct"
                 )
-                self.number(
+                self.limited(
                     f"{p}.interest_increase_pct",
                     s.interest_increase_pct,
-                    req=True,
-                    low="0",
-                    high="100",
+                    "cp2a.interest_increase_pct",
                 )
             self.text("assumptions.cp2a.rationale", a.cp2a.rationale, req=True)
         if a.cp2d is not None:
             p = "assumptions.cp2d"
-            self.number(
-                f"{p}.horizon_months",
-                a.cp2d.horizon_months,
-                req=True,
-                whole=True,
-                low="1",
-                high="60",
-            )
-            self.number(f"{p}.minimum_cash_m", a.cp2d.minimum_cash_m, req=True, low="0")
+            self.limited(f"{p}.horizon_months", a.cp2d.horizon_months, "cp2d.horizon_months")
+            self.limited(f"{p}.minimum_cash_m", a.cp2d.minimum_cash_m, "cp2d.minimum_cash_m")
             self.text(f"{p}.rationale", a.cp2d.rationale, req=True)
         if a.cp2e is not None:
             p = "assumptions.cp2e"
-            self.shocks(f"{p}.rate_shocks_bps", a.cp2e.rate_shocks_bps, "1000", True)
-            self.shocks(f"{p}.fx_shocks_pct", a.cp2e.fx_shocks_pct, "50", False)
-            self.number(f"{p}.hedge_ratio_pct", a.cp2e.hedge_ratio_pct, low="0", high="100")
+            self.shocks(f"{p}.rate_shocks_bps", a.cp2e.rate_shocks_bps, "cp2e.rate_shocks_bps")
+            self.shocks(f"{p}.fx_shocks_pct", a.cp2e.fx_shocks_pct, "cp2e.fx_shocks_pct")
+            self.limited(f"{p}.hedge_ratio_pct", a.cp2e.hedge_ratio_pct, "cp2e.hedge_ratio_pct")
             self.text(f"{p}.rationale", a.cp2e.rationale, req=True)
         if a.cp3c is not None:
             p = "assumptions.cp3c"
-            self.number(f"{p}.repricing_bps", a.cp3c.repricing_bps, req=True, low="0", high="1000")
+            self.limited(f"{p}.repricing_bps", a.cp3c.repricing_bps, "cp3c.repricing_bps")
             self.text(f"{p}.rationale", a.cp3c.rationale, req=True)
         if a.cp3d is not None:
             p = "assumptions.cp3d"
-            self.number(
-                f"{p}.recovery_pct", a.cp3d.recovery_pct, req=True, low="0", high_excl="100"
-            )
+            self.limited(f"{p}.recovery_pct", a.cp3d.recovery_pct, "cp3d.recovery_pct")
             self.text(f"{p}.rationale", a.cp3d.rationale, req=True)
         if a.cp4c is not None:
             p = "assumptions.cp4c"
-            self.number(
-                f"{p}.ev_multiple", a.cp4c.ev_multiple, req=True, low_excl="0", high="99.99"
-            )
+            self.limited(f"{p}.ev_multiple", a.cp4c.ev_multiple, "cp4c.ev_multiple")
             self.text(f"{p}.rationale", a.cp4c.rationale, req=True)
 
     def attachments_and_questions(self) -> None:
@@ -664,6 +700,7 @@ def _num_message(
     value: str,
     signed: bool,
     whole: bool,
+    places: int | None,
     low: str | None,
     low_excl: str | None,
     high: str | None,
@@ -676,6 +713,8 @@ def _num_message(
         return "enter a plain number such as 1250 or 99.5."
     if whole and not _match(_INT, value):
         return "enter a whole number."
+    if places is not None and len(value.partition(".")[2]) > places:
+        return f"use at most {places} decimal places."
     x = Decimal(value)
     checks: tuple[tuple[str | None, Callable[[Decimal, Decimal], bool], str], ...] = (
         (low, lambda a, b: a < b, "must be {} or more."),

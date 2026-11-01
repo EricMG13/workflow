@@ -99,8 +99,9 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
             # docs/CP2E-OWNER-LEASE.md:40: the financial source only, never identity.
             ("CP-2E", "macro_fx"): _held("financial"),
-            # docs/CP2H-OWNER-LEASE.md:36: identity, financial and ratings.
-            ("CP-2H", "rating_triggers"): _held("identity", "financial", "ratings"),
+            # docs/CP2H-OWNER-LEASE.md:36, :46: identity, financial, ratings and, when the pack
+            # holds it, the context file (the register's ratings rows; Python reads them).
+            ("CP-2H", "rating_triggers"): _held("identity", "financial", "ratings", "context"),
             # docs/CP4C-OWNER-LEASE.md:46, :85: financial and legal-covenants, never identity.
             ("CP-4C", "restructuring_fulcrum"): _held("financial", "legal-covenants"),
             # docs/CP8-OWNER-LEASE.md:35: prior_case, update and market_update.
@@ -937,6 +938,13 @@ def _execution_state(
         raise
     except (ValueError, KeyError, OSError):
         raise SourceError("identity_mismatch") from None
+
+
+def session_sources(store: Execution, ticket_id: str, step_id: str) -> tuple[str, ...]:
+    """The pack sources a source session for this step reads (O6-P14): the list the prompt names
+    in rule 5, so the model is never told to search sources the session would refuse. Raises
+    ``SourceError`` where no session may be opened for the step."""
+    return _execution_state(store, ticket_id, step_id)[3]
 
 
 # The owner and financial layers re-parse every call receipt with pydantic

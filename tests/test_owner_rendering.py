@@ -41,12 +41,12 @@ from deploy_vii.contracts import (
     TableColumn,
     TableRow,
 )
-from deploy_vii.execution import Attempt, Execution, current_inputs, inherited_limitations
+from deploy_vii.execution import Attempt, Execution, Head, current_inputs, inherited_limitations
 from deploy_vii.registry import modules as registry_modules
 from deploy_vii.render import empty_view, render
 from deploy_vii.report_view import build, pathways
 from deploy_workflow import owner_rendering as g2
-from deploy_workflow.owner_workflow import BeginRecord, OwnerRunReceipt
+from deploy_workflow.owner_workflow import BLOCKED_EDGE, BeginRecord, OwnerRunReceipt, RefusedBegin
 
 ROOT = Path(__file__).resolve().parents[1]
 LEASE = (ROOT / "docs/OWNER-RENDERING-LEASE.md").read_text(encoding="utf-8")
@@ -470,6 +470,84 @@ def _receipt(run: Run) -> OwnerRunReceipt:
         submissions=(),
         publications=(),
     )
+
+
+# --- consequence refusals (G3, ruling B23): `_outcome_rules` on hand-built receipts ------------
+
+_PLAN = ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL")
+
+
+def _refused_begin(module: str, reason: str, *missing: str) -> RefusedBegin:
+    if reason == BLOCKED_EDGE:
+        return RefusedBegin(
+            module_id=module, snapshot_sha256=H, reason=reason, missing_inputs=missing
+        )
+    return RefusedBegin(
+        module_id=module, snapshot_sha256=H, reason=reason, missing_commands=(f"Run {module}",)
+    )
+
+
+def _heads(*modules: str, status: str = "accepted") -> tuple[Head, ...]:
+    return tuple(
+        Head(module_id=m, status=status, result_sha256=H, inputs=())  # type: ignore[arg-type]
+        for m in modules
+    )
+
+
+def _rules(refusals: tuple[RefusedBegin, ...], heads: tuple[Head, ...]) -> str:
+    receipt = _receipt(_cp1_model_run()).model_copy(
+        update={"refusals": refusals, "heads": heads, "plan": _PLAN}
+    )
+    scope = g2.DELIVERY_SCOPES["cp1-model"]
+    try:
+        return str(g2._outcome_rules(receipt, scope, heads))
+    except ValueError as error:
+        return str(error)
+
+
+ROOT_REFUSAL = _refused_begin("CP-1", "CP-0 has not authorized this consumer's source readiness")
+
+
+def test_fast_one_root_with_consequences_renders_like_the_single_refused_begin() -> None:
+    heads = _heads("CP-0")
+    single = _rules((ROOT_REFUSAL,), heads)
+    assert single == "refused"
+    consequence = _refused_begin("CP-2", BLOCKED_EDGE, "CP-1")
+    assert _rules((ROOT_REFUSAL, consequence), heads) == single
+
+
+def test_fast_two_roots_with_consequences_render() -> None:
+    """The cp4c shape: CP-1 and CP-4 both `DO NOT RUN`, then their consequences."""
+    other = _refused_begin("CP-1A", "CP-0 has not authorized this consumer's source readiness")
+    consequence = _refused_begin("CP-2", BLOCKED_EDGE, "CP-1", "CP-1A")
+    assert _rules((ROOT_REFUSAL, other, consequence), _heads("CP-0")) == "refused"
+
+
+def test_fast_blocked_edge_on_a_blocked_head_is_not_a_consequence() -> None:
+    """The missing input is a blocked producer, not a refused module: owner_render_blocked."""
+    blocked = _refused_begin("CP-2", BLOCKED_EDGE, "CP-1")
+    heads = _heads("CP-0") + _heads("CP-1", status="blocked")
+    assert _rules((blocked,), heads) == "owner_render_blocked"
+
+
+def test_fast_a_head_planned_after_the_first_refusal_is_an_outcome_refused_begin() -> None:
+    assert _rules((ROOT_REFUSAL,), _heads("CP-0", "CP-1A")) == "owner_render_outcome"
+
+
+def test_fast_a_head_planned_between_two_roots_is_an_outcome_refusal_whatever_the_list_order() -> (
+    None
+):
+    """The earliest refused module in the plan decides, not the first listed (the verifier does not
+    bind `receipt.refusals` order): CP-1A settled between the roots CP-1 and CP-2."""
+    later = _refused_begin("CP-2", "CP-0 has not authorized this consumer's source readiness")
+    heads = _heads("CP-0", "CP-1A")
+    assert _rules((ROOT_REFUSAL, later), heads) == "owner_render_outcome"
+    assert _rules((later, ROOT_REFUSAL), heads) == "owner_render_outcome"
+
+
+def test_fast_a_consequence_naming_an_unrefused_module_is_blocked() -> None:
+    consequence = _refused_begin("CP-2", BLOCKED_EDGE, "CP-1A")  # CP-1A is not refused
+    assert _rules((ROOT_REFUSAL, consequence), _heads("CP-0")) == "owner_render_blocked"
 
 
 def _render(tmp_path: Path, raw: bytes, destination: Path | None = None) -> Path:

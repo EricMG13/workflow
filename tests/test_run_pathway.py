@@ -12,6 +12,7 @@ import os
 import socket
 import sys
 import traceback
+import uuid
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, NoReturn
@@ -23,6 +24,7 @@ from deploy_vii.preparation import prepare
 from deploy_workflow import run_inputs as run_inputs_module
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model import adapter as adapter_module
+from deploy_workflow.model import loop as loop_module
 from deploy_workflow.model import transport as transport_module
 from deploy_workflow.model.adapter import (
     LiveAdapter,
@@ -67,7 +69,7 @@ OFFLINE_KEYS = {
     "outcome",
     "stopped_reason",
 }
-STOPPED_SET = {"sources", "pack", "execution", "calls.jsonl", "run.json"}
+STOPPED_SET = {"sources", "pack", "execution", "calls.jsonl", "run.json", "cap.json"}
 
 
 @pytest.fixture(autouse=True)
@@ -834,3 +836,758 @@ def test_the_phase_accessor_mirrors_the_private_phase_across_a_walk(args: dict[s
     assert len(set(seen)) > 1  # the accessor moved with the walk
     with pytest.raises(AttributeError):
         workflow.phase = "complete"  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------- resume (O3 Task 3b: G5, N1, R9a)
+
+pack_helpers: Any = importlib.import_module("tests.model._pack")
+
+
+class Kill(BaseException):
+    """A process killed: not an Exception, so nothing in the run catches it."""
+
+
+def scripted_complete(
+    monkeypatch: pytest.MonkeyPatch, replies: list[Any]
+) -> list[tuple[str, int, str]]:
+    """The provider double: each request takes the next reply (or raises it). What was sent."""
+    sent: list[tuple[str, int, str]] = []
+    queue = list(replies)
+
+    def complete(
+        self: object,
+        request: object,
+        *,
+        invocation_digest: str,
+        call_index: int,
+        reservation_id: str,
+    ) -> Any:
+        sent.append((invocation_digest, call_index, reservation_id))
+        item = queue.pop(0)
+        if isinstance(item, BaseException):
+            raise item
+        return item
+
+    monkeypatch.setattr(RecordedAdapter, "complete", complete)
+    return sent
+
+
+def kill_at_reserve(monkeypatch: pytest.MonkeyPatch, nth: int) -> None:
+    """The process dies as the nth reservation of the run is about to be made."""
+    real = Budget.reserve
+    seen = [0]
+
+    def reserve(self: Budget, *a: Any, **k: Any) -> None:
+        seen[0] += 1
+        if seen[0] == nth:
+            raise Kill()
+        real(self, *a, **k)
+
+    monkeypatch.setattr(Budget, "reserve", reserve)
+
+
+def read_s1() -> Any:
+    return pack_helpers.ok(
+        pack_helpers.tool_call("read_pages", source_id="s1", first_page=1, last_page=1)
+    )
+
+
+@pytest.fixture
+def killed(args: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """A fresh run killed between two model calls: the first call is settled and recorded, the
+    second reservation is never made. The run directory holds no ``run.json``."""
+    scripted_complete(monkeypatch, [read_s1()])
+    real = Budget.reserve
+    kill_at_reserve(monkeypatch, 2)
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    monkeypatch.setattr(Budget, "reserve", real)
+    assert not (args["run_dir"] / "run.json").exists()
+    return args
+
+
+def calls_of(run_dir: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in (run_dir / "calls.jsonl").read_text().splitlines()]
+
+
+def test_a_fresh_run_creates_cap_json_once(killed: dict[str, Any]) -> None:
+    run_dir = killed["run_dir"]
+    assert json.loads((run_dir / "cap.json").read_text()) == {"cap_usd": "1", "mode": "offline"}
+    with pytest.raises(rp.CapExists):
+        rp._create_cap(run_dir, Decimal(2), "offline")
+    assert json.loads((run_dir / "cap.json").read_text()) == {"cap_usd": "1", "mode": "offline"}
+
+
+def test_resume_continues_call_index_and_digest_and_counts_the_spend_once(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    (first,) = calls_of(run_dir)
+    assert (first["call_index"], first["cost_status"]) == (0, "computed")
+
+    def not_called(*a: object, **k: object) -> NoReturn:
+        raise AssertionError("a resume stages nothing")
+
+    monkeypatch.setattr(rp, "stage_sources", not_called)
+    monkeypatch.setattr(run_inputs_module, "_check_run_dir", not_called)
+    sent = scripted_complete(
+        monkeypatch, [pack_helpers.failed("sent_known", "ProviderRejected", 400)]
+    )
+    outcome = run_pathway(**killed, resume=True)
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("ProviderRejected")
+    assert [(s[0], s[1]) for s in sent] == [(first["invocation_digest"], 1)]
+    records = calls_of(run_dir)
+    assert [r["call_index"] for r in records] == [0, 1]  # appended, never rewritten
+    assert records[0] == first
+    assert outcome.spent_usd == Decimal(first["settled_usd"])  # the first call, counted once
+    markers = [
+        p
+        for p in (run_dir / "execution/owner-run-audit/reservations").iterdir()
+        if not p.name.endswith(".settled")
+    ]
+    assert len(markers) == 2
+    assert run_json(run_dir)["stopped_reason"] == outcome.stopped_reason
+
+
+def test_a_reservation_left_by_a_crash_stops_the_resume_and_sends_nothing(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scripted_complete(monkeypatch, [Kill()])  # dies inside complete: the hold may have been sent
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    run_dir: Path = args["run_dir"]
+    (marker,) = (run_dir / "execution/owner-run-audit/reservations").iterdir()
+    held = Decimal(json.loads(marker.read_text())["usd"])
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == []
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None and "unsettled by a crash" in outcome.stopped_reason
+    assert outcome.spent_usd == held  # counted once
+    assert run_json(run_dir)["outcome"] == "stopped"
+
+
+def test_a_held_unknown_charge_stops_the_resume_and_sends_nothing(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scripted_complete(
+        monkeypatch, [pack_helpers.failed("sent_unknown", "ProviderServerError", 502)]
+    )
+    kill_at_reserve(monkeypatch, 2)  # the retry is never reserved
+    real = Budget.reserve
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    monkeypatch.setattr(Budget, "reserve", real)
+    run_dir: Path = args["run_dir"]
+    (first,) = calls_of(run_dir)
+    assert first["cost_status"] == "unknown"
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == []
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("UnknownCharge")  # the loop's name for it (R15)
+    assert outcome.spent_usd == Decimal(first["reserved_usd"])  # the hold, counted once
+
+
+def test_a_torn_audit_ends_the_resume_as_torn_audit_not_as_a_workflow_code(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    (first,) = calls_of(run_dir)
+    (run_dir / "execution/owner-run-audit/calls" / ("0" * 64)).write_text("{}")
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**killed, resume=True)
+    assert outcome.outcome == "stopped" and outcome.stopped_reason == "TornAudit"
+    assert run_json(run_dir)["stopped_reason"] == "TornAudit"
+    assert outcome.spent_usd == Decimal(first["settled_usd"])
+    assert sent == []
+
+
+def test_a_resume_without_a_run_dir_or_over_a_finished_run_is_refused_untouched(
+    args: dict[str, Any],
+) -> None:
+    with pytest.raises(run_inputs_module.RunDirInvalid):
+        run_pathway(**args, resume=True)
+    assert not os.path.lexists(args["run_dir"])
+    assert run_pathway(**args).outcome == "stopped"  # RecordingMissing: run.json is written
+    before = files_under(args["run_dir"])
+    with pytest.raises(rp.ResumeRefused):
+        run_pathway(**args, resume=True)
+    assert files_under(args["run_dir"]) == before
+
+
+HIGH = ModelSpec("sol-high", "openai", "gpt-6.1-sol", "high")
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"cap_usd": Decimal(2)},
+        {"cap_usd": Decimal("0.5")},
+        {"run_id": "run-2"},
+        {"case_id": "case-2"},
+        {"model": HIGH},
+    ],
+    ids=["cap-raised", "cap-lowered", "run_id", "case_id", "config_id"],
+)
+def test_a_resume_with_other_arguments_is_refused_before_anything_changes(
+    killed: dict[str, Any], tmp_path: Path, change: dict[str, Any]
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    before = files_under(run_dir)
+    other = {**killed, **change}
+    if "model" in change:
+        other["adapter"] = recorded_adapter(HIGH, tmp_path / "recordings")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**other, resume=True)
+    assert files_under(run_dir) == before
+
+
+def test_a_resume_with_another_pathway_is_refused_before_anything_changes(
+    killed: dict[str, Any], tmp_path: Path
+) -> None:
+    context = json.loads((ROOT / "cases/context/research-minimal.json").read_text())
+    context["run"]["pathway"] = "earnings_update"
+    other_context = tmp_path / "other-context.json"
+    other_context.write_text(json.dumps(context))
+    run_dir: Path = killed["run_dir"]
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(
+            **{**killed, "context": other_context, "pathway": "earnings_update"}, resume=True
+        )
+    assert files_under(run_dir) == before
+
+
+def test_a_second_run_pathway_on_a_held_run_dir_is_refused_before_it_writes(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir: Path = killed["run_dir"]
+    seen: list[BaseException] = []
+
+    def second(self: object, *a: object, **k: object) -> Any:
+        before = files_under(run_dir)
+        try:
+            run_pathway(**killed, resume=True)
+        except rp.RunDirBusy as error:
+            seen.append(error)
+        assert files_under(run_dir) == before
+        return pack_helpers.failed("sent_known", "ProviderRejected", 400)
+
+    monkeypatch.setattr(RecordedAdapter, "complete", second)
+    outcome = run_pathway(**killed, resume=True)
+    assert outcome.outcome == "stopped" and len(seen) == 1
+    again = scripted_complete(monkeypatch, [])
+    with pytest.raises(rp.ResumeRefused):  # the lock is released with the run; run.json now exists
+        run_pathway(**killed, resume=True)
+    assert again == []
+
+
+def test_a_fresh_run_holds_the_lock_too(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[BaseException] = []
+
+    def second(self: object, *a: object, **k: object) -> Any:
+        try:
+            run_pathway(**args, resume=True)
+        except rp.RunDirBusy as error:
+            seen.append(error)
+        return pack_helpers.failed("sent_known", "ProviderRejected", 400)
+
+    monkeypatch.setattr(RecordedAdapter, "complete", second)
+    assert run_pathway(**args).outcome == "stopped" and len(seen) == 1
+
+
+def test_a_resume_reads_state_once_and_never_polls_it_while_it_drives(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A poller on `state()` makes the mutators fail `not_permitted` (Task 2, I1): the one read is
+    the loop's seed, before the first request."""
+    reads: list[str] = []
+    real = OwnerWorkflow.state
+
+    def counting(self: OwnerWorkflow) -> Any:
+        reads.append("state")
+        return real(self)
+
+    monkeypatch.setattr(OwnerWorkflow, "state", counting)
+    scripted_complete(monkeypatch, [pack_helpers.failed("sent_known", "ProviderRejected", 400)])
+    assert run_pathway(**killed, resume=True).outcome == "stopped"
+    assert reads == ["state"]
+
+
+def test_a_resume_of_a_run_killed_before_any_call_still_checks_run_id_and_sources(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No `calls.jsonl` and no marker to compare with: the staged pack alone refuses."""
+    scripted_complete(monkeypatch, [])
+    kill_at_reserve(monkeypatch, 1)
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    run_dir: Path = args["run_dir"]
+    assert not (run_dir / "calls.jsonl").exists()
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**{**args, "run_id": "run-2"}, resume=True)
+    (args["sources"][1].path).write_bytes(b"other text\n")  # the caller's file changed since
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+    assert files_under(run_dir) == before
+
+
+class PhaseWorkflow:
+    def __init__(self, phase: str, publications: tuple[str, ...] = ()) -> None:
+        self.phase, self.published = phase, 0
+        self._publications = list(publications)
+
+    def publish(self) -> dict[str, Any]:
+        self.published += 1
+        self.phase = "complete"
+        return {"status": "ok", "error_code": None, "next_step": None}
+
+
+@pytest.mark.parametrize(
+    ("phase", "runs", "published", "reason"),
+    [
+        ("analytical", 1, 0, None),
+        ("walked", 0, 1, None),
+        ("complete", 0, 0, None),
+        ("failed", 0, 0, "resume: the publication left the walk failed"),
+    ],
+)
+def test_a_resumed_walk_continues_by_the_phase_open_reports(
+    phase: str, runs: int, published: int, reason: str | None
+) -> None:
+    workflow, loop = PhaseWorkflow(phase), CountingLoop()
+    assert rp._drive_resumed(workflow, loop) == reason  # type: ignore[arg-type]
+    assert (loop.runs, workflow.published) == (runs, published)
+
+
+# ---------------------------------------------------------------- fix round 1 (R13 to R19)
+
+
+def fresh_reason_dies_before_run_json(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
+    """The run decides its stop, then the process dies as it writes run.json: the reasons the
+    fresh run was about to write."""
+    wrote: list[Any] = []
+
+    def die(run_dir: Path, meta: object, outcome: str, reason: str | None) -> NoReturn:
+        wrote.append((outcome, reason))
+        raise Kill("run.json")
+
+    monkeypatch.setattr(rp, "_write_run_json", die)
+    return wrote
+
+
+def gap_world(args: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Path, Any]:
+    """The staged run over the gap pack (CP-0, then a refused publication), as `walked` does."""
+    checked = check_arguments(**args)
+    run_dir: Path = args["run_dir"]
+    stage_sources(checked, run_dir)
+    pack = fw.make_pack(True)
+    monkeypatch.setattr(rp, "load_pack", lambda path: pack)
+    return checked, run_dir, lambda p: pack_helpers.prompt_for
+
+
+def test_a_settled_call_with_no_record_stops_the_resume_as_unrecorded_call(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R13: killed after `settle`, before the record: the next call would reuse the lost call's
+    call_index. The resume sends nothing and counts the charge."""
+    import dataclasses
+
+    run_dir: Path = args["run_dir"]
+    reply = dataclasses.replace(read_s1(), raw=None)  # a recorded reply: no raw archive to collide
+    with monkeypatch.context() as m:
+        scripted_complete(m, [reply])
+        real = Budget.settle
+
+        def settle_then_die(self: Budget, *a: Any, **k: Any) -> NoReturn:
+            real(self, *a, **k)
+            raise Kill("after settle")
+
+        m.setattr(Budget, "settle", settle_then_die)
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    assert not (run_dir / "calls.jsonl").exists()
+    (marker,) = (run_dir / "execution/owner-run-audit/reservations").glob("call-*.settled")
+    charged = Decimal(json.loads(marker.read_text())["usd"])
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == [] and outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("UnrecordedCall")
+    assert outcome.spent_usd == charged and charged > 0
+    assert run_json(run_dir)["outcome"] == "stopped"
+
+
+@pytest.mark.parametrize(
+    ("usage", "name"),
+    [
+        (pack_helpers.Usage(input_tokens=300_000, output_tokens=10), "UnknownCharge"),
+        (pack_helpers.Usage(input_tokens=100, output_tokens=10_000_000), "OverrunStop"),
+    ],
+    ids=["unknown", "overrun"],
+)
+def test_a_money_stop_on_the_call_that_ends_the_walk_stops_the_resume(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch, usage: Any, name: str
+) -> None:
+    """R15: the call whose submit ends the analytical walk is settled after the walk moved on; a
+    kill before run.json leaves nothing to ask the model, yet the stop stands."""
+    checked, run_dir, factory = gap_world(args, monkeypatch)
+    with monkeypatch.context() as m:
+        scripted_complete(
+            m,
+            [
+                pack_helpers.ok(pack_helpers.read_identity()),
+                pack_helpers.ok(pack_helpers.gap_submit(), usage=usage),
+            ],
+        )
+        wrote = fresh_reason_dies_before_run_json(m)
+        with pytest.raises(Kill):
+            rp._run_pathway(checked, run_dir, args["adapter"], factory)
+    assert wrote[0][0] == "stopped" and wrote[0][1].startswith(name)
+    sent = scripted_complete(monkeypatch, [])
+    outcome = rp._run_pathway(checked, run_dir, args["adapter"], factory, resume=True)
+    assert sent == [] and outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None and outcome.stopped_reason.startswith(name)
+
+
+STOPS = {
+    "sent_usage": lambda: pack_helpers.failed(
+        "sent_usage",
+        "MalformedReply",
+        200,
+        usage=pack_helpers.Usage(input_tokens=10, output_tokens=5),
+    ),
+    "4xx": lambda: pack_helpers.failed("sent_known", "ProviderRejected", 400),
+    "KeyReflected": lambda: pack_helpers.failed("sent_known", "KeyReflected", 400),
+    "NoSubmit": lambda: pack_helpers.ok(),
+}
+
+
+@pytest.mark.parametrize("kind", list(STOPS))
+def test_a_recorded_stop_survives_a_kill_and_the_resume_sends_nothing(
+    kind: str, args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R16: the loop wrote the stop into the call's record, then the process died before run.json;
+    the resume ends with the very stop the fresh run was writing and sends nothing (R9: a
+    key-reflecting reply is never resent)."""
+    with monkeypatch.context() as m:
+        scripted_complete(m, [STOPS[kind]()])
+        wrote = fresh_reason_dies_before_run_json(m)
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == [] and outcome.outcome == "stopped"
+    assert outcome.stopped_reason == wrote[0][1]
+
+
+def test_a_first_402_record_is_not_a_stop_the_resume_waits_and_resends(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("time.sleep", lambda seconds: None)
+
+    def credit() -> Any:
+        return pack_helpers.failed("sent_known", "CreditExhausted402", 402)
+
+    with monkeypatch.context() as m:
+        scripted_complete(m, [credit()])
+        kill_at_reserve(m, 2)  # killed while it waits out the 402
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    sent = scripted_complete(monkeypatch, [credit()])
+    outcome = run_pathway(**args, resume=True)  # the 402 was already resent once: one send more
+    assert len(sent) == 1 and outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None and outcome.stopped_reason.startswith(
+        "CreditExhausted"
+    )
+
+
+def test_a_source_dropped_from_the_resume_is_refused(killed: dict[str, Any]) -> None:
+    """R17: the same ids and the same files, not a subset."""
+    run_dir: Path = killed["run_dir"]
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**{**killed, "sources": killed["sources"][:1]}, resume=True)
+    assert files_under(run_dir) == before
+
+
+def test_a_live_run_resumed_offline_is_refused(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R18: the mode is part of the identity cap.json records."""
+    rulings = tmp_path / "rulings"
+    rulings.mkdir()
+    ruling = rulings / "lift.md"
+    ruling.write_text(RULING)
+    monkeypatch.setattr(adapter_module, "LIVE_RULINGS_ROOT", rulings)
+
+    def transport(request: object) -> NoReturn:
+        raise AssertionError("the transport was called")
+
+    live = adapter_module.live_adapter(MODEL, ruling, transport=transport, environ={})
+    with monkeypatch.context() as m:
+        m.setattr(LiveAdapter, "complete", lambda self, request, **k: read_s1())
+        kill_at_reserve(m, 2)
+        with pytest.raises(Kill):
+            run_pathway(**{**args, "adapter": live})
+    run_dir: Path = args["run_dir"]
+    assert json.loads((run_dir / "cap.json").read_text())["mode"] == "live"
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+    assert files_under(run_dir) == before
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"cap_usd": "sNaN", "mode": "offline"}',
+        '{"cap_usd": "NaN", "mode": "offline"}',
+        '{"cap_usd": "1"}',
+        '{"cap_usd": "1", "mode": "x"}',
+        "[]",
+        "not json",
+    ],
+)
+def test_a_bad_cap_json_is_a_named_refusal(killed: dict[str, Any], text: str) -> None:
+    run_dir: Path = killed["run_dir"]
+    (run_dir / "cap.json").write_text(text)
+    before = files_under(run_dir)
+    with pytest.raises(rp.ResumeRefused):
+        run_pathway(**killed, resume=True)
+    assert files_under(run_dir) == before
+
+
+def test_a_sealed_run_without_run_json_has_its_own_named_stop(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """R19: finishing it is an owner follow-up; the stop is named, nothing is sent."""
+    checked, run_dir, factory = gap_world(args, monkeypatch)
+    with monkeypatch.context() as m:
+        scripted_complete(
+            m,
+            [
+                pack_helpers.ok(pack_helpers.read_identity()),
+                pack_helpers.ok(pack_helpers.gap_submit()),
+            ],
+        )
+
+        def die(*a: object, **k: object) -> NoReturn:
+            raise Kill("after the seal")
+
+        m.setattr(rp, "verify_owner_run_receipt", die)
+        with pytest.raises(Kill):
+            rp._run_pathway(checked, run_dir, args["adapter"], factory)
+    assert (run_dir / "owner-run.json").exists() and not (run_dir / "run.json").exists()
+    sent = scripted_complete(monkeypatch, [])
+    outcome = rp._run_pathway(checked, run_dir, args["adapter"], factory, resume=True)
+    assert sent == [] and outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("SealedWithoutRunRecord")
+    assert "not_permitted" not in outcome.stopped_reason
+
+
+def test_a_torn_audit_counts_the_crash_left_hold(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L1: the hold a kill inside `complete` left is counted once on a TornAudit stop too."""
+    scripted_complete(monkeypatch, [Kill()])
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    run_dir: Path = args["run_dir"]
+    (marker,) = (run_dir / "execution/owner-run-audit/reservations").iterdir()
+    held = Decimal(json.loads(marker.read_text())["usd"])
+    calls = run_dir / "execution/owner-run-audit/calls"
+    calls.mkdir(exist_ok=True)
+    (calls / ("0" * 64)).write_text("{}")
+    scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert outcome.stopped_reason == "TornAudit" and outcome.spent_usd == held
+
+
+def test_a_resume_does_not_publish_again_after_a_refused_publication() -> None:
+    workflow, loop = PhaseWorkflow("walked", ("refused",)), CountingLoop()
+    reason = rp._drive_resumed(workflow, loop)  # type: ignore[arg-type]
+    assert workflow.published == 0 and reason is not None and reason.startswith("publish:")
+
+
+def test_a_reservation_marker_the_budget_cannot_load_is_a_named_stop(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L5: a BudgetError on a resume ends `stopped` with run.json, not as an exception."""
+    run_dir: Path = killed["run_dir"]
+    (marker,) = (run_dir / "execution/owner-run-audit/reservations").glob("*.settled")
+    marker.write_text(json.dumps(json.loads(marker.read_text()) | {"usd": "abc"}))
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**killed, resume=True)
+    assert sent == [] and outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None and outcome.stopped_reason.startswith("BudgetError")
+    assert run_json(run_dir)["outcome"] == "stopped"
+
+
+# ---------------------------------------------------------------- kills adopted from the 3b review
+
+
+def test_a_crash_left_marker_alone_pins_the_config(
+    args: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """config_id is checked against a reservation marker even when calls.jsonl holds nothing."""
+    scripted_complete(monkeypatch, [Kill()])
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    run_dir: Path = args["run_dir"]
+    assert not (run_dir / "calls.jsonl").exists()
+    before = files_under(run_dir)
+    other = {**args, "model": HIGH, "adapter": recorded_adapter(HIGH, tmp_path / "recordings")}
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**other, resume=True)
+    assert files_under(run_dir) == before
+
+
+def test_the_crash_stop_counts_the_settled_charges_and_the_held_one(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scripted_complete(monkeypatch, [read_s1(), Kill()])
+    with pytest.raises(Kill):
+        run_pathway(**args)
+    audit = args["run_dir"] / "execution/owner-run-audit/reservations"
+    settled = sum(
+        (Decimal(json.loads(p.read_text())["usd"]) for p in audit.glob("*.settled")), Decimal(0)
+    )
+    held = sum(
+        (
+            Decimal(json.loads(p.read_text())["usd"])
+            for p in audit.iterdir()
+            if not p.name.endswith(".settled") and not (audit / (p.name + ".settled")).exists()
+        ),
+        Decimal(0),
+    )
+    assert settled > 0 and held > 0
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == [] and outcome.spent_usd == settled + held
+
+
+def test_a_resumed_walk_reaching_the_stop_publishes_then_settles(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checked, run_dir, factory = gap_world(args, monkeypatch)
+    with monkeypatch.context() as m:
+        scripted_complete(m, [pack_helpers.ok(pack_helpers.read_identity())])
+        kill_at_reserve(m, 2)
+        with pytest.raises(Kill):
+            rp._run_pathway(checked, run_dir, args["adapter"], factory)
+    sent = scripted_complete(monkeypatch, [pack_helpers.ok(pack_helpers.gap_submit())])
+    outcome = rp._run_pathway(checked, run_dir, args["adapter"], factory, resume=True)
+    assert len(sent) == 1 and outcome.outcome == "settled", outcome.stopped_reason
+    receipt = json.loads((run_dir / "owner-run.json").read_text())
+    assert [p["status"] for p in receipt["publications"]] == ["refused"]
+
+
+def test_the_identity_is_checked_under_the_lock(
+    killed: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A second resume that runs to its end between the first one's identity check and its lock
+    cannot be followed by a second run.json."""
+    real_check = rp._check_identity
+    inner: list[str] = []
+
+    def racing(checked: Any, rd: Path, redactor: Any) -> None:
+        real_check(checked, rd, redactor)
+        if not inner:
+            inner.append("ran")
+            try:
+                inner.append(run_pathway(**killed, resume=True).outcome)
+            except rp.RunDirBusy:
+                inner.append("busy")
+
+    monkeypatch.setattr(rp, "_check_identity", racing)
+    scripted_complete(monkeypatch, [pack_helpers.failed("sent_known", "ProviderRejected", 400)] * 2)
+    replaced: list[str] = []
+    real_replace = os.replace
+
+    def spy(src: Any, dst: Any) -> None:
+        replaced.append(Path(dst).name)
+        real_replace(src, dst)
+
+    monkeypatch.setattr("deploy_workflow.run_pathway.os.replace", spy)
+    try:
+        run_pathway(**killed, resume=True)
+    except rp.ResumeRefused:
+        pass
+    assert replaced.count("run.json") == 1, (inner, replaced)
+
+
+OVER = pack_helpers.Usage(input_tokens=100, output_tokens=10_000_000)
+
+
+@pytest.mark.parametrize("order", ["unknown-first", "overrun-first"])
+def test_an_overrun_after_a_retry_keeps_its_name_on_resume(
+    order: str, args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L7 (3b Low): a 5xx (unknown, retryable) then a retry that overruns. The fresh run stops
+    OverrunStop; after a kill before run.json the resume writes the same stop, whichever way the
+    two call ids sort."""
+    ids = iter([uuid.UUID(int=1), uuid.UUID(int=2)])
+    if order == "overrun-first":
+        ids = iter([uuid.UUID(int=2), uuid.UUID(int=1)])
+    monkeypatch.setattr(loop_module, "uuid4", lambda: next(ids))
+    with monkeypatch.context() as m:
+        scripted_complete(
+            m,
+            [
+                pack_helpers.failed("sent_unknown", "ProviderServerError", 502),
+                pack_helpers.ok(
+                    pack_helpers.tool_call("read_pages", source_id="s1", first_page=1, last_page=1),
+                    usage=OVER,
+                ),
+            ],
+        )
+        wrote = fresh_reason_dies_before_run_json(m)
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    assert wrote[0][1].startswith("OverrunStop")
+    sent = scripted_complete(monkeypatch, [])
+    outcome = run_pathway(**args, resume=True)
+    assert sent == [] and outcome.stopped_reason == wrote[0][1]
+
+
+def test_a_kill_during_the_402_wait_costs_at_most_one_more_send_after_the_wait(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L8 (3b Low): the last record of the step is a first 402 (the kill came in the Retry-After
+    wait), so the resumed loop counts it as resent once: it waits first, sends at most once, and a
+    second 402 stops. The fresh rule is two sends for one logical request."""
+
+    def credit() -> Any:
+        return pack_helpers.failed("sent_known", "CreditExhausted402", 402, retry_after=30)
+
+    def killed_sleep(seconds: float) -> NoReturn:
+        raise Kill("during the Retry-After wait")
+
+    with monkeypatch.context() as m:
+        first = scripted_complete(m, [credit()])
+        m.setattr("time.sleep", killed_sleep)
+        with pytest.raises(Kill):
+            run_pathway(**args)
+    events: list[str] = []
+    monkeypatch.setattr("time.sleep", lambda seconds: events.append("wait"))
+    sent = scripted_complete(monkeypatch, [credit(), credit()])
+    real_complete = RecordedAdapter.complete
+
+    def complete(self: Any, request: Any, **k: Any) -> Any:
+        events.append("send")
+        return real_complete(self, request, **k)
+
+    monkeypatch.setattr(RecordedAdapter, "complete", complete)
+    outcome = run_pathway(**args, resume=True)
+    assert len(first) + len(sent) == 2  # one logical request: two sends in all
+    assert events[:2] == ["wait", "send"]  # the wait comes first
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("CreditExhausted")

@@ -1,0 +1,61 @@
+{
+ "rules": [
+  {
+   "id": "research.1",
+   "statement": "Submit exactly one `gaps` entry, by its `gap_id`, for every gap on the CP-0 agenda (`gaps` of the module context), none twice and none for an id the agenda does not list, each with one to four `questions`; when the agenda is empty, `gaps` is empty.",
+   "checks": [
+    "oracle:cpdr:gap_unaddressed",
+    "oracle:cpdr:gap_with_five_questions",
+    "oracle:cpdr:unknown_gap",
+    "oracle:cpdr:gap_repeated",
+    "oracle:cpdr:submission_against_empty_agenda",
+    "fn:deploy_workflow.owners.cpdr:validate_research"
+   ]
+  },
+  {
+   "id": "research.2",
+   "statement": "Every `question_id` is different from every other in the whole submission, and at most 145 characters, since fact ids are composed from it.",
+   "checks": [
+    "oracle:cpdr:question_id_repeated"
+   ]
+  },
+  {
+   "id": "research.3",
+   "statement": "An `answered` question has an `answer`, a `category` and at least one citation, and a null `limitation`. A `not_found` question has a null `answer` and `category`, no citations, and states its `limitation`.",
+   "checks": [
+    "oracle:cpdr:answered_without_citation",
+    "oracle:cpdr:not_found_with_answer",
+    "oracle:cpdr:not_found_without_limitation",
+    "oracle:cpdr:answered_with_limitation",
+    "fn:deploy_workflow.owners.cpdr:_question_issues"
+   ]
+  },
+  {
+   "id": "research.4",
+   "statement": "Each question lists in `searched_sources` one or more sources, every one a ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
+   "checks": [
+    "oracle:cpdr:no_searched_source",
+    "oracle:cpdr:searched_source_not_in_pack",
+    "oracle:cpdr:searched_source_not_searched"
+   ]
+  },
+  {
+   "id": "research.5",
+   "statement": "Cite only pack sources whose cited page you read with `read_pages`, each quote verbatim under its locator; a source outside the pack is refused.",
+   "checks": [
+    "oracle:cpdr:cited_page_not_read",
+    "oracle:cpdr:quote_not_verbatim",
+    "oracle:cpdr:citation_outside_pack"
+   ]
+  },
+  {
+   "id": "research.6",
+   "statement": "A question's `text`, `answer` and `limitation` are nonblank, contain no digit or figure, no braces or brackets, and none of the words recommend, refinanc, covenant or recovery in any case; an answer is plain text with no reference.",
+   "checks": [
+    "oracle:cpdr:digit_in_text",
+    "oracle:cpdr:prohibited_conclusion",
+    "fn:deploy_workflow.owners.cpdr:_model_text_issues"
+   ]
+  }
+ ]
+}

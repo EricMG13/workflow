@@ -265,7 +265,7 @@
       "pack": "financial source missing: no pages/hash, extraction blocked, limitation 'Quarterly financial statements were not supplied.' (cases/financial/manifest.json negative_case)",
       "submission": "submissions.json refused.cp0_consumer_row_cp1, refused.cp0_consumer_row_cpl10, refused.gap_row (no CP-L10 submission exists)",
       "expected": "expected.json refused",
-      "execution": "CP-0 only; CP-1 begin raises NotAuthorized (RefusedBegin for CP-1, kind not_authorized); CP-L10 is never begun"
+      "execution": "CP-0 only; CP-1 begin raises NotAuthorized (RefusedBegin for CP-1, kind not_authorized); the CP-L10 begin is refused as a consequence (RefusedBegin for CP-L10, kind blocked, missing_inputs CP-1); CP-L10 is never begun"
     },
     "blocked": {
       "expected": "expected.json blocked",

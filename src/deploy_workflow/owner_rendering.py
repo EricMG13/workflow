@@ -659,12 +659,23 @@ def _outcome_rules(
     outcome: Outcome = "refused" if receipt.refusals else "complete"
     if outcome not in scope.banner:
         raise _refusal("owner_render_outcome")
-    if any(r.reason == BLOCKED_EDGE for r in receipt.refusals):
+    refused = {r.module_id for r in receipt.refusals}
+    # A consequence refusal (G3, ruling B23) is a blocked-edge refusal whose missing inputs are all
+    # modules refused in this receipt; it adds nothing to the root refusal's delivery.
+    if any(
+        r.reason == BLOCKED_EDGE
+        and not (r.missing_inputs and all(item in refused for item in r.missing_inputs))
+        for r in receipt.refusals
+    ):
         raise _refusal("owner_render_blocked")
     if any(head.status not in _SETTLED for head in snapshot_heads):
         raise _refusal("owner_render_blocked")  # blocked and stale heads are not scope outcomes
     if outcome == "refused":
-        if len(receipt.refusals) != 1 or receipt.model is not None:
+        first = min((receipt.plan.index(m) for m in refused if m in receipt.plan), default=0)
+        if receipt.model is not None or any(
+            head.module_id not in receipt.plan or receipt.plan.index(head.module_id) >= first
+            for head in snapshot_heads
+        ):
             raise _refusal("owner_render_outcome")
     elif {head.module_id for head in snapshot_heads} != set(receipt.plan):
         raise _refusal("owner_render_outcome")

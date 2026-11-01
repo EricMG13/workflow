@@ -1,0 +1,83 @@
+{
+ "rules": [
+  {
+   "id": "downside_pathway.1",
+   "statement": "Set `base_period` to one of the periods listed in `base_periods` of the module context, and one whose base EBITDA is known and above zero; any other value is refused alone, before the rest of the submission is read.",
+   "checks": [
+    "oracle:cp2a:v01",
+    "oracle:cp2a:v02",
+    "fn:deploy_workflow.owners.cp2a:validate",
+    "fn:deploy_workflow.owners.cp2a:break_points"
+   ]
+  },
+  {
+   "id": "downside_pathway.2",
+   "statement": "`ebitda_decline` and `interest_increase` are decimal strings from 0 to 1 with at most four decimal places (`0`, `1` or `0.` followed by one to four digits); a threshold `level` is a non-negative decimal string of at most six integer digits and four decimal places, and above zero.",
+   "checks": [
+    "oracle:cp2a:r01",
+    "oracle:cp2a:r02",
+    "oracle:cp2a:r03",
+    "oracle:cp2a:r04",
+    "oracle:cp2a:r05",
+    "oracle:cp2a:r08",
+    "oracle:cp2a:r09",
+    "oracle:cp2a:v05"
+   ]
+  },
+  {
+   "id": "downside_pathway.3",
+   "statement": "Submit one to four `scenarios`, and each `thresholds` entry's `metric` is one of total_leverage, net_leverage and interest_coverage. Every field of the schema is present (`limitation` is null when there is none), no other field appears, `assessment.confidence` is one of the four listed values, and the object is valid JSON.",
+   "checks": [
+    "oracle:cp2a:r06",
+    "oracle:cp2a:r07",
+    "oracle:cp2a:r10",
+    "oracle:cp2a:r11",
+    "oracle:cp2a:r12",
+    "oracle:cp2a:r13",
+    "oracle:cp2a:r14"
+   ]
+  },
+  {
+   "id": "downside_pathway.4",
+   "statement": "Each scenario `name` and threshold `label` is nonblank, free of digits, braces, brackets, line breaks and control characters, and not `Base (no stress)`; scenario names are all different, threshold labels are all different, and no metric has more than one threshold. A name or label states no prohibited conclusion either (as downside_pathway.5 lists).",
+   "checks": [
+    "oracle:cp2a:v03",
+    "oracle:cp2a:v04",
+    "oracle:cp2a:v06",
+    "oracle:cp2a:v07",
+    "fn:deploy_workflow.owners.cp2a:_name_issues",
+    "fn:deploy_workflow.owners.cp2a:_scenario_issues",
+    "fn:deploy_workflow.owners.cp2a:_threshold_issues"
+   ]
+  },
+  {
+   "id": "downside_pathway.5",
+   "statement": "Every `rationale`, `limitation` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty, and you state no peer ranking, instrument recommendation or recovery conclusion (phrases such as `versus peers`, `recommend` or `will recover` are refused).",
+   "checks": [
+    "oracle:cp2a:v08",
+    "oracle:cp2a:v09",
+    "oracle:cp2a:v10",
+    "oracle:cp2a:v11",
+    "oracle:cp2a:v12",
+    "oracle:cp2a:v14",
+    "oracle:cp2a:v15",
+    "oracle:cp2a:v16",
+    "fn:deploy_workflow.owners.cp2a:_prose_issues"
+   ]
+  },
+  {
+   "id": "downside_pathway.6",
+   "statement": "`assessment.confidence` is never High, because the shock sizes and watch levels are uncited analyst assumptions.",
+   "checks": [
+    "oracle:cp2a:v13"
+   ]
+  },
+  {
+   "id": "downside_pathway.7",
+   "statement": "Do not write Python's pinned-shock-size line in a gap or a threshold label, in any case or spacing; Python adds that line when shock sizes are pinned.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2a:_gap_label_issues"
+   ]
+  }
+ ]
+}

@@ -14,14 +14,15 @@ pure.
 """
 
 import re
+import unicodedata
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal, localcontext
 from functools import partial
-from typing import Literal, Protocol, Self
+from typing import Any, Literal, Protocol, Self
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import SerializerFunctionWrapHandler, TypeAdapter, ValidationError, model_serializer
 
 from deploy_vii.contracts import (
     Citation,
@@ -34,6 +35,7 @@ from deploy_vii.contracts import (
     ReportTable,
     Run,
     RunText,
+    Source,
     TableColumn,
     TableRow,
 )
@@ -55,8 +57,18 @@ from deploy_vii.prose import tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, context_facts
+from deploy_workflow.context import Quote as ContextQuote
+from deploy_workflow.context_cites import (
+    STALE_DAYS,
+    UNREADABLE,
+    ContextTextError,
+    cite_all,
+    context_text,
+)
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-3D"
@@ -82,6 +94,18 @@ class Observation(Contract):
     quote: str
     level_text: str
     as_of_text: str | None = None
+    # The id of a Python-built context observation (`o01`, B6): a deliberate default, because every
+    # submission made before the context file was read lacks it. The model submits `kind` and this
+    # id with every other field empty; Python expands it to the listed row. An absent value is left
+    # out of the dump, so a submission and a head without context keep their content hash (N1).
+    context_row: str | None = None
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_context_row(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        if self.context_row is None:
+            data.pop("context_row", None)
+        return data
 
 
 class Absence(Contract):
@@ -164,6 +188,16 @@ class MarketContext:
     # (source_id, locator) -> the `Published <date>` the page itself states
     published: Mapping[tuple[str, str], date]
     run_as_of: date
+    # row id -> the index of the `quotes[i]` it came from: a bid and an offer pair only within one.
+    # No default: a context built without it would silently skip the pairing check (fail closed).
+    context_quote_rows: Mapping[str, int]
+    # The context file's quotes as Python-built observations (B6, Design 9), by row id (`o01`..):
+    # the listed observation, its CP-1 facility, its quote date. Empty with no context file.
+    context_observations: Mapping[str, Observation] = field(default_factory=dict)
+    context_facilities: Mapping[str, str] = field(default_factory=dict)
+    context_dates: Mapping[str, date] = field(default_factory=dict)
+    # One `context source unreadable: <reason>` per reason the file cannot be used, in order.
+    context_errors: tuple[str, ...] = ()
 
 
 # --- dates and numerals ------------------------------------------------------------------------
@@ -206,6 +240,180 @@ def parse_date(text: str) -> date | None:
 
 def _short_date(d: date) -> str:
     return f"{d.day} {_MONTHS[d.month - 1][:3]} {d.year}"
+
+
+# --- the context file's quotes as observations (B6, Design 9) ----------------------------------
+#
+# Python reads the `context` source of the frozen pack and offers its quotes as observations
+# (`o01`, `o02`...); the model submits `Observation(kind, context_row="o01")` with every other
+# field empty and Python expands it to the listed row. Quotes only: deal talk is a range, not a
+# price level (ruling Q1). Every figure is cited by `context_cites` (the file's own text, by line).
+
+CONTEXT_ROW_ISSUE = "context_row must stand alone and name a listed row"
+MIXED_FACILITIES = "observations mix context facilities"
+SINGLE_DEALER_SHEET = (
+    "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
+)
+SINGLE_DEALER_CONTEXT = (
+    "Single dealer quotation from the context file (user-supplied); trading activity is not read"
+)
+# quote kind -> (observation kind, quote field) in offer order
+BY_PYTHON = "context market evidence is built by Python; cite it by row id"
+PAIR_ISSUE = (
+    "observations[{i}] and observations[{j}]: a context bid or offer must pair with the other "
+    "side of the same context quote row"
+)
+SINGLE_ONE_SIDE_CONTEXT = (
+    "Single dealer quotation from the context file (user-supplied) with only the {side} "
+    "observed; trading activity is not read"
+)
+TALK_FROM_CONTEXT = "Indicative talk from the context file (user-supplied)."
+_OFFERED: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "observed": (("bid", "bid"), ("offer", "ask")),
+    "indicative_talk": (("indicative_talk", "price"),),
+}
+_QUOTE_FIGURES = ("bid", "ask", "price", "yield_pct", "spread_bps")
+
+
+def _long_date(d: date) -> str:
+    """`Month D, YYYY`, the form `parse_date` reads."""
+    return f"{_MONTHS[d.month - 1]} {d.day}, {d.year}"
+
+
+@dataclass(frozen=True)
+class _Offers:
+    observations: Mapping[str, Observation]
+    facilities: Mapping[str, str]
+    dates: Mapping[str, date]
+    quote_rows: Mapping[str, int]
+    errors: tuple[str, ...]
+
+
+_NO_OFFERS = _Offers({}, {}, {}, {}, ())
+
+
+def _refused(*problems: str) -> _Offers:
+    return _Offers({}, {}, {}, {}, tuple(UNREADABLE + problem for problem in problems))
+
+
+def _quote_offers(source: Source, index: int, quote: ContextQuote) -> list[Observation]:
+    """The observations one context quote offers. A quote any of whose figures cannot be cited as
+    one unique span offers none (B20a): a figure is never cited by a guessed span."""
+    figures = [name for name in _QUOTE_FIGURES if getattr(quote, name)]
+    cited = cite_all(source, [f"quotes[{index}].{name}" for name in figures])
+    if cited is None:
+        return []
+    found = dict(zip(figures, cited, strict=True))
+    shown = _long_date(date.fromisoformat(quote.as_of))
+    return [
+        Observation(
+            kind=kind,
+            source_id=CONTEXT_SOURCE_ID,
+            locator=found[name].locator,
+            quote=found[name].quote,
+            level_text=getattr(quote, name),
+            as_of_text=shown,
+        )
+        for kind, name in _OFFERED[quote.kind]
+        if name in found
+    ]
+
+
+def _readable(pack: PreparedPack) -> None:
+    """Raise `ContextTextError` for a ready context source that cannot be read by line."""
+    for source in pack.sources:
+        if source.source_id == CONTEXT_SOURCE_ID and source.status == "ready":
+            context_text(source)
+
+
+def context_offers(pack: PreparedPack) -> _Offers:
+    """The observations the pack's context file offers, with each row's facility and quote date;
+    or the named reasons it cannot be read (`context source unreadable: ...`, one per reason, the
+    reader's own order). A pack without a context source offers nothing."""
+    try:
+        _readable(pack)  # before any span is indexed
+        facts = context_facts(pack)
+        if facts is None:
+            return _NO_OFFERS
+        return _offers_of(pack, facts.quotes)
+    except ContextTextError as error:
+        return _refused(str(error))
+    except ContextRefused as refused:
+        return _refused(*refused.problems)
+
+
+def _offers_of(pack: PreparedPack, quotes: Sequence[ContextQuote]) -> _Offers:
+    """The observations of the loaded quotes, in context order (ids `o01`...)."""
+    source = next(s for s in pack.sources if s.source_id == CONTEXT_SOURCE_ID)
+    observations: dict[str, Observation] = {}
+    facilities: dict[str, str] = {}
+    dates: dict[str, date] = {}
+    quote_rows: dict[str, int] = {}
+    for index, quote in enumerate(quotes):
+        for built in _quote_offers(source, index, quote):
+            row = f"o{len(observations) + 1:02d}"
+            observations[row] = built.model_copy(update={"context_row": row})
+            facilities[row] = quote.facility_id
+            dates[row] = date.fromisoformat(quote.as_of)
+            quote_rows[row] = index
+    return _Offers(observations, facilities, dates, quote_rows, ())
+
+
+def _standalone(o: Observation) -> bool:
+    return not (o.source_id or o.locator or o.quote or o.level_text) and o.as_of_text is None
+
+
+def _listed(o: Observation, context: MarketContext) -> Observation | None:
+    """The listed row a submitted `context_row` observation stands for: the row is listed, the
+    kind is the row's and every other field is empty. None otherwise."""
+    listed = context.context_observations.get(o.context_row or "")
+    if listed is None or listed.kind != o.kind or not _standalone(o):
+        return None
+    return listed
+
+
+def _expanded(o: Observation, context: MarketContext) -> Observation:
+    return o if o.context_row is None else _listed(o, context) or o
+
+
+def expand_context_rows(
+    submission: MarketImpliedSubmission, context: MarketContext
+) -> MarketImpliedSubmission:
+    """The submission with each `context_row` observation replaced by the listed row. The same
+    object when there is none. The hash of a submission is taken before this (P3-P12)."""
+    if all(o.context_row is None for o in submission.observations):
+        return submission
+    expanded = tuple(_expanded(o, context) for o in submission.observations)
+    return submission.model_copy(update={"observations": expanded})
+
+
+def _talk_label(submission: MarketImpliedSubmission, said: Sequence[str]) -> list[str]:
+    """The user-supplied label for a context talk when no single-dealer line already says it."""
+    from_context = any(
+        o.kind == "indicative_talk" and o.context_row is not None for o in submission.observations
+    )
+    return (
+        [TALK_FROM_CONTEXT]
+        if from_context and not any("(user-supplied)" in x for x in said)
+        else []
+    )
+
+
+def _stale_lines(submission: MarketImpliedSubmission, context: MarketContext | None) -> list[str]:
+    """One line per context quote more than `STALE_DAYS` whole days before the run as-of (Design 6)."""
+    if context is None:
+        return []
+    lines: list[str] = []
+    for o in submission.observations:
+        row = o.context_row or ""
+        when = context.context_dates.get(row)
+        if when is not None and (days := (context.run_as_of - when).days) > STALE_DAYS:
+            lines.append(
+                f"Stale quote: {context.context_facilities[row]} quote dated {when.isoformat()} "
+                f"is {days} days before the run as-of {context.run_as_of.isoformat()} "
+                f"(limit {STALE_DAYS})"
+            )
+    return lines
 
 
 _MINUS = r"(?<![A-Za-z0-9])-"  # round 10 item 1: a minus sign, not a hyphen after a letter or digit
@@ -592,12 +800,29 @@ def _labelled(kind: str, level_text: str, quote: str) -> bool:
     )
 
 
+def _label_ok(o: Observation, path: str, out: _Issues) -> bool:
+    """Whether the quote labels the level as the observation's kind (ruling 6b C1); else the issue."""
+    lt = o.level_text
+    if o.kind == "indicative_talk":
+        if _labelled("(?:bid|offer)", lt, o.quote):
+            out.add(f"{path}: indicative_talk level_text {lt} is a bid or offer level in the quote")
+            return False
+    elif not _labelled(o.kind, lt, o.quote):
+        out.add(f"{path}: {o.kind} level_text {lt} is not labelled {o.kind} in the quote")
+        return False
+    return True
+
+
 def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | None:
     """The level of one observation, or None after recording its first issue."""
     if o.kind not in KINDS:
         out.add(f"{path}: kind {o.kind} is not one of bid, offer, indicative_talk")
         return None
-    if o.source_id in out.context.pages and o.source_id not in out.context.third_party:
+    unlisted = o.context_row is None  # a listed context row is Python's, not the sheet's
+    if unlisted and o.source_id == CONTEXT_SOURCE_ID:  # whatever CP-0 classes the source
+        out.add(f"{path}: {BY_PYTHON}")
+        return None
+    if unlisted and o.source_id in out.context.pages and o.source_id not in out.context.third_party:
         out.add(f"{path}: source {o.source_id} is not a third_party source (CP-0 T3)")
         return None
     if not out.on_page(o.source_id, o.locator, o.quote, path):
@@ -612,12 +837,7 @@ def _observation_level(o: Observation, path: str, out: _Issues) -> Decimal | Non
     if _LEADING_ZERO.match(lt):  # ruling 6g: after occurrence, before decimals and bound
         out.add(f"{path}: level_text {lt} {_NO_LEADING_ZERO}")
         return None
-    if o.kind == "indicative_talk":
-        if _labelled("(?:bid|offer)", lt, o.quote):
-            out.add(f"{path}: indicative_talk level_text {lt} is a bid or offer level in the quote")
-            return None
-    elif not _labelled(o.kind, lt, o.quote):
-        out.add(f"{path}: {o.kind} level_text {lt} is not labelled {o.kind} in the quote")
+    if unlisted and not _label_ok(o, path, out):
         return None
     if "." in lt and len(lt.split(".")[1]) > 4:
         out.add(f"{path}: level_text {lt} must have at most four decimal places")
@@ -635,10 +855,83 @@ def _observation_date(o: Observation, path: str, out: _Issues) -> date | None:
             out.add(f"{path}: {o.kind} needs as_of_text")
         return None
     parsed = parse_date(o.as_of_text)
-    if o.as_of_text not in normalise(o.quote) or parsed is None:
+    unlisted = o.context_row is None  # a listed row's date is Python's: not looked for in its quote
+    if parsed is None or (unlisted and o.as_of_text not in normalise(o.quote)):
         out.add(f"{path}: as_of_text {o.as_of_text} does not occur in the quote")
         return None
     return parsed
+
+
+def _resolved(o: Observation, path: str, out: _Issues) -> Observation | None:
+    """The observation to check: itself, or the listed row its `context_row` names. None after the
+    issue; silent when the file is unreadable, whose reasons are already issues."""
+    if o.context_row is None:
+        return o
+    listed = _listed(o, out.context)
+    if listed is None and not out.context.context_errors:
+        out.add(f"{path}: {CONTEXT_ROW_ISSUE}")
+    return listed
+
+
+def _check_observation(
+    path: str,
+    submitted: Observation,
+    out: _Issues,
+    levels: dict[str, Decimal],
+    dates: dict[str, date],
+) -> None:
+    """One observation's rules; records its level and date by kind when valid."""
+    o = _resolved(submitted, path, out)
+    if o is None:
+        return
+    value = _observation_level(o, path, out)
+    if value is None:
+        return
+    levels[o.kind] = value
+    parsed = _observation_date(o, path, out)
+    if parsed is not None:
+        dates[o.kind] = parsed
+
+
+def _refused_context(o: Observation, context: MarketContext) -> bool:
+    """Whether the observation is a context observation CP-3D refuses: a `context_row` that names
+    no listed row, or a model-written one citing the `context` source."""
+    if o.context_row is None:
+        return o.source_id == CONTEXT_SOURCE_ID
+    return _listed(o, context) is None
+
+
+def _side_rows(
+    sub: MarketImpliedSubmission, context: MarketContext
+) -> dict[str, tuple[int, int | None]]:
+    """For the first bid and the first offer: its position and the context quote row it came from
+    (None for a sheet observation). Empty when a side is a refused context observation."""
+    sides: dict[str, tuple[int, int | None]] = {}
+    for i, o in enumerate(sub.observations):
+        if o.kind not in ("bid", "offer") or o.kind in sides:
+            continue
+        if _refused_context(o, context):
+            return {}  # it has its own issue
+        sides[o.kind] = (i, context.context_quote_rows.get(o.context_row or ""))
+    return sides
+
+
+def _check_facilities(sub: MarketImpliedSubmission, out: _Issues) -> None:
+    """All observations of a submission share one context facility (ruling Q2). A context bid and
+    offer are one quote row's (P3-P21): never a context side with a sheet side, nor two rows."""
+    facilities = {
+        out.context.context_facilities[o.context_row]
+        for o in sub.observations
+        if o.context_row is not None and _listed(o, out.context) is not None
+    }
+    if len(facilities) > 1:
+        out.add(MIXED_FACILITIES)
+        return
+    sides = _side_rows(sub, out.context)
+    if len(sides) == 2:
+        (i, bid), (j, offer) = sides["bid"], sides["offer"]
+        if (bid is not None or offer is not None) and bid != offer:
+            out.add(PAIR_ISSUE.format(i=i, j=j))
 
 
 def _check_observations(sub: MarketImpliedSubmission, out: _Issues) -> date | None:
@@ -651,15 +944,9 @@ def _check_observations(sub: MarketImpliedSubmission, out: _Issues) -> date | No
             out.add(f"observations: kind {k} appears more than once")
     levels: dict[str, Decimal] = {}
     dates: dict[str, date] = {}
-    for i, o in enumerate(sub.observations):
-        path = f"observations[{i}]"
-        value = _observation_level(o, path, out)
-        if value is None:
-            continue
-        levels[o.kind] = value
-        parsed = _observation_date(o, path, out)
-        if parsed is not None:
-            dates[o.kind] = parsed
+    for i, submitted in enumerate(sub.observations):
+        _check_observation(f"observations[{i}]", submitted, out, levels, dates)
+    _check_facilities(sub, out)
     if "bid" in levels and "offer" in levels:
         if levels["bid"] > levels["offer"]:
             out.add("observations: bid exceeds offer")
@@ -786,11 +1073,49 @@ def _check_technicals(sub: MarketImpliedSubmission, out: _Issues) -> None:
             out.ref_on_page(b, f"{path}.basis[{j}]")
 
 
+PIN_LABEL_FORGED = "the user-supplied pin line is Python's; do not write it"
+
+
+def _normalised(text: str) -> str:
+    """NFKC, no format characters (category Cf), whitespace runs as one space, case folded, the
+    ends trimmed and one trailing full stop dropped: what a reader would take for the same text."""
+    kept = "".join(
+        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
+    )
+    folded = " ".join(kept.split()).casefold()
+    return folded.removesuffix(".").strip()
+
+
+def pin_label_forged(module_id: str, text: str | None) -> bool:
+    """True when `text` holds `module_id`'s pinned-recovery sentence, or a near copy that differs
+    only as `_normalised` folds (case, spacing, format characters, compatibility forms, the full
+    stop; a homoglyph from another script is not folded). Shared by the modules whose own
+    limitations carry model prose beside Python's pinned line (P6-P13)."""
+    return bool(text) and _normalised(pinned_line(module_id)) in _normalised(text or "")
+
+
+def _check_pin_label(sub: MarketImpliedSubmission, out: _Issues) -> None:
+    """Refuse a `technicals[i].limitation` that contains Python's pinned-recovery sentence, or a
+    near copy of it (`pin_label_forged`). The own limitations copy that text verbatim, so a
+    model-written copy would state a pin that does not exist or push the real label out of last
+    place."""
+    for i, x in enumerate(sub.technicals):
+        if pin_label_forged(MODULE_ID, x.limitation):
+            out.add(f"technicals[{i}].limitation: {PIN_LABEL_FORGED}")
+
+
+def _check_technicals_and_label(sub: MarketImpliedSubmission, out: _Issues) -> None:
+    _check_technicals(sub, out)
+    _check_pin_label(sub, out)
+
+
 def submission_issues(
     *, submission: MarketImpliedSubmission, context: MarketContext
 ) -> tuple[str, ...]:
     """Every validator issue of a submission, in rule order (empty: valid)."""
     out = _Issues(context)
+    for error in context.context_errors:
+        out.add(error)
     quotation = _check_observations(submission, out)
     for key, absence in (
         ("market_absence", submission.market_absence),
@@ -807,7 +1132,7 @@ def submission_issues(
         out.add("instrument: name does not occur in the quote")
     _check_terms(submission.terms, quotation, out)
     _check_recovery(submission, out)
-    _check_technicals(submission, out)
+    _check_technicals_and_label(submission, out)
     out.analyst_text("summary.text", submission.summary.text)
     return tuple(out.items)
 
@@ -1088,7 +1413,10 @@ class _Composer:
     def _published(self, ref: _Located) -> str:
         """` published <iso date>` from the cited page's `Published` line, else the ruled
         `, publication date not stated` (ruling D1: never fail closed)."""
-        stated = self.ctx.published.get((ref.source_id, ref.locator))
+        if isinstance(ref, Observation) and ref.context_row is not None:
+            stated = self.ctx.context_dates.get(ref.context_row)  # P3-P9: the quote's own date
+        else:
+            stated = self.ctx.published.get((ref.source_id, ref.locator))
         return f" published {stated.isoformat()}" if stated else ", publication date not stated"
 
     def talk_period(self) -> str:
@@ -1655,10 +1983,11 @@ def absence_paths(submission: MarketImpliedSubmission) -> tuple[str, ...]:
 def _single_dealer(sub: MarketImpliedSubmission) -> list[str]:
     """Ruling 6b C1: the single-dealer limitation, keyed on the observed sides only."""
     sides = [k for k in ("bid", "offer") if any(o.kind == k for o in sub.observations)]
+    from_context = any(o.context_row is not None and o.kind in sides for o in sub.observations)
     if len(sides) == 2:
-        return [
-            "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
-        ]
+        return [SINGLE_DEALER_CONTEXT if from_context else SINGLE_DEALER_SHEET]
+    if sides and from_context:
+        return [SINGLE_ONE_SIDE_CONTEXT.format(side=sides[0])]
     if sides:
         return [
             (
@@ -1669,8 +1998,23 @@ def _single_dealer(sub: MarketImpliedSubmission) -> list[str]:
     return []  # talk only: LVL-01 and the talk limitation already say it
 
 
-def own_limitations(submission: MarketImpliedSubmission) -> tuple[str, ...]:
-    """The module's own limitations, in the lease's order, de-duplicated."""
+def _with_pin(lines: Sequence[str], pinned: bool) -> tuple[str, ...]:
+    """`lines` de-duplicated, then the user-supplied recovery line last when `pinned`."""
+    if pinned:
+        lines = [*lines, pinned_line(MODULE_ID)]
+    return tuple(dict.fromkeys(lines))
+
+
+def own_limitations(
+    submission: MarketImpliedSubmission,
+    context: MarketContext | None = None,
+    *,
+    pinned: bool = False,
+) -> tuple[str, ...]:
+    """The module's own limitations, in the lease's order, de-duplicated. The `context` gives the
+    stale-quote lines the dates of the context rows (Design 6); without it there are none. With
+    `pinned` (the context file pins the recovery rate) the user-supplied line comes last, after
+    the stale, single-dealer and context-talk lines."""
     sub = submission
     out: list[str] = []
     if sub.market_absence is not None:
@@ -1678,7 +2022,10 @@ def own_limitations(submission: MarketImpliedSubmission) -> tuple[str, ...]:
             "No third-party market quotation source is in the pack, so no market level is shown"
         )
     else:
-        out += _single_dealer(sub)
+        said = _single_dealer(sub)
+        out += said
+        out += _talk_label(sub, said)
+    out += _stale_lines(sub, context)
     out += [x.limitation for x in sub.technicals if x.limitation]
     if any(o.kind == "indicative_talk" for o in sub.observations):
         out.append("Indicative dealer talk is shown but is not used in any calculation")
@@ -1719,7 +2066,7 @@ def own_limitations(submission: MarketImpliedSubmission) -> tuple[str, ...]:
             "An absence is backed only by a recorded search over some source, not by a search for the "
             "specific item"
         )
-    return tuple(dict.fromkeys(out))
+    return _with_pin(out, pinned)
 
 
 def inherited_limitations(*, own: Sequence[str], upstream: Sequence[str]) -> tuple[str, ...]:
@@ -1874,12 +2221,15 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
 
 
 def market_implied_result(
-    *, submission: MarketImpliedSubmission, context: MarketContext
+    *, submission: MarketImpliedSubmission, context: MarketContext, pinned: bool = False
 ) -> MarketImpliedResult:
-    """Tables T3E.1-T3E.9, claims and own limitations of a validated submission (pure)."""
-    derived = compose(inputs=inputs_from_submission(submission))
-    c = _Composer(submission, context, derived)
-    own = own_limitations(submission)
+    """Tables T3E.1-T3E.9, claims and own limitations of a validated submission (pure). `pinned`
+    is set by `market_implied` once the context file's pin is accepted; the pin is not checked
+    here (`_pin_lines`)."""
+    sub = expand_context_rows(submission, context)
+    derived = compose(inputs=inputs_from_submission(sub))
+    c = _Composer(sub, context, derived)
+    own = own_limitations(sub, context, pinned=pinned)
     builders: tuple[Callable[[], Table], ...] = (
         c.market_levels,
         c.price_metrics,
@@ -1938,14 +2288,40 @@ def _third_party(cp0: Module) -> frozenset[str]:
 def upstream_of(*, pack: PreparedPack, cp0: Module) -> Upstream:
     """The pure adapter: the pack and the bound CP-0 module to the Stage 1 context object."""
     pages = {s.source_id: {span.locator: span.text for span in s.spans} for s in pack.sources}
+    offers = context_offers(pack)
     context = MarketContext(
         pages=pages,
         names={s.source_id: s.name for s in pack.sources},
         third_party=_third_party(cp0),
         published=publication_dates(pages),
         run_as_of=pack.run.as_of,
+        context_observations=offers.observations,
+        context_facilities=offers.facilities,
+        context_dates=offers.dates,
+        context_quote_rows=offers.quote_rows,
+        context_errors=offers.errors,
     )
     return Upstream(context, tuple(dict.fromkeys((*cp0.limitations, *cp0.inherited_limitations))))
+
+
+def context_observations_data(upstream: Upstream) -> list[dict[str, str | None]]:
+    """The observations the context file offers, one dict per row in id order (`row`, `kind`,
+    `source_id`, `locator`, `quote`, `level_text`, `as_of_text`, `facility_id`), for the prompt to
+    show the model what it may cite. Empty when the file offers none."""
+    context = upstream.context
+    return [
+        {
+            "row": row,
+            "kind": o.kind,
+            "source_id": o.source_id,
+            "locator": o.locator,
+            "quote": o.quote,
+            "level_text": o.level_text,
+            "as_of_text": o.as_of_text,
+            "facility_id": context.context_facilities[row],
+        }
+        for row, o in context.context_observations.items()
+    ]
 
 
 def cp3d_upstream(
@@ -1991,6 +2367,35 @@ def validate_market_implied(
         if any(run.kind != "text" for run in tokenize(submission.summary.text)):
             issues = (*issues, "summary.text: text carries a reference")
     return tuple(dict.fromkeys(issues))
+
+
+def _pin_lines(pack: PreparedPack, submission: MarketImpliedSubmission) -> tuple[str, ...]:
+    """The line where the submitted recovery percent differs from the context pin, as typed (the
+    text is clipped by `pin_issues`; nothing is parsed here); a recovery absence is the
+    `submitted absence` line. A context the run refuses is the single line
+    `Context refused: ...` and no pin line (`_issues` does not call this when the upstream
+    already carries `context_errors`). Empty, and nothing mapped, when nothing is pinned."""
+    try:
+        if pins_of(MODULE_ID, pack) is None:
+            return ()
+        recovery = submission.recovery
+        submitted = {"recovery.percent_text": None if recovery is None else recovery.percent_text}
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
+
+
+def _issues(
+    pack: PreparedPack, submission: MarketImpliedSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """The content issues, then the pin lines: the one issue set of the step validator and the
+    composer gate."""
+    content = validate_market_implied(submission=submission, upstream=upstream)
+    if upstream.context.context_errors:
+        # The context is already refused (the `context source unreadable` lines are in `content`),
+        # so the pins are not read: no pin line and no second `Context refused:` line (P6-P3).
+        return tuple(dict.fromkeys(content))
+    return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
 
 
 # --- the report and the module -----------------------------------------------------------------
@@ -2080,9 +2485,13 @@ def market_implied(
     *, pack: PreparedPack, submission: MarketImpliedSubmission, upstream: Upstream
 ) -> MarketImpliedReport:
     """The report of a submission the validator accepts (`ValueError` listing the issues if not)."""
-    if issues := validate_market_implied(submission=submission, upstream=upstream):
+    if issues := _issues(pack, submission, upstream):
         raise ValueError("; ".join(issues))
-    result = market_implied_result(submission=submission, context=upstream.context)
+    # A context the pins reader refuses is also refused by the offers reader, so its
+    # `context_errors` give content lines; `market_implied` raises on the lines `_issues` returns,
+    # so `pins_of` cannot raise here.
+    pinned = pins_of(MODULE_ID, pack) is not None
+    result = market_implied_result(submission=submission, context=upstream.context, pinned=pinned)
     tables: list[ReportTable] = []
     facts: list[Fact] = []
     for table in result.tables:
@@ -2154,7 +2563,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     upstream = cp3d_upstream(store=store, attempt=attempt, pack=pack)
-    if issues := validate_market_implied(submission=submission, upstream=upstream):
+    if issues := _issues(pack, submission, upstream):
         return StepValidation(issues=issues)
     report = market_implied(pack=pack, submission=submission, upstream=upstream)
     return StepValidation(output=report.model_dump_json())

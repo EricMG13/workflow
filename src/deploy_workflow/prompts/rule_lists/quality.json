@@ -1,0 +1,39 @@
+{
+ "rules": [
+  {
+   "id": "quality.a",
+   "statement": "a. `claims`: exactly one assessment for each claim_id listed under `claims` in the CONTEXT block, and no other. `material` is true when the claim bears on the credit view; its `rationale` says why or why not.",
+   "checks": [
+    "fn:deploy_vii.quality:validate_quality_review"
+   ]
+  },
+  {
+   "id": "quality.b",
+   "statement": "b. A claim's `evidence`: exactly one lineage for each id in that claim's `evidence_ids`, and no other. Its `lineage_class` is the `ceiling` listed for that id under `evidence` or a weaker class, never a stronger one: the ceiling's `basis` names the register that produced the evidence (citation, calculation, estimate, gap, missing or coverage), which is why it cannot go higher. From strongest to weakest: Directly Sourced, Calculated, Assumption-Based, Analyst Inference, Weak Lineage, then Untraced, Conflicting and Insufficient Information (equally weakest). Keep the ceiling when the record and its citations support it; lower it when they do not, and say why in `rationale`.",
+   "checks": [
+    "fn:deploy_vii.quality:validate_quality_review"
+   ]
+  },
+  {
+   "id": "quality.c",
+   "statement": "c. `findings`: one per defect the CONTEXT block shows (for example an absent coverage slot, a lineage the record cannot support, a conflict), else none. Each has a new `finding_id` (letters, digits and `_` `.` `:` `-`; never one of `inherited_findings`), a `severity` (CRITICAL, MATERIAL or MINOR), a `status` that is open unless the CONTEXT block shows the defect resolved (any other status needs its `resolution`), a `description`, and `references` that name only evidence ids or coverage `field_id`s listed in the CONTEXT block. Add no finding for the CONTEXT block's `module_status` or `source_gate`: Python already sets the QA status from them (`blocked` or a failed gate forces Blocked), so the inputs carry them.",
+   "checks": [
+    "fn:deploy_vii.quality:validate_quality_review"
+   ]
+  },
+  {
+   "id": "quality.d",
+   "statement": "d. Every rationale, description and resolution is nonblank. The CONTEXT block is not a source and is never cited.",
+   "checks": [
+    "fn:deploy_vii.quality:validate_quality_review"
+   ]
+  },
+  {
+   "id": "quality.e",
+   "statement": "e. A REPAIR block never justifies lowering a severity or changing a status; keep every finding the CONTEXT block supports.",
+   "checks": [
+    "fn:deploy_vii.quality:validate_quality_review"
+   ]
+  }
+ ]
+}

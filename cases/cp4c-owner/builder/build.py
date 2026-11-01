@@ -42,10 +42,10 @@ PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
-    "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
-    "cases/cp2g-owner/manifest.json": "c7f66104fbfda75cd06b3dd51b2a49f7ed19b107e058ee7fe77d9832624a4068",
+    "cases/cp2a-owner/expected.json": "f6b22e02a196b8c621908f365ebbfacc4e7c5d6425d3cb842a99e164409ee66f",
+    "cases/cp2g-owner/manifest.json": "a08869a799f5b76ec65226355436f30c0453ede592e3230a4635b84adef1c4a0",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
-    "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
+    "cases/cp2g-owner/expected.json": "d1935a73770227172cd37a552b5583721f391da6f988ef4ef8baf1797f1e1b65",
     "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
     "cases/cp4-owner/expected.json": "1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78",
     "cases/cp3c-owner/manifest.json": "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",
@@ -3155,7 +3155,7 @@ def main():
             "refused": {
                 "run": runs["refused"],
                 "pack": "financial source missing",
-                "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); no later attempt",
+                "execution": "CP-0 only; CP-1 begin refused (cp1_not_authorized); the CP-2A, CP-4, CP-2G and CP-4C begins are refused as consequences (no CP-1 head); no later attempt",
             },
             "blocked": {
                 "run": runs["blocked"],
@@ -3466,7 +3466,28 @@ def main():
             {
                 "module_id": "CP-1",
                 "reason": "CP-0 has not authorized this consumer's source readiness",
-            }
+                "missing_commands": ["Run CP-1"],
+            },
+            {
+                "module_id": "CP-2A",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1"],
+            },
+            {
+                "module_id": "CP-4",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1"],
+            },
+            {
+                "module_id": "CP-2G",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1", "CP-2A"],
+            },
+            {
+                "module_id": "CP-4C",
+                "reason": "Required upstream is unrun, stale or blocked",
+                "missing_inputs": ["CP-1", "CP-2A", "CP-4", "CP-2G"],
+            },
         ],
         "refusal": "cp1_not_authorized",
         "attempts": ["CP-0"],

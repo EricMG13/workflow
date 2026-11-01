@@ -26,6 +26,7 @@ from typing import Any
 
 import cp2h_runs as runs
 import pytest
+import refusal_view
 import test_method_cp2h as stage1
 import view_tree
 from defect_classes import model_text_failures
@@ -282,9 +283,10 @@ def test_a2b_refused_begin_for_cp1_and_no_cp2h_anywhere(
     closed, outcome = refused
     store = _verify(closed)
     want = EXPECTED["cases"]["refused"]
-    assert [(r.module_id, r.reason) for r in _receipt(closed).refusals] == [
-        (w["module_id"], w["reason"]) for w in want["refused_begins"]
-    ]
+    # frozen field: refused_begins, with missing_inputs / missing_commands (G3, B23)
+    assert refusal_view.of_receipt(_receipt(closed)) == refusal_view.of_oracle(
+        want["refused_begins"]
+    )
     assert outcome["refusal"] == want["refusal"] == "cp1_not_authorized"
     assert [a.module_id for a in store.read().attempts] == want["attempts"]
     assert [h.module_id for h in store.read().heads] == want["heads"]

@@ -1,0 +1,73 @@
+{
+ "rules": [
+  {
+   "id": "change_screen.1",
+   "statement": "Choose `comparison.from_period` and `comparison.to_period` from the periods the module context offers, with `to_period` later than `from_period`; Python rates every topic for that pair.",
+   "checks": [
+    "oracle:cpl10:r01",
+    "oracle:cpl10:r02",
+    "fn:deploy_workflow.owners.cpl10:_comparison_issues"
+   ],
+   "from_code": "Python rates each of the seven topics for the change between the two quarters you choose. A topic is Material when the absolute change is at least one tenth of the absolute starting value, Watch when it is at least one twentieth, otherwise Stable; the rating uses the exact values, not the rounded percentage. A zero starting value with a change is Material. A topic with a missing value at either end is Not assessed. Ranks run Material, Watch, Not assessed, Stable, larger relative change first. Write exactly one assessment for each topic rated Material or Watch in `pair_screens` for your pair, none for any other. Confidence is Medium or Low, never High. Write no figure, no reference and no recommendation, recovery or covenant conclusion."
+  },
+  {
+   "id": "change_screen.2",
+   "statement": "Write exactly one assessment for each topic that `pair_screens` rates Material or Watch for your pair, naming it by its `topic_id`, and none for a topic rated Stable or Not assessed; never name an unknown topic or the same topic twice.",
+   "checks": [
+    "oracle:cpl10:r03",
+    "oracle:cpl10:r04",
+    "oracle:cpl10:r05",
+    "oracle:cpl10:r06",
+    "fn:deploy_workflow.owners.cpl10:_assessment_issues"
+   ]
+  },
+  {
+   "id": "change_screen.3",
+   "statement": "No confidence is High, in an assessment or in `overall`; a confidence is Insufficient Information exactly when its category is Insufficient Information.",
+   "checks": [
+    "oracle:cpl10:r07",
+    "oracle:cpl10:r13",
+    "fn:deploy_workflow.owners.cpl10:_confidence_issues"
+   ]
+  },
+  {
+   "id": "change_screen.4",
+   "statement": "An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.",
+   "checks": [
+    "oracle:cpl10:r08",
+    "oracle:cpl10:r09",
+    "oracle:cpl10:r10",
+    "oracle:cpl10:r11",
+    "fn:deploy_workflow.owners.cpl10:_text_issues"
+   ]
+  },
+  {
+   "id": "change_screen.5",
+   "statement": "An overall whose category is Insufficient Information states its `limitation`; an overall of any other category has a null `limitation`, and a stated limitation is not blank.",
+   "checks": [
+    "oracle:cpl10:r14",
+    "oracle:cpl10:r15",
+    "fn:deploy_workflow.owners.cpl10:_overall_issues"
+   ]
+  },
+  {
+   "id": "change_screen.6",
+   "statement": "Each gap's `affected_analysis` is a topic id of the view or `overall`; its `gap`, `why_it_matters` and `action` are not blank; no gap field contains a digit; and no two gaps share the same `affected_analysis` and `gap`.",
+   "checks": [
+    "oracle:cpl10:r16",
+    "oracle:cpl10:r17",
+    "oracle:cpl10:r18",
+    "oracle:cpl10:r19",
+    "fn:deploy_workflow.owners.cpl10:_gap_issues"
+   ]
+  },
+  {
+   "id": "change_screen.7",
+   "statement": "Submit one object with `comparison`, `assessments`, `overall` and `gaps` complete, and every field of each row present with the type the schema gives.",
+   "checks": [
+    "oracle:cpl10:r12",
+    "fn:deploy_workflow.owners.cpl10:_validate_step"
+   ]
+  }
+ ]
+}

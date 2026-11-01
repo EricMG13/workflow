@@ -930,7 +930,7 @@ def main():
             "gap": {"run": runs["gap"], "pack": "identity + financial + bridge (gap: no supporting page, one amount and both totals 'Not stated')", "submission": "submissions.json gap",
                     "expected": "expected.json cases.gap", "execution": "closed run: unstated amount is missing (never 0), every item Insufficient evidence, supported EBITDA equals the statements'"},
             "refused": {"run": runs["refused"], "pack": "financial source missing (cases/financial/manifest.json negative_case); identity only", "submission": "submissions.json refused",
-                        "expected": "expected.json cases.refused", "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1D never begun"},
+                        "expected": "expected.json cases.refused", "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-1D begin is refused as a consequence (CP-1 has no head); CP-1D never begun"},
         },
         "cp1_fact_selection_rule": {
             "table_id": "T4.10", "period": LTM_PERIOD,
@@ -1039,8 +1039,9 @@ def main():
     expected["cases"]["refused"] = {
         "plan_order": ["CP-0", "CP-1", "CP-1D"],
         "CP-0": {"status": "restricted", "T8_commands": {"CP-1": "DO NOT RUN", "CP-1D": "DO NOT RUN"}},
-        "refused_begins": [{"module_id": "CP-1", "reason": "str(NotAuthorized): CP-0 has not authorized this consumer's source readiness"}],
-        "attempts": ["CP-0"], "heads": ["CP-0"], "cp1d": "never begun (G1 stops the walk after a RefusedBegin)", "model_publication": "not planned", "receipt": "verifies",
+        "refused_begins": [{"module_id": "CP-1", "reason": "str(NotAuthorized): CP-0 has not authorized this consumer's source readiness", "missing_commands": ["Run CP-1"]},
+                           {"module_id": "CP-1D", "reason": "str(ValueError): Required upstream is unrun, stale or blocked", "missing_inputs": ["CP-1"]}],
+        "attempts": ["CP-0"], "heads": ["CP-0"], "cp1d": "never begun: its begin is refused as a consequence of the CP-1 refusal (G3 records a refused begin and the walk goes on; CP-1 has no head, and current_inputs checks the upstream before the CP-0 command)", "model_publication": "not planned", "receipt": "verifies",
         "must_not_appear": ["a CP-1D ticket, attempt, head or table", "a leverage or share of 0 standing for a missing one"],
     }
     # sanity on analyst prose: no digit outside references

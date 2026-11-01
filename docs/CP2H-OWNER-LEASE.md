@@ -43,7 +43,7 @@ Edges (D4), checked with `registry`: `plan(("CP-2H",))` = (CP-0, CP-1, CP-2A, CP
 ## Prerequisites
 
 1. G1, the S1a extension and G1-X integrated (protocol sections 2-4). CP-2A and CP-2G integrated and their cores registered.
-2. Host work (H1, protocol section 3): CP-2H opens a `SourceSession` over a fixed host-side mapping (identity, financial, ratings), never caller-supplied, together with the `module_context` view (the CP-1D/CP-DR pattern).
+2. Host work (H1, protocol section 3): CP-2H opens a `SourceSession` over a fixed host-side mapping (identity, financial, ratings and, when the pack holds it, context; Phase 4 Task 3), never caller-supplied, together with the `module_context` view (the CP-1D/CP-DR pattern).
 3. Pins (builder): financial manifest `6b3eeffe…93432`; snapshot submissions `bff9ed18…b35c`; CP-2G manifest `05ac9f84…b70b`, submissions `aaa8ea0e…da86f`, expected `97328745…406c`; methodology.json `1bb6c0bc…89a6`. Revision 2 re-pinned the builder to the landed serialised methodology change (methodology `348fbc4b…` → `1bb6c0bc…`, CP-2G manifest `cd8241fb…` → `05ac9f84…`); a later re-pin of any frozen file re-pins this builder.
 
 ## Files

@@ -79,6 +79,7 @@ def _context(case: str) -> cp3d.MarketContext:
         third_party=_third_party(case),
         published=cp3d.publication_dates(pages),
         run_as_of=date.fromisoformat(meta["run"]["as_of"]),
+        context_quote_rows={},
     )
 
 
@@ -285,6 +286,7 @@ def _with_page(
         third_party=base.third_party,
         published=cp3d.publication_dates(pages),
         run_as_of=base.run_as_of,
+        context_quote_rows={},
     )
 
 
@@ -463,6 +465,7 @@ def test_d1_period_without_a_published_line_is_stated_not_refused() -> None:
         third_party=base.third_party,
         published={k: v for k, v in base.published.items() if k not in dropped},
         run_as_of=base.run_as_of,
+        context_quote_rows={},
     )
     result = cp3d.market_implied_result(
         submission=_submission(SUBMISSIONS["positive"]), context=ctx

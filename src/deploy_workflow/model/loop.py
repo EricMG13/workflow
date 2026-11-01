@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import math
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -83,6 +83,29 @@ class StepStopped(Exception):
         super().__init__(f"{reason}: {detail}" if detail else reason)
         self.reason = reason
         self.detail = detail
+
+
+def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
+    """The stop a killed run had already decided, from its last durable record (R16): the record
+    form of the loop's stops (``_after_reply``, ``_outcome_of``, ``_validate``), which all write
+    their class and detail into the call's own record before the loop raises. Not a stop: no error,
+    a first 402 (the loop waits it out and resends), and a retryable unknown charge, whose stop is
+    the budget's (``Budget.stop_reason``). The text is the one ``StepStopped`` carries."""
+    if not records:
+        return None
+    last = records[-1]
+    error_class = last["error_class"]
+    if error_class is None or last["cost_status"] == "unknown":
+        return None
+    twice_402 = (
+        len(records) > 1
+        and records[-2]["http_status"] == 402
+        and records[-2]["invocation_digest"] == last["invocation_digest"]
+    )
+    if last["http_status"] == 402 and not twice_402:
+        return None
+    detail = last["error"] or ""
+    return f"{error_class}: {detail}" if detail else str(error_class)
 
 
 # ---------------------------------------------------------------- repair scoping (runner port)
@@ -290,8 +313,10 @@ def _dt(seconds: float | None) -> datetime | None:
 
 
 class ToolLoop:
-    """One loop per run: it is not resumable (its digests, retry flag and call counts live in
-    memory), so a restarted run builds a new ToolLoop over a fresh run directory."""
+    """One loop per run. Its digests, retry flag and call counts live in memory, so a restarted
+    run builds a new ToolLoop; ``resumed=True`` seeds the active step's counts and invocation
+    digest from the workflow's retained state and ``calls.jsonl`` (O3 Task 3b). The retry flag is
+    not seeded: the budget refuses a second retry from its markers (``RetryUsed``)."""
 
     def __init__(
         self,
@@ -311,6 +336,7 @@ class ToolLoop:
         pathway: str,
         max_output_tokens: int,
         bytes_per_token: Decimal = Decimal(1),
+        resumed: bool = False,
     ) -> None:
         if adapter.config_id != spec.config_id:
             raise ValueError("the adapter and the model spec name different configurations")
@@ -325,6 +351,54 @@ class ToolLoop:
         self._digests: dict[tuple[str, str], str] = {}
         self._counts: Counter[tuple[str, str, str]] = Counter()
         self._retry_used = False
+        self._first_issues: tuple[str, ...] = ()
+        self._wait_402_first = False  # a resumed step whose last record is its first 402
+        self._seed(resumed)
+
+    def _seed(self, resumed: bool) -> None:
+        """Take over a run another process began. One ``state()`` read, here and nowhere else in
+        the loop: the active step's used counts (so the caps still bind) and, from
+        ``calls.jsonl``, the invocation digest its earlier calls were sent under (so a resumed
+        step keeps its digest and ``call_index`` continues from the file). The issues of a
+        resubmission ``open()`` made go into the first prompt of the step it re-activated."""
+        if not resumed:
+            return
+        state = self._workflow.state()
+        if state.step_id is None:  # the walk is at a stop: no step to take over
+            return
+        binding = self._workflow.binding
+        key = (binding.ticket_id, binding.step_id)
+        for kind, used in (
+            ("invoke", state.invokes_used),
+            (READ_INPUTS, state.reads_used),
+            ("submit_review", state.submits_used),
+        ):
+            self._counts[(*key, kind)] = used
+        digests = {
+            r["invocation_digest"]
+            for r in self._log.records()
+            if (r["module_id"], r["step_id"], r["attempt"])
+            == (binding.module_id, binding.step_id, binding.attempt)
+        }
+        if len(digests) > 1:
+            raise ValueError("calls.jsonl holds more than one invocation digest for the step")
+        if digests:
+            self._digests[key] = digests.pop()
+        self._wait_402_first = self._last_was_first_402(binding)
+        resubmitted = self._workflow.resumed_submission
+        if resubmitted is not None and resubmitted["status"] == "invalid":
+            self._first_issues = tuple(resubmitted["issues"])
+
+    def _last_was_first_402(self, binding: OwnerBinding) -> bool:
+        """The step's last record is a 402 (``recorded_stop`` already stopped a second one): the
+        killed process was in the Retry-After wait, so this request counts as resent once (L8)."""
+        mine = [
+            r
+            for r in self._log.records()
+            if (r["module_id"], r["step_id"], r["attempt"])
+            == (binding.module_id, binding.step_id, binding.attempt)
+        ]
+        return bool(mine) and mine[-1]["http_status"] == 402
 
     # -- the run ---------------------------------------------------------------------
 
@@ -333,10 +407,18 @@ class ToolLoop:
         raises ``StepStopped``."""
         outcomes: list[dict[str, Any]] = []
         while True:
-            outcome = self._step()
+            outcome = self.run_step()
             outcomes.append(outcome)
             if outcome["next_step"] is None:
                 return tuple(outcomes)
+
+    def run_step(self) -> dict[str, Any]:
+        """Drive the workflow's active step to a submit the workflow did not refuse and return its
+        outcome (``next_step`` is None when the walk has left the analytical phase). The public
+        one-step driver: a caller that interleaves other work between steps (a rerun's replay of
+        retained modules) calls this where ``run`` would drive to the walk's end. A stop raises
+        ``StepStopped``."""
+        return self._step()
 
     def _step(self) -> dict[str, Any]:
         """One conversation: the opening prompt for the current step, then requests until a
@@ -344,7 +426,7 @@ class ToolLoop:
         binding, spec = self._workflow.binding, self._workflow.spec
         snapshot = self._execution.read()
         attempt = next(a for a in snapshot.attempts if a.ticket_id == binding.ticket_id)
-        issues = repair_prompt(snapshot, attempt, binding.step_id).issues
+        issues = self._issues(snapshot, attempt, binding.step_id)
         opening = self._prompt_for(binding, spec, issues)
         tools = self._tools_for(binding, spec)
         if spec.inputs != "none" and all(t.name != READ_INPUTS for t in tools):
@@ -365,6 +447,14 @@ class ToolLoop:
             outcome = done.validated.outcome
             if outcome is not None and outcome["status"] != "refused":
                 return outcome
+
+    def _issues(
+        self, snapshot: ExecutionSnapshot, attempt: Attempt, step_id: str
+    ) -> tuple[str, ...]:
+        """The issues for the step's opening prompt: the journal's repair issues, or on a resumed
+        run's first step those of the resubmission ``open()`` made (I3), once."""
+        issues, self._first_issues = self._first_issues, ()
+        return issues or repair_prompt(snapshot, attempt, step_id).issues
 
     def _digest(self, binding: OwnerBinding, opening: tuple[Message, ...]) -> str:
         """The invocation digest of (step, attempt): computed and retained once, from the first
@@ -387,9 +477,19 @@ class ToolLoop:
 
     # -- one logical request: the 402 wait and the one retry ---------------------------
 
+    def _wait_out_killed_402(self) -> bool:
+        """True once a resumed step whose last record is a first 402 has waited: that request is
+        then resent once already, so a second 402 stops. The record keeps no Retry-After; the
+        wait is the default."""
+        if not self._wait_402_first:
+            return False
+        self._wait_402_first = False
+        self._sleep(RETRY_AFTER_DEFAULT_S)
+        return True
+
     def _request(self, ctx: _Ctx, request: TurnRequest) -> _Attempt:
         outgoing = redacted_request(self._redactor, request)
-        resent_402 = False
+        resent_402 = self._wait_out_killed_402()
         retry_of: str | None = None
         while True:
             done = self._attempt(ctx, outgoing, retry_of)
@@ -701,8 +801,9 @@ class ToolLoop:
             if failure is not None or result is None:
                 # Whatever the workflow raised is one loop stop (record.LOOP_STOPS); the original
                 # type name and the redacted message go in the detail.
-                record["refusal_code"] = "WorkflowError"
-                out.stop = ("WorkflowError", self._named(failure))
+                stop_class = _stop_class(failure)
+                record["refusal_code"] = stop_class
+                out.stop = (stop_class, self._named(failure))
                 return out
             content, refusal, outcome = result
             if returned:
@@ -746,6 +847,14 @@ class ToolLoop:
         return Message("tool", content, tool_call_id=call.call_id)
 
 
+def _stop_class(failure: BaseException | None) -> str:
+    """The loop stop (``record.LOOP_STOPS``) a failure of the workflow is: a ``read_inputs`` body
+    over the byte cap (G6, P8) is named ``InputsTooLarge``; any other failure is ``WorkflowError``."""
+    if isinstance(failure, WorkflowError) and failure.code == "inputs_too_large":
+        return "InputsTooLarge"
+    return "WorkflowError"
+
+
 def _caught[T](action: Callable[[], T]) -> tuple[T | None, Exception | None]:
     """Run ``action``; return its value, or the exception it raised. The loop's one catch-all:
     a failure here is never dropped. The caller records its class and redacted text, settles the
@@ -773,6 +882,7 @@ __all__ = [
     "contract_prompt_for",
     "contract_tools_for",
     "read_inputs_tool",
+    "recorded_stop",
     "redacted_request",
     "redacted_turn",
     "repair_prompt",

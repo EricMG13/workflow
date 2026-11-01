@@ -1,0 +1,68 @@
+{
+ "rules": [
+  {
+   "id": "legal_covenants.a",
+   "statement": "a. Each citation names a SOURCE block's id, copies one `locator=` value from that block exactly (for example page:1: no brackets, ranges or notes) and quotes a verbatim substring of that span's text. Runs of whitespace and line breaks may be written as one space and curly quotes or dashes in ASCII; every other character is copied exactly, and the quote must be in the span its locator names. Copy a run that is contiguous in the SOURCE block as printed; never reassemble a sentence across interleaved table text. Never continue a quote onto the next page.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:_bind",
+    "fn:deploy_vii.cp4_legal:validate_covenant_interpretation",
+    "fn:deploy_vii.readiness:citation_issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.b",
+   "statement": "b. Quote only the sources listed under `legal_sources` in the CONTEXT block, each from its own SOURCE block; `other_sources` are never cited. Every document, covenant, capacity and red flag row quotes at least one span. A document row quotes its own source only, and each source is registered by one document row.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:_row_issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.c",
+   "statement": "c. The CONTEXT block states each source's extraction coverage. Never call a page or locator absent when that coverage lists it. This holds for every text field.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:validate_covenant_interpretation",
+    "fn:deploy_vii.readiness:absence_issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.d",
+   "statement": "d. `threshold_text` is copied from one of the covenant's own quotes and holds the one tested threshold. `threshold_value` is that number exactly as the quote writes it (null for `other` and `not stated`): Python reads the number out of the quote and rejects a value that differs. A `multiple` or `percent` threshold states its `comparison`; a maximum (`<=`, `<`) is rejected when the quote names only a floor, a minimum (`>=`, `>`) when it names only a cap.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:_threshold_issues",
+    "fn:deploy_vii.cp4_legal:_direction_issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.e",
+   "statement": "e. `metric_ref` is a ref listed under `cp1_facts` whose unit matches the threshold's, or null; with no `metric_ref`, `metric_basis` is Not determinable.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:_covenant_issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.f",
+   "statement": "f. Python computes every headroom and every within-threshold result from the quoted threshold and the CP-1 metric: never state compliance, a breach or an amount of headroom or cushion in any text.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp4:semantic_issues",
+    "fn:deploy_vii.cp4_legal:python_owned_issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.g",
+   "statement": "g. Every text field is nonblank run text: labels only (period, filing and section labels); a CP-1 figure only as `{ref|unit}` from `cp1_facts` and a threshold only inside its quote; never a bare number. No instrument recommendation and no recovery conclusion; recovery prospects may appear as a mechanic.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:validate_covenant_interpretation",
+    "fn:deploy_vii.cp4_legal:prohibited_issues_cp4",
+    "fn:deploy_vii.prose:issues"
+   ]
+  },
+  {
+   "id": "legal_covenants.h",
+   "statement": "h. A covenant's `document_id` names a `documents` row, which the covenant quotes; its `facility_ids` name facilities listed under `facilities`, each once. A lender protection rating above Insufficient Information cites the provisions it rests on; an Insufficient Information rating states its `limitation`.",
+   "checks": [
+    "fn:deploy_vii.cp4_legal:_covenant_issues",
+    "fn:deploy_vii.cp4_legal:_row_issues"
+   ]
+  }
+ ]
+}

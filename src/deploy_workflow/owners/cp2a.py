@@ -20,7 +20,7 @@ import json
 import re
 import unicodedata
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Context, Decimal, Inexact, InvalidOperation, Overflow, localcontext
 from fractions import Fraction
 from typing import Literal, get_args
@@ -67,8 +67,11 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import figure_unit
+from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2A"
 STEP_ID = "downside_pathway"
@@ -597,12 +600,14 @@ HIGH_ISSUE = (
 class Inputs:
     """Everything the calculation reads. `cp1_facts`: the bound CP-1 head's T4.10 facts the
     view offers; `offered_periods`: the view's base periods; `names`: the issuer name (digits in
-    it are not figures)."""
+    it are not figures); `pinned`: the context file pins the scenario shocks, so the limitations
+    state they are user-supplied (the pins themselves are checked by `validate_downside`, not the core)."""
 
     submission: DownsideSubmission
     cp1_facts: tuple[Fact, ...]
     offered_periods: tuple[str, ...]
     names: tuple[str, ...]
+    pinned: bool = False
 
 
 def _bad_name(text: str) -> bool:
@@ -696,7 +701,23 @@ def validate(inputs: Inputs) -> tuple[str, ...]:
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
             path = f"gaps[{n}].{name}"
             issues += _prose_issues(path, getattr(gap, name), bound, inputs.names)
+    issues += _gap_label_issues(sub)
     return tuple(dict.fromkeys(issues))
+
+
+def _gap_label_issues(sub: DownsideSubmission) -> list[str]:
+    """A gap line and a threshold label join the own limitations beside Python's pinned line, so
+    a model-written copy of that line in either is refused (P6-P13, shared with CP-3D)."""
+    found = [
+        f"gaps[{n}].gap: {PIN_LABEL_FORGED}"
+        for n, g in enumerate(sub.gaps)
+        if pin_label_forged(MODULE_ID, g.gap)
+    ]
+    return found + [
+        f"thresholds[{n}].label: {PIN_LABEL_FORGED}"
+        for n, t in enumerate(sub.thresholds)
+        if pin_label_forged(MODULE_ID, t.label)
+    ]
 
 
 # --- composition ------------------------------------------------------------------------------
@@ -1422,6 +1443,8 @@ def compute(inputs: Inputs) -> Result:
     claims = _claims(out, sub, runs[1:], ranked, bound)
     if not ranked:
         limits.append(NO_FIRST_BREAK)
+    if inputs.pinned:
+        limits.append(pinned_line(MODULE_ID))
     copies, references = _references(sub, bound, base)
     return Result(
         base=base,
@@ -1547,7 +1570,8 @@ def offered_bases(cp1: Iterable[Fact]) -> tuple[OfferedBase, ...]:
 def _inputs(pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream) -> Inputs:
     """The store adapter: the settled CP-1 head's offered T4.10 facts (in the head's order), the
     offered periods and the issuer name, as the Stage 1 `Inputs` the core reads. Submit, probe and
-    the entry validator reach the core only through this."""
+    the entry validator reach the core only through this. It reads no context: `downside_report`
+    sets `Inputs.pinned` once `validate_downside` has accepted the context."""
     bases = offered_bases(upstream.cp1)
     chosen = {f.fact_id for base in bases for f in base.facts}
     return Inputs(
@@ -1556,6 +1580,22 @@ def _inputs(pack: PreparedPack, submission: DownsideSubmission, upstream: Upstre
         offered_periods=tuple(base.period for base in bases),
         names=(pack.run.issuer_name,),
     )
+
+
+def _pin_lines(pack: PreparedPack, submission: DownsideSubmission) -> tuple[str, ...]:
+    """The lines where the submitted shocks differ from the context pins, in the submission's
+    units and as typed; a context the run refuses is the single line `Context refused: ...` and
+    no pin line (the message is `context_facts`'s). Empty when nothing is pinned."""
+    submitted = {
+        "scenarios": [
+            {"ebitda_decline": s.ebitda_decline, "interest_increase": s.interest_increase}
+            for s in submission.scenarios
+        ]
+    }
+    try:
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
 
 
 def _stale_issues(upstream: Upstream) -> list[str]:
@@ -1578,8 +1618,14 @@ def validate_downside(
     *, pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream
 ) -> tuple[str, ...]:
     """Every issue of `submission` over the bound `upstream`: staleness first, then the core's
-    content issues in their order; empty when it composes."""
-    issues = [*_stale_issues(upstream), *validate(_inputs(pack, submission, upstream))]
+    content issues in their order, then the pin lines (also after a base-period issue that
+    `validate` returns alone); empty when it composes. The one issue set of the entry validator and
+    the composer gate."""
+    issues = [
+        *_stale_issues(upstream),
+        *validate(_inputs(pack, submission, upstream)),
+        *_pin_lines(pack, submission),
+    ]
     return tuple(dict.fromkeys(issues))
 
 
@@ -1590,7 +1636,10 @@ def downside_report(
     issues = validate_downside(pack=pack, submission=submission, upstream=upstream)
     if issues:
         raise ValueError("; ".join(bounded_issues(issues)))
-    result = compute(_inputs(pack, submission, upstream))
+    # A refused context is a `Context refused: ...` issue, so `validate_downside` returned it and
+    # this function raised above; `pins_of` cannot raise `ContextRefused` here.
+    pinned = pins_of(MODULE_ID, pack) is not None
+    result = compute(replace(_inputs(pack, submission, upstream), pinned=pinned))
     return DownsideReport(
         run=pack.run,
         pack_sha256=pack.content_hash(),

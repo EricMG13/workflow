@@ -169,3 +169,150 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   then a model can cite a `line:N` it never read; the quote must still match the line exactly. The controller
   rulings recorded with it (O2 Task 7): `MAX_LINES_PER_EXTRACT` 200 (a real filing's last statement unit fails
   closed), and `live/prompts.py` still says "page" (before O6 live runs).
+- **B23 (controller, applied recommendation, 2026-11-01): G3 keeps today's refused deliveries.** O3 Task 1
+  (0a83d2b8) continues the walk after a refusal, as the approved plan says. The plan missed that six frozen module
+  oracles pin the old stop-at-first-refusal walk: `cases/{cp1c,cp2a,cp2g,cp2h,cp4c,cpl10}-owner/expected.json`
+  give `refused_begins == ['CP-1']` and "never begun". Five refused deliveries also break:
+  `test_owner_rendering.py::test_genuine_deferred_refused_cases` for cp1c, cp2a, cp2g, cp2h and cp4c. The
+  downstream refusals carry `BLOCKED_EDGE`, so `owner_rendering.py:662` refuses them (mx-adversary a62b849b).
+  The ruling has three parts.
+  1. The renderer keeps the exact pre-G3 deliveries and renders nothing new. A `refused` outcome renders only
+     when all of the following hold:
+     - no publication exists;
+     - every refusal is either a non-`BLOCKED_EDGE` refusal, or a consequence refusal (`BLOCKED_EDGE` whose
+       `missing_inputs` are all modules refused in the same receipt);
+     - every head belongs to a module planned before the first refusal.
+
+     Any other `BLOCKED_EDGE` refusal stays `owner_render_blocked`. A refused run where a later module settled
+     stays `owner_render_outcome`. That covers distressed CP-2G/CP-2H, which is still the user's call as a
+     report with named gaps. The change goes in `_outcome_rules`.
+  2. The `refused` blocks of every module oracle whose walk G3 changes are re-cut. Each re-cut is derived from
+     `dependencies()`, CP-0's commands and `Execution.begin`'s check order, with no value read back from the code
+     under test. Each has a separate preparer, an independent `mx-precise` review and an `mx-scaffold` freeze;
+     none of them is the Task 1 builder.
+  3. Then the module tests are adapted to the frozen oracles.
+
+  Not chosen: leaving the five deliveries broken, and narrowing G3 (contract amendment 2). Cost if wrong: one
+  renderer rule and six oracle re-cuts to revert. The Modules session owns these oracles and is told.
+- **B23a (controller, applied recommendation, 2026-11-01): the scope of the B23 re-cut and freeze.** Oracle review
+  mx-precise ab59ccee approved the seven re-cuts of 02f2fb93 (cp1c, cp1d, cp2a, cp2g, cp2h, cp4c, cpl10). It found
+  that cpos-owner `s1a_refused_cp1a` was missed: `cases/cpos-owner/expected.json:2861-2862` and
+  `builder/build.py:440-443` say "the walk stops". Under G3 the walk refuses CP-2 (`missing_inputs` [CP-1A]) and
+  stops at CP-MODEL.
+  1. cpos joins the B23 re-cut. S1a lease Q3(b) ("keep G1's stop rule", `docs/S1A-OWNER-RUN-LEASE.md:190,235`)
+     is superseded by G3, the approved O3 plan. The lease text is left as history.
+  2. The freeze is pin-only and mechanical: regenerated digests, no change to any claim. It is done by
+     `mx-scaffold`, and it covers:
+     - the downstream builder pin literals (cp2g, cp2h, cp4c, cp2h-context, context-identity-periods,
+       pins-context, valuation-context, periods-currency);
+     - the chart oracles that embed these digests (`cases/charts/dr2`, `dr345`, `dr6`, `rv3`);
+     - `cases/PINS.json`.
+
+     Modules owns the chart oracles and is told.
+  3. The cp4c builder's cp3c-manifest pin was already stale (owner list). It stays as it is, and the freeze
+     regenerates cp4c with only that one assert skipped.
+  4. Each module test is adapted to its frozen oracle, including the slow `tests/test_owner_s1a.py:898`. That
+     test is not run here (B16), so it goes to CI.
+
+  Cost if wrong: digest re-pins to revert.
+- **B24 (controller, 2026-11-01): parallel lanes.** MANAGER relayed the user's "Send it" for a lineup that shortens
+  the critical path. The controller adopts it on its own authority: global §2 allows stages with disjoint outputs
+  to run in parallel. It is not treated as a change of who rules.
+  - Lanes now running alongside O3/O4, which stays serial:
+    - O6;
+    - Phase 3 Tasks 1-3 (Task 4 after O6);
+    - Phase 6 Tasks 1-8 and 10 (Task 9 after O6 Task 2).
+  - Phase 4 starts once Phase 3 Task 2 lands `context_cites.py`.
+  - Phases 2 and 5 (they edit owner_workflow.py), O7, Phase 7 and Phase 8 stay in order.
+  - An overlap MANAGER missed: Phase 3 Task 2 and Phase 6 Task 7 both edit `owners/cp3d.py`, so Phase 6 Task 7
+    runs after Phase 3 Task 2.
+  - These files get one writer at a time: `cases/PINS.json`, `cases/pins.py`, `cases/context/primary-full.json`
+    and `docs/reuse/manifest.json` (D12).
+  - All lanes share this worktree, because isolated-worktree builders cannot use the venv. A builder that sees an
+    import or syntax error in a file it did not touch treats it as another lane's edit in progress: it waits and
+    re-runs, and never edits that file.
+  - Caps: at most 6 Opus agents and 10 subagents at once. A phase's builder is never its preparer.
+
+  Cost if wrong: one lane's tests flake on another lane's edit in progress, so a rerun.
+- **B6a: B6 covers the deal-talk rows (user, 2026-11-01, relayed by MANAGER quoting the user: "Yes, B6 covers it").**
+  Under B6, `src/deploy_vii/cp3_relative_value.py` also builds CP-3 market evidence from the context's `deal_terms` talk rows,
+  as the approved Phase 3 plan (ruled decision 1) says. CP-3D stays quotes-only. This answers Phase 3 pre-flight P3-P1.
+  The answer came through MANAGER. The phase therefore builds now, but it is not released to the PR Manager until the
+  user confirms B6a in this session. The memory rule on relays (`deploy-workflow-manager-routing`) covers this.
+  Confirmed by the user in this session on 2026-11-01 ("confirm B6a"). Phase 3 can be released once its gates pass.
+
+## B25. Fable is available again (user, 2026-11-01)
+
+The user wrote in this session: "fable is available". This lifts the 2026-10-28 stop on Fable for this plan. The controller ruled on how to use it, by its own recommendation:
+
+- Each phase review from now on (O3+O4, O6, Phase 3, Phase 6 and the later phases) goes to `mx-architect` (Fable 5.1), as does the whole-branch review at the end. So does an `mx-adversary` audit that is refused, as global §1 says.
+- Fable writes no code. A third fix round still goes to `mx-autonomous` for the root cause and then to a fresh `mx-feature` (global §1, owner 2026-10-28). `mx-escalate` is not dispatched.
+- Per-task reviews keep their routing: `mx-precise`, plus `mx-adversary` on sensitive diffs.
+- The phase reviews already done (O1, O5 and O2) are not rerun.
+
+Cost if wrong: higher review spend on the remaining phase reviews. The user can narrow this ruling.
+
+## B26. O5 follow-up batch (controller, 2026-11-01)
+
+The model-testing framework session reported four defects in the released O5 code (`src/deploy_workflow/model/`), relayed through MANAGER:
+- key-shaped field names in `RecordInvalid` text;
+- negative `reserved_usd` and `settled_usd`, and a boolean `attempt`;
+- keys glued to a word character that `KEY_PATTERN` misses;
+- the private `_strings`, which the framework imports.
+
+They predate the current tasks, but they are this plan's code and touch key leakage and money. They are fixed here as one follow-up batch, built by mx-feature and reviewed by mx-adversary (`.superpowers/sdd/2026-10-31-part-b-o5/followup-1-brief.md`). They are not left as owner items. The fix goes to the PR Manager as an addition to the O5 release.
+
+Cost if wrong: one small extra batch and review.
+
+The O2 note in the same message is for information. The offline synthetic full walk (`tests/o2_case.py`) ends `stopped` with `render: owner_render_scope` and takes more than 5 minutes. It is checked at the O3/O4 phase gate in CI and in O7.
+
+## B27. Analyst-assumption figures under O1 (user, 2026-11-01)
+
+The O6 Task 4 adversary review found a conflict (M1). Orchestrator rule O1 says "never use … any figure not shown there". But eight new owner steps require analyst-assumption figures that no evidence shows:
+- `downside_pathway`
+- `forward_credit_model`
+- `liquidity_bridge`
+- `macro_fx`
+- `refinancing_risk`
+- `market_implied`
+- `restructuring_fulcrum`
+- `earnings_quality`
+
+The question went to the user through MANAGER with three options:
+1. Keep O1's text and add one sentence to each of the eight texts.
+2. Keep O1 strict, so the eight steps refuse.
+3. Supply the assumptions through the context form.
+
+The user's reply, relayed verbatim by MANAGER: "1".
+
+**Ruling.** O1's text is unchanged. Each of the eight step texts gains one sentence that names that step's assumption fields. The model:
+- chooses each value within the schema's range;
+- bases it on the figures the module context lists, where they bear on it;
+- never presents it as sourced;
+- states its basis in the step's limitation field.
+
+Python labels the value an analyst assumption. The sentence is built in the O6 Task 4 fix round and reviewed by mx-adversary.
+
+The adversary's M2 is a separate matter: two steps ask the model to reproduce Python's arithmetic (restructuring_fulcrum `.6`/`.7`, forward_credit_model `.3`). It goes to the owner list.
+
+## B28. Phase-by-phase release (user via MANAGER, 2026-11-01; controller cut rule)
+
+- **User instruction (relayed by MANAGER, the user's words "Do it"):** release each phase as soon as its phase gate and phase review pass. Merge codex/checkpoint (cfe37c23) into this branch before the first cut. Send each release request to MANAGER for the user's merge approval.
+- **Done:** base merge 8869ef55, with no conflicts and no push. The Verifier gate (CLAUDE.md) applies to plans and leases written from 2026-11-01. This plan's lanes were planned on 2026-10-31 and finish under their own plans.
+- **Controller cut rule.** A release tip is valid when all of the following hold:
+  1. every commit up to it belongs to a task with an approving review and no open High or Medium finding;
+  2. every phase completed at the tip has passed its phase gate and phase review;
+  3. the union fast gate of all carried lanes, the golden and `cases/pins.py --check` exit 0 at the tip.
+
+  Interleaved lanes whose tasks are approved but whose phase is unfinished are named in the release note.
+- **User decision (relayed by MANAGER, 2026-11-01, the user's reply verbatim: "1").** The first cut may carry the task-approved, phase-pending lanes, gated as proposed: O3/O4 Tasks 1-5; O6 Tasks 1-5 and its end batch; O7a and the frozen O7 oracle; B26. When the cut is valid, MANAGER receives the exact tip, its gate results, the carried and left-out lists, and the `src/deploy_vii` diff list, for the user's merge approval.
+
+## B29. CP-3 method text and rule d name the context-row basis (user, 2026-11-01: "Approved")
+
+- **Approved by the user in this session.** A wording-only edit to two pieces of text so that they name `basis.context_rows` (Python's context rows, cited by id) next to `basis.quotes`:
+  - `src/deploy_vii/methods/cp3.md` (~:26-33), which says market evidence comes only from a `third_party` source, and "copy that row's quote into `basis.quotes`";
+  - `CP3_BASIS_RULE` in `src/deploy_vii/live/prompts.py` (~:597-602, rule d), which names "a `basis.quotes` market quote" as the only market basis.
+
+  No rule, number, table id or validator changes. Each file gets its D12 record. Review: `mx-adversary`, because both texts reach the model (as B17 item 4).
+- **Why:** the Phase 3 phase review (Low 1) found that both texts reach CP-3's live system message and still describe the market basis as `basis.quotes` only, while the validator accepts `basis.context_rows`.
+- **Controller timing ruling:** the edit lands after the first release cut (B28), as its own small release, so that the cut stays exactly as gated. The edit changes CP-3's frozen digest, its rule-list statement `relative_value.d` and the golden. Cost if wrong: CP-3's prompt keeps the old wording until the follow-up merges; live runs are paused.

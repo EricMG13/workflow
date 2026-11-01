@@ -60,6 +60,7 @@ def _context_with(char: str) -> cp3d.MarketContext:
         third_party=ctx.third_party,
         published=ctx.published,
         run_as_of=ctx.run_as_of,
+        context_quote_rows={},
     )
 
 
@@ -146,6 +147,7 @@ def test_backlog_signed_value_text_is_matched_on_the_plain_reading_only() -> Non
         third_party=ctx.third_party,
         published=ctx.published,
         run_as_of=ctx.run_as_of,
+        context_quote_rows={},
     )
     for text in ("-425", "425"):
         raw = base._edited(
@@ -170,6 +172,7 @@ def test_backlog_raw_value_is_compared_with_the_normalised_quote() -> None:
         third_party=ctx.third_party,
         published=ctx.published,
         run_as_of=ctx.run_as_of,
+        context_quote_rows={},
     )
     quote = POSITIVE["instrument"]["quote"]["quote"].replace("Term Loan", "Term−Loan", 1)
     raw = base._edited(

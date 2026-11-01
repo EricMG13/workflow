@@ -20,6 +20,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
 
+import cp2h_context_support as wiring
 import pytest
 import test_method_cp2g as cp2g_stage1
 import test_method_cp2h as stage1
@@ -444,6 +445,42 @@ def test_adapter_returns_the_stage_1_input_object(case: str, tmp_path: Path) -> 
     assert [s.source_id for s in got.pack.sources] == ["identity", "financial", "ratings"]
     assert cp2h.compute(got) == cp2h.compute(replace(want, upstream=up))
     assert [i.input_id for i in attempt.inputs] == EXPECTED["execution"]["inputs"]["positive"]
+
+
+def _context_pack(pack: PreparedPack, context_name: str = "context-positive.json") -> PreparedPack:
+    """The seeded pack with the context oracle's ratings source in place of the fictional one and
+    the context file after it (the run is the same issuer and as-of date)."""
+    held = [s for s in pack.sources if s.source_id != "ratings"]
+    ratings = wiring.ratings_source("positive")
+    return PreparedPack(run=pack.run, sources=(*held, ratings, wiring.context_source(context_name)))
+
+
+def test_adapter_returns_the_stage_1_input_object_for_a_context_pack(tmp_path: Path) -> None:
+    """The context variant of the adapter test: the pack carries the `context` file; the adapter
+    keeps it in the host scope in pack order, types it, and the core reads the register from it."""
+    store, pack, attempt = seed(tmp_path, "positive")
+    with_context = _context_pack(pack)
+    got = cp2h._inputs(with_context, _submission(store, "positive"), _upstream(store, attempt))
+    assert [s.source_id for s in got.pack.sources] == [
+        "identity",
+        "financial",
+        "ratings",
+        "context",
+    ]
+    assert got.pack == wiring.scope_of(with_context)
+    assert got.pack.context is not None and got.pack.context_refusal is None
+    assert [r.agency for r in got.pack.context.ratings] == ["S&P", "Moody's"]
+    _, source, citations = cp2h.register_source(got.pack)
+    assert [r.agency for r in source.register] == ["S&P", "Moody's"] and len(citations) == 2
+
+
+def test_the_adapter_carries_a_context_refusal_not_a_raise(tmp_path: Path) -> None:
+    store, pack, attempt = seed(tmp_path, "positive")
+    mismatch = _context_pack(pack, "context-mismatch.json")
+    got = cp2h._inputs(mismatch, _submission(store, "positive"), _upstream(store, attempt))
+    assert got.pack.context is None
+    assert got.pack.context_refusal == wiring.REFUSALS["context_mismatch"]["expected_issues"][0]
+    assert cp2h.validate(got) == (got.pack.context_refusal,)
 
 
 def _scaled(facts: tuple[Fact, ...], metric: str, amount: str) -> tuple[Fact, ...]:

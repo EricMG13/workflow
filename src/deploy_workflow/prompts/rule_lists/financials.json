@@ -1,0 +1,87 @@
+{
+ "rules": [
+  {
+   "id": "financials.a",
+   "statement": "a. Every `amount` is a JSON number, never a string, with no unit or currency symbol: remove thousands separators, and write parentheses or a leading minus as a negative number (`3,624` is 3624; `(211)` is -211). Money amounts are written as the source prints them, in the `unit` and `currency` of the source scope the book binds to (rule i; a facility's in the facility's own `currency`), and are never arithmetic. Other amounts have their own unit: `effective_tax_rate` is a decimal fraction (21.0% is 0.21); a facility's `spread_bps` and `floor_bps` are basis points (2.75% is 275) and its `fixed_rate` is a percent (5.25% is 5.25); an FX `rate` is target-currency units per source-currency unit; a KPI amount is in that KPI's own `unit`.",
+   "checks": [
+    "fn:deploy_vii.financial_contracts:Observation.value_state"
+   ]
+  },
+  {
+   "id": "financials.b",
+   "statement": "b. `accounts[].metric_id` is one of the account metrics the schema's `metric_id` enum lists: the r14 canonical accounts Python calculates from. A figure the filing reports that has no account metric belongs in `statement_lines` under its own `item_id` (issuer detail with the `other:` prefix), with its `statement` and `sign_convention`, not in `accounts`.",
+   "checks": [
+    "fn:deploy_vii.financial_contracts:AccountObservation.controlled_metric"
+   ]
+  },
+  {
+   "id": "financials.c",
+   "statement": "c. Every `period_id` an entry uses must be declared in its book's `periods`.",
+   "checks": [
+    "fn:deploy_vii.financial_validation:period_issues",
+    "fn:deploy_vii.financial_validation:validate_financial_review"
+   ]
+  },
+  {
+   "id": "financials.d",
+   "statement": "d. A statement line's `sign_convention` is `signed` when its amount carries the arithmetic sign the statement implies (an expense or outflow negative, a revenue or inflow positive); balance-sheet lines are always `signed`. Use `outflow_magnitude` only when the source prints an expense or outflow as a positive magnitude and you keep that presentation: then `sign_citations` must hold at least one located span showing the printed presentation (repeat the value's citation in `sign_citations`), never empty. A negative amount under `outflow_magnitude` is read as -abs(amount); use `signed` for a negative figure.",
+   "checks": [
+    "fn:deploy_vii.financial_contracts:StatementLine.sign_evidence",
+    "fn:deploy_vii.statement_validation:statement_issues"
+   ]
+  },
+  {
+   "id": "financials.e",
+   "statement": "e. A statement line is one row per period under one `line_id` and one `display_priority`: every period's row for it repeats the same `statement`, `item_id`, `label` and `line_kind`, and a period is never its own `line_id`. For example `line_id` \"is-net-revenues\" has a row for FY2025 and a row for FY2024, both at `display_priority` 1. An `item_id` is used by one line per statement (one `other:` id per issuer-detail line, never reused). `display_priority` is unique within a statement across all periods (two lines of one statement never share a number). Addbacks (`addback_id`), segments (`segment_id`) and KPIs (`kpi_id`) follow the same rule: one id and one `display_priority` across all periods, never repeated for another id, and every period's row repeats the same `addback_label` and `classification` (addbacks), `segment_name` and `segment_type` (segments), or `kpi_label`, `business_unit`, `definition`, `unit` and `value_type` (KPIs).",
+   "checks": [
+    "fn:deploy_vii.statement_validation:statement_issues",
+    "fn:deploy_vii.statement_validation:_identity_issues",
+    "fn:deploy_vii.financial_validation:_series_issues",
+    "fn:deploy_vii.canonical_audit:validate_definition_review"
+   ]
+  },
+  {
+   "id": "financials.f",
+   "statement": "f. A statement line's `item_id` is one of the ids listed for its own `statement` below; an id listed for one statement is not admitted on another unless that statement lists it too. A line the filing prints that is not in its statement's list takes an `other:` id (for example `other:deferred_revenue`; letters, digits and `_.:-` only, no spaces), never another statement's id.\nIS: revenue, cogs, gross_profit, sga, other_operating, ebitda_reported, ebitda_adjusted, depreciation_amortization, ebit, interest_expense_total, interest_expense_cash, interest_income, other_non_operating, pretax_income, income_tax_total, income_tax_cash, net_income, exceptionals, sbc, opex_including_da, operating_lease_cost\nCFS: ocf_before_wc, cfo_ncfo, working_capital_change, capex_maintenance, capex_growth, capex_total, fcf_levered, fcf_unlevered, dividends_paid, acquisitions, disposals, debt_issuance, debt_repayment, equity_issuance, equity_buybacks, net_cash_change, cash_taxes_paid, cash_interest_paid, investing_cash_flow, financing_cash_flow, fx_cash_effect, opening_cash, closing_cash, net_income, lease_payments_in_financing, interest_paid_in_financing\nBS: cash_and_equivalents, restricted_cash, short_term_investments, trade_receivables, inventory, other_current_assets, total_current_assets, ppe_net, goodwill, other_intangibles, other_noncurrent_assets, total_assets, short_term_debt, current_portion_long_term_debt, trade_payables, other_current_liabilities, total_current_liabilities, senior_secured_debt, senior_unsecured_debt, subordinated_debt, total_debt, pension_obligations, lease_obligations, other_noncurrent_liabilities, total_liabilities, shareholders_equity, minority_interests, total_equity, rcf_drawn, rcf_commitment, net_accounts_receivable, accounts_payable, restricted_cash_noncurrent",
+   "checks": [
+    "fn:deploy_vii.statement_validation:statement_issues"
+   ]
+  },
+  {
+   "id": "financials.g",
+   "statement": "g. An `accounts` entry and the statement line linked to it (the same metric and `period_id`; a line is usually linked to the account named like its `item_id`; the renamed links are: IS `ebitda_reported` is the `ebitda` account, IS `ebitda_adjusted` is the `adjusted_ebitda` account, IS `income_tax_total` is the `income_tax_expense` account, CFS `capex_total` is the `capex_and_intangible_investment` account) must carry the same amount, an outflow compared as a negative number (for example the IS `income_tax_total` line and the `income_tax_expense` account). When the source gives two values, write the disagreement explicitly: set that observation's `status` to `conflicting` with a null `amount`, a `reason` and at least two distinct located `alternatives` (each with an `amount`, `citations` and an `explanation`), never two silent values. A statement line whose `status` is `conflicting` leaves the matching `accounts` amount null (`conflicting` or `missing`), never a canonical value.",
+   "checks": [
+    "fn:deploy_vii.statement_validation:statement_issues"
+   ]
+  },
+  {
+   "id": "financials.h",
+   "statement": "h. `segment_allocation` places every `segment_id` exactly once: each segment appears in exactly one slot's `component_segment_ids`, no segment is left out or listed twice, and each keeps its own presentation row in `segments`. A `slot_id` is used at most once.",
+   "checks": [
+    "fn:deploy_vii.financial_validation:book_issues"
+   ]
+  },
+  {
+   "id": "financials.i",
+   "statement": "i. Python fills each book's and each period's `currency`, `unit`, `accounting_basis` and `entity_perimeter` (they are not in the schema) with the strings of the step:source_context `scopes` entry they bind to: a `historical_duration` or `period_end` scope of the entity in the book's `binding.books[].entity_id` with the period's `end_date`, and, unless `period_type` is `PERIOD_END`, a `historical_duration` scope with the period's `start_date` too (a book takes the four strings its periods share). Choose that entity and each period's `period_type`, `start_date` and `end_date` so that they name such a scope, write money amounts in that scope's `unit` and `currency`, and keep in one book only periods whose scopes carry the same four strings: a period with no such scope, or a book whose periods' scopes differ, is a rejection.",
+   "checks": [
+    "fn:deploy_vii.context_binding:validate_financial_context",
+    "fn:deploy_vii.financial_validation:validate_financial_review"
+   ]
+  },
+  {
+   "id": "financials.j",
+   "statement": "j. The quoted words must appear on the cited page. A statement or reconciliation heading printed at the foot of the preceding page is not on the table's page: quote a row label or a figure from the table's own page, or cite the heading's own page.",
+   "checks": [
+    "fn:deploy_vii.readiness:citation_issues"
+   ]
+  },
+  {
+   "id": "financials.k",
+   "statement": "k. Statement lines come from `extract_statements`: keep its labels verbatim and take each amount from the line's raw_values, written as rule a says, never retyped from memory or prose. You map `item_id`/`period_id`, choose `line_kind` and `sign_convention`, and cite the page. A value no extracted line holds keeps its rule f `item_id`, is read with `read_pages` and cited there, and carries a limitation saying it was not extracted. Verify a line the tool flags with `read_pages` before using it.",
+   "checks": [
+    "fn:deploy_workflow.financial_workflow:_evidence_issues"
+   ]
+  }
+ ]
+}

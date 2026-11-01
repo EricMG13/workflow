@@ -1,0 +1,39 @@
+{
+ "rules": [
+  {
+   "id": "readiness.a",
+   "statement": "a. Every free-text field (a prose part's `text`, a `title`, `rationale`, `action` or `limitation`) is nonblank run text with no bare figure: digits appear only inside a period, filing, section, instrument, coverage-count or ordinal label (`FY2025`, `Q3 2025`, `10-K`, `Item 7A`, `6.50% notes due 2032`, `195 of 195 pages`, `CP-1`); a number stays in the evidence it comes from and is never written out. Write no braces or square brackets anywhere in prose, since all are reserved for references. A space or an empty string is not prose.",
+   "checks": [
+    "fn:deploy_vii.downstream_readiness:validate_downstream_review"
+   ]
+  },
+  {
+   "id": "readiness.b",
+   "statement": "b. `consumers`: one assessment for each `entry` on the `consumers` lines (the requested consumers), no other entry and none twice. Its `requirements` use only the requirement keys on that consumer's line (the last column), each at most once; a key left out is recorded as an unassessed dependency, so assess every key.",
+   "checks": [
+    "fn:deploy_vii.downstream_readiness:validate_downstream_review"
+   ]
+  },
+  {
+   "id": "readiness.c",
+   "statement": "c. For every status, a requirement's `evidence_ids` are distinct and from the evidence table. A requirement whose status is `sufficient` or `limited` names at least one (`missing` may name none). Evidence is judged by tags: a line's tags are its `kind`, plus `kpi:<key>` for a `kind=kpi` line (its `key` column) and `observation:<register_id>` for a `kind=observation` line (its `register_id` column); a `kind=kpi`, `kind=statement_*` or `kind=observation` line whose `amount` is null has no tag at all. For the keys below, the cited lines together must carry at least one tag from every group (groups are separated by `;`, the alternatives within a group by `|`):\n- normalized_financials: statement_IS; statement_CFS; statement_BS\n- entity_scope: entity\n- period_coverage: construction | source_period\n- kpi_dashboard: kpi\n- calculation_register: computation\n- fcf_build: kpi:fcf; computation\n- cash_flow_metrics: kpi:cfo_adjusted | kpi:fcf | kpi:ffo\n- liquidity_data: kpi:cash_closing | kpi:liquidity | kpi:undrawn_rcf\n- earnings_quality_metrics: kpi:adjusted_ebitda | kpi:ebitda\n- debt_classification: observation:facilities\n- capital_structure: observation:facilities | statement_BS\n- debt_schedule: observation:facilities\n- maturity_profile: observation:facilities\n- covenant_metrics: kpi\n- ebitda_definitions: definition\n- covenant_compliance: kpi; definition\nFor any other key, at least one cited line must carry a tag and not be a `kind=gap` line. A consumer whose `policy` is `consumer_specific_review` (for example CP-1A or CP-6) has the one requirement `consumer_specific_cp1_sufficiency`: judge whether the cited CP-1 evidence suffices for that consumer's own use; it has no group, so one cited line that carries a tag and is not a `kind=gap` line is enough for `limited` or `sufficient`. A `kind=computation` line shows `operation`, `amount` and `status` but no label: recognise one by its `operation` and by an `amount` equal to a dashboard KPI's.",
+   "checks": [
+    "fn:deploy_vii.downstream_readiness:validate_downstream_review"
+   ]
+  },
+  {
+   "id": "readiness.d",
+   "statement": "d. A requirement whose status is not `sufficient` needs at least one `actions` entry. `kpi_dashboard` is `sufficient` only when at least one `kind=kpi` line exists and every one has a non-null `amount`.",
+   "checks": [
+    "fn:deploy_vii.downstream_readiness:validate_downstream_review"
+   ]
+  },
+  {
+   "id": "readiness.e",
+   "statement": "e. `gaps`: each scope's `gap_ids` are distinct and taken from the `gap_id` column of the `kind=gap` lines or of the `narrative_gaps` lines (the `evidence_id` of a gap line is not its `gap_id`), and no gap_id is in two scopes of one consumer; a gap left out stays unassessed. Its `evidence_ids` are distinct evidence_ids from the evidence table. `not_relevant` needs at least one evidence id and is never given to a gap whose `severity` is `BLOCK` and whose `origin` is `context_binding` or `context`. A gap left out of every scope keeps that consumer `not_ready` (its action reads \"Assess all retained gaps for this consumer\"). The completion budget may not cover every gap of every consumer, so scope those that matter to each consumer by class: the `BLOCK` gaps first, then the gaps matched to that consumer's metrics. One scope may list many gap_ids.",
+   "checks": [
+    "fn:deploy_vii.downstream_readiness:validate_downstream_review"
+   ]
+  }
+ ]
+}

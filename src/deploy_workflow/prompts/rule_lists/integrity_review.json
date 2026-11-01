@@ -1,0 +1,47 @@
+{
+ "rules": [
+  {
+   "id": "integrity_review.a",
+   "statement": "a. The `integrity-scope` CONTEXT block is Python's review scope: the evaluated modules with their claims (each citation as a `ref`), the facts a review may name, and the findings Python's checks already made. Judge only the analysts' claims listed there; CP-0 is not evaluated.",
+   "checks": [
+    "fn:deploy_vii.cp5_integrity:review_scope",
+    "fn:deploy_vii.cp5_integrity:_Checker.facts",
+    "oracle:cp5:cp5-producer-not-evaluated"
+   ]
+  },
+  {
+   "id": "integrity_review.b",
+   "statement": "b. `claim_reviews`: exactly one for each pair listed under `claims_to_review`, `producer_module` and `claim_ref` as listed. Name upstream evidence by `ref` only, in `upstream_refs`: a fact ref or a citation ref of that module. A supported or partly_supported verdict names at least one; supported is refused where a Python finding touches the claim or a ref it names.",
+   "checks": [
+    "fn:deploy_vii.cp5_integrity:_review_issues",
+    "fn:deploy_vii.cp5_integrity:_review_findings",
+    "oracle:cp5:cp5-unreviewed-claim",
+    "oracle:cp5:cp5-doubly-reviewed",
+    "oracle:cp5:cp5-unresolved-claim-ref",
+    "oracle:cp5:cp5-unresolved-upstream-ref",
+    "oracle:cp5:cp5-supported-names-no-ref",
+    "oracle:cp5:cp5-shape-unknown-support"
+   ]
+  },
+  {
+   "id": "integrity_review.c",
+   "statement": "c. A `contradictions` entry names, in `claim_refs`, claims of at least two modules, each claim once; a `gaps` entry's `affected_modules` are bound modules.",
+   "checks": [
+    "fn:deploy_vii.cp5_integrity:_review_issues",
+    "oracle:cp5:cp5-contradiction-one-module",
+    "oracle:cp5:cp5-gap-unbound-module"
+   ]
+  },
+  {
+   "id": "integrity_review.d",
+   "statement": "d. Every rationale, nature, gap, why_it_matters and action is nonblank text of labels only: no figure and no reference. Python assigns every finding, contradiction and gap id and the status.",
+   "checks": [
+    "fn:deploy_vii.cp5_integrity:_review_issues",
+    "fn:deploy_vii.cp5_integrity:_text_issues",
+    "oracle:cp5:cp5-figure-in-rationale",
+    "oracle:cp5:cp5-claim-id-in-rationale",
+    "oracle:cp5:cp5-empty-rationale"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,84 @@
+{
+ "rules": [
+  {
+   "id": "forward_credit_model.1",
+   "statement": "Each of the seven `base_drivers` has `values` of exactly three strings, one per forecast period listed in `base.forecast_periods` of the module context. `revenue_growth` values are decimals from -1 to 1; `ebitda_margin`, `capex_pct_revenue`, `tax_wc_pct_revenue` and `interest_rate` are decimals from 0 to 1; each has at most four decimal places. `dividends` and `debt_repayment` are non-negative amounts of at most six integer digits and four decimals. `minimum_liquidity.amount` is such an amount or `not assessed`, and `downside.scenario` has the form `s` and two digits.",
+   "checks": [
+    "oracle:cp2g:r01",
+    "oracle:cp2g:r02",
+    "oracle:cp2g:r03",
+    "oracle:cp2g:r04",
+    "oracle:cp2g:r05",
+    "oracle:cp2g:r06",
+    "oracle:cp2g:r07",
+    "oracle:cp2g:r08",
+    "oracle:cp2g:r09",
+    "oracle:cp2g:r15",
+    "oracle:cp2g:r16"
+   ]
+  },
+  {
+   "id": "forward_credit_model.2",
+   "statement": "Submit every field of the schema (`limitation` is null when there is none) and no other, valid JSON; each `break_metrics` `metric` is total_leverage, net_leverage or interest_coverage and `assessment.confidence` is one of the four listed values.",
+   "checks": [
+    "oracle:cp2g:r10",
+    "oracle:cp2g:r11",
+    "oracle:cp2g:r12",
+    "oracle:cp2g:r13",
+    "oracle:cp2g:r14"
+   ]
+  },
+  {
+   "id": "forward_credit_model.3",
+   "statement": "The running total of the three `debt_repayment` values never exceeds the opening total debt in the base operands of the module context.",
+   "checks": [
+    "oracle:cp2g:v02"
+   ]
+  },
+  {
+   "id": "forward_credit_model.4",
+   "statement": "`downside.scenario` is the `row` of one of the CP-2A `scenarios` in the module context.",
+   "checks": [
+    "oracle:cp2g:v01"
+   ]
+  },
+  {
+   "id": "forward_credit_model.5",
+   "statement": "`break_metrics` has exactly one entry for each CP-2A break that is not a definition break, its `break_id` that break's `row`, each once. A definition break has a fixed metric and is not named. The `metric` you give for a break must reproduce the required decline of that break in the CP-2A `breaks` of the module context, among those in `break_metrics_offered`.",
+   "checks": [
+    "oracle:cp2g:v03",
+    "oracle:cp2g:v04",
+    "oracle:cp2g:v05",
+    "oracle:cp2g:v06",
+    "oracle:cp2g:v07",
+    "fn:deploy_workflow.owners.cp2g:_break_issues"
+   ]
+  },
+  {
+   "id": "forward_credit_model.6",
+   "statement": "Every `rationale`, `limitation` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts` or `cp1d_facts`, closed and non-empty, and you state no peer ranking, instrument recommendation, recovery conclusion or probability weighting (phrases such as `versus peers`, `recommend`, `will recover` or `probability-weighted` are refused).",
+   "checks": [
+    "oracle:cp2g:v08",
+    "oracle:cp2g:v09",
+    "oracle:cp2g:v10",
+    "oracle:cp2g:v11",
+    "oracle:cp2g:v12",
+    "oracle:cp2g:v14",
+    "oracle:cp2g:v15",
+    "oracle:cp2g:v16",
+    "oracle:cp2g:v17",
+    "fn:deploy_workflow.owners.cp2g:_text_issues",
+    "fn:deploy_workflow.owners.cp2g:_run_text_issues",
+    "fn:deploy_workflow.owners.cp2g:_limitation_issues",
+    "fn:deploy_workflow.owners.cp2g:content_issues"
+   ]
+  },
+  {
+   "id": "forward_credit_model.7",
+   "statement": "`assessment.confidence` is never High, because the driver values are uncited analyst assumptions.",
+   "checks": [
+    "oracle:cp2g:v13"
+   ]
+  }
+ ]
+}

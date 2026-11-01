@@ -35,9 +35,9 @@ D = Decimal
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-    "cases/cp2g-owner/manifest.json": "c7f66104fbfda75cd06b3dd51b2a49f7ed19b107e058ee7fe77d9832624a4068",
+    "cases/cp2g-owner/manifest.json": "a08869a799f5b76ec65226355436f30c0453ede592e3230a4635b84adef1c4a0",
     "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
-    "cases/cp2g-owner/expected.json": "3e8f27c8488cea9c364ce47ccbd3e2b927d0a61410c89653787b091d40386b6d",
+    "cases/cp2g-owner/expected.json": "d1935a73770227172cd37a552b5583721f391da6f988ef4ef8baf1797f1e1b65",
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
 }
 
@@ -1123,7 +1123,7 @@ def main():
             "gap": {"run": runs["gap"], "pack": "identity + financial + ratings (gap)", "submission": "submissions.json cases.gap", "expected": "expected.json cases.gap",
                     "execution": "closed run as positive with the limited agency source: one threshold Not stated (missing), one agency withdrawn (position, notches, lower rated and outlooks not_applicable)"},
             "refused": {"run": runs["refused"], "pack": "financial source missing (cases/financial/manifest.json negative_case)", "submission": "submissions.json refused", "expected": "expected.json cases.refused",
-                        "execution": "CP-0 only; CP-1 begin raises NotAuthorized; CP-2A, CP-2G and CP-2H are never begun"},
+                        "execution": "CP-0 only; CP-1 begin raises NotAuthorized; the CP-2A, CP-2G and CP-2H begins are refused as consequences (no CP-1, CP-2A or CP-2G head); CP-2A, CP-2G and CP-2H are never begun"},
             "blocked": {"run": runs["blocked"], "pack": "same pack as positive", "submission": "submissions.json refusals r01 (attempt 0) then v08 (attempt 1)", "expected": "expected.json cases.blocked",
                         "execution": "a clone of the positive store taken after CP-2G settles and before CP-2H begins (the refusal payloads r01 and v08 mutate the positive submission, so their issues are those on the positive facts and pages); CP-2H attempt 0 invalid (rejected) and attempt 1 invalid (blocked)"},
             "cp2g_blocked": {"run": runs["cp2g_blocked"], "pack": "same pack as gap", "submission": "cases/cp2g-owner/submissions.json refusals r01 then v13 for CP-2G", "expected": "expected.json cases.cp2g_blocked",
@@ -1286,9 +1286,12 @@ def main():
         "execution": "run", "plan_order": plan,
         "cp0": {"rows": ["submissions.json refused.cp0_consumer_row_cp1", "refused.cp0_consumer_row_cp2a", "refused.cp0_consumer_row_cp2g", "refused.cp0_consumer_row_cp2h"], "gap_row": "submissions.json refused.gap_row",
                 "validator_issues": [], "settled_status": "restricted", "T8_commands": [["CP-1", "DO NOT RUN"], ["CP-2A", "DO NOT RUN"], ["CP-2G", "DO NOT RUN"], ["CP-2H", "DO NOT RUN"]]},
-        "refused_begins": [{"module_id": "CP-1", "reason": "CP-0 has not authorized this consumer's source readiness"}], "refusal": "cp1_not_authorized",
+        "refused_begins": [{"module_id": "CP-1", "reason": "CP-0 has not authorized this consumer's source readiness", "missing_commands": ["Run CP-1"]},
+                           {"module_id": "CP-2A", "reason": "Required upstream is unrun, stale or blocked", "missing_inputs": ["CP-1"]},
+                           {"module_id": "CP-2G", "reason": "Required upstream is unrun, stale or blocked", "missing_inputs": ["CP-1", "CP-2A"]},
+                           {"module_id": "CP-2H", "reason": "Required upstream is unrun, stale or blocked", "missing_inputs": ["CP-1", "CP-2G"]}], "refusal": "cp1_not_authorized",
         "refusal_note": "the 'refusal' field of the financial-review-outcome/1 returned by the CP-0 submit that settles CP-0 and triggers the CP-1 begin (the CP-2G refused case pins the same code)",
-        "attempts": ["CP-0"], "heads": ["CP-0"], "later_modules": "CP-2A, CP-2G and CP-2H are never begun", "model_publication": "not planned", "receipt": "verifies",
+        "attempts": ["CP-0"], "heads": ["CP-0"], "later_modules": "CP-2A, CP-2G and CP-2H are never begun: each begin is refused as a consequence of the CP-1 refusal (G3 records a refused begin and the walk goes on; the upstream check precedes CP-0's command check)", "model_publication": "not planned", "receipt": "verifies",
         "must_not_appear": ["a CP-2A, CP-2G or CP-2H ticket, attempt, head or table", "a trigger headroom of 0 standing for a missing one"]}
     expected["cases"]["blocked"] = {
         "plan_order": plan,

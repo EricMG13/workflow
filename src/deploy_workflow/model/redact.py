@@ -16,9 +16,13 @@ from typing import Any, TextIO, cast
 _LOG = logging.getLogger(__name__)
 REPLACEMENT = "[redacted]"
 KEY_ENV_NAMES = ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY")
-KEY_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
+# A key may follow "_" or any other non-key character, or a %XX escape (URL-encoded text); only a
+# preceding letter or digit marks the "sk-" as the tail of a longer word such as "risk-".
+KEY_PATTERN = re.compile(
+    r"(?:(?<![A-Za-z0-9])|(?<=%[0-9A-Fa-f]{2}))(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})"
+)
 _KEY_PATTERN_BYTES = re.compile(KEY_PATTERN.pattern.encode("ascii"))
-_KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
+_KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-%"
 
 
 def _suffixed(key: Any, n: int) -> Any:

@@ -25,7 +25,7 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "cases/cpl10-owner/expected.json": "9a6345b5272da3c2f9b20c9055348e9edef2042f9aefbcdd784448e4b908fd63",
+    "cases/cpl10-owner/expected.json": "285915140dbd7722e406ce96bb11c20ab5f5ce370e6649748299f4809695ce45",
 }
 RAW = {}
 for rel, digest in PINS.items():

@@ -374,27 +374,27 @@ legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
 
     <div class="mod" id="as-cp2e"><fieldset><legend>CP-2E macro and FX</legend><div data-cards="asm" data-name="mode-cp2e" data-key="mode"></div></fieldset>
       <div class="uf" hidden><div class="grid">
-        <div class="f"><label for="as-cp2e-rate_shocks_bps">Rate shocks (bps)</label><input type="text" id="as-cp2e-rate_shocks_bps" placeholder="e.g. 100, 200" data-k="rate_shocks_bps" aria-describedby="as-cp2e-rate_shocks_bps-h"><p class="help" id="as-cp2e-rate_shocks_bps-h">1 to 3 whole numbers, each 1 to 1000, comma-separated.</p></div>
-        <div class="f"><label for="as-cp2e-fx_shocks_pct">FX shocks (%)</label><input type="text" id="as-cp2e-fx_shocks_pct" placeholder="e.g. 10, 20" data-k="fx_shocks_pct" aria-describedby="as-cp2e-fx_shocks_pct-h"><p class="help" id="as-cp2e-fx_shocks_pct-h">1 to 3 values, each 1 to 50, comma-separated.</p></div>
-        <div class="f"><label for="as-cp2e-hedge_ratio_pct">Hedge ratio (%)</label><input type="text" id="as-cp2e-hedge_ratio_pct" placeholder="e.g. 50" data-k="hedge_ratio_pct" inputmode="decimal" aria-describedby="as-cp2e-hedge_ratio_pct-h"><p class="help" id="as-cp2e-hedge_ratio_pct-h">Optional, 0 to 100.</p></div>
+        <div class="f"><label for="as-cp2e-rate_shocks_bps">Rate shocks (bps)</label><input type="text" id="as-cp2e-rate_shocks_bps" placeholder="e.g. 100, 200" data-k="rate_shocks_bps" aria-describedby="as-cp2e-rate_shocks_bps-h"><p class="help" id="as-cp2e-rate_shocks_bps-h">1 to 3 whole numbers, each 1 to 1000, comma-separated, increasing.</p></div>
+        <div class="f"><label for="as-cp2e-fx_shocks_pct">FX shocks (%)</label><input type="text" id="as-cp2e-fx_shocks_pct" placeholder="e.g. 10, 20" data-k="fx_shocks_pct" aria-describedby="as-cp2e-fx_shocks_pct-h"><p class="help" id="as-cp2e-fx_shocks_pct-h">1 to 3 whole numbers, each 1 to 50, comma-separated, increasing.</p></div>
+        <div class="f"><label for="as-cp2e-hedge_ratio_pct">Hedge ratio (%)</label><input type="text" id="as-cp2e-hedge_ratio_pct" placeholder="e.g. 50" data-k="hedge_ratio_pct" inputmode="decimal" aria-describedby="as-cp2e-hedge_ratio_pct-h"><p class="help" id="as-cp2e-hedge_ratio_pct-h">Optional, 0 to 100, at most 2 decimal places.</p></div>
         <div class="f"><label for="as-cp2e-rationale">Rationale</label><input type="text" id="as-cp2e-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp2e-rationale-h"><p class="help" id="as-cp2e-rationale-h">Say why you chose these values.</p></div>
       </div></div></div>
 
     <div class="mod" id="as-cp3c"><fieldset><legend>CP-3C refinancing</legend><div data-cards="asm" data-name="mode-cp3c" data-key="mode"></div></fieldset>
       <div class="uf" hidden><div class="grid">
-        <div class="f"><label for="as-cp3c-repricing_bps">Repricing step-up (bps)</label><input type="text" id="as-cp3c-repricing_bps" placeholder="e.g. 150" data-k="repricing_bps" inputmode="decimal" aria-describedby="as-cp3c-repricing_bps-h"><p class="help" id="as-cp3c-repricing_bps-h">0 to 1000.</p></div>
+        <div class="f"><label for="as-cp3c-repricing_bps">Repricing step-up (bps)</label><input type="text" id="as-cp3c-repricing_bps" placeholder="e.g. 150" data-k="repricing_bps" inputmode="numeric" aria-describedby="as-cp3c-repricing_bps-h"><p class="help" id="as-cp3c-repricing_bps-h">Whole number, 0 to 1000.</p></div>
         <div class="f"><label for="as-cp3c-rationale">Rationale</label><input type="text" id="as-cp3c-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp3c-rationale-h"><p class="help" id="as-cp3c-rationale-h">Say why you chose these values.</p></div>
       </div></div></div>
 
     <div class="mod" id="as-cp3d"><fieldset><legend>CP-3D market</legend><div data-cards="asm" data-name="mode-cp3d" data-key="mode"></div></fieldset>
       <div class="uf" hidden><div class="grid">
-        <div class="f"><label for="as-cp3d-recovery_pct">Recovery (%)</label><input type="text" id="as-cp3d-recovery_pct" placeholder="e.g. 40" data-k="recovery_pct" inputmode="decimal" aria-describedby="as-cp3d-recovery_pct-h"><p class="help" id="as-cp3d-recovery_pct-h">0 or more, below 100.</p></div>
+        <div class="f"><label for="as-cp3d-recovery_pct">Recovery (%)</label><input type="text" id="as-cp3d-recovery_pct" placeholder="e.g. 40" data-k="recovery_pct" inputmode="decimal" aria-describedby="as-cp3d-recovery_pct-h"><p class="help" id="as-cp3d-recovery_pct-h">0 or more, below 100, at most 2 decimal places.</p></div>
         <div class="f"><label for="as-cp3d-rationale">Rationale</label><input type="text" id="as-cp3d-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp3d-rationale-h"><p class="help" id="as-cp3d-rationale-h">Say why you chose these values.</p></div>
       </div></div></div>
 
     <div class="mod" id="as-cp4c"><fieldset><legend>CP-4C recovery</legend><div data-cards="asm" data-name="mode-cp4c" data-key="mode"></div></fieldset>
       <div class="uf" hidden><div class="grid">
-        <div class="f"><label for="as-cp4c-ev_multiple">EV multiple</label><input type="text" id="as-cp4c-ev_multiple" placeholder="e.g. 6.5" data-k="ev_multiple" inputmode="decimal" aria-describedby="as-cp4c-ev_multiple-h"><p class="help" id="as-cp4c-ev_multiple-h">Above 0, up to 99.99.</p></div>
+        <div class="f"><label for="as-cp4c-ev_multiple">EV multiple</label><input type="text" id="as-cp4c-ev_multiple" placeholder="e.g. 6.5" data-k="ev_multiple" inputmode="decimal" aria-describedby="as-cp4c-ev_multiple-h"><p class="help" id="as-cp4c-ev_multiple-h">Above 0, up to 99.99, at most 2 decimal places.</p></div>
         <div class="f"><label for="as-cp4c-rationale">Rationale</label><input type="text" id="as-cp4c-rationale" placeholder="e.g. Matches the sponsor downside case" data-k="rationale" aria-describedby="as-cp4c-rationale-h"><p class="help" id="as-cp4c-rationale-h">Say why you chose these values.</p></div>
       </div></div></div>
   </div>
@@ -595,7 +595,7 @@ const ROWS = {
   }},
   scen: {box:'rows-cp2a', title:'Scenario', max:4, make() {
     const p = 's' + (++uid);
-    return rowShell('Scenario', '<div class="grid">' + F(p+'a','ebitda_decline_pct','EBITDA decline (%)',NP('e.g. 20'),'0 to 100.') + F(p+'b','interest_increase_pct','Interest increase (%)',NP('e.g. 10'),'0 to 100.') + '</div>');
+    return rowShell('Scenario', '<div class="grid">' + F(p+'a','ebitda_decline_pct','EBITDA decline (%)',NP('e.g. 20'),'0 to 100, at most 2 decimal places.') + F(p+'b','interest_increase_pct','Interest increase (%)',NP('e.g. 10'),'0 to 100, at most 2 decimal places.') + '</div>');
   }},
   q: {box:'rows-q', title:'Question', max:10, make() {
     const p = 'z' + (++uid);
@@ -661,6 +661,7 @@ function numMsg(v, r) {
   if (v.includes(',')) return 'no thousands separators; write 1250, not 1,250.';
   if (!(r.signed ? SNUM : NUM).test(v)) return 'enter a plain number such as 1250 or 99.5.';
   if (r.int && !/^-?\d+$/.test(v)) return 'enter a whole number.';
+  if (r.dp !== undefined && (v.split('.')[1] || '').length > r.dp) return 'use at most ' + r.dp + ' decimal places.';
   const x = Number(v);
   if (r.min !== undefined && x < r.min) return 'must be ' + r.min + ' or more.';
   if (r.minEx !== undefined && x <= r.minEx) return 'must be above ' + r.minEx + '.';
@@ -687,7 +688,11 @@ function fld(scope, k, r) {
     if (r.req && !items.length) bad(el, 'required.');
     if (r.minN && items.length && items.length < r.minN) bad(el, 'give at least ' + r.minN + '.');
     if (r.maxN && items.length > r.maxN) bad(el, 'give at most ' + r.maxN + ' values.');
-    if (r.item) items.forEach(it => { const m = numMsg(it, r.item); if (m) bad(el, '"' + it + '": ' + m); });
+    if (r.item) {
+      const msgs = items.map(it => numMsg(it, r.item));
+      items.forEach((it, i) => { if (msgs[i]) bad(el, '"' + it + '": ' + msgs[i]); });
+      if (!msgs.some(Boolean) && items.some((it, i) => i > 0 && !(Number(items[i - 1]) < Number(it)))) bad(el, 'values must increase.');
+    }
     return items;
   }
   if (v === '') { if (r.req) bad(el, 'required.'); return ''; }
@@ -779,13 +784,13 @@ function build() {
   const valuation = {peer_source, basis, issuer_market, peers, precedents, user_multiple};
 
   const assumptions = {
-    cp2a: asm('cp2a', [], sc => ({scenarios: rowsOf('rows-cp2a').map(r => readSpec(r, [['ebitda_decline_pct',{t:'num',req:true,min:0,max:100}],['interest_increase_pct',{t:'num',req:true,min:0,max:100}]]))}),
+    cp2a: asm('cp2a', [], sc => ({scenarios: rowsOf('rows-cp2a').map(r => readSpec(r, [['ebitda_decline_pct',{t:'num',req:true,dp:2,min:0,max:100}],['interest_increase_pct',{t:'num',req:true,dp:2,min:0,max:100}]]))}),
       sc => { if (!$('rows-cp2a').children.length) bad($('add-cp2a'), 'add 1 to 4 scenarios.'); }),
     cp2d: asm('cp2d', [['horizon_months',{t:'num',req:true,int:true,min:1,max:60}],['minimum_cash_m',{t:'num',req:true,min:0}]]),
-    cp2e: asm('cp2e', [['rate_shocks_bps',{t:'list',req:true,maxN:3,item:{t:'num',int:true,min:1,max:1000}}],['fx_shocks_pct',{t:'list',req:true,maxN:3,item:{t:'num',min:1,max:50}}],['hedge_ratio_pct',{t:'num',min:0,max:100}]]),
-    cp3c: asm('cp3c', [['repricing_bps',{t:'num',req:true,min:0,max:1000}]]),
-    cp3d: asm('cp3d', [['recovery_pct',{t:'num',req:true,min:0,maxEx:100}]]),
-    cp4c: asm('cp4c', [['ev_multiple',{t:'num',req:true,minEx:0,max:99.99}]])
+    cp2e: asm('cp2e', [['rate_shocks_bps',{t:'list',req:true,maxN:3,item:{t:'num',int:true,min:1,max:1000}}],['fx_shocks_pct',{t:'list',req:true,maxN:3,item:{t:'num',int:true,min:1,max:50}}],['hedge_ratio_pct',{t:'num',dp:2,min:0,max:100}]]),
+    cp3c: asm('cp3c', [['repricing_bps',{t:'num',req:true,int:true,min:0,max:1000}]]),
+    cp3d: asm('cp3d', [['recovery_pct',{t:'num',req:true,dp:2,min:0,maxEx:100}]]),
+    cp4c: asm('cp4c', [['ev_multiple',{t:'num',req:true,dp:2,minEx:0,max:99.99}]])
   };
 
   const s9 = $('sec9');
@@ -1083,7 +1088,6 @@ function panel(o) {
   if (has('CP-4') && att.legal_documents === 'draft') planned.push('CP-4 draft-document mode');
   if (has('CP-2A') && o.assumptions.cp2a || has('CP-2D') && o.assumptions.cp2d || has('CP-2E') && o.assumptions.cp2e || has('CP-3C') && o.assumptions.cp3c || has('CP-3D') && o.assumptions.cp3d || has('CP-4C') && o.assumptions.cp4c) planned.push('pinned assumptions');
   if (has('CP-2H') && o.ratings.length) planned.push('real agency names in CP-2H');
-  if (has('CP-3') && o.quotes.length) planned.push('quotes replacing rv_quotes');
   if (o.research_questions.length) planned.push('CP-DR user questions');
   planned.forEach(p => add('limited', 'Needs a Planned feature: ' + p + '.'));
 

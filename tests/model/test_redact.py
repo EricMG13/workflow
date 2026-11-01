@@ -3,9 +3,10 @@
 import gc
 import io
 import logging
+import re
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from deploy_workflow.model.redact import KEY_PATTERN, Redactor
@@ -34,7 +35,6 @@ def test_regex_only_redactor_catches_known_shapes() -> None:
     assert r.text("sk-" + "a" * 20) == "[redacted]"
     assert r.text("sk-" + "a" * 19) == "sk-" + "a" * 19
     assert r.text("risk-or-x") == "risk-or-x"
-    assert KEY_PATTERN.pattern == r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})"
 
 
 def test_chain_cause_redacted() -> None:
@@ -249,3 +249,75 @@ def test_flush_cost_stays_linear_in_held_text() -> None:
         started = time.perf_counter()
         stream.flush()
         assert time.perf_counter() - started < 1.0
+
+
+GLUED = "sk-proj-QQQQQQFAKEKEY"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "key_" + GLUED,
+        "401 key_" + GLUED + " bad",
+        "pre_" + GLUED + "_post",
+        '{"error": "' + GLUED + '"}',
+        '{"k":"x_' + GLUED + '"}',
+        "q=%20" + GLUED,
+        "a=" + GLUED,
+        GLUED,
+        "x-" + GLUED,
+        "x\n" + GLUED,
+        "q=%2F" + GLUED,
+        "q=%3D" + GLUED,
+    ],
+)
+def test_glued_embedded_quoted_encoded_and_leading_keys_redacted(text: str) -> None:
+    assert "QQQQQQ" not in Redactor().text(text)
+    assert b"QQQQQQ" not in Redactor().bytes_(text.encode())
+    assert not KEY_PATTERN.search(Redactor().text(text))
+
+
+def test_word_internal_sk_is_not_over_redacted() -> None:
+    r = Redactor()
+    assert r.text("risk-or-abcdefgh") == "risk-or-abcdefgh"
+    assert r.text("task-proj-abcdefgh") == "task-proj-abcdefgh"
+    assert r.bytes_(b"risk-or-abcdefgh") == b"risk-or-abcdefgh"
+
+
+_OLD_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
+
+
+_KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
+# noise, one preceding character or escape, a key prefix, then a key-character tail: text that
+# holds an old-pattern match, so the property is exercised by generation and not only by @example
+_WITH_OLD_MATCH = st.builds(
+    lambda noise, pre, head, tail: noise + pre + head + tail,
+    st.text(alphabet="ab -_%=", max_size=8),
+    st.sampled_from(["", " ", "-", "_", "=", '"', "/", "\n", "%2F", "%3D", "a", "9"]),
+    st.sampled_from(["sk-or-", "sk-ant-", "sk-proj-", "sk-"]),
+    st.text(alphabet=_KEY_CHARS, min_size=6, max_size=30),
+)
+
+
+@example("x-sk-proj-abcdefg")
+@given(_WITH_OLD_MATCH)
+def test_every_old_pattern_match_still_matches(text: str) -> None:
+    for m in _OLD_PATTERN.finditer(text):
+        assert KEY_PATTERN.match(text, m.start()), (text, m.span())
+
+
+def test_dash_preceded_key_is_redacted_with_str_and_bytes() -> None:
+    r = Redactor()
+    assert r.text("x-" + GLUED) == "x-[redacted]"
+    assert r.bytes_(b"x-" + GLUED.encode()) == b"x-[redacted]"
+
+
+@pytest.mark.parametrize("prefix", ["%2F", "%3D"])
+def test_percent_encoded_key_survives_a_stream_split(prefix: str) -> None:
+    out = io.StringIO()
+    stream = Redactor().redact_stream(out)
+    stream.write("q=" + prefix + GLUED[:10])
+    stream.flush()
+    stream.write(GLUED[10:] + "\n")
+    stream.close()
+    assert "QQQQQQ" not in out.getvalue()

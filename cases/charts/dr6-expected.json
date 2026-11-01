@@ -324,7 +324,7 @@
       {
         "path": "cases/cp2h-owner/expected.json",
         "schema_version": "cp2h-owner-expected/1",
-        "sha256": "d0d0310087cfed3bc1ca9c90d1bcd4b54960f0da3b29b449997e80459c14fae6"
+        "sha256": "851abf7dc71237cb9e300b4cd20c962d17b27186df28ee12543f395f19261d4c"
       }
     ],
     "rulings": [

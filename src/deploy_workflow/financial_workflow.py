@@ -12,7 +12,7 @@ import re
 import sys
 import tempfile
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
@@ -23,7 +23,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from deploy_vii.canonical_tables import CanonicalTables
-from deploy_vii.contracts import Contract, Hash, Identifier, Input, Run
+from deploy_vii.contracts import Contract, Hash, Identifier, Input, Run, Span
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_quality import cp1_quality_inputs
 from deploy_vii.cp1_workflow import (
@@ -72,6 +72,7 @@ from deploy_workflow.host import SourceSession
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
+_LINE_LOCATOR = re.compile(r"line:([0-9]+)")
 Step = Literal[
     "source_readiness", "source_context", "financials", "narrative", "readiness", "quality"
 ]
@@ -353,6 +354,33 @@ def _filled(
     return filled.payload, resolved, filled.paths, filled.kinds
 
 
+def _statement_units(spans: Sequence[Span]) -> dict[str, str]:
+    """The statement units of one source's spans, by locator, each with its text (B22).
+
+    A source with a `page:N` span, or with any other kind of span, has one unit per
+    statement-heading span (its locator, its text). A line source (every span `line:N`) has one
+    unit per statement-heading line K, `line:K-E`, E being the line before the next heading or the
+    source's last line; its text is those lines joined by newlines."""
+    numbered = {
+        int(m.group(1)): span for span in spans if (m := _LINE_LOCATOR.fullmatch(span.locator))
+    }
+    if (
+        not spans
+        or len(numbered) != len(spans)
+        or any(s.locator.startswith("page:") for s in spans)
+    ):
+        return {s.locator: s.text for s in spans if STATEMENT_HEADING.search(s.text)}
+    headings = [n for n in sorted(numbered) if STATEMENT_HEADING.search(numbered[n].text)]
+    last = max(numbered)
+    ends = [*(n - 1 for n in headings[1:]), last]
+    return {
+        f"line:{first}-{end}": "\n".join(
+            numbered[n].text for n in range(first, end + 1) if n in numbered
+        )
+        for first, end in zip(headings, ends, strict=True)
+    }
+
+
 def _evidence_issues(
     store: Execution, binding: FinancialBinding, payload: str, evidence: SourceEvidence
 ) -> tuple[str, ...]:
@@ -371,13 +399,13 @@ def _evidence_issues(
         return tuple(issues)
     financial_ids = tuple(s.source_id for s in context.sources if s.classification == "financial")
     pack = store.pack()
-    required = {
-        (source.source_id, span.locator)
+    units = {
+        (source.source_id, locator): text
         for source in pack.sources
         if source.source_id in financial_ids and source.status == "ready"
-        for span in source.spans
-        if STATEMENT_HEADING.search(span.text)
+        for locator, text in _statement_units(source.spans).items()
     }
+    required = set(units)
     if not required or not required <= set(evidence.extracted):
         issues.append("Financials must extract every located statement page in this epoch")
     tables = seen_tables(PackTools(pack, sources=financial_ids), evidence.seen(), context)
@@ -390,13 +418,7 @@ def _evidence_issues(
         key = (table.source_id, table.locator)
         if key not in required:
             continue
-        page_text = next(
-            span.text
-            for source in pack.sources
-            if source.source_id == table.source_id
-            for span in source.spans
-            if span.locator == table.locator
-        )
+        page_text = units[key]
         if table.lines:
             measured.add(key)
         for extracted in table.lines:
@@ -414,7 +436,7 @@ def _evidence_issues(
                         and line.value.amount == value
                         and any(
                             c.source_id == table.source_id
-                            and c.locator == table.locator
+                            and c.locator == extracted.locator
                             and extracted.label in c.quote
                             for c in line.value.citations
                         )

@@ -53,6 +53,17 @@ for the cited-page rule (the model saw its printed lines), as `read_pages` does.
 outside the step's declared sources, a locator the source does not hold, more than
 `MAX_PAGES_PER_EXTRACT` pages or malformed locators are a refused call (`ToolError`).
 
+B22 (user ruling, 31 Oct 2026): a prepared text or HTML pack locates its spans as `line:N`, one per
+converted line. A source with no `page:N` span and only `line:N` spans is a *line source*; every
+other source keeps the page behaviour above unchanged. On a line source `read_pages` takes line
+numbers as `first_page`/`last_page` (at most `MAX_PAGES_PER_READ` lines) and returns one SOURCE
+block per `line:N`; `extract_statements` takes ranges `line:N-M` (at most `MAX_PAGES_PER_EXTRACT`
+ranges and `MAX_LINES_PER_EXTRACT` lines per call), extracts each range as one text and rebases each
+row's `line_no` and locator to its own `line:K`. A range counts as extracted, with each of its data
+rows' `line:K`. Arguments of the wrong kind, a range with a missing line or a line holding a newline
+are a refused call that records nothing. The cited-page rule (`unread_citation_issues`) is still
+`page:N` only (controller ruling R1, to be re-cut with the frozen scripts).
+
 Task 8.11 (user decision "B"): a step in the registry's `part_submit_steps()` (`financials`
 only) sends its JSON object in parts. In place of the one-shot `submit_<step>` it is offered
 `submit_<step>_part` (`{part, payload}`, `part_spec`) and a `submit_<step>` of no arguments
@@ -63,7 +74,7 @@ submit. The loop (`live.loop`) runs them.
 import re
 from collections import Counter
 from collections.abc import Iterator, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import ROUND_FLOOR, Decimal
 from typing import Any
@@ -94,6 +105,8 @@ MAX_PAGES_PER_READ = 5
 # Task 8.10b: an extracted page is compact (one row per printed data line), so a call may name
 # more pages than `read_pages` returns.
 MAX_PAGES_PER_EXTRACT = 8
+# B22: a `line:N-M` range of a line source is one extraction; the call is bounded in lines too.
+MAX_LINES_PER_EXTRACT = 200
 MAX_HITS = 15
 DEFAULT_HITS = 10
 SNIPPET_CHARS = 300
@@ -101,6 +114,8 @@ TOOL_CHOICE = "required"
 SEARCH, READ, EXTRACT = "search_pack", "read_pages", "extract_statements"
 EXTRACT_COLUMNS = "line_no | label | caption | raw_values | flags"
 _PAGE = re.compile(r"page:([0-9]+)")
+_LINE = re.compile(r"line:([0-9]+)")
+_LINE_RANGE = re.compile(r"line:([1-9][0-9]{0,8})-([1-9][0-9]{0,8})")
 # A fiscal year in days, inclusive of both ends: 52 weeks (364) to 53 weeks (371).
 FISCAL_YEAR_DAYS = range(364, 372)
 EVIDENCE = ("citations", "limitations", "claims", "objects")
@@ -205,14 +220,19 @@ def extract_spec() -> dict[str, Any]:
         "The statement lines Python extracted from pages of one source (at most "
         f"{MAX_PAGES_PER_EXTRACT} per call), each page as a SOURCE block with its locator and "
         f"raw header lines, then one row per printed data line: {EXTRACT_COLUMNS}. Labels and "
-        "raw_values are verbatim from the page (`$` dropped; `(n)` is negative; a dash is nil).",
+        "raw_values are verbatim from the page (`$` dropped; `(n)` is negative; a dash is nil). "
+        f"On a line:N source name ranges line:N-M (at most {MAX_LINES_PER_EXTRACT} lines); each "
+        "row's line_no is its line:N locator.",
         {
             "type": "object",
             "properties": {
                 "source_id": {"type": "string"},
                 "locators": {
                     "type": "array",
-                    "items": {"type": "string", "pattern": "^page:[0-9]+$"},
+                    "items": {
+                        "type": "string",
+                        "pattern": "^(page:[0-9]+|line:[1-9][0-9]*-[1-9][0-9]*)$",
+                    },
                     "minItems": 1,
                     "maxItems": MAX_PAGES_PER_EXTRACT,
                 },
@@ -325,6 +345,18 @@ class PackTools:
             for source_id, source in self.ready.items()
         }
         self.located_pages = sum(len(pages) for pages in self.pages.values())
+        # B22: the `line:N` spans of a line source (no `page:N` span, every span `line:N`).
+        self.lines = {
+            source_id: {
+                int(m.group(1)): span
+                for span in source.spans
+                if (m := _LINE.fullmatch(span.locator))
+            }
+            for source_id, source in self.ready.items()
+            if source.spans
+            and not self.pages[source_id]
+            and all(_LINE.fullmatch(span.locator) for span in source.spans)
+        }
         self.read: set[tuple[str, str]] = set()
         self.extracted: set[tuple[str, str]] = set()
         self.surfaced: set[tuple[str, str]] = set()
@@ -394,15 +426,18 @@ class PackTools:
         if last - first + 1 > MAX_PAGES_PER_READ:
             raise ToolError(f"bad arguments: at most {MAX_PAGES_PER_READ} pages per call")
         pages = self.pages[source_id]
-        if not pages:
+        unit, located = "page", pages
+        if not pages and source_id in self.lines:
+            unit, located = "line", self.lines[source_id]
+        if not located:
             raise ToolError(f"source {source_id} has no page:N locators")
         digest = str(self.ready[source_id].sha256)
         parts = []
         read: set[tuple[str, str]] = set()
         for number in range(first, last + 1):
-            span = pages.get(number)
+            span = located.get(number)
             if span is None:
-                parts.append(f"page:{number} is not a located span of {source_id}.")
+                parts.append(f"{unit}:{number} is not a located span of {source_id}.")
                 continue
             parts.append(block("SOURCE", source_id, digest, span_line(span)))
             read.add((source_id, span.locator))
@@ -417,6 +452,8 @@ class PackTools:
         _arguments(raw, ("source_id", "locators"))
         source_id = self._source(raw["source_id"])
         locators = raw["locators"]
+        if source_id in self.lines:
+            return self._extract_lines(source_id, locators)
         if not isinstance(locators, list) or not all(
             isinstance(item, str) and _PAGE.fullmatch(item) for item in locators
         ):
@@ -453,10 +490,68 @@ class PackTools:
         self.extracted.update((source_id, item) for item in locators)
         return "\n".join(parts)
 
+    def _extract_lines(self, source_id: str, locators: object) -> str:
+        """`extract_statements` on a line source (B22): the ranges `line:N-M` named, each as one
+        text with its rows rebased to their own `line:K`. Every range is extracted before any is
+        recorded, so a refused call records nothing."""
+        if not isinstance(locators, list) or not all(
+            isinstance(item, str) and _LINE_RANGE.fullmatch(item) for item in locators
+        ):
+            raise ToolError("bad arguments: locators must be a list of line:N-M ranges")
+        if not locators:
+            raise ToolError("bad arguments: locators must name at least one range")
+        if len(locators) > MAX_PAGES_PER_EXTRACT:
+            raise ToolError(f"bad arguments: at most {MAX_PAGES_PER_EXTRACT} ranges per call")
+        if repeated := sorted({item for item in locators if locators.count(item) > 1}):
+            raise ToolError(f"bad arguments: locators repeat {', '.join(repeated)}")
+        covered = 0
+        for item in locators:
+            first, last = _range_of(item)
+            if last < first:
+                raise ToolError(f"bad arguments: {item} runs backwards")
+            covered += last - first + 1
+        if covered > MAX_LINES_PER_EXTRACT:
+            raise ToolError(f"bad arguments: at most {MAX_LINES_PER_EXTRACT} lines per call")
+        tables = [_line_table(self.lines[source_id], item, source_id) for item in locators]
+        digest = str(self.ready[source_id].sha256)
+        parts = [block("SOURCE", source_id, digest, extracted_body(table)) for table in tables]
+        for table in tables:
+            self.extracted.add((source_id, table.locator))
+            self.extracted.update((source_id, line.locator) for line in table.lines)
+        return "\n".join(parts)
+
     def seen(self) -> "Seen":
         """What the model has been shown so far, frozen (a submit is judged on this): a page
         read or extracted counts as read."""
         return Seen(frozenset(self.read | self.extracted), tuple(self.searched))
+
+
+def _range_of(item: str) -> tuple[int, int]:
+    match = _LINE_RANGE.fullmatch(item)
+    if match is None:
+        raise ToolError(f"bad arguments: {item} is not a line:N-M range")
+    return int(match.group(1)), int(match.group(2))
+
+
+def _line_table(spans: Mapping[int, Span], item: str, source_id: str) -> ExtractedTable:
+    """The table of the range `item` (`line:N-M`) of a line source (B22): spans N..M joined by
+    newlines and extracted as one text, each row then rebased to its own line (`line_no` N + rel
+    - 1, locator `line:K`). A missing line or a span holding a newline is a refused call."""
+    first, last = _range_of(item)
+    texts = []
+    for number in range(first, last + 1):
+        span = spans.get(number)
+        if span is None:
+            raise ToolError(f"line:{number} is not a located span of {source_id}")
+        if "\n" in span.text:
+            raise ToolError(f"line:{number} of {source_id} holds a newline and cannot be ranged")
+        texts.append(span.text)
+    table = extract_statement_lines("\n".join(texts), item, source_id=source_id)
+    rows = tuple(
+        replace(line, line_no=first + line.line_no - 1, locator=f"line:{first + line.line_no - 1}")
+        for line in table.lines
+    )
+    return replace(table, lines=rows)
 
 
 def extracted_body(table: ExtractedTable) -> str:
@@ -999,7 +1094,7 @@ def seen_tables(
     tools: PackTools, seen: Seen, context: SourceContextReview
 ) -> tuple[ExtractedTable, ...]:
     """The extracted tables `extracted_coverage` reads for one `financials` submit (task 8.12):
-    one per `page:N` span of a financial source of `context` (`classification: financial`) that
+    one per `page:N` span (per `line:N-M` range of a line source, B22) of a financial source of `context` (`classification: financial`) that
     the model had been shown by then (`seen.read`: through `read_pages` or
     `extract_statements`), in pack then page order. Never a page the model was not shown, so
     the work is bounded by what the step read, never the whole filing."""
@@ -1007,6 +1102,17 @@ def seen_tables(
     tables: list[ExtractedTable] = []
     for source_id, source in tools.ready.items():
         if source_id not in financial:
+            continue
+        if source_id in tools.lines:
+            ranges = sorted(
+                (
+                    loc
+                    for ident, loc in seen.read
+                    if ident == source_id and _LINE_RANGE.fullmatch(loc)
+                ),
+                key=_range_of,
+            )
+            tables += [_line_table(tools.lines[source_id], loc, source_id) for loc in ranges]
             continue
         spans = {span.locator: span for span in source.spans if _PAGE.fullmatch(span.locator)}
         shown = sorted(

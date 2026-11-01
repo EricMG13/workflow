@@ -7,7 +7,8 @@ proves orchestration, not the prompts (O6), and recordings made now stop matchin
 the prompt (the digest includes the prompt hash).
 
 ``test_stopped_run_fast`` runs always. The full walk is not here: the prepared text pack cannot
-pass CP-1 ``financials`` (see ``test_a_text_pack_cannot_extract_a_statement_page``), so no frozen
+pass CP-1 ``financials`` with a frozen payload (no financials payload exists in the oracle; B22 made
+the statement units extractable, see ``test_a_text_pack_extracts_its_statement_units``), so no frozen
 payload sequence reaches CP-8. That gap is reported, not worked around.
 """
 
@@ -17,16 +18,23 @@ import os
 import socket
 import time
 from collections.abc import Iterator, Mapping
+from decimal import Decimal
 from pathlib import Path
-from typing import Any, NoReturn
+from types import SimpleNamespace
+from typing import Any, NoReturn, cast
 
 import o2_case
 import pytest
 
 from deploy_vii.execution import Execution
+from deploy_vii.preparation import load_pack
+from deploy_workflow import financial_workflow
+from deploy_workflow.financial_workflow import STATEMENT_HEADING
 from deploy_workflow.model import transport as transport_module
+from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.model.record import arguments_sha256
 from deploy_workflow.model.turn import load_arguments
+from deploy_workflow.owner_workflow import OwnerWorkflow
 
 OFFLINE_KEYS = {
     "case_id",
@@ -108,16 +116,126 @@ def test_the_oracle_files_are_the_pinned_ones() -> None:
     o2_case.check_pins()  # raises on drift; reads cases/PINS.json
 
 
-def test_a_text_pack_cannot_extract_a_statement_page(tmp_path: Path) -> None:
-    """Why no full walk exists: CP-1 ``financials`` requires ``extract_statements`` on every
-    statement-heading span, and that tool accepts ``page:N`` locators only, while a prepared text
-    pack has ``line:N`` spans. This pins the blocker so a fix elsewhere turns this test red."""
-    found = o2_case.blocker(tmp_path)
-    assert found["extract_error"] == "bad_arguments"
-    assert found["heading_locators"]  # the step requires spans...
-    assert all(
-        item.startswith("line:") for item in found["heading_locators"]
-    )  # ...it cannot extract
+UNITS = ("line:22-46", "line:47-81", "line:82-131")  # the three statement units of financial.txt
+
+
+def at_financials(root: Path) -> tuple[OwnerWorkflow, Path]:
+    """CP-1 ``financials`` on the prepared text pack: the frozen CP-0 and source-context payloads
+    submitted, the searches the context step needs recorded."""
+    empty = root / "check-recordings"
+    empty.mkdir(parents=True)
+    _, run_dir = o2_case._prepare(root, recorded_adapter(o2_case.MODEL, empty))
+    pack = load_pack(run_dir / "pack")
+    workflow = OwnerWorkflow.create(
+        run_dir / "execution", pack, publication_directory=run_dir / "publication"
+    )
+    assert workflow.submit_review(o2_case.payload_for("source_readiness"))["status"] == "valid"
+    for source_id, query in o2_case.SEARCHES:
+        workflow.invoke("search_pack", {"query": query, "source_id": source_id})
+    assert workflow.submit_review(o2_case.payload_for("source_context"))["status"] == "valid"
+    assert workflow.binding.step_id == "financials"
+    return workflow, run_dir
+
+
+def test_a_text_pack_extracts_its_statement_units(tmp_path: Path) -> None:
+    """B22: CP-1 ``financials`` requires every statement-heading unit of a line source to be
+    extracted, a unit being ``line:K-E`` from a heading to the line before the next one. This
+    replaces the Task 5 pin that ``page:N`` was the only locator ``extract_statements`` took."""
+    heading = sorted(
+        span.locator
+        for source in load_pack(at_financials(tmp_path / "walk")[1] / "pack").sources
+        if source.source_id == "financial"
+        for span in source.spans
+        if STATEMENT_HEADING.search(span.text)
+    )
+    assert heading == ["line:22", "line:47", "line:82"]
+    workflow, _ = at_financials(tmp_path / "all")
+    for unit in UNITS:
+        done = workflow.invoke("extract_statements", {"source_id": "financial", "locators": [unit]})
+        assert done["status"] == "ok", done
+    # one unit short: the step names the missing coverage
+    short, _ = at_financials(tmp_path / "short")
+    for unit in UNITS[:2]:
+        assert (
+            short.invoke("extract_statements", {"source_id": "financial", "locators": [unit]})[
+                "status"
+            ]
+            == "ok"
+        )
+    refused = short.submit_review("{}")
+    assert refused["status"] == "refused"
+    assert "Financials must extract every located statement page in this epoch" in refused["issues"]
+    complete = workflow.submit_review("{}")
+    assert (
+        "Financials must extract every located statement page in this epoch"
+        not in complete["issues"]
+    )
+
+
+def test_a_line_citation_naming_the_range_key_is_not_coverage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A payload line covers an extracted row only by citing the row's own ``line:K``; the unit's
+    ``line:N-M`` key is the extraction request, not a located span. The payload is a stand-in
+    for a ``FinancialSubmission`` (its real shape is some 36 KB of schema): only the fields
+    ``_evidence_issues`` reads, over the real extraction of the real pack."""
+    workflow, run_dir = at_financials(tmp_path)
+    for unit in UNITS:
+        assert (
+            workflow.invoke("extract_statements", {"source_id": "financial", "locators": [unit]})[
+                "status"
+            ]
+            == "ok"
+        )
+    periods = [
+        SimpleNamespace(
+            period_id=f"p-{name}",
+            end_date="2025-12-31",
+            fiscal_year="FY2025",
+            period_type="QUARTER" if name != "fy" else "FY",
+            fiscal_quarter=int(name[1]) if name != "fy" else None,
+        )
+        for name in ("q1", "q2", "q3", "q4", "fy")
+    ]
+
+    submissions: dict[str, Any] = {}
+    for locator in ("line:22-46", "line:24"):
+        cite = SimpleNamespace(source_id="financial", locator=locator, quote="Revenue  30")
+        submissions[locator] = SimpleNamespace(
+            financial=SimpleNamespace(
+                books=[
+                    SimpleNamespace(
+                        periods=periods,
+                        statement_lines=[
+                            SimpleNamespace(
+                                period_id=period.period_id,
+                                statement="IS",
+                                label="Revenue",
+                                value=SimpleNamespace(amount=Decimal(amount), citations=[cite]),
+                            )
+                            for period, amount in zip(periods, (30, 30, 30, 30, 120), strict=True)
+                        ],
+                    )
+                ]
+            )
+        )
+    monkeypatch.setattr(
+        financial_workflow,
+        "FinancialSubmission",
+        SimpleNamespace(model_validate_json=lambda text: submissions[text]),
+    )
+    store = Execution(run_dir / "execution")
+    evidence = workflow._epoch_calls[-1].source_evidence
+
+    def uncovered(locator: str) -> list[str]:
+        found = financial_workflow._evidence_issues(
+            store, cast(Any, workflow.binding), locator, evidence
+        )
+        return [i for i in found if i.startswith("Uncovered extracted statement line")]
+
+    row = "Uncovered extracted statement line: financial line:22-46 line 24"
+    assert row in uncovered("line:22-46")  # the range key names no row
+    assert row not in uncovered("line:24")  # the row's own locator covers it
 
 
 def test_stopped_run_fast(tmp_path: Path) -> None:

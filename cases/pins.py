@@ -36,6 +36,7 @@ PATTERNS = (
     "cases/o2-synthetic/*.txt",
     "cases/o2-synthetic/builder/build.py",
     "cases/o2-synthetic/builder/cp1_financials.py",
+    "cases/o2-synthetic/builder/context_rows.py",
     "cases/valuation-context-owner/contexts/*.json",
     "src/deploy_vii/methodology.json",
 )

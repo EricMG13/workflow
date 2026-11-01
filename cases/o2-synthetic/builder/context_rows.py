@@ -33,7 +33,7 @@ ADDED = (
     "validate_business_context (every prepared source assessed once; business_context.py:665)"
 )
 STATUS_SUFFIX = (
-    "; business_context `context` source row (O2 Task 4c) prepared, not reviewed, not frozen"
+    "; business_context `context` source row (O2 Task 4c): CP-1A context row reviewed (mx-precise accca4ec) and frozen"
 )
 BASE_STATUS = (
     "S1, CP-3, CP-5, CP-6 submissions, sources and context frozen (9de132e7, cases/PINS.json); "

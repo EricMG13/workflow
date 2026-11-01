@@ -273,13 +273,22 @@ def test_cp1b_q4_2024_present_is_still_unsupported() -> None:
 def test_cp1b_prior_year_period_in_the_register_falsifies_the_limits() -> None:
     """The limitation "no FY2024 annual income statement or prior-year quarterly series is
     supplied" is true only while the register carries none, so the pair is refused."""
-    module = _with_period(a1.fixture(), "q4-2024", "QUARTER", "4", "2024-10-01", "2024-12-31")
+    module = _with_period(_register(), "q4-2024", "QUARTER", "4", "2024-10-01", "2024-12-31")
     for prior, current, comparison in (
         ("q3-2025", "q4-2025", "flat_sequential"),
         ("fy-2024", "fy-2025", "comparative_not_supplied"),
     ):
         found = cp1b.compute(module, review(prior, current, comparison))
         assert found.issues == ("unsupported_pair",), (prior, current)
+
+
+@pytest.mark.parametrize("kind", ["LTM", "YTD"])
+def test_cp1b_2024_ltm_or_ytd_row_falsifies_the_gap_limit(kind: str) -> None:
+    """A 2024 LTM or YTD income row is a prior-year series, so the gap pair's limitation "No FY2024
+    annual income statement or prior-year quarterly series is supplied" would be false."""
+    module = _with_period(_register(), "x-2024", kind, "4", "2024-01-01", "2024-12-31")
+    found = cp1b.compute(module, review("fy-2024", "fy-2025", "comparative_not_supplied"))
+    assert found.report is None and found.issues == ("unsupported_pair",)
 
 
 def test_cp1b_comparison_label_is_derived_from_the_deltas() -> None:

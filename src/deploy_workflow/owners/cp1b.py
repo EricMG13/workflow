@@ -133,15 +133,19 @@ def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
     rows = _periods(view)
     # The limitations say no FY2024 or prior-year series is supplied: no 2024 duration period.
     # The `opening-2024` PERIOD_END row the real E-* register holds is a balance date, not a series.
+    # Any non-PERIOD_END row (QUARTER, FY, LTM, YTD) dated 2024 is such a series.
     if any(
-        r["period_type"].text in ("QUARTER", "FY")
+        r["period_type"].text != "PERIOD_END"
         and "2024" in (r["start_date"].text or "") + (r["end_date"].text or "")
         for r in rows.values()
     ):
         return False
     if pair == GAP_PAIR:
         # The table limitation "Opening-2024 balance data exists" must be true; the claim
-        # "current FY2025 leverage remains valid" needs known FY2025 leverage.
+        # "current FY2025 leverage remains valid" needs known FY2025 leverage. The opening
+        # balance is evidenced by the T4.14 PERIOD_END row alone: T4.10 columns are the KPI
+        # display bases of duration periods (canonical_tables._dashboard), so the register holds
+        # no opening-2024 T4.10 value to require.
         opening = rows.get(OPENING_2024)
         return (
             report.prior_basis_id is None

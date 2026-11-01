@@ -967,3 +967,97 @@ def test_withheld_names_a_split_key_that_ends_in_an_error_event(tmp_path: Path) 
     ]
     body = "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
     assert CallLog(tmp_path, Redactor())._withheld(body, None) == "KeyReflected"
+
+
+def _malformed_anthropic_body(usage: dict[str, Any]) -> bytes:
+    events: list[dict[str, Any]] = [
+        {
+            "type": "message_start",
+            "message": {"id": "msg_1", "model": "claude-opus-5-5", "usage": usage},
+        },
+        {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {"type": "tool_use", "id": "t1", "name": "submit", "input": {}},
+        },
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "input_json_delta", "partial_json": "[1]"},
+        },
+        {"type": "content_block_stop", "index": 0},
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "tool_use"},
+            "usage": {"output_tokens": 100},
+        },
+        {"type": "message_stop"},
+    ]
+    return "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
+
+
+SPLIT_USAGE = {
+    "input_tokens": 600,
+    "cache_creation_input_tokens": 150,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {"ephemeral_5m_input_tokens": 100, "ephemeral_1h_input_tokens": 50},
+    "output_tokens": 1,
+}
+
+
+def _sent_usage_record(**over: Any) -> CallRecord:
+    return record(
+        **ANTHROPIC,
+        request_id="msg_1",
+        reported_model="claude-opus-5-5",
+        cost_status="computed",
+        error_class="MalformedToolArguments",
+        input_tokens=600,
+        cached_read_tokens=0,
+        cache_write_tokens=150,
+        output_tokens=100,
+        **over,
+    )
+
+
+def test_sent_usage_export_keeps_the_cache_write_split_from_the_raw_body(tmp_path: Path) -> None:
+    (resp,) = exported(
+        tmp_path, _sent_usage_record(), bodies={0: _malformed_anthropic_body(SPLIT_USAGE)}
+    )
+    assert resp["kind"] == "sent_usage"
+    assert (resp["usage"]["cache_write_5m_tokens"], resp["usage"]["cache_write_1h_tokens"]) == (
+        100,
+        50,
+    )
+
+
+def test_sent_usage_export_split_is_null_when_the_body_is_withheld(tmp_path: Path) -> None:
+    (resp,) = exported(tmp_path, _sent_usage_record(), bodies={0: b"\xff\xfe not utf-8"})
+    assert resp["kind"] == "sent_usage"
+    assert resp["usage"]["cache_write_5m_tokens"] is None
+    assert resp["usage"]["cache_write_1h_tokens"] is None
+
+
+def test_sent_usage_export_refuses_a_body_that_disagrees_with_the_record(tmp_path: Path) -> None:
+    other = {**SPLIT_USAGE, "cache_creation_input_tokens": 149}
+    other["cache_creation"] = {"ephemeral_5m_input_tokens": 99, "ephemeral_1h_input_tokens": 50}
+    with pytest.raises(ExportMismatch):
+        exported(tmp_path, _sent_usage_record(), bodies={0: _malformed_anthropic_body(other)})
+
+
+def test_adapter_error_record_exports_sent_unknown(tmp_path: Path) -> None:
+    (resp,) = exported(
+        tmp_path,
+        record(
+            http_status=None,
+            cost_status="unknown",
+            settled_usd=None,
+            error_class="AdapterError",
+            output_tokens=None,
+        ),
+    )
+    assert (resp["kind"], resp["error_class"], resp["http_status"]) == (
+        "sent_unknown",
+        "AdapterError",
+        None,
+    )

@@ -222,10 +222,11 @@ def test_a_second_unknown_charge_in_the_run_is_not_retried(tmp_path: Path) -> No
 
 def test_an_exception_out_of_complete_keeps_the_hold_and_stops(tmp_path: Path) -> None:
     rig = make_rig(tmp_path, [RuntimeError("the socket is gone")])
-    assert _stop(rig).reason == "RuntimeError"
+    assert _stop(rig).reason == "RuntimeError"  # the stop names the exception
     (record,) = rig.records()
     assert (record["cost_status"], record["settled_usd"]) == ("unknown", None)
-    assert record["error_class"] == "RuntimeError" and record["http_status"] is None
+    assert record["error_class"] == "AdapterError" and record["http_status"] is None
+    assert "RuntimeError" in record["error"]  # the exception type name stays in the text
     assert rig.budget.spent == Decimal(record["reserved_usd"])
     with pytest.raises(RunStopped):
         rig.budget.reserve("next-call", Decimal("0.001"), config_id=CONFIG)
@@ -238,7 +239,8 @@ def test_recording_missing_is_a_recorded_call_and_a_stop(tmp_path: Path) -> None
     stopped = _stop(rig)
     assert stopped.reason == "RecordingMissing"
     (record,) = rig.records()
-    assert record["error_class"] == "RecordingMissing" and record["cost_status"] == "unknown"
+    assert record["error_class"] == "AdapterError" and record["cost_status"] == "unknown"
+    assert "RecordingMissing" in record["error"]
     digest = record["invocation_digest"]
     assert digest in stopped.detail  # a recording author reads the digest to write against
     assert (tmp_path / "run" / "store" / "owner-run-audit" / "invocations" / digest).is_file()

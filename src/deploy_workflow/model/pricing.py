@@ -78,6 +78,9 @@ class ModelPrice:
     cache_write_5m: Decimal | None = None  # Anthropic only
     cache_write_1h: Decimal | None = None  # Anthropic only
     max_input_tokens: int | None = None  # a longer request has no listed rate: ContextTooLong
+    cache_write_listed: bool = (
+        True  # False: ``cache_write`` only reserves; a charge needing it is unknown
+    )
 
     def __post_init__(self) -> None:
         for name in ("input", "output", "cache_write"):
@@ -101,7 +104,8 @@ _UNKNOWN = Priced(None, "unknown")
 _SOL = ModelPrice(
     input=Decimal("2.00"),
     cached_read=Decimal("0.10"),
-    cache_write=Decimal("2.00"),  # not stated: reserved and charged at input
+    cache_write=Decimal("2.00"),  # not stated (ledger :2): reserved at input, never charged
+    cache_write_listed=False,
     output=Decimal("10.00"),
     max_input_tokens=272_000,  # standard tier; long-context rates not supplied
 )
@@ -155,7 +159,7 @@ def _openai_like(price: ModelPrice, usage: Usage) -> Decimal | None:
     cached = usage.cached_read_tokens or 0  # absent: all at the input rate, never an undercharge
     written = usage.cache_write_tokens or 0  # not a documented OpenAI field: absent means none
     fresh = n_in - cached - written
-    if fresh < 0:
+    if fresh < 0 or (written and not price.cache_write_listed):
         return None
     return (
         fresh * price.input

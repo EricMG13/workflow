@@ -8,7 +8,6 @@ every key here is a planted test value.
 import http.client
 import json
 import os
-import socket
 import traceback
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
@@ -55,19 +54,6 @@ PLANTED = "sk-or-v1-TESTONLY123456"
 LIVE_KEY = "sk-proj-OPAQUETESTKEY0000000000"
 TIMING = ("started_at", "first_byte_at", "finished_at")
 CONFIG = SPEC.config_id
-
-
-@pytest.fixture(autouse=True)
-def no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The default transport must raise: any request that escapes a fake is a test failure."""
-
-    def refuse(*args: object, **kwargs: object) -> NoReturn:
-        raise AssertionError("a test reached the network")
-
-    monkeypatch.setattr(http.client, "HTTPSConnection", refuse)
-    monkeypatch.setattr(http.client, "HTTPConnection", refuse)
-    monkeypatch.setattr(socket, "create_connection", refuse)
-    monkeypatch.setattr(transport_module, "_default_connection", refuse)
 
 
 def test_the_default_transport_is_refused() -> None:

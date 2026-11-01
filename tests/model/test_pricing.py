@@ -113,10 +113,10 @@ def test_openai_counts_cache_write_once() -> None:
 
 def test_openai_table_rates() -> None:
     usage = Usage(
-        input_tokens=1000, cached_read_tokens=400, cache_write_tokens=100, output_tokens=100
+        input_tokens=1000, cached_read_tokens=400, cache_write_tokens=0, output_tokens=100
     )
     got = price_usage("sol-high", usage)
-    assert got.usd == (500 * D(2) + 400 * D("0.1") + 100 * D(2) + 100 * D(10)) / 10**6
+    assert got.usd == (600 * D(2) + 400 * D("0.1") + 100 * D(10)) / 10**6  # no write: priced
 
 
 def test_anthropic_inclusivity_and_ephemeral_rates() -> None:
@@ -214,3 +214,13 @@ def test_offline_openrouter_cache_write_is_unknown() -> None:
     assert price_usage("deepseek-max", usage, offline=True) == Priced(None, "unknown")
     clean = Usage(input_tokens=100, cached_read_tokens=0, cache_write_tokens=0, output_tokens=1)
     assert price_usage("deepseek-max", clean, offline=True).cost_status == "computed"
+
+
+def test_sol_cache_write_charge_is_unknown_not_priced_at_input() -> None:
+    """Ledger :2: the sol cache-write rate is unsupplied, so a charge needing it is unknown."""
+    written = Usage(input_tokens=10_000, cache_write_tokens=8_000, output_tokens=100)
+    assert price_usage("sol-medium", written).cost_status == "unknown"
+    assert price_usage("sol-high", written, offline=True).cost_status == "unknown"
+    none_written = Usage(input_tokens=10_000, cache_write_tokens=0, output_tokens=100)
+    assert price_usage("sol-medium", none_written).cost_status == "computed"
+    assert reservation_usd(PRICES["sol-medium"], 1000, 0) == D(2000) / 10**6

@@ -44,6 +44,7 @@ from deploy_workflow.model.pricing import (
 )
 from deploy_workflow.model.providers import RETRY_AFTER_DEFAULT_S, RETRY_AFTER_MAX_S
 from deploy_workflow.model.record import (
+    ADAPTER_ERROR,
     CallLog,
     CallRecord,
     arguments_sha256,
@@ -428,12 +429,14 @@ class ToolLoop:
         )
         if reply is None or failure is not None:
             # An exception out of complete may follow a send: the charge is unknown, so the hold
-            # is kept and counted, never released; the run stops once the record is written.
+            # is kept and counted, never released; the run stops once the record is written. The
+            # record's class is the fixed AdapterError; the exception type is in the error text.
             name = type(failure).__name__
             self._budget.settle(call_id, None)
             self._append(
                 ctx, index, started, None, None, reserved, None, "unknown",
-                error_class=name, error=self._redactor.exception(failure or RuntimeError(name)),
+                error_class=ADAPTER_ERROR,
+                error=self._redactor.exception(failure or RuntimeError(name)),
             )  # fmt: skip
             return _Attempt(stop=(name, self._redactor.text(str(failure))))
         return self._after_reply(ctx, index, call_id, started, reserved, reply, retry_of)

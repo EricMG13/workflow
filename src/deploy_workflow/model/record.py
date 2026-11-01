@@ -483,15 +483,18 @@ def retain_preimage(store: _Store, preimage: Mapping[str, Any]) -> str:
 # the reply parsed as a turn, then the loop stopped on it. Such a record exports as the ok turn.
 LOOP_STOPS: frozenset[str] = frozenset({"NoSubmit", "CallLimit", "WorkflowError", "BadTurn"})
 
+# The class of a record whose ``complete`` raised: the call may have been sent, the charge is unknown.
+ADAPTER_ERROR = "AdapterError"
+
 _TRANSPORT_CLASSES = frozenset(
-    {"ConnectTimeout", "IdleTimeout", "OverallTimeout", "TransportError"}
+    {"ConnectTimeout", "IdleTimeout", "OverallTimeout", "TransportError", ADAPTER_ERROR}
 )
 
 
 _RECORDED_TOKENS = (
     "input_tokens",
     "cached_read_tokens",
-    "cache_write_tokens",  # the 5m/1h split is not recorded (B11)
+    "cache_write_tokens",  # the 5m/1h split is not recorded (B11); see _split_from_body
     "output_tokens",
     "reasoning_tokens",
 )
@@ -506,8 +509,31 @@ def _usage_object(rec: CallRecord) -> dict[str, int | None]:
     return {f.name: getattr(rec, f.name, None) for f in fields(Usage)}
 
 
-def _error_response(rec: CallRecord, error_class: str) -> dict[str, Any]:
-    """An error reply from the record's own fields; the raw body is never consulted."""
+def _split_from_body(
+    run: Path, rec: CallRecord, status: int, redactor: Redactor
+) -> tuple[int | None, int | None]:
+    """The Anthropic 5m/1h cache-write split of a usage-bearing error reply, from its raw body.
+
+    The record keeps five token fields (B11), so the split is read back by re-parsing the archived
+    body. It is taken only when the parsed usage agrees with the five recorded fields (else
+    ``ExportMismatch``). A missing or withheld body, or one that parses to no usage, leaves the
+    split None and the replay prices the call unknown."""
+    path = run / "raw" / f"{rec.invocation_digest}-{rec.call_index}.json"
+    if rec.provider != "anthropic" or not path.is_file() or path.stat().st_size == 0:
+        return None, None
+    parsed = parse("anthropic", status, _archived_body(path, rec), {}, redactor)
+    if not isinstance(parsed, ProviderError) or parsed.usage is None:
+        return None, None
+    if _usage_of(rec) != {k: getattr(parsed.usage, k) for k in _RECORDED_TOKENS}:
+        raise ExportMismatch(rec.invocation_digest, rec.call_index, "usage")
+    return parsed.usage.cache_write_5m_tokens, parsed.usage.cache_write_1h_tokens
+
+
+def _error_response(
+    rec: CallRecord, error_class: str, run: Path, redactor: Redactor
+) -> dict[str, Any]:
+    """An error reply from the record's own fields. Only a usage-bearing reply also consults the
+    raw body, for the cache-write split the record does not keep."""
     key = (rec.invocation_digest, rec.call_index)
     unknown = rec.cost_status == "unknown"
     if rec.http_status is None:
@@ -524,6 +550,9 @@ def _error_response(rec: CallRecord, error_class: str) -> dict[str, Any]:
     if has_tokens or rec.cost_status == "billed":
         out["kind"] = "sent_usage"
         out["usage"] = _usage_object(rec)
+        out["usage"]["cache_write_5m_tokens"], out["usage"]["cache_write_1h_tokens"] = (
+            _split_from_body(run, rec, rec.http_status, redactor)
+        )
     elif unknown:
         out["kind"] = "sent_unknown"
     else:
@@ -621,7 +650,7 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
             )
         else:
             _refuse_forged_error(run, rec, redactor)
-            response = _error_response(rec, rec.error_class)
+            response = _error_response(rec, rec.error_class, run, redactor)
         if key in responses and dump_json(responses[key]) != dump_json(response):
             raise ValueError(f"conflicting records for {key}")
         responses[key] = response
@@ -644,6 +673,7 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
 
 
 __all__ = [
+    "ADAPTER_ERROR",
     "LOOP_STOPS",
     "AuditCorrupt",
     "CallLog",

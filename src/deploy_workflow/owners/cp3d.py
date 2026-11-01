@@ -67,6 +67,7 @@ from deploy_workflow.context_cites import (
 )
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-3D"
@@ -1959,11 +1960,23 @@ def _single_dealer(sub: MarketImpliedSubmission) -> list[str]:
     return []  # talk only: LVL-01 and the talk limitation already say it
 
 
+def _with_pin(lines: Sequence[str], pinned: bool) -> tuple[str, ...]:
+    """`lines` de-duplicated, then the user-supplied recovery line last when `pinned`."""
+    if pinned:
+        lines = [*lines, pinned_line(MODULE_ID)]
+    return tuple(dict.fromkeys(lines))
+
+
 def own_limitations(
-    submission: MarketImpliedSubmission, context: MarketContext | None = None
+    submission: MarketImpliedSubmission,
+    context: MarketContext | None = None,
+    *,
+    pinned: bool = False,
 ) -> tuple[str, ...]:
     """The module's own limitations, in the lease's order, de-duplicated. The `context` gives the
-    stale-quote lines the dates of the context rows (Design 6); without it there are none."""
+    stale-quote lines the dates of the context rows (Design 6); without it there are none. With
+    `pinned` (the context file pins the recovery rate) the user-supplied line comes last, after
+    the stale, single-dealer and context-talk lines."""
     sub = submission
     out: list[str] = []
     if sub.market_absence is not None:
@@ -2015,7 +2028,7 @@ def own_limitations(
             "An absence is backed only by a recorded search over some source, not by a search for the "
             "specific item"
         )
-    return tuple(dict.fromkeys(out))
+    return _with_pin(out, pinned)
 
 
 def inherited_limitations(*, own: Sequence[str], upstream: Sequence[str]) -> tuple[str, ...]:
@@ -2170,13 +2183,15 @@ def _claims(c: _Composer, tables: Sequence[Table]) -> tuple[ClaimText, ...]:
 
 
 def market_implied_result(
-    *, submission: MarketImpliedSubmission, context: MarketContext
+    *, submission: MarketImpliedSubmission, context: MarketContext, pinned: bool = False
 ) -> MarketImpliedResult:
-    """Tables T3E.1-T3E.9, claims and own limitations of a validated submission (pure)."""
+    """Tables T3E.1-T3E.9, claims and own limitations of a validated submission (pure). `pinned`
+    is set by `market_implied` once the context file's pin is accepted; the pin is not checked
+    here (`_pin_lines`)."""
     sub = expand_context_rows(submission, context)
     derived = compose(inputs=inputs_from_submission(sub))
     c = _Composer(sub, context, derived)
-    own = own_limitations(sub, context)
+    own = own_limitations(sub, context, pinned=pinned)
     builders: tuple[Callable[[], Table], ...] = (
         c.market_levels,
         c.price_metrics,
@@ -2316,6 +2331,31 @@ def validate_market_implied(
     return tuple(dict.fromkeys(issues))
 
 
+def _pin_lines(pack: PreparedPack, submission: MarketImpliedSubmission) -> tuple[str, ...]:
+    """The line where the submitted recovery percent differs from the context pin, as typed (the
+    text is clipped by `pin_issues`; nothing is parsed here); a recovery absence is the
+    `submitted absence` line. A context the run refuses is the single line
+    `Context refused: ...` and no pin line, apart from the market-quote `context_errors` that
+    `validate_market_implied` reports. Empty, and nothing mapped, when nothing is pinned."""
+    try:
+        if pins_of(MODULE_ID, pack) is None:
+            return ()
+        recovery = submission.recovery
+        submitted = {"recovery.percent_text": None if recovery is None else recovery.percent_text}
+        return pin_issues(MODULE_ID, pack, submitted)
+    except ContextRefused as error:
+        return (clipped(("Context refused: ", str(error))),)
+
+
+def _issues(
+    pack: PreparedPack, submission: MarketImpliedSubmission, upstream: Upstream
+) -> tuple[str, ...]:
+    """The content issues, then the pin lines: the one issue set of the step validator and the
+    composer gate."""
+    content = validate_market_implied(submission=submission, upstream=upstream)
+    return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
+
+
 # --- the report and the module -----------------------------------------------------------------
 
 
@@ -2403,9 +2443,11 @@ def market_implied(
     *, pack: PreparedPack, submission: MarketImpliedSubmission, upstream: Upstream
 ) -> MarketImpliedReport:
     """The report of a submission the validator accepts (`ValueError` listing the issues if not)."""
-    if issues := validate_market_implied(submission=submission, upstream=upstream):
+    if issues := _issues(pack, submission, upstream):
         raise ValueError("; ".join(issues))
-    result = market_implied_result(submission=submission, context=upstream.context)
+    # `_issues` raised on a refused context, so `pins_of` cannot raise here.
+    pinned = pins_of(MODULE_ID, pack) is not None
+    result = market_implied_result(submission=submission, context=upstream.context, pinned=pinned)
     tables: list[ReportTable] = []
     facts: list[Fact] = []
     for table in result.tables:
@@ -2477,7 +2519,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     upstream = cp3d_upstream(store=store, attempt=attempt, pack=pack)
-    if issues := validate_market_implied(submission=submission, upstream=upstream):
+    if issues := _issues(pack, submission, upstream):
         return StepValidation(issues=issues)
     report = market_implied(pack=pack, submission=submission, upstream=upstream)
     return StepValidation(output=report.model_dump_json())

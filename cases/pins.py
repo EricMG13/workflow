@@ -26,6 +26,10 @@ PATTERNS = (
     "cases/charts/*-expected.json",
     "cases/charts/expected.json",
     "cases/charts/builder/*.py",
+    "cases/context-identity-periods/*.json",
+    "cases/context-identity-periods/contexts/*.json",
+    "cases/context-identity-periods/sources/*.json",
+    "cases/context-identity-periods/builder/build.py",
     "src/deploy_vii/methodology.json",
 )
 

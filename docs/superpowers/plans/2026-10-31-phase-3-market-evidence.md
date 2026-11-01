@@ -128,7 +128,7 @@ evidence caps confidence (tests listed under "Done-when as tests").
 - **O6 prompts (`part-b-o6.md` H2 :114, O3, M6 :116):** `relative_value` is an existing O6 step with its
   contract unchanged (o6 :109) and today's rule `CP3_EVIDENCE_RULE` (`live/prompts.py:583-587`: basis quotes
   repeat a `market_evidence` row; quotes only from `market_evidence_sources`) conflicts with by-id context
-  rows. `src/deploy_vii/live/prompts.py` is outside B6 and stays unchanged; it goes to the user (below). O6 rule
+  rows. `src/deploy_vii/live/prompts.py` is changed (wording only) in Task 4 under user ruling B17 item 3. O6 rule
   O3 (the model never cites `context`) stays: the model cites by row id, not by quote. O6's M6 no-leak
   sentinel test forbids context figures anywhere in a prompt; it is exempted for exactly one fenced data block
   (Task 4). O6's `run_context_block` whitelist is unchanged. CP-3D's rule list comes from
@@ -138,9 +138,8 @@ evidence caps confidence (tests listed under "Done-when as tests").
 - **O7:** `owners/cp1c.py`, `cpdr.py`; no shared file. **Other phases:** `cp3d.py` is shared with Phases 6
   and 8; `context.py`/the form with 2 and 6. Phase 3 does not change `context.py` (a drift test pins the
   30-day limit) and changes the form only in Task 3.
-- **For the user (final report):** the `relative_value` contract text in `src/deploy_vii/live/prompts.py`
-  (:583-587) is unchanged; until the user rules, a live CP-3 run may conflict with it. Offline tests drive
-  recorded submissions.
+- **`live/prompts.py` (B17 item 3):** the `relative_value` contract text (`CP3_EVIDENCE_RULE`, :582-587, used
+  at :826) changes in Task 4, wording only, with a D12 record and `mx-adversary` review.
 
 ## Task 0: Oracle (separate preparer; independent `mx-precise` review; frozen and pinned before Tasks 1-4)
 
@@ -236,8 +235,14 @@ rows stay (Q5 of the questions file). The form drift tests (parent Task 2) must 
 ## Task 4: O6 follow-through (after O6 is built; separate writer for text and rule lists, `mx-precise` review)
 
 **Files:** O6's `prompts/compose.py`, `prompts/fence.py`, `prompts/texts/relative_value.md` and
-`market_implied.md`, `prompts/rule_lists/relative_value.json` and `market_implied.json`, their tests. Not
-`src/deploy_vii/live/prompts.py`.
+`market_implied.md`, `prompts/rule_lists/relative_value.json` and `market_implied.json`, their tests; and
+`src/deploy_vii/live/prompts.py` (SENSITIVE: `src/deploy_vii` diff; `mx-adversary`).
+- **`live/prompts.py` (B17 item 3):** reword `CP3_EVIDENCE_RULE` (wording only; read the text at :582-587 with
+  `git show HEAD:`): a `basis` refers to Python's context rows by id (`basis.context_rows`) and never copies
+  their figures; `basis.quotes` still repeats a `market_evidence` row's quote for `third_party` rows only; no
+  other contract text changes. D12 `post_import_patches` record in `docs/reuse/manifest.json` (prompts.py is an
+  imported file: normal shape, `project_commit` filled by the controller after the commit); re-pin the O6
+  prompt-set hash (`STEP_CONTRACTS` pins) in the same change.
 - The composer embeds Python's evidence rows (`context_market_evidence`; CP-3D's `context_observations_data`) as one
   fenced `data_block("CONTEXT", "context-evidence", ...)` for those two steps, with the step rule "rows from
   the context are Python's; refer to them by row id; never copy their figures".
@@ -245,7 +250,8 @@ rows stay (Q5 of the questions file). The form drift tests (parent Task 2) must 
 - O6 rule O3 stays (the model never cites `context`); a test asserts the rule text still forbids a `context`
   quote.
 - The rule lists gain this oracle's refusal ids (Task 0) through the O6 rule-list process.
-- [ ] RED: composed `relative_value` prompt contains the block and the rule; the M6 test passes with only the
+- [ ] RED: composed `relative_value` prompt names row-id references (`basis.context_rows`) and no longer says
+  basis quotes repeat a `market_evidence` row for every basis; contains the block and the rule; the M6 test passes with only the
   block exempt; the rule lists cover every new refusal id. Run O6's `tests/prompts` suite.
 
 ## Done-when as tests
@@ -267,13 +273,13 @@ rows stay (Q5 of the questions file). The form drift tests (parent Task 2) must 
 2. Ruled: all observations of a CP-3D submission share one context `facility_id`; the instrument name is not matched to it; CP-1 is not added as a CP-3D input (Design 9; Task 2 `test_mixed_facilities_refused`).
 3. Ruled: object-anchored citations (Design 3); a residual key collision with different content drops the later row into a gap (Task 1).
 4. Ruled: a quote with every figure empty yields no row and the gap `context quote for facility <id> carries no figure; not used` (Design 5; Task 1 `test_unmatched_and_empty_quote_are_named_gaps`).
-5. Ruled: prompt text is O6's; Phase 3 adds Task 4 (O6 follow-through) and leaves `live/prompts.py` to the user.
+5. Ruled: prompt text is O6's; Phase 3 adds Task 4 (O6 follow-through) and edits the `relative_value` contract in `live/prompts.py` (B17 item 3).
 6. Ruled (M2): no model copies a context figure; it refers to Python rows by id (Design 4, 9).
 
 
 ## Not verified (to carry into each report)
 
 Journaled (store) CP-3/CP-3D runs on the new case (wait for O1 and Stage 5; engine tests only); live model
-behaviour with the by-id rows and the unchanged `live/prompts.py` contract (paused; user ruling pending);
+behaviour with the by-id rows and the reworded `live/prompts.py` contract (paused);
 CP-3D tool-use read of the `context` page (`unread_citation_issues`) in a real run; Task 4 until O6 is built;
 the exact CP-3D CONTEXT/view location; oracle values are unreviewed drafts until Task 0.

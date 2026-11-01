@@ -41,12 +41,12 @@ neither `owner_workflow.py` nor `prompts/`; see Open question 3.
 - `DEFAULT_BASIS` is not a stub: it is the frozen-case behaviour, used only when `context_facts(pack)` is `None`. A pack that
   has a context never reaches it.
 - Python owns every date and figure; the model never quotes a period or currency string it was not handed.
-- `src/deploy_vii`: only wording-only edits to `methods/*.md` that this phase makes stale (B9), each with a D12
+- `src/deploy_vii`: Task 6b (user ruling B17-9: `bindings/cp1b.py` and `report_view.py`, D12 records, `mx-adversary`, re-pins) and wording-only edits to `methods/*.md` that this phase makes stale (B9), each with a D12
   `post_import_patches` record in `docs/reuse/manifest.json` (`project_commit` = the commit where the file hashes to
-  `sha256`; record shape at `manifest.json:1146-1154`) and an `mx-feature` review. No `bindings/*.py` or other
+  `sha256`; record shape at `manifest.json:1146-1154`) and an `mx-feature` review. No other `bindings/*.py` or
   `src/deploy_vii` change: no binding holds a period label (`git grep -nE "Q4 25|2025|LTM" HEAD -- src/deploy_vii/bindings`
   is empty for CP-1C, 1D, 2A, 2D, 2E, 2G, 2H, 3C, 4C, L10). The renderer's `_CURRENCY_LABEL = {"USD": "US$"}`
-  (`report_view.py:974`) is not edited: another currency renders as its ISO code (`scale_label`, :1024-1031, "EUR m").
+  (`report_view.py:974`) is not edited by this phase: another currency renders as its ISO code (`scale_label`, :1024-1031, "EUR m").
 - A pack without a `context` source: every frozen `cases/*-owner` case, `PINS.json` entry and test stays green and unchanged.
   Pinned texts that contain `USD`/`US$`/`FY2025` are produced by formatting `DEFAULT_BASIS`, and a test asserts the output
   equals the old literal.
@@ -120,10 +120,11 @@ rules; fields not listed are defaults):
   values; CP-2H first-reached text "Not reached by FY2029"; CP-4C claims column `Q4 2026-12-31`, balance-date limitation
   "31 December 2026"; CP-2E periods per the table (its basis comes from its own `FY 2026` header and `run.current_period`, Task 7); CP-L10 quarters Q1-Q4 26 (Phase 2 owns the offering; Phase 8 checks the
   currency token only).
-- R3 (ruled H1): CP-1B **refuses** with `cp1b_currency_label_fixed`: "CP-1B's row labels are fixed in US$
-  (bindings/cp1b.py); a non-USD run needs a labels change" (rows pinned at `bindings/cp1b.py:32-49`, checked at
-  `report_view.py:2353-2356`; no bindings change is approved). CP-1D settles in EUR: basis line parsed, every amount fact
-  `currency="EUR"`, claims show `EUR m`, no `US$`.
+- R3 (EUR; user ruling B17-9): CP-1B settles with the dimension check passing on `EUR`/`MILLIONS`; every amount fact
+  carries `currency="EUR"`; the T1B.1/T1B.2 row labels read `Revenue (EUR m)`, `Reported EBITDA (EUR m)`, `Adjusted EBITDA
+  (EUR m)`, `Reported CFO (EUR m)`, `Signed capex (EUR m)`, `Levered FCF (EUR m)`, `Closing cash (EUR m)`, `Total debt (EUR
+  m)`, `Net debt (EUR m)`, and the non-money labels are unchanged (labels per `bindings/cp1b.py:32-49`, nine money labels, with `US$ m` -> `EUR m`); the layout check
+  accepts them. CP-1D settles in EUR: basis line parsed, claims show `EUR m`, no `US$`.
 - R6: as R1's figures with `EUR m` tokens; no `US$` in CP-1C, CP-2D, CP-3C rendered output.
 - R4: every one of CP-1C, CP-2D, CP-3C is `refused` at its entry validator with the issue
   `reporting_currency EUR, but CP-1 reports USD` (exact text frozen by the preparer from Task 1's `PeriodRefused` message
@@ -162,7 +163,7 @@ DEFAULT_BASIS: PeriodBasis      # exactly the literals above
 def period_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> PeriodBasis: ...   # fy/q4 bases only
 def currency_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> CurrencyBasis: ... # any base (M3)
 ```
-`CurrencyBasis(currency, money_unit)`; `DEFAULT_CURRENCY` is USD / `US$ m`. CP-2A, CP-L10 and CP-1B (USD only, H1) call
+`CurrencyBasis(currency, money_unit)`; `DEFAULT_CURRENCY` is USD / `US$ m`. CP-2A, CP-L10 and CP-1B call
 `currency_basis`; CP-1C, CP-1D, CP-2D, CP-3C, CP-2G, CP-2H, CP-4C call `period_basis` (which includes the currency).
 **Behaviour.** `context is None` -> `DEFAULT_BASIS`. `currency_basis` checks only that the CP-1 T4.14 `currency` equals `run.reporting_currency` (any base kind, blank
 included). Otherwise `period_basis`: `current_period` must match `fy-YYYY` or `q4-YYYY`
@@ -299,6 +300,35 @@ CP-2G's forecast fact by `YEARS`; the Phase 6 pin and Phase 7 selected multiple 
 - [ ] **Run:** `pytest tests/test_periods_currency_cp4c.py tests/test_owner_cp4c.py tests/test_connect_cp4c.py -q`.
 - [ ] **Commit:** `feat(cp4c): balance date, forecast years and currency from the run context (P8 T6)`.
 
+## Task 6b: CP-1B row labels take the run's money unit (B17-9; sensitive: `src/deploy_vii` diff; `mx-adversary`)
+
+**Files:** `src/deploy_vii/bindings/cp1b.py` (repo-authored, not in `files[]`), `src/deploy_vii/report_view.py` (imported),
+`docs/reuse/manifest.json`, the re-pinned files below, `tests/test_periods_currency_cp1b_labels.py`.
+**Smallest change.** In `bindings/cp1b.py` the nine money labels (:32-49, including `Net debt (US$ m)` at :49) are written with a `{unit}` placeholder
+(`"Revenue ({unit})"`); `def cp1b_layouts(unit: str = "US$ m") -> tuple[_Layout, ...]` returns them formatted, and
+`_CP1B_LAYOUTS = cp1b_layouts()` stays, so every USD caller and the module's bytes of output are unchanged. In
+`report_view._validate_cp1b_layout` (:2315-2356) the unit is read from the facts, not trusted from the labels: C is the
+currency of `cp1b:T1B.1:revenue:current`, required non-None, and `scale_label("MILLIONS", C)` (:1024) is the unit.
+`_cp1b_fact_shape` (:2285-2300, B18) is in scope: its hard-coded `("MILLIONS", "USD", Decimal(1000000))` at :2298 becomes
+`("MILLIONS", C, Decimal(1000000))` for every money fact on all nine rows (prior, current, delta); there is no "gaps with no
+currency -> `US$ m`" fallback. REDs: a row in a currency other than C refuses; a None currency refuses; USD output is byte-identical. The loop at :2344 and the row at :2386 then use
+`cp1b_layouts(unit)`; any label not equal to that layout's still raises "CP1B layout has invalid ordered rows or labels".
+`earnings_workflow.py:1619-1635` (the producer) builds its labels from the same `cp1b_layouts(unit)` so the two cannot drift.
+**D12.** `bindings/cp1b.py`: B14 shape (`imported_sha256` = `prior_project_sha256` = its sha256 at the commit before this
+task, `reason` begins "repo-authored (not in files[])"); `report_view.py`: normal record (`project_commit` = the commit
+where the file hashes to `sha256`, last record `docs/reuse/manifest.json:1795`, sha `5dc981...`). Review: `mx-adversary`.
+**Re-pins** (found at HEAD by `git grep -n "report_view.py\|bindings/cp1b.py" -- cases tests docs/reuse`, re-run at the tip):
+`cases/cpos-owner/manifest.json:10`, `cases/cpos-owner/builder/build.py:28` (`read_pinned` asserts the `report_view.py` hash) and the `cases/PINS.json` entries that follow from it (`cases/cpos-owner/builder/build.py` at :104 and any cpos-owner file it regenerates); `cases/legal/manifest.json:294,338` hold old provenance hashes, are unenforced and are not re-pinned; every `PINS.json` entry whose file changes;
+each re-pin runs through the oracle process (a separate preparer regenerates, independent `mx-precise` checks, `python3 -I cases/pins.py`)
+in the same commit. Chart oracles that quote `report_view.py` (`cases/charts/*`) are checked by their own tests.
+- [ ] **RED tests:** (a) `cp1b_layouts()` equals today's `_CP1B_LAYOUTS` row by row; (b) a CP-1B module with EUR/MILLIONS
+  facts and `Revenue (EUR m)` labels passes `_validate_cp1b_layout`; (c) the same labels over USD facts raise "invalid
+  ordered rows or labels"; `Revenue (US$ m)` over EUR facts raises likewise; (d) revenue prior EUR, current USD raises; (e)
+  all-gap money rows keep `US$ m`.
+- [ ] **Run:** `pytest tests/test_periods_currency_cp1b_labels.py tests/test_report_view.py tests/test_earnings.py -q` plus
+  every test that reads the re-pinned manifests (found by the grep), and `python3 -I cases/pins.py --check`.
+- [ ] **Commit:** `feat(cp1b): row labels take the run's money unit (P8 T6b, B17-9)`.
+
 ## Task 7: CP-2A, CP-2E, CP-L10, CP-1B (`mx-adversary` for CP-1B, CP-2A and CP-2E; CP-L10 rides)
 
 **Files:** modify `owners/cp2a.py`, `owners/cp2e.py`, `owners/cpl10.py`, `owners/cp1b.py` (Part B O1; rebase on it),
@@ -316,18 +346,16 @@ create `tests/test_periods_currency_misc.py`.
   2026-01-10") is `pack.run.as_of`. Currency: the statement's `Currency:` clause must equal `reporting_currency`.
 - **CP-L10** (`currency_basis`): `_USD`, `_MONEY` (:90-91), topic unit (:550) and `US$ m` sites (:138-142) use the currency
   basis; quarters per Phase 2 (Assumes).
-- **CP-1B (H1, ruled).** No bindings change is approved: its row labels are fixed in US$ (`bindings/cp1b.py:32-49`, checked at
-  `report_view.py:2353-2356`). `owners/cp1b.py` and the `build_earnings_delta` callers (`earnings_workflow.py:1278, 2020,
-  2525`) call `currency_basis`; when `reporting_currency != "USD"` CP-1B refuses with `cp1b_currency_label_fixed`: "CP-1B's
-  row labels are fixed in US$ (bindings/cp1b.py); a non-USD run needs a labels change", never a false label. The
-  `build_earnings_delta(..., *, currency="USD")` parameter is added for USD-vs-T4.14 checking only (`earnings.py:147-150`,
-  :187). A bindings/`report_view` change goes to the user (final report). Accounting basis stays IFRS-only.
+- **CP-1B (B17-9).** Labels follow Task 6b. `owners/cp1b.py` and the `build_earnings_delta` callers
+  (`earnings_workflow.py:1278, 2020, 2525`) call `currency_basis`; `build_earnings_delta(..., *, currency="USD")` takes
+  the run currency (`earnings.py:147-150`, :187); the row labels at `earnings_workflow.py:1619-1635` and the
+  `_COMMON_LIMITS` sentence are formatted from `money_unit`/`currency`. Accounting basis stays IFRS-only.
 - [ ] **RED tests:** (a) default paths byte-equal (existing `tests/test_earnings.py`, `test_owner_cp2a.py`, `test_owner_cp2e.py`,
-  `test_owner_cpl10.py` green); (b) CP-1B with `reporting_currency` EUR refuses with `cp1b_currency_label_fixed`, with USD
-  and a `q3-2026` base it settles (M3); a USD context over an EUR T4.14 head raises `incompatible_dimensions`; (c) CP-2E
+  `test_owner_cpl10.py` green); (b) CP-1B under EUR settles with `EUR m` labels that the layout check accepts, under USD and a `q3-2026` base it settles
+  (M3); a USD context over an EUR T4.14 head raises `incompatible_dimensions`; (c) CP-2E
   accepts the `FY 2026` header under `fy-2026`, refuses `FY 2025` under it, refuses under `h2-2026`, with no CP-1 input
   supplied; `PER_RUN == "Run as of 2027-01-10"` for `as_of` 2027-01-10; (d) CP-2A refuses a EUR operand under USD and offers
-  it under EUR, and offers a `q3` base; (e) one EUR RED per module (CP-2A, CP-2E, CP-L10): no `US$` in any cell or claim.
+  it under EUR, and offers a `q3` base; (e) one EUR RED per module (CP-1B, CP-2A, CP-2E, CP-L10): no `US$` in any cell or claim.
 - [ ] **Run:** `pytest tests/test_periods_currency_misc.py tests/test_earnings.py tests/test_owner_cp2a.py tests/test_owner_cp2e.py tests/test_owner_cpl10.py tests/test_owner_workflow.py -q`.
 - [ ] **Commit:** `feat(cp2a,cp2e,cpl10,cp1b): currency and base period from the run context (P8 T7)`.
 
@@ -352,13 +380,13 @@ number, table id or schema name changes.
 1. `test_r1_relative_value_fy2026`: R1 settles CP-1C, CP-2D, CP-3C; no emitted period string contains `2025`; figures equal
    `expected.json`.
 2. `test_r2_distressed_q4_2026`: R2 settles CP-2A, CP-2G, CP-2H, CP-4C, CP-2E, CP-L10; forecast columns FY2027-FY2029.
-3. `test_r3_earnings_eur`: R3 CP-1B refuses `cp1b_currency_label_fixed`; CP-1D settles, every amount fact carries `EUR`.
+3. `test_r3_earnings_eur`: R3 CP-1B settles with `EUR m` labels; CP-1D settles, every amount fact carries `EUR`.
 4. `test_r4_currency_mismatch_refuses`, `test_r5_h2_base_refuses`: named refusals, no figure; `test_r5b_q3_base_settles` (CP-2A, CP-L10, CP-1B in USD).
 5. `test_no_context_pack_unchanged`: the frozen `cases/*-owner` suites pass unchanged (`pytest tests/test_owner_*.py
    tests/test_connect_*.py -q`).
 6. `test_no_hardcoded_period_left`: `git grep -nE "LTM Q4 25|q4-2025|FY2026, FY2027|\"USD\"" -- src/deploy_workflow/owners`
    matches only `period_basis.py` and an allow-list in the test (the CP-1 fact-label parsers that read vii's own format).
-7. `test_eur_runs_render_no_usd_token`: the rendered output of R2, R3 (CP-1D) and R6 for every Phase 8 module except CP-1B contains `EUR m` and no `US$`.
+7. `test_eur_runs_render_no_usd_token`: the rendered output of R2, R3 (CP-1D) and R6 for every Phase 8 module including CP-1B contains `EUR m` and no `US$`.
 Gate once before hand-off: `pytest tests -q` (full suite), `python3 -I cases/pins.py --check`, ruff/format/mypy on changed files.
 
 ## Ruled (coordinator, `work/context-plan/reviews/phase-8-plan-review.md`); no open questions remain
@@ -370,7 +398,7 @@ Gate once before hand-off: `pytest tests -q` (full suite), `python3 -I cases/pin
 3. **O6 prompt texts** may quote period strings (their inputs are `methods/*.md`, O6 plan :158). Ruled: O6 texts take the
    period from the `read_inputs` view (data), not the prompt; check at the tip, otherwise a one-line O6 follow-up.
 4. **IFRS-only and `US$` in other renderers** (`financial_series.py:215,314`, `liquidity_series.py:27`, charts) are outside
-   these modules. Ruled: leave the other renderers, but Done-when 7 requires that the EUR runs' rendered output for the Phase 8 modules (CP-1B excepted, ruled H1) holds no `US$`.
+   these modules. Ruled (B17-10): `US$`/IFRS labels outside the Phase 8 modules stay out of scope and are listed in the final report; Done-when 7 requires that the EUR runs' rendered output for every Phase 8 module holds no `US$`.
 
 Not verified: no test or gate was run; the three p8probe scripts were not rerun against this text; the CP-2E statement-header and `Currency:` clause forms; `HEAD` line numbers, the T4.14 field names (`fiscal_quarter` text form), vii CP-1 on a
 non-USD or non-calendar-year pack, and whether the shifted-year oracle reproduces the frozen figures are all unchecked.

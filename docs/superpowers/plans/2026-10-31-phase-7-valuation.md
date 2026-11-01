@@ -24,7 +24,7 @@ CP-4C (distressed) must use that multiple. A pack without a `context` source beh
   context (`cp1c.py:69`); empty means "not supplied", never zero (`context.py:246`).
 - `src/deploy_vii`: only the three B8 files, each with a D12 `post_import_patches` record in `docs/reuse/manifest.json`
   (`project_commit` = the commit where the file hashes to `sha256`; record shape at `manifest.json:1641-1649`) and an
-  `mx-adversary` review. Nothing else: not `bindings/cp4c.py`, `report_view.py`, `methods/*.md` (Ruled Q5), `readiness.py`. A change
+  `mx-adversary` review. Nothing else: not `bindings/cp4c.py`, `report_view.py`, `readiness.py`; `methods/cp1c.md` and `methods/cp4c.md` only through Task 5b (B17 item 7). A change
   that needs another vii file stops BLOCKED. `src/deploy_vii` never imports `deploy_workflow` (`bindings/cp1c.py:10`).
 - **Every `methodology.json` commit carries its re-pin amendment** (O7 review M2, `work/context-plan/reviews/o7-plan-review.md`):
   the file's hash is pinned in 44 files (`git grep -l <old sha256>`; 14 oracle `manifest.json`, 14 `builder/build.py`,
@@ -124,7 +124,7 @@ CP-4C (distressed) must use that multiple. A pack without a `context` source beh
     inherit CP-1C's limitations (`execution.py:345-365`), a blocked CP-1C restricts CP-4C (:484-489), and a missing CP-1C head stops
     CP-2 and CP-4C; (d) CP-1C needs `period_coverage` (`downstream_readiness.py:29`); (e) a distressed pack **without** context also plans
     CP-1C (no `peers` source: the no-peers design, `cp1c.py:86`, runs an analyst step). CP-2's optional CP-1C edge is not edited (outside
-    B8); whether to remove it goes to the user. Frozen cases name `requested_modules` and do not change; a pack that takes the preset
+    B8); ruled kept (B17 item 8). Frozen cases name `requested_modules` and do not change; a pack that takes the preset
     default (`contracts.py:94`) changes its pack hash, including earlier phases' distressed context packs (Task 1 finds them).
 
 ## Interactions with Part B (named)
@@ -292,10 +292,13 @@ change to `RestructuringSubmission` (:96-140).
 **Files:** `docs/templates/context-form.html` (the `Planned` tags on `auto` and the CP-1C EV note: lines :492, :498 say "(Planned)"; set
 them to "(Python reads these; public peers need the CP-DR peer pack)" and keep `cp_dr_public` Planned), the form's `PATHWAYS` copy (:467) gains `CP-1C` in `distressed_restructuring` (a test compares it with `PATHWAY_MODULES`), :498 drops "or both" (no automatic blend) and :1082 drops "valuation basis selection" from the Planned list; `docs/RUN-GUIDE.md`
 (a "Valuation from the context" section: which basis reads what, the not-stated currency and period, the 12/36-month windows,
-that CP-4C refuses a different multiple), `README`/`PLAN.md` Outstanding line if the controller asks. No `src/deploy_vii` (the
-method texts are unchanged, Ruled Q5). The form change touches the file Phases 2, 3 and 6 also edit: rebase, one hunk.
+that CP-4C refuses a different multiple), `README`/`PLAN.md` Outstanding line if the controller asks. No `src/deploy_vii` here (the method texts are Task 5b). The form change touches the file Phases 2, 3 and 6 also edit: rebase, one hunk.
 - [ ] Test: `tests/product/test_context.py` form-parity tests (the form's regex literals equal the reader's) still pass; commit
   `docs: valuation basis in the context form and run guide (Phase 7)`.
+
+## Task 5b (B17 item 7; wording only; `mx-feature` review): method texts
+
+**Files:** `src/deploy_vii/methods/cp1c.md` (add the EV tables T1C.9-T1C.11, user-supplied records, windows, selection rules, the not-stated currency and period, the O7d gap) and `src/deploy_vii/methods/cp4c.md` (the optional CP-1C edge and the multiple binding, pin precedence); `docs/reuse/manifest.json` D12 records. Neither file is in `files[]` (checked at HEAD), so the B14 shape: `imported_sha256` = `prior_project_sha256` = the file's sha256 before this task, `reason` beginning "repo-authored (not in files[])". No test or case pins their hashes at HEAD (`git grep` finds only prose mentions, `tests/test_connect_cp1c.py:197`, `test_connect_cp4c.py:1529`); the task re-greps and, if a hash pin appears, re-pins through the oracle process in the same commit. Test: those two tests (method-note checks) pass. Commit `docs(methods): CP-1C EV tables and CP-4C multiple binding (Phase 7)`.
 
 ## Done-when as tests
 
@@ -312,9 +315,9 @@ method texts are unchanged, Ruled Q5). The form change touches the file Phases 2
 
 - **Ruled Q1:** `blend` weights the two medians equally, each set needing 3 admitted records.
 - **Ruled Q2:** the 12/36-month windows apply to explicit `public_comps`, `precedents` and `blend` too.
-- **Ruled Q3:** every CP-4C valuation case, the stress case included, carries the selected multiple (fail closed). Whether a free stress multiple is wanted goes to the user in the final report.
+- **Ruled Q3:** every CP-4C valuation case, the stress case included, carries the selected multiple (fail closed). Ruled kept (B17 item 8).
 - **Ruled Q4:** a Phase 6 pin (`assumptions.cp4c.ev_multiple`) wins over the CP-1C selection; the selection is recorded in CP-4C's limitation; a pin that differs from the selection is not an error. Task 4's `test_pin_wins_over_selection` asserts this.
-- **Ruled Q5:** `methods/cp1c.md` and `methods/cp4c.md` are unchanged (outside B8 and B9); the staleness is listed for the user.
+- **Ruled Q5 (B17 item 7):** `methods/cp1c.md` and `methods/cp4c.md` are edited, wording only, in Task 5b (D12, `mx-feature`).
 - **Ruled Q6 (B14):** `bindings/cp1c.py` gets a D12 record in the repo-authored shape: `imported_sha256` = `prior_project_sha256` = its sha256 at the commit before Task 1, `reason` beginning "repo-authored (not in files[])".
 - **Ruled Q7:** the unplaced CP-1C tabs in a distressed report are accepted (a new block is outside B8).
 

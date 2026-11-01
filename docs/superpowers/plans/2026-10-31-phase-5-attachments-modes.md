@@ -29,7 +29,8 @@ states the limitation.
   `docs/reuse/manifest.json` (array shape as the `cp4_legal.py` entries at `:1345-1362`): `project_commit` is the
   code commit, `sha256` the file's hash there (`git show <commit>:<path> | shasum -a 256`), landed in the commit
   after the code commit. Review: `mx-adversary` on both diffs (B7 names D12 and the adversary).
-  Not edited (no ruling): `methods/cp4.md:15,119`, `live/prompts.py:547`, `live/context.py:33,128` (see Q1).
+  Task 6 (user ruling B17 item 4) adds wording-only edits to `methods/cp4.md`, `live/prompts.py`, `live/context.py`; each a D12 record
+  (all three are in the manifest's `files[]`, `manifest.json:449,458,953`, so the ordinary shape, not B14's repo-authored one).
 - A pack without a `context` source, or with `legal_documents: none`/all attachments `false`, behaves exactly as
   today: every frozen case, `PINS.json` entry and oracle stays green and unchanged.
 - Context figures need no label here (no figure is read). The draft limitation is Python's fixed text, not model text.
@@ -101,14 +102,14 @@ Depends on Task 0.
   (c) a pack with no `context` source: same line; (d) a pack whose context fails `context_facts` (`mismatch`): the
   line `Draft authority refused, context invalid: <first problem>` (no exception escapes, no silent pass);
   (e) a review with no `draft` assessment never calls `context_facts` (monkeypatch it to raise: still `()`), so every
-  existing pack validates as today; (f) `build_readiness` T3 authority fact text is `draft` (`readiness.py:494`); (g) H1: a CP-1A `source_class: "draft"` is still refused and the `SourceJudgment` authority values are unchanged; (h) L1: a `draft` assessment of `context` is refused. Guards (pass today, must stay): (e) and the second half of (g).
+  existing pack validates as today; (f) `build_readiness` T3 authority fact text is `draft` (`readiness.py:494`); (g) H1: a CP-1A `source_class: "draft"` is still refused and the `SourceJudgment` authority values are unchanged; (h) L1/B17-6: an `executed`, `filed` or `draft` assessment of `context` is refused (three cases, each its own issue line `Context source cannot be classified <authority>`). Guards (pass today, must stay): (e) and the second half of (g).
 - [ ] **Implement:** leave `Authority` (`:28-30`) unchanged (H1: it also types CP-1A `SourceUse.source_class`, `business_context.py:53,141`, and the live `SourceJudgment`, `live/submission.py:121,163`) and set `SourceAssessment.authority: Authority | Literal["draft"]`; in `validate_review`'s source loop (`:356-376`) collect
   `draft = [a.source_id for a in review.sources if a.authority == "draft"]`; if any, import `context_facts`/`ContextRefused`
   lazily inside the function (layering precedent: `distressed_figures.py:62`, `report_view.py:1888`), read
   `context_facts(pack)` once, and append the one issue per draft source unless `legal_documents == "draft"`.
-  The `unknown`-authority rule at `:367` is unchanged; `draft` still needs entity and period or a limitation. Also append an issue when a `draft` assessment is for source id `context`
-  (`Draft authority cannot classify the context source`; L1: else `cp4_legal.py:229-234` would make the context file citable).
-  `executed` on `context` predates this phase and goes to the user.
+  The `unknown`-authority rule at `:367` is unchanged; `draft` still needs entity and period or a limitation. Also append an issue when an `executed`, `filed` or `draft` assessment is for source id `context`
+  (`Context source cannot be classified <authority>`; else `cp4_legal.py:229-234` would make the context file citable).
+  Task 1 also refuses `executed`, `filed` or `draft` authority on the `context` source (B17 item 6), as RED (h) above states.
 - [ ] Run `tests/test_readiness_draft.py tests/test_readiness_linear.py tests/test_source_workflow.py -q`; gates.
 - [ ] Commit `feat(vii): CP-0 draft authority, admitted only for a draft context (B7)`; then the D12 commit
   `docs(reuse): D12 record for readiness.py draft authority`.
@@ -170,6 +171,21 @@ the Task 0 table. Bounded: at most 4 issues; no loop over the review longer than
   failure here reopens the task that owns the cause.
 - [ ] Commit `test(owner): a draft-document run reaches CP-4 with the draft limitation`.
 
+## Task 6: model-facing wording (user ruling B17 item 4; wording only)
+
+**Files:** modify `src/deploy_vii/methods/cp4.md` (`:15`, `:119`), `src/deploy_vii/live/context.py` (`:33`), and
+`src/deploy_vii/live/prompts.py` only if a literal "executed or filed" is present (at HEAD `:545-549` has none: `CP4_METHOD` is
+read from `cp4.md` and `CP4_SOURCES_RULE` names `legal_sources`, so the prompt changes through `cp4.md`); test
+`tests/test_cp4_wording.py`; two D12 entries. Reviews: `methods/cp4.md` `mx-feature`; `live/context.py` and `live/prompts.py`
+(model-facing) `mx-adversary`. Depends on Task 2.
+
+- [ ] **RED:** the three files contain the exact phrase `executed, filed or, on a draft-documents run, draft` where each said
+  "executed or filed" / "executed and filed"; `CP4_METHOD` (as built by `prompts.py:545`) contains it; no other sentence of
+  `cp4.md` changes (the phrase wraps across `cp4.md:15-16`; the test matches it with whitespace normalised). Re-pin: run `grep -rn "cp4.md" tests cases/PINS.json` and every hash of
+  `methods/cp4.md` or the prompt set found there, plus `tests/test_method_cp4.py`, is re-pinned in the same commit.
+- [ ] Run `tests/test_cp4_wording.py tests/test_method_cp4.py tests/test_connect_cp4.py -q`; gates.
+- [ ] Commit `docs(vii): CP-4 method and prompt name draft sources on a draft run (B17)`; then the D12 commit.
+
 ## Task 5: regression and hand-off
 
 - [ ] `python3 -I cases/pins.py --check` exit 0; `tests/test_method_cp4.py` and every `cases/*-owner` test unchanged and green; the full suite once (B3).
@@ -180,18 +196,17 @@ the Task 0 table. Bounded: at most 4 issues; no loop over the review longer than
 - "A primary run with draft documents reaches CP-4 with a 'draft' limitation": Task 4 and Task 2(c).
 - "A declared but absent source is a CP-0 gap": Task 3 `abs-refused` / `abs-gap-ok` / `abs-unready` / `legal-exec-missing`.
 - "Draft admitted only when the context's `legal_documents` is `draft`" (B7): Task 1(b)(c)(d).
-- Limit (Q1 ruling): draft mode is proven on the owner path only; the live CP-4 prompt and method are unchanged, so a live model run cannot cite draft sources.
+- Task 6: the CP-4 method, the live CONTEXT-block comment and the CP-4 prompt tell the model draft sources are citable on a draft-documents run (text assertions, no live call).
 - "No context, same behaviour": Task 1(e), Task 2(d), Task 3 `none-declared`, Task 5 pins and frozen cases.
 
 ## Ruled decisions (no open questions; `work/context-plan/reviews/phase-5-plan-review.md`)
 
-- **Ruled: Q1 stays unchanged and goes to the user.** `methods/cp4.md:15,119`, `live/prompts.py:547` and `live/context.py:33` keep
-  "executed or filed"; B7 does not cover them and B9 names Phases 4, 6, 8. Live-run limit: a live CP-4 model is not told about
-  draft sources and so cannot cite them; draft mode works on the owner path only (fails closed). `live/context.py:128` follows
-  `legal_sources`, so the CONTEXT block lists draft sources automatically.
+- **Ruled: Q1 (user ruling B17 item 4):** the "executed or filed" wording becomes "executed, filed or, on a draft-documents run,
+  draft" in `methods/cp4.md:15,119`, `live/context.py:33` and, where the phrase appears, `live/prompts.py` (Task 6).
+  `live/context.py:128` follows `legal_sources`, so the CONTEXT block lists draft sources automatically.
 - **Ruled: Q2** keep the error wording at `cp4_legal.py:476-478` (frozen texts).
-- **Ruled: Q3 stays unchanged and goes to the user.** No CP-3 confidence cap; the CP-4 limitation travels in the module's `limitations`.
+- **Ruled: Q3 (B17 item 5):** no CP-3 confidence cap, nothing to build or ask; the CP-4 limitation travels in the module's `limitations`.
 - **Ruled: Q4** a draft source beside executed ones is allowed; the limitation applies to the whole module (Task 2(c)).
 - **Ruled: Q5** a `source` gap names the missing id in its description, matched by `(?<![A-Za-z0-9_])<id>(?![A-Za-z0-9_])`; no new gap field.
 - **Ruled (review H1, M1, M2, L1-L6)** applied above: `Authority` unchanged; packs via `prepare`; context hashes in the manifest;
-  `context` draft refusal; path tags; replay probe; guards marked; exact regex; citations corrected. `executed` on the `context` source goes to the user.
+  `context` draft refusal; path tags; replay probe; guards marked; exact regex; citations corrected.

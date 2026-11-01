@@ -906,3 +906,16 @@ def test_replaying_the_export_reproduces_the_records_and_the_stop(
         return [{k: r[k] for k in keys} for r in rig.records()]
 
     assert pick(second) == pick(first)
+
+
+def test_a_no_submit_record_whose_raw_body_gained_a_submit_call_does_not_export(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = _live(tmp_path, monkeypatch, [_body(text="prose only")])
+    assert _stop(rig).reason == "NoSubmit"
+    assert _export(rig, tmp_path / "honest.jsonl") == 1
+    (raw,) = (rig.run_dir / "raw").iterdir()
+    forged = _body(("submit_source_readiness", {}), text="prose only")
+    raw.write_text(json.dumps(json.loads(forged)))
+    with pytest.raises(ExportMismatch):
+        _export(rig, tmp_path / "forged.jsonl")

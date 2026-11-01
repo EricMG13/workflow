@@ -616,7 +616,9 @@ def export_recording(run_dir: Path, out: Path, redactor: Redactor) -> int:
             and 200 <= rec.http_status < 300
         )
         if rec.error_class is None or stopped_ok:
-            response = _ok_response(run, rec, redactor, prefix=stopped_ok)
+            response = _ok_response(
+                run, rec, redactor, prefix=stopped_ok and rec.error_class != "NoSubmit"
+            )
         else:
             _refuse_forged_error(run, rec, redactor)
             response = _error_response(rec, rec.error_class)

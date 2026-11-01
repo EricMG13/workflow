@@ -128,13 +128,13 @@ def test_quoted_path_workflow_fails_builder_role(tmp_path: pathlib.Path) -> None
 def test_root_commit_in_range_is_checked(tmp_path: pathlib.Path) -> None:
     repo = tmp_path / "root"
     repo.mkdir()
-    git(repo, "init", "-q")
+    git(repo, "init", "-q", "-b", "main")
     commit(repo, "src/a.py", "cases/x/e.json")
     git(repo, "checkout", "-q", "--orphan", "other")
     git(repo, "rm", "-rqf", ".")
     git(repo, "commit", "-q", "--allow-empty", "-m", "other")
     other = git(repo, "rev-parse", "HEAD")
-    git(repo, "checkout", "-q", "-")
+    git(repo, "checkout", "-q", "main")
     done = run(repo, other, "HEAD")
     assert done.returncode == 1
     assert "src/a.py: PRODUCT in per-commit" in done.stdout

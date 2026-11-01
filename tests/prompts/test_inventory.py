@@ -7,7 +7,7 @@ turns an unexpected pass into a failure, so the marker cannot be forgotten).
 
 import pytest
 
-from deploy_vii.contracts import PATHWAY_MODULES
+from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_vii.registry import plan
 from deploy_workflow import prompts
 from deploy_workflow.owner_workflow import OWNER_SPECS
@@ -52,7 +52,7 @@ def test_inventory_is_the_26_steps_of_owner_specs() -> None:
 
 
 @pytest.mark.parametrize("preset", sorted(PATHWAY_MODULES))
-def test_every_step_of_a_preset_is_in_the_inventory(preset: str) -> None:
+def test_every_step_of_a_preset_is_in_the_inventory(preset: PathwayId) -> None:
     steps = [
         s.step_id
         for module_id in plan(PATHWAY_MODULES[preset])

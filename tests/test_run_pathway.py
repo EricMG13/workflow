@@ -315,6 +315,21 @@ def test_a_key_in_a_prepare_error_reaches_no_file(
     assert_clean(args["run_dir"], SECRET)
 
 
+def test_a_staged_file_changed_before_prepare_ends_is_a_stop_with_run_json(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+
+    def tampering(request: Any, sources: Path, out: Path) -> Any:
+        (sources / "s1.txt").write_bytes(b"changed\n")
+        return prepare(request, sources, out)
+
+    monkeypatch.setattr(run_inputs_module, "prepare", tampering)
+    outcome = run_pathway(**args)
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason == "prepare: source s1 changed"
+    assert run_json(args["run_dir"])["stopped_reason"] == "prepare: source s1 changed"
+
+
 def test_a_key_in_a_recording_error_reaches_no_file(
     args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:

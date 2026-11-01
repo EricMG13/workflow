@@ -56,6 +56,7 @@ from deploy_workflow.run_inputs import (
     CheckedRun,
     RunInputError,
     RunOutcome,
+    StagedSourceChanged,
     check_arguments,
     stage_sources,
 )
@@ -359,11 +360,14 @@ def _stage(
     live: bool,
     redactor: Redactor,
 ) -> RunOutcome | None:
-    """Stage the sources; a ``ValueError`` from prepare stops the run (``prepare: <text>``)."""
+    """Stage the sources; a ``ValueError`` from prepare stops the run (``prepare: <text>``), as does a
+    ``StagedSourceChanged`` (``prepare: source <id> changed``)."""
     try:
         stage_sources(checked, run_dir)
     except RunInputError:
         raise
+    except StagedSourceChanged as error:
+        failure = str(error)  # already reads `prepare: source <id> changed`
     except ValueError as error:
         failure = f"prepare: {error}"
     else:

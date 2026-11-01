@@ -32,9 +32,7 @@ ADDED = (
     "business_context: added source row for `context` (own cited line), required by "
     "validate_business_context (every prepared source assessed once; business_context.py:665)"
 )
-STATUS_SUFFIX = (
-    "; business_context `context` source row (O2 Task 4c): CP-1A context row reviewed (mx-precise accca4ec) and frozen"
-)
+STATUS_SUFFIX = "; business_context `context` source row (O2 Task 4c): CP-1A context row reviewed (mx-precise accca4ec) and frozen"
 BASE_STATUS = (
     "S1, CP-3, CP-5, CP-6 submissions, sources and context frozen (9de132e7, cases/PINS.json); "
     "cp1-financials.json reviewed (mx-precise a0d99f61) and frozen"
@@ -69,9 +67,7 @@ def main() -> int:
             "entity_covered": "Northbridge Synthetic Group",
             "data_supplied": "Run settings: pathway, case kind, as-of date and issuer identity",
             "use": "Run settings supplied with the pack; not issuer evidence",
-            "citations": [
-                {"source_id": "context", "locator": f"line:{found[0]}", "quote": QUOTE}
-            ],
+            "citations": [{"source_id": "context", "locator": f"line:{found[0]}", "quote": QUOTE}],
             "limitation": "Run settings supplied by the analyst; not issuer evidence.",
         }
     )

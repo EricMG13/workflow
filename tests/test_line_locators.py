@@ -255,6 +255,20 @@ def test_adjacent_headings_form_one_unit_that_is_measured(
     assert UNMEASURED not in issues and NOT_EXTRACTED not in issues
 
 
+def test_a_line_source_with_no_heading_line_has_no_units() -> None:
+    spans = _line_spans(["Consolidated Balance Sheets", ROWS[0], ROWS[1]])  # title case
+    assert fw._statement_units(spans) == {}
+
+
+def test_a_no_heading_line_source_gets_the_named_refusal_not_a_raise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = _with_spans(_line_spans(["Consolidated Balance Sheets", HEADER, *ROWS]))
+    units, issues = _issues(monkeypatch, pack)
+    assert units == {}
+    assert NOT_EXTRACTED in issues
+
+
 def test_a_unit_runs_to_the_line_before_the_next_non_adjacent_heading() -> None:
     spans = _line_spans([H_IS, H_IS, HEADER, ROWS[0], H_BS, H_BS, HEADER, ROWS[1]])
     assert list(fw._statement_units(spans)) == ["line:1-4", "line:5-8"]

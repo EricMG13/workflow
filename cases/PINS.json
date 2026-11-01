@@ -140,7 +140,7 @@
   "cases/cpos-owner/manifest.json": "4a0e3ef61bd0a07973815679a56507f1b68dc814a56776984a83fbcd9552686b",
   "cases/cpos-owner/submissions.json": "cfbcdd4d5e294e81fb3bf52f9109f2469496ffb392e6e7884d267151a2fa636e",
   "cases/o2-synthetic/builder/build.py": "1c605fca0109fa173389bdfa1a9f18ee095f88529377887a13c023ade3e9e078",
-  "cases/o2-synthetic/builder/context_rows.py": "2e41bcc6a2a7bf1d17124cf3a13a4b72f830aacc4b4a7dd489e1584f0f85c017",
+  "cases/o2-synthetic/builder/context_rows.py": "cc34c1982295d8e70055c75c7e0aabdbf9dccd5a346721c8757500f8406fd68f",
   "cases/o2-synthetic/builder/cp1_financials.py": "a25114207be0a7c3e7261b6a9e27bd868ab0ceb5e89479234605f908568e873c",
   "cases/o2-synthetic/business.txt": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
   "cases/o2-synthetic/context.json": "9e85d95ba4d701532552c51213bca992604e8217e3a4c20376623957565012dd",

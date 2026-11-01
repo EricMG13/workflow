@@ -923,7 +923,9 @@ def test_a_no_submit_record_whose_raw_body_gained_a_submit_call_does_not_export(
         _export(rig, tmp_path / "forged.jsonl")
 
 
-def test_a_non_ok_reply_whose_raw_write_fails_keeps_the_provider_class(tmp_path: Path) -> None:
+def test_a_non_ok_reply_whose_raw_write_fails_keeps_the_provider_class(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """The write failure is kept in the message; the class stays the provider's (a 502 is a
     ProviderServerError, not the OSError that lost its raw body)."""
     rig = make_rig(tmp_path, [failed("sent_unknown", "ProviderServerError", 502, raw=b"{}")])
@@ -931,7 +933,7 @@ def test_a_non_ok_reply_whose_raw_write_fails_keeps_the_provider_class(tmp_path:
     def disk_full(*args: Any, **kwargs: Any) -> None:
         raise OSError("disk full")
 
-    rig.log.write_raw = disk_full  # the real CallLog instance the loop holds
+    monkeypatch.setattr(rig.log, "write_raw", disk_full)  # the real CallLog instance the loop holds
     stop = _stop(rig)
     (record,) = rig.records()
     assert record["error_class"] == "ProviderServerError"

@@ -370,6 +370,8 @@ def _statement_units(spans: Sequence[Span]) -> dict[str, str]:
         return {s.locator: s.text for s in spans if STATEMENT_HEADING.search(s.text)}
     marked = {n for n in numbered if STATEMENT_HEADING.search(numbered[n].text)}
     headings = [n for n in sorted(marked) if n - 1 not in marked]
+    if not headings:
+        return {}
     last = max(numbered)
     ends = [*(n - 1 for n in headings[1:]), last]
     return {

@@ -215,3 +215,22 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
      test is not run here (B16), so it goes to CI.
 
   Cost if wrong: digest re-pins to revert.
+- **B24 (controller, 2026-11-01): parallel lanes.** MANAGER relayed the user's "Send it" for a lineup that shortens
+  the critical path. The controller adopts it on its own authority: global §2 allows stages with disjoint outputs
+  to run in parallel. It is not treated as a change of who rules.
+  - Lanes now running alongside O3/O4, which stays serial:
+    - O6;
+    - Phase 3 Tasks 1-3 (Task 4 after O6);
+    - Phase 6 Tasks 1-8 and 10 (Task 9 after O6 Task 2).
+  - Phase 4 starts once Phase 3 Task 2 lands `context_cites.py`.
+  - Phases 2 and 5 (they edit owner_workflow.py), O7, Phase 7 and Phase 8 stay in order.
+  - An overlap MANAGER missed: Phase 3 Task 2 and Phase 6 Task 7 both edit `owners/cp3d.py`, so Phase 6 Task 7
+    runs after Phase 3 Task 2.
+  - These files get one writer at a time: `cases/PINS.json`, `cases/pins.py`, `cases/context/primary-full.json`
+    and `docs/reuse/manifest.json` (D12).
+  - All lanes share this worktree, because isolated-worktree builders cannot use the venv. A builder that sees an
+    import or syntax error in a file it did not touch treats it as another lane's edit in progress: it waits and
+    re-runs, and never edits that file.
+  - Caps: at most 6 Opus agents and 10 subagents at once. A phase's builder is never its preparer.
+
+  Cost if wrong: one lane's tests flake on another lane's edit in progress, so a rerun.

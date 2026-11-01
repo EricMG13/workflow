@@ -13,7 +13,7 @@ diffs too) → phase gate → PR Manager.
 |---|---|---|---|---|
 | O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | complete: phase gate passed (52ee9de4), phase review approved, Lows 675221a9 | 5a00d7be..675221a9 (16 commits, list in PR Manager hand-off) | 2026-11-01, merge hold lifted (O5 gate passed) |
 | O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | complete: phase gate c38407a0, phase review fix 2605b745 approved; 2 Lows parked for the end-of-plan batch (O5 ledger 06:26); readiness/owner list work/context-plan/o5-readiness-and-owner-items.md | a40986ec..2605b745 (interleaved with O1 Lows and plan amendments) | 2026-11-01 |
-| O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | plan approved 5032faaa (2 rounds; new oracle cases/o2-synthetic) | — | — |
+| O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | complete: phase gate d91ee403, phase review fix 9a85a694 approved; B22 line:N tools (f0cf47c6); oracles 9de132e7, 471253b3, 59646195; done-when as ruled (walk via _run_pathway + test composer; full walk and B21 tests gated → CI; end state render: owner_render_scope); owner/readiness items in work/context-plan/o5-readiness-and-owner-items.md | 994e2995..9a85a694 (interleaved with O5) | 2026-11-01, release 9a85a694 |
 | O3+O4 | docs/superpowers/plans/2026-10-31-part-b-o3-o4.md | plan approved (2 rounds) + N1 amendment (identity rebinding, whole-pack equality) | — | — |
 | O6 | docs/superpowers/plans/2026-10-31-part-b-o6.md | plan approved (2 rounds) | — | — |
 | O7a-d | docs/superpowers/plans/2026-10-31-part-b-o7.md | plan approved (3 review rounds; N1 identity rebinding moved into O3 Task 4); rulings B12-B13 | — | — |

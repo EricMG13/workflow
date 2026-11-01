@@ -16,6 +16,7 @@ from deploy_workflow.model.turn import (
     Turn,
     TurnError,
     Usage,
+    load_json,
     turn_from_json,
     turn_to_json,
 )
@@ -177,3 +178,8 @@ def test_spec_refuses_pair_outside_the_section_7_1_table(
 def test_spec_accepts_the_section_7_1_pairs() -> None:
     ModelSpec("sol-high", "openai", "gpt-6.1-sol", "high")
     ModelSpec("deepseek-max", "openrouter", "deepseek/deepseek-v4.1-flash-1017", "max")
+
+
+def test_load_json_maps_deep_nesting_to_turn_error() -> None:
+    with pytest.raises(TurnError):
+        load_json("[" * 100_000)

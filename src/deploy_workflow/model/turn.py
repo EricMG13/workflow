@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields
 from decimal import Decimal, InvalidOperation
 from types import MappingProxyType
@@ -55,12 +55,22 @@ def _refuse_constant(name: str) -> object:
     raise TurnError(f"{name} is not allowed in a JSON number")
 
 
-def load_json(text: str) -> object:
-    """Parse JSON keeping decimal digits exactly (Decimal) and refusing NaN and Infinity."""
+def load_json(
+    text: str, object_pairs_hook: Callable[[list[tuple[str, Any]]], Any] | None = None
+) -> object:
+    """Parse JSON keeping decimal digits exactly (Decimal) and refusing NaN and Infinity.
+    Nesting too deep for the parser is a TurnError, not a RecursionError."""
     try:
-        return json.loads(text, parse_float=Decimal, parse_constant=_refuse_constant)
+        return json.loads(
+            text,
+            parse_float=Decimal,
+            parse_constant=_refuse_constant,
+            object_pairs_hook=object_pairs_hook,
+        )
     except json.JSONDecodeError as error:
         raise TurnError(f"not JSON: {error.msg}") from None
+    except RecursionError:
+        raise TurnError("not JSON: nested too deeply") from None
 
 
 def load_arguments(text: str) -> dict[str, Any]:

@@ -1,5 +1,6 @@
 """R2 live-pause gate: a tripwire on a user-lifted ruling file. No network, no real env."""
 
+import hashlib
 import os
 from collections.abc import Iterator, Mapping
 from pathlib import Path
@@ -249,3 +250,47 @@ def test_good_ruling_construction_touches_nothing_and_complete_reads_the_three_k
 def test_classes_are_distinct_and_exported() -> None:
     assert not issubclass(LiveAdapter, RecordedAdapter)
     assert not issubclass(RecordedAdapter, LiveAdapter)
+
+
+# ------------------------------------------------------------------ fix round 1
+
+
+def test_gate_sha_is_of_the_file_bytes(tmp_path: Path) -> None:
+    root, path = ruling(tmp_path)
+    result = check_live_gate(spec_for("sol-medium"), path, rulings_root=root)
+    assert result.sha256 == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.mark.parametrize(
+    "old,new",
+    [
+        ("by: user", "by: username"),
+        ("lifts: live-provider-pause", "lifts: live-provider-pause-x"),
+        ("2026-11-01", "2026-1-1"),
+    ],
+)
+def test_gate_is_exact_about_values(tmp_path: Path, old: str, new: str) -> None:
+    root, path = ruling(tmp_path, GOOD.replace(old, new))
+    with pytest.raises(LivePauseInForce):
+        check_live_gate(spec_for("sol-medium"), path, rulings_root=root)
+
+
+def test_gate_refuses_a_swap_to_a_symlink_after_resolve(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, path = ruling(tmp_path, GOOD.replace("by: user", "by: codex"))
+    outside = tmp_path / "outside.md"
+    outside.write_text(GOOD, encoding="utf-8")
+    real_open = os.open
+    swapped: list[bool] = []
+
+    def racing_open(target: str | Path, flags: int, mode: int = 0o777) -> int:
+        if Path(target) == path.resolve() and not swapped:
+            path.unlink()
+            path.symlink_to(outside)
+            swapped.append(True)
+        return real_open(target, flags, mode)
+
+    monkeypatch.setattr(os, "open", racing_open)
+    with pytest.raises(LivePauseInForce):
+        check_live_gate(spec_for("sol-medium"), path, rulings_root=root)

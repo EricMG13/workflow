@@ -3,7 +3,7 @@
 import json
 from decimal import Decimal
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
 
@@ -11,6 +11,7 @@ from deploy_workflow.model import adapter as adapter_module
 from deploy_workflow.model.adapter import (
     AdapterReply,
     LiveAdapter,
+    LivePauseInForce,
     RecordedAdapter,
     RecordingConflict,
     RecordingError,
@@ -18,7 +19,7 @@ from deploy_workflow.model.adapter import (
     live_adapter,
     recorded_adapter,
 )
-from deploy_workflow.model.transport import Request, Response, TransportError
+from deploy_workflow.model.transport import InsecureUrl, Request, Response, TransportError
 from deploy_workflow.model.turn import (
     Message,
     ModelSpec,
@@ -339,3 +340,193 @@ def test_live_refused_request_is_not_sent(live_ruling: Path) -> None:
 def test_adapter_reply_ok_needs_a_turn() -> None:
     with pytest.raises(ValueError):
         AdapterReply("ok", None, None, 200, None, None, None, None)
+
+
+# ------------------------------------------------------------------ fix round 1
+
+
+def test_live_adapter_runs_the_gate_in_its_constructor(live_ruling: Path, tmp_path: Path) -> None:
+    fake = FakeTransport(Response(200, b"{}"))
+    with pytest.raises(LivePauseInForce):
+        LiveAdapter(SPEC, tmp_path / "missing.md", fake, {"OPENAI_API_KEY": FAKE_KEY})
+    bad = live_ruling.parent / "bad.md"
+    bad.write_text(RULING_TEXT.replace("by: user", "by: codex"), encoding="utf-8")
+    with pytest.raises(LivePauseInForce):
+        LiveAdapter(SPEC, bad, fake, {"OPENAI_API_KEY": FAKE_KEY})
+    assert fake.requests == []
+
+
+def test_live_adapter_ruling_and_gate_are_read_only(live_ruling: Path) -> None:
+    adapter = LiveAdapter(SPEC, live_ruling, FakeTransport(), {})
+    assert adapter.ruling == live_ruling and adapter.gate.path == live_ruling.resolve()
+    with pytest.raises(AttributeError):
+        adapter.ruling = None  # type: ignore[misc]
+    with pytest.raises(AttributeError):
+        adapter.gate = adapter.gate  # type: ignore[misc]
+
+
+def test_live_json_escaped_key_never_reaches_raw(live_ruling: Path) -> None:
+    escaped = FAKE_KEY.replace("-", "\\u002d", 1)
+    body = (
+        '{"id":"r","model":"m","status":"completed","output":[{"type":"message","content":'
+        '[{"type":"output_text","text":"' + escaped + '"}]}],'
+        '"usage":{"input_tokens":1,"output_tokens":1}}'
+    ).encode()
+    adapter = live_adapter(
+        SPEC,
+        live_ruling,
+        transport=FakeTransport(Response(200, body)),
+        environ={"OPENAI_API_KEY": FAKE_KEY},
+    )
+    reply = complete(adapter)
+    assert reply.error_class == "KeyReflected"
+    assert reply.raw == b'"[redacted]"'
+
+
+def test_live_sse_split_key_never_reaches_raw(live_ruling: Path) -> None:
+    key = "sk-ant-" + "W" * 40
+    spec = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
+    live_ruling.write_text(RULING_TEXT.replace("sol-medium", "opus-medium"), encoding="utf-8")
+    events: list[dict[str, Any]] = [
+        {
+            "type": "message_start",
+            "message": {"id": "m1", "model": "x", "usage": {"input_tokens": 1}},
+        },
+        {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": key[:5]},
+        },
+        {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {"type": "text_delta", "text": key[5:]},
+        },
+        {"type": "content_block_stop", "index": 0},
+        {
+            "type": "message_delta",
+            "delta": {"stop_reason": "end_turn"},
+            "usage": {"output_tokens": 2},
+        },
+        {"type": "message_stop"},
+    ]
+    sse = "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()
+    adapter = live_adapter(
+        spec,
+        live_ruling,
+        transport=FakeTransport(Response(200, sse)),
+        environ={"ANTHROPIC_API_KEY": key},
+    )
+    reply = complete(adapter)
+    assert reply.error_class == "KeyReflected" and reply.raw == b'"[redacted]"'
+
+
+def test_live_bad_tool_arguments_is_sent_usage_with_its_usage(live_ruling: Path) -> None:
+    body = (
+        b'{"id":"r","model":"gpt-6.1-sol","status":"completed","output":[{"type":"function_call",'
+        b'"call_id":"c1","name":"t","arguments":"[1]"}],'
+        b'"usage":{"input_tokens":5,"output_tokens":3}}'
+    )
+    adapter = live_adapter(
+        SPEC,
+        live_ruling,
+        transport=FakeTransport(Response(200, body)),
+        environ={"OPENAI_API_KEY": FAKE_KEY},
+    )
+    reply = complete(adapter)
+    assert reply.kind == "sent_usage" and reply.error_class == "MalformedToolArguments"
+    assert reply.usage == Usage(input_tokens=5, output_tokens=3) and reply.turn is None
+
+
+def test_live_insecure_url_is_not_sent(live_ruling: Path) -> None:
+    fake = FakeTransport(error=InsecureUrl("only https endpoints are permitted"))
+    adapter = live_adapter(SPEC, live_ruling, transport=fake, environ={"OPENAI_API_KEY": FAKE_KEY})
+    reply = complete(adapter)
+    assert reply.kind == "not_sent" and reply.error_class == "InsecureUrl"
+
+
+def _error(**over: object) -> dict[str, object]:
+    return {"kind": "sent_unknown", "error_class": "X", "http_status": 502, **over}
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        _error(kind="sent_known", http_status=502),
+        _error(kind="sent_known", http_status=None),
+        _error(kind="sent_known", http_status=200),
+        _error(http_status="502"),
+        {
+            **_error(kind="sent_usage", http_status=None),
+            "usage": {f: None for f in Usage.__dataclass_fields__},
+        },
+    ],
+)
+def test_recorded_error_status_rules(tmp_path: Path, response: object) -> None:
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, response))
+    with pytest.raises(RecordingError, match="line 1"):
+        recorded_adapter(SPEC, tmp_path)
+
+
+@pytest.mark.parametrize("kind", ["not_sent", "sent_unknown"])
+def test_recorded_null_status_allowed_for_unsent_or_unknown(tmp_path: Path, kind: str) -> None:
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, _error(kind=kind, http_status=None)))
+    reply = complete(recorded_adapter(SPEC, tmp_path))
+    assert reply.kind == kind and reply.http_status is None
+
+
+@pytest.mark.parametrize("status", [502, 500, 199, 300, 0, -1])
+def test_recorded_ok_needs_a_2xx_status(tmp_path: Path, status: int) -> None:
+    body = turn_to_json(one_call_turn())
+    body["http_status"] = status
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, body))
+    with pytest.raises(RecordingError, match="line 1"):
+        recorded_adapter(SPEC, tmp_path)
+
+
+def test_recorded_duplicate_object_keys_refused(tmp_path: Path) -> None:
+    text = (
+        '{"invocation_digest":"' + DIGEST + '","call_index":0,"response":'
+        '{"kind":"sent_unknown","error_class":"X","http_status":502,"kind":"sent_known"}}'
+    )
+    write(tmp_path / "rec.jsonl", text)
+    with pytest.raises(RecordingError, match="line 1"):
+        recorded_adapter(SPEC, tmp_path)
+
+
+def test_recorded_conflict_distinguishes_true_from_one(tmp_path: Path) -> None:
+    base = turn_to_json(one_call_turn())
+    as_one = line(
+        DIGEST, 0, {**base, "provider_blocks": [{"provider": "anthropic", "data": {"n": 1}}]}
+    )
+    as_true = as_one.replace('"n": 1', '"n": true')
+    assert as_one != as_true
+    write(tmp_path / "rec.jsonl", as_one, as_true)
+    with pytest.raises(RecordingConflict):
+        recorded_adapter(SPEC, tmp_path)
+
+
+def test_recorded_refuses_bad_envelope_values(tmp_path: Path) -> None:
+    good = turn_to_json(one_call_turn())
+    for digest, index in ((DIGEST, -1), ("", 0)):
+        write(tmp_path / "rec.jsonl", line(digest, index, good))
+        with pytest.raises(RecordingError, match="line 1"):
+            recorded_adapter(SPEC, tmp_path)
+    bad = {"kind": "sent_known", "error_class": "X", "http_status": 400, "billed_usd": "-0.01"}
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, bad))
+    with pytest.raises(RecordingError, match="line 1"):
+        recorded_adapter(SPEC, tmp_path)
+
+
+def test_recording_missing_carries_its_key(tmp_path: Path) -> None:
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, turn_to_json(one_call_turn())))
+    with pytest.raises(RecordingMissing) as caught:
+        complete(recorded_adapter(SPEC, tmp_path), digest="b" * 64, index=3)
+    assert caught.value.digest == "b" * 64 and caught.value.call_index == 3
+
+
+def test_recorded_deeply_nested_line_is_a_recording_error(tmp_path: Path) -> None:
+    write(tmp_path / "rec.jsonl", line(DIGEST, 0, turn_to_json(one_call_turn())), "[" * 100_000)
+    with pytest.raises(RecordingError, match="line 2"):
+        recorded_adapter(SPEC, tmp_path)

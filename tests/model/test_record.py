@@ -370,7 +370,6 @@ def test_export_null_status_records_use_the_ruled_format(
     }
 
 
-@pytest.mark.xfail(strict=True, reason="Task 4 fix 1 adds null http_status")
 def test_adapter_reads_null_status_recording(tmp_path: Path) -> None:
     run, out = tmp_path / "run", tmp_path / "rec"
     run.mkdir()

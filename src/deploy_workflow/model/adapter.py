@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import stat
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -21,7 +22,7 @@ from datetime import date as Date
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Literal, Protocol, cast
+from typing import Any, Literal, Protocol, cast
 
 from deploy_workflow.model.providers import (
     ErrorKind,
@@ -42,12 +43,14 @@ from deploy_workflow.model.turn import (
     TurnRequest,
     Usage,
     _exact_keys,
+    dump_json,
     load_json,
     turn_from_json,
 )
 
 ReplyKind = Literal["ok", "not_sent", "sent_known", "sent_usage", "sent_unknown"]
 _ERROR_KINDS: tuple[str, ...] = ("not_sent", "sent_known", "sent_usage", "sent_unknown")
+_STATUS_OPTIONAL = ("not_sent", "sent_unknown")  # no reply status may exist for these
 _KIND_OF: Mapping[ErrorKind, ReplyKind] = {
     ErrorKind.NOT_SENT: "not_sent",
     ErrorKind.SENT_CHARGE_KNOWN: "sent_known",
@@ -60,6 +63,7 @@ KEY_VARIABLES: Mapping[str, str] = {
     "openrouter": "OPENROUTER_API_KEY",
 }
 LIVE_RULINGS_ROOT = Path(__file__).resolve().parents[3] / "docs" / "rulings"
+_REFLECTED_RAW = b'"[redacted]"'
 _PAUSE_LIFT = "live-provider-pause"
 _RULING_KEYS = ("lifts", "by", "date", "configs")
 _RULING_LINE = re.compile(r"^[ \t]*(lifts|by|date|configs):[ \t]*(.*?)[ \t]*$", re.MULTILINE)
@@ -117,7 +121,9 @@ class AdapterReply:
 
 class ModelAdapter(Protocol):
     config_id: str
-    ruling: Path | None
+
+    @property
+    def ruling(self) -> Path | None: ...
 
     def complete(
         self,
@@ -149,14 +155,21 @@ def check_live_gate(
     root = (LIVE_RULINGS_ROOT if rulings_root is None else rulings_root).resolve()
     try:
         path = Path(ruling).resolve(strict=True)
-        data = path.read_bytes() if path.is_file() else None
-        text = None if data is None else data.decode("utf-8")
-    except (OSError, UnicodeDecodeError) as error:
+    except OSError as error:
         raise LivePauseInForce(f"ruling unreadable: {type(error).__name__}") from None
-    if data is None or text is None:
-        raise LivePauseInForce("the ruling is not a file")
     if not path.is_relative_to(root):
         raise LivePauseInForce("the ruling is not under docs/rulings")
+    try:
+        # O_NOFOLLOW: a symlink swapped in after resolve() is refused, not followed; O_NONBLOCK
+        # keeps a FIFO from blocking the open. The checked bytes are the bytes read from this fd.
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(fd, "rb") as handle:
+            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                raise LivePauseInForce("the ruling is not a regular file")
+            data = handle.read()
+        text = data.decode("utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise LivePauseInForce(f"ruling unreadable: {type(error).__name__}") from None
     found: dict[str, list[str]] = {key: [] for key in _RULING_KEYS}
     for match in _RULING_LINE.finditer(text):
         found[match.group(1)].append(match.group(2))
@@ -192,8 +205,13 @@ def _reply_from_error_json(obj: object) -> AdapterReply:
         raise TurnError(f"unknown error kind {kind!r}")
     if not isinstance(error_class, str):
         raise TurnError("error_class must be a string")
-    if isinstance(status, bool) or not isinstance(status, int):
+    if status is None:
+        if kind not in _STATUS_OPTIONAL:
+            raise TurnError(f"http_status is required for kind {kind!r}")
+    elif isinstance(status, bool) or not isinstance(status, int):
         raise TurnError("http_status must be an integer")
+    elif kind == "sent_known" and not 400 <= status <= 499:
+        raise TurnError("sent_known needs an http_status in 400..499")
     usage: Usage | None = None
     if "usage" in data:
         usage_obj = _exact_keys("usage", data["usage"], _USAGE_KEYS)
@@ -220,12 +238,36 @@ def _reply_from_json(obj: object) -> AdapterReply:
     if isinstance(obj, Mapping) and "kind" in obj:
         return _reply_from_error_json(obj)
     turn = turn_from_json(obj)
+    if not 200 <= turn.http_status < 300:
+        raise TurnError(f"an ok turn needs a 2xx http_status, not {turn.http_status}")
     return AdapterReply(
         "ok", turn, None, turn.http_status, None, None, None, None, turn.usage, turn.billed_usd
     )
 
 
 _ENVELOPE_KEYS = frozenset({"invocation_digest", "call_index", "response"})
+
+
+def _no_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    seen: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in seen:
+            raise TurnError(f"duplicate object key {key!r}")
+        seen[key] = value
+    return seen
+
+
+def _sorted_copy(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {k: _sorted_copy(value[k]) for k in sorted(value)}
+    if isinstance(value, list):
+        return [_sorted_copy(v) for v in value]
+    return value
+
+
+def _canonical(value: object) -> str:
+    """Key-sorted exact JSON text: True, 1 and 1.0 stay different, unlike Python ``==``."""
+    return dump_json(_sorted_copy(value))
 
 
 class RecordedAdapter:
@@ -255,7 +297,7 @@ def recorded_adapter(model: ModelSpec, recordings: Path) -> RecordedAdapter:
     if not root.is_dir():
         raise RecordingError(f"recordings directory {root} does not exist")
     replies: dict[tuple[str, int], AdapterReply] = {}
-    responses: dict[tuple[str, int], object] = {}
+    responses: dict[tuple[str, int], str] = {}
     for path in sorted(root.rglob("*.jsonl")):
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
@@ -266,19 +308,23 @@ def recorded_adapter(model: ModelSpec, recordings: Path) -> RecordedAdapter:
                 continue
             where = f"{path.name} line {number}"
             try:
-                envelope = _exact_keys("recording", load_json(text), _ENVELOPE_KEYS)
+                envelope = _exact_keys(
+                    "recording", load_json(text, _no_duplicate_keys), _ENVELOPE_KEYS
+                )
                 digest, index = envelope["invocation_digest"], envelope["call_index"]
                 if not isinstance(digest, str) or not digest:
                     raise TurnError("invocation_digest must be a non-empty string")
                 if isinstance(index, bool) or not isinstance(index, int) or index < 0:
                     raise TurnError("call_index must be a non-negative integer")
                 reply = _reply_from_json(envelope["response"])
-            except TurnError as error:
-                raise RecordingError(f"{where}: {error}") from None
+                canonical = _canonical(envelope["response"])
+            except (TurnError, RecursionError) as error:
+                detail = "nested too deeply" if isinstance(error, RecursionError) else error
+                raise RecordingError(f"{where}: {detail}") from None
             key = (digest, index)
-            if key in responses and responses[key] != envelope["response"]:
+            if key in responses and responses[key] != canonical:
                 raise RecordingConflict(f"{where}: conflicting response for {key}")
-            responses[key] = envelope["response"]
+            responses[key] = canonical
             replies[key] = reply
     return RecordedAdapter(model, replies)
 
@@ -287,23 +333,32 @@ def recorded_adapter(model: ModelSpec, recordings: Path) -> RecordedAdapter:
 
 
 class LiveAdapter:
+    """Every construction runs the R2 gate, so no instance exists without a passing ruling."""
+
     def __init__(
         self,
         model: ModelSpec,
         ruling: Path,
-        gate: GateResult,
-        transport: Callable[[Request], Response],
-        environ: Mapping[str, str] | None,
-        clock: Callable[[], float],
+        transport: Callable[[Request], Response] = https_transport,
+        environ: Mapping[str, str] | None = None,
+        clock: Callable[[], float] = time.time,
     ) -> None:
+        self._gate = check_live_gate(model, ruling)  # first: before any environment access
         self.config_id = model.config_id
-        self.ruling: Path | None = ruling
-        self.gate = gate
+        self._ruling = Path(ruling)
         self._model = model
         self._transport = transport
         self._environ = environ  # None: os.environ, read only at the first complete
         self._clock = clock
         self._cached: tuple[str, str | None, Redactor] | None = None
+
+    @property
+    def ruling(self) -> Path | None:
+        return self._ruling
+
+    @property
+    def gate(self) -> GateResult:
+        return self._gate
 
     def _credentials(self) -> tuple[str, str | None, Redactor]:
         """The key variable's name and value and the redactor, read once from the mapping on
@@ -352,6 +407,8 @@ class LiveAdapter:
             raw = redactor.bytes_(response.body)
             status = response.status
         finished = self._clock()
+        if isinstance(outcome, ProviderError) and outcome.error_class == "KeyReflected":
+            raw = _REFLECTED_RAW  # a key decodable from the body: no part of it is kept
         if isinstance(outcome, Turn):
             return AdapterReply(
                 "ok", outcome, raw, outcome.http_status, None, None, started, finished,
@@ -388,8 +445,7 @@ def live_adapter(
     """Run the R2 gate first. Nothing reads or builds from the environment before it passes,
     and even after it the environment is read only by ``complete`` (F11). ``environ=None``
     means ``os.environ``, looked up then."""
-    gate = check_live_gate(model, ruling)
-    return LiveAdapter(model, Path(ruling), gate, transport, environ, clock)
+    return LiveAdapter(model, ruling, transport, environ, clock)
 
 
 __all__ = [

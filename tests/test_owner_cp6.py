@@ -110,7 +110,8 @@ def drive_cp6(root: Path) -> OwnerWorkflow:
     review = workflow.submit_review(text)
     assert review["status"] == "valid", review["issues"]
     # CP-6: the oracle literal, figures bound like CP-3
-    payload = runs.literal(CASE, STEP)
+    # `runs.literal` has no committee_challenge case: read the frozen literal from the oracle
+    payload = json.dumps(runs.oracle()["submissions"][CASE][STEP], ensure_ascii=False)
     payload = runs.bind_figures(
         payload, runs.cp1_bindings(workflow._store, runs.figure_names(payload))
     )

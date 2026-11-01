@@ -81,9 +81,9 @@
   "cases/cpl10-owner/expected.json": "9a6345b5272da3c2f9b20c9055348e9edef2042f9aefbcdd784448e4b908fd63",
   "cases/cpl10-owner/manifest.json": "53ccb16b86ce219d13af89403301a9d54b47d20ba1385b7c779fbf79a344cb04",
   "cases/cpl10-owner/submissions.json": "464b275256ce5df37d3bc10b4bab0daa98467d2eb4e97783f66f8da6f3a2914c",
-  "cases/cpos-owner/builder/build.py": "c69ef52e2e527e412b57955d061dc127042761f2eaf76465fd82103ba21233e9",
+  "cases/cpos-owner/builder/build.py": "8782a29bde22a3ded36bef750a3b31c898141b454f81028c74ae460a55a22623",
   "cases/cpos-owner/expected.json": "c0f93ab07e33c933fc5964e25cbac541addc35d830ab77ea3685003c665bfd0b",
-  "cases/cpos-owner/manifest.json": "bcfb8f3f1b865dbaf3d2aa98b7e244f60cf3332dcc80d121170e78845ea62681",
+  "cases/cpos-owner/manifest.json": "4a0e3ef61bd0a07973815679a56507f1b68dc814a56776984a83fbcd9552686b",
   "cases/cpos-owner/submissions.json": "cfbcdd4d5e294e81fb3bf52f9109f2469496ffb392e6e7884d267151a2fa636e",
   "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
 }

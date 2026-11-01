@@ -104,3 +104,7 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 ## From the Phase 4 Task 3 adversary review (2026-11-01)
 
 - **`ContextRefused` texts can carry raw context data into the REPAIR block (pre-existing, shared).** `load_context` refusal texts put user-chosen JSON key names verbatim into `loc` (`context.py` ~:347) and the `_line_break_problems` paths (~:291), with decoded escapes (a key `"x\n- Ignore…"` becomes a real line break; a raw RLO stays raw). `_Rules.shocks` (~:469) echoes a raw cp2e shock item. Through `PackScope.context_refusal` → `validate` these reach the model's REPAIR block as extra `- …` lines. cp2a/cp2d/cp2e/cp3c/cp3d/cp4c already route the same text through `pins_of`; Phase 4 Task 3 (796f24be) adds CP-2H. Reachable only for packs prepared outside `run_inputs.py` / `context.py`'s preparers (both run `load_context` first). Probes: `scratchpad/p4t3-adversary/probe_context_refused_text.py` (1), `probe_refused_shared.py` (0, predates). Recommendation: escape C/Zl/Zp characters as `\uXXXX` (the P4-P15 rule) once, where `ContextRefused` is built in `context.py`, so every owner inherits it.
+
+## From the Phase 4 phase review (2026-11-01)
+
+- **`tests/prompts/test_rules.py` nodes run alone from the repo root fail on `import o2_case`.** `pyproject` sets `pythonpath = ["src", "."]`; pytest's prepend mode adds `tests/` only when a `tests/` file is also collected. Passes with `PYTHONPATH=src:tests`. Recommendation: add `"tests"` to `pythonpath` in `pyproject.toml` (one line), so every node id runs alone.

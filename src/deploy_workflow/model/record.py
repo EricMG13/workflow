@@ -114,6 +114,11 @@ class ToolCallRecord(Contract):
     refusal_code: str | None
 
 
+def _money_field(value: Decimal) -> str:
+    """The one money text for a record or its export: zero is written ``0`` (not ``-0``/``0.00``)."""
+    return "0" if value == 0 else money_text(value)
+
+
 def _where(error: Mapping[str, Any]) -> str:
     """An error's location. An ``extra_forbidden`` error's last ``loc`` element is the input's own
     field name, which may be a key, so a fixed placeholder replaces it; other elements are
@@ -209,7 +214,7 @@ class CallRecord(Contract):
     def _money(self, value: Decimal | None) -> str | None:
         if value is None:
             return None
-        return "0" if value == 0 else money_text(value)  # -0 and 0.00 are written as 0
+        return _money_field(value)
 
     @model_validator(mode="after")
     def _checked(self) -> CallRecord:
@@ -588,7 +593,7 @@ def _error_response(
         if not 400 <= rec.http_status <= 499:
             raise ExportMismatch(*key, "http_status")
     if rec.cost_status == "billed" and rec.settled_usd is not None:
-        out["billed_usd"] = money_text(rec.settled_usd)
+        out["billed_usd"] = _money_field(rec.settled_usd)
     return {"kind": out.pop("kind"), **out}
 
 

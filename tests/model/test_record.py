@@ -630,6 +630,27 @@ def test_error_record_with_usage_and_billed_exports_them(tmp_path: Path) -> None
     assert resp["usage"]["input_tokens"] == 7 and resp["usage"]["output_tokens"] == 2
 
 
+def test_billed_error_record_with_foreign_negative_zero_exports_zero(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    log = CallLog(run, Redactor())
+    log.append(
+        record(
+            http_status=400,
+            error_class="Http",
+            output_tokens=None,
+            cost_status="billed",
+            settled_usd=Decimal("0.5"),
+        )
+    )
+    calls = run / "calls.jsonl"
+    foreign = json.loads(calls.read_text())
+    foreign["settled_usd"] = "-0"  # not product-written: the serializer writes zero as "0"
+    calls.write_text(json.dumps(foreign) + "\n")
+    out = tmp_path / "o.jsonl"
+    export_recording(run, out, Redactor())
+    assert json.loads(out.read_text())["response"]["billed_usd"] == "0"
+
+
 def test_error_record_is_not_reparsed_so_no_raw_is_needed(tmp_path: Path) -> None:
     (resp,) = exported(tmp_path, record(http_status=400, error_class="Http", output_tokens=None))
     assert resp["kind"] == "sent_known"

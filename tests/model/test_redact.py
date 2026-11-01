@@ -287,8 +287,20 @@ def test_word_internal_sk_is_not_over_redacted() -> None:
 _OLD_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
 
 
+_KEY_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
+# noise, one preceding character or escape, a key prefix, then a key-character tail: text that
+# holds an old-pattern match, so the property is exercised by generation and not only by @example
+_WITH_OLD_MATCH = st.builds(
+    lambda noise, pre, head, tail: noise + pre + head + tail,
+    st.text(alphabet="ab -_%=", max_size=8),
+    st.sampled_from(["", " ", "-", "_", "=", '"', "/", "\n", "%2F", "%3D", "a", "9"]),
+    st.sampled_from(["sk-or-", "sk-ant-", "sk-proj-", "sk-"]),
+    st.text(alphabet=_KEY_CHARS, min_size=6, max_size=30),
+)
+
+
 @example("x-sk-proj-abcdefg")
-@given(st.text(alphabet='sk-orantpj_%2F0aB .="', max_size=40))
+@given(_WITH_OLD_MATCH)
 def test_every_old_pattern_match_still_matches(text: str) -> None:
     for m in _OLD_PATTERN.finditer(text):
         assert KEY_PATTERN.match(text, m.start()), (text, m.span())

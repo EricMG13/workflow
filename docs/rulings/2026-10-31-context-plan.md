@@ -339,3 +339,6 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
   - pushes and merges: release requests still go to MANAGER and PR Manager;
   - live or paid provider calls, which stay paused;
   - prohibited actions.
+- **B31a (user, 2026-11-01).** I asked: "Should B31 also cover src/deploy_vii changes beyond the approved list? 1 keep the exceptions, 2 cover them." The user replied "Cover them".
+  - A `src/deploy_vii` change that the plan needs is now decided by the controller's recommendation. Each one gets its D12 record and an `mx-adversary` review, is recorded here as "applied recommendation (B31a)", and is named in the controller's next message.
+  - The other B31 exceptions are unchanged: new dependencies, permission and config changes, pushes and merges, live or paid calls, and prohibited actions.

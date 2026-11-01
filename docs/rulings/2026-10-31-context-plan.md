@@ -234,3 +234,8 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   - Caps: at most 6 Opus agents and 10 subagents at once. A phase's builder is never its preparer.
 
   Cost if wrong: one lane's tests flake on another lane's edit in progress, so a rerun.
+- **B6a: B6 covers the deal-talk rows (user, 2026-11-01, relayed by MANAGER quoting the user: "Yes, B6 covers it").**
+  Under B6, `src/deploy_vii/cp3_relative_value.py` also builds CP-3 market evidence from the context's `deal_terms` talk rows,
+  as the approved Phase 3 plan (ruled decision 1) says. CP-3D stays quotes-only. This answers Phase 3 pre-flight P3-P1.
+  The answer came through MANAGER. The phase therefore builds now, but it is not released to the PR Manager until the
+  user confirms B6a in this session. The memory rule on relays (`deploy-workflow-manager-routing`) covers this.

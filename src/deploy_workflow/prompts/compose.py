@@ -14,6 +14,7 @@ import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 from deploy_vii.business_context import STEP_ID as BUSINESS_CONTEXT
 from deploy_vii.business_context import context_block
@@ -36,6 +37,7 @@ from deploy_workflow.context import RunContext
 from deploy_workflow.financial_workflow import MAX_CALLS
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import StepSpec
+from deploy_workflow.owners.cp3d import context_offers
 from deploy_workflow.prompts.fence import (
     UntrustedItem,
     data_block,
@@ -113,6 +115,9 @@ O6_PINS = (
 PINS_ENABLED: frozenset[str] = frozenset()
 PINS_ID = "pinned-assumptions"
 REPAIR_ID = "prior-validation-issues"
+ROWS_ID = "context-rows"
+MARKET_IMPLIED = "market_implied"
+TEXTS_DIR = Path(__file__).parent / "texts"  # the new steps' texts, <step_id>.md (O6 Task 4)
 _BLOCK_NAMES = re.compile(r"(SOURCE|CONTEXT) block id=([^\s(),;]+)")
 
 
@@ -134,8 +139,29 @@ class PromptRequest:
     issues: tuple[str, ...] = ()
 
 
+def _text_path(step_id: str) -> Path:
+    return TEXTS_DIR / f"{step_id}.md"
+
+
+def _contract_of(step_id: str) -> str | None:
+    """The step's text: ``STEP_CONTRACTS`` first; else ``texts/<step_id>.md``; else None. A file
+    for a step that ``STEP_CONTRACTS`` has is refused, never shadowed; an empty file is refused."""
+    path = _text_path(step_id)
+    contract = STEP_CONTRACTS.get(step_id)
+    if contract is not None:
+        if path.exists():
+            raise PromptError(f"{path.name} duplicates the STEP_CONTRACTS text of step {step_id}")
+        return contract
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8")
+    if not text.strip():
+        raise PromptError(f"the text file {path.name} of step {step_id} is empty")
+    return text
+
+
 def has_prompt(step_id: str) -> bool:
-    return step_id in STEP_CONTRACTS
+    return step_id in STEP_CONTRACTS or _text_path(step_id).is_file()
 
 
 def pin_enabled(module_id: str) -> bool:
@@ -321,7 +347,7 @@ def _pack_facts(request: PromptRequest) -> str:
 
 
 def _check(request: PromptRequest) -> str:
-    contract = STEP_CONTRACTS.get(request.step_id)
+    contract = _contract_of(request.step_id)
     if contract is None:
         raise NoPrompt(request.step_id)
     if request.spec.step_id != request.step_id:
@@ -335,6 +361,27 @@ def _check(request: PromptRequest) -> str:
             "inputs reads them through read_inputs, which the workflow journals"
         )
     return contract
+
+
+def _context_rows_block(request: PromptRequest) -> str | None:
+    """O6-P24: the context rows Python offers a market_implied step, by id, kind, facility and
+    date, so the model can cite one by ``context_row``; no quote text, level or figure. None for
+    another step, a pack with no context source, or one whose context cannot be read."""
+    if request.step_id != MARKET_IMPLIED:
+        return None
+    offers = context_offers(request.pack)
+    if offers.errors or not offers.observations:
+        return None
+    rows = [
+        {
+            "row": row,
+            "kind": observation.kind,
+            "facility_id": offers.facilities[row],
+            "as_of": offers.dates[row].isoformat(),
+        }
+        for row, observation in offers.observations.items()
+    ]
+    return data_block("CONTEXT", ROWS_ID, json.dumps(rows, indent=1))
 
 
 def compose(request: PromptRequest) -> tuple[Message, ...]:
@@ -351,6 +398,8 @@ def compose(request: PromptRequest) -> tuple[Message, ...]:
         blocks.append(run_context_block(request.context))
     if pins is not None:
         blocks.append(pins)
+    if (rows := _context_rows_block(request)) is not None:
+        blocks.append(rows)
     if request.untrusted:
         blocks.append(untrusted_evidence_block(request.untrusted))
     if request.issues:

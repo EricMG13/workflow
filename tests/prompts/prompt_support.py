@@ -14,7 +14,8 @@ from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.owner_workflow import OWNER_SPECS, StepSpec
 from deploy_workflow.prompts import PromptRequest
 
-EXISTING = tuple(sorted(STEP_CONTRACTS))
+TEXTS = Path(__file__).parents[2] / "src" / "deploy_workflow" / "prompts" / "texts"
+EXISTING = tuple(sorted({*STEP_CONTRACTS, *(p.stem for p in TEXTS.glob("*.md"))}))
 CP3_MODULE_CONTEXT = {
     "market_evidence_sources": ["market"],
     "cp1_facilities": [{"facility_id": "tlb-2031", "label": "Term loan B"}],

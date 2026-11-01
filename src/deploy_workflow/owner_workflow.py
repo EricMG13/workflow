@@ -1451,9 +1451,6 @@ class OwnerWorkflow:
         Single writer: exactly one instance may write a run directory at a time. `open()` takes
         no lock and the audit has no lock file; two live instances over one directory are not
         detected (`run_pathway` holds the run directory's `flock` for the whole run, 3b).
-        # ponytail: the single-writer rule is a documented precondition at this level, because
-        # the kill tests abandon the first object instead of closing it. Upgrade path: a flock
-        # held by the instance on the store directory, released by `write_receipt` or `close()`.
 
         Calls: a kill with unsubmitted `invoke` calls is resumed in the same epoch. A rebuilt
         `SourceSession` starts at sequence 0 with new call ids, so the retained epoch is replayed
@@ -1468,6 +1465,9 @@ class OwnerWorkflow:
         last publication being `failed` with a publisher head, a pending publisher attempt or the
         output directory still present; a run whose `receipt.sha256` exists is sealed (the
         receipt file is written before the seal)."""
+        # ponytail: the single-writer rule is a documented precondition at this level, because
+        # the kill tests abandon the first object instead of closing it. Upgrade path: a flock
+        # held by the instance on the store directory, released by `write_receipt` or `close()`.
         if not (directory / "current").is_file():
             raise WorkflowError("not_permitted")
         store = Execution(directory)

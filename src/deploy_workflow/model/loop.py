@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import math
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -83,6 +83,29 @@ class StepStopped(Exception):
         super().__init__(f"{reason}: {detail}" if detail else reason)
         self.reason = reason
         self.detail = detail
+
+
+def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
+    """The stop a killed run had already decided, from its last durable record (R16): the record
+    form of the loop's stops (``_after_reply``, ``_outcome_of``, ``_validate``), which all write
+    their class and detail into the call's own record before the loop raises. Not a stop: no error,
+    a first 402 (the loop waits it out and resends), and a retryable unknown charge, whose stop is
+    the budget's (``Budget.stop_reason``). The text is the one ``StepStopped`` carries."""
+    if not records:
+        return None
+    last = records[-1]
+    error_class = last["error_class"]
+    if error_class is None or last["cost_status"] == "unknown":
+        return None
+    twice_402 = (
+        len(records) > 1
+        and records[-2]["http_status"] == 402
+        and records[-2]["invocation_digest"] == last["invocation_digest"]
+    )
+    if last["http_status"] == 402 and not twice_402:
+        return None
+    detail = last["error"] or ""
+    return f"{error_class}: {detail}" if detail else str(error_class)
 
 
 # ---------------------------------------------------------------- repair scoping (runner port)
@@ -819,6 +842,7 @@ __all__ = [
     "contract_prompt_for",
     "contract_tools_for",
     "read_inputs_tool",
+    "recorded_stop",
     "redacted_request",
     "redacted_turn",
     "repair_prompt",

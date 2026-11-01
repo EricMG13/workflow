@@ -1728,3 +1728,42 @@ def test_a_resubmit_that_is_invalid_keeps_its_issues_for_the_repair_prompt(
     assert outcome is not None and outcome["status"] == "invalid"
     assert outcome["issues"] == [g1x.VALIDATOR_ISSUE]
     assert resumed.state().step_id == g1x.SOURCED  # the same step is re-activated for the repair
+
+
+def test_window_b_with_a_forged_closed_call_writes_nothing(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The rebuilt begin is retained only after the closed records are checked."""
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    actions[0][1](workflow)  # sources
+    real = owner._retain
+    fired = [0]
+
+    def retain(store: Any, kind: str, value: Any) -> None:
+        if kind == "begins" and not fired[0] and getattr(value, "module_id", None) == "CP-1":
+            fired[0] = 1
+            raise _Kill()
+        real(store, kind, value)
+
+    monkeypatch.setattr(owner, "_retain", retain)
+    with pytest.raises(_Kill):
+        actions[1][1](workflow)  # cp0 settles; CP-1 begun, its BeginRecord not retained
+    monkeypatch.setattr(owner, "_retain", real)
+    del workflow
+    _forge_cp0_call(tmp_path)
+    before = _store_tree(tmp_path)
+    with pytest.raises(owner.TornAudit):
+        _open(tmp_path)
+    assert _store_tree(tmp_path) == before
+
+
+def test_a_read_at_an_undeclared_step_is_torn_at_open(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    workflow, _, _ = _prefix(cp3, tmp_path, "a viewed")
+    read = next(r for r in workflow._reads if r.binding.step_id == g1x.SOURCED)
+    del workflow
+    binding = read.binding.model_copy(update={"step_id": "no_such_step"})
+    forged = owner.OwnerInputRead(
+        binding=binding, sequence=1, inputs_sha256=read.inputs_sha256, body=read.body
+    )
+    owner._retain(Execution(tmp_path / "store"), "input-reads", forged)
+    assert _torn_kind(tmp_path) == "input-reads"

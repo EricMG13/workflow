@@ -41,6 +41,7 @@ from deploy_workflow.model.loop import (
     contract_prompt_for,
     contract_tools_for,
     read_inputs_tool,
+    recorded_stop,
     repair_prompt,
 )
 from deploy_workflow.model.record import (
@@ -1083,3 +1084,96 @@ def test_a_resumed_loop_reads_state_once_and_the_first_prompt_carries_the_resubm
     with pytest.raises(StepStopped):  # the repair attempt is valid; the next module's step asks
         loop.run()
     assert seen[0] == expected and seen[1:] == [()] and reads[0] == 1  # the issues, once
+
+
+# ---------------------------------------------------------------- recorded stops (R16)
+
+
+def _record(**values: Any) -> dict[str, Any]:
+    base = {
+        "error_class": None,
+        "error": None,
+        "http_status": 200,
+        "cost_status": "computed",
+        "invocation_digest": "a" * 64,
+    }
+    return base | values
+
+
+def test_recorded_stop_reads_the_stop_off_the_last_record() -> None:
+    assert recorded_stop([]) is None
+    assert recorded_stop([_record()]) is None
+    stop = _record(error_class="NoSubmit", error="no submit", http_status=200)
+    assert recorded_stop([_record(), stop]) == "NoSubmit: no submit"
+    assert recorded_stop([stop, _record()]) is None  # only the last record decides
+    assert recorded_stop([_record(error_class="KeyReflected", http_status=400)]) == "KeyReflected"
+
+
+def test_recorded_stop_treats_one_402_as_a_wait_and_two_as_the_stop() -> None:
+    credit = _record(error_class="CreditExhausted402", error="no credit", http_status=402)
+    assert recorded_stop([credit]) is None
+    assert recorded_stop([_record(), credit]) is None
+    assert recorded_stop([credit, credit]) == "CreditExhausted402: no credit"
+    elsewhere = credit | {"invocation_digest": "b" * 64}
+    assert recorded_stop([elsewhere, credit]) is None  # another request's 402
+
+
+def test_recorded_stop_leaves_an_unknown_charge_to_the_budget() -> None:
+    unknown = _record(error_class="ProviderServerError", http_status=502, cost_status="unknown")
+    assert recorded_stop([unknown]) is None
+
+
+# ---------------------------------------------------------------- kills adopted from the 3b review
+
+
+def test_the_seeded_read_count_binds(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`state()` reports the read cap used (no fast-world step has inputs); the real workflow
+    refuses the read `not_permitted` as it does at the cap, and the loop stops as CallLimit."""
+    owner_start(tmp_path)
+    real_state = OwnerWorkflow.state
+    monkeypatch.setattr(
+        OwnerWorkflow, "state", lambda self: real_state(self).model_copy(update={"reads_used": 16})
+    )
+    call = tool_call("read_inputs")
+    loop, adapter = _resumed(tmp_path, [ok(call), ok(call)])
+    with pytest.raises(StepStopped) as caught:
+        loop.run()
+    assert caught.value.reason == "CallLimit" and len(adapter.sent) == 1
+
+
+def test_the_seeded_submit_count_binds(tmp_path: Path) -> None:
+    workflow, _ = owner_start(tmp_path)
+    payload = json.dumps(ready_submit().arguments)
+    for _ in range(16):
+        assert workflow.submit_review(payload)["status"] == "refused"
+    del workflow
+    loop, adapter = _resumed(tmp_path, [ok(ready_submit()), ok(ready_submit())])
+    assert loop._workflow.state().submits_used == 16
+    with pytest.raises(StepStopped) as caught:
+        loop.run()
+    assert caught.value.reason == "CallLimit" and len(adapter.sent) == 1
+
+
+def test_the_digest_of_another_attempt_is_not_seeded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (first,) = _killed_after_one_turn(tmp_path, monkeypatch)
+    path = tmp_path / "run" / "calls.jsonl"
+    lines = path.read_text().splitlines()
+    other = json.loads(lines[0])
+    other.update(attempt=first["attempt"] + 1, invocation_digest="f" * 64, call_index=0)
+    path.write_text(lines[0] + "\n" + json.dumps(other) + "\n")
+    loop, adapter = _resumed(tmp_path, [ok(gap_submit())])
+    loop.run()
+    assert [s.digest for s in adapter.sent] == [first["invocation_digest"]]
+
+
+def test_two_digests_for_one_step_refuse_the_resume_before_a_send(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (first,) = _killed_after_one_turn(tmp_path, monkeypatch)
+    other = dict(first, invocation_digest="f" * 64, call_index=1)
+    with (tmp_path / "run" / "calls.jsonl").open("a") as handle:
+        handle.write(json.dumps(other) + "\n")
+    with pytest.raises(ValueError, match="more than one invocation digest"):
+        _resumed(tmp_path, [ok(gap_submit())])

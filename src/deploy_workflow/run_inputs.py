@@ -198,6 +198,11 @@ def _check_adapter(adapter: ModelAdapter, model: ModelSpec) -> GateResult | None
     return adapter.gate if isinstance(adapter, LiveAdapter) else None
 
 
+def _check_cap(cap_usd: Decimal) -> None:
+    if not (isinstance(cap_usd, Decimal) and cap_usd.is_finite() and cap_usd > 0):
+        raise BadCap(f"cap_usd {cap_usd!r} is not a finite Decimal above zero")
+
+
 def _require_ready(request: SourceRequest, data: bytes) -> None:
     """``prepare_source`` does no I/O: refuse a source the pack would call unusable now."""
     prepared = prepare_source(request, data)
@@ -225,8 +230,7 @@ def check_arguments(
     if not resume:
         _check_run_dir(run_dir)
     gate = _check_adapter(adapter, model)
-    if not (isinstance(cap_usd, Decimal) and cap_usd.is_finite() and cap_usd > 0):
-        raise BadCap(f"cap_usd {cap_usd!r} is not a finite Decimal above zero")
+    _check_cap(cap_usd)
     _identifier(case_id, BadIdentifier, "case_id")
     _identifier(run_id, BadIdentifier, "run_id")
     context_raw = read_capped(context)

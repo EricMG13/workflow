@@ -243,6 +243,19 @@ class Budget:
             return self._spent()
 
     @property
+    def stop_reason(self) -> str | None:
+        """Why the run is stopped (an unknown charge, an overrun, a crash-left hold), or None."""
+        with self._lock:
+            return self._stops()
+
+    @property
+    def settled_calls(self) -> tuple[str, ...]:
+        """The sorted ids of the reservations settled as sent: a settled marker whose status is
+        not ``released`` (a released hold was never sent)."""
+        with self._lock:
+            return tuple(sorted(c for c, s in self._settled.items() if s.status != "released"))
+
+    @property
     def unsettled(self) -> tuple[str, ...]:
         with self._lock:
             return tuple(sorted(c for c in self._holds if c not in self._settled))

@@ -38,6 +38,7 @@ from deploy_workflow.model.loop import (
     ToolLoop,
     contract_prompt_for,
     contract_tools_for,
+    recorded_stop,
 )
 from deploy_workflow.model.pricing import money_text
 from deploy_workflow.model.record import CallLog
@@ -143,9 +144,10 @@ def _single_writer(run_dir: Path) -> Iterator[None]:
         os.close(fd)  # closing releases the lock
 
 
-def _create_cap(run_dir: Path, cap_usd: Decimal) -> None:
-    """Record the run's cap, create-once (P2): a resume can neither raise nor lower it."""
-    data = (json.dumps({"cap_usd": money_text(cap_usd)}) + "\n").encode()
+def _create_cap(run_dir: Path, cap_usd: Decimal, mode: str) -> None:
+    """Record the run's cap and mode, create-once (P2, R18): a resume can neither raise nor lower
+    the cap, nor change from offline to live or back."""
+    data = (json.dumps({"cap_usd": money_text(cap_usd), "mode": mode}) + "\n").encode()
     try:
         fd = os.open(
             run_dir / CAP_FILE,
@@ -161,12 +163,28 @@ def _create_cap(run_dir: Path, cap_usd: Decimal) -> None:
     _fsync_directory(run_dir)
 
 
-def _retained_cap(run_dir: Path) -> Decimal:
+def _retained_identity(run_dir: Path) -> tuple[Decimal, str]:
+    """The cap and mode the run began with; a missing, malformed or non-finite file is refused."""
     try:
         loaded = json.loads((run_dir / CAP_FILE).read_text())
-        return Decimal(loaded["cap_usd"])
+        cap, mode = Decimal(loaded["cap_usd"]), loaded["mode"]
     except (OSError, ValueError, KeyError, TypeError, ArithmeticError):
         raise ResumeRefused(f"{run_dir / CAP_FILE} is missing or unreadable") from None
+    if not cap.is_finite() or mode not in ("live", "offline"):  # sNaN would raise on comparison
+        raise ResumeRefused(f"{run_dir / CAP_FILE} is missing or unreadable")
+    return cap, str(mode)
+
+
+def _check_cap_and_mode(checked: CheckedRun, run_dir: Path) -> None:
+    cap, mode = _retained_identity(run_dir)
+    if cap != checked.cap_usd:
+        raise ResumeMismatch("cap_usd is not the cap the run began with")
+    if mode != _mode_of(checked.adapter):
+        raise ResumeMismatch("the mode (live or offline) is not the one the run began with")
+
+
+def _mode_of(adapter: ModelAdapter) -> str:
+    return "live" if type(adapter) is LiveAdapter else "offline"
 
 
 def _retained_configs(run_dir: Path, redactor: Redactor) -> tuple[set[tuple[str, ...]], set[str]]:
@@ -197,11 +215,11 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         raise ResumeRefused(f"prepare: {error}") from None
     if (pack.run.run_id, pack.run.pathway) != (checked.run_id, checked.pathway):
         raise ResumeMismatch("run_id or pathway is not the staged run's")
-    held = {s.source_id: s.sha256 for s in pack.sources}
-    if any(held.get(item.source_id) != item.sha256 for item in checked.files):
+    if {s.source_id: s.sha256 for s in pack.sources} != {
+        item.source_id: item.sha256 for item in checked.files
+    }:  # the same ids and the same files, no subset (R17)
         raise ResumeMismatch("the sources are not the staged run's")
-    if _retained_cap(run_dir) != checked.cap_usd:
-        raise ResumeMismatch("cap_usd is not the cap the run began with")
+    _check_cap_and_mode(checked, run_dir)
     try:
         identities, configs = _retained_configs(run_dir, redactor)
     except (OSError, ValueError, KeyError, TypeError) as error:
@@ -396,6 +414,8 @@ def _drive_resumed(workflow: OwnerWorkflow, loop: ToolLoop) -> str | None:
     if workflow.phase == "analytical":
         loop.run()
     if workflow.phase == "walked":
+        if workflow._publications:  # a fresh run stopped on a refused publication: not again
+            return "publish: refused by an earlier call; not published again"
         return _publish_and_go_on(workflow, loop)
     if workflow.phase == "failed":
         return "resume: the publication left the walk failed"
@@ -415,11 +435,27 @@ def _prior_spend(checked: CheckedRun, execution: Path) -> Decimal:
     zero for a run that has none."""
     if not (execution / AUDIT / "reservations").is_dir():
         return Decimal(0)
-    return Budget(checked.cap_usd, execution).spent
+    return _spend(Budget(checked.cap_usd, execution))
+
+
+def _spend(budget: Budget) -> Decimal:
+    """Every charge once: the settled ones, the unknown ones and the crash-left holds."""
+    return _EXACT_ADD(budget.spent, budget.reserved)
+
+
+def _stopped_before_loop(
+    checked: CheckedRun, execution: Path, reason: str, redactor: Redactor
+) -> _Fault:
+    """A stop before the loop's budget exists; the spend so far, or, if the budget itself cannot
+    be read, the reason with the budget's failure appended (never a silent zero)."""
+    try:
+        return _Fault(reason, _prior_spend(checked, execution))
+    except BudgetError as error:
+        return _Fault(f"{reason}; {_fault_reason(error, redactor)}", Decimal(0))
 
 
 def _opened(
-    checked: CheckedRun, run_dir: Path, pack: PreparedPack, resume: bool
+    checked: CheckedRun, run_dir: Path, pack: PreparedPack, resume: bool, redactor: Redactor
 ) -> OwnerWorkflow | _Fault:
     """The workflow, or the fault that stops the run. A ``TornAudit`` is mapped before the generic
     ``workflow: <code>`` (P6, F6), so it never surfaces as ``workflow: identity_mismatch``."""
@@ -427,21 +463,46 @@ def _opened(
     try:
         return _enter(run_dir, pack, resume)
     except TornAudit:
-        return _Fault("TornAudit", _prior_spend(checked, execution))
+        return _stopped_before_loop(checked, execution, "TornAudit", redactor)
     except WorkflowError as error:
-        return _Fault(f"workflow: {error.code}", _prior_spend(checked, execution))
+        return _stopped_before_loop(checked, execution, f"workflow: {error.code}", redactor)
 
 
 def _held(budget: Budget, resume: bool) -> _Fault | None:
-    """B10: on a resume, a reservation with no settlement may have been sent, its charge unknown.
-    The run stops before any step (the model is not called, nothing is published) and the hold is
-    counted once in the spend."""
-    if not resume or not budget.unsettled:
+    """B10: on a resume, a money stop the budget holds (R15): a reservation with no settlement
+    (it may have been sent, its charge unknown), an unknown charge, an overrun. The fresh run
+    would have stopped with the loop's name for it; the resumed run stops before any step (the
+    model is not called, nothing is published) and every charge is counted once in the spend."""
+    reason = budget.stop_reason if resume else None
+    if reason is None:
         return None
-    return _Fault(
-        "RunStopped: a reservation left unsettled by a crash: " + ", ".join(budget.unsettled),
-        _EXACT_ADD(budget.spent, budget.reserved),
-    )
+    if budget.unsettled:
+        text = "RunStopped: a reservation left unsettled by a crash: " + ", ".join(budget.unsettled)
+    elif "overran" in reason:
+        text = "OverrunStop: the actual charge was above the reservation"
+    else:
+        text = "UnknownCharge: the charge of a sent call is unknown"
+    return _Fault(text, _spend(budget))
+
+
+def _resume_stop(budget: Budget, run_dir: Path, redactor: Redactor) -> _Fault | None:
+    """Why a resumed run must not go on, from the durable state alone: a money stop (R15); a
+    settled call with no record in ``calls.jsonl`` (R13), whose ``call_index`` the next call would
+    reuse; the stop the last record shows (R16); a sealed receipt with no ``run.json`` (R19)."""
+    held = _held(budget, True)
+    if held is not None:
+        return held
+    records = CallLog(run_dir, redactor).records()
+    sent = sum(1 for record in records if Decimal(record["reserved_usd"]) > 0)
+    if len(budget.settled_calls) > sent:
+        text = "UnrecordedCall: a settled call has no record in calls.jsonl"
+    elif (stop := recorded_stop(records)) is not None:
+        text = stop
+    elif (run_dir / "execution" / AUDIT / "receipt.sha256").exists():
+        text = "SealedWithoutRunRecord: the receipt is sealed and run.json was never written"
+    else:
+        return None
+    return _Fault(text, _spend(budget))
 
 
 def _drive_and_finish(
@@ -495,13 +556,16 @@ def _stages(
         pack = load_pack(run_dir / "pack")
     except ValueError as error:
         return _Fault(f"prepare: {error}", Decimal(0))
-    workflow = _opened(checked, run_dir, pack, resume)
+    workflow = _opened(checked, run_dir, pack, resume, meta.redactor)
     if isinstance(workflow, _Fault):
         return workflow
-    budget = Budget(checked.cap_usd, run_dir / "execution")
-    held = _held(budget, resume)
-    if held is not None:
-        return held
+    try:
+        budget = Budget(checked.cap_usd, run_dir / "execution")
+        stop = _resume_stop(budget, run_dir, meta.redactor) if resume else None
+    except BudgetError as error:  # a marker the budget cannot load: a named stop, not a crash
+        return _Fault(_fault_reason(error, meta.redactor), Decimal(0))
+    if stop is not None:
+        return stop
     return _drive_and_finish(
         checked, run_dir, adapter, prompt_for, meta, pack, workflow, budget, resume
     )
@@ -624,7 +688,7 @@ def run_pathway(
         # The directory was created by the exclusive mkdir above, so two fresh runs never share one;
         # the lock follows at once, before the first record of the run (the cap) is written.
         with _single_writer(run_dir):
-            _create_cap(run_dir, checked.cap_usd)
+            _create_cap(run_dir, checked.cap_usd, _mode_of(adapter))
             return _run_pathway(checked, run_dir, adapter, entries=entries)
 
 

@@ -1,5 +1,6 @@
 """The tool loop drives the real OwnerWorkflow: order, money, retry, repair, redaction. No network."""
 
+import hashlib
 import json
 import traceback
 from datetime import datetime
@@ -29,7 +30,7 @@ from _pack import (
 
 from deploy_vii.execution import Execution
 from deploy_workflow.model import loop as loop_module
-from deploy_workflow.model.adapter import recorded_adapter
+from deploy_workflow.model.adapter import AdapterReply, recorded_adapter
 from deploy_workflow.model.budget import RunStopped
 from deploy_workflow.model.loop import (
     StepStopped,
@@ -40,7 +41,7 @@ from deploy_workflow.model.loop import (
 )
 from deploy_workflow.model.record import arguments_sha256
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import ModelSpec, Usage
+from deploy_workflow.model.turn import ModelSpec, Usage, dump_json
 
 CONFIG = SPEC.config_id
 
@@ -208,7 +209,7 @@ def test_a_second_unknown_charge_in_the_run_is_not_retried(tmp_path: Path) -> No
             ok(read_identity(), gap_submit()),
         ],
     )
-    assert _stop(rig).reason in {"ProviderServerError", "RunStopped"}
+    assert _stop(rig).reason == "ProviderServerError"
     assert len(rig.adapter.sent) == 3
 
 
@@ -614,3 +615,124 @@ def test_an_unreported_first_byte_stays_unreported(tmp_path: Path) -> None:
     rig = make_rig(tmp_path, [ok(read_identity(), gap_submit(), first_byte=None)])
     rig.loop.run()
     assert rig.records()[0]["first_byte_at"] is None
+
+
+# ---------------------------------------------------------------- fix round 1
+
+
+def test_a_key_reflecting_402_is_neither_waited_out_nor_resent(tmp_path: Path) -> None:
+    rig = make_rig(
+        tmp_path,
+        [
+            failed("sent_known", "KeyReflected", 402, retry_after=7),
+            ok(read_identity(), gap_submit()),
+        ],
+    )
+    assert _stop(rig).reason == "KeyReflected"
+    assert len(rig.adapter.sent) == 1 and rig.sleeps == []
+
+
+def test_the_seventeenth_refused_submit_is_the_call_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(fw, "start", owner_start)
+    workflow, pack = fw.before_financials(tmp_path)
+    fw.financial_reads(workflow)
+    assert workflow.submit_review(json.dumps(fw.financials(pack)))["status"] == "valid"
+    script: list[AdapterReply | BaseException] = [
+        ok(submit("narrative", "{}")) for _ in range(20)
+    ]  # inputs are never read
+    rig = make_rig(
+        tmp_path, script, workflow=workflow, pack=pack, cap="50", bytes_per_token=Decimal(3)
+    )
+    assert _stop(rig).reason == "CallLimit"
+    assert len(rig.adapter.sent) == 17
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        failed("sent_unknown", "KeyReflected", 502, raw=b'{"error":"plain"}'),
+        failed("sent_known", "KeyReflected", 400, raw=b'{"error":"plain"}'),
+    ],
+)
+def test_the_reply_error_class_reaches_the_raw_archive(tmp_path: Path, reply: Any) -> None:
+    rig = make_rig(tmp_path, [reply])
+    _stop(rig)
+    digest = rig.adapter.sent[0].digest
+    stored = json.loads((rig.run_dir / "raw" / f"{digest}-0.json").read_text())
+    assert stored == "[withheld: KeyReflected; 17 bytes]"
+
+
+def test_an_error_reply_with_a_plain_body_is_archived_as_it_came(tmp_path: Path) -> None:
+    usage = Usage(input_tokens=10, output_tokens=5)
+    rig = make_rig(
+        tmp_path, [failed("sent_usage", "MalformedToolArguments", 200, usage=usage, raw=b'{"a":1}')]
+    )
+    _stop(rig)
+    digest = rig.adapter.sent[0].digest
+    assert json.loads((rig.run_dir / "raw" / f"{digest}-0.json").read_text()) == {"a": 1}
+
+
+def test_the_stop_reason_is_redacted(tmp_path: Path) -> None:
+    rig = make_rig(tmp_path, [failed("sent_known", SECRET, 400)])
+    stopped = _stop(rig)
+    assert SECRET not in stopped.reason and SECRET not in str(stopped)
+
+
+def test_an_empty_call_id_stops_before_any_dispatch(tmp_path: Path) -> None:
+    call = read_identity()
+    bad = type(call)("", call.name, call.arguments)
+    rig = make_rig(tmp_path, [ok(bad, gap_submit())], taped=True)
+    assert _stop(rig).reason == "ValueError"
+    assert "workflow.invoke" not in rig.tape and "workflow.submit_review" not in rig.tape
+    (record,) = rig.records()
+    assert record["error_class"] == "ValueError" and record["settled_usd"] is not None
+
+
+def test_calls_after_a_submit_that_moved_the_step_are_not_executed(tmp_path: Path) -> None:
+    rig = make_rig(
+        tmp_path,
+        [ok(read_identity(), gap_submit(), tool_call("search_pack", query="x"))],
+        taped=True,
+    )
+    rig.loop.run()
+    assert rig.tape.count("workflow.invoke") == 1  # the search after the submit never ran
+    (record,) = rig.records()
+    assert record["tool_calls"][2]["refusal_code"] == "not_executed"
+    assert record["tool_calls"][2]["result_bytes"] is None
+
+
+def test_a_cut_stream_that_reported_usage_is_not_retried(tmp_path: Path) -> None:
+    cut = failed("sent_unknown", "StreamCut", None, usage=Usage(input_tokens=5, output_tokens=1))
+    rig = make_rig(tmp_path, [cut, ok(read_identity(), gap_submit())])
+    assert _stop(rig).reason == "StreamCut" and len(rig.adapter.sent) == 1
+
+
+def test_the_402_wait_is_capped_at_300_seconds(tmp_path: Path) -> None:
+    rig = make_rig(
+        tmp_path,
+        [
+            failed("sent_known", "CreditExhausted402", 402, retry_after=9999),
+            ok(read_identity(), gap_submit()),
+        ],
+    )
+    rig.loop.run()
+    assert rig.sleeps == [300]
+
+
+def test_submit_sha256_is_the_hash_of_the_payload_text(tmp_path: Path) -> None:
+    call = gap_submit()
+    rig = make_rig(tmp_path, [ok(read_identity(), call)])
+    rig.loop.run()
+    expected = hashlib.sha256(dump_json(call.arguments).encode()).hexdigest()
+    assert rig.records()[0]["submit_sha256"] == expected
+
+
+@pytest.mark.parametrize("status", [499, 600])
+def test_only_a_5xx_status_is_retried(tmp_path: Path, status: int) -> None:
+    rig = make_rig(
+        tmp_path,
+        [failed("sent_unknown", "UnexpectedStatus", status), ok(read_identity(), gap_submit())],
+    )
+    assert _stop(rig).reason == "UnexpectedStatus" and len(rig.adapter.sent) == 1

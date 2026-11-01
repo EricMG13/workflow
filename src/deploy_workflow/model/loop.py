@@ -164,6 +164,8 @@ def redacted_request(redactor: Redactor, request: TurnRequest) -> TurnRequest:
 
 def redacted_turn(redactor: Redactor, turn: Turn) -> Turn:
     """The returned turn with every string and tool argument redacted, before any tool runs."""
+    if any(not c.call_id for c in turn.tool_calls):
+        raise ValueError("a tool call has an empty call id")
     return replace(
         turn,
         text=redactor.text(turn.text),
@@ -285,6 +287,9 @@ def _dt(seconds: float | None) -> datetime | None:
 
 
 class ToolLoop:
+    """One loop per run: it is not resumable (its digests, retry flag and call counts live in
+    memory), so a restarted run builds a new ToolLoop over a fresh run directory."""
+
     def __init__(
         self,
         workflow: OwnerWorkflow,
@@ -398,7 +403,7 @@ class ToolLoop:
                 retry_of, self._retry_used = done.held, True
                 continue
             if done.stop is not None:
-                raise StepStopped(*done.stop) from None
+                raise StepStopped(self._redactor.text(done.stop[0]), done.stop[1]) from None
             return done
 
     # -- one provider request ----------------------------------------------------------
@@ -615,6 +620,8 @@ class ToolLoop:
         """The stop after a settled, recorded call, or None; ``done.again`` names a resend."""
         error_class = reply.error_class or reply.kind
         detail = self._redactor.text(reply.message or "")
+        if reply.error_class == "KeyReflected":  # never resent, whatever the status (R9)
+            return error_class, detail
         if reply.kind == "sent_usage":
             return error_class, detail
         if reply.kind == "sent_known":
@@ -678,6 +685,8 @@ class ToolLoop:
                     return out
                 # any other not_permitted is a refusal the model sees (F14)
                 refused = dump_json({"status": "refused", "error_code": "not_permitted"})
+                if kind == "submit_review":  # the workflow counted this submit before refusing it
+                    self._counts[key] += 1
                 result, failure, returned = (refused, "not_permitted", None), None, False
             if failure is not None or result is None:
                 name = (

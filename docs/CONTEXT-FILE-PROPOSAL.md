@@ -120,9 +120,10 @@ Built: the form, the `context/1` reader, pack preparation with the `Run` mapping
 the frozen-pack reader (Phase 1), and quotes as CP-3 and CP-3D market evidence
 (Phase 3; `rv_quotes` stays for now), the context's periods in CP-1B (limited to the two
 pairs above; other pairs wait for Phase 8) and CP-L10, and the borrower, alias, sector and
-sponsor names shown and checked on the delivered credit snapshot (Phase 2). Planned, each
+sponsor names shown and checked on the delivered credit snapshot (Phase 2), and pinned
+assumptions (Phase 6). Planned, each
 needing its own lease:
 CP-DR web peer and precedent sourcing (live provider calls are paused); CP-1C
 EV/EBITDA; valuation basis selection; CP-4
-draft-document mode; CP-DR user questions; pinned assumptions; non-USD currency; real
+draft-document mode; CP-DR user questions; non-USD currency; real
 agency names in CP-2H.

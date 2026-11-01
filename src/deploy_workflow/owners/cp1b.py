@@ -30,6 +30,7 @@ from deploy_vii.execution import (
     ExecutionSnapshot,
     Qualification,
     StepValidation,
+    clipped,
 )
 from deploy_vii.live.schema import exact_json, json_object, normalise
 from deploy_vii.live.submission import Submitted
@@ -122,9 +123,10 @@ def expected_comparison(report: EarningsDeltaReport) -> str:
 
 
 def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
-    """Whether this report is one of the two pairs this core accepts until Task 4b widens it
-    (ruling B19, P2T4a-R2): the flat q3-2025 -> q4-2025 pair or the missing-prior
-    fy-2024 -> fy-2025 pair. The composer derives its prose from the register and refuses what it
+    """Whether this report is one of the two pairs this core accepts, with or without a run
+    context (ruling B19, P2T4a-R2; P2T4b-R1 keeps the pins until Phase 8): the flat q3-2025 ->
+    q4-2025 pair or the missing-prior fy-2024 -> fy-2025 pair. A context pair outside these two
+    resolves and passes the context check, then refuses here as `unsupported_pair`. The composer derives its prose from the register and refuses what it
     cannot state truthfully; these guards and pins are narrower and stay:
     every current value known, no 2024 duration period in the register and, for the gap pair, the
     opening-2024 balance row and known FY2025 leverage; for the flat pair, Q3 leverage missing for
@@ -277,15 +279,18 @@ def _point_rows(report: EarningsDeltaReport) -> list[dict[str, str | None]]:
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
     """(sha256, body) of the one `read_inputs` view as compact JSON: the periods the settled CP-1
-    head offers, and exactly the pairs the validator accepts (ruling B19: the flat q3-2025 ->
-    q4-2025 pair and the missing-prior fy-2024 -> fy-2025 pair), each with the assessment Python
-    derives and the point list it builds."""
+    head offers, and exactly the pairs the validator accepts, each with the assessment Python
+    derives and the point list it builds. Without a run context those are the two pinned pairs
+    (ruling B19: the flat q3-2025 -> q4-2025 pair and the missing-prior fy-2024 -> fy-2025 pair).
+    With a context naming both periods it is the one pair the context resolves to (when that pair
+    is accepted), and a refused context or an unresolved current period offers none and carries
+    `context_issue`."""
     module = cp1_view(_cp1(historical, attempt))
     body: dict[str, object]
     try:
         fixed = context_pair(module, historical.pack())
     except ContextRefused as error:
-        fixed = ContextPair(None, (f"Context refused: {error}",))
+        fixed = ContextPair(None, (clipped(("Context refused: ", str(error))),))
     try:
         rows = _periods(module)
     except ValueError as error:
@@ -347,7 +352,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     try:
         fixed = context_pair(cp1_view(producer), pack)
     except ContextRefused as error:
-        return StepValidation(issues=(f"Context refused: {error}",))
+        return StepValidation(issues=(clipped(("Context refused: ", str(error))),))
     submitted = (submission.prior_period_id, submission.current_period_id)
     if fixed.issues:
         return StepValidation(issues=fixed.issues)

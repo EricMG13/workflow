@@ -10,16 +10,17 @@ import datetime as dt
 import hashlib
 import json
 import os
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import test_earnings as a1
 from pydantic import ValidationError
 
 from deploy_vii.contracts import Fact, Input, Module, Run
-from deploy_vii.execution import Attempt, StepSubmission
+from deploy_vii.execution import MAX_ISSUE_CHARS, Attempt, Execution, StepSubmission
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow import earnings_workflow as ew
 from deploy_workflow import host
@@ -1123,26 +1124,37 @@ CTX = json.loads((CONTEXT_CASE / "expected.json").read_text())["cp1b"]
 CTX_MANIFEST = json.loads((CONTEXT_CASE / "manifest.json").read_text())["contexts"]
 
 
-def _ctx_pack(name: str) -> PreparedPack:
+def _ctx_pack(name: str, edit: Callable[[dict[str, Any]], None] | None = None) -> PreparedPack:
     """A pack holding only the oracle's context `name` as its `context` source, under the oracle's
-    run for it (the CP-1 producer is hand-built, so no promotion is needed)."""
+    run for it (the CP-1 producer is hand-built, so no promotion is needed). `edit` changes the
+    context document before it is frozen into the pack."""
     spec = CTX_MANIFEST[name]
     run = Run.model_validate_json(json.dumps({k: v for k, v in spec["run"].items() if k != "set"}))
+    raw = (CONTEXT_CASE / spec["file"]).read_bytes()
+    if edit is not None:
+        document = json.loads(raw)
+        edit(document)
+        raw = json.dumps(document, indent=2).encode()
     held = prepare_source(
         SourceRequest(
             source_id="context",
             path=f"cases/context-identity-periods/{spec['file']}",
             media_type="text/plain",
         ),
-        (CONTEXT_CASE / spec["file"]).read_bytes(),
+        raw,
     )
     return PreparedPack(run=run, sources=(held,))
 
 
+def _ctx_view_text(pack: PreparedPack, producer: Module | None = None) -> str:
+    producer = producer if producer is not None else _producer(opening=True)
+    return cp1b.view(cast(Execution, _Store(producer, "", pack)), _attempt(producer))[1]
+
+
 def _ctx_view(pack: PreparedPack | None) -> dict[str, Any]:
-    producer = _producer(opening=True)
-    text = cp1b.view(_Store(producer, "", pack), _attempt(producer))[1]  # type: ignore[arg-type]
-    body: dict[str, Any] = json.loads(text)
+    body: dict[str, Any] = json.loads(
+        _ctx_view_text(pack if pack is not None else PreparedPack(run=_run(), sources=()))
+    )
     return body
 
 
@@ -1185,6 +1197,21 @@ def test_context_pair_composes_flat_sequential() -> None:
     assert [f for f in head.facts if f.table_id != "T1B.3"] == [
         f for f in plain.facts if f.table_id != "T1B.3"
     ]
+    # T1B.3: six facts equal the no-context head's; the scope-limitations fact differs by exactly
+    # the context limitation line.
+    pairs = list(
+        zip(
+            [f for f in head.facts if f.table_id == "T1B.3"],
+            [f for f in plain.facts if f.table_id == "T1B.3"],
+            strict=True,
+        )
+    )
+    assert len(pairs) == 7
+    changed = [(mine, base) for mine, base in pairs if mine != base]
+    assert len(changed) == 1
+    mine, base = changed[0]
+    assert mine.row_id == base.row_id == "scope.limitations"
+    assert mine.text == (base.text or "") + "\n" + cp1b.CONTEXT_LIMIT
     assert head.tables == plain.tables and head.claims == plain.claims
     assert tuple(x for x in head.limitations if x != cp1b.CONTEXT_LIMIT) == plain.limitations
 
@@ -1250,7 +1277,7 @@ def test_context_pair_other_than_the_pins_stays_fail_closed(
         ("q1-2027", "q2-2027"), ()
     )
     outcome = cp1b._validate_step(
-        _Store(producer, _payload("q1-2027", "q2-2027", "flat_sequential"), pack),  # type: ignore[arg-type]
+        cast(Execution, _Store(producer, _payload("q1-2027", "q2-2027", "flat_sequential"), pack)),
         pack,
         _attempt(
             producer, StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
@@ -1259,15 +1286,107 @@ def test_context_pair_other_than_the_pins_stays_fail_closed(
     assert outcome.issues == (cp1b.UNSUPPORTED,)
 
 
+# SHA-256 of the view body and of the composed head (flat, gap) with no context, computed by the
+# code before Task 4b (f8b76afb^) on the same hand-built producer; never computed from the new code.
+PRE_P2T4B_NO_CONTEXT = {
+    "view": "220a7130fa8ec47c523cf97b546b364fceab893276b27033223288155ea735e6",
+    "q3-2025": "bb5726e70884e49fbda193ce57187f85408222b4d2a5941a8bea9d3ede8cb4b8",
+    "fy-2024": "02fb5700967687b3ef9a17534a636df1b58ef64801eeca24a8f780be0b8c286e",
+}
+
+
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def test_no_context_unchanged() -> None:
-    """No context: the view, the issues and the head equal what they are without a pack source."""
-    assert _ctx_view(None)["pairs"] == _ctx_view(PreparedPack(run=_run(), sources=()))["pairs"]
+    """No context: the view and both heads equal the bytes the code made before Task 4b."""
     body = _ctx_view(None)
-    assert [(p["prior_period_id"], p["current_period_id"]) for p in body["pairs"]] == [
-        ("q3-2025", "q4-2025"),
-        ("fy-2024", "fy-2025"),
-    ]
     assert "context_issue" not in body
-    outcome = _validate(_payload("q3-2025", "q4-2025", "flat_sequential"))[0]
-    head = Module.model_validate_json(outcome.output)
-    assert cp1b.CONTEXT_LIMIT not in head.limitations
+    assert (
+        _digest(_ctx_view_text(PreparedPack(run=_run(), sources=())))
+        == (PRE_P2T4B_NO_CONTEXT["view"])
+    )
+    for pair, comparison in (
+        (("q3-2025", "q4-2025"), "flat_sequential"),
+        (("fy-2024", "fy-2025"), "comparative_not_supplied"),
+    ):
+        outcome = _validate(_payload(*pair, comparison))[0]
+        assert outcome.output is not None and not outcome.issues
+        assert _digest(outcome.output) == PRE_P2T4B_NO_CONTEXT[pair[0]]
+        assert cp1b.CONTEXT_LIMIT not in Module.model_validate_json(outcome.output).limitations
+
+
+def _periods_of(document: dict[str, Any], prior: str, current: str) -> None:
+    """Set the run periods; the reader takes an unset period only on a non-earnings run type."""
+    document["run"]["run_type"] = "research"
+    document["run"]["prior_period"], document["run"]["current_period"] = prior, current
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        lambda d: _periods_of(d, "", ""),
+        lambda d: _periods_of(d, "", "q4-2025"),
+        lambda d: _periods_of(d, "q3-2025", ""),
+    ],
+    ids=["both-empty", "prior-empty", "current-empty"],
+)
+def test_empty_or_partial_periods_leave_everything_as_without_a_context(
+    edit: Callable[[dict[str, Any]], None],
+) -> None:
+    """`#cp1b/no_context_or_empty_periods`: a context that does not name both periods changes
+    nothing: the view, the validator's issues and the head are byte-identical to a pack of the
+    same run with no context source."""
+    for name in ("ctx-research", "ctx-match"):
+        with_context = _ctx_pack(name, edit)
+        assert context_facts(with_context) is not None
+        without = PreparedPack(run=with_context.run, sources=())
+        assert _ctx_view_text(with_context) == _ctx_view_text(without)
+        for pair, comparison in (
+            (("q3-2025", "q4-2025"), "flat_sequential"),
+            (("q2-2025", "q3-2025"), "flat_sequential"),
+        ):
+            got = _validate(_payload(*pair, comparison), with_context)[0]
+            base = _validate(_payload(*pair, comparison), without)[0]
+            assert (got.issues, got.output) == (base.issues, base.output)
+
+
+def _refusing(document: dict[str, Any]) -> None:
+    document["identity"]["issuer_name"] = "Another Issuer " + "X" * 5000
+
+
+def test_a_refused_context_refuses_the_step_and_offers_no_pair() -> None:
+    """The context file disagrees with the run: no output, one bounded `Context refused: ` issue at
+    the validator, and a view with no pair that names the issue."""
+    pack = _ctx_pack("ctx-match", _refusing)
+    outcome = _validate(_payload("q3-2025", "q4-2025", "flat_sequential"), pack)[0]
+    assert outcome.output is None and len(outcome.issues) == 1
+    assert outcome.issues[0].startswith("Context refused: ")
+    assert len(outcome.issues[0]) <= MAX_ISSUE_CHARS
+    body = _ctx_view(pack)
+    assert body["pairs"] == [] and body["context_issue"].startswith("Context refused: ")
+    assert len(body["context_issue"]) <= MAX_ISSUE_CHARS
+
+
+def test_a_context_with_a_broken_register_reports_the_register_code() -> None:
+    """A context plus a register `build_earnings_delta` refuses: the register's code is the issue
+    (and the view's `register_issue`); the context check neither raises nor hides it."""
+    producer = _producer(opening=True)
+    broken = producer.model_copy(
+        update={
+            "facts": tuple(
+                f
+                for f in producer.facts
+                if not (f.table_id == "T4.14" and f.period == "q4-2025" and f.field == "end_date")
+            )
+        }
+    )
+    pack = _ctx_pack("ctx-match")
+    assert json.loads(_ctx_view_text(pack, broken))["register_issue"] == "incomplete_register"
+    step = StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
+    payload = _payload("q3-2025", "q4-2025", "flat_sequential")
+    outcome = cp1b._validate_step(
+        cast(Execution, _Store(broken, payload, pack)), pack, _attempt(broken, step)
+    )
+    assert outcome.issues == ("incomplete_register",) and outcome.output is None

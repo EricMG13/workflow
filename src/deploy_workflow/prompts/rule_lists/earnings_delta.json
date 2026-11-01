@@ -10,7 +10,7 @@
   },
   {
    "id": "earnings_delta.2",
-   "statement": "Take `prior_period_id` and `current_period_id` together from one entry of `pairs` in the read_inputs view; any other pair is refused as `unsupported_pair`; when the run context names the pair, a pair that differs from it is refused as `context_period_mismatch` and a context period that is not in the register as `context_period_unresolved`; and a register Python cannot compare is refused with its code (incompatible_periods, incomplete_register, invalid_source_view, incompatible_dimensions, ambiguous_coordinate or invalid_fact).",
+   "statement": "Take `prior_period_id` and `current_period_id` together from one entry of `pairs` in the read_inputs view; any other pair is refused as `unsupported_pair`; when the run context names the pair, a pair that differs from it is refused as `context_period_mismatch`, a current context period that matches no single register row is refused as `context_period_unresolved`, and a context prior that matches no row is not refused (it gives the `comparative_not_supplied` gap); a context file that is refused is refused as `Context refused: ...`; and a register Python cannot compare is refused with its code (incompatible_periods, incomplete_register, invalid_source_view, incompatible_dimensions, ambiguous_coordinate or invalid_fact).",
    "checks": [
     "code:cp1b:period:ambiguous_coordinate",
     "code:cp1b:period:incompatible_dimensions",

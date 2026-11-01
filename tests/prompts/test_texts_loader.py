@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
+from test_g8 import undo_merged_contract
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
@@ -98,6 +99,9 @@ def test_existing_is_the_contracts_plus_the_text_stems() -> None:
 # gives the old message. relative_value was re-frozen by Phase 3 Task 4 (the CP3_EVIDENCE_RULE
 # reword, B17 item 3); tests/prompts/test_context_evidence.py keeps its old digest and shows that
 # putting back the old rule text and removing the evidence block gives the old message.
+# financials and narrative were re-frozen by the O6 merge integration (ruling M-R1: the merged
+# restricted-cash change in their contract text and schema); test_the_merged_restricted_cash_change_
+# is_the_only_change keeps their old digests and shows that undoing exactly it gives the old message.
 def test_the_twelve_existing_steps_compose_byte_identically(pack: PreparedPack) -> None:
     got = {}
     for step in sorted(STEP_CONTRACTS):
@@ -107,14 +111,34 @@ def test_the_twelve_existing_steps_compose_byte_identically(pack: PreparedPack) 
     assert got == FROZEN
 
 
+# The answer key (M-R1): the digests of these two steps before the merged restricted-cash ids.
+# Never edited.
+PRE_MERGE_FROZEN: dict[str, str] = {
+    "financials": "985eafab692bb87012ef143cabaee6d868895d532f05bc9d242e9a2acd683e4a",
+    "narrative": "d4677ff1aa1cbb825ca73c54ecd6743ed53164f8d072764bba0a7ff2035499a0",
+}
+
+
+@pytest.mark.parametrize("step", sorted(PRE_MERGE_FROZEN))
+def test_the_merged_restricted_cash_change_is_the_only_change_to_the_frozen_message(
+    pack: PreparedPack, step: str
+) -> None:
+    messages = compose(request_for(step, pack))
+    system, user = messages[0], messages[1]
+    body = json.dumps(
+        [[system.role, undo_merged_contract(step, system.text)], [user.role, user.text]]
+    )
+    assert hashlib.sha256(body.encode()).hexdigest() == PRE_MERGE_FROZEN[step]
+
+
 FROZEN: dict[str, str] = {
     "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
     "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
     "credit_synthesis": ("209914c5b5b6662bd897f2b92d9dc3ae90286be0f30153aa5f54ec235fa2320c"),
-    "financials": ("985eafab692bb87012ef143cabaee6d868895d532f05bc9d242e9a2acd683e4a"),
+    "financials": ("8d196274b78c7f5444f3a9e130618be05b74d5d800a703654abbc445926dd315"),
     "integrity_review": ("1b71ce3d77e672011f2234c363def35ecd38e3f7a0bf2322a6ec38c876b2ffcf"),
     "legal_covenants": ("d274462457744ea7fbc7b91bcd8ad38e9f3b2310671f8b39090daa8680477a44"),
-    "narrative": ("d4677ff1aa1cbb825ca73c54ecd6743ed53164f8d072764bba0a7ff2035499a0"),
+    "narrative": ("3e8d87b8f6e5085f539e94e7184db2e89feb7cc45b4e03e897925dca24d819f7"),
     "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
     "relative_value": ("dc90b63a7ee77bd4482fdadba8b6e25a5492951897753e2e4a828af3ea9dd729"),

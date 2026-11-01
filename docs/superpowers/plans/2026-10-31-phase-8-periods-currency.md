@@ -324,7 +324,7 @@ in the same commit. Chart oracles that quote `report_view.py` (`cases/charts/*`)
 - [ ] **RED tests:** (a) `cp1b_layouts()` equals today's `_CP1B_LAYOUTS` row by row; (b) a CP-1B module with EUR/MILLIONS
   facts and `Revenue (EUR m)` labels passes `_validate_cp1b_layout`; (c) the same labels over USD facts raise "invalid
   ordered rows or labels"; `Revenue (US$ m)` over EUR facts raises likewise; (d) revenue prior EUR, current USD raises; (e)
-  all-gap money rows keep `US$ m`.
+  all-gap money rows take C (the currency of `revenue:current`), and a None currency refuses.
 - [ ] **Run:** `pytest tests/test_periods_currency_cp1b_labels.py tests/test_report_view.py tests/test_earnings.py -q` plus
   every test that reads the re-pinned manifests (found by the grep), and `python3 -I cases/pins.py --check`.
 - [ ] **Commit:** `feat(cp1b): row labels take the run's money unit (P8 T6b, B17-9)`.
@@ -386,7 +386,7 @@ number, table id or schema name changes.
    tests/test_connect_*.py -q`).
 6. `test_no_hardcoded_period_left`: `git grep -nE "LTM Q4 25|q4-2025|FY2026, FY2027|\"USD\"" -- src/deploy_workflow/owners`
    matches only `period_basis.py` and an allow-list in the test (the CP-1 fact-label parsers that read vii's own format).
-7. `test_eur_runs_render_no_usd_token`: the rendered output of R2, R3 (CP-1D) and R6 for every Phase 8 module including CP-1B contains `EUR m` and no `US$`.
+7. `test_eur_runs_render_no_usd_token`: the rendered output of R2, R3 (CP-1B, CP-1D) and R6 for every Phase 8 module including CP-1B contains `EUR m` and no `US$`.
 Gate once before hand-off: `pytest tests -q` (full suite), `python3 -I cases/pins.py --check`, ruff/format/mypy on changed files.
 
 ## Ruled (coordinator, `work/context-plan/reviews/phase-8-plan-review.md`); no open questions remain

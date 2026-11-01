@@ -168,7 +168,8 @@ RUNS = {
         "requested_modules": [m for m in BASE_REQUEST if m != "CP-MODEL"] + ["CP-3", "CP-5", "CP-6"],
         "plan_order": ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-3", "CP-5", "CP-6"],
         "live_consumers": ["CP-1", "CP-1A", "CP-2", "CP-3", "CP-5", "CP-6"],
-        "cp1a_consumers": ["CP-2", "CP-3", "CP-5", "CP-6"],
+        # CP-MODEL is always judged (cp1a_consumers, r14) although R6 does not request it.
+        "cp1a_consumers": ["CP-2", "CP-3", "CP-5", "CP-6", "CP-MODEL"],
     },
 }
 # Cross-check the hand-derived plan and consumer lists against the methodology data file (data
@@ -211,7 +212,8 @@ for _name, _run in RUNS.items():
     _cons = [
         m
         for m in METH_ORDER
-        if m in _sel and (m == "CP-MODEL" or "CP-1A" in (*_cat[m]["required"], *_cat[m]["optional"]))
+        if m == "CP-MODEL"
+        or (m in _sel and "CP-1A" in (*_cat[m]["required"], *_cat[m]["optional"]))
     ]
     assert _cons == _run["cp1a_consumers"], (_name, _cons)
 

@@ -11,3 +11,4 @@ UTC time | run | command | exit | counts | agent fix-rounds gates-first-pass
 2026-11-01 16:00 UTC | t2 close | mx-precise scoped re-review PASS; merged at 18deaf89 | - | - | agent=mx-feature fix-rounds=2 gates-first-pass=y
 2026-11-01 16:03 UTC | t3 fix1 | RED 8304577b 7 failed/7 passed; ruff 1 (SIM114 :172), format 0, mypy 0, pytest tests/test_prove_affected.py; YAML parse; key rows 3-5 | 1 (ruff) | 14 passed; rows 3-5 PASS | agent=mx-feature
 2026-11-01 16:10 UTC | t3 fix2 | RED 455c8917 1 failed/14 passed; ruff, format, mypy 0; pytest tests/test_prove_affected.py; YAML parse; key rows 3-5; N1 probe | 0 | 15 passed; rows 3-5 PASS | agent=mx-feature
+2026-11-01 16:10 UTC | t3 close | mx-precise scoped re-review PASS with notes (Q1 Low kept as documented limit); merged at 922bb227 | - | - | agent=mx-feature fix-rounds=2 gates-first-pass=n

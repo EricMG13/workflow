@@ -20,6 +20,7 @@ The rule for one figure (rulings B20, B20a):
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import cast
 
 from deploy_vii.contracts import Citation, Source
 from deploy_vii.readiness import citation_issues
@@ -95,9 +96,7 @@ class _Walk:
     def key(self) -> str:
         if self.peek() != '"':
             raise ContextTextError(f"member name at offset {self.at} is not text")
-        name: str
-        name, self.at = _DECODER.raw_decode(self.text, self.at)
-        return name
+        return cast(str, self.value())  # the text at `at` opens with a quote: a string or an error
 
     def after(self, close: str) -> None:
         """After one member or element: past a ',', or at the closing `close`."""
@@ -165,7 +164,10 @@ class _Walk:
 def _members(text: str) -> dict[str, _Member]:
     """Every string member of the rows of the cited arrays, by `<array>[i].<field>`. Raises
     `ContextTextError` on text that is not a JSON object."""
-    return _Walk(text).top()
+    try:
+        return _Walk(text).top()
+    except RecursionError as error:  # the json scanner's own depth limit, named
+        raise ContextTextError("not valid JSON (nesting is too deep)") from error
 
 
 def value_offsets(text: str) -> dict[str, int]:

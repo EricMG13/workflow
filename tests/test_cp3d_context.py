@@ -364,6 +364,23 @@ def test_non_text_and_multi_line_context_sources_are_unreadable() -> None:
     assert refused(unavailable) == (UNREADABLE + "sources.context: status is unreadable: no bytes",)
 
 
+@pytest.mark.parametrize("name", ["no-quotes", "observed-and-talk"])
+@pytest.mark.parametrize("json_spans", [True, False])
+def test_a_non_text_context_is_refused_on_its_media_type_alone(name: str, json_spans: bool) -> None:
+    plain = context_pack(name)
+    context = next(s for s in plain.sources if s.source_id == "context")
+    others = tuple(s for s in plain.sources if s.source_id != "context")
+    spans = (
+        context.spans
+        if json_spans
+        else tuple(s.model_copy(update={"text": "%PDF " + s.text}) for s in context.spans)
+    )
+    pdf = context.model_copy(update={"media_type": "application/pdf", "spans": spans})
+    pack = PreparedPack(run=plain.run, sources=(*others, pdf))
+    errors = cp3d.upstream_of(pack=pack, cp0=conn._cp0("positive")).context.context_errors
+    assert errors == (UNREADABLE + "media type is application/pdf, not text/plain",)
+
+
 def test_a_context_that_differs_from_the_run_is_unreadable() -> None:
     plain = context_pack("observed-and-talk")
     other = plain.run.model_copy(update={"issuer_id": "someone-else"})

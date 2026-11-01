@@ -136,6 +136,66 @@ def test_invalid_json_is_a_named_error_for_every_entry_point(text: str) -> None:
         cites.cite(raw_source(text), "quotes[0].bid")
 
 
+_DEEP = "[" * 100000 + "]" * 100000
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"quotes": [{"b\\x": "1"}]}',
+        '{"q\\x": 1}',
+        '{"quotes": [{"bid',
+        '{"quotes": [{"b\x01id": "1"}]}',
+        '{"quotes": [{"bid": "\\q"}]}',
+        '{"quotes":\u00a0[]}',
+        '{"x": ' + _DEEP + "}",
+        '{"quotes": [{"x": ' + _DEEP + "}]}",
+        '{"quotes": [1 2]}',
+    ],
+    ids=[
+        "bad-escape-row-key",
+        "bad-escape-top-key",
+        "unterminated-row-key",
+        "control-char-row-key",
+        "bad-escape-row-value",
+        "nbsp-between-tokens",
+        "deep-skipped-value",
+        "deep-row-value",
+        "non-object-row-then-garbage",
+    ],
+)
+def test_every_walk_failure_is_a_named_error(text: str) -> None:
+    with pytest.raises((ValueError, RecursionError)):
+        json.loads(text)
+    with pytest.raises(cites.ContextTextError):
+        cites.value_offsets(text)
+
+
+def test_a_key_decode_error_reads_as_the_json_modules_own_wording() -> None:
+    text = '{"quotes": [{"b\\x": "1"}]}'
+    with pytest.raises(json.JSONDecodeError) as error:
+        json.loads(text)
+    want = f"not valid JSON ({error.value.msg} at line {error.value.lineno})"
+    with pytest.raises(cites.ContextTextError) as ours:
+        cites.value_offsets(text)
+    assert str(ours.value) == want
+
+
+def test_a_bad_escape_in_a_row_value_is_named_by_value() -> None:
+    text = '{"quotes": [{"bid": "\\q"}]}'
+    with pytest.raises(json.JSONDecodeError) as error:
+        json.loads(text)
+    want = f"not valid JSON ({error.value.msg} at line {error.value.lineno})"
+    with pytest.raises(cites.ContextTextError) as ours:
+        cites.value_offsets(text)
+    assert str(ours.value) == want
+
+
+def test_nesting_too_deep_is_named() -> None:
+    with pytest.raises(cites.ContextTextError, match=r"^not valid JSON \(nesting is too deep\)$"):
+        cites.value_offsets('{"x": ' + _DEEP + "}")
+
+
 def test_a_leading_bom_reads_as_the_json_modules_own_wording() -> None:
     with pytest.raises(json.JSONDecodeError) as error:
         json.loads("\ufeff{}")

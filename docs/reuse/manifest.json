@@ -2086,7 +2086,7 @@
       "project_commit": "e7d2c02baba0054c0e591809fe62d05158ff8e76",
       "sha256": "36d84f1d9985abbf5b141054dd678434c4e6cbabcbecd0e1d12dd98d1436bc83",
       "reason": "B29 (docs/rulings/2026-10-31-context-plan.md, user-approved): wording-only sentence in the market-evidence paragraph: a run with a context file also offers Python's context rows, which a basis cites by row id in basis.context_rows and never copies; the third_party/basis.quotes sentences are unchanged. No rule, number or table id added.",
-      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b29-brief.md, b29-report.md); mx-adversary review (both texts reach the model)"
+      "review": "mx-adversary ac70b2b7"
     },
     {
       "destination": "src/deploy_vii/live/prompts.py",
@@ -2095,7 +2095,7 @@
       "project_commit": "e7d2c02baba0054c0e591809fe62d05158ff8e76",
       "sha256": "eeb599d9b7de576e803eacb6daa216629e469c5b4dd5437ac07fa5cb030feae7",
       "reason": "B29 (docs/rulings, user-approved): wording-only edit to CP3_BASIS_RULE (rule d): the market basis is a basis.quotes market quote or a context row named in basis.context_rows, as the validator (_basis_issues, _cites_market) accepts. No other contract text changes.",
-      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b29-brief.md, b29-report.md); mx-adversary review (both texts reach the model)"
+      "review": "mx-adversary ac70b2b7"
     },
     {
       "destination": "src/deploy_vii/methods/cp3.md",
@@ -2104,7 +2104,7 @@
       "project_commit": "68ebc369347121ce505488a8808661e643751d52",
       "sha256": "2d5f12ad5e3688fbd92317046faf9a3dd76b549ab1a6c2f6abe580482b60da5f",
       "reason": "B30 (docs/rulings/2026-10-31-context-plan.md, user-approved): wording-only: the market_observation sentence says a statement's basis quotes a market_evidence row (basis.quotes) or, in a run with a context file, names a context row in basis.context_rows. No rule, number or table id added.",
-      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b30-brief.md, b30-report.md); mx-adversary review of B30 (id supplied by the controller)"
+      "review": "mx-adversary a3f74bdc"
     },
     {
       "destination": "src/deploy_vii/live/prompts.py",
@@ -2113,7 +2113,7 @@
       "project_commit": "68ebc369347121ce505488a8808661e643751d52",
       "sha256": "11a831ab3ecf62a3a650c3133f0dfe72dd0ff0545327a5f4331a146ab67f1fe9",
       "reason": "B30 (docs/rulings, user-approved): wording-only edits to CP3_BASIS_RULE (rule d, market_observation clause) and CP3_PREFERENCE_RULE (rule e): a market observation or a preference cites a market quote or a context row named in basis.context_rows, as the validator (_cites_market) accepts. No other contract text changes.",
-      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b30-brief.md, b30-report.md); mx-adversary review of B30 (id supplied by the controller)"
+      "review": "mx-adversary a3f74bdc"
     },
     {
       "destination": "src/deploy_vii/cp3_relative_value.py",
@@ -2122,7 +2122,16 @@
       "project_commit": "68ebc369347121ce505488a8808661e643751d52",
       "sha256": "d53035f7368704e750ecaded0985ecdfdb18c86acf8aaa8d60cab371df05e24b",
       "reason": "B30 (docs/rulings, user-approved): wording-only: the Basis docstring names the context-row basis and Basis.context_rows gets a schema description (Python's context market-evidence row ids, cited by id, figures never copied). Default () and the omit-when-empty dump are unchanged, so content hashes are unchanged. No validator logic or refusal message changes.",
-      "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (b30-brief.md, b30-report.md); mx-adversary review of B30 (id supplied by the controller)"
+      "review": "mx-adversary a3f74bdc"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3.md",
+      "imported_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "prior_project_sha256": "2d5f12ad5e3688fbd92317046faf9a3dd76b549ab1a6c2f6abe580482b60da5f",
+      "project_commit": "9e8b92dc7fd46b3cf10e1141fc7df9d3a2ab1bf3",
+      "sha256": "6009dcca0feac906bcb8a612a36e16b81552c68aadc280aa25e41af15a1c5bfb",
+      "reason": "B34 (docs/rulings/2026-10-31-context-plan.md, applied recommendation): wording-only: the preference line under 'What to return' says the basis is at least one market evidence quote or a context row named in basis.context_rows, unless the confidence is Insufficient Information, as rule e and the validator (_preference_issues) accept. No rule, number or table id added.",
+      "review": "mx-adversary (B34 review; id supplied by the controller)"
     },
     {
       "destination": "src/deploy_vii/readiness.py",

@@ -231,7 +231,7 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   - All lanes share this worktree, because isolated-worktree builders cannot use the venv. A builder that sees an
     import or syntax error in a file it did not touch treats it as another lane's edit in progress: it waits and
     re-runs, and never edits that file.
-  - Caps: at most 6 Opus agents and 10 subagents at once. A phase's builder is never its preparer.
+  - Caps: at most 15 subagents at once, any model, with no separate Opus cap. That is the user's words, relayed by MANAGER on 2026-11-01: "increase to max no opus limits / max 15". It replaces 6 Opus and 10 subagents. AGENTS.md was updated in d8dbbc5d. A phase's builder is never its preparer.
 
   Cost if wrong: one lane's tests flake on another lane's edit in progress, so a rerun.
 - **B6a: B6 covers the deal-talk rows (user, 2026-11-01, relayed by MANAGER quoting the user: "Yes, B6 covers it").**

@@ -23,7 +23,7 @@ from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from decimal import Context, Decimal, Inexact, InvalidOperation
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from deploy_vii.contracts import PathwayId
 from deploy_vii.execution import Execution
@@ -53,6 +53,16 @@ from deploy_workflow.owner_workflow import (
     StepSpec,
     TornAudit,
     verify_owner_run_receipt,
+)
+from deploy_workflow.replay import (
+    ReplayDiverged,
+    ReplayError,
+    ReplayPackChanged,
+    ReplayPlan,
+    ReplayRefused,
+    ReplayRejected,
+    check_replay,
+    replay_module,
 )
 from deploy_workflow.run_inputs import (
     HTML_MEDIA,
@@ -230,7 +240,16 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         raise ResumeMismatch("config_id is not the run's")
 
 
-_FAULTS = (StepStopped, BudgetError, RecordingMissing, WorkflowError, NoPrompt, PromptError)
+_FAULTS = (
+    StepStopped,
+    BudgetError,
+    RecordingMissing,
+    WorkflowError,
+    NoPrompt,
+    PromptError,
+    ReplayError,
+    ReplayPackChanged,
+)
 
 
 @dataclass(frozen=True)
@@ -241,6 +260,7 @@ class _Meta:
     entries: tuple[dict[str, Any], ...]
     live: bool
     redactor: Redactor
+    replayed_from: str | None = None  # the earlier run's run_id, for a rerun after repair
 
 
 def _source_entries(
@@ -308,7 +328,7 @@ def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: st
         "cap_usd": money_text(checked.cap_usd),
         "sources": list(meta.entries),
         "cp_dr_invoked": False,
-        "replayed_from_run": None,
+        "replayed_from_run": meta.replayed_from,
         "outcome": outcome,
         "stopped_reason": stopped_reason,
     }
@@ -381,7 +401,40 @@ def _finish_run(workflow: OwnerWorkflow, run_dir: Path, meta: _Meta, budget: Bud
     return RunOutcome(meta.checked.run_id, run_dir, "settled", None, budget.spent)
 
 
-def _drive(workflow: OwnerWorkflow, loop: ToolLoop, pack: PreparedPack) -> str | None:
+class _Walk(Protocol):
+    """What the driver needs of the loop: drive the analytical walk to where it stops."""
+
+    def run(self) -> object: ...
+
+
+class _ReplayingLoop:
+    """``run`` for a rerun after repair (G4): a replayed module is resubmitted from the earlier
+    run's retained submissions, any other module is driven live one step at a time by the tool
+    loop. The walk is plan-ordered, so a live module that precedes a replayed one is begun first.
+    A replayed step sends no model request; divergence raises and never falls back to the loop."""
+
+    def __init__(
+        self, workflow: OwnerWorkflow, loop: ToolLoop, replay: ReplayPlan, execution: Path
+    ) -> None:
+        self._workflow, self._loop, self._replay, self._execution = (
+            workflow,
+            loop,
+            replay,
+            execution,
+        )
+
+    def run(self) -> None:
+        while self._workflow.phase == "analytical":
+            module = self._workflow.binding.module_id
+            if module in self._replay.replayed:
+                replay_module(
+                    self._workflow, self._replay.earlier, module, execution=self._execution
+                )
+            else:
+                self._loop.run_step()
+
+
+def _drive(workflow: OwnerWorkflow, loop: _Walk, pack: PreparedPack) -> str | None:
     """Run every step. The loop returns at the publisher's stop (or when the walk ends refused);
     ``publish`` runs there once and the walk resumes after it. A refused publication that ends the
     walk is not a fault (O1 Q1); one that leaves the walk open is, and its code is returned as the
@@ -395,7 +448,7 @@ def _drive(workflow: OwnerWorkflow, loop: ToolLoop, pack: PreparedPack) -> str |
     return _publish_and_go_on(workflow, loop)
 
 
-def _publish_and_go_on(workflow: OwnerWorkflow, loop: ToolLoop) -> str | None:
+def _publish_and_go_on(workflow: OwnerWorkflow, loop: _Walk) -> str | None:
     """``publish`` at the publisher's stop, then the rest of the walk; the stop reason of a
     refusal that leaves the walk open, else ``None``."""
     published = workflow.publish()
@@ -407,7 +460,7 @@ def _publish_and_go_on(workflow: OwnerWorkflow, loop: ToolLoop) -> str | None:
     return None
 
 
-def _drive_resumed(workflow: OwnerWorkflow, loop: ToolLoop) -> str | None:
+def _drive_resumed(workflow: OwnerWorkflow, loop: _Walk) -> str | None:
     """Continue a resumed walk from where ``open()`` left it, by the phase it reports (never by
     polling ``state()``): steps while a module is active, ``publish`` once at the publisher's stop,
     nothing when the walk already ended. A publication that failed mid-cleanup is not retried."""
@@ -515,8 +568,10 @@ def _drive_and_finish(
     workflow: OwnerWorkflow,
     budget: Budget,
     resume: bool,
+    replay: ReplayPlan | None = None,
 ) -> RunOutcome | _Fault:
-    """The loop over the workflow, ``publish`` at the stop, then the receipt and ``run.json``."""
+    """The loop over the workflow, ``publish`` at the stop, then the receipt and ``run.json``.
+    A rerun after repair (``replay``) replays the modules the plan names and drives the rest."""
     redactor, execution = meta.redactor, run_dir / "execution"
     try:
         loop = ToolLoop(
@@ -536,7 +591,8 @@ def _drive_and_finish(
             max_output_tokens=MAX_OUTPUT_TOKENS,
             resumed=resume,
         )
-        refused = _drive_resumed(workflow, loop) if resume else _drive(workflow, loop, pack)
+        walk: _Walk = loop if replay is None else _ReplayingLoop(workflow, loop, replay, execution)
+        refused = _drive_resumed(workflow, walk) if resume else _drive(workflow, walk, pack)
         if refused is not None:
             return _Fault(refused, budget.spent)
         return _finish_run(workflow, run_dir, meta, budget)
@@ -551,6 +607,7 @@ def _stages(
     prompt_for: PromptFactory,
     meta: _Meta,
     resume: bool = False,
+    replay: ReplayPlan | None = None,
 ) -> RunOutcome | _Fault:
     try:
         pack = load_pack(run_dir / "pack")
@@ -567,7 +624,7 @@ def _stages(
     if stop is not None:
         return stop
     return _drive_and_finish(
-        checked, run_dir, adapter, prompt_for, meta, pack, workflow, budget, resume
+        checked, run_dir, adapter, prompt_for, meta, pack, workflow, budget, resume, replay
     )
 
 
@@ -578,8 +635,9 @@ def _walk(
     prompt_for: PromptFactory,
     meta: _Meta,
     resume: bool = False,
+    replay: ReplayPlan | None = None,
 ) -> RunOutcome:
-    result = _stages(checked, run_dir, adapter, prompt_for, meta, resume)
+    result = _stages(checked, run_dir, adapter, prompt_for, meta, resume, replay)
     if isinstance(result, _Fault):
         return _stop(run_dir, meta, result.reason, result.spent)
     return result
@@ -604,9 +662,10 @@ def _run_pathway(
     *,
     entries: tuple[dict[str, Any], ...] | None = None,
     resume: bool = False,
+    replay: ReplayPlan | None = None,
 ) -> RunOutcome:
     """Run the walk over a staged ``run_dir``; ``resume`` reopens the killed run's workflow
-    instead of creating one. No adapter-type check here (``check_arguments``
+    instead of creating one; ``replay`` (from ``check_replay``) makes it a rerun after repair. No adapter-type check here (``check_arguments``
     owns it), so the authoring harness can drive it with a test adapter. While it runs, stderr
     passes through the redactor."""
     redactor = Redactor()
@@ -615,9 +674,10 @@ def _run_pathway(
         _staged_entries(checked, run_dir) if entries is None else entries,
         type(adapter) is LiveAdapter,
         redactor,
+        None if replay is None else replay.earlier_run_id,
     )
     with _redacted_stderr(redactor):
-        return _walk(checked, run_dir, adapter, prompt_for, meta, resume)
+        return _walk(checked, run_dir, adapter, prompt_for, meta, resume, replay)
 
 
 def _stage(
@@ -655,6 +715,8 @@ def run_pathway(
     run_id: str,
     cp_dr: bool = False,
     resume: bool = False,
+    replay_from: Path | None = None,
+    repaired: frozenset[str] = frozenset(),
 ) -> RunOutcome:
     """Check, stage, run, with stderr redacted throughout. A refused argument raises and writes
     nothing; a named fault after the first write returns a ``stopped`` outcome with ``run.json``.
@@ -663,7 +725,13 @@ def run_pathway(
     written. The directory's ``flock`` is held for the whole run, fresh or resumed (R9a).
     Any other exception propagates and leaves ``run_dir`` without ``run.json``, with one
     exception of O5's: a failure inside a model tool call is caught by the loop and stops the run
-    as a named ``StepStopped``."""
+    as a named ``StepStopped``.
+    ``replay_from`` (an earlier run directory) with a non-empty ``repaired`` set of planned analytical
+    modules makes a rerun after repair (G4): ``repaired`` and the modules downstream of it run live,
+    every other analytical module is replayed from the earlier run's retained submissions (no model
+    request), and the deterministic publisher runs again. It needs a new ``run_id`` and the earlier
+    run's pack in everything but ``run_id``; every refusal comes before anything is written.
+    ``run.json.replayed_from_run`` is the earlier ``run_id``. A rerun is a fresh run: not a resume."""
     redactor = Redactor()
     with _redacted_stderr(redactor):
         checked = check_arguments(
@@ -680,6 +748,7 @@ def run_pathway(
             resume=resume,
         )
         entries = _source_entries(checked, sources, context)
+        replay = _checked_replay(checked, run_dir, resume, replay_from, repaired)
         if resume:
             return _resume_pathway(checked, run_dir, adapter, entries, redactor)
         staged = _stage(checked, run_dir, entries, type(adapter) is LiveAdapter, redactor)
@@ -689,7 +758,23 @@ def run_pathway(
         # the lock follows at once, before the first record of the run (the cap) is written.
         with _single_writer(run_dir):
             _create_cap(run_dir, checked.cap_usd, _mode_of(adapter))
-            return _run_pathway(checked, run_dir, adapter, entries=entries)
+            return _run_pathway(checked, run_dir, adapter, entries=entries, replay=replay)
+
+
+def _checked_replay(
+    checked: CheckedRun,
+    run_dir: Path,
+    resume: bool,
+    replay_from: Path | None,
+    repaired: frozenset[str],
+) -> ReplayPlan | None:
+    """The rerun's plan, or None for an ordinary run; every refusal of a rerun is raised here,
+    before anything is written."""
+    if replay_from is None and not repaired:
+        return None
+    if resume:
+        raise ReplayRefused("a rerun after repair is a fresh run, not a resume")
+    return check_replay(checked, run_dir, replay_from, repaired)
 
 
 def _resume_pathway(
@@ -711,6 +796,10 @@ def _resume_pathway(
 __all__ = [
     "CapExists",
     "NoPrompt",
+    "ReplayDiverged",
+    "ReplayPackChanged",
+    "ReplayRefused",
+    "ReplayRejected",
     "ResumeMismatch",
     "ResumeRefused",
     "RunDirBusy",

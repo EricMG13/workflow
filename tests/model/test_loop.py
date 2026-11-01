@@ -1177,3 +1177,31 @@ def test_two_digests_for_one_step_refuse_the_resume_before_a_send(
         handle.write(json.dumps(other) + "\n")
     with pytest.raises(ValueError, match="more than one invocation digest"):
         _resumed(tmp_path, [ok(gap_submit())])
+
+
+def test_run_step_drives_one_step_and_run_is_the_same_steps_to_the_walks_end(
+    tmp_path: Path,
+) -> None:
+    """P10/T4-R2: ``run_step`` is the public one-step driver ``run`` is made of. It returns to its
+    caller after one step; stepped to the walk's end it gives the outcomes and records ``run`` does."""
+    script: list[Any] = [
+        ok(read_identity(), read_financial(), ready_submit()),
+        ok(submit("source_context", "{}")),
+    ]
+    stepped = make_rig(tmp_path / "stepped", script, gap=False)
+    first = stepped.loop.run_step()
+    assert first["status"] == "valid" and first["step_id"] == "source_readiness"
+    assert first["next_step"] == "source_context"  # one step only: the loop returned to its caller
+    assert stepped.workflow.binding.step_id == "source_context"
+    assert [(r["step_id"], r["call_index"]) for r in stepped.records()] == [("source_readiness", 0)]
+    gap: list[Any] = [ok(read_identity(), gap_submit())]
+    whole, by_step = make_rig(tmp_path / "whole", gap), make_rig(tmp_path / "by-step", gap)
+    outcomes = whole.loop.run()
+    stepwise = [by_step.loop.run_step()]
+    while stepwise[-1]["next_step"] is not None:
+        stepwise.append(by_step.loop.run_step())
+    keys = ("status", "issues", "step_id", "refusal", "next_step", "stored_payload_sha256")
+    assert [{k: o[k] for k in keys} for o in outcomes] == [
+        {k: o[k] for k in keys} for o in stepwise
+    ]
+    assert _shape(whole) == _shape(by_step)

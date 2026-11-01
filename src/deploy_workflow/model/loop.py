@@ -407,10 +407,18 @@ class ToolLoop:
         raises ``StepStopped``."""
         outcomes: list[dict[str, Any]] = []
         while True:
-            outcome = self._step()
+            outcome = self.run_step()
             outcomes.append(outcome)
             if outcome["next_step"] is None:
                 return tuple(outcomes)
+
+    def run_step(self) -> dict[str, Any]:
+        """Drive the workflow's active step to a submit the workflow did not refuse and return its
+        outcome (``next_step`` is None when the walk has left the analytical phase). The public
+        one-step driver: a caller that interleaves other work between steps (a rerun's replay of
+        retained modules) calls this where ``run`` would drive to the walk's end. A stop raises
+        ``StepStopped``."""
+        return self._step()
 
     def _step(self) -> dict[str, Any]:
         """One conversation: the opening prompt for the current step, then requests until a

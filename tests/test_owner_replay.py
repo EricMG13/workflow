@@ -36,8 +36,10 @@ from deploy_workflow.owner_workflow import (
     OWNER_SPECS,
     OwnerCall,
     OwnerFault,
+    OwnerRunReceipt,
     OwnerSubmission,
     OwnerWorkflow,
+    verify_owner_run_receipt,
 )
 from deploy_workflow.replay import (
     REBOUND_FIELDS,
@@ -49,6 +51,7 @@ from deploy_workflow.replay import (
     ReplayRejected,
 )
 from deploy_workflow.run_inputs import CaseSource, RunInputError, check_arguments, stage_sources
+from deploy_workflow.run_pathway import run_pathway
 
 EARLIER_ID = o2_case.RUN_ID  # the frozen payloads bind the pack of this run id
 RERUN_ID = "o2-synthetic-rerun"
@@ -630,3 +633,234 @@ def test_the_cp1_financials_run_id_is_rebound_and_nothing_else() -> None:
     other = json.dumps({**payload, "financial": {**payload["financial"], "run_id": "someone-else"}})
     assert replay._rebind("CP-1", "financials", other, earlier, rerun) == (other, ())
     assert replay._rebind("CP-2", "credit_synthesis", text, earlier, rerun) == (text, ())
+
+
+# ================================================================================== part C
+# the rerun through run_pathway
+
+
+class CountingScript(CallingScript):
+    """The script, counting the requests it was sent."""
+
+    sent = 0
+
+    def complete(self, request: Any, **kwargs: Any) -> Any:
+        self.sent += 1
+        return super().complete(request, **kwargs)
+
+
+def rerun_private(
+    root: Path,
+    earlier: Path,
+    repaired: frozenset[str] = frozenset({"CP-1"}),
+    *,
+    run_id: str = RERUN_ID,
+    answers: tuple[str, ...] = (),
+    cap: Decimal | None = None,
+) -> tuple[Any, CountingScript]:
+    """The rerun through the private seam, with the script as the live model."""
+    checked, run_dir = checked_run(root, run_id)
+    if cap is not None:
+        checked = dataclasses.replace(checked, cap_usd=cap)
+    plan = replay.check_replay(checked, run_dir, earlier, repaired)
+    stage_sources(checked, run_dir)
+    recordings = root / "recordings"
+    recordings.mkdir()
+    script = CountingScript(recordings, answers, run_dir / "execution", o2_case.MODEL)
+    outcome = rp._run_pathway(checked, run_dir, script, o2_case.test_prompt_for, replay=plan)
+    return outcome, script
+
+
+def rerun_public(root: Path, earlier: Path | None, **extra: Any) -> Any:
+    """The rerun through ``run_pathway`` with an empty recorded adapter (no recordings at all)."""
+    checked, run_dir = checked_run(root, extra.pop("run_id", RERUN_ID))
+    extra.setdefault("repaired", frozenset({"CP-1"}))
+    return run_pathway(
+        case_id=o2_case.CASE_ID,
+        sources=extra.pop("sources", o2_case.case_sources()),
+        context=o2_case.CASE / "context.json",
+        pathway=o2_case.PATHWAY,
+        model=o2_case.MODEL,
+        adapter=checked.adapter,
+        cap_usd=o2_case.CAP,
+        run_dir=run_dir,
+        run_id=checked.run_id,
+        replay_from=earlier,
+        **extra,
+    )
+
+
+def records_of(run_dir: Path) -> list[dict[str, Any]]:
+    path = run_dir / "calls.jsonl"
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text().splitlines()]
+
+
+def run_json(run_dir: Path) -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads((run_dir / "run.json").read_text())
+    return loaded
+
+
+def spent_by_records(records: list[dict[str, Any]]) -> Decimal:
+    """A settled call costs its settled charge, an unknown one its whole hold (O5)."""
+    total = Decimal(0)
+    for record in records:
+        settled = record["settled_usd"]
+        total += Decimal(record["reserved_usd"] if settled is None else settled)
+    return total
+
+
+def test_rerun_replays_cp0_and_runs_cp1_live(tmp_path: Path, earlier_run: Path) -> None:
+    before = tree_hash(earlier_run)
+    outcome, script = rerun_private(tmp_path / "rerun", earlier_run)
+    run_dir = outcome.run_dir
+    assert outcome.run_id == RERUN_ID and outcome.outcome == "stopped"
+    assert outcome.stopped_reason is not None
+    assert outcome.stopped_reason.startswith("RecordingMissing")  # CP-1 asked the model: live
+    body = run_json(run_dir)
+    assert body["replayed_from_run"] == EARLIER_ID and body["run_id"] == RERUN_ID
+    assert run_json(earlier_run)["replayed_from_run"] is None
+    heads = {h.module_id: h.status for h in Execution(run_dir / "execution").read().heads}
+    assert heads == {"CP-0": "restricted"}  # CP-0 settled in the rerun's own journal
+    records = records_of(run_dir)
+    assert [(r["module_id"], r["step_id"]) for r in records] == [("CP-1", "source_context")]
+    assert script.sent == 1  # the replayed CP-0 step sent no request
+    assert len(replay_records(run_dir)) == 1
+    assert tree_hash(earlier_run) == before  # the earlier run is read only
+
+
+def test_rerun_calls_jsonl_holds_only_sent_calls(tmp_path: Path, earlier_run: Path) -> None:
+    earlier_calls = (earlier_run / "calls.jsonl").read_bytes()
+    outcome, script = rerun_private(tmp_path / "rerun", earlier_run)
+    records = records_of(outcome.run_dir)
+    assert len(records) == script.sent == 1
+    assert all(r["module_id"] != "CP-0" for r in records)
+    assert [r["call_index"] for r in records] == [0]
+    assert (earlier_run / "calls.jsonl").read_bytes() == earlier_calls
+
+
+def test_rerun_spend_excludes_replayed_calls(tmp_path: Path, earlier_run: Path) -> None:
+    earlier_records = records_of(earlier_run)
+    outcome, _ = rerun_private(tmp_path / "rerun", earlier_run)
+    spent = spent_by_records(records_of(outcome.run_dir))
+    assert outcome.spent_usd == spent > 0
+    assert outcome.spent_usd < spent_by_records(earlier_records)  # the earlier run paid for CP-0
+    cp0 = next(Decimal(r["settled_usd"]) for r in earlier_records if r["module_id"] == "CP-0")
+    cp1 = next(Decimal(r["reserved_usd"]) for r in earlier_records if r["module_id"] == "CP-1")
+    cap = cp1 + cp0 / 2  # admits the live request, not the replayed charge besides it
+    again, _ = rerun_private(
+        tmp_path / "capped", earlier_run, cap=cap, run_id="o2-synthetic-capped"
+    )
+    assert again.stopped_reason is not None and again.stopped_reason.startswith("RecordingMissing")
+    fresh = author_earlier(
+        tmp_path / "fresh", cap=cap
+    )  # the same cap stops a run that pays for CP-0
+    assert run_json(fresh)["stopped_reason"].startswith("BudgetExhausted")
+
+
+def test_a_diverged_replay_stops_the_run_as_replay_diverged(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    edit_call_body(copy)
+    outcome = rerun_public(tmp_path / "rerun", copy)
+    assert outcome.outcome == "stopped"
+    assert (
+        run_json(outcome.run_dir)["stopped_reason"] == "ReplayDiverged: CP-0 source_readiness: call"
+    )
+    assert [
+        OwnerFault.model_validate_json(p.read_bytes()).code
+        for p in audit(outcome.run_dir, "faults")
+    ] == ["replay_diverged"]
+    assert records_of(outcome.run_dir) == []  # no model request was sent for the module
+
+
+def test_a_rejected_replay_stops_the_run_as_replay_rejected(
+    tmp_path: Path, earlier_run: Path
+) -> None:
+    copy = copy_of(earlier_run, tmp_path)
+    edit_payload(copy, lambda p: p.update(consumers=[{"consumer_id": "no-such-module"}]))
+    outcome = rerun_public(tmp_path / "rerun", copy)
+    reason = run_json(outcome.run_dir)["stopped_reason"]
+    assert reason.startswith("ReplayRejected: CP-0 source_readiness: ")
+    assert not reason.startswith("workflow:")
+    assert records_of(outcome.run_dir) == []
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "no-repaired",
+        "no-replay-from",
+        "missing-replay-from",
+        "replay-from-is-run-dir",
+        "same-run-id",
+        "resume",
+        "changed-source",
+    ],
+)
+def test_a_refused_rerun_writes_nothing(case: str, tmp_path: Path, earlier_run: Path) -> None:
+    root = tmp_path / "rerun"
+    extra: dict[str, Any] = {"repaired": frozenset({"CP-1"})}
+    earlier: Path | None = earlier_run
+    if case == "no-repaired":
+        extra["repaired"] = frozenset()
+    elif case == "no-replay-from":
+        earlier = None
+    elif case == "missing-replay-from":
+        earlier = tmp_path / "no-such-run"
+    elif case == "replay-from-is-run-dir":
+        earlier = root / "run"
+    elif case == "same-run-id":
+        extra["run_id"] = EARLIER_ID
+    elif case == "resume":
+        extra["resume"] = True
+    else:
+        changed = tmp_path / "business-changed.txt"
+        changed.write_text(o2_case.case_sources()[2].path.read_text() + "One more sentence.\n")
+        extra["sources"] = [
+            *o2_case.case_sources()[:2],
+            CaseSource("business", changed, "text/plain"),
+            o2_case.case_sources()[3],
+        ]
+    with pytest.raises(RunInputError):
+        rerun_public(root, earlier, **extra)
+    assert not (root / "run").exists()
+
+
+# ================================================================================== gated
+
+promotion = pytest.mark.skipif(
+    os.environ.get("RUN_PROMOTION") != "1",
+    reason="the full o2 walk (CP-1 105 s, publish 72 s, receipt 107 s per run, B16); deferred to CI",
+)
+
+
+@promotion
+def test_rerun_replays_upstream_and_runs_the_repaired_module_live(tmp_path: Path) -> None:
+    """Gated, written and never run here. Earlier: the whole o2 walk. Repair CP-3 (relative value):
+    CP-0, CP-1, CP-1A and CP-2 are replayed (CP-1 under the new run id), CP-MODEL is published again,
+    CP-3 and its consumers CP-5 and CP-6 run live, and the receipt verifies."""
+    authored = o2_case.author(tmp_path / "authoring", answers=o2_case.ALL_STEPS)
+    earlier = authored.run_dir
+    before = tree_hash(earlier)
+    live_steps = ("relative_value", "integrity_review", "committee_challenge")
+    outcome, _ = rerun_private(tmp_path / "rerun", earlier, frozenset({"CP-3"}), answers=live_steps)
+    run_dir = outcome.run_dir
+    assert run_json(run_dir)["replayed_from_run"] == o2_case.RUN_ID
+    records = records_of(run_dir)
+    assert {r["module_id"] for r in records}.isdisjoint({"CP-0", "CP-1", "CP-1A", "CP-2"})
+    assert {r["module_id"] for r in records} >= {"CP-3", "CP-5", "CP-6"}
+    assert {r.module_id for r in replay_records(run_dir)} == {"CP-0", "CP-1", "CP-1A", "CP-2"}
+    cp1 = next(r for r in replay_records(run_dir) if r.module_id == "CP-1")
+    assert [(b.path, b.old, b.new) for b in cp1.rebound] == [
+        ("financial.run_id", o2_case.RUN_ID, RERUN_ID)
+    ]
+    receipt = OwnerRunReceipt.model_validate_json((run_dir / "owner-run.json").read_text())
+    verify_owner_run_receipt(
+        Execution(run_dir / "execution"), receipt, publication_directory=run_dir / "publication"
+    )
+    assert outcome.spent_usd == spent_by_records(records)
+    assert outcome.spent_usd < authored.outcome.spent_usd
+    assert tree_hash(earlier) == before

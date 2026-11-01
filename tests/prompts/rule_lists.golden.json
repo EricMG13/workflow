@@ -647,7 +647,7 @@
    },
    {
     "id": "earnings_quality.4",
-    "statement": "Each `rationale` is run text with no bare figure (digits only inside a period or filing label); a figure appears only as a reference to a fact the module context lists, in that fact's unit, and never as a reference to a gap.",
+    "statement": "Each `rationale` is run text with no bare figure (digits only inside a period or filing label); a figure appears only as a reference in that fact's unit, and never as a reference to a gap. An assessment `rationale` references module facts only (as `{T1D.x.y.z|unit}`, for example a listed `claimed_ref`), and a CP-1 reference is refused there; only `overall.rationale` may reference a fact of `cp1_facts`.",
     "checks": [
      "oracle:cp1d:r09",
      "fn:deploy_workflow.owners.cp1d:_model_text_issues",
@@ -1198,6 +1198,13 @@
      "oracle:cp3d:term_absence_without_search",
      "fn:deploy_workflow.owners.cp3d:absence_paths"
     ]
+   },
+   {
+    "id": "market_implied.9",
+    "statement": "Do not write Python's pinned-recovery line in a `technicals` limitation, in any case or spacing; Python adds that line when a recovery is pinned.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp3d:_check_pin_label"
+    ]
    }
   ],
   "narrative": [
@@ -1274,7 +1281,7 @@
    },
    {
     "id": "peer_benchmark.4",
-    "statement": "Each `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty; a reference that resolves to no fact, or to a fact whose value is a gap, is refused. State no instrument recommendation or recovery conclusion in any text field (`rationale`, `limitation` and gap fields).",
+    "statement": "Each `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty; a reference that resolves to no fact, or to a fact whose value is a gap, is refused. State no instrument recommendation or recovery conclusion in any text field (`rationale`, `limitation` and gap fields), and leave none blank: a blank `limitation` (of an assessment, when given, or of `overall`) or gap field (`gap`, `why_it_matters`, `affected_analysis`, `action`) is refused.",
     "checks": [
      "oracle:cp1c:r06",
      "oracle:cp1c:r09",
@@ -1621,7 +1628,7 @@
   "restructuring_fulcrum": [
    {
     "id": "restructuring_fulcrum.1",
-    "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds at least three entries.",
+    "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries.",
     "checks": [
      "oracle:cp4c:r01",
      "oracle:cp4c:r02",
@@ -1837,20 +1844,20 @@
    "src/deploy_vii/source_context.py": "bcdcec4119bdccfb5752b6f4ebc41179f132047373c453fff825c705f672517f",
    "src/deploy_vii/statement_validation.py": "6c14886cf39fad31cfa2e017f1c6a62051ea26141da1cdfdeb3b02e125987107",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "5cea794e74759c7fbeab612e53236e4dd10724c922b41c00c1cfc52aad0a15e6",
+   "src/deploy_workflow/owner_workflow.py": "6841007217f8543f5614b52a69d07cbe6e18d5423c184dbcc699894be692c67d",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",
    "src/deploy_workflow/owners/cp1d.py": "2a8bebd72aa10358104948ede3ca8e7d36476a6453b32d38efed29e6c41fb90d",
    "src/deploy_workflow/owners/cp2.py": "902dea0e690a9054b06e064d1b3636367a6a8c02ff75d5ae9c746bf4fdf085e2",
-   "src/deploy_workflow/owners/cp2a.py": "0bade27030c9c3e763de720c89761d5271133cb5e0e806946644ff6e1c8b1e1a",
-   "src/deploy_workflow/owners/cp2d.py": "d3857ac7755cf4d45c90bebfcfef498eaa75eb1eed8e9b732fb1a80d65871147",
-   "src/deploy_workflow/owners/cp2e.py": "59cf6c191a721080dbc351336defe7c2ef3d5623489988557d534ada7a5d6046",
+   "src/deploy_workflow/owners/cp2a.py": "4868c65b8b9305f0cb3b27c84b7fcb76a6580bda97744330cff442b62934325c",
+   "src/deploy_workflow/owners/cp2d.py": "cc7a462168e7498c0af4facc5197b32a0ee2f0054a6b5ecc03a1657bbfca7423",
+   "src/deploy_workflow/owners/cp2e.py": "88b87ae65766ac5368096967c538d88127e98f4ef4b9cb9ff0916c55657a2732",
    "src/deploy_workflow/owners/cp2g.py": "71c06be61716570408bfed1913c5f8853bb8010c5a96f61554b61f84923e4bdb",
-   "src/deploy_workflow/owners/cp2h.py": "9fa9ebb713c063d046f6bc727f357b72be3a5963cb271e9495106eca30c81c1f",
+   "src/deploy_workflow/owners/cp2h.py": "7280c83c695a62e6f2334728d0f0ad66851116e13da266475001170868881eb2",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
-   "src/deploy_workflow/owners/cp3c.py": "7bd54cdb92cbb5b10060227175a0b1ee0e774bda4b8b8412e461ef5d43761fd4",
-   "src/deploy_workflow/owners/cp3d.py": "efa916f6f245ad6a646a9e62775c35587fd9c0b42964d4cf51fe71708ca94122",
+   "src/deploy_workflow/owners/cp3c.py": "6ce5989769711e1f978f300a205e0fd80a5ac8a011c9f2eee5831210cb7cdb0b",
+   "src/deploy_workflow/owners/cp3d.py": "b06b7126dcead6fe426e8fa6eeb93ea200386ec2b876df819efba76a94c0e61f",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
    "src/deploy_workflow/owners/cp4c.py": "4fec1bf89e5744c23ea5becfdf90ead8407d9ef2c6a5ba6973a04d18fd71bed8",
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
@@ -1858,7 +1865,7 @@
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
    "src/deploy_workflow/owners/cpdr.py": "844516fc229f72447f33d40481133f684c0340f87a480aaa69945aad560da2d9",
    "src/deploy_workflow/owners/cpl10.py": "acc24b334a81727e95ee9eef9574c1ce43cc4433fb29d4e588a2a3967da1df50",
-   "src/deploy_workflow/owners/pins.py": "f48056fb0370c061bbc811b98bd7e23183c47db92c1f1c5b482b36f2d2cefb1f",
+   "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
    "src/deploy_workflow/prompts/fence.py": "92506b6585b3e3b11db86524fc0c7fe4e5b875b35a100097c98c63882f08e408"
   },
   "oracles": {

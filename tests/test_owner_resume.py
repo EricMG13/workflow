@@ -1219,6 +1219,88 @@ def test_a_dot_name_in_an_audit_kind_is_ignored_and_never_adopted(
 # --- fix round 1: the survivors of the first mutant run (adversary M5, P17) --------------------
 
 
+def test_a_record_stored_under_another_digest_is_torn(cp3: SimpleNamespace, tmp_path: Path) -> None:
+    """Canonical bytes that parse, under a name that is not their digest (a copied record)."""
+    workflow, _, _ = _prefix(cp3, tmp_path, "cp1 pages 1")
+    begin = workflow._begins[0]
+    (tmp_path / "store" / owner.AUDIT / "begins" / ("a" * 64)).write_bytes(
+        begin.model_dump_json().encode()
+    )
+    del workflow
+    assert _torn_kind(tmp_path) == "begins"
+
+
+def test_a_pending_attempt_whose_steps_are_all_valid_is_torn(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """CP-0's step is journaled valid and the kill falls before `finish`: the attempt is pending
+    with every step valid, nothing left to resubmit. A `submissions` record covering the span (as
+    if the retain had succeeded) leaves no tail, and `open()` still refuses the attempt."""
+    workflow, actions = _build(cp3, tmp_path, REFUSAL_ORDER, False)
+    cp0: Any = importlib.import_module("deploy_vii.cp0_workflow")
+    real = cp0._validate_review
+    calls = {"n": 0}
+
+    def second_raises(*args: Any, **kwargs: Any) -> Any:
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("probe: killed between the step and the settlement")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(cp0, "_validate_review", second_raises)
+    _until_it_raises(workflow, actions, RuntimeError)
+    store = workflow._store
+    current = store.read()
+    attempt = next(a for a in current.attempts if a.status == "pending")
+    step = attempt.steps[-1]
+    assert step.status == "valid"
+    stray = _stray(tmp_path)
+    owner._retain(
+        store,
+        "submissions",
+        owner.OwnerSubmission(
+            sequence=1,
+            binding=stray,
+            stored_payload_sha256=step.payload_sha256,
+            canonical_review_sha256=None,
+            disposition="valid",
+            issues=(),
+            snapshot_after_sha256=current.content_hash(),
+            step_sha256=step.content_hash(),
+            step_output_sha256=step.output_sha256,
+        ),
+    )
+    del workflow
+    assert _torn_kind(tmp_path) == "journal"
+
+
+def test_a_publish_killed_before_any_record_still_counts_against_the_cap(
+    cp3: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The call record is written first: a refused `publish` killed before its `publications`
+    retain leaves one call and no publication, and two more calls are not allowed."""
+    monkeypatch.setattr(owner, "_terminal", lambda heads, run, publisher: False)
+    workflow, _, _ = _prefix(cp3, tmp_path, "publish", STOP_ORDER, True)
+    real = owner._retain
+
+    def failing(store: Any, kind: str, value: Any) -> None:
+        if kind == "publications":
+            raise OSError("probe")
+        real(store, kind, value)
+
+    monkeypatch.setattr(owner, "_retain", failing)
+    with pytest.raises(OSError):
+        workflow.publish()
+    monkeypatch.setattr(owner, "_retain", real)
+    del workflow
+    resumed = _open(tmp_path)
+    assert resumed._publications == [] and resumed._publish_calls == 1
+    assert resumed.publish()["status"] == "refused"
+    with pytest.raises(WorkflowError) as caught:
+        resumed.publish()
+    assert caught.value.code == "not_permitted"
+
+
 def test_m24_a_tampered_open_epoch_call_is_torn(tmp_path: Path) -> None:
     """Replay equality: a self-consistent call record whose body was changed is refused."""
     workflow, pack = runs.start("positive", tmp_path)

@@ -1210,7 +1210,7 @@ def _covered(store: Execution, got: _Retained, position: Mapping[str, int]) -> i
     A begin, a submission and a publication each record `before -> after`; sorted, each must start
     where the previous one ended, from the created snapshot (a refused submission or publication
     changes no snapshot and has width 0). A record that names a snapshot outside the chain, or a
-    gap between two records, is torn. Calls, reads, refusals and unread submits are only placed:
+    gap between two records, is torn. Calls, reads and refusals are only placed:
     they must name a snapshot of the chain."""
     spans: list[tuple[int, int, str]] = []
     transitions: list[tuple[str, Contract, str, str]] = [

@@ -36,6 +36,7 @@ from deploy_vii.registry import dependencies
 
 if TYPE_CHECKING:
     from deploy_vii.bindings import Binding, BindingMap
+    from deploy_vii.bindings.cp1b import _Layout
 
 Provenance = Literal["cited", "calculated", "synthetic", "gap"]
 DisplayStatus = Literal[
@@ -2285,8 +2286,12 @@ def _unplaced(view: View, pathway: Pathway, maps: tuple["BindingMap", ...]) -> t
     )
 
 
-def _cp1b_fact_shape(fact: Fact) -> None:
-    """Validate role dimensions and value shape without computing financial truth."""
+def _cp1b_fact_shape(fact: Fact, currency: str) -> None:
+    """Validate role dimensions and value shape without computing financial truth.
+
+    ``currency`` is the run's money currency, read from ``revenue:current``; every money
+    fact (prior, current, delta; known or gap) carries it.
+    """
     if fact.decimals is not None:
         raise ValueError("CP1B layout does not permit a precision override")
     assessment = fact.table_id == "T1B.3"
@@ -2298,7 +2303,7 @@ def _cp1b_fact_shape(fact: Fact) -> None:
     elif fact.row_id == "ebitda_margin":
         dimensions = ("pp", None, Decimal(1))
     else:
-        dimensions = ("MILLIONS", "USD", Decimal(1000000))
+        dimensions = ("MILLIONS", currency, Decimal(1000000))
     if (fact.unit, fact.currency, fact.scale) != dimensions:
         raise ValueError("CP1B layout has incompatible native dimensions")
     if fact.status != "known":
@@ -2317,34 +2322,51 @@ def _cp1b_fact_shape(fact: Fact) -> None:
         raise ValueError("CP1B numeric coordinates require a period descriptor")
 
 
+def _cp1b_unit_layouts(
+    checked: ModuleView,
+) -> "tuple[dict[str, Fact], tuple[_Layout, ...], str]":
+    """The facts by id, the layouts labelled in the run's money unit, and that currency.
+
+    The unit is read from ``revenue:current``, never trusted from the row labels.
+    """
+    from deploy_vii.bindings.cp1b import cp1b_layouts
+
+    # Table ids, row ids and fields do not depend on the unit; only the money labels do.
+    canonical = cp1b_layouts()
+    if tuple(t.table_id for t in checked.tables) != tuple(t.table_id for t in canonical):
+        raise ValueError("CP1B layout requires exactly its three ordered tables")
+    facts = {fact.fact_id: fact for fact in checked.facts}
+    expected_ids = {
+        f"cp1b:{layout.table_id}:{row_id}:{field}"
+        for layout in canonical
+        for row_id, _ in layout.rows
+        for field in layout.fields
+    }
+    if facts.keys() != expected_ids:
+        raise ValueError("CP1B layout requires exact canonical fact coverage")
+    currency = facts["cp1b:T1B.1:revenue:current"].currency
+    if currency is None:
+        raise ValueError("CP1B layout requires a reporting currency on revenue current")
+    layouts = cp1b_layouts(scale_label("MILLIONS", currency) or "")
+    return facts, layouts, currency
+
+
 def _validate_cp1b_layout(module: ModuleView) -> None:
     """Refuse malformed CP1B layouts before generic table/prose consumption.
 
     Period headings describe supplied coordinates; dates, values, grants and
     operand authenticity remain the producer and selected-run verifier's job.
     """
-    from deploy_vii.bindings.cp1b import _CP1B_LAYOUTS
-
     # Reuses canonical Fact/ReportTable validation even for model_copy callers.
     checked = ModuleView.model_validate(module.model_dump())
-    if tuple(t.table_id for t in checked.tables) != tuple(t.table_id for t in _CP1B_LAYOUTS):
-        raise ValueError("CP1B layout requires exactly its three ordered tables")
-    facts = {fact.fact_id: fact for fact in checked.facts}
-    expected_ids = {
-        f"cp1b:{layout.table_id}:{row_id}:{field}"
-        for layout in _CP1B_LAYOUTS
-        for row_id, _ in layout.rows
-        for field in layout.fields
-    }
-    if facts.keys() != expected_ids:
-        raise ValueError("CP1B layout requires exact canonical fact coverage")
+    facts, layouts, currency = _cp1b_unit_layouts(checked)
     fixed_headings = {
         "delta": "Change (native unit; margin pp)",
         "growth": "Growth (%)",
         "assessment": "Assessment",
     }
     paired_headings: tuple[str, str] | None = None
-    for table, layout in zip(checked.tables, _CP1B_LAYOUTS, strict=True):
+    for table, layout in zip(checked.tables, layouts, strict=True):
         if (table.title, table.row_header, table.interface_id) != (
             layout.title,
             layout.row_header,
@@ -2385,8 +2407,8 @@ def _validate_cp1b_layout(module: ModuleView) -> None:
             if row.fact_ids != identifiers:
                 raise ValueError("CP1B layout cell pointers differ from canonical coordinates")
             for fact_id in identifiers:
-                _cp1b_fact_shape(facts[fact_id])
-    for row_id, _ in _CP1B_LAYOUTS[0].rows:
+                _cp1b_fact_shape(facts[fact_id], currency)
+    for row_id, _ in layouts[0].rows:
         growth = facts[f"cp1b:T1B.1:{row_id}:growth"]
         if row_id not in {"revenue", "ebitda", "adjusted_ebitda"}:
             if growth.status != "not_applicable":

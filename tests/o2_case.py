@@ -12,31 +12,26 @@ is a TEST composer: it proves orchestration, not the prompts (O6), and recording
 matching once O6 changes the prompt (the invocation digest includes the prompt hash).
 """
 
-import contextlib
 import hashlib
 import importlib
 import json
-from collections.abc import Iterator
 from dataclasses import dataclass
 from decimal import Decimal
-from functools import partial
 from pathlib import Path
 from typing import Any
-from unittest import mock
 
 import s1a_runs as s1
 
 from deploy_vii.contracts import PathwayId
 from deploy_vii.execution import Execution
 from deploy_vii.preparation import PreparedPack
-from deploy_workflow import run_pathway as run_pathway_module
 from deploy_workflow.model.adapter import (
     AdapterReply,
     ModelAdapter,
     RecordingMissing,
     recorded_adapter,
 )
-from deploy_workflow.model.loop import PromptFor, ToolLoop
+from deploy_workflow.model.loop import PromptFor
 from deploy_workflow.model.turn import (
     Message,
     ModelSpec,
@@ -58,14 +53,15 @@ CASE = ROOT / "cases" / "o2-synthetic"
 CASE_ID = "o2-synthetic"
 RUN_ID = "o2-synthetic-portfolio-decision"
 PATHWAY: PathwayId = "portfolio_decision"
-MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
-CAP = Decimal(5)
+# opus-medium (spec 7.1; effort medium is the only one its row allows) has no listed input limit in
+# pricing.py, so run_pathway's own token bound applies unchanged. SOL_MODEL is the pinned limitation.
+MODEL = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
+SOL_MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
+# Test-authored cap: the opus-medium reservations for the CP-1 requests (each sized from the request
+# bytes at one byte per token) need it; offline spend is cap logic, not money (Q7).
+CAP = Decimal(100)
 # Test-authored counts, not measured: offline spend is cap logic, not money (Q7).
-USAGE = Usage(input_tokens=1000, output_tokens=200)
-# A TEST-authored lower bound on bytes per token, for the walk past CP-1 narrative: run_pathway
-# builds its ToolLoop with the sound default of 1, which sizes the narrative step's second request
-# (the 669 KB read body) above the model's listed context (ContextTooLong, pinned by a test).
-TEST_BYTES_PER_TOKEN = Decimal(4)
+USAGE = Usage(input_tokens=1000, cached_read_tokens=0, cache_write_tokens=0, output_tokens=200)
 STARTED, FINISHED = 1_000.0, 1_001.0
 SOURCE_IDS = ("identity", "financial", "business", "market")
 # Step id -> the key of the frozen payload under ``positive``. Only a step whose frozen payload
@@ -177,8 +173,11 @@ class ScriptAdapter:
 
     ruling: Path | None = None
 
-    def __init__(self, recordings: Path, answers: tuple[str, ...], execution: Path) -> None:
-        self.config_id = MODEL.config_id
+    def __init__(
+        self, recordings: Path, answers: tuple[str, ...], execution: Path, model: ModelSpec
+    ) -> None:
+        self.config_id = model.config_id
+        self._model = model
         self._file = recordings / "o2.jsonl"
         self._answers = answers
         self._execution = execution
@@ -235,7 +234,13 @@ class ScriptAdapter:
             for n, (name, arguments) in enumerate(self._plan(step_id, reads))
         ]
         turn = Turn(
-            "", tuple(calls), USAGE, "tool_use", MODEL.model, f"o2-{invocation_digest[:12]}", 200
+            "",
+            tuple(calls),
+            USAGE,
+            "tool_use",
+            self._model.model,
+            f"o2-{invocation_digest[:12]}",
+            200,
         )
         line = {
             "invocation_digest": invocation_digest,
@@ -261,7 +266,7 @@ def stage(root: Path) -> tuple[Any, Path]:
     return _prepare(root, recorded_adapter(MODEL, empty))
 
 
-def _prepare(root: Path, adapter: ModelAdapter) -> tuple[Any, Path]:
+def _prepare(root: Path, adapter: ModelAdapter, model: ModelSpec = MODEL) -> tuple[Any, Path]:
     run_dir = root / "run"
     root.mkdir(parents=True, exist_ok=True)
     checked = check_arguments(
@@ -269,7 +274,7 @@ def _prepare(root: Path, adapter: ModelAdapter) -> tuple[Any, Path]:
         sources=case_sources(),
         context=CASE / "context.json",
         pathway=PATHWAY,
-        model=MODEL,
+        model=model,
         adapter=adapter,
         cap_usd=CAP,
         run_dir=run_dir,
@@ -279,36 +284,20 @@ def _prepare(root: Path, adapter: ModelAdapter) -> tuple[Any, Path]:
     return checked, run_dir
 
 
-@contextlib.contextmanager
-def loop_bound(bytes_per_token: Decimal | None) -> Iterator[None]:
-    """Run with ``run_pathway``'s ToolLoop given ``bytes_per_token`` (None: its own default)."""
-    if bytes_per_token is None:
-        yield
-        return
-    with mock.patch.object(
-        run_pathway_module, "ToolLoop", partial(ToolLoop, bytes_per_token=bytes_per_token)
-    ):
-        yield
-
-
-def author(
-    root: Path, *, answers: tuple[str, ...], bytes_per_token: Decimal | None = None
-) -> Authored:
+def author(root: Path, *, answers: tuple[str, ...], model: ModelSpec = MODEL) -> Authored:
     """Drive the walk with ``ScriptAdapter`` over a fresh run directory under ``root``."""
     recordings = root / "recordings"
     recordings.mkdir(parents=True)
     empty = root / "check-recordings"
     empty.mkdir()
-    checked, run_dir = _prepare(root, recorded_adapter(MODEL, empty))
-    script = ScriptAdapter(recordings, answers, run_dir / "execution")
-    with loop_bound(bytes_per_token):
-        outcome = _run_pathway(checked, run_dir, script, test_prompt_for)
+    checked, run_dir = _prepare(root, recorded_adapter(model, empty), model)
+    script = ScriptAdapter(recordings, answers, run_dir / "execution", model)
+    outcome = _run_pathway(checked, run_dir, script, test_prompt_for)
     return Authored(outcome, run_dir, recordings)
 
 
-def replay(root: Path, recordings: Path, *, bytes_per_token: Decimal | None = None) -> RunOutcome:
+def replay(root: Path, recordings: Path, *, model: ModelSpec = MODEL) -> RunOutcome:
     """A second run over a fresh run directory, same ``run_id``, a plain ``recorded_adapter``."""
-    adapter = recorded_adapter(MODEL, recordings)
-    checked, run_dir = _prepare(root, adapter)
-    with loop_bound(bytes_per_token):
-        return _run_pathway(checked, run_dir, adapter, test_prompt_for)
+    adapter = recorded_adapter(model, recordings)
+    checked, run_dir = _prepare(root, adapter, model)
+    return _run_pathway(checked, run_dir, adapter, test_prompt_for)

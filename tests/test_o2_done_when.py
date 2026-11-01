@@ -322,10 +322,10 @@ def assert_replay_equals_authoring(authored: o2_case.Authored, replayed: RunOutc
 
 
 def test_the_default_token_bound_stops_the_walk_at_narrative(tmp_path: Path) -> None:
-    """Pins today's behaviour: ``run_pathway`` builds its ToolLoop with ``bytes_per_token`` 1, which
+    """Pins today's behaviour on sol-medium (the opus-medium walk has no listed input limit): ``run_pathway`` builds its ToolLoop with ``bytes_per_token`` 1, which
     sizes the narrative step's second request (the read body is about 669 KB) above the model's
     listed context, so a run stops there with ``ContextTooLong``. A product gap, reported."""
-    authored = o2_case.author(tmp_path, answers=o2_case.ALL_STEPS[:4])
+    authored = o2_case.author(tmp_path, answers=o2_case.ALL_STEPS[:4], model=o2_case.SOL_MODEL)
     assert authored.outcome.stopped_reason is not None
     assert authored.outcome.stopped_reason.startswith("ContextTooLong: ")
     last = records_of(authored.run_dir)[-1]
@@ -356,9 +356,8 @@ def test_walk_through_cp1_quality_offline(tmp_path: Path) -> None:
     business_context) is not answered: the frozen payload is refused by the pack (see
     ``test_the_frozen_business_context_omits_the_context_source``). Both runs stop there."""
     steps = o2_case.ALL_STEPS[:6]
-    bound = o2_case.TEST_BYTES_PER_TOKEN
-    authored = o2_case.author(tmp_path / "authoring", answers=steps, bytes_per_token=bound)
-    replayed = o2_case.replay(tmp_path / "replay", authored.recordings, bytes_per_token=bound)
+    authored = o2_case.author(tmp_path / "authoring", answers=steps)
+    replayed = o2_case.replay(tmp_path / "replay", authored.recordings)
     for outcome in (authored.outcome, replayed):
         assert outcome.outcome == "stopped"
         assert outcome.stopped_reason is not None

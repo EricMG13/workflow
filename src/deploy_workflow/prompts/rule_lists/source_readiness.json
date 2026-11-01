@@ -58,6 +58,13 @@
     "fn:deploy_vii.readiness:validate_review",
     "fn:deploy_vii.prose:issues"
    ]
+  },
+  {
+   "id": "source_readiness.g8",
+   "statement": "Write one consumer judgment for each. Python writes \"Run <id>\" for READY or READY_WITH_LIMITATIONS; any lower readiness refuses that module in this run, and every module that requires it.",
+   "checks": [
+    "fn:deploy_vii.readiness:validate_review"
+   ]
   }
  ]
 }

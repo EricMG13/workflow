@@ -94,7 +94,9 @@ def test_existing_is_the_contracts_plus_the_text_stems() -> None:
 
 
 # Frozen at HEAD (before the loader): sha256 of the JSON of each STEP_CONTRACTS step's composed
-# messages on the o2 pack.
+# messages on the o2 pack. Re-frozen by O6 Task 5 (T5-D) for the [compose.<id>] tokens and CP-0's
+# G8 block; tests/prompts/test_g8.py keeps the old digests and shows that removing exactly those
+# gives the old message.
 def test_the_twelve_existing_steps_compose_byte_identically(pack: PreparedPack) -> None:
     got = {}
     for step in sorted(STEP_CONTRACTS):
@@ -105,18 +107,18 @@ def test_the_twelve_existing_steps_compose_byte_identically(pack: PreparedPack) 
 
 
 FROZEN: dict[str, str] = {
-    "business_context": ("77e144292b8b64791e6a326a9dbfd68de8dd776282549ce823c334c7780f2f93"),
-    "committee_challenge": ("20af64f31e55a976174c1f953a6787769b94137307030ef6cadd04fda50e0716"),
-    "credit_synthesis": ("ce0a50087423ab9e674d178f243fd0eb54de655ed447651a9b56cc00a14d6702"),
-    "financials": ("f42748bd79792c3a1e6e703b36fa2384456eec66ec25f8fe87c95612d9a57022"),
-    "integrity_review": ("3bbd8f39400a1ca508f00150c52e3437b55bf9e32a4eead1f839cdfa96925038"),
-    "legal_covenants": ("dc57675b1e42b1810ed1a3da99ba2dc70d0698e15aa41af1261c1e108ae6b14f"),
-    "narrative": ("2e13063723b8fde9a990002de88f2857155c070c80a4649500d5183e226372fc"),
-    "quality": ("007209478b2ffe287277ff755b9d497d101552cf0451eff4bfb854e4b921c058"),
-    "readiness": ("8f92e8a5bfe7ea33a91d6112fb28925050b2d3885670fdfbcb968d08e7805fcd"),
-    "relative_value": ("e3483e176ff80b2f302311904cdba37d6bfce3e75c2914caf33031d3f1541e22"),
-    "source_context": ("1b40c9c60bd152592cf691414ea459416706b842d9e407e166024d382d8d11d8"),
-    "source_readiness": ("ea4e4966aee75b656e67c6c07ac46e3cf68b6c8c8d9063ac8316cf111e1d5db6"),
+    "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
+    "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
+    "credit_synthesis": ("209914c5b5b6662bd897f2b92d9dc3ae90286be0f30153aa5f54ec235fa2320c"),
+    "financials": ("985eafab692bb87012ef143cabaee6d868895d532f05bc9d242e9a2acd683e4a"),
+    "integrity_review": ("1b71ce3d77e672011f2234c363def35ecd38e3f7a0bf2322a6ec38c876b2ffcf"),
+    "legal_covenants": ("d274462457744ea7fbc7b91bcd8ad38e9f3b2310671f8b39090daa8680477a44"),
+    "narrative": ("d4677ff1aa1cbb825ca73c54ecd6743ed53164f8d072764bba0a7ff2035499a0"),
+    "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
+    "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
+    "relative_value": ("b8693476b0f4e65871ddb987d1288c2a2f24641ee24a68eb90b4fa1c13454f52"),
+    "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
+    "source_readiness": ("2c2f595691b8cd8e7e31dd2b7f447fc50d9b0e4ecb409907c9115bef1d644ea0"),
 }
 
 

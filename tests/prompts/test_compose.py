@@ -53,6 +53,8 @@ from deploy_workflow.prompts.tools import model_schema, tool_names, tools_for
 compose_module = importlib.import_module("deploy_workflow.prompts.compose")
 NEW = tuple(s for s in inventory() if s not in EXISTING)
 ORCHESTRATOR = re.compile(r"^O\d\. ")
+COMPOSE_TOKEN = re.compile(r"^\[compose\.[A-Za-z0-9]+\] ")  # O6-P21
+G8_PREFIX = "[source_readiness.g8] "  # Task 5: CP-0's planned-module block, composer-owned
 
 
 def system_of(messages: tuple[Message, ...]) -> str:
@@ -64,8 +66,13 @@ def user_of(messages: tuple[Message, ...]) -> str:
     return messages[1].text
 
 
+def untokened(system: str) -> str:
+    """The system message without the ``[compose.<id>] `` tokens (O6-P21)."""
+    return "\n".join(COMPOSE_TOKEN.sub("", line) for line in system.splitlines())
+
+
 def rule5(system: str) -> str:
-    return next(line for line in system.splitlines() if line.startswith("5. "))
+    return next(line for line in untokened(system).splitlines() if line.startswith("5. "))
 
 
 def stripped(system: str, step_id: str) -> list[str]:
@@ -74,8 +81,11 @@ def stripped(system: str, step_id: str) -> list[str]:
     index = ", ".join(f"[{step_id}.{c}]={c}" for c in letters)
     return [
         line
-        for line in system.splitlines()
-        if line != index and not line.startswith("5. ") and not ORCHESTRATOR.match(line)
+        for line in untokened(system).splitlines()
+        if line != index
+        and not line.startswith("5. ")
+        and not line.startswith(G8_PREFIX)
+        and not ORCHESTRATOR.match(line)
     ]
 
 
@@ -596,5 +606,9 @@ def test_a_pin_that_forges_a_marker_is_refused(
 def test_all_prompts_have_no_orchestrator_rule_outside_the_ruled_set(pack: PreparedPack) -> None:
     for step_id in EXISTING:
         system = system_of(compose(request_for(step_id, pack)))
-        found = {line.split(".")[0] for line in system.splitlines() if ORCHESTRATOR.match(line)}
+        found = {
+            line.split(".")[0]
+            for line in untokened(system).splitlines()
+            if ORCHESTRATOR.match(line)
+        }
         assert found <= {"O1", "O2", "O3", "O4", "O5"}, (step_id, found)

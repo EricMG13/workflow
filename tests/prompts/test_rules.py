@@ -23,6 +23,7 @@ from deploy_vii.live.prompts import STEP_CONTRACTS
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.prompts import NoPrompt, compose, inventory, rules
 from deploy_workflow.prompts.compose import PromptRequest
+from deploy_workflow.prompts.g8 import G8_RULE_ID
 
 compose_module = importlib.import_module("deploy_workflow.prompts.compose")
 GOLDEN = Path(__file__).with_name("rule_lists.golden.json")
@@ -236,7 +237,8 @@ def test_there_is_one_list_per_inventory_step_and_one_for_the_composer() -> None
 @pytest.mark.parametrize("step_id", CONTRACT_STEPS)
 def test_an_existing_step_carries_its_contract_rules_whole(step_id: str) -> None:
     expected = rules.contract_rules(STEP_CONTRACTS[step_id], step_id)
-    got = [(r.id, r.statement) for r in rules.load_rules(step_id)]
+    # source_readiness.g8 is the composer's G8 block, not a contract line (tests/prompts/test_g8.py)
+    got = [(r.id, r.statement) for r in rules.load_rules(step_id) if r.id != G8_RULE_ID]
     assert got == list(expected)
     letters = re.findall(r"^([a-z])\. ", STEP_CONTRACTS[step_id], re.MULTILINE)
     assert [i for i, _ in expected] == [f"{step_id}.{c}" for c in letters]
@@ -302,7 +304,10 @@ def missing_rules(step_id: str, request: PromptRequest, system: str) -> list[str
     for rule in rules.load_rules(step_id):
         if f"[{rule.id}]" not in system or rule.statement not in system:
             lost.append(rule.id)
-    lost.extend(r.id for r in applicable(request) if r.statement not in system)
+    # O6-P21: a composer rule is named by its token too
+    lost.extend(
+        r.id for r in applicable(request) if f"[{r.id}]" not in system or r.statement not in system
+    )
     return lost
 
 

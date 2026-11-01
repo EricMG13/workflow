@@ -11,7 +11,7 @@ import hashlib
 import importlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from pydantic import ValidationError
@@ -130,6 +130,40 @@ def test_draft_with_an_invalid_context_is_refused_not_raised() -> None:
     assert not any(NEEDS_DRAFT in line for line in issues)
 
 
+def test_draft_still_needs_entity_and_period_or_a_limitation() -> None:
+    pack = make_pack("draft-ok")
+    document = json.loads(make_review("draft-ok", pack).model_dump_json())
+    for item in document["sources"]:
+        if item["source_id"] == "legal-draft":
+            item["entity"] = None
+            item["limitations"] = []
+    review = ReadinessReview.model_validate_json(json.dumps(document))
+    line = "Unresolved source classification requires limitation: legal-draft"
+    assert line in validate_review(pack, review)
+
+
+def test_every_draft_source_gets_its_own_wrong_context_line() -> None:
+    pack = make_pack("draft-wrong-context")
+    review = reassess(make_review("draft-wrong-context", pack), "financial", "draft")
+    assert validate_review(pack, review) == (
+        WRONG_CONTEXT.format(source_id="financial"),
+        WRONG_CONTEXT.format(source_id="legal-draft"),
+    )
+
+
+def test_an_invalid_context_names_its_first_problem() -> None:
+    base = make_pack("draft-ok", context="context-mismatch")
+    run = base.run.model_copy(update={"issuer_name": "Other Issuer"})
+    pack = PreparedPack(run=run, sources=base.sources)
+    first = (
+        f"identity.issuer_name: context has {base.run.issuer_name!r} "
+        f"but the run has {'Other Issuer'!r}"
+    )
+    issues = validate_review(pack, make_review("draft-ok", pack))
+    assert f"Draft authority refused, context invalid: {first}" in issues
+    assert not any("run.as_of" in line for line in issues)
+
+
 # --- (e): no draft assessment, no context read -----------------------------------------------
 
 
@@ -165,7 +199,15 @@ def test_cp1a_source_class_still_refuses_draft() -> None:
     }
     with pytest.raises(ValidationError):
         SourceUse.model_validate_json(json.dumps({**fields, "source_class": "draft"}))
-    assert "draft" not in readiness.Authority.__args__  # type: ignore[attr-defined]
+    assert set(get_args(readiness.Authority)) == {
+        "filed",
+        "executed",
+        "issuer",
+        "management",
+        "sponsor",
+        "third_party",
+        "unknown",
+    }
     SourceUse.model_validate_json(json.dumps({**fields, "source_class": "issuer"}))
 
 
@@ -177,5 +219,11 @@ def test_context_source_cannot_be_classified(authority: str) -> None:
     pack = make_pack("none-declared")
     review = reassess(make_review("none-declared", pack), "context", authority)
     line = f"Context source cannot be classified {authority}"
-    assert line in validate_review(pack, review)
+    issues = validate_review(pack, review)
+    assert line in issues
+    if authority in {"executed", "filed"}:
+        assert issues == (line,)
+    else:
+        draft_line = NEEDS_DRAFT.replace("legal-draft", "context")
+        assert issues == (line, draft_line)
     assert validate_review(pack, make_review("none-declared", pack)) == ()

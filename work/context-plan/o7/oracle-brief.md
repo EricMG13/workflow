@@ -235,3 +235,22 @@ All four are distinct agents.
 6. Pinning the fence refusal by its suffix is accepted.
 7. The CP-1 readiness entry for CP-DR stays `not_verified`. O7b-1 validates it.
 8. Rendering and tamper recipes are outside this brief and are not pinned.
+
+## 12. Controller rulings on the oracle review (2026-11-01; mx-precise aa63af88, verdict FIX)
+
+1. **H1: locators.** An accepted evidence item is a prepared `text/plain` source, so its spans are `line:1..line:N` (`src/deploy_vii/preparation.py` `text_content`). Change every `ev-*` locator from `page:1` to the quote's own `line:<n>`, counting lines with `text.split("\n")`. Re-derive these at line granularity:
+   - citations;
+   - the CP-0 and CP-1 source-context literals;
+   - the `read_pages` expectations (`first_page`/`last_page` over `line:N`, as `src/deploy_vii/live/tools.py` ~:428-431 serves a line source);
+   - `search_pack` span locators and hit counts;
+   - the fence claim.
+
+   Build or load a real prepared pack in a scratch check (read-only use of `deploy_vii.preparation`) and run `validate_review` / `validate_source_context` against it. Record the check in the report. It is a check only; `build.py` stays stdlib-only.
+2. **M1: the v1 `not_found` question.** Reword the valuation-context question so that it asks only for a stated trading level or spread figure for the sector. Keep it digit-free. ev-1's qualitative "discount to its own history" does not state a level, so v1 is `not_found` with a limitation saying so. `search_pack` may still find ev-1; the limitation names the item searched.
+   - **Q14 re-ruled.** In v2, the same evidence is re-judged: that question becomes `partly`. It cites ev-1's `line:<n>` remark and carries a limitation that no level or spread is stated.
+   - Readiness stays `RESEARCH_READY_WITH_LIMITATIONS`.
+   - The TDR.3 `total` counts move: `not_found` goes 1 → 0 and `partly` goes 0 → 1. Everything else stays as ruling 11.1 says.
+3. **L1.** Dossier cells are the `shown` strings (Q10), including a gap cell's `∅ G#`. The gap's limitation text appears where the TDR.3 limitations already list it.
+4. **L2.** The TDR.3 `total` `contrary` text names the item id: `1 contrary item cited: ev-3`.
+
+Re-run `build.py` and both determinism checks. The reviewer's probes in `scratchpad/o7-oracle-review/` are the answer key; do not edit them.

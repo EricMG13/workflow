@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import test_connect_cp1d as conn
 import test_method_cp1d as stage1
 from test_period_basis import _context, _oracle_facts
 
@@ -158,7 +159,7 @@ def test_eur_compute_refuses_a_bridge_with_the_other_years_line() -> None:
 # --- (d) the CP-1 column -------------------------------------------------------------------------
 
 
-def _t410(period: str, column: str, scale: int = 0) -> list[Fact]:
+def _t410(period: str, column: str, scale: int = 0, currency: str = "EUR") -> list[Fact]:
     facts = []
     for number, metric in enumerate(cp1d._CP1_METRICS.values()):
         facts.append(
@@ -170,7 +171,7 @@ def _t410(period: str, column: str, scale: int = 0) -> list[Fact]:
                 field="value",
                 amount=Decimal(10 + number + scale),
                 unit="MULTIPLE" if "leverage" in metric else "MILLIONS",
-                currency=None if "leverage" in metric else "EUR",
+                currency=None if "leverage" in metric else currency,
                 period=period,
                 value_class="calculated",
             )
@@ -266,13 +267,14 @@ def test_adapter_reads_the_basis_from_the_context_and_register() -> None:
 
 
 def test_context_block_bridge_and_facts_follow_the_run_basis() -> None:
-    block = cp1d.context_block(pack=_eur_pack(), upstream=_eur_upstream())
-    bridge: Any = block["bridge"]
+    block: Any = cp1d.context_block(pack=_eur_pack(), upstream=_eur_upstream())
+    bridge = block["bridge"]
     assert bridge["state"] == "present"
     assert [i["row"] for i in bridge["items"]] == [
         r["row_id"] for r in ORACLE["tables"][0]["rows"][:4]
     ]
-    assert re.search(r"2026", json.dumps(block["cp1_facts"]))
+    assert {f["period"] for f in block["cp1_facts"]} == {KEY["ltm_period"]}
+    assert "context_issue" not in block
 
 
 def test_adapter_refuses_a_context_whose_currency_the_register_does_not_state() -> None:
@@ -287,7 +289,7 @@ def test_adapter_refuses_a_context_whose_currency_the_register_does_not_state() 
     submission = _eur_inputs(_eur_basis()).submission
     issues, report = cp1d._checked(mismatched, submission, _eur_upstream())
     assert report is None
-    assert any(i.startswith("Period and currency basis refused: ") and "EUR" in i for i in issues)
+    assert any(i.startswith("Period basis refused: ") and "EUR" in i for i in issues)
 
 
 def test_eur_run_composes_through_the_validator_with_the_oracle_claims() -> None:
@@ -321,5 +323,97 @@ def test_blank_base_context_follows_run_basis_ruling_p8_r3() -> None:
 
 
 def _eur_upstream_2025() -> cp1d.Upstream:
-    head = _head(_t410(DEFAULT_BASIS.ltm_period, DEFAULT_BASIS.ltm_column))
+    head = _head(_t410(DEFAULT_BASIS.ltm_period, DEFAULT_BASIS.ltm_column, currency="USD"))
     return cp1d.Upstream(bound=(), current=(), cp0=head, cp1=head, cp1b=None, inherited=())
+
+
+# --- fix round 1: the view carries a refusal (P8-R5); mutant tests -------------------------------
+
+
+def _pack_with_context(pack: PreparedPack, **run: str) -> PreparedPack:
+    document = json.loads(json.dumps(R3))
+    document["run"].update(run)
+    request = SourceRequest(source_id="context", path="context.json", media_type="text/plain")
+    held = prepare_source(request, json.dumps(document).encode("utf-8"))
+    kept = tuple(s for s in pack.sources if s.source_id != "context")
+    return PreparedPack(run=pack.run, sources=(*kept, held))
+
+
+_REFUSING = {
+    "q3 base": ({"current_period": "q3-2026", "prior_period": "q2-2026"}, "Period basis refused: "),
+    "USD context over an EUR register": ({"reporting_currency": "USD"}, "Period basis refused: "),
+    "blank base, EUR": (
+        {"run_type": "research", "current_period": "", "prior_period": ""},
+        "Period basis refused: ",
+    ),
+    "as_of disagrees with the run": ({"as_of": "2027-01-11"}, "Context refused: "),
+}
+
+
+@pytest.mark.parametrize("label", list(_REFUSING))
+def test_view_carries_a_refused_basis_as_context_issue(label: str) -> None:
+    overrides, prefix = _REFUSING[label]
+    pack = _pack_with_context(_eur_pack(), **overrides)
+    upstream = _eur_upstream()
+    issues, report = cp1d._checked(pack, _eur_inputs(_eur_basis()).submission, upstream)
+    assert report is None and len(issues) == 1 and issues[0].startswith(prefix)
+    block: Any = cp1d.context_block(pack=pack, upstream=upstream)
+    assert block["context_issue"] == issues[0]
+    assert block["bridge"]["items"] == [] and block["bridge"]["totals"] is None
+    assert block["cp1_facts"] == []
+
+
+def test_blank_base_usd_view_equals_the_no_context_view() -> None:
+    plain = conn._pack("positive")
+    run = plain.run
+    blank = _pack_with_context(
+        plain,
+        run_type="research",
+        current_period="",
+        prior_period="",
+        reporting_currency="USD",
+        as_of=run.as_of.isoformat(),
+        case_kind=run.case_kind,
+        pathway=run.pathway,
+    )
+    document = json.loads(json.dumps(R3))
+    document["identity"].update(issuer_name=run.issuer_name, issuer_id=run.issuer_id)
+    blank = PreparedPack(run=run, sources=(*plain.sources, _identity_context(blank, document)))
+    assert cp1d.context_block(pack=blank, upstream=conn._upstream()) == cp1d.context_block(
+        pack=plain, upstream=conn._upstream()
+    )
+
+
+def _identity_context(pack: PreparedPack, document: dict[str, Any]) -> Source:
+    held = next(s for s in pack.sources if s.source_id == "context")
+    merged = json.loads("\n".join(span.text for span in held.spans))
+    merged["identity"] = document["identity"]
+    request = SourceRequest(source_id="context", path="context.json", media_type="text/plain")
+    return prepare_source(request, json.dumps(merged).encode("utf-8"))
+
+
+def test_checked_maps_only_the_refusals_to_the_basis_lines() -> None:
+    only_2026 = _head(_t410(KEY["ltm_period"], KEY["ltm_column"]))
+    issues, report = cp1d._checked(
+        conn._pack("positive"), conn._submission("positive"), conn._upstream(only_2026)
+    )
+    assert report is None
+    assert len(issues) == 1 and issues[0].startswith("CP-1 operands unavailable: ")
+    assert "refused" not in issues[0]
+
+
+def test_entry_refuses_cp1_amounts_in_another_currency_than_the_basis() -> None:
+    cp1 = conn._cp1_module()
+    eur = cp1.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"currency": "EUR"}) if f.currency == "USD" else f
+                for f in cp1.facts
+            )
+        }
+    )
+    issues, report = cp1d._checked(
+        conn._pack("positive"), conn._submission("positive", eur), conn._upstream(eur)
+    )
+    assert report is None
+    assert issues == ("Period basis refused: run.reporting_currency USD, but CP-1 reports EUR",)

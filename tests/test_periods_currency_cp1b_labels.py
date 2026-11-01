@@ -1,30 +1,36 @@
 """Phase 8 Task 6b: CP-1B row labels and fact shape take the run's money unit (B17-9, B18)."""
 
+import json
+from pathlib import Path
+
 import pytest
 from test_earnings_render import _change_fact, _module, _replace, _seed
 
 from deploy_vii import report_view
 from deploy_vii.bindings import cp1b
-from deploy_vii.report_view import scale_label
 
-USD_LABELS = (
-    ("T1B.1", "revenue", "Revenue (US$ m)"),
-    ("T1B.1", "ebitda", "Reported EBITDA (US$ m)"),
-    ("T1B.1", "adjusted_ebitda", "Adjusted EBITDA (US$ m)"),
-    ("T1B.1", "ebitda_margin", "EBITDA margin (%; change pp)"),
-    ("T1B.1", "cfo_reported", "Reported CFO (US$ m)"),
-    ("T1B.1", "capex", "Signed capex (US$ m)"),
-    ("T1B.1", "fcf", "Levered FCF (US$ m)"),
-    ("T1B.2", "cash_closing", "Closing cash (US$ m)"),
-    ("T1B.2", "total_debt", "Total debt (US$ m)"),
-    ("T1B.2", "net_debt", "Net debt (US$ m)"),
-)
+ROOT = Path(__file__).parents[1]
+_EXPECTED = json.loads((ROOT / "cases/periods-currency-owner/expected.json").read_text())
+_RENDER = json.loads((ROOT / "cases/earnings/render-expected.json").read_text())
+# Answer keys, read at run time; the code under test never derives them.
+EUR_LABELS = {
+    row["row_id"]: row["label"]
+    for rows in _EXPECTED["module_oracles"]["CP-1B@EUR"]["row_labels"].values()
+    for row in rows
+}
+EUR_UNIT = _EXPECTED["runs"]["R3"]["modules"]["CP-1B"]["money_unit"]
+USD_LABELS = {
+    row["row_id"]: row["label"]
+    for table in _RENDER["layout"]["tables"]
+    if table["table_id"] in {"T1B.1", "T1B.2"}
+    for row in table["rows"]
+}
 LAYOUT_ERROR = "CP1B layout has invalid ordered rows or labels"
+NON_ISO = ["", " ", "usd", "eur", "US$", "EURO", "\u20ac", "EUR\n", "{unit}", "123"]
 
 
-def _in_currency(view, currency, *, labels=None):
-    """The seeded module with every money fact in ``currency`` and rows labelled for ``labels``."""
-    unit = scale_label("MILLIONS", labels or currency)
+def _in_currency(view, currency, labels):
+    """The seeded module with every money fact in ``currency`` and rows labelled by ``labels``."""
     module = _module(view)
     facts = tuple(
         f.model_copy(update={"currency": currency}) if f.unit == "MILLIONS" else f
@@ -34,7 +40,7 @@ def _in_currency(view, currency, *, labels=None):
         t.model_copy(
             update={
                 "rows": tuple(
-                    r.model_copy(update={"label": r.label.replace("US$ m", unit)}) for r in t.rows
+                    r.model_copy(update={"label": labels.get(r.row_id, r.label)}) for r in t.rows
                 )
             }
         )
@@ -43,18 +49,15 @@ def _in_currency(view, currency, *, labels=None):
     return _replace(view, module.model_copy(update={"facts": facts, "tables": tables}))
 
 
-def test_default_layouts_equal_todays_usd_labels():
-    layouts = cp1b.cp1b_layouts()
-    assert layouts == cp1b._CP1B_LAYOUTS
-    rows = {(l.table_id, rid): label for l in layouts for rid, label in l.rows}
-    for table, row, label in USD_LABELS:
-        assert rows[(table, row)] == label
+def test_default_layouts_equal_the_usd_key():
+    rows = {rid: label for l in cp1b.cp1b_layouts() for rid, label in l.rows}
+    assert {k: v for k, v in rows.items() if k in USD_LABELS} == USD_LABELS
+    assert cp1b.cp1b_layouts() == cp1b._CP1B_LAYOUTS
 
 
-def test_layouts_format_the_unit_into_nine_money_labels():
-    rows = [label for l in cp1b.cp1b_layouts("EUR m") for _, label in l.rows]
-    assert sum("(EUR m)" in label for label in rows) == 9
-    assert not any("US$" in label for label in rows)
+def test_layouts_in_the_oracle_unit_equal_the_oracle_labels():
+    rows = {rid: label for l in cp1b.cp1b_layouts(EUR_UNIT) for rid, label in l.rows}
+    assert {k: v for k, v in rows.items() if k in EUR_LABELS} == EUR_LABELS
 
 
 @pytest.mark.parametrize("case", ["positive", "gap"])
@@ -63,19 +66,26 @@ def test_usd_module_validates_unchanged(case):
 
 
 @pytest.mark.parametrize("case", ["positive", "gap"])
-def test_eur_facts_with_eur_labels_validate(case):
-    report_view._validate_cp1b_layout(_module(_in_currency(_seed(case), "EUR")))
+def test_eur_facts_with_oracle_labels_validate(case):
+    report_view._validate_cp1b_layout(_module(_in_currency(_seed(case), "EUR", EUR_LABELS)))
 
 
 def test_eur_labels_over_usd_facts_refuse():
-    view = _in_currency(_seed(), "USD", labels="EUR")
+    view = _in_currency(_seed(), "USD", EUR_LABELS)
     with pytest.raises(ValueError, match=LAYOUT_ERROR):
         report_view._validate_cp1b_layout(_module(view))
 
 
 def test_usd_labels_over_eur_facts_refuse():
-    view = _in_currency(_seed(), "EUR", labels="USD")
+    view = _in_currency(_seed(), "EUR", USD_LABELS)
     with pytest.raises(ValueError, match=LAYOUT_ERROR):
+        report_view._validate_cp1b_layout(_module(view))
+
+
+@pytest.mark.parametrize("bad", NON_ISO)
+def test_a_non_iso_money_currency_refuses(bad):
+    view = _in_currency(_seed(), bad, EUR_LABELS)
+    with pytest.raises(ValueError, match="reporting currency"):
         report_view._validate_cp1b_layout(_module(view))
 
 
@@ -90,7 +100,7 @@ def test_usd_labels_over_eur_facts_refuse():
     ],
 )
 def test_a_money_fact_in_another_currency_refuses(fact_id):
-    view = _change_fact(_in_currency(_seed(), "EUR"), fact_id, currency="USD")
+    view = _change_fact(_in_currency(_seed(), "EUR", EUR_LABELS), fact_id, currency="USD")
     with pytest.raises(ValueError, match="incompatible native dimensions"):
         report_view._validate_cp1b_layout(_module(view))
 
@@ -102,7 +112,7 @@ def test_revenue_prior_eur_current_usd_refuses():
 
 
 def test_gap_money_rows_take_the_revenue_current_currency():
-    view = _in_currency(_seed("gap"), "EUR")
+    view = _in_currency(_seed("gap"), "EUR", EUR_LABELS)
     gaps = [f for f in _module(view).facts if f.unit == "MILLIONS" and f.status != "known"]
     assert gaps
     assert {f.currency for f in gaps} == {"EUR"}
@@ -111,7 +121,7 @@ def test_gap_money_rows_take_the_revenue_current_currency():
 
 def test_gap_money_fact_without_currency_has_no_fallback():
     view = _change_fact(
-        _in_currency(_seed("gap"), "EUR"), "cp1b:T1B.1:revenue:prior", currency=None
+        _in_currency(_seed("gap"), "EUR", EUR_LABELS), "cp1b:T1B.1:revenue:prior", currency=None
     )
     with pytest.raises(ValueError, match="incompatible native dimensions"):
         report_view._validate_cp1b_layout(_module(view))

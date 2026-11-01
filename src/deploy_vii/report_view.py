@@ -2345,7 +2345,7 @@ def _cp1b_unit_layouts(
     if facts.keys() != expected_ids:
         raise ValueError("CP1B layout requires exact canonical fact coverage")
     currency = facts["cp1b:T1B.1:revenue:current"].currency
-    if currency is None:
+    if currency is None or not re.fullmatch(r"[A-Z]{3}", currency):
         raise ValueError("CP1B layout requires a reporting currency on revenue current")
     layouts = cp1b_layouts(scale_label("MILLIONS", currency) or "")
     return facts, layouts, currency

@@ -99,6 +99,15 @@
    "checks": [
     "fn:deploy_workflow.owners.cp3d:_check_pin_label"
    ]
+  },
+  {
+   "id": "market_implied.10",
+   "statement": "Rows from the context are Python's; refer to them by row id; never copy their figures.",
+   "checks": [
+    "oracle:cp3-context:cp3d-filled-context-row",
+    "oracle:cp3-context:cp3d-unknown-context-row",
+    "fn:deploy_workflow.owners.cp3d:_resolved"
+   ]
   }
  ]
 }

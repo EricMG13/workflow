@@ -46,19 +46,6 @@ PENDING: dict[str, dict[str, str]] = {
                 "_figure_problems",
             )
         },
-        **{
-            f"oracle:cp3-context:{i}": CP3_T4
-            for i in (
-                "ctx-observed-and-talk-high",
-                "ctx-talk-only-high",
-                "ctx-deal-talk-high",
-                "ctx-stale-high",
-                "context-row-submitted",
-                "context-quote-cited",
-                "unknown-context-row",
-                "talk-level-wording",
-            )
-        },
     },
 }
 

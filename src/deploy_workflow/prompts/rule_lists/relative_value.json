@@ -10,13 +10,16 @@
   },
   {
    "id": "relative_value.b",
-   "statement": "b. Quotes appear only in `market_evidence`: each observed or indicative_talk row quotes one span of a source listed under `market_evidence_sources` in the CONTEXT block, its `quote.source_id` equal to its `source_id`, one row per quoted span. A `none` row quotes nothing (a null `quote`) and states its `limitation`. A `basis.quotes` entry repeats a `market_evidence` row's quote exactly.",
+   "statement": "b. Quotes appear only in `market_evidence`: each observed or indicative_talk row quotes one span of a source listed under `market_evidence_sources` in the CONTEXT block, its `quote.source_id` equal to its `source_id`, one row per quoted span. A `none` row quotes nothing (a null `quote`) and states its `limitation`. A `basis` refers to Python's context rows by id (`basis.context_rows`) and never copies their figures; a `basis.quotes` entry still repeats a `market_evidence` row's quote exactly, for the rows of a `third_party` source only.",
    "checks": [
     "fn:deploy_vii.cp3_relative_value:_market_row",
     "fn:deploy_vii.cp3_relative_value:_bind_evidence",
     "fn:deploy_vii.cp3_relative_value:_basis_issues",
     "oracle:cp3-cp6:cp3-basis-quote-not-evidence",
-    "oracle:cp3-cp6:cp3-gap-fabricated-market"
+    "oracle:cp3-cp6:cp3-gap-fabricated-market",
+    "oracle:cp3-context:context-row-submitted",
+    "oracle:cp3-context:context-quote-cited",
+    "oracle:cp3-context:unknown-context-row"
    ]
   },
   {
@@ -27,7 +30,8 @@
     "fn:deploy_vii.cp3_relative_value:_preference_issues",
     "fn:deploy_vii.cp3_relative_value:_level_issues",
     "oracle:cp3-cp6:cp3-observed-quotes-talk",
-    "oracle:cp3-cp6:cp3-talk-worded-as-level"
+    "oracle:cp3-cp6:cp3-talk-worded-as-level",
+    "oracle:cp3-context:talk-level-wording"
    ]
   },
   {
@@ -48,7 +52,11 @@
     "fn:deploy_vii.cp3_relative_value:_preference_issues",
     "oracle:cp3-cp6:cp3-confidence-high",
     "oracle:cp3-cp6:cp3-ordering-missing",
-    "oracle:cp3-cp6:cp3-gap-confidence-without-evidence"
+    "oracle:cp3-cp6:cp3-gap-confidence-without-evidence",
+    "oracle:cp3-context:ctx-observed-and-talk-high",
+    "oracle:cp3-context:ctx-talk-only-high",
+    "oracle:cp3-context:ctx-deal-talk-high",
+    "oracle:cp3-context:ctx-stale-high"
    ]
   },
   {

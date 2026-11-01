@@ -254,9 +254,10 @@ DIFFERING: dict[str, dict[str, Any]] = {
 ABSOLUTE = re.compile(
     r"retype no figure|are your assumptions|are your analyst assumptions|you supply, as analyst"
 )
-# CP-2E's gap rule and hedge-ratio absence would otherwise forbid a pinned hedge ratio. (CP-3D's
-# "never fill the gap" is about quotes and absences of market facts; its text is Phase 3's.)
+# CP-2E's gap rule and hedge-ratio absence would otherwise forbid a pinned hedge ratio; CP-3D's gap
+# rule would otherwise forbid the pinned recovery (Phase 3 Task 4, P3T4-R8).
 HEDGE_ABSOLUTE = re.compile(r"never fill the gap|hedge ratio \(or why none")
+GAP_ABSOLUTE = re.compile(r"never fill the gap")
 WITHIN_RANGE = "within the schema's range"
 B27_EXCEPTION = (
     ", unless the pinned-assumptions block pins it, in which case submit exactly the pinned value"
@@ -290,7 +291,11 @@ def text_admits_the_pin(module: str) -> None:
     for line in lines:
         prose = RULE_LINE.match(line) is None
         for sentence in sentences_of(line):
-            if ABSOLUTE.search(sentence) or (module == "CP-2E" and HEDGE_ABSOLUTE.search(sentence)):
+            if (
+                ABSOLUTE.search(sentence)
+                or (module == "CP-2E" and HEDGE_ABSOLUTE.search(sentence))
+                or (module == "CP-3D" and GAP_ABSOLUTE.search(sentence))
+            ):
                 assert "pinned-assumptions block" in sentence, sentence[:160]
             if WITHIN_RANGE in sentence:
                 tail = sentence.split(WITHIN_RANGE, 1)[1]

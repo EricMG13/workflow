@@ -11,8 +11,8 @@ diffs too) → phase gate → PR Manager.
 
 | Phase | Plan file | State | Commits | Sent to PR Manager |
 |---|---|---|---|---|
-| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | plan approved 8e17789b (2 review rounds); building: Task 1 reopened for a stale cpos registry pin (fix 2 = re-pin by a separate preparer); Task 2 building (BASE e871f90c) | 5a00d7be, 4725c3b6 | — |
-| O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | plan approved 01ee8514 (3 rounds); provider docs in work/context-plan/provider-docs-2026-10-31.md; builds after O1 | — | — |
+| O1 | docs/superpowers/plans/2026-10-31-part-b-o1.md | complete: phase gate passed (52ee9de4), phase review approved, Lows 675221a9 | 5a00d7be..675221a9 (16 commits, list in PR Manager hand-off) | 2026-11-01, hold merge until O5 gate |
+| O5 | docs/superpowers/plans/2026-10-31-part-b-o5.md | building: Task 1 fix 2 in re-review; Task 2 fix 1 re-reviewed (M ModelSpec refusal open), fix 2 pending; Task 3/6 briefs amended for SentChargeUsage | a40986ec, 345c47d6, 44c9a8b2, 96b7526f, 61220cb9 | — |
 | O2 | docs/superpowers/plans/2026-10-31-part-b-o2.md | plan approved 5032faaa (2 rounds; new oracle cases/o2-synthetic) | — | — |
 | O3+O4 | docs/superpowers/plans/2026-10-31-part-b-o3-o4.md | plan approved (2 rounds) + N1 amendment (identity rebinding, whole-pack equality) | — | — |
 | O6 | docs/superpowers/plans/2026-10-31-part-b-o6.md | plan approved (2 rounds) | — | — |
@@ -42,7 +42,7 @@ B17 plan amendments review (mx-autonomous aa2f06f2): P3/P5/P7 approve, P8 fix (H
 Phase 8 plan fix 2 73e254fd approved (aa2f06f2). Phases 3, 5, 7, 8 B17 amendments: approved (d6508410, 73e254fd). Preparers: P3 ab25fc2b, P4 a86eb9b2, P5 a5601db8 (mx-feature). (00:48 UTC)
 Preparers: P6 a9445071, P7 a6370cff, P8 afe48384 (mx-feature), dispatched 00:48 UTC. Builders of Phases 3-8 must be other agents.
 
-Plan amendments pending (apply before each phase's build; one docs dispatch + mx-feature review), 01:19 UTC:
+Plan amendments (01:19 UTC list) APPLIED e3bfa9e3 + Lows 7d8a59f7 (mx-feature aa75cae9; review mx-feature aec19b0e Lows only), 04:29 UTC:
 - Phase 2 Task 4: B19 step — generalise the CP-1B composer prose before the owner path widens pairs.
 - Phase 3 Design 3 (:65-67) and ruled decision 3 (:274): B20/B20a/B20b (member alone on its line; every colliding row dropped; gap names row n; Design 5 prefix).
 - Phase 5 Task 3: "ten cases" = 15 ids incl. legal-draft-missing(+gap) with the ruled draft-missing text.
@@ -50,3 +50,4 @@ Plan amendments pending (apply before each phase's build; one docs dispatch + mx
 - Phase 8 Done-when 1: no stale unshifted literal (derived list), not "no 2025".
 Pre-existing defects for the owner (final report): cases/cp4c-owner/builder/build.py:51 stale CP-3C manifest pin 2f65c085 (10ec5231) and class-by-class division vs the lease's largest-remainder; docs/CP5-OWNER-LEASE.md:43 methodology 1bb6c0bc vs 0932d9fb; tests/test_upstream_tools.py ruff C408 x14 + mypy; earnings.py:315-318 raw-day period-length comparison (FY2024 leap year; Q2 91 vs Q3 92 days); O1/B1: no CP-5/integrity check of CP-MODEL head identity (only publish_cp_model).
 All Task 0 oracles frozen (Phases 2-8, o2-synthetic); cases/pins.py --check 0 (176 paths) at 5485b8be. (01:21 UTC)
+O1 Lows batch mx-scaffold a2dbf115: 675221a9 (L1 lease B1 text, L2 owner-only text, MISFIT_BASIS deleted); ruff 0; preset walks 23 passed 2 skipped; mypy error tests/cp3c_runs.py:151 in an untouched file → pre-existing (owner list). O1 sent to PR Manager, merge held until O5 gate. (04:25 UTC)

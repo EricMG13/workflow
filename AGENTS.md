@@ -65,7 +65,7 @@ An independent `mx-precise` review checks sensitive expectations. The global 800
 PR cap does not apply to lane integrations (user, 2026-10-27). Reuse existing
 reviews rather than add approval chains. Stop inventing policy at unclear semantics:
 name the exact requirement and have LEAD resolve it from the adopted source.
-LEAD's rulings are applied to a draft before its first independent review.
+LEAD's rulings are applied to a draft before its first independent review. These expectations are the answer key of CLAUDE.md's Verifier gate.
 
 Module builds (user, 2026-10-28):
 - An oracle or lease preparer runs the product's table, claim and render

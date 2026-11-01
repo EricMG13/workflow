@@ -114,6 +114,7 @@ from deploy_workflow.owners import (
     cp4,
     cp4c,
     cp5,
+    cp6,
     cp8,
     cpdr,
     cpl10,
@@ -144,6 +145,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-3C",
         "CP-2H",
         "CP-4C",
+        "CP-6",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
@@ -186,6 +188,7 @@ _QUALIFICATION = {
     "CP-3C": cp3c.QUALIFICATION,
     "CP-2H": cp2h.QUALIFICATION,
     "CP-4C": cp4c.QUALIFICATION,
+    "CP-6": cp6.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -208,6 +211,7 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-3C": cp3c.probe,
     "CP-2H": cp2h.probe,
     "CP-4C": cp4c.probe,
+    "CP-6": cp6.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -227,6 +231,7 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "refinancing_risk": cp3c.view,
     "rating_triggers": cp2h.view,
     "restructuring_fulcrum": cp4c.view,
+    "committee_challenge": cp6.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -250,6 +255,7 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-3C": cp3c.ENTRY_VALIDATOR,
     "CP-2H": cp2h.ENTRY_VALIDATOR,
     "CP-4C": cp4c.ENTRY_VALIDATOR,
+    "CP-6": cp6.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -294,6 +300,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.cp3_relative_value import RelativeValueSubmission
     from deploy_vii.cp4_legal import CovenantInterpretationSubmission
     from deploy_vii.cp5_integrity import IntegritySubmission
+    from deploy_vii.cp6_committee import CommitteeSubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
     from deploy_vii.quality import QualityReview
@@ -369,6 +376,13 @@ def _default_specs() -> dict[str, OwnerSpec]:
         "CP-2": OwnerSpec(
             module_id="CP-2",
             steps=(step("credit_synthesis", CreditSynthesisSubmission, inputs="module_context"),),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-6": OwnerSpec(
+            module_id="CP-6",
+            steps=(step("committee_challenge", CommitteeSubmission, inputs="module_context"),),
             entry="model_payload",
             kind="analytical",
             publish=None,

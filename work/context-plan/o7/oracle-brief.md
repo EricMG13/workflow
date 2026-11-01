@@ -196,3 +196,27 @@ Check each item against the frozen files and this brief, not against code under 
 - **Q14 What the v2 dossier changes.** Recommend the v2 `research` submission differs from v1 in exactly one question: the v1 `not_found` question becomes answered from A with a "none found in ev-1, ev-2, ev-3" contrary entry, readiness stays `RESEARCH_READY_WITH_LIMITATIONS` (the C contradiction remains), the TDR.3 `total` counts move, the brief hash and evidence list are unchanged, run_id `cpdr-research-owner-v2`.
 - **Q15 Purpose text.** The O7b-1 test reads the id from the registry purpose (`methodology.json` CP-DR entry, plan "What exists today"). Recommend the oracle records only `purpose_contains: "cp-dr/2026-10-31"` in `registry_after_o7b1` and does not pin the whole purpose string (the builder writes it).
 - **Q16 Re-pin split.** Recommend as section 5: the preparer touches none of the 44 files; a separate oracle dispatch re-pins in O7b-1's commit. Controller to confirm, and to decide who prepares that dispatch's brief.
+
+## 10. Controller rulings on Q1-Q16 (2026-11-01; binding on the preparer)
+
+Each question takes its recommended answer above (memory "apply my recommendations"; B17), with these clarifications:
+
+- **Q2.** Use as-of `2026-01-10` only if that is the frozen pack's as-of. Read it from the pack's manifest. If it differs, use the pack's as-of, move every evidence date by the same offset, and say so in the report.
+- **Q4.** If the CP-0 review validator cannot hold supplementary `ev-*` sources, stop with NEEDS_CONTEXT. Do not reshape the review.
+- **Q6.** The issuer id, and the as-of in the period-mismatch text, come from the frozen pack. `northbridge-synthetic` is valid only if it is the pack's issuer id; check it. The texts are otherwise frozen verbatim.
+- **Q9.** `ClaimState` follows O7-P4 (`task-O7a-addendum.md`) exactly:
+  - blocked or empty gives `BLOCKED`;
+  - contrary or missing gives `RESEARCH_READY_WITH_LIMITATIONS`;
+  - otherwise `RESEARCH_READY`.
+
+  So the v1 case's readiness is `RESEARCH_READY_WITH_LIMITATIONS`.
+- **Q13.** `src/deploy_workflow/prompts/fence.py` exists at the tip. Copy its terminator literal from there and cite it. O4's fault-record shape is pinned by behaviour if no literal exists.
+- **Q16.** Confirmed: the 44-file re-pin is a separate oracle dispatch in O7b-1's commit. The controller writes its brief when O7b-1's builder is ready. You touch none of the 44 files.
+
+Roles (B2):
+- this brief's writer: a7a388ea;
+- the preparer: one fresh mx-feature;
+- the oracle reviewer: a fresh mx-precise;
+- the O7b-1 builder: another fresh mx-feature.
+
+All four are distinct agents.

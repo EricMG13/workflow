@@ -7,11 +7,13 @@ mapping it is given; an offline run builds ``Redactor()`` (regex only).
 from __future__ import annotations
 
 import io
+import logging
 import re
 import traceback
 from collections.abc import Iterable, Mapping
 from typing import Any, TextIO, cast
 
+_LOG = logging.getLogger(__name__)
 REPLACEMENT = "[redacted]"
 KEY_ENV_NAMES = ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY")
 KEY_PATTERN = re.compile(r"\b(sk-(or|ant|proj)-[A-Za-z0-9_-]{6,}|sk-[A-Za-z0-9_-]{20,})")
@@ -72,11 +74,14 @@ class Redactor:
     def from_environ(cls, environ: Mapping[str, str]) -> Redactor:
         return cls(environ[name] for name in KEY_ENV_NAMES if environ.get(name))
 
-    def text(self, value: str) -> str:
+    def _spans(self, value: str) -> list[tuple[int, int]]:
         spans = [m.span() for m in KEY_PATTERN.finditer(value)]
         if self._exact is not None:
             spans += [m.span(1) for m in self._exact.finditer(value)]
-        return _replace_spans(value, spans, REPLACEMENT)
+        return spans
+
+    def text(self, value: str) -> str:
+        return _replace_spans(value, self._spans(value), REPLACEMENT)
 
     def bytes_(self, value: bytes) -> bytes:
         spans = [m.span() for m in _KEY_PATTERN_BYTES.finditer(value)]
@@ -86,13 +91,23 @@ class Redactor:
 
     def _hold_from(self, text: str) -> int:
         """Index from which ``text`` might still be the start of a key: the trailing run of
-        key characters, or a tail that is a prefix of an exact value."""
-        hold = len(text) - len(_TRAILING_KEY_RUN.search(text).group())  # type: ignore[union-attr]
+        key characters, or a tail that is a prefix of an exact value. A complete match that
+        crosses the cut pulls the cut back to the match start, so no match is split."""
+        run = _TRAILING_KEY_RUN.search(text)
+        hold = run.start() if run else len(text)
         for value in self._values:
             for n in range(min(len(value), len(text)), 0, -1):
                 if text.endswith(value[:n]):
                     hold = min(hold, len(text) - n)
                     break
+        spans = self._spans(text)
+        moved = True
+        while moved:
+            moved = False
+            for start, end in spans:
+                if start < hold < end:
+                    hold = start
+                    moved = True
         return hold
 
     def _key(self, key: Any) -> Any:
@@ -108,11 +123,14 @@ class Redactor:
 
     def json_value(self, value: Any) -> Any:
         """Redact keys and values, nested, including bytes, tuples and sets. Keys that
-        collide once redacted get a suffix, so no entry is dropped."""
+        collide once redacted get a suffix, so no dict entry is dropped. Set entries that redact
+        to the same text collapse into one; no secret is lost by that."""
         if isinstance(value, str):
             return self.text(value)
         if isinstance(value, bytes):
             return self.bytes_(value)
+        if isinstance(value, bytearray):
+            return bytearray(self.bytes_(bytes(value)))
         if isinstance(value, Mapping):
             out: dict[Any, Any] = {}
             for key, item in value.items():
@@ -141,7 +159,9 @@ class _RedactingStream(io.TextIOBase):
     """Line-buffered writer. A partial line is held until a newline; flush() writes only the
     part that cannot be the start of a key (the trailing key-character run and any tail that
     is a prefix of an exact value stay held), so a key split by a flush is still seen whole.
-    close() writes everything."""
+    close() writes everything. If the stream is garbage-collected unclosed (CPython flushes but
+    never closes std streams at exit) the redacted tail is written; if the target is already
+    closed the drop is logged with a char count, never the text."""
 
     def __init__(self, redactor: Redactor, target: TextIO) -> None:
         self._redactor = redactor
@@ -152,6 +172,8 @@ class _RedactingStream(io.TextIOBase):
         return True
 
     def write(self, s: str) -> int:
+        if self.closed:
+            raise ValueError("I/O operation on closed file")
         self._pending += s
         head, sep, tail = self._pending.rpartition("\n")
         if sep:
@@ -167,9 +189,18 @@ class _RedactingStream(io.TextIOBase):
         self._target.flush()
 
     def __del__(self) -> None:
-        # No implicit write on garbage collection: the target may already be closed.
-        # Callers close() the stream to emit a held tail.
-        pass
+        pending = getattr(self, "_pending", "")
+        if self.closed or not pending:
+            return
+        if self._target.closed:
+            _LOG.warning(
+                "dropped %d chars of held stream text: target already closed", len(pending)
+            )
+            return
+        # Garbage collection is final, so the whole tail is redacted and written.
+        self._target.write(self._redactor.text(pending))
+        self._target.flush()
+        self._pending = ""
 
     def close(self) -> None:
         if not self.closed:

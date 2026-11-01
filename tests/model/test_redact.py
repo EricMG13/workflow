@@ -1,7 +1,10 @@
 """R3 key redaction: synthetic values only, no environment read."""
 
+import gc
 import io
+import logging
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -179,3 +182,59 @@ def test_json_value_non_json_types_are_redacted() -> None:
     assert r.json_value({("abc123XYZ", "q"): 1}) == {("[redacted]", "q"): 1}
     assert r.json_value({"s": {"abc123XYZ", "ok"}}) == {"s": {"[redacted]", "ok"}}
     assert r.json_value(("abc123XYZ", b"abc123XYZ")) == ["[redacted]", b"[redacted]"]
+
+
+def test_flush_never_splits_exact_value_with_non_key_char() -> None:
+    buf = io.StringIO()
+    stream = Redactor(["TESTONLY.dot"]).redact_stream(buf)
+    stream.write("a TESTONLY.dotmore")
+    stream.flush()
+    stream.write("\n")
+    assert "TESTONLY" not in buf.getvalue()
+    assert buf.getvalue() == "a [redacted]more\n"
+
+
+def test_flush_never_splits_exact_value_starting_with_non_key_char() -> None:
+    buf = io.StringIO()
+    stream = Redactor(["x.TESTONLYval"]).redact_stream(buf)
+    stream.write("k x.TESTONLYvalmore")
+    stream.flush()
+    stream.write("\n")
+    assert "TESTONLY" not in buf.getvalue()
+
+
+def test_garbage_collected_stream_emits_redacted_tail() -> None:
+    buf = io.StringIO()
+    stream = Redactor().redact_stream(buf)
+    stream.write("tail sk-or-v1-TESTONLYabcdef")
+    stream.flush()
+    del stream
+    gc.collect()
+    assert buf.getvalue() == "tail [redacted]"
+
+
+def test_garbage_collected_stream_with_closed_target_logs_char_count(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    buf = io.StringIO()
+    stream = Redactor().redact_stream(buf)
+    stream.write("fatal: sk-or-v1-TESTONLYabcdef")
+    buf.close()
+    with caplog.at_level(logging.WARNING, logger="deploy_workflow.model.redact"):
+        del stream
+        gc.collect()
+    assert "TESTONLY" not in caplog.text
+    assert "30 chars" in caplog.text
+
+
+def test_write_after_close_raises() -> None:
+    buf = io.StringIO()
+    stream = Redactor().redact_stream(buf)
+    stream.close()
+    with pytest.raises(ValueError):
+        stream.write("late")
+
+
+def test_json_value_redacts_bytearray() -> None:
+    out = Redactor(["abc123XYZ"]).json_value({"b": bytearray(b"k abc123XYZ")})
+    assert bytes(out["b"]) == b"k [redacted]"

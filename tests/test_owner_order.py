@@ -415,40 +415,46 @@ def test_refusal_after_the_stop_is_bound_to_the_final_snapshot(
 def test_refusal_before_the_stop_still_lets_cp_model_publish(
     cp3: SimpleNamespace, tmp_path: Path
 ) -> None:
-    """A module planned before CP-MODEL refused at its begin (CP-1C on the blocked CP-1) ends
-    the walk at the stop: `publish` refuses terminally and the walk is complete, with no module
-    after it begun. The refusal sits on the snapshot the publication started from."""
+    """A module planned before CP-MODEL refused at its begin (CP-1C on the blocked CP-1): the walk
+    continues (G3) to the CP-MODEL stop, `publish` refuses terminally and the module planned after
+    CP-MODEL then runs. The refusal sits on the snapshot the publication started from.
+
+    Changed from "the refusal ends the walk at the stop, nothing after it begun": a refusal no
+    longer ends the walk, so `_resume_after` is CP-MODEL and the later module settles."""
     order = ("CP-0", "CP-1", "CP-1C", "CP-MODEL", g1x.MODULE)
     workflow = _terminal_world(cp3, tmp_path, order, "CP-1C")
-    assert workflow._phase == "walked" and workflow._resume_after is None
+    assert workflow._phase == "walked" and workflow._resume_after == "CP-MODEL"
     assert [r.module_id for r in workflow._refusals] == ["CP-1C"]
     assert workflow.publish()["status"] == "refused"
+    assert workflow._phase == "analytical" and workflow._binding.module_id == g1x.MODULE
+    g1x._drive(workflow)
     assert workflow._phase == "complete"
     receipt = workflow.write_receipt(tmp_path / "receipt.json")
     owner.verify_owner_run_receipt(owner.Execution(tmp_path / "store"), receipt)
     assert receipt.refusals[0].snapshot_sha256 == receipt.publications[0].snapshot_before_sha256
-    assert g1x.MODULE not in {b.module_id for b in receipt.begins}
+    assert g1x.MODULE in {b.module_id for b in receipt.begins}
 
 
-def test_post_stop_attempt_after_a_pre_stop_refusal_is_rejected(
+def test_unsettled_post_stop_module_after_a_pre_stop_refusal_is_rejected(
     cp3: SimpleNamespace, tmp_path: Path
 ) -> None:
-    """After a refusal before the stop the walk ends at the publication. A forged continuation
-    (a begun module planned after CP-MODEL, attempt 0 rejected, no head) is a walk the runtime
-    cannot produce; `_verify_walk` refuses any attempt of a module after the refused one (M1)."""
+    """Changed from "a forged continuation after a pre-stop refusal is rejected": the module
+    planned after CP-MODEL now legitimately begins after the publication (G3). What the verifier
+    still refuses is a walk that ends with that module neither settled nor refused (it has an
+    attempt but no head): `_verify_walk` requires exactly one of the two for every module."""
     order = ("CP-0", "CP-1", "CP-1C", "CP-MODEL", g1x.MODULE)
     workflow = _terminal_world(cp3, tmp_path, order, "CP-1C")
-    assert [r.module_id for r in workflow._refusals] == ["CP-1C"]
     assert workflow.publish()["status"] == "refused"
-    assert workflow._phase == "complete"
-    workflow._phase = "analytical"  # forge: continue past the end of the walk
-    assert workflow._begin(g1x.MODULE) is True
-    workflow._begin = lambda module_id: setattr(workflow, "_phase", "complete")  # no attempt 1
+    assert workflow._binding.module_id == g1x.MODULE
     workflow.read_inputs()
     assert workflow.submit_review(g1x._sourced())["status"] == "invalid"  # cited page unread
     attempts = [a for a in workflow._store.read().attempts if a.module_id == g1x.MODULE]
-    assert [(a.number, a.status, bool(a.issues)) for a in attempts] == [(0, "finished", True)]
+    assert [(a.number, a.status, bool(a.issues)) for a in attempts] == [
+        (0, "finished", True),
+        (1, "pending", False),
+    ]
     assert g1x.MODULE not in {h.module_id for h in workflow._store.read().heads}
+    workflow._phase = "complete"  # forge: end the walk with the module unsettled
     with pytest.raises(WorkflowError) as caught:
         workflow.write_receipt(tmp_path / "receipt.json")
     assert caught.value.code == "identity_mismatch"
@@ -458,10 +464,12 @@ def test_pre_stop_refusal_is_bound_to_the_first_publications_before(
     cp3: SimpleNamespace, tmp_path: Path
 ) -> None:
     """Kills the mutant "a refusal before the stop is always on the final snapshot": a receipt
-    whose first publication starts at an earlier ancestor is rejected by `_verify_walk`."""
+    whose first publication starts at an earlier ancestor is rejected by `_verify_walk`. (The
+    later module is driven to the end first: the walk now continues past the refusal, G3.)"""
     order = ("CP-0", "CP-1", "CP-1C", "CP-MODEL", g1x.MODULE)
     workflow = _terminal_world(cp3, tmp_path, order, "CP-1C")
     assert workflow.publish()["status"] == "refused"
+    g1x._drive(workflow)
     receipt = workflow.write_receipt(tmp_path / "receipt.json")
     store = owner.Execution(tmp_path / "store")
     earlier = store.read().parent

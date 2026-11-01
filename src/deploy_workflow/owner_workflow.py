@@ -25,8 +25,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
 from types import MappingProxyType, ModuleType
-from typing import Any, Literal, TextIO
+from typing import Annotated, Any, Literal, TextIO
 from uuid import uuid4
+
+from pydantic import Field, SerializerFunctionWrapHandler, model_serializer
 
 from deploy_vii.business_context import PROMOTED as CP1A_PROMOTED
 from deploy_vii.contracts import Contract, Hash, Identifier, Input, Module, Run
@@ -71,7 +73,7 @@ from deploy_vii.live.submission import (
 )
 from deploy_vii.live.tools import ToolRules
 from deploy_vii.preparation import PreparedPack
-from deploy_vii.registry import StepChain, dependencies, plan, step_chain
+from deploy_vii.registry import StepChain, dependencies, edge_rule, plan, step_chain
 from deploy_workflow import host
 from deploy_workflow.financial_workflow import (
     FILES,
@@ -681,9 +683,25 @@ class BeginRecord(Contract):
 
 
 class RefusedBegin(Contract):
+    """A begin the journal refused: why, and what was missing (G3).
+
+    `missing_inputs` names the required upstream modules with no usable head;
+    `missing_commands` the CP-0 command (`Run <id>`) that is absent. Both are omitted from the
+    JSON while empty, so an older receipt keeps its bytes (as `Attempt.step_repairs`)."""
+
     module_id: Identifier
     snapshot_sha256: Hash
     reason: str
+    missing_inputs: tuple[Identifier, ...] = ()
+    missing_commands: tuple[Annotated[str, Field(max_length=160)], ...] = ()
+
+    @model_serializer(mode="wrap")
+    def _omit_empty_missing(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        for name in ("missing_inputs", "missing_commands"):
+            if not getattr(self, name):
+                data.pop(name, None)
+        return data
 
 
 class SettledHead(Contract):
@@ -1148,17 +1166,24 @@ class OwnerWorkflow:
         _hist(self._store, self._binding)
 
     def _begin(self, module_id: str) -> bool:
-        """Begin one analytical module; a refusal is retained and ends the walk."""
+        """Begin one analytical module. A refusal is retained with what it lacked, and the walk
+        continues through `_advance` (G3), so the CP-MODEL stop and the end of the plan still
+        apply."""
         before = self._store.read()
         kind: Literal["not_authorized", "blocked"]
         try:
             attempt = self._store.begin(module_id)
         except NotAuthorized as error:
             reason, kind = str(error), "not_authorized"
+            missing = _missing_inputs(before, module_id, error)
         except ValueError as error:
-            # Only the blocked-edge refusal after a blocked producer is a retained refusal.
-            if not str(error).startswith(BLOCKED_EDGE) or not any(
-                h.status == "blocked" for h in before.heads
+            # Only the blocked-edge refusal is a retained refusal: after a blocked producer, or
+            # when every missing input is itself a refused module of this walk. Any other
+            # ValueError is a defect and propagates.
+            missing = _missing_inputs(before, module_id, error)
+            refused = {r.module_id for r in self._refusals}
+            if not str(error).startswith(BLOCKED_EDGE) or not _retainable(
+                before, missing[0], refused
             ):
                 raise
             reason, kind = str(error), "blocked"
@@ -1176,13 +1201,18 @@ class OwnerWorkflow:
             self._activate(attempt, self._specs[module_id].steps[0].step_id)
             return True
         refusal = RefusedBegin(
-            module_id=module_id, snapshot_sha256=before.content_hash(), reason=reason
+            module_id=module_id,
+            snapshot_sha256=before.content_hash(),
+            reason=reason,
+            missing_inputs=missing[0],
+            missing_commands=missing[1],
         )
         _retain(self._store, "refused-begin", refusal)
         self._refusals.append(refusal)
-        self._refusal_kind = kind
+        if self._refusal_kind is None:  # the first refusal names the submit outcome (L2)
+            self._refusal_kind = kind
         self._current_sha256 = before.content_hash()
-        self._finish_walk()
+        self._advance(module_id)
         return False
 
     def _advance(self, module_id: str) -> None:
@@ -1574,6 +1604,64 @@ def _verify_audit(store: Execution, receipt: OwnerRunReceipt) -> None:
         raise WorkflowError("identity_mismatch")
 
 
+def _missing_inputs(
+    snapshot: ExecutionSnapshot, module_id: str, error: ValueError
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """What a refused begin lacked: `(missing_inputs, missing_commands)` (G3).
+
+    A `NotAuthorized` lacks CP-0's `Run <module_id>` command and nothing else. The blocked-edge
+    `ValueError` lacks the required upstream modules with no usable head, in plan order: no head,
+    or a blocked head under an edge that does not restrict (`execution.current_inputs`' own
+    rule). Any other error names nothing."""
+    if isinstance(error, NotAuthorized):
+        return (), (f"Run {module_id}",)
+    if not str(error).startswith(BLOCKED_EDGE):
+        return (), ()
+    order = plan(snapshot.run.requested_modules)
+    required = dependencies(snapshot.run.requested_modules).get(module_id, set())
+    heads = {h.module_id: h for h in snapshot.heads}
+
+    def usable(item: str) -> bool:
+        head = heads.get(item)
+        if head is None:
+            return False
+        if head.status in ("accepted", "restricted"):
+            return True
+        return head.status == "blocked" and edge_rule(module_id, item) == "restricted"
+
+    missing = [item for item in required if not usable(item)]
+    missing.sort(key=lambda item: (order.index(item) if item in order else len(order), item))
+    return tuple(missing), ()
+
+
+def _verify_refusal(before: ExecutionSnapshot, refusal: RefusedBegin, refused: set[str]) -> None:
+    """The refusal is the journal's own answer at `before`: `current_inputs` raises with the same
+    reason, and `_missing_inputs` of that error equals what was recorded. A blocked-edge refusal
+    needs a blocked head in `before` or every missing input itself refused in the walk."""
+    try:
+        current_inputs(before, refusal.module_id)
+    except ValueError as error:
+        if str(error) != refusal.reason:
+            raise WorkflowError("identity_mismatch") from None
+        inputs, commands = _missing_inputs(before, refusal.module_id, error)
+        if (inputs, commands) != (refusal.missing_inputs, refusal.missing_commands):
+            raise WorkflowError("identity_mismatch") from None
+        if not isinstance(error, NotAuthorized) and (
+            not str(error).startswith(BLOCKED_EDGE) or not _retainable(before, inputs, refused)
+        ):
+            raise WorkflowError("identity_mismatch") from None
+    else:
+        raise WorkflowError("identity_mismatch")
+
+
+def _retainable(before: ExecutionSnapshot, missing: tuple[str, ...], refused: set[str]) -> bool:
+    """A blocked-edge `ValueError` is a retained refusal only after a blocked producer, or when
+    every missing input is a module refused in this walk; anything else is a defect (G7)."""
+    if any(h.status == "blocked" for h in before.heads):
+        return True
+    return bool(missing) and all(item in refused for item in missing)
+
+
 def _expected_begin(before: ExecutionSnapshot, module_id: str, ticket_id: str) -> Attempt:
     """What `Execution.begin(module_id)` yields on `before` (execution.py `begin`), with the
     ticket id taken from the record because a uuid cannot be replayed: no pending attempt; the
@@ -1714,6 +1802,7 @@ def _verify_chain(
     stop = planned.index(deterministic) if deterministic is not None else len(planned)
     stage = 0
     cursor = 0
+    last_begun = -1  # begins follow plan order; a refused module is skipped (G3)
     for before, after, kind, ticket_id in transitions:
         if before != cursor or after < before:
             raise WorkflowError("identity_mismatch")
@@ -1724,6 +1813,10 @@ def _verify_chain(
             if module_id not in planned:
                 raise WorkflowError("identity_mismatch")
             phase = 0 if planned.index(module_id) < stop else 2
+            if kind == "begin":
+                if planned.index(module_id) < last_begun:
+                    raise WorkflowError("identity_mismatch")
+                last_begun = planned.index(module_id)
         if phase < stage:
             raise WorkflowError("identity_mismatch")
         stage = phase
@@ -1752,25 +1845,25 @@ def _verify_walk(
     planned: tuple[str, ...],
     deterministic: str | None,
 ) -> None:
-    """Planned analytical modules are settled, or the first unsettled one was refused."""
+    """Each planned analytical module is settled or refused, never both and never neither (G3).
+
+    A refusal does not end the walk: the next module is begun. A refusal sits on the snapshot the
+    next begin started from; with no later begin before the stop, on the first publication's
+    `before` when the module is planned before CP-MODEL and a publication follows, else on the
+    final snapshot (a refusal does not change the journal, so consecutive refusals share one)."""
     snapshot = store.read()
     heads = {h.module_id for h in snapshot.heads}
-    refused = {r.module_id for r in receipt.refusals}
-    if len(receipt.refusals) > 1 or len(heads) != len(snapshot.heads):
+    refused_ids = [r.module_id for r in receipt.refusals]
+    refused = set(refused_ids)
+    if len(refused) != len(refused_ids) or len(heads) != len(snapshot.heads):
         raise WorkflowError("identity_mismatch")
-    for index, module_id in enumerate(analytical):
-        if module_id in heads:
-            if module_id in refused:
-                raise WorkflowError("identity_mismatch")
-            continue
-        if refused != {module_id}:
+    if not refused <= set(analytical):
+        raise WorkflowError("identity_mismatch")
+    for module_id in analytical:
+        # settled xor refused; a refused module has no attempt (it was never begun)
+        if (module_id in heads) == (module_id in refused):
             raise WorkflowError("identity_mismatch")
-        # No later module may have been begun either: the walk ends at the refusal.
-        if any(a.module_id in analytical[index:] for a in snapshot.attempts):
-            raise WorkflowError("identity_mismatch")
-        break
-    else:
-        if refused:
+        if module_id in refused and any(a.module_id == module_id for a in snapshot.attempts):
             raise WorkflowError("identity_mismatch")
     blocked = [
         m
@@ -1781,34 +1874,26 @@ def _verify_walk(
         later = analytical[analytical.index(blocked[0]) + 1 :]
         if later and later[0] not in heads:
             raise WorkflowError("identity_mismatch")
-    # The refusal ended the analytical walk. A module planned before CP-MODEL was refused before
-    # the stop, on the snapshot the first publication started from; one planned after it was
-    # refused after the publication, on the final snapshot, since later modules may have settled
-    # in between (F3). With no publication, the final snapshot.
     before_stop = planned.index(deterministic) if deterministic is not None else len(planned)
     final = snapshot.content_hash()
 
     def refused_on(module_id: str) -> str:
-        if receipt.publications and planned.index(module_id) < before_stop:
+        index = planned.index(module_id)
+        pre_stop = index < before_stop
+        for begin in receipt.begins:  # chronological: the first later one is the next begin
+            position = planned.index(begin.module_id)
+            if position > index and (not pre_stop or position < before_stop):
+                return begin.snapshot_before_sha256
+        if receipt.publications and pre_stop:
             return receipt.publications[0].snapshot_before_sha256
         return final
 
     for refusal in receipt.refusals:
-        before = _snapshot(store, refusal.snapshot_sha256)
         if refusal.module_id not in planned or refusal.snapshot_sha256 != refused_on(
             refusal.module_id
         ):
             raise WorkflowError("identity_mismatch")
-        try:
-            current_inputs(before, refusal.module_id)
-        except NotAuthorized as error:
-            if str(error) != refusal.reason:
-                raise WorkflowError("identity_mismatch") from None
-        except ValueError as error:
-            if str(error) != refusal.reason or not str(error).startswith(BLOCKED_EDGE):
-                raise WorkflowError("identity_mismatch") from None
-        else:
-            raise WorkflowError("identity_mismatch")
+        _verify_refusal(_snapshot(store, refusal.snapshot_sha256), refusal, refused)
 
 
 def _interrupted_issues(interruption: str) -> tuple[str, ...]:

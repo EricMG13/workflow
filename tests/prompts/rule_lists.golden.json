@@ -1113,8 +1113,7 @@
      "oracle:cp3d:observations_and_absence",
      "oracle:cp3d:duplicate_kind",
      "fn:deploy_workflow.owners.cp3d:_check_observations",
-     "fn:deploy_workflow.owners.cp3d:submission_issues",
-     "fn:deploy_workflow.owners.cp3d:_issues"
+     "fn:deploy_workflow.owners.cp3d:submission_issues"
     ]
    },
    {
@@ -1136,7 +1135,7 @@
    },
    {
     "id": "market_implied.3",
-    "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused. All `context_row` observations of one submission name rows of the same facility. A context bid and offer come from one listed row, never one from the context and one from a sheet. Context market evidence is built by Python: cite it only by its row id in `context_row`, never with the `context` source as a `source_id`.",
+    "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused. All `context_row` observations of one submission name rows of the same facility. A context bid and offer are the two listed rows of one context quote (same facility and date), never one from the context and one from a sheet. Context market evidence is built by Python: cite it only by its row id in `context_row`, never with the `context` source as a `source_id`.",
     "checks": [
      "fn:deploy_workflow.owners.cp3d:_resolved",
      "fn:deploy_workflow.owners.cp3d:_check_facilities",
@@ -1851,9 +1850,9 @@
    "src/deploy_workflow/owners/cp2h.py": "9fa9ebb713c063d046f6bc727f357b72be3a5963cb271e9495106eca30c81c1f",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
    "src/deploy_workflow/owners/cp3c.py": "7bd54cdb92cbb5b10060227175a0b1ee0e774bda4b8b8412e461ef5d43761fd4",
-   "src/deploy_workflow/owners/cp3d.py": "76e3b8bf17d4063800b36620dc7e4c4fd9ed505608729ac2d4f6443e0476c23a",
+   "src/deploy_workflow/owners/cp3d.py": "efa916f6f245ad6a646a9e62775c35587fd9c0b42964d4cf51fe71708ca94122",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
-   "src/deploy_workflow/owners/cp4c.py": "19824c5ef61373468c74001fb6652b121f07cae8d72601371528f4ca1650dbf4",
+   "src/deploy_workflow/owners/cp4c.py": "4fec1bf89e5744c23ea5becfdf90ead8407d9ef2c6a5ba6973a04d18fd71bed8",
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",

@@ -420,7 +420,7 @@ Notes on the table.
 
 Not verified: nothing was rendered or run through G2; no `report_view.build` output was compared to these oracle pointers (keys were read from the JSON, not from product output); whether `build` already emits S.5, RV.3, CR.1-3 and DR.2-6 is the wiring builders' work; the claim that a restricted CP-1 run populates `model-chart-strip` rests on `tests/test_cp1_chart_render.py` (a typed-seam fixture, not the genuine G1 run); the `E/expected.json` pointers for S.1-S.4 were read as keys, not matched to marks.
 
-## Rev 4 amendment (Phase 2 Task 5, 2026-11-01) — the run-context section; overrides the HTML paragraph and the equivalence test below where they differ
+## Rev 4 amendment (Phase 2 Task 5, 2026-11-01) — the run-context section; overrides the HTML paragraph and the equivalence test above where they differ
 
 When the pack carries a `context` source, `_capture` reads it through `context_facts(pack)` after the store block. A `ContextRefused` becomes `owner_render_context`; it is never relabelled as a store failure. When the pack carries no context, nothing changes and the page bytes equal the rev 3 delivery's.
 
@@ -429,6 +429,6 @@ When a context exists, the same `replace` that inserts the banner also inserts, 
 - CP-1: the borrower-name check result (`match`, `not_supplied` or the gap text) and the borrower entities located in CP-1's T4.2 rows;
 - CP-1A: the user-supplied sector and sponsor.
 
-Each user-supplied value carries the mark `user-supplied (context source, line N)`, where N is the line of its key in the frozen context source. Empty fields are omitted and every value is HTML-escaped. The section is part of `report.html`, so the `files` digests and the verifier's two `_capture` comparisons cover it; the receipt gains no field. The builder is the pure function `run_context_section(context, spans, cp0_fields, t42_cells)`; its answer key is `cases/context-identity-periods/expected.json#render`.
+Each user-supplied value carries the mark `user-supplied (context source, line N)`, where N is the line of its key in the frozen context source. Empty fields are omitted, and so is the issuer row when no CP-0 head is shown. Every value is HTML-escaped, and a control (Cc) or format (Cf) character is then shown as a visible `\uXXXX` escape; a value without one is byte-identical to its plain escape. N is found from the key's `"<key>":` token inside the `identity` object, on the reader's own line split, never from a line prefix. A key the spans cannot place there, or a span whose locator is not `line:N`, refuses the delivery as `owner_render_context`. The section is part of `report.html`, so the `files` digests and the verifier's two `_capture` comparisons cover it; the receipt gains no field. The builder is the pure function `run_context_section(context, spans, cp0_fields, t42_cells)`; its answer key is `cases/context-identity-periods/expected.json#render`.
 
 Consequence for the equivalence test (Acceptance 3): for a delivery that carries a context, the page with the banner and the run-context section removed equals `render_financial_slice`'s page with its banner removed. A delivery without a context is unchanged.

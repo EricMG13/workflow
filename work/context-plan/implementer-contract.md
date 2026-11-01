@@ -9,10 +9,10 @@ dispatch names; if not, stop and report NEEDS_CONTEXT.
 2. TDD: write the RED test(s) first, run them, see them fail for the expected reason, then
    implement until GREEN. Record both outputs.
 3. Tests: `PYTHONPATH=src "/Users/ericguei/Documents/Deploy Workflow/.venv/bin/python" -m pytest <paths> -q`.
-   Run the affected tests your brief names (and any test file whose imports you change), once, in
-   one process, never `RUN_PROMOTION=1` and never a second copy in parallel (ruling B15): report the
-   promotion-gated tests and `test_owner_workflow.py` / `test_owner_s1a.py` as deferred unless your
-   brief names one of them as RED. Gates on
+   Fast tests only (user, ruling B16): run your RED tests and the specific test functions your change
+   touches, by node id (`tests/x.py::test_name`), once, in one process, each command under 5 minutes
+   (Bash timeout 300000); never `RUN_PROMOTION=1`, never a whole long file, never a parallel copy.
+   Every other affected test is reported deferred under `Not verified:`. Gates on
    changed files: `ruff check`, `ruff format --check`, and `mypy <files>` (all via the venv's
    `-m ruff` / `-m mypy`). All must exit 0 before you commit.
 4. Never: a stub or fake value standing in for real behaviour; a catch-all that hides a failure;

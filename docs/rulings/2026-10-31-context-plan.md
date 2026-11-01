@@ -81,3 +81,9 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   per phase, by the controller, on a frozen export, before the full suite and the PR Manager hand-off.
   O1 Task 1 at 4725c3b6: presets, order, workflow and financial passed with `RUN_PROMOTION=1`; cp3, cp4, cpos,
   rendering, s1a were stopped and wait for the O1 phase gate.
+- **B16 Fast tests only (user, 2026-11-01: "only run the fast test").** Supersedes B15 and narrows B3.
+  Per task: the RED tests and the touched test functions by node id, each command under 5 minutes, never
+  `RUN_PROMOTION=1`, never a whole long file. Per phase (controller, before the PR Manager hand-off): the
+  union of those node ids plus `ruff`/`mypy`, not the full suite. Promotion-gated tests, the long files and
+  the full suite are not run in this session; each hand-off lists them under `Not verified:` for the PR
+  Manager / CI. Cost: a regression outside the touched tests is found later, at CI.

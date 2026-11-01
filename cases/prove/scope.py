@@ -8,23 +8,27 @@
         exit 1 when BASE...HEAD touches a PRODUCT path
 
 Run from the repository root. A git failure exits 2 with git's stderr; it never passes.
+
+Bound: per-commit mode stops a careless mix only. Merge commits are skipped and a builder can
+split a mix across commits; the `--role builder` check over the whole range is the boundary.
+In patterns, `*` matches within one path segment and `**` matches any depth.
 """
 
-import fnmatch
+import re
 import subprocess
 import sys
 
 ORACLE = (
-    "cases/*",
+    "cases/**",
     "src/deploy_vii/methodology.json",
-    ".claude/skills/*",
-    ".github/*",
+    ".claude/skills/**",
+    ".github/**",
     "tests/test_goldens_*.py",
     "tests/test_prove_*.py",
 )
 PLAN = (
-    "docs/superpowers/plans/*",
-    "docs/superpowers/specs/*",
+    "docs/superpowers/plans/**",
+    "docs/superpowers/specs/**",
     "docs/*-LEASE.md",
     "docs/*-ADDENDUM.md",
 )
@@ -35,15 +39,16 @@ class GitError(Exception):
     pass
 
 
+def _regex(pattern: str) -> re.Pattern[str]:
+    parts = re.split(r"(\*\*|\*)", pattern)
+    body = "".join(
+        ".*" if part == "**" else "[^/]*" if part == "*" else re.escape(part) for part in parts
+    )
+    return re.compile(body)
+
+
 def _match(path: str, patterns: tuple[str, ...]) -> bool:
-    for pattern in patterns:
-        if pattern.startswith("docs/*-"):
-            # single-level glob: the file sits directly under docs/
-            if path.count("/") == 1 and fnmatch.fnmatchcase(path, pattern):
-                return True
-        elif fnmatch.fnmatchcase(path, pattern):
-            return True
-    return False
+    return any(_regex(pattern).fullmatch(path) for pattern in patterns)
 
 
 def classify(path: str) -> str:
@@ -57,24 +62,35 @@ def classify(path: str) -> str:
 
 
 def git(*args: str) -> list[str]:
+    """Run git; return its NUL-separated output decoded as utf-8 with surrogateescape."""
     try:
-        done = subprocess.run(["git", *args], capture_output=True, text=True, check=False)
+        done = subprocess.run(["git", *args], capture_output=True, check=False)
     except OSError as exc:
         raise GitError(f"git {' '.join(args)}: {exc}") from exc
     if done.returncode != 0:
-        raise GitError(done.stderr.strip() or f"git {' '.join(args)} exited {done.returncode}")
-    return [line for line in done.stdout.splitlines() if line]
+        message = done.stderr.decode("utf-8", errors="replace").strip()
+        raise GitError(message or f"git {' '.join(args)} exited {done.returncode}")
+    return [
+        item.decode("utf-8", errors="surrogateescape") for item in done.stdout.split(b"\0") if item
+    ]
+
+
+def printable(text: str) -> str:
+    """Escape undecodable bytes so printing a path can never raise."""
+    return text.encode("utf-8", errors="backslashreplace").decode("utf-8")
 
 
 def per_commit(base: str, head: str) -> tuple[int, list[str]]:
-    shas = git("rev-list", "--no-merges", f"{base}..{head}")
+    shas = git("rev-list", "--no-merges", "-z", f"{base}..{head}")
     violations: list[str] = []
     for sha in shas:
-        paths = git("diff-tree", "--no-commit-id", "-r", "--name-only", "--no-renames", sha)
+        paths = git(
+            "diff-tree", "--root", "-z", "--no-commit-id", "-r", "--name-only", "--no-renames", sha
+        )
         classes = {path: classify(path) for path in paths}
         if "PRODUCT" in classes.values() and "ORACLE" in classes.values():
             violations += [
-                f"{sha} {path}: {kind} in per-commit"
+                f"{sha} {printable(path)}: {kind} in per-commit"
                 for path, kind in classes.items()
                 if kind in ("PRODUCT", "ORACLE")
             ]
@@ -83,9 +99,9 @@ def per_commit(base: str, head: str) -> tuple[int, list[str]]:
 
 def per_role(role: str, base: str, head: str) -> tuple[int, list[str]]:
     forbidden = {"builder": ("ORACLE", "PLAN"), "oracle": ("PRODUCT",)}[role]
-    paths = git("diff", "--name-only", "--no-renames", f"{base}...{head}")
+    paths = git("diff", "-z", "--name-only", "--no-renames", f"{base}...{head}")
     violations = [
-        f"{base}...{head} {path}: {classify(path)} in --role {role}"
+        f"{base}...{head} {printable(path)}: {classify(path)} in --role {role}"
         for path in paths
         if classify(path) in forbidden
     ]
@@ -103,7 +119,7 @@ def main(argv: list[str]) -> int:
     try:
         checked, violations = per_role(role, base, head) if role else per_commit(base, head)
     except GitError as exc:
-        print(f"scope: git failed: {exc}", file=sys.stderr)
+        print(f"scope: git failed: {printable(str(exc))}", file=sys.stderr)
         return 2
     for line in violations:
         print(line)

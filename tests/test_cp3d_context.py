@@ -488,6 +488,16 @@ def test_a_model_written_context_observation_is_refused_whatever_cp0_says() -> N
         f"observations[2]: {BY_PYTHON}"
     ]
     assert issues_of(submission(by_row("o01", "o02", "o03")), up) == []
+    # the refused hand-written bid is not also reported as an unpaired side
+    hand_bid = {
+        **by_row("o01")[0],
+        "context_row": None,
+        "source_id": "context",
+        "locator": "line:30",
+    }
+    assert issues_of(submission([hand_bid, by_row("o02")[0]]), up) == [
+        f"observations[0]: {BY_PYTHON}"
+    ]
 
 
 def test_a_context_bid_and_offer_must_come_from_one_quote_row() -> None:

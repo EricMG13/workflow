@@ -890,19 +890,26 @@ def _check_observation(
         dates[o.kind] = parsed
 
 
+def _refused_context(o: Observation, context: MarketContext) -> bool:
+    """Whether the observation is a context observation CP-3D refuses: a `context_row` that names
+    no listed row, or a model-written one citing the `context` source."""
+    if o.context_row is None:
+        return o.source_id == CONTEXT_SOURCE_ID
+    return _listed(o, context) is None
+
+
 def _side_rows(
     sub: MarketImpliedSubmission, context: MarketContext
 ) -> dict[str, tuple[int, int | None]]:
     """For the first bid and the first offer: its position and the context quote row it came from
-    (None for a sheet observation). Empty when a side names an unlisted row."""
+    (None for a sheet observation). Empty when a side is a refused context observation."""
     sides: dict[str, tuple[int, int | None]] = {}
     for i, o in enumerate(sub.observations):
-        if o.kind in ("bid", "offer") and o.kind not in sides:
-            listed = _listed(o, context) if o.context_row is not None else None
-            if o.context_row is not None and listed is None:
-                return {}  # the unlisted row has its own issue
-            row = None if listed is None else context.context_quote_rows[listed.context_row or ""]
-            sides[o.kind] = (i, row)
+        if o.kind not in ("bid", "offer") or o.kind in sides:
+            continue
+        if _refused_context(o, context):
+            return {}  # it has its own issue
+        sides[o.kind] = (i, context.context_quote_rows.get(o.context_row or ""))
     return sides
 
 

@@ -306,6 +306,14 @@ def test_cp3d_is_enabled_and_pinned(pack: PreparedPack) -> None:
     enabled_and_pinned_by_default("CP-3D", pack)
 
 
+def test_cp4c_is_enabled_and_pinned(pack: PreparedPack) -> None:
+    enabled_and_pinned_by_default("CP-4C", pack)
+
+
+def test_phase_6_enables_all_six_modules() -> None:
+    assert compose_module.PINS_ENABLED == ALL_SIX
+
+
 # ------------------------------------------------------------------------------ the guard
 
 Runner = Callable[[Path, pytest.MonkeyPatch], list[str]]

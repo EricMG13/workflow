@@ -161,3 +161,11 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   review, gives the CP-1 tool-loop payloads (`financials`, `narrative`, `readiness`, `quality`), re-cut from
   the frozen figures with no invented value. O2 Task 5 then adds the settled walk with receipt and render,
   and the B21 receipt tests.
+- **B22a The citation check lands before the first live call (user, 2026-11-01: "Before first live run").**
+  Narrows B22. `read_pages` and `extract_statements` take `line:N` now (f0cf47c6). `unread_citation_issues`
+  stays page-only for the O2 release. Turning it on re-cuts the frozen payloads that cite context lines (o2 CP-0,
+  `context-attachments-owner`, `cp2h-context-owner`, o2 CP-1A/CP-3, owner cores cp1d, cp2e, cp3d, cpdr, cp8),
+  each with its own preparer and reviewer, and that follow-up must land before any live provider call. Until
+  then a model can cite a `line:N` it never read; the quote must still match the line exactly. The controller
+  rulings recorded with it (O2 Task 7): `MAX_LINES_PER_EXTRACT` 200 (a real filing's last statement unit fails
+  closed), and `live/prompts.py` still says "page" (before O6 live runs).

@@ -21,6 +21,7 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
    - refuse adapters that are not of the exact type;
    - map `StepStopped` to `outcome: stopped`;
    - wire `redact_stream` to stderr.
+7. B22a: turn on the `line:N` citation check in `unread_citation_issues`, and re-cut the frozen payloads that cite context lines (owner table below). This must land before any live call.
 
 ## For the owner to decide
 
@@ -40,7 +41,7 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 | An exception inside a tool call (for example a TypeError) becomes a stop with run.json through O5's `_caught`, not a propagated crash (p09) | `model/loop.py` `_caught` | run_pathway docstring says so |
 | `DELIVERY_SCOPES` has no `portfolio_decision` row, so every portfolio_decision run ends `stopped: render: owner_render_scope` and writes no delivery (O2 Task 5: on o2-synthetic, eight modules settle restricted and the receipt verifies, then render refuses). Adding a scope is a rendering lease. | `owner_rendering.py:101-372` | the O2 done-when pins this end state |
 | A RecordedAdapter miss is recorded as `AdapterError`, cost unknown, with the reservation held, so an offline stopped run reports non-zero `spent_usd` (O2 Task 3 C4) | `model/loop.py` | offline spend is not money (Q7); parked for the end-of-plan batch |
-| B22's citation check is not done. `unread_citation_issues` stays page-only, so on a text or HTML run a model can cite a `line:N` it never read; the quote must still match the line exactly (O2 Task 7 R1; phase review p03). Tightening it re-cuts the frozen o2 CP-0 payload, the context-citing payloads of `context-attachments-owner`, `cp2h-context-owner`, o2 CP-1A/CP-3 and the owner cores cp1d, cp2e, cp3d, cpdr and cp8. | `live/tools.py:1261-1267` | asked of the user (narrows B22) |
+| B22's citation check is not done. `unread_citation_issues` stays page-only, so on a text or HTML run a model can cite a `line:N` it never read; the quote must still match the line exactly (O2 Task 7 R1; phase review p03). Tightening it re-cuts the frozen o2 CP-0 payload, the context-citing payloads of `context-attachments-owner`, `cp2h-context-owner`, o2 CP-1A/CP-3 and the owner cores cp1d, cp2e, cp3d, cpdr and cp8. | `live/tools.py:1261-1267` | user B22a: before the first live run (readiness item 7) |
 | `MAX_LINES_PER_EXTRACT` is 200, but a real filing's last statement unit runs to the end of the source, so CP-1 financials fails closed on real HTML (O2 Task 7 R2). | `live/tools.py` | fails closed |
 | The extracted-coverage floor (`_cell_coverage`) counts only `page:N` citations, so it never judges a line source (B22 review I1). Nothing in the repo turns the floor on. | `live/tools.py:919-924` | floor off |
 | `STATEMENT_HEADING` is case-sensitive and must match the whole line. All 22 golden HTML sources title-case their statement headings ("Consolidated Balance Sheets"), so CP-1 financials on a real HTML source finds no statement unit and refuses by name (phase review p01). This predates O2. | `financial_workflow.py:88` | refuses by name after the O2 phase fix |

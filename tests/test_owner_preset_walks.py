@@ -98,8 +98,6 @@ EXPECTED: dict[str, dict[str, Any]] = {
 }
 # Every misfit row is `predicted`: a static comparison of bound inputs, consumer lists or readiness
 # entry sets, not an observed refusal. Only a first gap at CP-0 is `measured`.
-UNSHAPED = {"context-attachments-owner"}
-UNSHAPED_COUNT = 5
 GAP_PRESETS = sorted(p for p in EXPECTED if EXPECTED[p]["first_gap"] == "CP-0")
 
 
@@ -178,21 +176,14 @@ def test_walk_ends_at_cp0_without_a_frozen_document(pathway: str, tmp_path: Path
     assert workflow._binding.module_id == "CP-0"
     assert workflow._phase == "analytical" and not workflow._begins[1:]
     ids = {s.source_id for s in pack.sources}
-    refused = unshaped = 0
+    refused = 0
     for oracle, document in pw.frozen_cp0_documents(pack.content_hash()):
         assert {s["source_id"] for s in document["sources"]} != ids, oracle
-        try:
-            review = ReadinessReview.model_validate_json(json.dumps(document))
-        except ValueError as error:
-            # only context-attachments-owner literals may fail to parse, on a source authority
-            # the current enum lacks; any other unparsed literal fails the test
-            assert oracle in UNSHAPED and "authority" in str(error), (oracle, str(error)[:200])
-            unshaped += 1
-            continue
+        # every frozen literal parses, `draft` authority included (Phase 5 Task 1 admitted it)
+        review = ReadinessReview.model_validate_json(json.dumps(document))
         assert pw.SOURCE_RULE in validate_review(pack, review), oracle
         refused += 1
-    assert unshaped == UNSHAPED_COUNT
-    assert refused == len(pw.frozen_cp0_documents()) - UNSHAPED_COUNT
+    assert refused == len(pw.frozen_cp0_documents())
     with pytest.raises(WorkflowError, match="not_permitted"):
         workflow.write_receipt(tmp_path / "receipt.json")
     with pytest.raises(WorkflowError, match="not_permitted"):

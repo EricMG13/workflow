@@ -38,7 +38,8 @@ NOT_CONSUMERS = frozenset({"CP-0", "CP-MODEL", "CP-MEMO", "CP-OS"})
 class SourceAssessment(Contract):
     source_id: Identifier
     document_family: Text
-    authority: Authority
+    # `draft` is CP-0 only (B7): it is not an `Authority`, which also types CP-1A source_class.
+    authority: Authority | Literal["draft"]
     entity: str | None
     period: str | None
     version_relationship: Text
@@ -327,6 +328,35 @@ def coverage_issues(pack: PreparedPack, review: ReadinessReview) -> tuple[str, .
     return absence_issues(pack, texts)
 
 
+def context_authority_issues(pack: PreparedPack, review: ReadinessReview) -> list[str]:
+    """Issues for the two rules on the run's `context` source (B7, B17 item 6).
+
+    The `context` source never carries `executed`, `filed` or `draft` authority. A `draft`
+    assessment of any source is admitted only when the context frozen in the pack declares
+    `legal_documents: draft`; the context is read once, and only when a draft is assessed.
+    """
+    from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, context_facts
+
+    issues = [
+        f"Context source cannot be classified {item.authority}"
+        for item in review.sources
+        if item.source_id == CONTEXT_SOURCE_ID and item.authority in {"executed", "filed", "draft"}
+    ]
+    drafts = [item.source_id for item in review.sources if item.authority == "draft"]
+    if not drafts:
+        return issues
+    try:
+        context = context_facts(pack)
+    except ContextRefused as error:
+        return [*issues, f"Draft authority refused, context invalid: {error.problems[0]}"]
+    if context is None or context.attachments.legal_documents != "draft":
+        issues += [
+            f"Draft authority needs a context that declares draft legal documents: {source_id}"
+            for source_id in drafts
+        ]
+    return issues
+
+
 def validate_review(pack: PreparedPack, review: ReadinessReview) -> tuple[str, ...]:
     try:
         pack = PreparedPack.model_validate_json(pack.model_dump_json())
@@ -374,6 +404,7 @@ def validate_review(pack: PreparedPack, review: ReadinessReview) -> tuple[str, .
         if any(citation.source_id != source.source_id for citation in source_review.citations):
             issues.append(f"Classification cites a different source: {source.source_id}")
         issues.extend(citation_issues(source_review.citations, pack.sources))
+    issues.extend(context_authority_issues(pack, review))
 
     assessments_by_id = {item.source_id: item for item in review.sources}
     # The first READY consumer of each module, by position: a gap's "omits relevant gap" lines

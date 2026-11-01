@@ -1880,7 +1880,7 @@
     "modules": [
       {
         "path": "cases/cp1c-owner/expected.json",
-        "sha256": "2165d28d06e80347b8ea9c5a78350a1a41bb60db4b140cfce3e4256bccc57862"
+        "sha256": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df"
       }
     ],
     "order_of_authority": "approved page decides appearance; pack brief decides provider and data path; inference last",

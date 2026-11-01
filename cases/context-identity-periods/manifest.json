@@ -10,7 +10,7 @@
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "cases/cpl10-owner/expected.json": "9a6345b5272da3c2f9b20c9055348e9edef2042f9aefbcdd784448e4b908fd63"
+    "cases/cpl10-owner/expected.json": "285915140dbd7722e406ce96bb11c20ab5f5ce370e6649748299f4809695ce45"
   },
   "packs": {
     "E": {
@@ -325,7 +325,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "4543dba7604ab0888840d5004377b965a8ad535bf5192525d0506127f82f29e2",
+    "sha256": "e134a50d829f95e696a41ec6301f937879f315fbe822b6e3e19d55a21ae5f2b8",
     "run": "python3 -I cases/context-identity-periods/builder/build.py"
   },
   "files_sha256": {
@@ -343,7 +343,7 @@
     "contexts/ctx-q2031.json": "569f239c0a79ec52c910937a625de2e3ecf41baa4a7b131de26ad468e248ac6b",
     "contexts/ctx-q3.json": "3533c6af5ce729a2674e0de75b990b2bd947d62b2d6166d43050b73b02cf2521",
     "contexts/ctx-research.json": "f92dd06a94396ce504c6fda97ce251aebf156e33b557aed56bee2e0308239f20",
-    "expected.json": "a443c9f739c66e0048f664e0860f133be394fd81be9673ff2d116a8f8f5f3781",
+    "expected.json": "2f31d33129aea420b3a247860887751b780532d3b9b29c36ebafff83faadb9ce",
     "overlays.json": "fd454ec9a19225bc4869d36c04fce78e1e45de5fe34312a2348d2e089ece47e1",
     "sources/identity-b.json": "010c83577f92a14f2e108caa9909dabd375d3cf9765f424122f2d1047be92a14",
     "submissions-b.json": "edeba5b70dea36ded727ff5b3d1031f23e59a7a3c55fb4585738604ba6408371"

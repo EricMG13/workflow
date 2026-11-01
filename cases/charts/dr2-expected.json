@@ -1348,7 +1348,7 @@
       {
         "path": "cases/cp4c-owner/expected.json",
         "schema_version": "cp4c-owner-expected/1",
-        "sha256": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6"
+        "sha256": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed"
       }
     ],
     "rulings": [

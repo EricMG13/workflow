@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import shutil
 from collections.abc import Iterator, Sequence
 from collections.abc import Mapping as MappingABC
@@ -23,6 +24,8 @@ import pytest
 
 from deploy_vii.contracts import PATHWAY_MODULES
 from deploy_vii.execution import Execution
+from deploy_workflow.model_testing import pathway as pathway_module
+from deploy_workflow.model_testing import scoring as scoring_module
 from deploy_workflow.model_testing.cases import CaseError, GoldenCase
 from deploy_workflow.model_testing.mapping import Locator, Mapping, MappingEntry
 from deploy_workflow.model_testing.pathway import PathwayScore, score_run
@@ -153,6 +156,56 @@ def gap_copy(gap_run: Path, tmp_path: Path) -> Path:
     return target
 
 
+@pytest.fixture(scope="module")
+def good_run(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A genuine CP-0, CP-1 and CP-MODEL run (every plan module has a settled head), published and
+    rendered with the real renderer; about three minutes to build, once per module."""
+    base = tmp_path_factory.mktemp("pathway-good")
+    build, run_dir = base / "build", base / "run"
+    build.mkdir()
+
+    def start(root: Path, gap: bool = False) -> tuple[OwnerWorkflow, Any]:
+        pack = fw.make_pack(gap)
+        return OwnerWorkflow.create(
+            root / "store", pack, publication_directory=root / "model"
+        ), pack
+
+    patch = pytest.MonkeyPatch()
+    patch.setattr(fw, "start", start)
+    try:
+        workflow = fw.promoted_case(build)
+    finally:
+        patch.undo()
+    assert workflow.publish()["status"] == "ok"
+    receipt = workflow.write_receipt(build / "owner-run.json")
+    run_dir.mkdir()
+    shutil.copytree(build / "store", run_dir / "execution")
+    shutil.copytree(build / "model", run_dir / "publication")
+    shutil.copyfile(build / "owner-run.json", run_dir / "owner-run.json")
+    render_owner_slice(
+        run_dir / "execution",
+        run_dir / "owner-run.json",
+        run_dir / "publication",
+        run_dir / "delivery",
+    )
+    _write_run_json(run_dir, receipt.run.run_id)
+    return run_dir
+
+
+@pytest.fixture
+def good_copy(good_run: Path, tmp_path: Path) -> Path:
+    target = tmp_path / "run"
+    shutil.copytree(good_run, target)
+    return target
+
+
+def _good_case() -> tuple[GoldenCase, Mapping]:
+    facts = [_golden_fact(OBJECTIVE, "known", "Historical financial foundation", "text")]
+    return _case(GAP_CASE, "credit_snapshot", facts), _mapping(
+        GAP_CASE, [_entry(OBJECTIVE, "run", "objective")]
+    )
+
+
 def _tree(root: Path) -> dict[str, bytes]:
     return {
         str(p.relative_to(root)): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()
@@ -162,16 +215,16 @@ def _tree(root: Path) -> dict[str, bytes]:
 def test_scores_plan_order(gap_run: Path) -> None:
     case, mapping = _gap_case()
     before = _tree(gap_run)
-    score = score_run(gap_run, case, mapping)
+    score = score_run(gap_run, case, mapping, refusals={"CP-1": ("financial source",)})
     assert isinstance(score, PathwayScore)
     assert [m.module_id for m in score.modules] == ["CP-0", "CP-1", "CP-MODEL"]
     assert [m.head_status for m in score.modules] == ["restricted", "refused", "absent"]
     cp0 = score.modules[0]
     assert [(f.fact_id, f.outcome) for f in cp0.facts] == [(OBJECTIVE, "match")]
     assert score.modules[1].facts[0].outcome == "gap_ok"
+    assert [m.passed for m in score.modules] == [True, True, False]  # CP-MODEL never ran
     assert score.rendered is True
-    assert all(m.passed for m in score.modules)
-    assert score.passed is True
+    assert score.passed is False
     assert (score.run_id, score.case_id, score.pathway) == (
         "slice-cp1-model-gap",
         GAP_CASE,
@@ -196,14 +249,17 @@ def test_retry_uses_settled_head_only(gap_run: Path) -> None:
 
 
 def test_tampered_delivery_not_rendered(gap_copy: Path) -> None:
+    """The directory renders until one byte of the report changes. (The gap run's CP-MODEL never
+    ran, so ``passed`` is False either way; the isolated single-cause version needs the slow
+    ``good_run`` and is ``test_tampered_delivery_isolated``.)"""
     case, mapping = _gap_case()
+    assert score_run(gap_copy, case, mapping).rendered is True
     report = gap_copy / "delivery" / "report.html"
     raw = bytearray(report.read_bytes())
     raw[len(raw) // 2] ^= 0x01
     report.write_bytes(bytes(raw))
     score = score_run(gap_copy, case, mapping)
     assert score.rendered is False
-    assert all(m.passed for m in score.modules)
     assert score.passed is False
 
 
@@ -231,9 +287,40 @@ def test_refusal_names_flow_to_the_module(gap_run: Path) -> None:
     case, mapping = _gap_case()
     plain = score_run(gap_run, case, mapping)
     assert plain.modules[1].facts[0].observed is None
+    assert plain.modules[1].passed is False  # refused, and it named nothing it lacked
+    assert plain.passed is False
     named = score_run(gap_run, case, mapping, refusals={"CP-1": ("financial source",)})
+    assert named.modules[1].facts[0].outcome == "gap_ok"
     assert named.modules[1].facts[0].observed == "refused: financial source"
-    assert named.passed is True
+    assert named.modules[1].passed is True
+    assert named.modules[2].passed is False and named.passed is False  # CP-MODEL absent
+
+
+def test_upstream_mismatch_reaches_downstream_modules(
+    gap_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """CP-0's objective is scored 'mismatch' (the golden says otherwise); every later module is
+    then scored with that fact_id as an upstream mismatch (the scorer turns it into 'inherited' for
+    an entry that depends_on it; Task 7 owns that rule). The real scorer runs; only its arguments
+    are recorded."""
+    seen: dict[str, frozenset[str]] = {}
+    real = scoring_module.score_module
+
+    def spy(module: Any, module_id: str, status: str, *args: Any) -> Any:
+        seen[module_id] = args[2]  # case, mapping, upstream_mismatches
+        return real(module, module_id, status, *args)
+
+    monkeypatch.setattr(pathway_module, "score_module", spy)  # the name pathway.py calls
+    facts = [_golden_fact(OBJECTIVE, "known", "Something else entirely", "text")]
+    case = _case(GAP_CASE, "credit_snapshot", facts)
+    mapping = _mapping(GAP_CASE, [_entry(OBJECTIVE, "run", "objective")])
+    score = score_run(gap_run, case, mapping)
+    assert score.modules[0].facts[0].outcome == "mismatch"
+    assert seen == {
+        "CP-0": frozenset(),
+        "CP-1": frozenset({OBJECTIVE}),
+        "CP-MODEL": frozenset({OBJECTIVE}),
+    }
 
 
 def test_reads_outcome_and_mode_from_run_json(gap_copy: Path) -> None:
@@ -250,8 +337,7 @@ def test_reads_outcome_and_mode_from_run_json(gap_copy: Path) -> None:
     assert score.outcome == "stopped" and score.stopped_reason == "BudgetExhausted: cap"
     assert score.mode == "offline" and score.ruling_sha256 is None
     assert score.config_id == "opus-medium" and score.run_id == "copied-run-id"
-    assert score.passed is False  # stopped, whatever the modules scored
-    assert all(m.passed for m in score.modules)
+    assert score.passed is False
 
 
 def test_live_ruling_copied(gap_copy: Path) -> None:
@@ -329,3 +415,45 @@ def test_stopped_run_case_mismatch(stopped_run: Path) -> None:
     wrong = _case("not-o2", o2_case.PATHWAY, list(case.facts.values()))
     with pytest.raises(CaseError):
         score_run(stopped_run, wrong, mapping)
+
+
+# ------------------------------------------------------------------ full run (slow, deferred to CI)
+
+slow = pytest.mark.skipif(
+    os.environ.get("RUN_PROMOTION") != "1",
+    reason="genuine CP-0, CP-1 and CP-MODEL run: build about 3 minutes, render and verify far "
+    "longer (tests/test_owner_rendering.py gates its genuine runs the same way); deferred to CI",
+)
+
+
+@slow
+def test_settled_rendered_run_passes(good_run: Path) -> None:
+    case, mapping = _good_case()
+    score = score_run(good_run, case, mapping)
+    assert [m.head_status for m in score.modules] == ["restricted"] * 3
+    assert all(m.passed for m in score.modules)
+    assert score.outcome == "settled" and score.rendered is True
+    assert score.passed is True
+
+
+@slow
+def test_tampered_delivery_isolated(good_copy: Path) -> None:
+    case, mapping = _good_case()
+    report = good_copy / "delivery" / "report.html"
+    raw = bytearray(report.read_bytes())
+    raw[len(raw) // 2] ^= 0x01
+    report.write_bytes(bytes(raw))
+    score = score_run(good_copy, case, mapping)
+    assert all(m.passed for m in score.modules) and score.outcome == "settled"
+    assert score.rendered is False and score.passed is False
+
+
+@slow
+def test_stopped_outcome_isolated(good_copy: Path) -> None:
+    case, mapping = _good_case()
+    body = json.loads((good_copy / "run.json").read_text())
+    body.update(outcome="stopped", stopped_reason="render: owner_render_scope")
+    (good_copy / "run.json").write_text(json.dumps(body))
+    score = score_run(good_copy, case, mapping)
+    assert all(m.passed for m in score.modules) and score.rendered is True
+    assert score.outcome == "stopped" and score.passed is False

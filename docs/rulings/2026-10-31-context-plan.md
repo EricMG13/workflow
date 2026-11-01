@@ -142,3 +142,13 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   (Phase 3 oracle re-review: a quote matching two objects is a guessed span, Design 3 :66-68).
 - **B20b (controller, 2026-11-01).** B20a drop gaps render in a module's own limitations exactly as the Design 5
   named context gaps do (same `Gap (<severity>): ` prefix and severity); the B20a text is the gap description.
+- **B21 (controller, applied recommendation, 2026-11-01): O1 done-when part 2 as measured.** O1 Task 5 (526ddcf0)
+  measured that on frozen fixtures five presets stop at CP-0 as an oracle gap (each union pack matches no frozen
+  CP-0 document's source set) and earnings_update walks CP-0, CP-1, CP-1B, publishes, then stops at CP-1D. No
+  stand-in payload is made. O1 is done when: all six presets pass `_check_specs` (Task 4); each preset's
+  measured end state is pinned (`EXPECTED`, `test_step1_table`); the gated earnings walk and
+  `test_no_later_module_before_publish` are written (CI, B16). The full portfolio_decision walk with
+  `verify_owner_run_receipt` and `test_receipt_rejects_model_in_cp5_inputs` move to O2 Task 5 on the frozen
+  `cases/o2-synthetic` (its CP-0 covers the prepared pack). Per-preset CP-0 oracles for the other presets are a
+  follow-up for the owner. Cost if wrong: receipt verification for five presets stays unproven until those
+  oracles exist.

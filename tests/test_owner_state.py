@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from deploy_vii.execution import Execution
 from deploy_workflow.workflow import WorkflowError
@@ -24,8 +25,23 @@ cp3 = refusals.cp3  # the fixture: the G1-X fake registered as CP-3 / CP-3D
 fake = refusals.fake
 
 
+def _retained(root: Path, kind: str, model: Any) -> list[Any]:
+    directory = root / owner.AUDIT / kind
+    return [model.model_validate_json(p.read_bytes()) for p in directory.glob("*")]
+
+
 def _independent(workflow: Any) -> Any:
-    """`OwnerState` built from the journal and the retained audit, not from `state()`."""
+    """`OwnerState` built from disk only: `store.read()` and `owner-run-audit/`.
+
+    The active ticket is the journal's one pending attempt and its step the first not yet valid
+    in the module's declared chain. Counters are per `(ticket_id, step_id)` over the retained
+    calls, input reads and submissions (never per full binding: its `snapshot_sha256` moves on a
+    repair); `inputs_read` is a retained read of that ticket and step on the journal's current
+    snapshot. `phase` and `plan` are the instance's (they are not on disk), and `stale` is False.
+
+    The one path it cannot see: a submit refused before any record (an unread inputs step) is
+    counted by `state().submits_used` (the per-step budget, R1) but retains nothing; that test
+    asserts `state()` directly."""
     root = workflow._store.directory
     snapshot = Execution(root).read()
     heads = []
@@ -44,32 +60,58 @@ def _independent(workflow: Any) -> Any:
             )
         )
     kept = sorted(
-        (
-            owner.RefusedBegin.model_validate_json(p.read_bytes())
-            for p in (root / owner.AUDIT / "refused-begin").glob("*")
-        ),
+        _retained(root, "refused-begin", owner.RefusedBegin),
         key=lambda r: workflow._plan.index(r.module_id),
     )
-    active = workflow.phase == "analytical"
-    binding = workflow.binding
+    pending = [a for a in snapshot.attempts if a.status == "pending"]
+    common: dict[str, Any] = {
+        "phase": workflow.phase,
+        "plan": workflow._plan,
+        "snapshot_sha256": snapshot.content_hash(),
+        "stale": False,
+        "settled": tuple(heads),
+        "refusals": tuple(kept),
+    }
+    if workflow.phase != "analytical":
+        assert not pending
+        return owner.OwnerState(
+            **common,
+            module_id=None,
+            step_id=None,
+            ticket_id=None,
+            attempt=None,
+            inputs_required=False,
+            inputs_read=False,
+            invokes_used=0,
+            reads_used=0,
+            submits_used=0,
+        )
+    (attempt,) = pending
+    steps = owner.OWNER_SPECS[attempt.module_id].steps
+    spec = steps[sum(s.status == "valid" for s in attempt.steps)]
+    key = (attempt.ticket_id, spec.step_id)
+    reads = [
+        r for r in _retained(root, "input-reads", owner.OwnerInputRead) if _of(r.binding) == key
+    ]
     return owner.OwnerState(
-        phase=workflow.phase,
-        plan=workflow._plan,
-        snapshot_sha256=snapshot.content_hash(),
-        module_id=binding.module_id if active else None,
-        step_id=binding.step_id if active else None,
-        ticket_id=binding.ticket_id if active else None,
-        attempt=binding.attempt if active else None,
-        inputs_required=workflow.spec.inputs != "none" if active else False,
-        inputs_read=any(r.binding == binding for r in workflow._reads) if active else False,
-        invokes_used=sum(c.binding == binding for c in workflow._calls) if active else 0,
-        reads_used=sum(r.binding == binding for r in workflow._reads) if active else 0,
-        submits_used=sum(s.binding.binding == binding for s in workflow._submissions)
-        if active
-        else 0,
-        settled=tuple(heads),
-        refusals=tuple(kept),
+        **common,
+        module_id=attempt.module_id,
+        step_id=spec.step_id,
+        ticket_id=attempt.ticket_id,
+        attempt=attempt.number,
+        inputs_required=spec.inputs != "none",
+        inputs_read=any(r.binding.snapshot_sha256 == snapshot.content_hash() for r in reads),
+        invokes_used=sum(_of(c.binding) == key for c in _retained(root, "calls", owner.OwnerCall)),
+        reads_used=len(reads),
+        submits_used=sum(
+            _of(m.binding.binding) == key
+            for m in _retained(root, "submissions", owner.OwnerSubmission)
+        ),
     )
+
+
+def _of(binding: Any) -> tuple[str, str]:
+    return binding.ticket_id, binding.step_id
 
 
 def test_state_after_create(tmp_path: Path) -> None:
@@ -85,6 +127,7 @@ def test_state_after_create(tmp_path: Path) -> None:
     assert state.settled == () and state.refusals == ()
     assert state.phase == workflow.phase == "analytical"
     assert state.plan == workflow._plan
+    assert state.stale is False
     assert state.snapshot_sha256 == workflow._store.read().content_hash()
 
 
@@ -106,6 +149,8 @@ def test_counters_reset_on_the_next_step_of_a_multi_step_module(tmp_path: Path) 
     assert (after.invokes_used, after.reads_used, after.submits_used) == (0, 0, 0)
     assert after.inputs_read is False
     assert after.inputs_required is (workflow.spec.inputs != "none")
+    assert mid.stale is False and after.stale is False
+    assert after == _independent(workflow)
 
 
 def test_reads_and_invokes_are_counted_and_inputs_read_is_per_binding(tmp_path: Path) -> None:
@@ -121,13 +166,21 @@ def test_reads_and_invokes_are_counted_and_inputs_read_is_per_binding(tmp_path: 
     assert workflow.state().inputs_required is False
     runs.submit_valid(workflow, json.dumps(fw.financials(pack)))
     assert workflow.state().inputs_required is True and workflow.state().inputs_read is False
-    workflow.read_inputs()
+    read = workflow.read_inputs()
     page = {"source_id": "financial", "first_page": 1, "last_page": 1}
     workflow.invoke("read_pages", page)  # the narrative step offers no source tool: refused,
     workflow.invoke("read_pages", page)  # yet each call is counted
     state = workflow.state()
     assert (state.reads_used, state.invokes_used, state.inputs_read) == (1, 2, True)
     assert state == _independent(workflow)
+    runs.submit_valid(workflow, json.dumps(fw.narrative(read)))
+    readiness = workflow.state()  # the next step requires inputs: its own read is still to come
+    assert readiness.step_id != state.step_id and readiness.ticket_id == state.ticket_id
+    assert readiness.inputs_required is True and readiness.inputs_read is False
+    assert readiness.reads_used == 0
+    workflow.read_inputs()
+    assert workflow.state().inputs_read is True
+    assert workflow.state() == _independent(workflow)
 
 
 def test_invalid_first_submit_keeps_the_step_and_counts_it(tmp_path: Path) -> None:
@@ -148,6 +201,8 @@ def test_invalid_first_submit_keeps_the_step_and_counts_it(tmp_path: Path) -> No
     assert (after.module_id, after.step_id) == ("CP-1", before.step_id)
     assert after.ticket_id == before.ticket_id and after.submits_used == 1
     assert [h.module_id for h in after.settled] == ["CP-0"]
+    assert after.stale is False
+    assert after == _independent(workflow)  # the repair moved the binding's snapshot, not the count
 
 
 def test_invalid_cp0_submit_opens_a_repair_attempt_with_fresh_counters(tmp_path: Path) -> None:
@@ -215,15 +270,62 @@ def test_state_on_a_sealed_workflow_returns_and_matches_the_receipt(
     assert state == _independent(workflow)
 
 
-def test_state_works_on_a_stale_instance(tmp_path: Path) -> None:
-    """`state()` never calls `_current()`: a journal moved behind the instance's back does not
-    make it raise (`open()` relies on this), while `read_inputs` would raise `stale_binding`."""
+def test_submit_before_the_required_read_is_refused_and_counted(tmp_path: Path) -> None:
+    """R1: `submits_used` is the per-step budget from `_limits`, so a submit refused for an unread
+    inputs step counts although it retains no record (`_independent` cannot see it)."""
+    workflow, pack = runs.start("positive", tmp_path)
+    runs.drive_cp0(workflow, pack, "positive")
+    context = runs.literal("positive", "cp1_source_context", pack)
+    runs.read_cited(workflow, context)
+    runs.search(workflow, "financial", "subsequent")
+    runs.search(workflow, "business", "acquisition")
+    runs.submit_valid(workflow, context)
+    fw = runs._fw()
+    fw.financial_reads(workflow)
+    runs.submit_valid(workflow, json.dumps(fw.financials(pack)))
+    assert workflow.state().inputs_required is True
+    with pytest.raises(WorkflowError, match="not_permitted"):
+        workflow.submit_review("{}")
+    state = workflow.state()
+    assert state.submits_used == 1 and state.inputs_read is False
+    assert _independent(workflow).submits_used == 0  # the one path the oracle cannot see
+
+
+def test_stale_flag_when_another_writer_interrupts_the_ticket(tmp_path: Path) -> None:
+    """`state()` never calls `_current()`: a journal moved behind the instance does not make it
+    raise (`open()` relies on this), while `invoke` raises `stale_binding`. The caller sees it in
+    `stale`; the binding and counters are the instance's last view."""
     workflow, _ = runs.start("positive", tmp_path)
+    assert workflow.state().stale is False
     store = Execution(workflow._store.directory)
     store.interrupt(workflow.binding.ticket_id, "moved behind the instance")  # moves the journal
     with pytest.raises(WorkflowError, match="stale_binding"):
         workflow.invoke("read_pages", {"source_id": "x", "first_page": 1, "last_page": 1})
-    assert workflow.state().snapshot_sha256 == workflow._store.read().content_hash()
+    state = workflow.state()
+    assert state.stale is True
+    assert state.snapshot_sha256 == store.read().content_hash()
+    assert state.module_id == "CP-0" and state.ticket_id == workflow.binding.ticket_id
+
+
+def test_stale_flag_when_another_writer_settles_the_module(tmp_path: Path) -> None:
+    workflow, pack = runs.start("positive", tmp_path)
+    other = Execution(workflow._store.directory)
+    owner.submit_cp0_review(
+        other, workflow.binding.ticket_id, runs.literal("positive", "readiness_review", pack)
+    )
+    state = workflow.state()
+    assert state.stale is True
+    assert "CP-0" in [h.module_id for h in state.settled]  # the journal's view
+    assert state.module_id == "CP-0"  # the instance's last binding, as `stale` says
+
+
+def test_stale_is_false_at_each_checkpoint_of_a_walk(tmp_path: Path) -> None:
+    workflow, pack = runs.start("positive", tmp_path)
+    assert workflow.state().stale is False
+    runs.drive_cp0(workflow, pack, "positive")
+    assert workflow.state().stale is False
+    assert workflow.submit_review("{}")["status"] == "invalid"  # CP-1 context: a repair
+    assert workflow.state().stale is False
 
 
 def test_state_refuses_while_another_operation_holds_the_lock(tmp_path: Path) -> None:
@@ -249,5 +351,5 @@ def test_state_is_a_fresh_immutable_value(tmp_path: Path) -> None:
     workflow, _ = runs.start("positive", tmp_path)
     first, second = workflow.state(), workflow.state()
     assert first == second and first is not second
-    with pytest.raises(Exception):  # noqa: B017 - pydantic frozen model, any ValidationError
+    with pytest.raises(ValidationError):  # the model is frozen
         first.phase = "x"

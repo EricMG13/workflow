@@ -720,6 +720,9 @@ class OwnerState(Contract):
     phase: str
     plan: tuple[Identifier, ...]
     snapshot_sha256: Hash
+    # True when the journal moved since this instance last bound its step: the binding and the
+    # counters below are then the instance's last view, not the journal's (G5a).
+    stale: bool
     module_id: Identifier | None
     step_id: Identifier | None
     ticket_id: Identifier | None
@@ -1158,12 +1161,14 @@ class OwnerWorkflow:
             raise WorkflowError("not_permitted")
         try:
             snapshot = self._store.read()
+            stale = snapshot.content_hash() != self._current_sha256
             settled = tuple(_settled(self._store, h.module_id) for h in snapshot.heads)
             if self._phase != "analytical":  # no module is active: the last binding is history
                 return OwnerState(
                     phase=self._phase,
                     plan=self._plan,
                     snapshot_sha256=snapshot.content_hash(),
+                    stale=stale,
                     module_id=None,
                     step_id=None,
                     ticket_id=None,
@@ -1185,6 +1190,7 @@ class OwnerWorkflow:
                 phase=self._phase,
                 plan=self._plan,
                 snapshot_sha256=snapshot.content_hash(),
+                stale=stale,
                 module_id=binding.module_id,
                 step_id=binding.step_id,
                 ticket_id=binding.ticket_id,

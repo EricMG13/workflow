@@ -772,3 +772,86 @@ def test_cp1b_probe_rejects_tampered_head(tmp_path: Path) -> None:
     )
     with pytest.raises(WorkflowError, match="identity_mismatch"):
         cp1b.probe(store, forged, forged_attempt)
+
+
+# --- B19: the composer's prose is derived from the report's own periods (ruling P2-P8) -----------
+
+_FOREIGN_WORDS = ("FY2024", "FY2025", "q3-2025", "q4-2025", "Q3", "Q4", "Opening-2024")
+
+
+def _flat_producer_at(prior: str, current: str) -> Module:
+    """The literal flat register moved to other quarters: ids, dates and the basis identities of
+    q3-2025 and q4-2025 renamed, so a flat pair exists at periods the old prose never names."""
+    renames = {
+        "q3-2025": prior,
+        "q4-2025": current,
+        "Q3 25": "Q1 27",
+        "Q4 25": "Q2 27",
+        "2025-07-01": "2027-01-01",
+        "2025-09-30": "2027-03-31",
+        "2025-10-01": "2027-04-01",
+        "2025-12-31": "2027-06-29",
+        a1.BASES["q3-2025"]: _basis_of(prior, "QUARTER"),
+        a1.BASES["q4-2025"]: _basis_of(current, "QUARTER"),
+    }
+    text = _producer().model_dump_json()
+    for old, new in renames.items():
+        text = text.replace(old, new)
+    return Module.model_validate_json(text)
+
+
+def _prose(module: Module) -> list[str]:
+    texts = [*module.limitations]
+    for claim in module.claims:
+        texts += [claim.text, claim.limitation or ""]
+    texts += [
+        f.text or ""
+        for f in module.facts
+        if f.table_id == "T1B.3" and f.row_id != "evidence.inputs"
+    ]
+    texts += [f.limitation or "" for f in module.facts if f.table_id == "T1B.3"]
+    texts += [t.limitation or "" for t in module.tables]
+    return texts
+
+
+def test_derived_prose_names_the_reports_own_periods() -> None:
+    """A flat pair at q1-2027 -> q2-2027 (hand-built register): the head, claim and limits name
+    its own periods and none of the pair the prose used to be fixed to."""
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    report = build_earnings_delta(cp1b.cp1_view(producer), "q1-2027", "q2-2027")
+    assert cp1b.expected_comparison(report) == "flat_sequential"
+    composed = ew.compose_delta(
+        producer,
+        report,
+        ew._operands(producer, report),
+        (),
+        ew._own_limits(report, owner=True),
+        _attempt(producer),
+        _run(),
+    )
+    prose = "\n".join(_prose(composed))
+    for own in ("q1-2027 to q2-2027", "Q1 trailing leverage", "current Q2", "FY2026"):
+        assert own in prose, own
+    for foreign in _FOREIGN_WORDS:
+        assert foreign not in prose, foreign
+
+
+def test_nonzero_delta_pair_not_flat() -> None:
+    """A pair whose deltas are non-zero is `unsupported_pair` on the owner path (no report, so no
+    module text), and the composer itself refuses to write "is flat" over it."""
+    module = _register()
+    moved = module.model_copy(update={"facts": _moved(module.facts, "value.revenue.q4-2025", "45")})
+    found = cp1b.compute(moved, review("q3-2025", "q4-2025"))
+    assert found.report is None and found.issues == ("unsupported_pair",)
+    producer = _producer().model_copy(update={"facts": moved.facts})
+    report = build_earnings_delta(cp1b.cp1_view(producer), "q3-2025", "q4-2025")
+    with pytest.raises(ValueError, match="unsupported_pair"):
+        ew.compose_delta(
+            producer,
+            report,
+            ew._operands(producer, report),
+            (),
+            ew._own_limits(report, owner=True),
+            _attempt(producer),
+            _run(),
+        )

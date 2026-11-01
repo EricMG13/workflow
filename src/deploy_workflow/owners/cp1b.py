@@ -306,7 +306,7 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
             found.report,
             _operands(producer, found.report),
             (Input(input_id=SUBMISSION_INPUT, sha256=submission.content_hash()),),
-            _own_limits(found.report.prior_basis_id is None, owner=True),
+            _own_limits(found.report, owner=True),
             attempt,
             pack.run,
         )

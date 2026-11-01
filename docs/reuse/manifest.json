@@ -2131,7 +2131,7 @@
       "project_commit": "9e8b92dc7fd46b3cf10e1141fc7df9d3a2ab1bf3",
       "sha256": "6009dcca0feac906bcb8a612a36e16b81552c68aadc280aa25e41af15a1c5bfb",
       "reason": "B34 (docs/rulings/2026-10-31-context-plan.md, applied recommendation): wording-only: the preference line under 'What to return' says the basis is at least one market evidence quote or a context row named in basis.context_rows, unless the confidence is Insufficient Information, as rule e and the validator (_preference_issues) accept. No rule, number or table id added.",
-      "review": "mx-adversary (B34 review; id supplied by the controller)"
+      "review": "mx-adversary a491ef81"
     },
     {
       "destination": "src/deploy_vii/readiness.py",
@@ -2140,7 +2140,16 @@
       "project_commit": "eeab0b8fecda6ee1a74b16c66711503e12928583",
       "sha256": "475d9976caa7d7bcb2aea5e66a840fe027820bb0028c58bb562ace9ef8b34072",
       "reason": "B7 (draft authority, user-approved) and B17 item 6: SourceAssessment.authority also admits 'draft' (Authority unchanged), validate_review refuses a draft assessment unless the context frozen in the pack declares legal_documents 'draft' (or says 'Draft authority refused, context invalid: <problem>'), and refuses executed, filed or draft authority on the 'context' source.",
-      "review": ".superpowers/sdd/2026-10-31-phase-5-attachments-modes/ (task-1-brief.md, task-1-report.md); review id supplied by the controller"
+      "review": "mx-adversary a0b90eb1, mx-precise ab4eba86"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "prior_project_sha256": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
+      "project_commit": "4a5adf9f82c3c7b40e2245c6a6bd71eceb5f5589",
+      "sha256": "025d1f2ee7002ebb95d7c45459e3e20d7b266956409de01198d55195674eadda",
+      "reason": "B7 (draft authority, user-approved): LEGAL_AUTHORITIES also admits 'draft', so a source CP-0 assesses draft is a CP-4 legal source as filed is; DRAFT_LIMITATION (the frozen cases/context-attachments-owner expected.json draft_limitation) is appended once to the module limitations, after the gap and blocked-CP-1 limitations, whenever a legal source is draft. The Q2 refusal wording ('is not an executed or filed source') is unchanged.",
+      "review": "mx-adversary (Phase 5 Task 2 review; id supplied by the controller)"
     }
   ],
   "local_patch_lineage": [

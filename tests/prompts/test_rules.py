@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from prompt_support import EXISTING, request_for
+from prompt_support import CONTRACT_STEPS, EXISTING, request_for
 
 from deploy_vii.live.prompts import STEP_CONTRACTS
 from deploy_vii.preparation import PreparedPack
@@ -233,7 +233,7 @@ def test_there_is_one_list_per_inventory_step_and_one_for_the_composer() -> None
     ]
 
 
-@pytest.mark.parametrize("step_id", EXISTING)
+@pytest.mark.parametrize("step_id", CONTRACT_STEPS)
 def test_an_existing_step_carries_its_contract_rules_whole(step_id: str) -> None:
     expected = rules.contract_rules(STEP_CONTRACTS[step_id], step_id)
     got = [(r.id, r.statement) for r in rules.load_rules(step_id)]

@@ -13,6 +13,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 from probes.injection_cases import INERT_BODIES, MARKER_BODIES, QUESTION_INJECTION
 from prompt_support import (
+    CONTRACT_STEPS,
     CP3_MODULE_CONTEXT,
     EXISTING,
     context_with,
@@ -107,7 +108,7 @@ def test_reuse_is_faithful_where_build_accepts_the_step(pack: PreparedPack, step
         assert ours[-1] == theirs[-1]
 
 
-@pytest.mark.parametrize("step_id", EXISTING)
+@pytest.mark.parametrize("step_id", CONTRACT_STEPS)
 def test_an_existing_contract_appears_verbatim(pack: PreparedPack, step_id: str) -> None:
     system = system_of(compose(request_for(step_id, pack)))
     contract = STEP_CONTRACTS[step_id]
@@ -147,7 +148,7 @@ def test_the_system_message_opens_with_the_step_and_ends_with_the_schema(
     assert COMPACT_OUTPUT_RULE in system
 
 
-@pytest.mark.parametrize("step_id", EXISTING)
+@pytest.mark.parametrize("step_id", CONTRACT_STEPS)
 def test_m2_the_rule_index_line_follows_the_contract(pack: PreparedPack, step_id: str) -> None:
     system = system_of(compose(request_for(step_id, pack)))
     letters = re.findall(r"^([a-z])\. ", STEP_CONTRACTS[step_id], re.MULTILINE)
@@ -163,7 +164,7 @@ def test_m2_the_rule_index_line_follows_the_contract(pack: PreparedPack, step_id
 # ------------------------------------------------------------------- rule 5
 
 
-@pytest.mark.parametrize("step_id", [s for s in EXISTING if spec_of(s).inputs != "none"])
+@pytest.mark.parametrize("step_id", [s for s in CONTRACT_STEPS if spec_of(s).inputs != "none"])
 def test_h1_a_read_inputs_step_is_never_told_every_input_is_in_the_prompt(
     pack: PreparedPack, step_id: str
 ) -> None:

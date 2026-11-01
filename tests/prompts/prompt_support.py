@@ -15,7 +15,15 @@ from deploy_workflow.owner_workflow import OWNER_SPECS, StepSpec
 from deploy_workflow.prompts import PromptRequest
 
 TEXTS = Path(__file__).parents[2] / "src" / "deploy_workflow" / "prompts" / "texts"
-EXISTING = tuple(sorted({*STEP_CONTRACTS, *(p.stem for p in TEXTS.glob("*.md"))}))
+CONTRACT_STEPS = tuple(sorted(STEP_CONTRACTS))  # steps whose text is a STEP_CONTRACTS entry
+
+
+def steps_with_text(texts: Path = TEXTS) -> tuple[str, ...]:
+    """The steps with a text: the STEP_CONTRACTS steps and the stems of ``texts/*.md``."""
+    return tuple(sorted({*STEP_CONTRACTS, *(p.stem for p in texts.glob("*.md"))}))
+
+
+EXISTING = steps_with_text()
 CP3_MODULE_CONTEXT = {
     "market_evidence_sources": ["market"],
     "cp1_facilities": [{"facility_id": "tlb-2031", "label": "Term loan B"}],

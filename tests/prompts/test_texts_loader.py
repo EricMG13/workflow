@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from prompt_support import EXISTING, request_for
+from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_text
 
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
@@ -144,3 +144,12 @@ def test_offer_errors_no_block(texts: Path) -> None:
     (texts / f"{NEW}.md").write_text(TEXT, encoding="utf-8")
     assert cp3d.context_offers(ctx.context_pack("bad-bytes")).errors
     assert "context-rows" not in context_text("bad-bytes")
+
+
+def test_contract_steps_ignore_a_loaded_text(texts: Path) -> None:
+    """A step whose text is a file is not a STEP_CONTRACTS step: a test that reads
+    ``STEP_CONTRACTS[step]`` is parametrized over CONTRACT_STEPS, which a texts file never joins."""
+    (texts / f"{NEW}.md").write_text(TEXT, encoding="utf-8")
+    assert NEW in steps_with_text(texts)
+    assert NEW not in CONTRACT_STEPS
+    assert all(step in STEP_CONTRACTS for step in CONTRACT_STEPS)

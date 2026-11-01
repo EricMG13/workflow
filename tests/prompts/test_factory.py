@@ -9,7 +9,7 @@ from typing import Any
 import o2_case
 import pytest
 import test_method_cp3 as stage1
-from prompt_support import spec_of
+from prompt_support import EXISTING, spec_of
 
 from deploy_vii.business_context import cp1_context_facts
 from deploy_vii.contracts import Fact
@@ -106,7 +106,7 @@ def test_cp1a_after_a_conditional_cp1_is_told_no_figure_may_be_referenced(
     assert "consumers" in user
 
 
-STEPS_WITHOUT_TEXT = [s for s in inventory() if s not in STEP_CONTRACTS]
+STEPS_WITHOUT_TEXT = [s for s in inventory() if s not in EXISTING]
 
 
 @pytest.mark.parametrize("step_id", STEPS_WITHOUT_TEXT)

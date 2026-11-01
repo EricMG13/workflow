@@ -2,7 +2,10 @@
 
 Step 1 comes first (brief, F4): the expected end state of each preset, measured against the frozen
 oracles without a CP-1 promotion. `EXPECTED` is that table; `test_step1_table` recomputes it from
-the registry and the oracle files, so the table cannot drift from them.
+the registry (`dependencies`, `cp1a_consumers`) and the oracle files and fails when the two differ.
+Only the CP-0 rows are `measured` (a product validator refuses every frozen document); every
+`:inputs`, `:consumers`, `:readiness` misfit and the earnings CP-1D stop are `predicted` by a static
+comparison, and the gated walk submits the frozen CP-1D payload to observe what it really returns.
 
 Measured result (see `tests/preset_walks.py`): five presets have no frozen CP-0 document for their
 sources, so their walk ends at CP-0 as an oracle gap and no payload is invented. `earnings_update`
@@ -11,8 +14,8 @@ CP-1D, whose frozen submission was frozen on a run without CP-1B (bound inputs d
 needs a real CP-1 promotion (11-26 minutes), so it runs only under `RUN_PROMOTION=1` (ruling B16:
 written, committed and not run here).
 
-`test_walk[earnings_update]` and `test_no_later_module_before_publish` share one promoted run and
-rely on file order: the second only reads the stop state, the first then publishes.
+`test_walk_earnings_update` and `test_no_later_module_before_publish` each drive their own
+promoted run, so a selective or reversed run cannot fail either.
 """
 
 import json
@@ -46,18 +49,21 @@ EXPECTED: dict[str, dict[str, Any]] = {
     "credit_snapshot": {
         "sources": (*BASE, "business", "market", "legal-covenants"),
         "first_gap": "CP-0",
+        "first_gap_basis": "measured",
         "misfits": ("CP-3:inputs", "CP-5:inputs"),
         "cp5_covered": False,
     },
     "earnings_update": {
         "sources": BASE,
         "first_gap": "CP-1D",
+        "first_gap_basis": "predicted",
         "misfits": ("CP-1D:inputs", "CP-5:inputs"),
         "cp5_covered": False,
     },
     "relative_value": {
         "sources": (*BASE, "business", "market", "peers"),
         "first_gap": "CP-0",
+        "first_gap_basis": "measured",
         "misfits": (
             "CP-1:readiness",
             "CP-1A:consumers",
@@ -71,22 +77,30 @@ EXPECTED: dict[str, dict[str, Any]] = {
     "covenant_refinancing": {
         "sources": (*BASE, "business", "legal-covenants"),
         "first_gap": "CP-0",
+        "first_gap_basis": "measured",
         "misfits": ("CP-1A:consumers", "CP-3C:inputs", "CP-5:inputs"),
         "cp5_covered": False,
     },
     "distressed_restructuring": {
         "sources": (*BASE, "business", "legal-covenants", "ratings"),
         "first_gap": "CP-0",
+        "first_gap_basis": "measured",
         "misfits": ("CP-1:readiness", "CP-1A:consumers", "CP-5:inputs"),
         "cp5_covered": False,
     },
     "portfolio_decision": {
         "sources": (*BASE, "business", "market", "prior_case", "update", "market_update"),
         "first_gap": "CP-0",
+        "first_gap_basis": "measured",
         "misfits": ("CP-8:inputs",),
         "cp5_covered": True,
     },
 }
+# Every misfit row is `predicted`: a static comparison of bound inputs, consumer lists or readiness
+# entry sets, not an observed refusal. Only a first gap at CP-0 is `measured`.
+MISFIT_BASIS = "predicted"
+UNSHAPED = {"context-attachments-owner"}
+UNSHAPED_COUNT = 5
 GAP_PRESETS = sorted(p for p in EXPECTED if EXPECTED[p]["first_gap"] == "CP-0")
 
 
@@ -98,8 +112,12 @@ def test_step1_table_covers_all_six_presets() -> None:
 def test_step1_table(pathway: str) -> None:
     measured = pw.step1(pathway)
     expected = EXPECTED[pathway]
-    assert {k: measured[k] for k in expected} == expected
-    # Ruling B1: CP-MODEL is no input of CP-5 in any preset.
+    compared = {k: v for k, v in expected.items() if k != "first_gap_basis"}
+    assert {k: measured[k] for k in compared} == compared
+    assert (measured["first_gap"] == "CP-0") == (expected["first_gap_basis"] == "measured")
+    # Ruling B1: CP-MODEL is no input of CP-5 in any preset. This is a registry-only check; the
+    # receipt-level rejection (`test_receipt_rejects_model_in_cp5_inputs`) moves to O2 Task 5
+    # on cases/o2-synthetic (ruling B21).
     assert not measured["cp_model_in_cp5"]
     assert "CP-MODEL" not in dependencies(plan(pw.pathway_modules(pathway)))["CP-5"]
 
@@ -161,16 +179,21 @@ def test_walk_ends_at_cp0_without_a_frozen_document(pathway: str, tmp_path: Path
     assert workflow._binding.module_id == "CP-0"
     assert workflow._phase == "analytical" and not workflow._begins[1:]
     ids = {s.source_id for s in pack.sources}
-    refused = 0
-    for oracle, document in pw.frozen_cp0_documents():
+    refused = unshaped = 0
+    for oracle, document in pw.frozen_cp0_documents(pack.content_hash()):
         assert {s["source_id"] for s in document["sources"]} != ids, oracle
         try:
             review = ReadinessReview.model_validate_json(json.dumps(document))
-        except ValueError:
-            continue  # a literal not shaped for the current schema is no CP-0 for this pack either
+        except ValueError as error:
+            # only context-attachments-owner literals may fail to parse, on a source authority
+            # the current enum lacks; any other unparsed literal fails the test
+            assert oracle in UNSHAPED and "authority" in str(error), (oracle, str(error)[:200])
+            unshaped += 1
+            continue
         assert pw.SOURCE_RULE in validate_review(pack, review), oracle
         refused += 1
-    assert refused > 0
+    assert unshaped == UNSHAPED_COUNT
+    assert refused == len(pw.frozen_cp0_documents()) - UNSHAPED_COUNT
     with pytest.raises(WorkflowError, match="not_permitted"):
         workflow.write_receipt(tmp_path / "receipt.json")
     with pytest.raises(WorkflowError, match="not_permitted"):
@@ -225,11 +248,10 @@ def test_earnings_cp1b_payload_is_the_frozen_pair_and_assessments() -> None:
     }
 
 
-@pytest.fixture(scope="module")
-def earnings_at_stop(tmp_path_factory: pytest.TempPathFactory) -> Any:
-    root = tmp_path_factory.mktemp("earnings-walk")
-    workflow, pack = pw.walk_earnings_to_stop(root)
-    return root, workflow, pack
+@pytest.fixture
+def earnings_at_stop(tmp_path: Path) -> Any:
+    workflow, pack = pw.walk_earnings_to_stop(tmp_path)
+    return tmp_path, workflow, pack
 
 
 @promotion
@@ -254,7 +276,7 @@ def test_walk_earnings_update(earnings_at_stop: Any) -> None:
     assert published["status"] == "ok", published
     assert verify_cp_model_publication(workflow._store, root / "model") == ()
     # every module planned before CP-MODEL, then the first publication, then the rest
-    assert [b.module_id for b in workflow._begins] == ["CP-0", "CP-1", "CP-1B", "CP-1D"]
+    assert [b.module_id for b in workflow._begins][:4] == ["CP-0", "CP-1", "CP-1B", "CP-1D"]
     assert len(workflow._publications) == 1
     assert workflow._publications[0].status == "published"
     assert (
@@ -265,14 +287,20 @@ def test_walk_earnings_update(earnings_at_stop: Any) -> None:
         workflow._begins[2].snapshot_after_sha256
         == workflow._publications[0].snapshot_before_sha256
     )
-    # CP-5's attempt inputs hold no CP-MODEL input (ruling B1): CP-5 is not yet begun here, so
-    # the bound set is the registry's
+    # CP-5's bound set is the registry's and holds no CP-MODEL input (ruling B1)
     assert "CP-MODEL" not in dependencies(plan(pw.pathway_modules("earnings_update")))["CP-5"]
-    # the Step 1 end state: CP-1D is active, untouched (its frozen submission does not fit the
-    # inputs the preset binds), CP-1B settled, and no receipt can be written
     assert workflow._phase == "analytical"
     assert workflow._binding.module_id == "CP-1D"
     assert {h.module_id for h in workflow._store.read().heads} == {"CP-0", "CP-1", "CP-1B"}
-    assert not [s for s in workflow._submissions if s.binding.binding.module_id == "CP-1D"]
+    # The Step 1 stop at CP-1D is a prediction (bound inputs differ). Observe it: submit the
+    # frozen CP-1D payload. The first promotion run must pin the status here; until
+    # then only a refusal of the call itself fails.
+    outcome = pw.submit_frozen_cp1d(workflow)
+    assert outcome["status"] in ("valid", "invalid"), outcome
+    if outcome["status"] == "valid":
+        assert "CP-1D" in {h.module_id for h in workflow._store.read().heads}
+    else:
+        assert workflow._binding.module_id == "CP-1D"
+        assert workflow._phase == "analytical"
     with pytest.raises(WorkflowError, match="not_permitted"):
         workflow.write_receipt(root / "receipt.json")

@@ -174,13 +174,17 @@ def _documents(node: Any, found: list[dict[str, Any]]) -> None:
             _documents(value, found)
 
 
-def frozen_cp0_documents() -> list[tuple[str, dict[str, Any]]]:
-    """Every frozen CP-0 readiness literal in the oracle submissions, with its oracle name."""
+def frozen_cp0_documents(
+    pack_sha256: str = "0" * 64,
+) -> list[tuple[str, dict[str, Any]]]:
+    """Every frozen CP-0 readiness literal in the oracle submissions, with its oracle name and its
+    `pack_sha256` bound to `pack_sha256` (the oracles carry a run-time placeholder there, which the
+    runs' own `literal()` helpers bind the same way)."""
     documents: list[tuple[str, dict[str, Any]]] = []
     for path in sorted((ROOT / "cases").glob("*/submissions.json")):
         found: list[dict[str, Any]] = []
         _documents(json.loads(path.read_text()), found)
-        documents.extend((path.parent.name, d) for d in found)
+        documents.extend((path.parent.name, {**d, "pack_sha256": pack_sha256}) for d in found)
     return documents
 
 
@@ -259,8 +263,6 @@ def earnings_cp0(pack: PreparedPack) -> str:
     row = next(c for c in frozen["consumers"] if c["module_id"] == "CP-1D")
     rows = review["consumers"]
     review["consumers"] = [*rows[:2], row, *rows[2:]]
-    for gap in review["gaps"]:
-        gap["affected_modules"] = ["CP-1", "CP-1B", "CP-1D", "CP-5"]
     return json.dumps(review, ensure_ascii=False)
 
 
@@ -298,3 +300,14 @@ def walk_earnings_to_stop(root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
     workflow.read_inputs()
     s1.submit_valid(workflow, cp1b_payload())
     return workflow, pack
+
+
+def submit_frozen_cp1d(workflow: OwnerWorkflow) -> dict[str, Any]:
+    """CP-1D active: its view, the oracle's literal reads and the frozen `earnings_quality`
+    payload with its figures bound, exactly as the CP-1D oracle drives it. Returns the outcome
+    as the workflow gives it (valid or invalid; never required to be valid)."""
+    import cp1d_runs
+
+    body = cp1d_runs.read_view(workflow)
+    cp1d_runs.tool_calls(workflow, "statements_only")
+    return cp1d_runs.drive_cp1d(workflow, "statements_only", body)

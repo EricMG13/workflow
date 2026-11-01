@@ -2591,54 +2591,54 @@
       "context": "contexts/unciteable.json",
       "pack": "R3+context",
       "submission": "submissions.json#cases.unciteable",
-      "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped",
-      "strength": [],
+      "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped. Re-cut on the no-quotes pattern (plan :165, fix 3): the R3 positive submission, the ready third_party market source still in the pack",
+      "strength": [
+        "indicative_talk",
+        "observed"
+      ],
+      "strength_note": "the market source's rows only (cases/cp3-cp6-owner/expected.json:2915 and :2971); the context contributes none",
       "python_rows": [],
       "t33_row_order": [
-        "m01"
+        "m01",
+        "m02"
       ],
       "dropped_rows": [
         "quotes[0]",
         "quotes[1]"
       ],
       "gap_limitations": [
-        "context quote row 1 for facility term-loan cannot be cited as one unique span; not used",
-        "context quote row 2 for facility term-loan cannot be cited as one unique span; not used"
+        "Gap (Medium): context quote row 1 for facility term-loan cannot be cited as one unique span; not used",
+        "Gap (Medium): context quote row 2 for facility term-loan cannot be cited as one unique span; not used"
       ],
-      "own_limitations": {
-        "members": [
-          "Gap (Critical): No usable market evidence in the pack",
-          "No observed or indicative market evidence: relative value is not assessed",
-          "Relative value preference is Insufficient Information: No observed or indicative market evidence reached CP-3",
-          "context quote row 1 for facility term-loan cannot be cited as one unique span; not used",
-          "context quote row 2 for facility term-loan cannot be cited as one unique span; not used"
-        ],
-        "order": "not pinned (membership and count)"
-      },
-      "own_limitations_count": 5,
-      "user_supplied_limitation_present": false,
-      "no_python_row_consequences": "no c-row, no user-supplied label, strength is empty: the submission is the R3 gap submission (a `none` market row, no basis quote, Insufficient Information); Design 2/5 add only the two gap limitations",
-      "report_equals_r3_gap_except": {
-        "source": "cases/cp3-cp6-owner/expected.json#gap.CP-3 (tables, claims)",
-        "changed_cells": {
-          "T3.3.m01.limitation": "No usable market evidence in the pack",
-          "T3.10.g01.gap": "No usable market evidence in the pack"
+      "report_equals_r3_positive": {
+        "source": "cases/cp3-cp6-owner/expected.json#positive.CP-3 (tables, claims, own_limitations) at :2906 (T3.3) and :3432-3433 (own_limitations)",
+        "submission_source": "cases/cp3-cp6-owner/submissions.json:953 (positive.relative_value, verbatim)",
+        "sha256_of_canonical_json_sorted_keys": {
+          "tables": "b5498c3a6c976795e9550cbd20ed9e72eb484b642128f9811463ea075c010890",
+          "claims": "b78f6fc52837e716c6776c7e1524d834f1cb70e11e83fd8e232aef1083d107f5",
+          "own_limitations": "a9d1bc7e51418f9557d5e17b7ee1fc869740edd70832d8388ab9646bf9ca5f55"
         },
         "differs": [
           "pack_sha256 (the pack gained a source)",
-          "own limitations: R3 gap's three plus the two gap_limitations, with the g01 text changed"
+          "own_limitations: the R3 positive's two plus gap_limitations (B20b)"
         ],
-        "claims": [
-          {
-            "claim_id": "T3.4.preference",
-            "text": "With no market evidence the relative value of the instrument is not assessed, although the CP-2 view is unchanged.",
-            "limitation": "No observed or indicative market evidence reached CP-3",
-            "cites": []
-          }
-        ],
-        "t34_confidence": "Insufficient Information"
+        "r3_own_limitations": [
+          "Gap (Material): Only one dealer quotation and no traded price",
+          "Gap (Minor): Only one instrument exists, so no intra-issuer comparison is possible"
+        ]
       },
-      "cap_issue_note": "no High-cap mutation: the preference is Insufficient Information, so no cap string applies",
+      "own_limitations": {
+        "members": [
+          "Gap (Material): Only one dealer quotation and no traded price",
+          "Gap (Minor): Only one instrument exists, so no intra-issuer comparison is possible",
+          "Gap (Medium): context quote row 1 for facility term-loan cannot be cited as one unique span; not used",
+          "Gap (Medium): context quote row 2 for facility term-loan cannot be cited as one unique span; not used"
+        ],
+        "order": "R3 positive's two first, then the two gap_limitations (membership and count pinned)"
+      },
+      "own_limitations_count": 4,
+      "user_supplied_limitation_present": false,
+      "no_user_supplied_limitation": "Design 7 (:96) adds the user-supplied label only when a Python row exists; none does",
       "context_block": {
         "context_market_evidence": [],
         "confidence_caps": [
@@ -2650,54 +2650,54 @@
       "context": "contexts/unciteable-deal.json",
       "pack": "R3+context",
       "submission": "submissions.json#cases.unciteable-deal",
-      "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped",
-      "strength": [],
+      "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped. Re-cut on the no-quotes pattern (plan :165, fix 3): the R3 positive submission, the ready third_party market source still in the pack",
+      "strength": [
+        "indicative_talk",
+        "observed"
+      ],
+      "strength_note": "the market source's rows only (cases/cp3-cp6-owner/expected.json:2915 and :2971); the context contributes none",
       "python_rows": [],
       "t33_row_order": [
-        "m01"
+        "m01",
+        "m02"
       ],
       "dropped_rows": [
         "deal_terms[0]",
         "deal_terms[1]"
       ],
       "gap_limitations": [
-        "context deal terms row 1 for facility term-loan cannot be cited as one unique span; not used",
-        "context deal terms row 2 for facility term-loan cannot be cited as one unique span; not used"
+        "Gap (Medium): context deal terms row 1 for facility term-loan cannot be cited as one unique span; not used",
+        "Gap (Medium): context deal terms row 2 for facility term-loan cannot be cited as one unique span; not used"
       ],
-      "own_limitations": {
-        "members": [
-          "Gap (Critical): No usable market evidence in the pack",
-          "No observed or indicative market evidence: relative value is not assessed",
-          "Relative value preference is Insufficient Information: No observed or indicative market evidence reached CP-3",
-          "context deal terms row 1 for facility term-loan cannot be cited as one unique span; not used",
-          "context deal terms row 2 for facility term-loan cannot be cited as one unique span; not used"
-        ],
-        "order": "not pinned (membership and count)"
-      },
-      "own_limitations_count": 5,
-      "user_supplied_limitation_present": false,
-      "no_python_row_consequences": "no c-row, no user-supplied label, strength is empty: the submission is the R3 gap submission (a `none` market row, no basis quote, Insufficient Information); Design 2/5 add only the two gap limitations",
-      "report_equals_r3_gap_except": {
-        "source": "cases/cp3-cp6-owner/expected.json#gap.CP-3 (tables, claims)",
-        "changed_cells": {
-          "T3.3.m01.limitation": "No usable market evidence in the pack",
-          "T3.10.g01.gap": "No usable market evidence in the pack"
+      "report_equals_r3_positive": {
+        "source": "cases/cp3-cp6-owner/expected.json#positive.CP-3 (tables, claims, own_limitations) at :2906 (T3.3) and :3432-3433 (own_limitations)",
+        "submission_source": "cases/cp3-cp6-owner/submissions.json:953 (positive.relative_value, verbatim)",
+        "sha256_of_canonical_json_sorted_keys": {
+          "tables": "b5498c3a6c976795e9550cbd20ed9e72eb484b642128f9811463ea075c010890",
+          "claims": "b78f6fc52837e716c6776c7e1524d834f1cb70e11e83fd8e232aef1083d107f5",
+          "own_limitations": "a9d1bc7e51418f9557d5e17b7ee1fc869740edd70832d8388ab9646bf9ca5f55"
         },
         "differs": [
           "pack_sha256 (the pack gained a source)",
-          "own limitations: R3 gap's three plus the two gap_limitations, with the g01 text changed"
+          "own_limitations: the R3 positive's two plus gap_limitations (B20b)"
         ],
-        "claims": [
-          {
-            "claim_id": "T3.4.preference",
-            "text": "With no market evidence the relative value of the instrument is not assessed, although the CP-2 view is unchanged.",
-            "limitation": "No observed or indicative market evidence reached CP-3",
-            "cites": []
-          }
-        ],
-        "t34_confidence": "Insufficient Information"
+        "r3_own_limitations": [
+          "Gap (Material): Only one dealer quotation and no traded price",
+          "Gap (Minor): Only one instrument exists, so no intra-issuer comparison is possible"
+        ]
       },
-      "cap_issue_note": "no High-cap mutation: the preference is Insufficient Information, so no cap string applies",
+      "own_limitations": {
+        "members": [
+          "Gap (Material): Only one dealer quotation and no traded price",
+          "Gap (Minor): Only one instrument exists, so no intra-issuer comparison is possible",
+          "Gap (Medium): context deal terms row 1 for facility term-loan cannot be cited as one unique span; not used",
+          "Gap (Medium): context deal terms row 2 for facility term-loan cannot be cited as one unique span; not used"
+        ],
+        "order": "R3 positive's two first, then the two gap_limitations (membership and count pinned)"
+      },
+      "own_limitations_count": 4,
+      "user_supplied_limitation_present": false,
+      "no_user_supplied_limitation": "Design 7 (:96) adds the user-supplied label only when a Python row exists; none does",
       "context_block": {
         "context_market_evidence": [],
         "confidence_caps": [

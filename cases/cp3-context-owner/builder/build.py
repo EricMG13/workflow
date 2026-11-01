@@ -306,7 +306,7 @@ def python_evidence(cid):
             continue
         supplied = [k for k in QFIELDS if q[k]]
         if (cid, "quotes", i) in COLLIDES and supplied:
-            own.append(f"context quote row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
+            own.append(f"Gap (Medium): context quote row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
             continue
         if not supplied:
             own.append(f"Gap (Medium): context quote for facility {fid} carries no figure; not used")
@@ -347,7 +347,7 @@ def python_evidence(cid):
             elif d[lo] or d[hi]:
                 lone.append((label, lo if d[lo] else hi, d[lo] or d[hi]))
         if (cid, "deal_terms", i) in COLLIDES and pieces:
-            own.append(f"context deal terms row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
+            own.append(f"Gap (Medium): context deal terms row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
             continue
         if not pieces:
             continue
@@ -518,28 +518,11 @@ SUBS = {
     "no-quotes": deepcopy(RV),
     "minified": submission(["c01", "c02"]),
     "context-only": submission(["c01", "c02"]),
-    "unciteable": None,
-    "unciteable-deal": None,
+    "unciteable": deepcopy(RV),  # the no-quotes pattern (plan :165): the R3 positive verbatim
+    "unciteable-deal": deepcopy(RV),
     "bad-bytes": deepcopy(RV),
 }
-NO_USABLE = "No usable market evidence in the pack"
-R3_GAP_RV = R3_S["gap"]["relative_value"]
-
-
-def no_row_submission():
-    """Both unciteable contexts leave Python no row: the R3 gap submission (a none row, no basis quote,
-    Insufficient Information) with its 'no third-party source' sentence made true for this pack."""
-    s = deepcopy(R3_GAP_RV)
-    old = "No third-party market source in the pack"
-    assert s["market_evidence"][0]["limitation"] == old and s["gaps"][0]["gap"] == old
-    s["market_evidence"][0]["limitation"] = NO_USABLE
-    s["gaps"][0]["gap"] = NO_USABLE
-    return s
-
-
-SUBS["unciteable"] = no_row_submission()
-SUBS["unciteable-deal"] = no_row_submission()
-assert SUBS["no-quotes"] == RV
+assert SUBS["no-quotes"] == RV == SUBS["unciteable"] == SUBS["unciteable-deal"]
 assert "context_rows" not in json.dumps(SUBS["no-quotes"])
 assert SUBS["with-market-row"]["market_evidence"] == R3_ROWS
 assert SUBS["with-market-row"]["instruments"][0]["basis"]["quotes"] == R3_BASIS_QUOTES
@@ -667,7 +650,7 @@ def strength_of(case_id, rows):
     s = {r["kind"] for r in rows}
     if case_id == "with-market-row":
         s |= {"observed", "indicative_talk"}
-    if case_id in ("no-quotes", "bad-bytes"):
+    if case_id in ("no-quotes", "bad-bytes", "unciteable", "unciteable-deal"):
         s = {"observed", "indicative_talk"}
     return s
 
@@ -834,45 +817,40 @@ assert _lone["quote_cell"] == "term-loan: OID talk 99.0-99.5" and len(_lone["cit
 _lim = CASES_EXPECTED["deal-lone-bound"]["t33_rows"][0]["facts"][4]
 _lim["text"] = LONE_LIMITATION
 
-R3_GAP = R3_E["gap"]["CP-3"]
 for _c, _sec, _what in (("unciteable", "quotes", "quote"), ("unciteable-deal", "deal_terms", "deal terms")):
-    _gaps = [f"context {_what} row {n} for facility term-loan cannot be cited as one unique span; not used" for n in (1, 2)]
+    # fix 3: the no-quotes pattern (plan :165) on a pack that keeps the ready third_party `market` source.
+    _gaps = [
+        f"Gap (Medium): context {_what} row {n} for facility term-loan cannot be cited as one unique span; not used"
+        for n in (1, 2)
+    ]
     assert EVIDENCE[_c] == ([], _gaps)
-    sub = SUBS[_c]
-    own = (
-        [f"Gap ({g['severity']}): {g['gap']}" for g in sub["gaps"]]
-        + ["No observed or indicative market evidence: relative value is not assessed",
-           "Relative value preference is Insufficient Information: " + sub["preference"]["limitation"]]
-        + _gaps
-    )
+    assert SUBS[_c] == RV and strength_of(_c, []) == {"observed", "indicative_talk"}
+    _own = list(R3_CP3["own_limitations"]) + _gaps  # B20b: same `Gap (<severity>): ` form as the Design 5 named gaps
     CASES_EXPECTED[_c] = {
         "context": f"contexts/{_c}.json",
         "pack": "R3+context",
         "submission": f"submissions.json#cases.{_c}",
-        "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped",
-        "strength": [],
+        "kind": "residual key collision (B20a): the two objects are equal through the last cited figure, so every anchored quote matches both objects (a guessed span); every colliding row is dropped. Re-cut on the no-quotes pattern (plan :165, fix 3): the R3 positive submission, the ready third_party market source still in the pack",
+        "strength": ["indicative_talk", "observed"],
+        "strength_note": f"the market source's rows only ({R3E}:{line_of(R3E, 'T3.3.m01.kind')} and :{line_of(R3E, 'T3.3.m02.kind')}); the context contributes none",
         "python_rows": [],
-        "t33_row_order": ["m01"],
+        "t33_row_order": ["m01", "m02"],
         "dropped_rows": [f"{_sec}[0]", f"{_sec}[1]"],
         "gap_limitations": _gaps,
-        "own_limitations": {"members": own, "order": "not pinned (membership and count)"},
-        "own_limitations_count": len(own),
-        "user_supplied_limitation_present": False,
-        "no_python_row_consequences": "no c-row, no user-supplied label, strength is empty: the submission is the R3 gap submission (a `none` market row, no basis quote, Insufficient Information); Design 2/5 add only the two gap limitations",
-        "report_equals_r3_gap_except": {
-            "source": f"{R3E}#gap.CP-3 (tables, claims)",
-            "changed_cells": {
-                "T3.3.m01.limitation": NO_USABLE,
-                "T3.10.g01.gap": NO_USABLE,
-            },
-            "differs": ["pack_sha256 (the pack gained a source)", "own limitations: R3 gap's three plus the two gap_limitations, with the g01 text changed"],
-            "claims": R3_GAP["claims"],
-            "t34_confidence": "Insufficient Information",
+        "report_equals_r3_positive": {
+            "source": f"{R3E}#positive.CP-3 (tables, claims, own_limitations) at :{line_of(R3E, 'T3.3.m01.source')} (T3.3) and :3432-3433 (own_limitations)",
+            "submission_source": f"{R3S}:{line_of(R3S, '\"relative_value\"')} (positive.relative_value, verbatim)",
+            "sha256_of_canonical_json_sorted_keys": R3_HEAD_SHA,
+            "differs": ["pack_sha256 (the pack gained a source)", "own_limitations: the R3 positive's two plus gap_limitations (B20b)"],
+            "r3_own_limitations": R3_CP3["own_limitations"],
         },
-        "cap_issue_note": "no High-cap mutation: the preference is Insufficient Information, so no cap string applies",
+        "own_limitations": {"members": _own, "order": "R3 positive's two first, then the two gap_limitations (membership and count pinned)"},
+        "own_limitations_count": len(_own),
+        "user_supplied_limitation_present": False,
+        "no_user_supplied_limitation": "Design 7 (:96) adds the user-supplied label only when a Python row exists; none does",
         "context_block": {"context_market_evidence": [], "confidence_caps": [CAP_CP2]},
     }
-    assert "Gap (Critical): " + NO_USABLE in own
+    assert USER_LABEL not in _own and len(_own) == 4
 
 # stale positive: the exact-30 row carries no stale text
 assert "Stale quote" not in CASES_EXPECTED["stale"]["t33_rows"][0]["facts"][4]["text"]

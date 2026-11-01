@@ -173,7 +173,7 @@ def build_cp1(out_dir: Path) -> None:
     manifest = json.loads((CASE / "manifest.json").read_text(encoding="utf-8"))
     manifest["status"] = (
         "S1, CP-3, CP-5, CP-6 submissions, sources and context frozen (9de132e7, cases/PINS.json); "
-        "cp1-financials.json prepared (cp1_tool_loop), not reviewed, not frozen"
+        "cp1-financials.json reviewed (mx-precise a0d99f61) and frozen"
     )
     manifest["cp1_tool_loop"] = {
         "file": "cp1-financials.json",

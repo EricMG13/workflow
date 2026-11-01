@@ -1,7 +1,7 @@
 {
   "schema_version": "o2-synthetic-manifest/1",
   "scope": "Synthetic end-to-end oracle for the portfolio_decision preset: S1 (CP-0, CP-1, CP-1A, CP-2), CP-3, CP-5 and CP-6 submissions re-cut to a prepared pack",
-  "status": "S1, CP-3, CP-5, CP-6 submissions, sources and context frozen (9de132e7, cases/PINS.json); cp1-financials.json prepared (cp1_tool_loop), not reviewed, not frozen",
+  "status": "S1, CP-3, CP-5, CP-6 submissions, sources and context frozen (9de132e7, cases/PINS.json); cp1-financials.json reviewed (mx-precise a0d99f61) and frozen",
   "roles": {
     "preparer": "oracle preparer (this builder script)",
     "reviewer": null,

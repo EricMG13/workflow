@@ -7,6 +7,8 @@ from typing import Any
 
 import pytest
 
+from deploy_workflow.model.providers import ErrorKind, ProviderError, error_from_transport
+from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.transport import (
     ConnectTimeout,
     IdleTimeout,
@@ -181,6 +183,9 @@ class FakeTimer:
     def cancel(self) -> None:
         self.cancelled = True
 
+    def join(self) -> None:
+        self.joined = True
+
 
 def test_watchdog_shuts_the_socket_at_the_deadline_and_is_an_overall_timeout() -> None:
     timers: list[FakeTimer] = []
@@ -239,8 +244,8 @@ def test_per_read_timeout_is_recomputed_before_each_socket_read() -> None:
         def settimeout(self, value: float) -> None:
             seen.append(value)
 
-        def makefile(self, _mode: str) -> io.BufferedReader:
-            return io.BufferedReader(Raw())
+        def makefile(self, _mode: str, buffering: int | None = None) -> Any:
+            return Raw() if buffering == 0 else io.BufferedReader(Raw())
 
     class Conn(FakeConnection):
         def getresponse(self) -> Any:
@@ -253,3 +258,50 @@ def test_per_read_timeout_is_recomputed_before_each_socket_read() -> None:
     with pytest.raises(OverallTimeout):
         https_transport(_req(stream=True), clock=clock, connection_factory=lambda *_: conn)
     assert seen == [120.0, 120.0, 120.0, 100.0]  # the last read gets only what is left
+
+
+class PairConn(http.client.HTTPConnection):
+    """A real http.client connection over a local socketpair: no network."""
+
+    def __init__(self, reply: bytes) -> None:
+        super().__init__("api.example", 443, timeout=30)
+        self._reply = reply
+        self.peer: socket.socket | None = None
+
+    def connect(self) -> None:
+        self.sock, self.peer = socket.socketpair()
+        self.peer.sendall(self._reply)
+
+
+def test_real_socket_reply_is_read_through_the_bounded_socket() -> None:
+    reply = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
+    for stream in (False, True):
+        conn = PairConn(reply)
+        out = https_transport(
+            _req(stream=stream),
+            connection_factory=lambda *_, c=conn: c,
+        )
+        assert out.status == 200 and out.body == b"{}"
+
+
+def test_non_transport_exception_after_send_is_classified() -> None:
+    class Boom(FakeReply):
+        def read1(self, _size: int = -1, /) -> bytes:
+            raise ValueError("I/O operation on closed file")
+
+    conn = FakeConnection(Boom(200, iter([])))
+    with pytest.raises(TransportError, match="ValueError") as info:
+        https_transport(_req(), clock=Clock(), connection_factory=lambda *_: conn)
+    assert info.value.partial == b""
+    err = error_from_transport("openai", info.value, Redactor())
+    assert isinstance(err, ProviderError) and err.kind is ErrorKind.SENT_CHARGE_UNKNOWN
+
+
+def test_watchdog_thread_is_joined_before_return() -> None:
+    import threading
+
+    before = {t.ident for t in threading.enumerate()}
+    reply = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
+    conn = PairConn(reply)
+    https_transport(_req(), connection_factory=lambda *_: conn)
+    assert [t for t in threading.enumerate() if t.ident not in before and t.is_alive()] == []

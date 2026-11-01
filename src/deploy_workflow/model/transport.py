@@ -87,6 +87,7 @@ class _Connection(Protocol):
 class _Timer(Protocol):
     def start(self) -> None: ...
     def cancel(self) -> None: ...
+    def join(self) -> None: ...
 
 
 ConnectionFactory = Callable[[str, int, float], _Connection]
@@ -156,8 +157,9 @@ class _BoundedSocket:
         self._sock, self._deadline = sock, deadline
 
     def makefile(self, mode: str = "rb") -> io.BufferedReader:
-        inner = self._sock.makefile(mode)
-        raw = getattr(inner, "raw", inner)  # nothing has been read yet
+        # buffering=0 is the SocketIO itself: keeping only `.raw` of a buffered file would let
+        # the dropped wrapper close the shared SocketIO when it is garbage-collected.
+        raw = self._sock.makefile(mode, buffering=0)
         return io.BufferedReader(_BoundedRaw(raw, self._sock, self._deadline))
 
     def __getattr__(self, name: str) -> Any:
@@ -203,8 +205,9 @@ def https_transport(
             except OSError:
                 pass  # already closed or never connected: the flag above still ends the call
 
-        watchdog = timer_factory(max(deadline.remaining(), 0.0), expire)
-        watchdog.start()
+        timer = timer_factory(max(deadline.remaining(), 0.0), expire)
+        timer.start()
+        watchdog = timer
         timeout_error: type[TransportError] = IdleTimeout if request.stream else OverallTimeout
         try:
             conn.request("POST", path, request.body, request.headers)
@@ -230,6 +233,22 @@ def https_transport(
             if deadline.expired.is_set():
                 raise deadline.overall_timeout(b"".join(chunks)) from None
             raise TransportError(f"http error: {type(error).__name__}", b"".join(chunks)) from None
+        except (
+            ValueError,
+            RuntimeError,
+            TypeError,
+            AttributeError,
+            LookupError,
+            EOFError,
+        ) as error:
+            # Anything else after the send (e.g. ValueError from a closed file) may have reached
+            # the provider: it becomes a named TransportError, so the caller classifies it
+            # SentChargeUnknown. Not swallowed: the type is kept in the message.
+            if deadline.expired.is_set():
+                raise deadline.overall_timeout(b"".join(chunks)) from None
+            raise TransportError(
+                f"unexpected error: {type(error).__name__}", b"".join(chunks)
+            ) from None
         if deadline.expired.is_set() or deadline.remaining() < 0:
             raise deadline.overall_timeout(b"".join(chunks))
         headers: dict[str, str] = {}
@@ -240,4 +259,5 @@ def https_transport(
     finally:
         if watchdog is not None:
             watchdog.cancel()
+            watchdog.join()  # no watchdog thread outlives the call
         conn.close()

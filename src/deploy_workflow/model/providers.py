@@ -32,6 +32,7 @@ from deploy_workflow.model.transport import (
 )
 from deploy_workflow.model.turn import (
     CONFIG_MODELS,
+    MODEL_EFFORTS,
     Message,
     ModelSpec,
     Provider,
@@ -57,13 +58,6 @@ OPENROUTER_IGNORE_FOR_DEEPSEEK = ["open-inference"]  # spec §8
 MESSAGE_CHARS = 500
 RETRY_AFTER_DEFAULT_S = 120
 RETRY_AFTER_MAX_S = 300  # runner.py:608-614
-
-# Spec §7.1 uses per model (controller ruling). Any other (model, effort) pair is refused.
-MODEL_EFFORTS: Mapping[str, frozenset[str]] = {
-    "gpt-6.1-sol": frozenset({"medium", "high"}),
-    "claude-opus-5-5": frozenset({"medium"}),
-    "deepseek/deepseek-v4.1-flash-1017": frozenset({"max"}),
-}
 
 
 @dataclass(frozen=True)

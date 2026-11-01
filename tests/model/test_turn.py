@@ -10,6 +10,7 @@ from deploy_workflow.model.turn import (
     CONFIG_PROVIDERS,
     Message,
     ModelSpec,
+    Provider,
     ProviderBlock,
     ToolCall,
     Turn,
@@ -154,3 +155,25 @@ def test_only_assistant_message_carries_provider_blocks() -> None:
     Message("assistant", "", provider_blocks=(block,))
     with pytest.raises(TurnError):
         Message("user", "x", provider_blocks=(block,))
+
+
+@pytest.mark.parametrize(
+    ("config", "provider", "model", "effort"),
+    [
+        ("sol-medium", "openai", "gpt-6.1-sol-mini", "medium"),
+        ("sol-medium", "openai", "gpt-6.1-sol", "max"),
+        ("opus-medium", "anthropic", "claude-opus-5-5", "high"),
+        ("sol-medium", "openai", "claude-opus-5-5", "medium"),
+        ("x", "openrouter", "mistralai/some-model", "high"),
+    ],
+)
+def test_spec_refuses_pair_outside_the_section_7_1_table(
+    config: str, provider: Provider, model: str, effort: str
+) -> None:
+    with pytest.raises(TurnError):
+        ModelSpec(config, provider, model, effort)
+
+
+def test_spec_accepts_the_section_7_1_pairs() -> None:
+    ModelSpec("sol-high", "openai", "gpt-6.1-sol", "high")
+    ModelSpec("deepseek-max", "openrouter", "deepseek/deepseek-v4.1-flash-1017", "max")

@@ -4,6 +4,7 @@ import http.client
 import json
 import socket
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -134,8 +135,16 @@ def test_openrouter_build_deepseek_ignores_open_inference() -> None:
     assert body["tools"][0]["function"]["name"] == "submit_x"
 
 
+def _unchecked_spec(config_id: str, provider: str, model: str, effort: str) -> ModelSpec:
+    """A spec that skipped ModelSpec's own check, to test the checks in effort_for and build."""
+    return cast(
+        ModelSpec,
+        SimpleNamespace(config_id=config_id, provider=provider, model=model, effort=effort),
+    )
+
+
 def test_other_openrouter_id_has_no_provider_ignore() -> None:
-    other = ModelSpec("x", "openrouter", "mistralai/some-model", "high")
+    other = _unchecked_spec("x", "openrouter", "mistralai/some-model", "high")
     assert "provider" not in _openrouter_body(other, _request(effort="high"), "high")
     assert "provider" in _openrouter_body(DEEPSEEK, _request(effort="max"), "max")
 
@@ -143,10 +152,10 @@ def test_other_openrouter_id_has_no_provider_ignore() -> None:
 @pytest.mark.parametrize(
     "spec",
     [
-        ModelSpec("sol-medium", "openai", "gpt-6.1-sol-mini", "medium"),
-        ModelSpec("opus-medium", "anthropic", "claude-opus-5-5-20261101", "medium"),
-        ModelSpec("x", "openrouter", "mistralai/some-model", "high"),
-        ModelSpec("sol-medium", "openai", "claude-opus-5-5", "medium"),
+        _unchecked_spec("sol-medium", "openai", "gpt-6.1-sol-mini", "medium"),
+        _unchecked_spec("opus-medium", "anthropic", "claude-opus-5-5-20261101", "medium"),
+        _unchecked_spec("x", "openrouter", "mistralai/some-model", "high"),
+        _unchecked_spec("sol-medium", "openai", "claude-opus-5-5", "medium"),
     ],
 )
 def test_model_outside_the_section_7_1_table_or_off_its_config_is_refused(

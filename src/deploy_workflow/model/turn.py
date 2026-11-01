@@ -36,6 +36,13 @@ CONFIG_MODELS: Mapping[str, str] = MappingProxyType(
     }
 )
 
+# Spec §7.1 uses per model (controller ruling). Any other (model, effort) pair is refused.
+MODEL_EFFORTS: Mapping[str, frozenset[str]] = {
+    "gpt-6.1-sol": frozenset({"medium", "high"}),
+    "claude-opus-5-5": frozenset({"medium"}),
+    "deepseek/deepseek-v4.1-flash-1017": frozenset({"max"}),
+}
+
 _ROLES = ("system", "user", "assistant", "tool")
 _STOP_REASONS = ("end", "tool_use", "max_tokens", "other")
 
@@ -104,6 +111,10 @@ class ModelSpec:
             )
         if self.provider not in ("openai", "anthropic", "openrouter"):
             raise TurnError(f"unknown provider {self.provider!r}")
+        if self.config_id in CONFIG_MODELS and CONFIG_MODELS[self.config_id] != self.model:
+            raise TurnError(f"config {self.config_id!r} runs {CONFIG_MODELS[self.config_id]!r}")
+        if self.effort not in MODEL_EFFORTS.get(self.model, frozenset()):
+            raise TurnError(f"({self.model!r}, {self.effort!r}) is outside the spec §7.1 table")
 
 
 @dataclass(frozen=True)

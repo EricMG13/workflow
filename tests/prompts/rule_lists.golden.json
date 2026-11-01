@@ -1875,7 +1875,7 @@
    "src/deploy_vii/cp1_workflow.py": "966a982d4068bd962df47228ded77f1929b79a1e51624fb7c4cfa9470e1878d3",
    "src/deploy_vii/cp2_synthesis.py": "ac8856fddb71e7ddef9715febeffdeaa88ff9aa34526dd299ecb1cbc92d4d04e",
    "src/deploy_vii/cp3_relative_value.py": "d53035f7368704e750ecaded0985ecdfdb18c86acf8aaa8d60cab371df05e24b",
-   "src/deploy_vii/cp4_legal.py": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
+   "src/deploy_vii/cp4_legal.py": "025d1f2ee7002ebb95d7c45459e3e20d7b266956409de01198d55195674eadda",
    "src/deploy_vii/cp5_integrity.py": "eb3a766f5ed1ff5bb856c64d0e5a477855d421ded57b91279d365c1fa03ea901",
    "src/deploy_vii/cp6_committee.py": "e97d5074292aa29dc93651dedce0dbc734e38d0373a34f769e0cfef65e2196ac",
    "src/deploy_vii/downstream_readiness.py": "29c71a90df07d1eed7df2903b30211377a77588fa7f564d09389d6d47c11dbdd",

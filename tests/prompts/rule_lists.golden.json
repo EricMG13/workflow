@@ -48,7 +48,8 @@
      "fn:deploy_workflow.owners.pins:pin_issues",
      "fn:deploy_workflow.owners.cp2a:_pin_lines",
      "fn:deploy_workflow.owners.cp2d:_pin_lines",
-     "fn:deploy_workflow.owners.cp2e:_pin_lines"
+     "fn:deploy_workflow.owners.cp2e:_pin_lines",
+     "fn:deploy_workflow.owners.cp3c:_pin_lines"
     ]
    },
    {
@@ -1513,7 +1514,7 @@
    "src/deploy_workflow/owners/cp2g.py": "71c06be61716570408bfed1913c5f8853bb8010c5a96f61554b61f84923e4bdb",
    "src/deploy_workflow/owners/cp2h.py": "9fa9ebb713c063d046f6bc727f357b72be3a5963cb271e9495106eca30c81c1f",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
-   "src/deploy_workflow/owners/cp3c.py": "40bd79794531c51fe43f4acf9ebdad0da0b6b75b4ae9b38ca6db9d02a8383c0d",
+   "src/deploy_workflow/owners/cp3c.py": "7bd54cdb92cbb5b10060227175a0b1ee0e774bda4b8b8412e461ef5d43761fd4",
    "src/deploy_workflow/owners/cp3d.py": "8fbcda6944a6980a95dcd515058b1923d8eeb2f9e0f5af0fe287fce2ef980fc7",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
    "src/deploy_workflow/owners/cp4c.py": "9ea7820df084c0792a57d952d33b3dc9a9ab3d70803baee017dbbaa3c9918793",

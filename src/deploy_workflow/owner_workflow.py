@@ -110,7 +110,7 @@ from deploy_workflow.financial_workflow import (
     _verify_model_settlement,
     _verify_promotion,
 )
-from deploy_workflow.host import SourceSession
+from deploy_workflow.host import MAX_ARGUMENT_DEPTH, SourceSession
 from deploy_workflow.owners import (
     cp1a,
     cp1b,
@@ -281,9 +281,13 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
 # G6: the bytes a `read_inputs` body may take: the bound a submitted payload already obeys.
 MAX_INPUT_BYTES: int = MAX_LINE
-# G7: the deepest JSON nesting `serve_json_lines` accepts in a request (the request object is
-# depth 1). Deeper text is `bad_arguments`, decided before dispatch, never a `RecursionError`.
-MAX_JSON_DEPTH: int = 32
+# G7: the deepest JSON nesting `serve_json_lines` reads (the request object is depth 1). It sits
+# above anything the host answers itself: the host refuses `arguments` nested past
+# `MAX_ARGUMENT_DEPTH` with a retained receipt (H05), and a frame of that kind, even a far deeper
+# one, must reach it. The request envelope adds two levels (the request and its `arguments`).
+# Past the bound the text is not a request: `bad_arguments`, never a `RecursionError`.
+REQUEST_ENVELOPE_DEPTH: int = 2
+MAX_JSON_DEPTH: int = 3 * MAX_ARGUMENT_DEPTH + REQUEST_ENVELOPE_DEPTH
 # G7: the characters of an error's text an `InternalError` fault keeps.
 MAX_FAULT_DETAIL: int = 500
 _OPTIONAL_FAULT_FIELDS = (
@@ -3606,40 +3610,50 @@ def _finite_float(text: str) -> float:
 
 
 def _request_of(line: str) -> dict[str, Any]:
-    """The request a JSON-lines message carries, or `bad_arguments`: every error in the text of
-    the message is decided here, before dispatch (G7). Not valid JSON, a non-finite number,
-    nesting past `MAX_JSON_DEPTH`, a non-object and a string that cannot be written as UTF-8
-    (a lone surrogate) are the participant's malformed input. Nothing else is caught."""
+    """The request a JSON-lines message carries, or `bad_arguments`: not valid JSON, a non-finite
+    number, an over-limit integer, nesting past `MAX_JSON_DEPTH` and a non-object are the
+    participant's malformed text, decided before dispatch (G7). Nothing else is caught."""
     try:
         request = json.loads(line, parse_constant=_nonfinite_json, parse_float=_finite_float)
-        deep = _depth_of(request) > MAX_JSON_DEPTH
-        json.dumps(request, ensure_ascii=False, allow_nan=False).encode()
-    except (ValueError, RecursionError):  # JSONDecodeError, UnicodeEncodeError, non-finite
+    except (ValueError, RecursionError):  # JSONDecodeError, non-finite, int digit limit
         raise WorkflowError("bad_arguments") from None
-    if deep or type(request) is not dict:
+    if type(request) is not dict or _depth_of(request) > MAX_JSON_DEPTH:
         raise WorkflowError("bad_arguments")
     return request
 
 
 def _checked(request: dict[str, Any]) -> dict[str, Any]:
-    """The request's operation and arguments are of the right types, or `bad_arguments`. An
+    """The key set of a known operation, and a `submit_review` payload that can be written as
+    UTF-8, or `bad_arguments`. The shapes of an invoke frame (`tool`, `arguments`) and any lone
+    surrogate inside it are the host's to refuse, with a retained receipt (H05, item 88). An
     unknown operation is left to the dispatch (`not_permitted`)."""
-    shapes: dict[str, dict[str, type]] = {
-        "invoke": {"tool": str, "arguments": dict},
-        "submit_review": {"payload": str},
-        "read_inputs": {},
-        "publish": {},
-        "write_receipt": {},
+    keys: dict[str, tuple[str, ...]] = {
+        "invoke": ("tool", "arguments"),
+        "submit_review": ("payload",),
+        "read_inputs": (),
+        "publish": (),
+        "write_receipt": (),
     }
     operation = request.get("operation")
-    shape = shapes.get(operation) if isinstance(operation, str) else None
+    shape = keys.get(operation) if isinstance(operation, str) else None
     if shape is None:
         return request
-    if set(request) != {"operation", *shape} or any(
-        type(request[key]) is not kind for key, kind in shape.items()
-    ):
+    if set(request) != {"operation", *shape}:
+        raise WorkflowError("bad_arguments")
+    if operation == "submit_review" and not _utf8_text(request["payload"]):
         raise WorkflowError("bad_arguments")
     return request
+
+
+def _utf8_text(value: object) -> bool:
+    """`value` is a `str` that can be written as UTF-8 (no lone surrogate)."""
+    if type(value) is not str:
+        return False
+    try:
+        value.encode()
+    except UnicodeEncodeError:
+        return False
+    return True
 
 
 def serve_json_lines(

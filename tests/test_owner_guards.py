@@ -31,8 +31,15 @@ from pydantic import BaseModel
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.financial_workflow import MAX_CALLS, MAX_LINE
+from deploy_workflow.host import MAX_ARGUMENT_DEPTH
 from deploy_workflow.model.record import LOOP_STOPS
-from deploy_workflow.owner_workflow import AUDIT, MAX_INPUT_BYTES, MAX_JSON_DEPTH, OwnerFault
+from deploy_workflow.owner_workflow import (
+    AUDIT,
+    MAX_INPUT_BYTES,
+    MAX_JSON_DEPTH,
+    REQUEST_ENVELOPE_DEPTH,
+    OwnerFault,
+)
 from deploy_workflow.run_inputs import stage_sources
 from deploy_workflow.tools.source import SourceError, SourceTools
 from deploy_workflow.workflow import WorkflowError
@@ -651,13 +658,10 @@ SHAPES = {
     "invalid json": "{not json",
     "a json list": "[]",
     "a json scalar": "3",
-    "tool not a str": '{"operation":"invoke","tool":3,"arguments":{}}',
-    "arguments a list": '{"operation":"invoke","tool":"read_pages","arguments":[]}',
     "payload not a str": '{"operation":"submit_review","payload":3}',
     "NaN": '{"operation":"invoke","tool":"read_pages","arguments":{"value":NaN}}',
     "an overflowing float": '{"operation":"invoke","tool":"read_pages","arguments":{"v":1e999}}',
     "a lone-surrogate payload": '{"operation":"submit_review","payload":"\\ud800"}',
-    "a lone-surrogate tool": '{"operation":"invoke","tool":"\\ud800","arguments":{}}',
     "an unknown extra key": '{"operation":"read_inputs","extra":1}',
     "a missing key": '{"operation":"invoke","tool":"read_pages"}',
     "nested past the bound": _nested(MAX_JSON_DEPTH + 1),
@@ -704,3 +708,46 @@ def test_the_depth_bound_is_exact(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     (past,) = _serve_lines(past_workflow, tmp_path, _nested(MAX_JSON_DEPTH + 1) + "\n")
     assert past == {"status": "refused", "error_code": "bad_arguments"}
     assert _faults(workflow) == [] and _faults(past_workflow) == []
+
+
+# ------------------------------------- H05 / item 88: the host's frames reach the host
+
+
+def _host_frames() -> dict[str, str]:
+    """Frames `tests/test_host_frames.py` pins: each reaches the host, which answers a retained
+    receipt (a tool that is not a str, arguments that are a list, a lone surrogate in a query,
+    key or tool name, and `arguments` at, one over and far over the host's depth bound)."""
+
+    def search(arguments: str) -> str:
+        return '{"operation":"invoke","tool":"search_pack","arguments":' + arguments + "}"
+
+    def deep(levels: int) -> str:
+        return search('{"query":"x","extra":' + "[" * levels + "0" + "]" * levels + "}")
+
+    return {
+        "tool not a str": '{"operation":"invoke","tool":3,"arguments":{}}',
+        "arguments a list": '{"operation":"invoke","tool":"read_pages","arguments":[]}',
+        "surrogate tool": '{"operation":"invoke","tool":"\\ud800","arguments":{}}',
+        "surrogate query": search('{"query":"\\ud800"}'),
+        "surrogate key": search('{"query":"x","\\ud800":1}'),
+        "at the host bound": deep(MAX_ARGUMENT_DEPTH - 1),
+        "one over the host bound": deep(MAX_ARGUMENT_DEPTH),
+        "far over the host bound": deep(2 * MAX_ARGUMENT_DEPTH + 10),
+    }
+
+
+def test_the_transport_bound_is_derived_from_the_hosts() -> None:
+    assert REQUEST_ENVELOPE_DEPTH == 2
+    assert MAX_JSON_DEPTH > MAX_ARGUMENT_DEPTH + REQUEST_ENVELOPE_DEPTH + 1
+
+
+@pytest.mark.parametrize("name", sorted(_host_frames()))
+def test_a_host_frame_reaches_the_host_and_is_retained(
+    name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(financial, "start", _owner_start)
+    workflow, _ = financial.start(tmp_path)
+    (reply,) = _serve_lines(workflow, tmp_path, _host_frames()[name] + "\n")
+    assert reply["status"] == "refused" and "call_id" in reply, reply  # a receipt, not a label
+    assert len(workflow._calls) == 1 and workflow.state().invokes_used == 1
+    assert len(_audit_files(workflow, "calls")) == 1 and _faults(workflow) == []

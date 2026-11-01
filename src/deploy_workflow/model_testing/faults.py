@@ -10,11 +10,11 @@ import fcntl
 import os
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
-from pydantic import ValidationError, model_validator
+from pydantic import Field, ValidationError, model_validator
 
-from deploy_vii.contracts import Contract
+from deploy_vii.contracts import Contract, Identifier
 
 FaultClass = Literal["product", "prompt", "harness", "model"]
 
@@ -23,7 +23,7 @@ MAX_FIX_ROUNDS = 2
 
 class FaultRecord(Contract):
     schema_version: Literal["fault/1"]
-    fault_id: str
+    fault_id: Identifier
     run_id: str
     case_id: str
     pathway: str
@@ -33,7 +33,7 @@ class FaultRecord(Contract):
     fault_class: FaultClass
     assigned_by: str
     confirmed_by: str
-    evidence: tuple[str, ...]
+    evidence: tuple[Annotated[str, Field(min_length=1)], ...]
     fix_ref: str | None
     rerun_run_id: str | None
     rerun_passed: bool | None
@@ -63,7 +63,11 @@ def _parse(text: str, name: str) -> tuple[FaultRecord, ...]:
         try:
             out.append(FaultRecord.model_validate_json(line))
         except ValidationError as exc:
-            raise ValueError(f"{name} line {number}: unparsable fault record: {exc}") from exc
+            where = "; ".join(
+                f"{'.'.join(str(p) for p in e['loc']) or 'record'}: {e['msg']}"
+                for e in exc.errors(include_input=False)
+            )
+            raise ValueError(f"{name} line {number}: unparsable fault record ({where})") from None
     return tuple(out)
 
 
@@ -95,7 +99,7 @@ def read_faults(path: Path) -> tuple[FaultRecord, ...]:
     """Every record in file order. An unparsable line raises with its line number."""
     if not path.exists():
         return ()
-    return _parse(path.read_text(), path.name)
+    return _parse(path.read_text(encoding="utf-8"), path.name)
 
 
 def _fixes(
@@ -116,13 +120,14 @@ def fix_rounds(
     Model faults are never fixed, so they count zero."""
     if fault_class == "model":
         return 0
-    return len(_fixes(faults, case_id, module_id, fault_class))
+    return len(_fixes(tuple(faults), case_id, module_id, fault_class))
 
 
 def needs_owner(
     faults: Iterable[FaultRecord], case_id: str, module_id: str, fault_class: FaultClass
 ) -> bool:
     """True when the rounds are spent and the latest fix's rerun has not passed."""
-    if fix_rounds(faults, case_id, module_id, fault_class) < MAX_FIX_ROUNDS:
+    records = tuple(faults)
+    if fix_rounds(records, case_id, module_id, fault_class) < MAX_FIX_ROUNDS:
         return False
-    return _fixes(faults, case_id, module_id, fault_class)[-1].rerun_passed is not True
+    return _fixes(records, case_id, module_id, fault_class)[-1].rerun_passed is not True

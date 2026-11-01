@@ -41,4 +41,5 @@ Final-report items for the user (collected 2026-10-31/11-01):
 - Phase 5: "executed or filed" wording in methods/cp4.md, live/prompts.py:547, live/context.py:33 (vii outside B7); a CP-3 cap for draft-only legal inputs (outside B6); `executed` assessment of the `context` source (pre-existing).
 - Phase 7: methods/cp1c.md, cp4c.md wording (outside B8/B9); free stress multiple wanted?; CP-2's optional CP-1C edge binds CP-1C in distressed runs (removal needs a ruling).
 - Phase 8: CP-1B row labels fixed in US$ (bindings/cp1b.py, report_view.py:2353-2356) → CP-1B refuses non-USD; US$/IFRS labels outside the Phase 8 modules.
+- O1 G1b: frozen R6 oracle (cases/cp3-cp6-owner) misses CP-MODEL in CP-1A's consumers (pre-existing builder defect, build.py:171, :209-216); amendment in work/context-plan/reviews/o1-task2-review.md; CP-6's gated tests blocked until the oracle owner amends it.
 - Plan B hand-off items (work/context-plan/part-b-review-2026-10-31.md); the unanswered ChatGPT-link review.

@@ -16,6 +16,7 @@ import os
 import shutil
 from collections.abc import Iterator
 from decimal import Decimal
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -579,8 +580,8 @@ def test_store_context_ctx_fy_l10_reads_without_quarters_and_refuses_every_submi
 ) -> None:
     store, attempt = _store_for(tmp_path, "fy", runs.make_pack("ctx-fy-l10"), _t414_register())
     tree = json.loads(cpl10.view(store, attempt)[1])  # the read succeeds ...
-    assert tree["periods"] == [] and tree["topics"] == [] and tree["pair_screens"] == []
-    assert CTX_KEY["ctx-fy-l10"]["offers_quarter_list"] is False
+    assert tree["topics"] == [] and tree["pair_screens"] == []
+    assert bool(tree["periods"]) == CTX_KEY["ctx-fy-l10"]["offers_quarter_list"]
     issues = cpl10._validate_step(store, store.pack(), _pending(store)).issues
     assert issues == (CTX_KEY["ctx-fy-l10"]["step_validation_issue"],)  # ... the submit refuses
 
@@ -605,6 +606,20 @@ def test_period_register_duplicate_coordinate_refuses() -> None:
     twin = _t414(2025, 4)[2].model_copy(update={"fact_id": "q4-2025:fiscal_year:b"})
     with pytest.raises(cpl10.UpstreamError, match="ambiguous_coordinate"):
         cpl10.context_quarters("q4-2025", [*base, twin])
+
+
+def test_period_register_without_period_id_or_with_a_shared_one_refuses() -> None:
+    base = _t414_register()
+    headless = [f for f in base if not (f.row_id == "q4-2025" and f.field == "period_id")]
+    with pytest.raises(cpl10.UpstreamError, match="incomplete_register"):
+        cpl10.context_quarters("q4-2025", headless)
+    shared = [
+        f.model_copy(update={"row_id": "r-q3", "fact_id": f.fact_id + ":r"})
+        for f in _t414(2025, 3)
+        if f.field != "period_id"
+    ] + [_t414(2025, 4)[0].model_copy(update={"row_id": "r-q3", "fact_id": "r-q3:period_id"})]
+    with pytest.raises(cpl10.UpstreamError, match="ambiguous_coordinate"):
+        cpl10.context_quarters("q4-2025", [*base, *shared])
 
 
 def test_context_q4_2025_quarters_equal_the_oracle() -> None:
@@ -655,7 +670,13 @@ def test_context_fy_current_refuses() -> None:
 
 def test_two_t414_rows_for_one_quarter_refuse() -> None:
     twin = [
-        f.model_copy(update={"row_id": "q4-2025-restated", "fact_id": f.fact_id + ":restated"})
+        f.model_copy(
+            update={
+                "row_id": "q4-2025-restated",
+                "fact_id": f.fact_id + ":restated",
+                **({"text": "q4-2025-restated"} if f.field == "period_id" else {}),
+            }
+        )
         for f in _t414(2025, 4)
     ]
     with pytest.raises(cpl10.UpstreamError, match=r"q4-2025 \(no CP-1 T4.14 period\)"):
@@ -712,21 +733,42 @@ def test_context_q4_2025_offers_oracle_quarters(
 
 
 def _check_topics(want_topics: list[dict[str, Any]], result: cpl10.ScreenResult) -> None:
-    """Python's rating of each topic, from the oracle's `topics` (exact decimals, not floats)."""
+    """Python's rating of each topic against every field of the oracle's `topics` (exact decimals
+    and fractions, not floats). `value_class_basis` is the oracle's statement that the value class
+    is CP-1's own, which the facts compared here carry unchanged."""
 
     def dec(value: str | None) -> Decimal | None:
         return None if value is None else Decimal(value)
 
+    def end(fact: Fact) -> tuple[Any, ...]:
+        return (
+            fact.label,
+            fact.period,
+            fact.status,
+            fact.amount,
+            fact.value_class,
+            fact.limitation,
+        )
+
+    def want_end(w: dict[str, Any]) -> tuple[Any, ...]:
+        assert w["value_class_basis"] == "observed"
+        return (w["label"], w["period"], w["status"], dec(w["amount_exact"]), w["value_class"])
+
     got = [
-        (t.topic.topic_id, t.screen.materiality, t.screen.evidence, t.screen.disposition, t.rank)
-        + (t.screen.change, t.screen.pct, t.start.label, t.close.label, t.start.amount)
-        + (t.close.amount,)
+        (t.topic.topic_id, t.topic.label, t.screen.materiality, t.screen.evidence)
+        + (t.screen.disposition, t.rank, t.screen.change, t.screen.pct, t.screen.pct_fraction)
+        + end(t.start)
+        + end(t.close)
         for t in result.topics
     ]
     assert got == [
-        (w["topic_id"], w["materiality"], w["evidence"], w["disposition"], w["rank"])
-        + (dec(w["change_exact"]), dec(w["change_pct_exact"]), w["from"]["label"], w["to"]["label"])
-        + (dec(w["from"]["amount_exact"]), dec(w["to"]["amount_exact"]))
+        (w["topic_id"], w["label"], w["materiality"], w["evidence"])
+        + (w["disposition"], w["rank"], dec(w["change_exact"]), dec(w["change_pct_exact"]))
+        + (None if w["change_pct_fraction"] is None else Fraction(w["change_pct_fraction"]),)
+        + want_end(w["from"])
+        + (w["from"]["limitation"],)
+        + want_end(w["to"])
+        + (w["to"]["limitation"],)
         for w in want_topics
     ]
 

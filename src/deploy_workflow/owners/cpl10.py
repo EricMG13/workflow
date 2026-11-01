@@ -35,7 +35,6 @@ from deploy_vii.contracts import (
     Hash,
     Input,
     Module,
-    ModuleView,
     ReportTable,
     Run,
     TableColumn,
@@ -61,7 +60,6 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, status_display
-from deploy_workflow import earnings
 from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.context_periods import quarters_ending_at, resolve
 from deploy_workflow.owners.blank import is_blank, one_per_page
@@ -322,21 +320,25 @@ class ContextPeriodNotQuarter(UpstreamError):
 
 
 def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
-    """The CP-1 T4.14 rows by row id, read with the earnings reader (a duplicated coordinate refuses). The view only carries `facts` through that reader."""
-    held = tuple(facts)
-    view = ModuleView(
-        module_id="CP-1",
-        title="CP-1 model period register",
-        aliases=(),
-        status="candidate",
-        artifact_sha256=hashlib.sha256("\n".join(f.fact_id for f in held).encode()).hexdigest(),
-        facts=held,
-    )
-    try:
-        rows = earnings._rows(view, "T4.14")
-    except ValueError as error:
-        raise UpstreamError(f"CP-1 T4.14 register is unusable: {error}") from error
-    return {next(iter(row.values())).row_id: row for row in rows}
+    """The CP-1 T4.14 rows by `period_id`, as `earnings._periods` reads them: a repeated field of
+    one row, a row without a known `period_id` and two rows sharing one `period_id` all refuse."""
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in facts:
+        if fact.table_id != "T4.14":
+            continue
+        row = rows.setdefault(fact.row_id, {})
+        if fact.field in row:
+            raise UpstreamError("CP-1 T4.14 register is unusable: ambiguous_coordinate")
+        row[fact.field] = fact
+    register: dict[str, dict[str, Fact]] = {}
+    for row in rows.values():
+        identity = row.get("period_id")
+        if identity is None or identity.status != "known" or not identity.text:
+            raise UpstreamError("CP-1 T4.14 register is unusable: incomplete_register")
+        if identity.text in register:
+            raise UpstreamError("CP-1 T4.14 register is unusable: ambiguous_coordinate")
+        register[identity.text] = row
+    return register
 
 
 def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarter, ...]:

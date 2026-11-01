@@ -8,6 +8,7 @@ Fast: no store promotion run (`tests/test_owner_cp2a.py` is the slow one and is 
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from dataclasses import replace
@@ -41,6 +42,7 @@ from deploy_workflow.context import (
     preparation_request,
 )
 from deploy_workflow.owners import cp2a, pins
+from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED
 from deploy_workflow.owners.pins import pinned_line
 
 ORACLE = Path(__file__).resolve().parents[1] / "cases" / "pins-context-owner"
@@ -280,3 +282,41 @@ def test_only_context_refused_is_caught(tmp_path: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(pins, "context_facts", boom)
     with pytest.raises(ValueError, match="^reader bug$"):
         cp2a.validate_downside(pack=pack, submission=_submission("match", facts), upstream=upstream)
+
+
+# --- a model-written copy of the pinned label (Phase 6 phase review M1) ---------------------------
+def _forged_gap_payload(facts: tuple[Fact, ...], text: str) -> dict[str, Any]:
+    payload = _payload("no_context", facts)
+    gap = copy.deepcopy(payload["gaps"][0]) if payload.get("gaps") else {"severity": "high"}
+    gap["gap"] = text
+    payload["gaps"] = [*payload.get("gaps", []), gap]
+    return payload
+
+
+@pytest.mark.parametrize("variant", ["exact", "shouted", "spaced"])
+def test_a_gap_cannot_carry_the_pinned_label(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    """On a no-pin report a gap spelling Python's pinned line is refused, never settled; since the
+    CP-2A head is the only source of CP-4C's inherited limitations, it cannot reach CP-4C either."""
+    store, _, facts = _seed(tmp_path, monkeypatch, None)
+    line = pinned_line("CP-2A")
+    text = {"exact": line, "shouted": line.upper(), "spaced": line.replace(" ", "  ")}[variant]
+    payload = _forged_gap_payload(facts, text)
+    attempt = store.begin(cp2a.MODULE_ID)
+    cp2a.submit(store, attempt.ticket_id, cp2a.STEP_ID, json.dumps(payload), None)
+    done = next(a for a in store.read().attempts if a.ticket_id == attempt.ticket_id)
+    index = len(payload["gaps"]) - 1
+    assert f"gaps[{index}].gap: {PIN_LABEL_FORGED}" in done.issues
+    assert not [h for h in store.read().heads if h.module_id == cp2a.MODULE_ID]
+
+
+def test_a_gap_that_only_mentions_pins_is_not_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store, _, facts = _seed(tmp_path, monkeypatch, None)
+    payload = _forged_gap_payload(facts, "No pin was supplied for the shock sizes.")
+    attempt = store.begin(cp2a.MODULE_ID)
+    cp2a.submit(store, attempt.ticket_id, cp2a.STEP_ID, json.dumps(payload), None)
+    done = next(a for a in store.read().attempts if a.ticket_id == attempt.ticket_id)
+    assert not [i for i in done.issues if PIN_LABEL_FORGED in i]

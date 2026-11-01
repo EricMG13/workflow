@@ -1086,15 +1086,21 @@ def _normalised(text: str) -> str:
     return folded.removesuffix(".").strip()
 
 
+def pin_label_forged(module_id: str, text: str | None) -> bool:
+    """True when `text` holds `module_id`'s pinned-recovery sentence, or a near copy that differs
+    only as `_normalised` folds (case, spacing, format characters, compatibility forms, the full
+    stop; a homoglyph from another script is not folded). Shared by the modules whose own
+    limitations carry model prose beside Python's pinned line (P6-P13)."""
+    return bool(text) and _normalised(pinned_line(module_id)) in _normalised(text or "")
+
+
 def _check_pin_label(sub: MarketImpliedSubmission, out: _Issues) -> None:
     """Refuse a `technicals[i].limitation` that contains Python's pinned-recovery sentence, or a
-    near copy of it that differs only in case, spacing, format characters, compatibility forms or
-    the full stop (both sides normalised by `_normalised`; a homoglyph from another script is
-    not folded). The own limitations copy that text verbatim, so a model-written copy would state
-    a pin that does not exist or push the real label out of last place."""
-    label = _normalised(pinned_line(MODULE_ID))
+    near copy of it (`pin_label_forged`). The own limitations copy that text verbatim, so a
+    model-written copy would state a pin that does not exist or push the real label out of last
+    place."""
     for i, x in enumerate(sub.technicals):
-        if x.limitation and label in _normalised(x.limitation):
+        if pin_label_forged(MODULE_ID, x.limitation):
             out.add(f"technicals[{i}].limitation: {PIN_LABEL_FORGED}")
 
 

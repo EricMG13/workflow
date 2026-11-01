@@ -70,6 +70,7 @@ from deploy_vii.report_view import figure_unit
 from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2A"
@@ -700,6 +701,8 @@ def validate(inputs: Inputs) -> tuple[str, ...]:
         for name in ("gap", "why_it_matters", "affected_analysis", "action"):
             path = f"gaps[{n}].{name}"
             issues += _prose_issues(path, getattr(gap, name), bound, inputs.names)
+        if pin_label_forged(MODULE_ID, gap.gap):  # the gap text joins the limitations (P6-P13)
+            issues.append(f"gaps[{n}].gap: {PIN_LABEL_FORGED}")
     return tuple(dict.fromkeys(issues))
 
 

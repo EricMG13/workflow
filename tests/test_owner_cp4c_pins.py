@@ -30,7 +30,7 @@ from deploy_workflow.context import (
     load_context,
     preparation_request,
 )
-from deploy_workflow.owners import cp4c, pins
+from deploy_workflow.owners import cp3d, cp4c, pins
 from deploy_workflow.owners.pins import pinned_line
 
 ORACLE = Path(__file__).resolve().parents[1] / "cases" / "pins-context-owner"
@@ -485,3 +485,20 @@ def test_a_long_real_refusal_is_clipped_at_the_bound(
     assert out.output is None and line.startswith("Context refused: assumptions.cp2a.")
     assert len(line) == MAX_ISSUE_CHARS and line.endswith("…")
     assert cp4c._pin_lines(bad, _submission(_payload("match"))) == (line,)
+
+
+# --- a model-written copy of the pinned label (Phase 6 phase review M1) ---------------------------
+@pytest.mark.parametrize("variant", ["exact", "shouted", "spaced"])
+def test_a_gap_cannot_carry_the_pinned_label(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    line = pinned_line("CP-4C")
+    text = {"exact": line, "shouted": line.upper(), "spaced": line.replace(" ", "  ")}[variant]
+    payload = _payload("no_context")
+    gap = copy.deepcopy(payload["gaps"][0]) if payload.get("gaps") else {"severity": "high"}
+    gap["gap"] = text
+    payload["gaps"] = [*payload.get("gaps", []), gap]
+    store, _, attempt = _run(tmp_path, monkeypatch, "no_context", payload=payload)
+    assert f"gaps[{len(payload['gaps']) - 1}].gap: {cp3d.PIN_LABEL_FORGED}" in _issues(
+        store, attempt
+    )

@@ -84,6 +84,7 @@ from deploy_workflow.context import ContextRefused
 from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-4C"
@@ -1017,7 +1018,18 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
             if not found:
                 issues += _run_text_issues(path, text)
         issues += guard_issues(path, text)
+    issues += _gap_label_issues(sub)
     return tuple(issues)
+
+
+def _gap_label_issues(sub: RestructuringSubmission) -> list[str]:
+    """A gap line joins the own limitations beside Python's pinned line, so a model-written copy
+    of that line is refused (P6-P13, shared with CP-3D)."""
+    return [
+        f"gaps[{i}].gap: {PIN_LABEL_FORGED}"
+        for i, g in enumerate(sub.gaps)
+        if pin_label_forged(MODULE_ID, g.gap)
+    ]
 
 
 _RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)

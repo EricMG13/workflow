@@ -156,3 +156,12 @@ Prerequisites before any live run:
 - **12:14:** testing-framework plan written: docs/superpowers/plans/2026-10-31-model-testing-framework.md (11 tasks; Tasks 1-10 offline now, Task 11 after Part B O2+O5). Interfaces for O5/O2 (CallRecord model-call/1, run directory contract) to send to CONTEXT FORM. Awaiting user review.
 - **12:15:** CONTEXT FORM adopted model-call/1 and the run-directory contract unchanged (36b4a620 on claude/workflow-context-file-db27f3, local); O5 keeps the invocation_digest preimage in the Execution audit. If Tasks 2 or 8 change after user review, tell CONTEXT FORM.
 - **12:21 (user, /adversarial-reviewer):** "instruct this session and context form session to review both your plans and documentation. context form's implementation will run first, therefore, both sessions plans need to be complimentary (you should have everything you need for testing)". Asked CONTEXT FORM to review both plans (three personas, complementarity focus); dispatched a fresh opus55-reviewer here for the same. Next: consolidate both, fix framework plan, agree seam changes with CONTEXT FORM.
+
+## 8. Framework build status (2026-11-01, branch claude/agitated-meitner-5f25bb)
+- Started from efe43725 + codex/checkpoint 2e7709cc (merge 0e317b2a). `claude/codex-findings-review-64c673` is checked out in another worktree, so the work is on this branch.
+- Plan B amended for the cross-plan review rows owned by B or both (C2, C4, W1, W3, W4, W5, W7, W8, W9, N2), reviewed by mx-feature, commit 1af5176e.
+- Built and reviewed under SDD: Tasks 1-5 and 7-10 in `src/deploy_workflow/model_testing/` (configs, records, budget, cases, mapping, scoring, pathway, faults, report). Whole-branch review by mx-architect; fix wave 6315738e. Gates: 186 passed, 3 skipped (RUN_PROMOTION, deferred to CI); ruff, format and mypy strict all 0.
+- Deferred: Task 6 (mapping oracles, per landed context-plan phase, W3) and Task 11 (run driver, after O3/O4/O6 are merged).
+- Every ruling and deferred minor is in `work/model-testing/framework-build-ledger.md`.
+- Task 11 brief must carry: stop on any run folder without run.json (crashed live run); a refusal's named inputs come from O3; a good_run whose receipt plan is the full preset is needed for a real-scorer `passed=True` test; check refusal names against the case (I5).
+- Task 6 brief must carry: check `module_commits` keys against golden modules (Task 5 I-1).

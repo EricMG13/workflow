@@ -4,9 +4,9 @@ Every validator refusal has a rule (tests 1, 2) and every composed prompt names 
 owes (tests 3, 5). The ids, checks and statements are a golden file (test 4), so removing or
 rewording a rule is an explicit edit the review sees.
 
-The 14 new steps have draft lists: ``checks`` filled from their oracles and cores, ``statement``
-empty until M5's separate writer completes them. Their statement test and their prompt test are
-strict xfail per step: each marker comes off with the work that makes it pass (M5; Task 4).
+The 14 new steps' lists were drafted from their oracles and cores and their statements written by
+M5's separate writer. Their prompt test is strict xfail per step: each marker comes off with the
+work that makes it pass (Task 4).
 """
 
 import ast
@@ -250,13 +250,7 @@ def test_every_rule_has_a_check(step_id: str) -> None:
         assert rule.checks or rule.from_code, f"{rule.id} enforces nothing"
 
 
-@pytest.mark.parametrize(
-    "step_id",
-    [
-        xfail_new(s, reason="M5: the statements of {step} wait for their separate writer")
-        for s in STEPS
-    ],
-)
+@pytest.mark.parametrize("step_id", STEPS)
 def test_every_rule_has_a_statement(step_id: str) -> None:
     empty = [r.id for r in rules.load_rules(step_id) if not r.statement.strip()]
     assert not empty, f"{step_id}: no statement for {empty}"

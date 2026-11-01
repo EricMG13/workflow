@@ -2,18 +2,30 @@
  "rules": [
   {
    "id": "earnings_delta.1",
-   "statement": "",
+   "statement": "Submit one object with exactly `prior_period_id`, `current_period_id`, `comparison_assessment`, `driver_assessment` and `guidance_assessment`; `driver_assessment` and `guidance_assessment` are always `not_supplied`. Python composes the delta report from these fields, so no figure, fact id or other text is submitted.",
    "checks": [
     "code:cp1b:shape",
+    "code:cp1b:owner_error"
+   ]
+  },
+  {
+   "id": "earnings_delta.2",
+   "statement": "Take `prior_period_id` and `current_period_id` together from one entry of `pairs` in the read_inputs view; any other pair is refused as `unsupported_pair`, and a register Python cannot compare is refused with its code (incompatible_periods, incomplete_register, invalid_source_view, incompatible_dimensions, ambiguous_coordinate or invalid_fact).",
+   "checks": [
     "code:cp1b:period:ambiguous_coordinate",
     "code:cp1b:period:incompatible_dimensions",
     "code:cp1b:period:incompatible_periods",
     "code:cp1b:period:incomplete_register",
     "code:cp1b:period:invalid_fact",
     "code:cp1b:period:invalid_source_view",
-    "code:cp1b:unsupported_pair",
-    "code:cp1b:comparison_assessment",
-    "code:cp1b:owner_error"
+    "code:cp1b:unsupported_pair"
+   ]
+  },
+  {
+   "id": "earnings_delta.3",
+   "statement": "Copy `comparison_assessment` from the chosen pair's entry in `pairs`; any other value is refused because the periods give a different assessment.",
+   "checks": [
+    "code:cp1b:comparison_assessment"
    ]
   }
  ]

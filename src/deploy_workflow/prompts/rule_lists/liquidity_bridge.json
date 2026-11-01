@@ -2,27 +2,45 @@
  "rules": [
   {
    "id": "liquidity_bridge.1",
-   "statement": "",
+   "statement": "`horizon_months` is a whole number from 1 to 60. Give exactly one of `minimum_cash` and `minimum_cash_absence`; a `minimum_cash.amount` is not negative.",
    "checks": [
     "oracle:cp2d:horizon_zero",
     "oracle:cp2d:horizon_over_limit",
     "oracle:cp2d:minimum_cash_negative",
     "oracle:cp2d:minimum_cash_and_absence",
-    "oracle:cp2d:neither_minimum_cash_nor_absence",
-    "oracle:cp2d:section_missing",
-    "oracle:cp2d:section_repeated",
-    "oracle:cp2d:digit_in_text",
-    "oracle:cp2d:covenant_compliance_wording",
-    "oracle:cp2d:figure_free_text_forbidden_word",
-    "oracle:cp2d:unknown_basis_ref",
-    "oracle:cp2d:insufficient_without_limitation",
-    "oracle:cp2d:limitation_without_insufficient"
+    "oracle:cp2d:neither_minimum_cash_nor_absence"
    ]
   },
   {
    "id": "liquidity_bridge.2",
-   "statement": "",
+   "statement": "`assessments` holds exactly one row for each `section` (liquidity_runway, maturity_wall, funding_gap), no section missing and none twice. The maturity_wall row lists in `basis_refs` a ref of the T4.18 maturity_date fact from `cp1_facts`.",
    "checks": [
+    "oracle:cp2d:section_missing",
+    "oracle:cp2d:section_repeated"
+   ]
+  },
+  {
+   "id": "liquidity_bridge.3",
+   "statement": "Every `basis_refs` entry, in an assessment or in `minimum_cash`, is a `ref` listed in `cp1_facts` of the module context; any other name is refused.",
+   "checks": [
+    "oracle:cp2d:unknown_basis_ref"
+   ]
+  },
+  {
+   "id": "liquidity_bridge.4",
+   "statement": "Every analyst text (`text`, `credit_implication` and `limitation` of an assessment, `minimum_cash.rationale`, and the absence `reason` and `follow_up`) is nonblank, has no digit, and contains none of these substrings in any case: refinanc, recommend, buy, sell, overweight, underweight, fulcrum, recovery, covenant breach, covenant test is met, in compliance with, covenant compliance, default will, lme, liability management.",
+   "checks": [
+    "oracle:cp2d:digit_in_text",
+    "oracle:cp2d:covenant_compliance_wording",
+    "oracle:cp2d:figure_free_text_forbidden_word"
+   ]
+  },
+  {
+   "id": "liquidity_bridge.5",
+   "statement": "An assessment of category Insufficient Information states a nonblank `limitation`; an assessment of any other category has a null `limitation`.",
+   "checks": [
+    "oracle:cp2d:insufficient_without_limitation",
+    "oracle:cp2d:limitation_without_insufficient",
     "fn:deploy_workflow.owners.cp2d:_claims"
    ]
   }

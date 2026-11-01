@@ -182,46 +182,71 @@
   "change_screen": [
    {
     "id": "change_screen.1",
-    "statement": "",
-    "checks": []
-   },
-   {
-    "id": "change_screen.2",
-    "statement": "",
+    "statement": "Choose `comparison.from_period` and `comparison.to_period` from the periods the module context offers, with `to_period` later than `from_period`; Python rates every topic for that pair.",
     "checks": [
      "oracle:cpl10:r01",
      "oracle:cpl10:r02",
+     "fn:deploy_workflow.owners.cpl10:_comparison_issues"
+    ]
+   },
+   {
+    "id": "change_screen.2",
+    "statement": "Write exactly one assessment for each topic that `pair_screens` rates Material or Watch for your pair, naming it by its `topic_id`, and none for a topic rated Stable or Not assessed; never name an unknown topic or the same topic twice.",
+    "checks": [
      "oracle:cpl10:r03",
      "oracle:cpl10:r04",
      "oracle:cpl10:r05",
      "oracle:cpl10:r06",
-     "oracle:cpl10:r07",
-     "oracle:cpl10:r08",
-     "oracle:cpl10:r09",
-     "oracle:cpl10:r10",
-     "oracle:cpl10:r11",
-     "oracle:cpl10:r12",
-     "oracle:cpl10:r13",
-     "oracle:cpl10:r14",
-     "oracle:cpl10:r15",
-     "oracle:cpl10:r16",
-     "oracle:cpl10:r17",
-     "oracle:cpl10:r18",
-     "oracle:cpl10:r19"
+     "fn:deploy_workflow.owners.cpl10:_assessment_issues",
+     "fn:deploy_workflow.owners.cpl10:_claims",
+     "fn:deploy_workflow.owners.cpl10:_item_rows"
     ]
    },
    {
     "id": "change_screen.3",
-    "statement": "",
+    "statement": "No confidence is High, in an assessment or in `overall`; a confidence is Insufficient Information exactly when its category is Insufficient Information.",
     "checks": [
-     "fn:deploy_workflow.owners.cpl10:_assessment_issues",
-     "fn:deploy_workflow.owners.cpl10:_claims",
-     "fn:deploy_workflow.owners.cpl10:_comparison_issues",
-     "fn:deploy_workflow.owners.cpl10:_confidence_issues",
-     "fn:deploy_workflow.owners.cpl10:_gap_issues",
-     "fn:deploy_workflow.owners.cpl10:_item_rows",
-     "fn:deploy_workflow.owners.cpl10:_overall_issues",
-     "fn:deploy_workflow.owners.cpl10:_text_issues",
+     "oracle:cpl10:r07",
+     "oracle:cpl10:r13",
+     "fn:deploy_workflow.owners.cpl10:_confidence_issues"
+    ]
+   },
+   {
+    "id": "change_screen.4",
+    "statement": "An assessment's `assessment` and `credit_transmission`, and `overall.rationale`, are nonblank prose with no figure (digits only inside a period or filing label such as `Q3 2025`), no braces or square brackets, and none of the words recommend, recovery or covenant anywhere in the text, whatever the case.",
+    "checks": [
+     "oracle:cpl10:r08",
+     "oracle:cpl10:r09",
+     "oracle:cpl10:r10",
+     "oracle:cpl10:r11",
+     "fn:deploy_workflow.owners.cpl10:_text_issues"
+    ]
+   },
+   {
+    "id": "change_screen.5",
+    "statement": "An overall whose category is Insufficient Information states its `limitation`; an overall of any other category has a null `limitation`, and a stated limitation is not blank.",
+    "checks": [
+     "oracle:cpl10:r14",
+     "oracle:cpl10:r15",
+     "fn:deploy_workflow.owners.cpl10:_overall_issues"
+    ]
+   },
+   {
+    "id": "change_screen.6",
+    "statement": "Each gap's `affected_analysis` is a topic id of the view or `overall`; its `gap`, `why_it_matters` and `action` are not blank; no gap field contains a digit; and no two gaps share the same `affected_analysis` and `gap`.",
+    "checks": [
+     "oracle:cpl10:r16",
+     "oracle:cpl10:r17",
+     "oracle:cpl10:r18",
+     "oracle:cpl10:r19",
+     "fn:deploy_workflow.owners.cpl10:_gap_issues"
+    ]
+   },
+   {
+    "id": "change_screen.7",
+    "statement": "Submit one object with `comparison`, `assessments`, `overall` and `gaps` complete, and every field of each row present with the type the schema gives.",
+    "checks": [
+     "oracle:cpl10:r12",
      "fn:deploy_workflow.owners.cpl10:_validate_step"
     ]
    }
@@ -316,16 +341,54 @@
   "decision_ledger": [
    {
     "id": "decision_ledger.1",
-    "statement": "",
+    "statement": "Every `decision` field gives exactly one of `text` with its `quote` (the `text` occurring in that quote) or an `absence`; only `posture` and `size` may be absent. `action_bias` is Overweight, Neutral, Underweight or Insufficient Information, `confidence` is Insufficient Information, Low, Medium or High, and `decision_date` is written Month D, YYYY. Every decision quote cites `prior_case`; `observations` is always present.",
     "checks": [
      "oracle:cp8:r00",
      "oracle:cp8:r01",
      "oracle:cp8:r02",
-     "oracle:cp8:r03",
-     "oracle:cp8:r04",
      "oracle:cp8:r05",
      "oracle:cp8:r06",
      "oracle:cp8:r07",
+     "oracle:cp8:r29",
+     "oracle:cp8:r31",
+     "fn:deploy_workflow.owners.cp8:_Checker._decision",
+     "fn:deploy_workflow.owners.cp8:_Checker._decision_text"
+    ]
+   },
+   {
+    "id": "decision_ledger.2",
+    "statement": "Every `thesis` field but `downside_sizes` gives exactly one of a `quote` from `prior_case` or an `absence`; `thesis`, `greatest_uncertainty` and `downside_paths` cannot be absent.",
+    "checks": [
+     "oracle:cp8:r32",
+     "oracle:cp8:r33",
+     "fn:deploy_workflow.owners.cp8:_Checker._thesis"
+    ]
+   },
+   {
+    "id": "decision_ledger.3",
+    "statement": "Cite only `prior_case`, `update` and `market_update`, each quote verbatim under its locator and its page read with `read_pages`; a source outside those three, or one that is unavailable or changed, is refused.",
+    "checks": [
+     "oracle:cp8:r03",
+     "oracle:cp8:r04",
+     "oracle:cp8:r30",
+     "oracle:cp8:r54",
+     "oracle:cp8:t01",
+     "oracle:cp8:t02",
+     "fn:deploy_workflow.owners.cp8:_Checker._cite"
+    ]
+   },
+   {
+    "id": "decision_ledger.4",
+    "statement": "Before you give an `absence` or `outcome_absence`, search the pack for the item with `search_pack`; an absence claim with no recorded search is refused. Its `reason` and `follow_up` are analyst text (see decision_ledger.11), and an absence quote, if given, cites `prior_case`.",
+    "checks": [
+     "oracle:cp8:t03",
+     "fn:deploy_workflow.owners.cp8:_Checker._absence"
+    ]
+   },
+   {
+    "id": "decision_ledger.5",
+    "statement": "Each observation has `side` expected or realized and `metric` total_leverage, interest_cover, loan_bid or loan_offer, at most once per side and metric; loan_bid and loan_offer come together on each side, bid not above offer. An expected observation cites `prior_case`; a realized one cites `update` or `market_update`, never `prior_case`, from an issuer source for total_leverage and interest_cover and a third-party source for loan_bid and loan_offer. `value_text` is the figure as printed (digits, a point and two decimals), occurring once in the quote after its measure's label, and `as_of_text` is a Month D, YYYY date occurring in the quote as its only date; a realized as-of date is after the decision date.",
+    "checks": [
      "oracle:cp8:r08",
      "oracle:cp8:r09",
      "oracle:cp8:r10",
@@ -333,51 +396,35 @@
      "oracle:cp8:r12",
      "oracle:cp8:r13",
      "oracle:cp8:r14",
-     "oracle:cp8:r15",
-     "oracle:cp8:r16",
-     "oracle:cp8:r17",
-     "oracle:cp8:r18",
-     "oracle:cp8:r19",
-     "oracle:cp8:r20",
-     "oracle:cp8:r21",
-     "oracle:cp8:r22",
-     "oracle:cp8:r23",
-     "oracle:cp8:r24",
-     "oracle:cp8:r25",
-     "oracle:cp8:r26",
-     "oracle:cp8:r27",
-     "oracle:cp8:r28",
-     "oracle:cp8:r29",
-     "oracle:cp8:r30",
-     "oracle:cp8:r31",
-     "oracle:cp8:r32",
-     "oracle:cp8:r33",
      "oracle:cp8:r34",
      "oracle:cp8:r35",
      "oracle:cp8:r36",
      "oracle:cp8:r37",
-     "oracle:cp8:r39",
-     "oracle:cp8:r40",
-     "oracle:cp8:r41",
-     "oracle:cp8:r42",
-     "oracle:cp8:r43",
-     "oracle:cp8:r44",
-     "oracle:cp8:r45",
-     "oracle:cp8:r46",
-     "oracle:cp8:r47",
-     "oracle:cp8:r48",
-     "oracle:cp8:r49",
-     "oracle:cp8:r50",
-     "oracle:cp8:r51",
-     "oracle:cp8:r52",
-     "oracle:cp8:r53",
-     "oracle:cp8:r54",
+     "fn:deploy_workflow.owners.cp8:_Checker._observation",
+     "fn:deploy_workflow.owners.cp8:_Checker._observation_source",
+     "fn:deploy_workflow.owners.cp8:_Checker._observations"
+    ]
+   },
+   {
+    "id": "decision_ledger.6",
+    "statement": "Give realized observations or `outcome_absence`, never both and never neither. When a realized observation is given, `default_restructuring` is required: a quote from an issuer source other than `prior_case` that states default or restructuring, with `as_of_text` its only Month D, YYYY date, after the decision date. With `outcome_absence`, `default_restructuring` is null.",
+    "checks": [
+     "oracle:cp8:r15",
+     "oracle:cp8:r16",
      "oracle:cp8:r55",
      "oracle:cp8:r56",
      "oracle:cp8:r57",
      "oracle:cp8:r58",
      "oracle:cp8:r59",
      "oracle:cp8:r60",
+     "fn:deploy_workflow.owners.cp8:_Checker._outcome",
+     "fn:deploy_workflow.owners.cp8:_Checker._default"
+    ]
+   },
+   {
+    "id": "decision_ledger.7",
+    "statement": "Each `thesis.downside_sizes` entry names `metric_id` total_leverage or interest_cover once and `comparator` above or below; its quote cites `prior_case`, is a span of the `thesis.downside_paths` quote, and states the measure, comparator and level as `<total leverage or interest cover> <comparator> <level>x`, with `level_text` the figure as printed (digits, a point, two decimals) occurring once in it.",
+    "checks": [
      "oracle:cp8:r61",
      "oracle:cp8:r62",
      "oracle:cp8:r63",
@@ -385,136 +432,211 @@
      "oracle:cp8:r65",
      "oracle:cp8:r66",
      "oracle:cp8:r67",
-     "oracle:cp8:r68",
-     "oracle:cp8:r69"
+     "fn:deploy_workflow.owners.cp8:_Checker._size",
+     "fn:deploy_workflow.owners.cp8:_Checker._sizes"
     ]
    },
    {
-    "id": "decision_ledger.2",
-    "statement": "",
+    "id": "decision_ledger.8",
+    "statement": "`confidence` has one entry, once, for each compared metric, and none for another; a compared metric is total_leverage, interest_cover, or loan_mid, which needs bid and offer on both sides quoted on one date per side. Each `level` is High, Medium or Low.",
     "checks": [
-     "oracle:cp8:t01",
-     "oracle:cp8:t02",
-     "oracle:cp8:t03"
+     "oracle:cp8:r28",
+     "oracle:cp8:r39",
+     "oracle:cp8:r40",
+     "fn:deploy_workflow.owners.cp8:_Checker._confidence"
     ]
    },
    {
-    "id": "decision_ledger.3",
-    "statement": "",
+    "id": "decision_ledger.9",
+    "statement": "Give one attribution for each compared metric and one for `overall`, each once; `label` is Thesis Confirmed, Flagged Risk Materialized, Unflagged Risk Materialized, Right for Wrong Reason, Premature / Mistimed or Insufficient Information. `process_sound` is Y, N or Not assessed: Not assessed exactly with Insufficient Information, Y with Flagged Risk Materialized, N with Unflagged Risk Materialized. With no compared metric, `overall` is Insufficient Information.",
     "checks": [
-     "fn:deploy_workflow.owners.cp8:_Checker._absence",
+     "oracle:cp8:r17",
+     "oracle:cp8:r20",
+     "oracle:cp8:r22",
+     "oracle:cp8:r41",
+     "oracle:cp8:r42",
+     "oracle:cp8:r43",
+     "oracle:cp8:r44",
+     "oracle:cp8:r45",
+     "oracle:cp8:r46",
+     "oracle:cp8:r51",
      "fn:deploy_workflow.owners.cp8:_Checker._attributions",
-     "fn:deploy_workflow.owners.cp8:_Checker._cite",
-     "fn:deploy_workflow.owners.cp8:_Checker._confidence",
-     "fn:deploy_workflow.owners.cp8:_Checker._decision",
-     "fn:deploy_workflow.owners.cp8:_Checker._decision_text",
-     "fn:deploy_workflow.owners.cp8:_Checker._default",
+     "fn:deploy_workflow.owners.cp8:_Checker._process"
+    ]
+   },
+   {
+    "id": "decision_ledger.10",
+    "statement": "`flag_quote` is given only with Flagged Risk Materialized, as a span of your `thesis.downside_paths` quote, and the flagged metric needs a recorded `downside_sizes` entry that the realized value breaches strictly; a flagged `overall` needs one flagged metric so breached. `originating_module` is given only with Unflagged Risk Materialized and names a methodology module.",
+    "checks": [
+     "oracle:cp8:r18",
+     "oracle:cp8:r19",
+     "oracle:cp8:r21",
+     "oracle:cp8:r47",
+     "oracle:cp8:r48",
+     "oracle:cp8:r49",
+     "oracle:cp8:r50",
+     "oracle:cp8:r68",
+     "oracle:cp8:r69",
      "fn:deploy_workflow.owners.cp8:_Checker._flag",
      "fn:deploy_workflow.owners.cp8:_Checker._flag_size",
-     "fn:deploy_workflow.owners.cp8:_Checker._lessons",
-     "fn:deploy_workflow.owners.cp8:_Checker._observation",
-     "fn:deploy_workflow.owners.cp8:_Checker._observation_source",
-     "fn:deploy_workflow.owners.cp8:_Checker._observations",
-     "fn:deploy_workflow.owners.cp8:_Checker._origin",
-     "fn:deploy_workflow.owners.cp8:_Checker._outcome",
-     "fn:deploy_workflow.owners.cp8:_Checker._process",
-     "fn:deploy_workflow.owners.cp8:_Checker._size",
-     "fn:deploy_workflow.owners.cp8:_Checker._sizes",
+     "fn:deploy_workflow.owners.cp8:_Checker._origin"
+    ]
+   },
+   {
+    "id": "decision_ledger.11",
+    "statement": "Each `basis`, `lesson`, `synthesis.text`, absence `reason` and `follow_up` is nonblank text with no digit, no braces or square brackets, not a null spelling, and none of blame, fault, should have, in hindsight, with hindsight, recommend, overweight, underweight, buy, sell, adjust the prior or calibrat.",
+    "checks": [
+     "oracle:cp8:r23",
+     "oracle:cp8:r24",
+     "oracle:cp8:r25",
+     "oracle:cp8:r26",
+     "oracle:cp8:r27",
      "fn:deploy_workflow.owners.cp8:_Checker._text",
-     "fn:deploy_workflow.owners.cp8:_Checker._thesis",
      "fn:deploy_workflow.owners.cp8:_Composer._resolved"
+    ]
+   },
+   {
+    "id": "decision_ledger.12",
+    "statement": "Give at most two `lessons`, each with `metric_ids` naming only compared metrics.",
+    "checks": [
+     "oracle:cp8:r52",
+     "oracle:cp8:r53",
+     "fn:deploy_workflow.owners.cp8:_Checker._lessons"
     ]
    }
   ],
   "downside_pathway": [
    {
     "id": "downside_pathway.1",
-    "statement": "",
+    "statement": "Set `base_period` to one of the periods listed in `base_periods` of the module context, and one whose base EBITDA is known and above zero; any other value is refused alone, before the rest of the submission is read.",
+    "checks": [
+     "oracle:cp2a:v01",
+     "oracle:cp2a:v02",
+     "fn:deploy_workflow.owners.cp2a:validate",
+     "fn:deploy_workflow.owners.cp2a:break_points"
+    ]
+   },
+   {
+    "id": "downside_pathway.2",
+    "statement": "`ebitda_decline` and `interest_increase` are decimal strings from 0 to 1 with at most four decimal places (`0`, `1` or `0.` followed by one to four digits); a threshold `level` is a non-negative decimal string of at most six integer digits and four decimal places, and above zero.",
     "checks": [
      "oracle:cp2a:r01",
      "oracle:cp2a:r02",
      "oracle:cp2a:r03",
      "oracle:cp2a:r04",
      "oracle:cp2a:r05",
-     "oracle:cp2a:r06",
-     "oracle:cp2a:r07",
      "oracle:cp2a:r08",
      "oracle:cp2a:r09",
+     "oracle:cp2a:v05"
+    ]
+   },
+   {
+    "id": "downside_pathway.3",
+    "statement": "Submit one to four `scenarios`, and a `threshold` only for a metric among total_leverage, net_leverage and interest_coverage. Every field of the schema is present (`limitation` is null when there is none), no other field appears, `assessment.confidence` is one of the four listed values, and the object is valid JSON.",
+    "checks": [
+     "oracle:cp2a:r06",
+     "oracle:cp2a:r07",
      "oracle:cp2a:r10",
      "oracle:cp2a:r11",
      "oracle:cp2a:r12",
      "oracle:cp2a:r13",
-     "oracle:cp2a:r14",
-     "oracle:cp2a:v01",
-     "oracle:cp2a:v02",
+     "oracle:cp2a:r14"
+    ]
+   },
+   {
+    "id": "downside_pathway.4",
+    "statement": "Each scenario `name` and threshold `label` is nonblank, free of digits, braces, brackets, line breaks and control characters, and not `Base (no stress)`; scenario names are all different, threshold labels are all different, and no metric has more than one threshold. A name or label states no prohibited conclusion either (as downside_pathway.5 lists).",
+    "checks": [
      "oracle:cp2a:v03",
      "oracle:cp2a:v04",
-     "oracle:cp2a:v05",
      "oracle:cp2a:v06",
      "oracle:cp2a:v07",
+     "fn:deploy_workflow.owners.cp2a:_name_issues",
+     "fn:deploy_workflow.owners.cp2a:_scenario_issues",
+     "fn:deploy_workflow.owners.cp2a:_threshold_issues"
+    ]
+   },
+   {
+    "id": "downside_pathway.5",
+    "statement": "Every `rationale`, `limitation` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty, and you state no peer ranking, instrument recommendation or recovery conclusion (phrases such as `versus peers`, `recommend` or `will recover` are refused).",
+    "checks": [
      "oracle:cp2a:v08",
      "oracle:cp2a:v09",
      "oracle:cp2a:v10",
      "oracle:cp2a:v11",
      "oracle:cp2a:v12",
-     "oracle:cp2a:v13",
      "oracle:cp2a:v14",
      "oracle:cp2a:v15",
      "oracle:cp2a:v16",
-     "oracle:cp2a:v17"
+     "fn:deploy_workflow.owners.cp2a:_prose_issues"
     ]
    },
    {
-    "id": "downside_pathway.2",
-    "statement": "",
+    "id": "downside_pathway.6",
+    "statement": "`assessment.confidence` is never High, because the shock sizes and watch levels are uncited analyst assumptions.",
     "checks": [
-     "fn:deploy_workflow.owners.cp2a:_name_issues",
-     "fn:deploy_workflow.owners.cp2a:_prose_issues",
-     "fn:deploy_workflow.owners.cp2a:_scenario_issues",
-     "fn:deploy_workflow.owners.cp2a:_threshold_issues",
-     "fn:deploy_workflow.owners.cp2a:break_points",
-     "fn:deploy_workflow.owners.cp2a:validate"
+     "oracle:cp2a:v13"
+    ]
+   },
+   {
+    "id": "downside_pathway.7",
+    "statement": "A `Stale input` issue means a bound CP-1 input changed after the context was read; no edit to the submission cures it.",
+    "checks": [
+     "oracle:cp2a:v17"
     ]
    }
   ],
   "earnings_delta": [
    {
     "id": "earnings_delta.1",
-    "statement": "",
+    "statement": "Submit one object with exactly `prior_period_id`, `current_period_id`, `comparison_assessment`, `driver_assessment` and `guidance_assessment`; `driver_assessment` and `guidance_assessment` are always `not_supplied`. Python composes the delta report from these fields, so no figure, fact id or other text is submitted.",
     "checks": [
      "code:cp1b:shape",
+     "code:cp1b:owner_error"
+    ]
+   },
+   {
+    "id": "earnings_delta.2",
+    "statement": "Take `prior_period_id` and `current_period_id` together from one entry of `pairs` in the read_inputs view; any other pair is refused as `unsupported_pair`, and a register Python cannot compare is refused with its code (incompatible_periods, incomplete_register, invalid_source_view, incompatible_dimensions, ambiguous_coordinate or invalid_fact).",
+    "checks": [
      "code:cp1b:period:ambiguous_coordinate",
      "code:cp1b:period:incompatible_dimensions",
      "code:cp1b:period:incompatible_periods",
      "code:cp1b:period:incomplete_register",
      "code:cp1b:period:invalid_fact",
      "code:cp1b:period:invalid_source_view",
-     "code:cp1b:unsupported_pair",
-     "code:cp1b:comparison_assessment",
-     "code:cp1b:owner_error"
+     "code:cp1b:unsupported_pair"
+    ]
+   },
+   {
+    "id": "earnings_delta.3",
+    "statement": "Copy `comparison_assessment` from the chosen pair's entry in `pairs`; any other value is refused because the periods give a different assessment.",
+    "checks": [
+     "code:cp1b:comparison_assessment"
     ]
    }
   ],
   "earnings_quality": [
    {
     "id": "earnings_quality.1",
-    "statement": "",
+    "statement": "Write exactly one assessment for each add-back of the bridge in the module context, its `addback` the bridge label written exactly, and none for another label. When the pack supplies no bridge, assess no add-back and cite the statements' add-back disclosure in `overall.evidence`; if the bridge source is not ready or its table cannot be read, the step is refused as `Bridge table not found`.",
     "checks": [
      "oracle:cp1d:r01",
      "oracle:cp1d:r02",
-     "oracle:cp1d:r03",
-     "oracle:cp1d:r04",
-     "oracle:cp1d:r05",
-     "oracle:cp1d:r06",
-     "oracle:cp1d:r07",
-     "oracle:cp1d:r08",
-     "oracle:cp1d:r09",
-     "oracle:cp1d:r10",
-     "oracle:cp1d:r11",
-     "oracle:cp1d:r12",
      "oracle:cp1d:r13",
      "oracle:cp1d:r14",
      "oracle:cp1d:r15",
+     "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
+     "fn:deploy_workflow.owners.cp1d:validation_issues"
+    ]
+   },
+   {
+    "id": "earnings_quality.2",
+    "statement": "Give a `Partly supported` assessment exactly one of `accepted_fraction` or `accepted_basis`: the fraction a decimal string above 0 and below 1 with at most two places, the basis a cited quote holding exactly one amount that is above 0 and below the add-back's proposed amount. For any other achievability both are null.",
+    "checks": [
+     "oracle:cp1d:r03",
+     "oracle:cp1d:r04",
+     "oracle:cp1d:r05",
      "oracle:cp1d:r16",
      "oracle:cp1d:r17",
      "oracle:cp1d:r18",
@@ -522,25 +644,48 @@
     ]
    },
    {
-    "id": "earnings_quality.2",
-    "statement": "",
+    "id": "earnings_quality.3",
+    "statement": "An accepted add-back (achievability Supported or Partly supported, recurrence not Recurring) lists `evidence` and has an amount stated in the bridge. `recurrence` is Not applicable for a Saving; for a Cost it is Non-recurring, Recurring or Not assessable, and Not assessable only with achievability Insufficient evidence.",
     "checks": [
-     "oracle:cp1d:t01",
-     "oracle:cp1d:t02",
-     "oracle:cp1d:t03"
+     "oracle:cp1d:r06",
+     "oracle:cp1d:r07",
+     "oracle:cp1d:r08",
+     "oracle:cp1d:r12",
+     "fn:deploy_workflow.owners.cp1d:_rule_issues"
     ]
    },
    {
-    "id": "earnings_quality.3",
-    "statement": "",
+    "id": "earnings_quality.4",
+    "statement": "Each `rationale` is run text with no bare figure (digits only inside a period or filing label); a figure appears only as a reference to a fact the module context lists, in that fact's unit, and never as a reference to a gap.",
     "checks": [
-     "fn:deploy_workflow.owners.cp1d:_assessments_by_item",
-     "fn:deploy_workflow.owners.cp1d:_blank_issues",
-     "fn:deploy_workflow.owners.cp1d:_bridge_issues",
+     "oracle:cp1d:r09",
      "fn:deploy_workflow.owners.cp1d:_model_text_issues",
-     "fn:deploy_workflow.owners.cp1d:_rule_issues",
-     "fn:deploy_workflow.owners.cp1d:_structural_issues",
-     "fn:deploy_workflow.owners.cp1d:validation_issues"
+     "fn:deploy_workflow.owners.cp1d:_structural_issues"
+    ]
+   },
+   {
+    "id": "earnings_quality.5",
+    "statement": "No `rationale`, `limitation` or gap field is blank; leave `limitation` null rather than empty.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp1d:_blank_issues"
+    ]
+   },
+   {
+    "id": "earnings_quality.6",
+    "statement": "`overall.confidence` is never High, because the add-back evidence is management-supplied.",
+    "checks": [
+     "oracle:cp1d:r11",
+     "fn:deploy_workflow.owners.cp1d:_bridge_issues"
+    ]
+   },
+   {
+    "id": "earnings_quality.7",
+    "statement": "Quote a page only after reading it with `read_pages`: a page found only by `search_pack` was not read, and the quote must lie under the locator you cite. Call only the offered tools.",
+    "checks": [
+     "oracle:cp1d:r10",
+     "oracle:cp1d:t01",
+     "oracle:cp1d:t02",
+     "oracle:cp1d:t03"
     ]
    }
   ],
@@ -632,7 +777,7 @@
   "forward_credit_model": [
    {
     "id": "forward_credit_model.1",
-    "statement": "",
+    "statement": "Each of the seven `base_drivers` has `values` of exactly three strings, one per forecast period listed in `base.forecast_periods` of the module context. `revenue_growth` values are decimals from -1 to 1; `ebitda_margin`, `capex_pct_revenue`, `tax_wc_pct_revenue` and `interest_rate` are decimals from 0 to 1; each has at most four decimal places. `dividends` and `debt_repayment` are non-negative amounts of at most six integer digits and four decimals. `minimum_liquidity.amount` is such an amount or `not assessed`, and `downside.scenario` has the form `s` and two digits.",
     "checks": [
      "oracle:cp2g:r01",
      "oracle:cp2g:r02",
@@ -643,45 +788,81 @@
      "oracle:cp2g:r07",
      "oracle:cp2g:r08",
      "oracle:cp2g:r09",
+     "oracle:cp2g:r15",
+     "oracle:cp2g:r16"
+    ]
+   },
+   {
+    "id": "forward_credit_model.2",
+    "statement": "Submit every field of the schema (`limitation` is null when there is none) and no other, valid JSON; each `break_metrics` `metric` is total_leverage, net_leverage or interest_coverage and `assessment.confidence` is one of the four listed values.",
+    "checks": [
      "oracle:cp2g:r10",
      "oracle:cp2g:r11",
      "oracle:cp2g:r12",
      "oracle:cp2g:r13",
-     "oracle:cp2g:r14",
-     "oracle:cp2g:r15",
-     "oracle:cp2g:r16",
-     "oracle:cp2g:v01",
-     "oracle:cp2g:v02",
+     "oracle:cp2g:r14"
+    ]
+   },
+   {
+    "id": "forward_credit_model.3",
+    "statement": "The running total of the three `debt_repayment` values never exceeds the opening total debt in the base operands of the module context.",
+    "checks": [
+     "oracle:cp2g:v02"
+    ]
+   },
+   {
+    "id": "forward_credit_model.4",
+    "statement": "`downside.scenario` is the `row` of one of the CP-2A `scenarios` in the module context.",
+    "checks": [
+     "oracle:cp2g:v01"
+    ]
+   },
+   {
+    "id": "forward_credit_model.5",
+    "statement": "`break_metrics` has exactly one entry for each CP-2A break that is not a definition break, its `break_id` that break's `row`, each once. A definition break has a fixed metric and is not named. The `metric` you give for a break must reproduce the required decline of that break in the CP-2A `breaks` of the module context, among those in `break_metrics_offered`.",
+    "checks": [
      "oracle:cp2g:v03",
      "oracle:cp2g:v04",
      "oracle:cp2g:v05",
      "oracle:cp2g:v06",
      "oracle:cp2g:v07",
+     "fn:deploy_workflow.owners.cp2g:_break_issues"
+    ]
+   },
+   {
+    "id": "forward_credit_model.6",
+    "statement": "Every `rationale`, `limitation` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts` or `cp1d_facts`, closed and non-empty, and you state no peer ranking, instrument recommendation, recovery conclusion or probability weighting (phrases such as `versus peers`, `recommend`, `will recover` or `probability-weighted` are refused).",
+    "checks": [
      "oracle:cp2g:v08",
      "oracle:cp2g:v09",
      "oracle:cp2g:v10",
      "oracle:cp2g:v11",
      "oracle:cp2g:v12",
-     "oracle:cp2g:v13",
      "oracle:cp2g:v14",
      "oracle:cp2g:v15",
      "oracle:cp2g:v16",
      "oracle:cp2g:v17",
-     "oracle:cp2g:v18",
-     "oracle:cp2g:v19",
-     "oracle:cp2g:v20"
+     "fn:deploy_workflow.owners.cp2g:_text_issues",
+     "fn:deploy_workflow.owners.cp2g:_run_text_issues",
+     "fn:deploy_workflow.owners.cp2g:_limitation_issues",
+     "fn:deploy_workflow.owners.cp2g:content_issues",
+     "fn:deploy_workflow.owners.cp2g:_claims"
     ]
    },
    {
-    "id": "forward_credit_model.2",
-    "statement": "",
+    "id": "forward_credit_model.7",
+    "statement": "`assessment.confidence` is never High, because the driver values are uncited analyst assumptions.",
     "checks": [
-     "fn:deploy_workflow.owners.cp2g:_break_issues",
-     "fn:deploy_workflow.owners.cp2g:_claims",
-     "fn:deploy_workflow.owners.cp2g:_limitation_issues",
-     "fn:deploy_workflow.owners.cp2g:_run_text_issues",
-     "fn:deploy_workflow.owners.cp2g:_text_issues",
-     "fn:deploy_workflow.owners.cp2g:content_issues"
+     "oracle:cp2g:v13"
+    ]
+   },
+   {
+    "id": "forward_credit_model.8",
+    "statement": "A `Stale input` issue means a bound CP-2A, CP-1D or CP-1 input changed after the context was read; no edit to the submission cures it.",
+    "checks": [
+     "oracle:cp2g:v18",
+     "oracle:cp2g:v19",
+     "oracle:cp2g:v20"
     ]
    }
   ],
@@ -799,27 +980,45 @@
   "liquidity_bridge": [
    {
     "id": "liquidity_bridge.1",
-    "statement": "",
+    "statement": "`horizon_months` is a whole number from 1 to 60. Give exactly one of `minimum_cash` and `minimum_cash_absence`; a `minimum_cash.amount` is not negative.",
     "checks": [
      "oracle:cp2d:horizon_zero",
      "oracle:cp2d:horizon_over_limit",
      "oracle:cp2d:minimum_cash_negative",
      "oracle:cp2d:minimum_cash_and_absence",
-     "oracle:cp2d:neither_minimum_cash_nor_absence",
-     "oracle:cp2d:section_missing",
-     "oracle:cp2d:section_repeated",
-     "oracle:cp2d:digit_in_text",
-     "oracle:cp2d:covenant_compliance_wording",
-     "oracle:cp2d:figure_free_text_forbidden_word",
-     "oracle:cp2d:unknown_basis_ref",
-     "oracle:cp2d:insufficient_without_limitation",
-     "oracle:cp2d:limitation_without_insufficient"
+     "oracle:cp2d:neither_minimum_cash_nor_absence"
     ]
    },
    {
     "id": "liquidity_bridge.2",
-    "statement": "",
+    "statement": "`assessments` holds exactly one row for each `section` (liquidity_runway, maturity_wall, funding_gap), no section missing and none twice. The maturity_wall row lists in `basis_refs` a ref of the T4.18 maturity_date fact from `cp1_facts`.",
     "checks": [
+     "oracle:cp2d:section_missing",
+     "oracle:cp2d:section_repeated"
+    ]
+   },
+   {
+    "id": "liquidity_bridge.3",
+    "statement": "Every `basis_refs` entry, in an assessment or in `minimum_cash`, is a `ref` listed in `cp1_facts` of the module context; any other name is refused.",
+    "checks": [
+     "oracle:cp2d:unknown_basis_ref"
+    ]
+   },
+   {
+    "id": "liquidity_bridge.4",
+    "statement": "Every analyst text (`text`, `credit_implication` and `limitation` of an assessment, `minimum_cash.rationale`, and the absence `reason` and `follow_up`) is nonblank, has no digit, and contains none of these substrings in any case: refinanc, recommend, buy, sell, overweight, underweight, fulcrum, recovery, covenant breach, covenant test is met, in compliance with, covenant compliance, default will, lme, liability management.",
+    "checks": [
+     "oracle:cp2d:digit_in_text",
+     "oracle:cp2d:covenant_compliance_wording",
+     "oracle:cp2d:figure_free_text_forbidden_word"
+    ]
+   },
+   {
+    "id": "liquidity_bridge.5",
+    "statement": "An assessment of category Insufficient Information states a nonblank `limitation`; an assessment of any other category has a null `limitation`.",
+    "checks": [
+     "oracle:cp2d:insufficient_without_limitation",
+     "oracle:cp2d:limitation_without_insufficient",
      "fn:deploy_workflow.owners.cp2d:_claims"
     ]
    }
@@ -827,10 +1026,26 @@
   "macro_fx": [
    {
     "id": "macro_fx.1",
-    "statement": "",
+    "statement": "Cite only the `financial` source, a page that holds the quote; any other source, or a quote not on the cited page, is refused.",
+    "checks": [
+     "oracle:cp2e:source_outside_scope",
+     "oracle:cp2e:quote_off_page",
+     "fn:deploy_workflow.owners.cp2e:_Check.on_page",
+     "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
+    ]
+   },
+   {
+    "id": "macro_fx.2",
+    "statement": "`reporting_currency.code_text`, and `fx.debt_currency.code_text` when given, is a three-capital-letter currency code occurring as a whole word in its own quote.",
     "checks": [
      "oracle:cp2e:reporting_code_not_in_quote",
-     "oracle:cp2e:source_outside_scope",
+     "fn:deploy_workflow.owners.cp2e:_Check.code"
+    ]
+   },
+   {
+    "id": "macro_fx.3",
+    "statement": "Give exactly one of `rate_exposure` and `rate_absence`. In `rate_exposure`, `facility_balance.value_text`, `spread.bps_text` and `floor.bps_text` each occur once in their quote right after the words `balance of`, `spread` and `floor` (a numeral of at most three integer digits and four decimals, not a prefix of a longer number); the balance does not exceed the `earnings.total_debt` value. `rate_basis.rate_type` is FLOATING or FIXED as the quote states it (exactly one of a floating rate or a fixed rate), and a FLOATING `reference_rate` occurs in the quote.",
+    "checks": [
      "oracle:cp2e:rate_exposure_and_absence",
      "oracle:cp2e:balance_not_in_quote",
      "oracle:cp2e:balance_not_labelled",
@@ -838,124 +1053,168 @@
      "oracle:cp2e:rate_type_not_stated",
      "oracle:cp2e:reference_rate_not_in_quote",
      "oracle:cp2e:floor_not_in_quote",
+     "oracle:cp2e:balance_exceeds_total_debt",
+     "fn:deploy_workflow.owners.cp2e:_check_rate_exposure",
+     "fn:deploy_workflow.owners.cp2e:_Check.labelled",
+     "fn:deploy_workflow.owners.cp2e:_Check.exactly_one"
+    ]
+   },
+   {
+    "id": "macro_fx.4",
+    "statement": "Each of `earnings.ebitda`, `earnings.interest`, `earnings.fcf`, `earnings.total_debt` and `fx.fx_cash_effect` quotes one whole page line that begins with its row label (Reported EBITDA, Cash interest paid, Levered free cash flow, Total debt, FX effect on cash) followed by two spaces, on a page whose header ends in the FY column; its `value_text` is the last value of that line exactly as printed.",
+    "checks": [
      "oracle:cp2e:row_not_whole_line",
      "oracle:cp2e:row_wrong_label",
      "oracle:cp2e:row_value_not_last",
-     "oracle:cp2e:quote_off_page",
+     "fn:deploy_workflow.owners.cp2e:_Check.row"
+    ]
+   },
+   {
+    "id": "macro_fx.5",
+    "statement": "Give exactly one of `fx.debt_currency` and `fx.debt_currency_absence`, and exactly one of `fx.foreign_ebitda_share` and `fx.operating_fx_absence`; `percent_text` of the share is a numeral of at most 100 occurring once in its quote.",
+    "checks": [
      "oracle:cp2e:debt_currency_and_absence",
      "oracle:cp2e:foreign_share_and_absence",
+     "fn:deploy_workflow.owners.cp2e:_check_fx",
+     "fn:deploy_workflow.owners.cp2e:_fx_claim"
+    ]
+   },
+   {
+    "id": "macro_fx.6",
+    "statement": "Give exactly one of `hedge_ratio` and `hedge_absence`; `hedge_ratio.percent_text` is a numeral from 0 to 100 with at most three integer digits and two decimals.",
+    "checks": [
      "oracle:cp2e:hedge_ratio_and_absence",
      "oracle:cp2e:hedge_ratio_out_of_range",
+     "fn:deploy_workflow.owners.cp2e:_check_hedge",
+     "fn:deploy_workflow.owners.cp2e:_hedge_claim"
+    ]
+   },
+   {
+    "id": "macro_fx.7",
+    "statement": "`rate_shocks_bp` holds one to three whole numbers of basis points from 1 to 1000 (at most four digits), and `fx_shocks_percent` one to three whole percents from 1 to 50 (at most two digits); each list is written as strings and strictly increasing.",
+    "checks": [
      "oracle:cp2e:rate_shock_zero",
      "oracle:cp2e:rate_shocks_not_increasing",
      "oracle:cp2e:too_many_rate_shocks",
      "oracle:cp2e:fx_shock_too_large",
+     "fn:deploy_workflow.owners.cp2e:_Check.shocks",
+     "fn:deploy_workflow.owners.cp2e:_rate_claims"
+    ]
+   },
+   {
+    "id": "macro_fx.8",
+    "statement": "Give one assessment for each `section` (interest_rate, fx, hedging), none twice; `category` is Documentary Fact, Analyst Interpretation or Insufficient Information, `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote. Every analyst text (assessment `text` and `limitation`, `shock_rationale`, `summary.text`, the hedge `rationale`, `reference_rate`, and every absence `reason` and `follow_up`) is nonblank with no digit; `summary.text` has no reference; and an assessment `text` or `summary.text` uses none of the words recommend, buy, sell, overweight, underweight, downgrade, upgrade or covenant breach.",
+    "checks": [
      "oracle:cp2e:digit_in_text",
      "oracle:cp2e:prohibited_conclusion",
      "oracle:cp2e:insufficient_without_limitation",
      "oracle:cp2e:documentary_without_basis",
      "oracle:cp2e:section_missing",
-     "oracle:cp2e:section_repeated"
+     "oracle:cp2e:section_repeated",
+     "fn:deploy_workflow.owners.cp2e:_check_text",
+     "fn:deploy_workflow.owners.cp2e:_Check.digit_free",
+     "fn:deploy_workflow.owners.cp2e:_Check.empty",
+     "fn:deploy_workflow.owners.cp2e:_Check.run_text"
     ]
    },
    {
-    "id": "macro_fx.2",
-    "statement": "",
+    "id": "macro_fx.9",
+    "statement": "Read with `read_pages` every page you cite, and run `search_pack` before you give any absence; an absence claim with no recorded search is refused.",
     "checks": [
      "oracle:cp2e:unread_financial_page_3",
      "oracle:cp2e:unread_financial_page_5",
      "oracle:cp2e:absence_without_search"
-    ]
-   },
-   {
-    "id": "macro_fx.3",
-    "statement": "",
-    "checks": [
-     "oracle:cp2e:balance_exceeds_total_debt"
-    ]
-   },
-   {
-    "id": "macro_fx.4",
-    "statement": "",
-    "checks": [
-     "fn:deploy_workflow.owners.cp2e:_Check.code",
-     "fn:deploy_workflow.owners.cp2e:_Check.digit_free",
-     "fn:deploy_workflow.owners.cp2e:_Check.empty",
-     "fn:deploy_workflow.owners.cp2e:_Check.exactly_one",
-     "fn:deploy_workflow.owners.cp2e:_Check.labelled",
-     "fn:deploy_workflow.owners.cp2e:_Check.on_page",
-     "fn:deploy_workflow.owners.cp2e:_Check.row",
-     "fn:deploy_workflow.owners.cp2e:_Check.run_text",
-     "fn:deploy_workflow.owners.cp2e:_Check.shocks",
-     "fn:deploy_workflow.owners.cp2e:_check_fx",
-     "fn:deploy_workflow.owners.cp2e:_check_hedge",
-     "fn:deploy_workflow.owners.cp2e:_check_rate_exposure",
-     "fn:deploy_workflow.owners.cp2e:_check_text",
-     "fn:deploy_workflow.owners.cp2e:_fx_claim",
-     "fn:deploy_workflow.owners.cp2e:_hedge_claim",
-     "fn:deploy_workflow.owners.cp2e:_rate_claims",
-     "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
     ]
    }
   ],
   "market_implied": [
    {
     "id": "market_implied.1",
-    "statement": "",
+    "statement": "Give exactly one of `observations` and `market_absence`. In `observations` each `kind` (bid, offer, indicative_talk) appears at most once; a bid is not above the offer and both carry the same `as_of_text` date.",
+    "checks": [
+     "oracle:cp3d:observations_and_absence",
+     "oracle:cp3d:duplicate_kind",
+     "fn:deploy_workflow.owners.cp3d:_check_observations",
+     "fn:deploy_workflow.owners.cp3d:submission_issues"
+    ]
+   },
+   {
+    "id": "market_implied.2",
+    "statement": "Each quoted observation cites a page of a third_party source that holds its quote. `level_text` is a decimal numeral above 0 and at most 200, with no leading zero and at most four decimal places, occurring in the quote, and for a bid or offer labelled with that kind in the quote; an `indicative_talk` level is never one the quote labels bid or offer. A bid or offer needs `as_of_text` as a Month D, YYYY date occurring in the quote; `as_of_text` of indicative_talk may be null.",
     "checks": [
      "oracle:cp3d:level_not_in_quote",
      "oracle:cp3d:level_not_numeric",
      "oracle:cp3d:quote_off_page",
      "oracle:cp3d:source_not_third_party",
-     "oracle:cp3d:duplicate_kind",
      "oracle:cp3d:bid_level_is_the_offer",
      "oracle:cp3d:talk_cites_bid_offer_sentence",
      "oracle:cp3d:as_of_not_in_quote",
-     "oracle:cp3d:margin_not_in_quote",
-     "oracle:cp3d:recovery_out_of_range",
-     "oracle:cp3d:recovery_both",
-     "oracle:cp3d:reference_level_not_in_quote",
-     "oracle:cp3d:reference_rate_neither",
-     "oracle:cp3d:digit_in_text",
-     "oracle:cp3d:prohibited_conclusion",
-     "oracle:cp3d:insufficient_without_limitation",
-     "oracle:cp3d:observations_and_absence",
-     "oracle:cp3d:maturity_before_quotation",
-     "oracle:cp3d:amortisation_nonzero"
+     "fn:deploy_workflow.owners.cp3d:_observation_level",
+     "fn:deploy_workflow.owners.cp3d:_label_ok",
+     "fn:deploy_workflow.owners.cp3d:_observation_date",
+     "fn:deploy_workflow.owners.cp3d:_Issues.on_page"
     ]
    },
    {
-    "id": "market_implied.2",
-    "statement": "",
+    "id": "market_implied.3",
+    "statement": "To use a quote listed in the context, submit the observation with its `kind` and its `context_row` (a listed row id), with `source_id`, `locator`, `quote` and `level_text` empty and `as_of_text` null; the `kind` must be the listed row's kind and the row must be listed, or the row is refused.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp3d:_resolved"
+    ]
+   },
+   {
+    "id": "market_implied.4",
+    "statement": "`instrument.name` occurs in `instrument.quote`. `terms.maturity` gives exactly one of `date_text` (a Month D, YYYY date occurring in its quote, after the quotation date) and `absence`. `terms.margin` and `terms.amortisation` each give exactly one of their text (`bps_text`, `value_text`, a numeral of at most three integer digits and four decimals, no leading zero, occurring once in its own quote) and `absence`, and the amortisation value is zero. `terms.reference_rate.name` occurs in its quote, and it gives exactly one of `level` (its `percent_text` occurring in the level's own quote) and `absence`.",
+    "checks": [
+     "oracle:cp3d:maturity_before_quotation",
+     "oracle:cp3d:margin_not_in_quote",
+     "oracle:cp3d:reference_level_not_in_quote",
+     "oracle:cp3d:reference_rate_neither",
+     "oracle:cp3d:amortisation_nonzero",
+     "fn:deploy_workflow.owners.cp3d:_check_maturity",
+     "fn:deploy_workflow.owners.cp3d:_check_quoted_numeral",
+     "fn:deploy_workflow.owners.cp3d:_check_terms"
+    ]
+   },
+   {
+    "id": "market_implied.5",
+    "statement": "Give exactly one of `recovery` and `recovery_absence`; `recovery.percent_text` is a numeral at least 0 and below 100 with at most two decimals and no leading zero.",
+    "checks": [
+     "oracle:cp3d:recovery_out_of_range",
+     "oracle:cp3d:recovery_both",
+     "fn:deploy_workflow.owners.cp3d:_check_recovery"
+    ]
+   },
+   {
+    "id": "market_implied.6",
+    "statement": "Each `technicals` row has an `aspect` from quote_quality, trading_activity, talk_versus_quote and rating, each at most once, and a `category` from Documentary Fact, Analyst Interpretation and Insufficient Information. `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote on its page.",
+    "checks": [
+     "oracle:cp3d:insufficient_without_limitation",
+     "fn:deploy_workflow.owners.cp3d:_check_technicals"
+    ]
+   },
+   {
+    "id": "market_implied.7",
+    "statement": "Every analyst text (`summary.text`, `technicals` text and limitation, `recovery.rationale`, `instrument.name`, `reference_rate.name` and every absence `reason` and `follow_up`) is nonblank, has no digit, and uses none of the words buy, sell, overweight, underweight, recommend, cheap, undervalued, overvalued, outperform or attractive.",
+    "checks": [
+     "oracle:cp3d:digit_in_text",
+     "oracle:cp3d:prohibited_conclusion",
+     "fn:deploy_workflow.owners.cp3d:_Issues.analyst_text",
+     "fn:deploy_workflow.owners.cp3d:_Issues.digit_free",
+     "fn:deploy_workflow.owners.cp3d:_Issues.conclusion_free"
+    ]
+   },
+   {
+    "id": "market_implied.8",
+    "statement": "Read with `read_pages` every page you cite, and before you give `market_absence` or an `absence` for a term, run `search_pack` for it; an absence claim with no recorded search is refused. (`recovery_absence` is not an absence claim of this kind.)",
     "checks": [
      "oracle:cp3d:unread_market_page_1",
      "oracle:cp3d:unread_financial_page_5",
      "oracle:cp3d:unread_two_pages_sorted",
      "oracle:cp3d:absence_without_search",
-     "oracle:cp3d:term_absence_without_search"
-    ]
-   },
-   {
-    "id": "market_implied.3",
-    "statement": "",
-    "checks": [
-     "fn:deploy_workflow.owners.cp3d:_Composer.missing_inputs",
-     "fn:deploy_workflow.owners.cp3d:_Issues.analyst_text",
-     "fn:deploy_workflow.owners.cp3d:_Issues.conclusion_free",
-     "fn:deploy_workflow.owners.cp3d:_Issues.digit_free",
-     "fn:deploy_workflow.owners.cp3d:_Issues.on_page",
-     "fn:deploy_workflow.owners.cp3d:_check_maturity",
-     "fn:deploy_workflow.owners.cp3d:_check_observations",
-     "fn:deploy_workflow.owners.cp3d:_check_quoted_numeral",
-     "fn:deploy_workflow.owners.cp3d:_check_recovery",
-     "fn:deploy_workflow.owners.cp3d:_check_technicals",
-     "fn:deploy_workflow.owners.cp3d:_check_terms",
-     "fn:deploy_workflow.owners.cp3d:_label_ok",
-     "fn:deploy_workflow.owners.cp3d:_observation_date",
-     "fn:deploy_workflow.owners.cp3d:_observation_level",
-     "fn:deploy_workflow.owners.cp3d:_resolved",
+     "oracle:cp3d:term_absence_without_search",
      "fn:deploy_workflow.owners.cp3d:absence_paths",
-     "fn:deploy_workflow.owners.cp3d:submission_issues"
+     "fn:deploy_workflow.owners.cp3d:_Composer.missing_inputs"
     ]
    }
   ],
@@ -1006,47 +1265,53 @@
   "peer_benchmark": [
    {
     "id": "peer_benchmark.1",
-    "statement": "",
+    "statement": "Python computes every median, position and outlier. A peer you assess Comparable or Partly comparable is included in them, and a Not comparable peer is shown but kept out of every statistic, so choose each `comparability` with that effect in mind; `rules` of the module context gives the minimum number of included peers.",
     "checks": []
    },
    {
     "id": "peer_benchmark.2",
-    "statement": "",
+    "statement": "Write exactly one assessment for each peer listed in `peers.rows` of the module context, its `peer` the row's `label` written exactly, and none for another name or twice. When the peers source is absent, write no assessment; when its table cannot be read, every submission is refused as `Peer table not found`.",
     "checks": [
      "oracle:cp1c:r01",
      "oracle:cp1c:r02",
      "oracle:cp1c:r03",
-     "oracle:cp1c:r04",
-     "oracle:cp1c:r05",
-     "oracle:cp1c:r06",
-     "oracle:cp1c:r07",
-     "oracle:cp1c:r08",
-     "oracle:cp1c:r09",
      "oracle:cp1c:r10",
      "oracle:cp1c:r11",
-     "oracle:cp1c:r12",
-     "oracle:cp1c:r13",
-     "oracle:cp1c:r14"
+     "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
+     "fn:deploy_workflow.owners.cp1c:calculation_issues"
     ]
    },
    {
     "id": "peer_benchmark.3",
-    "statement": "",
+    "statement": "Every assessment lists `evidence`, and a Partly comparable assessment states its `limitation`. `overall.confidence` is never High, because the peer figures are desk-supplied and unaudited.",
     "checks": [
-     "oracle:cp1c:t01",
-     "oracle:cp1c:t02",
-     "oracle:cp1c:t03"
+     "oracle:cp1c:r04",
+     "oracle:cp1c:r05",
+     "oracle:cp1c:r08",
+     "fn:deploy_workflow.owners.cp1c:_content_issues"
     ]
    },
    {
     "id": "peer_benchmark.4",
-    "statement": "",
+    "statement": "Each `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts`, closed and non-empty; a reference that resolves to no fact, or to a fact whose value is a gap, is refused. State no instrument recommendation or recovery conclusion in any text field (`rationale`, `limitation` and gap fields).",
     "checks": [
-     "fn:deploy_workflow.owners.cp1c:_assessment_set_issues",
-     "fn:deploy_workflow.owners.cp1c:_citation_issues",
-     "fn:deploy_workflow.owners.cp1c:_content_issues",
-     "fn:deploy_workflow.owners.cp1c:_model_text_issues",
-     "fn:deploy_workflow.owners.cp1c:calculation_issues"
+     "oracle:cp1c:r06",
+     "oracle:cp1c:r09",
+     "oracle:cp1c:r12",
+     "oracle:cp1c:r13",
+     "oracle:cp1c:r14",
+     "fn:deploy_workflow.owners.cp1c:_model_text_issues"
+    ]
+   },
+   {
+    "id": "peer_benchmark.5",
+    "statement": "Cite each quote verbatim under the locator of its page, and read that page with `read_pages` first; call only the offered tools.",
+    "checks": [
+     "oracle:cp1c:r07",
+     "oracle:cp1c:t01",
+     "oracle:cp1c:t02",
+     "oracle:cp1c:t03",
+     "fn:deploy_workflow.owners.cp1c:_citation_issues"
     ]
    }
   ],
@@ -1090,7 +1355,7 @@
   "rating_triggers": [
    {
     "id": "rating_triggers.1",
-    "statement": "",
+    "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. `views` has at least one entry; each `view` is Downgrade pressure, Stable, Upgrade potential or Not assessable, `category` and `confidence` take only their listed values, and every view lists at least one `evidence` citation with its `source_id`, `locator` and `quote`.",
     "checks": [
      "oracle:cp2h:r01",
      "oracle:cp2h:r02",
@@ -1100,42 +1365,66 @@
      "oracle:cp2h:r06",
      "oracle:cp2h:r07",
      "oracle:cp2h:r08",
-     "oracle:cp2h:r09",
+     "oracle:cp2h:r09"
+    ]
+   },
+   {
+    "id": "rating_triggers.2",
+    "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice. If the ratings source's register or trigger terms cannot be read, the step is refused as `Rating register not found` or `Trigger terms not found`.",
+    "checks": [
      "oracle:cp2h:v01",
      "oracle:cp2h:v02",
      "oracle:cp2h:v03",
+     "oracle:cp2h:s01",
+     "oracle:cp2h:s02",
+     "fn:deploy_workflow.owners.cp2h:_view_issues"
+    ]
+   },
+   {
+    "id": "rating_triggers.3",
+    "statement": "No view's `confidence`, and not `overall.confidence`, is High, because forward headroom rests on analyst-assumed drivers.",
+    "checks": [
+     "oracle:cp2h:v08",
+     "oracle:cp2h:v09"
+    ]
+   },
+   {
+    "id": "rating_triggers.4",
+    "statement": "Every `rationale` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in the module context (`cp1_facts`, the `triggers` thresholds or the `cp2g` rows), closed and non-empty, and never a reference to a value that is not settled. A `limitation` is plain text: no figure and no reference. Write no peer ranking, instrument recommendation or recovery conclusion, no rating call (`will be downgraded`, `will be upgraded`, `will downgrade`, `will upgrade`, `is certain to be`, `our rating`, `we rate`, `shadow rating`, `implied rating`) and no probability weighting (`probability-weighted`, `expected value` and similar).",
+    "checks": [
      "oracle:cp2h:v04",
      "oracle:cp2h:v05",
      "oracle:cp2h:v06",
      "oracle:cp2h:v07",
-     "oracle:cp2h:v08",
-     "oracle:cp2h:v09",
      "oracle:cp2h:v10",
      "oracle:cp2h:v11",
      "oracle:cp2h:v12",
      "oracle:cp2h:v13",
      "oracle:cp2h:v14",
      "oracle:cp2h:v15",
-     "oracle:cp2h:v16",
-     "oracle:cp2h:v17",
-     "oracle:cp2h:v18",
-     "oracle:cp2h:s01",
-     "oracle:cp2h:s02"
+     "fn:deploy_workflow.owners.cp2h:_prose",
+     "fn:deploy_workflow.owners.cp2h:_run_text_issues",
+     "fn:deploy_workflow.owners.cp2h:_gap_issues",
+     "fn:deploy_workflow.owners.cp2h:_overall_issues",
+     "fn:deploy_workflow.owners.cp2h:_limitation",
+     "fn:deploy_workflow.owners.cp2h:phrase_issues",
+     "fn:deploy_workflow.owners.cp2h:_claims",
+     "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
     ]
    },
    {
-    "id": "rating_triggers.2",
-    "statement": "",
+    "id": "rating_triggers.5",
+    "statement": "Cite each quote verbatim under the locator of its page in the ratings source; a quote not on that page is refused.",
     "checks": [
-     "fn:deploy_workflow.owners.cp2h:_claims",
-     "fn:deploy_workflow.owners.cp2h:_gap_issues",
-     "fn:deploy_workflow.owners.cp2h:_limitation",
-     "fn:deploy_workflow.owners.cp2h:_overall_issues",
-     "fn:deploy_workflow.owners.cp2h:_prose",
-     "fn:deploy_workflow.owners.cp2h:_run_text_issues",
-     "fn:deploy_workflow.owners.cp2h:_view_issues",
-     "fn:deploy_workflow.owners.cp2h:_with_upstream_citations",
-     "fn:deploy_workflow.owners.cp2h:phrase_issues"
+     "oracle:cp2h:v16"
+    ]
+   },
+   {
+    "id": "rating_triggers.6",
+    "statement": "A `Stale input` issue means a bound CP-2G or CP-1 input changed after the context was read; no edit to the submission cures it.",
+    "checks": [
+     "oracle:cp2h:v17",
+     "oracle:cp2h:v18"
     ]
    }
   ],
@@ -1179,32 +1468,56 @@
   "refinancing_risk": [
    {
     "id": "refinancing_risk.1",
-    "statement": "",
+    "statement": "Give exactly one of `repricing` and `repricing_absence`; `repricing.bps` is a whole number of basis points from 0 to 1000.",
     "checks": [
      "oracle:cp3c:step_up_negative",
      "oracle:cp3c:step_up_over_limit",
      "oracle:cp3c:step_up_and_absence",
      "oracle:cp3c:neither_step_up_nor_absence",
-     "oracle:cp3c:path_missing",
-     "oracle:cp3c:path_repeated",
-     "oracle:cp3c:digit_in_text",
-     "oracle:cp3c:digit_in_rationale",
-     "oracle:cp3c:prohibited_recommendation",
-     "oracle:cp3c:prohibited_recovery",
-     "oracle:cp3c:covenant_compliance_wording",
-     "oracle:cp3c:unknown_basis_ref",
-     "oracle:cp3c:feasibility_without_basis",
-     "oracle:cp3c:insufficient_without_limitation",
-     "oracle:cp3c:limitation_without_insufficient",
-     "oracle:cp3c:feasibility_category_mismatch",
-     "oracle:cp3c:lme_judged_without_capacity_evidence"
+     "fn:deploy_workflow.owners.cp3c:submission_issues"
     ]
    },
    {
     "id": "refinancing_risk.2",
-    "statement": "",
+    "statement": "`paths` holds exactly one row for each `kind` (repay_from_resources, amend_and_extend, market_refinancing, asset_sale_or_equity, liability_management), none missing and none twice.",
     "checks": [
-     "fn:deploy_workflow.owners.cp3c:submission_issues"
+     "oracle:cp3c:path_missing",
+     "oracle:cp3c:path_repeated"
+    ]
+   },
+   {
+    "id": "refinancing_risk.3",
+    "statement": "Every analyst text (`repricing.rationale`, the absence `reason` and `follow_up`, and each path's `text`, `credit_implication` and `limitation`) is nonblank, has no digit, states no instrument recommendation or recovery conclusion, no refinancing outcome (`will be refinanced`, `will refinance`, `refinancing is assured`, `refinancing is certain`, `will default`), no `fulcrum` or `headroom is sufficient`, and no compliance word (complies, compliant, compliance, breach, met, satisfied and their forms) within four words of `covenant`.",
+    "checks": [
+     "oracle:cp3c:digit_in_text",
+     "oracle:cp3c:digit_in_rationale",
+     "oracle:cp3c:prohibited_recommendation",
+     "oracle:cp3c:prohibited_recovery",
+     "oracle:cp3c:covenant_compliance_wording"
+    ]
+   },
+   {
+    "id": "refinancing_risk.4",
+    "statement": "Every `basis_refs` entry is a `ref` listed under `facts` in the module context; a path whose feasibility is High, Medium or Low lists at least one.",
+    "checks": [
+     "oracle:cp3c:unknown_basis_ref",
+     "oracle:cp3c:feasibility_without_basis"
+    ]
+   },
+   {
+    "id": "refinancing_risk.5",
+    "statement": "A path's `feasibility` is Insufficient Information exactly when its `category` is. An Insufficient Information path states its `limitation`; any other path has a null or empty `limitation`.",
+    "checks": [
+     "oracle:cp3c:feasibility_category_mismatch",
+     "oracle:cp3c:insufficient_without_limitation",
+     "oracle:cp3c:limitation_without_insufficient"
+    ]
+   },
+   {
+    "id": "refinancing_risk.6",
+    "statement": "The `liability_management` path always has feasibility Insufficient Information, because the legal covenant capacity evidence it needs is not bound.",
+    "checks": [
+     "oracle:cp3c:lme_judged_without_capacity_evidence"
     ]
    }
   ],
@@ -1280,42 +1593,66 @@
   "research": [
    {
     "id": "research.1",
-    "statement": "",
+    "statement": "Submit exactly one `gaps` entry, by its `gap_id`, for every gap on the CP-0 agenda (`gaps` of the module context), none twice and none for an id the agenda does not list, each with one to four `questions`; when the agenda is empty, `gaps` is empty.",
     "checks": [
      "oracle:cpdr:gap_unaddressed",
      "oracle:cpdr:gap_with_five_questions",
      "oracle:cpdr:unknown_gap",
      "oracle:cpdr:gap_repeated",
-     "oracle:cpdr:question_id_repeated",
-     "oracle:cpdr:answered_without_citation",
-     "oracle:cpdr:not_found_with_answer",
-     "oracle:cpdr:not_found_without_limitation",
-     "oracle:cpdr:answered_with_limitation",
-     "oracle:cpdr:no_searched_source",
-     "oracle:cpdr:searched_source_not_in_pack",
-     "oracle:cpdr:searched_source_not_searched",
-     "oracle:cpdr:cited_page_not_read",
-     "oracle:cpdr:quote_not_verbatim",
-     "oracle:cpdr:citation_outside_pack",
-     "oracle:cpdr:digit_in_text",
-     "oracle:cpdr:prohibited_conclusion",
-     "oracle:cpdr:submission_against_empty_agenda"
+     "oracle:cpdr:submission_against_empty_agenda",
+     "fn:deploy_workflow.owners.cpdr:validate_research"
     ]
    },
    {
     "id": "research.2",
-    "statement": "",
+    "statement": "Every `question_id` is different from every other in the whole submission, and at most 145 characters, since fact ids are composed from it.",
     "checks": [
-     "fn:deploy_workflow.owners.cpdr:_model_text_issues",
-     "fn:deploy_workflow.owners.cpdr:_question_issues",
-     "fn:deploy_workflow.owners.cpdr:validate_research"
+     "oracle:cpdr:question_id_repeated"
+    ]
+   },
+   {
+    "id": "research.3",
+    "statement": "An `answered` question has an `answer`, a `category` and at least one citation, and a null `limitation`. A `not_found` question has a null `answer` and `category`, no citations, and states its `limitation`.",
+    "checks": [
+     "oracle:cpdr:answered_without_citation",
+     "oracle:cpdr:not_found_with_answer",
+     "oracle:cpdr:not_found_without_limitation",
+     "oracle:cpdr:answered_with_limitation",
+     "fn:deploy_workflow.owners.cpdr:_question_issues"
+    ]
+   },
+   {
+    "id": "research.4",
+    "statement": "Each question lists in `searched_sources` at least one ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
+    "checks": [
+     "oracle:cpdr:no_searched_source",
+     "oracle:cpdr:searched_source_not_in_pack",
+     "oracle:cpdr:searched_source_not_searched"
+    ]
+   },
+   {
+    "id": "research.5",
+    "statement": "Cite only pack sources whose cited page you read with `read_pages`, each quote verbatim under its locator; a source outside the pack is refused.",
+    "checks": [
+     "oracle:cpdr:cited_page_not_read",
+     "oracle:cpdr:quote_not_verbatim",
+     "oracle:cpdr:citation_outside_pack"
+    ]
+   },
+   {
+    "id": "research.6",
+    "statement": "A question's `text`, `answer` and `limitation` are nonblank, contain no digit or figure, no braces or brackets, and none of the words recommend, refinanc, covenant or recovery in any case; an answer is plain text with no reference.",
+    "checks": [
+     "oracle:cpdr:digit_in_text",
+     "oracle:cpdr:prohibited_conclusion",
+     "fn:deploy_workflow.owners.cpdr:_model_text_issues"
     ]
    }
   ],
   "restructuring_fulcrum": [
    {
     "id": "restructuring_fulcrum.1",
-    "statement": "",
+    "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds at least three entries.",
     "checks": [
      "oracle:cp4c:r01",
      "oracle:cp4c:r02",
@@ -1329,21 +1666,75 @@
      "oracle:cp4c:r10",
      "oracle:cp4c:r11",
      "oracle:cp4c:r12",
-     "oracle:cp4c:r13",
+     "oracle:cp4c:r13"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.2",
+    "statement": "Every claim has a different `class_id`. A class is secured_debt exactly when its `amount_source` is cp1_total_debt, and CP-1 must show the facility as both secured and senior for any class to be secured_debt. Exactly one class is secured_debt and its `rank` is lower than every other class's (it ranks first).",
+    "checks": [
      "oracle:cp4c:v01",
      "oracle:cp4c:v02",
+     "oracle:cp4c:v06",
+     "fn:deploy_workflow.owners.cp4c:_claim_issues",
+     "fn:deploy_workflow.owners.cp4c:_claims"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.3",
+    "statement": "A `source_row` claim cites in `amount_quote` the row it reads, quoted verbatim from the `financial` source under its locator, and gives in `period_column` the column of that statement for the claims' balance date (see `statement_rows`); the row must have a number under it, and the claim is above zero. A class with another `amount_source` has a null `amount_quote` and `period_column`.",
+    "checks": [
      "oracle:cp4c:v03",
      "oracle:cp4c:v04",
      "oracle:cp4c:v05",
-     "oracle:cp4c:v06",
+     "fn:deploy_workflow.owners.cp4c:_source_row_issues"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.4",
+    "statement": "Every `support` quote cites only the `financial` or `legal-covenants` source, verbatim under its locator.",
+    "checks": [
      "oracle:cp4c:v07",
-     "oracle:cp4c:v08",
+     "oracle:cp4c:v08"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.5",
+    "statement": "`valuation`, `fulcrum` and `plan` each hold the cases in order, the first with `case_id` v01, the second v02, and so on.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp4c:content_issues"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.6",
+    "statement": "Each `fulcrum` entry's `class_ids` are claim class ids (or `equity`), none twice, and are exactly the class or classes where Python's waterfall puts the value break for that case; where the value break is not determinable, `class_ids` is empty.",
+    "checks": [
      "oracle:cp4c:v09",
      "oracle:cp4c:v10",
      "oracle:cp4c:v11",
+     "fn:deploy_workflow.owners.cp4c:_fulcrum_issues"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.7",
+    "statement": "Each `plan` entry gives one treatment for every claim class and for `equity`, each once; every treatment must fit the waterfall result of its class in that case: Paid in full for a class recovered in full, Receives reorganised equity for a partial recovery, No recovery for none; for `equity`, Equity retained when value remains and No recovery when none; Not determined only where that result is not determined.",
+    "checks": [
      "oracle:cp4c:v12",
-     "oracle:cp4c:v13",
      "oracle:cp4c:v14",
+     "fn:deploy_workflow.owners.cp4c:_plan_issues"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.8",
+    "statement": "`assessment.confidence` is never High, because multiples, ranks and plan treatment are uncited analyst assumptions.",
+    "checks": [
+     "oracle:cp4c:v13"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.9",
+    "statement": "A class `name` and valuation `label` are one line with no bare figure and no braces or brackets. Every `rationale` is nonblank run text with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in `cp1_facts` or `cp2g_facts`, closed and non-empty. No text states a peer ranking, an instrument recommendation, outcome certainty (`recovery is guaranteed`, `recovery is assured`, `recovery is certain`, `guaranteed recovery`, `assured recovery`, `plan will be confirmed`, `confirmation is assured`, `confirmation is certain`) or probability weighting (`probability-weighted`, `probability of`, `expected value` and similar).",
+    "checks": [
      "oracle:cp4c:v15",
      "oracle:cp4c:v16",
      "oracle:cp4c:v17",
@@ -1353,25 +1744,19 @@
      "oracle:cp4c:v21",
      "oracle:cp4c:v22",
      "oracle:cp4c:v23",
+     "fn:deploy_workflow.owners.cp4c:_text_fields",
+     "fn:deploy_workflow.owners.cp4c:_run_text_issues",
+     "fn:deploy_workflow.owners.cp4c:guard_issues"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.10",
+    "statement": "A `Stale input` issue means a bound CP-2A, CP-2G, CP-4 or CP-1 input changed after the context was read; no edit to the submission cures it.",
+    "checks": [
      "oracle:cp4c:v24",
      "oracle:cp4c:v25",
      "oracle:cp4c:v26",
      "oracle:cp4c:v27"
-    ]
-   },
-   {
-    "id": "restructuring_fulcrum.2",
-    "statement": "",
-    "checks": [
-     "fn:deploy_workflow.owners.cp4c:_claim_issues",
-     "fn:deploy_workflow.owners.cp4c:_claims",
-     "fn:deploy_workflow.owners.cp4c:_fulcrum_issues",
-     "fn:deploy_workflow.owners.cp4c:_plan_issues",
-     "fn:deploy_workflow.owners.cp4c:_run_text_issues",
-     "fn:deploy_workflow.owners.cp4c:_source_row_issues",
-     "fn:deploy_workflow.owners.cp4c:_text_fields",
-     "fn:deploy_workflow.owners.cp4c:content_issues",
-     "fn:deploy_workflow.owners.cp4c:guard_issues"
     ]
    }
   ],

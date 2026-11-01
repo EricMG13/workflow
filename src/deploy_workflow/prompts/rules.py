@@ -238,7 +238,9 @@ ORACLE_EXCLUSIONS: Mapping[str, str] = {
     "context-attachments": "refusals of the attachment context loader, not of a step submission",
     "valuation-context": "refusal_ids of the valuation context loader, not of a step submission",
     "pins-context": "pinned lines are covered by compose.O6 (_pin_lines), not by oracle ids",
-    "cp3-context#cp3d": "cp3d refusals of the context file; Phase 3 T2 covers them",
+    "cp3-context#cp3d": "its refusals (cp3d-unknown-context-row, cp3d-filled-context-row) nest under "
+    "the cp3d part, a container the oracle reader does not descend into; market_implied.3 carries "
+    "the function that enforces them (cp3d:_resolved)",
 }
 
 # Containers of an oracle's ``expected.json`` that list content refusals. ``tamper_refusals`` and

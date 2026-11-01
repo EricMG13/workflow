@@ -2,32 +2,56 @@
  "rules": [
   {
    "id": "refinancing_risk.1",
-   "statement": "",
+   "statement": "Give exactly one of `repricing` and `repricing_absence`; `repricing.bps` is a whole number of basis points from 0 to 1000.",
    "checks": [
     "oracle:cp3c:step_up_negative",
     "oracle:cp3c:step_up_over_limit",
     "oracle:cp3c:step_up_and_absence",
     "oracle:cp3c:neither_step_up_nor_absence",
-    "oracle:cp3c:path_missing",
-    "oracle:cp3c:path_repeated",
-    "oracle:cp3c:digit_in_text",
-    "oracle:cp3c:digit_in_rationale",
-    "oracle:cp3c:prohibited_recommendation",
-    "oracle:cp3c:prohibited_recovery",
-    "oracle:cp3c:covenant_compliance_wording",
-    "oracle:cp3c:unknown_basis_ref",
-    "oracle:cp3c:feasibility_without_basis",
-    "oracle:cp3c:insufficient_without_limitation",
-    "oracle:cp3c:limitation_without_insufficient",
-    "oracle:cp3c:feasibility_category_mismatch",
-    "oracle:cp3c:lme_judged_without_capacity_evidence"
+    "fn:deploy_workflow.owners.cp3c:submission_issues"
    ]
   },
   {
    "id": "refinancing_risk.2",
-   "statement": "",
+   "statement": "`paths` holds exactly one row for each `kind` (repay_from_resources, amend_and_extend, market_refinancing, asset_sale_or_equity, liability_management), none missing and none twice.",
    "checks": [
-    "fn:deploy_workflow.owners.cp3c:submission_issues"
+    "oracle:cp3c:path_missing",
+    "oracle:cp3c:path_repeated"
+   ]
+  },
+  {
+   "id": "refinancing_risk.3",
+   "statement": "Every analyst text (`repricing.rationale`, the absence `reason` and `follow_up`, and each path's `text`, `credit_implication` and `limitation`) is nonblank, has no digit, states no instrument recommendation or recovery conclusion, no refinancing outcome (`will be refinanced`, `will refinance`, `refinancing is assured`, `refinancing is certain`, `will default`), no `fulcrum` or `headroom is sufficient`, and no compliance word (complies, compliant, compliance, breach, met, satisfied and their forms) within four words of `covenant`.",
+   "checks": [
+    "oracle:cp3c:digit_in_text",
+    "oracle:cp3c:digit_in_rationale",
+    "oracle:cp3c:prohibited_recommendation",
+    "oracle:cp3c:prohibited_recovery",
+    "oracle:cp3c:covenant_compliance_wording"
+   ]
+  },
+  {
+   "id": "refinancing_risk.4",
+   "statement": "Every `basis_refs` entry is a `ref` listed under `facts` in the module context; a path whose feasibility is High, Medium or Low lists at least one.",
+   "checks": [
+    "oracle:cp3c:unknown_basis_ref",
+    "oracle:cp3c:feasibility_without_basis"
+   ]
+  },
+  {
+   "id": "refinancing_risk.5",
+   "statement": "A path's `feasibility` is Insufficient Information exactly when its `category` is. An Insufficient Information path states its `limitation`; any other path has a null or empty `limitation`.",
+   "checks": [
+    "oracle:cp3c:feasibility_category_mismatch",
+    "oracle:cp3c:insufficient_without_limitation",
+    "oracle:cp3c:limitation_without_insufficient"
+   ]
+  },
+  {
+   "id": "refinancing_risk.6",
+   "statement": "The `liability_management` path always has feasibility Insufficient Information, because the legal covenant capacity evidence it needs is not bound.",
+   "checks": [
+    "oracle:cp3c:lme_judged_without_capacity_evidence"
    ]
   }
  ]

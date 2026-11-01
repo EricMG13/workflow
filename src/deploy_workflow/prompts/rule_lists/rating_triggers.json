@@ -2,7 +2,7 @@
  "rules": [
   {
    "id": "rating_triggers.1",
-   "statement": "",
+   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. `views` has at least one entry; each `view` is Downgrade pressure, Stable, Upgrade potential or Not assessable, `category` and `confidence` take only their listed values, and every view lists at least one `evidence` citation with its `source_id`, `locator` and `quote`.",
    "checks": [
     "oracle:cp2h:r01",
     "oracle:cp2h:r02",
@@ -12,42 +12,66 @@
     "oracle:cp2h:r06",
     "oracle:cp2h:r07",
     "oracle:cp2h:r08",
-    "oracle:cp2h:r09",
+    "oracle:cp2h:r09"
+   ]
+  },
+  {
+   "id": "rating_triggers.2",
+   "statement": "Give exactly one view for each agency in `register.agencies` of the module context, its `agency` written exactly, and none for another agency or twice. If the ratings source's register or trigger terms cannot be read, the step is refused as `Rating register not found` or `Trigger terms not found`.",
+   "checks": [
     "oracle:cp2h:v01",
     "oracle:cp2h:v02",
     "oracle:cp2h:v03",
+    "oracle:cp2h:s01",
+    "oracle:cp2h:s02",
+    "fn:deploy_workflow.owners.cp2h:_view_issues"
+   ]
+  },
+  {
+   "id": "rating_triggers.3",
+   "statement": "No view's `confidence`, and not `overall.confidence`, is High, because forward headroom rests on analyst-assumed drivers.",
+   "checks": [
+    "oracle:cp2h:v08",
+    "oracle:cp2h:v09"
+   ]
+  },
+  {
+   "id": "rating_triggers.4",
+   "statement": "Every `rationale` and gap field is nonblank prose with no bare figure (digits only inside a period or filing label); a figure appears only as `{ref|unit}` with a `ref` and `unit` listed in the module context (`cp1_facts`, the `triggers` thresholds or the `cp2g` rows), closed and non-empty, and never a reference to a value that is not settled. A `limitation` is plain text: no figure and no reference. Write no peer ranking, instrument recommendation or recovery conclusion, no rating call (`will be downgraded`, `will be upgraded`, `will downgrade`, `will upgrade`, `is certain to be`, `our rating`, `we rate`, `shadow rating`, `implied rating`) and no probability weighting (`probability-weighted`, `expected value` and similar).",
+   "checks": [
     "oracle:cp2h:v04",
     "oracle:cp2h:v05",
     "oracle:cp2h:v06",
     "oracle:cp2h:v07",
-    "oracle:cp2h:v08",
-    "oracle:cp2h:v09",
     "oracle:cp2h:v10",
     "oracle:cp2h:v11",
     "oracle:cp2h:v12",
     "oracle:cp2h:v13",
     "oracle:cp2h:v14",
     "oracle:cp2h:v15",
-    "oracle:cp2h:v16",
-    "oracle:cp2h:v17",
-    "oracle:cp2h:v18",
-    "oracle:cp2h:s01",
-    "oracle:cp2h:s02"
+    "fn:deploy_workflow.owners.cp2h:_prose",
+    "fn:deploy_workflow.owners.cp2h:_run_text_issues",
+    "fn:deploy_workflow.owners.cp2h:_gap_issues",
+    "fn:deploy_workflow.owners.cp2h:_overall_issues",
+    "fn:deploy_workflow.owners.cp2h:_limitation",
+    "fn:deploy_workflow.owners.cp2h:phrase_issues",
+    "fn:deploy_workflow.owners.cp2h:_claims",
+    "fn:deploy_workflow.owners.cp2h:_with_upstream_citations"
    ]
   },
   {
-   "id": "rating_triggers.2",
-   "statement": "",
+   "id": "rating_triggers.5",
+   "statement": "Cite each quote verbatim under the locator of its page in the ratings source; a quote not on that page is refused.",
    "checks": [
-    "fn:deploy_workflow.owners.cp2h:_claims",
-    "fn:deploy_workflow.owners.cp2h:_gap_issues",
-    "fn:deploy_workflow.owners.cp2h:_limitation",
-    "fn:deploy_workflow.owners.cp2h:_overall_issues",
-    "fn:deploy_workflow.owners.cp2h:_prose",
-    "fn:deploy_workflow.owners.cp2h:_run_text_issues",
-    "fn:deploy_workflow.owners.cp2h:_view_issues",
-    "fn:deploy_workflow.owners.cp2h:_with_upstream_citations",
-    "fn:deploy_workflow.owners.cp2h:phrase_issues"
+    "oracle:cp2h:v16"
+   ]
+  },
+  {
+   "id": "rating_triggers.6",
+   "statement": "A `Stale input` issue means a bound CP-2G or CP-1 input changed after the context was read; no edit to the submission cures it.",
+   "checks": [
+    "oracle:cp2h:v17",
+    "oracle:cp2h:v18"
    ]
   }
  ]

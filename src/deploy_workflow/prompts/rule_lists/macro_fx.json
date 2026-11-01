@@ -2,10 +2,26 @@
  "rules": [
   {
    "id": "macro_fx.1",
-   "statement": "",
+   "statement": "Cite only the `financial` source, a page that holds the quote; any other source, or a quote not on the cited page, is refused.",
+   "checks": [
+    "oracle:cp2e:source_outside_scope",
+    "oracle:cp2e:quote_off_page",
+    "fn:deploy_workflow.owners.cp2e:_Check.on_page",
+    "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
+   ]
+  },
+  {
+   "id": "macro_fx.2",
+   "statement": "`reporting_currency.code_text`, and `fx.debt_currency.code_text` when given, is a three-capital-letter currency code occurring as a whole word in its own quote.",
    "checks": [
     "oracle:cp2e:reporting_code_not_in_quote",
-    "oracle:cp2e:source_outside_scope",
+    "fn:deploy_workflow.owners.cp2e:_Check.code"
+   ]
+  },
+  {
+   "id": "macro_fx.3",
+   "statement": "Give exactly one of `rate_exposure` and `rate_absence`. In `rate_exposure`, `facility_balance.value_text`, `spread.bps_text` and `floor.bps_text` each occur once in their quote right after the words `balance of`, `spread` and `floor` (a numeral of at most three integer digits and four decimals, not a prefix of a longer number); the balance does not exceed the `earnings.total_debt` value. `rate_basis.rate_type` is FLOATING or FIXED as the quote states it (exactly one of a floating rate or a fixed rate), and a FLOATING `reference_rate` occurs in the quote.",
+   "checks": [
     "oracle:cp2e:rate_exposure_and_absence",
     "oracle:cp2e:balance_not_in_quote",
     "oracle:cp2e:balance_not_labelled",
@@ -13,63 +29,77 @@
     "oracle:cp2e:rate_type_not_stated",
     "oracle:cp2e:reference_rate_not_in_quote",
     "oracle:cp2e:floor_not_in_quote",
+    "oracle:cp2e:balance_exceeds_total_debt",
+    "fn:deploy_workflow.owners.cp2e:_check_rate_exposure",
+    "fn:deploy_workflow.owners.cp2e:_Check.labelled",
+    "fn:deploy_workflow.owners.cp2e:_Check.exactly_one"
+   ]
+  },
+  {
+   "id": "macro_fx.4",
+   "statement": "Each of `earnings.ebitda`, `earnings.interest`, `earnings.fcf`, `earnings.total_debt` and `fx.fx_cash_effect` quotes one whole page line that begins with its row label (Reported EBITDA, Cash interest paid, Levered free cash flow, Total debt, FX effect on cash) followed by two spaces, on a page whose header ends in the FY column; its `value_text` is the last value of that line exactly as printed.",
+   "checks": [
     "oracle:cp2e:row_not_whole_line",
     "oracle:cp2e:row_wrong_label",
     "oracle:cp2e:row_value_not_last",
-    "oracle:cp2e:quote_off_page",
+    "fn:deploy_workflow.owners.cp2e:_Check.row"
+   ]
+  },
+  {
+   "id": "macro_fx.5",
+   "statement": "Give exactly one of `fx.debt_currency` and `fx.debt_currency_absence`, and exactly one of `fx.foreign_ebitda_share` and `fx.operating_fx_absence`; `percent_text` of the share is a numeral of at most 100 occurring once in its quote.",
+   "checks": [
     "oracle:cp2e:debt_currency_and_absence",
     "oracle:cp2e:foreign_share_and_absence",
+    "fn:deploy_workflow.owners.cp2e:_check_fx",
+    "fn:deploy_workflow.owners.cp2e:_fx_claim"
+   ]
+  },
+  {
+   "id": "macro_fx.6",
+   "statement": "Give exactly one of `hedge_ratio` and `hedge_absence`; `hedge_ratio.percent_text` is a numeral from 0 to 100 with at most three integer digits and two decimals.",
+   "checks": [
     "oracle:cp2e:hedge_ratio_and_absence",
     "oracle:cp2e:hedge_ratio_out_of_range",
+    "fn:deploy_workflow.owners.cp2e:_check_hedge",
+    "fn:deploy_workflow.owners.cp2e:_hedge_claim"
+   ]
+  },
+  {
+   "id": "macro_fx.7",
+   "statement": "`rate_shocks_bp` holds one to three whole numbers of basis points from 1 to 1000 (at most four digits), and `fx_shocks_percent` one to three whole percents from 1 to 50 (at most two digits); each list is written as strings and strictly increasing.",
+   "checks": [
     "oracle:cp2e:rate_shock_zero",
     "oracle:cp2e:rate_shocks_not_increasing",
     "oracle:cp2e:too_many_rate_shocks",
     "oracle:cp2e:fx_shock_too_large",
+    "fn:deploy_workflow.owners.cp2e:_Check.shocks",
+    "fn:deploy_workflow.owners.cp2e:_rate_claims"
+   ]
+  },
+  {
+   "id": "macro_fx.8",
+   "statement": "Give one assessment for each `section` (interest_rate, fx, hedging), none twice; `category` is Documentary Fact, Analyst Interpretation or Insufficient Information, `limitation` is given for Insufficient Information and only for it, and a Documentary Fact has at least one `basis` quote. Every analyst text (assessment `text` and `limitation`, `shock_rationale`, `summary.text`, the hedge `rationale`, `reference_rate`, and every absence `reason` and `follow_up`) is nonblank with no digit; `summary.text` has no reference; and an assessment `text` or `summary.text` uses none of the words recommend, buy, sell, overweight, underweight, downgrade, upgrade or covenant breach.",
+   "checks": [
     "oracle:cp2e:digit_in_text",
     "oracle:cp2e:prohibited_conclusion",
     "oracle:cp2e:insufficient_without_limitation",
     "oracle:cp2e:documentary_without_basis",
     "oracle:cp2e:section_missing",
-    "oracle:cp2e:section_repeated"
+    "oracle:cp2e:section_repeated",
+    "fn:deploy_workflow.owners.cp2e:_check_text",
+    "fn:deploy_workflow.owners.cp2e:_Check.digit_free",
+    "fn:deploy_workflow.owners.cp2e:_Check.empty",
+    "fn:deploy_workflow.owners.cp2e:_Check.run_text"
    ]
   },
   {
-   "id": "macro_fx.2",
-   "statement": "",
+   "id": "macro_fx.9",
+   "statement": "Read with `read_pages` every page you cite, and run `search_pack` before you give any absence; an absence claim with no recorded search is refused.",
    "checks": [
     "oracle:cp2e:unread_financial_page_3",
     "oracle:cp2e:unread_financial_page_5",
     "oracle:cp2e:absence_without_search"
-   ]
-  },
-  {
-   "id": "macro_fx.3",
-   "statement": "",
-   "checks": [
-    "oracle:cp2e:balance_exceeds_total_debt"
-   ]
-  },
-  {
-   "id": "macro_fx.4",
-   "statement": "",
-   "checks": [
-    "fn:deploy_workflow.owners.cp2e:_Check.code",
-    "fn:deploy_workflow.owners.cp2e:_Check.digit_free",
-    "fn:deploy_workflow.owners.cp2e:_Check.empty",
-    "fn:deploy_workflow.owners.cp2e:_Check.exactly_one",
-    "fn:deploy_workflow.owners.cp2e:_Check.labelled",
-    "fn:deploy_workflow.owners.cp2e:_Check.on_page",
-    "fn:deploy_workflow.owners.cp2e:_Check.row",
-    "fn:deploy_workflow.owners.cp2e:_Check.run_text",
-    "fn:deploy_workflow.owners.cp2e:_Check.shocks",
-    "fn:deploy_workflow.owners.cp2e:_check_fx",
-    "fn:deploy_workflow.owners.cp2e:_check_hedge",
-    "fn:deploy_workflow.owners.cp2e:_check_rate_exposure",
-    "fn:deploy_workflow.owners.cp2e:_check_text",
-    "fn:deploy_workflow.owners.cp2e:_fx_claim",
-    "fn:deploy_workflow.owners.cp2e:_hedge_claim",
-    "fn:deploy_workflow.owners.cp2e:_rate_claims",
-    "fn:deploy_workflow.owners.cp2e:validate_macro_fx"
    ]
   }
  ]

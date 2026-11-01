@@ -1,0 +1,369 @@
+{
+  "schema_version": "pins-context-owner-cases/1",
+  "scope": "Phase 6 Task 0: pinned assumptions from the context file, for the owners of CP-2A, CP-2D, CP-2E, CP-3C, CP-3D and CP-4C",
+  "status": "PREPARED by the Phase 6 Task 0 preparer; independent mx-precise review pending; not frozen, not pinned (cases/PINS.json is written at the freeze; the glob cases/*-owner/* will then take manifest.json, submissions.json, expected.json and builder/build.py; until then `python3 -I cases/pins.py --check` lists them as unpinned)",
+  "raw_rule": "context files are the literal bytes the form writes (json indent 2, LF, trailing LF); the `context` source sha256 is the sha256 of those bytes, spans line:N via splitlines. The context files are outside the PINS.json globs, so their sha256 is embedded here.",
+  "inputs_pinned": {
+    "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
+    "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
+    "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
+    "cases/cp2a-owner/manifest.json": "5219f063dcb130b38b8059397a73ff890ccb14ef03f8c2a6188b971dce7ead1a",
+    "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
+    "cases/cp2a-owner/expected.json": "4b6138d79be7e8e0780eeade0cc09881658cf175b0c0b1cee1f0a083b1ea126a",
+    "cases/cp2d-owner/manifest.json": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
+    "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
+    "cases/cp2d-owner/expected.json": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
+    "cases/cp2e-owner/manifest.json": "4e3dab8f462c5d6968cfa3326d9f808242df7e1d34a6ca2b0383ed4752d4a6ab",
+    "cases/cp2e-owner/submissions.json": "d0e5915d1148d7a895915b70e7c56d937759f4a6eddc0feff0c5e8e163a7a804",
+    "cases/cp2e-owner/expected.json": "08a80e96cf23de2a5acbcc8f24ba2c713a1dc02152e3f5b99417d5ced3871592",
+    "cases/cp2e-owner/builder/build.py": "7a145dc3ad8b46d8579d02d287931c5d379bf4999c36a28b9af67787d26a32e4",
+    "cases/cp3c-owner/manifest.json": "c63e531441397d9f600e164d3a8876f51b33a527aeb9a8a29a2ff3a59e656021",
+    "cases/cp3c-owner/submissions.json": "eff5c4fb64452a8aa40a646f58772e6eb55767ea18db9ff54f2f47183d6e2b11",
+    "cases/cp3c-owner/expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
+    "cases/cp3d-owner/manifest.json": "2d21896a53afea7a6e42c0ae8b98b2f12be27f07550164245e04d6119586ec92",
+    "cases/cp3d-owner/submissions.json": "c4437879636ed0fe4a8624c71a640873b2c02df789ff9cd5cd05e3bc72bc0579",
+    "cases/cp3d-owner/expected.json": "8e28b859d56ba51c3d299c0e35c584bbded6ed18a258dee44c217ae4f43da039",
+    "cases/cp3d-owner/builder/build.py": "fd566e4c9643c1b4105f563f9ca3346427d6650d81c944be00890675e2a70c43",
+    "cases/cp4c-owner/manifest.json": "62102d7dae0507320e1ae09517322c2db9fdb94b04d0b8f9610f61892ac6dfd8",
+    "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
+    "cases/cp4c-owner/expected.json": "eb1a897bfbba83298171d82fb399d653d376d2597fecf99b71cfcbc38cd96ab6",
+    "cases/cp4c-owner/builder/build.py": "b6e905538ff2bbb7ad7d0634c6e503cad89565494286e67569bb8e6f9f7afec0",
+    "cases/cp3c-owner/builder/build.py": "c4d9af183d2bc1e527d61e074e8a2085371b0347b3be9da7f65ba3cd3409f981"
+  },
+  "no_pack_hash": "no base oracle freezes a PreparedPack.content_hash() (each binds it at run time), so the extra `context` source changes no frozen hash; the only hashes rebuilt here are the context file sha256 values and their citations",
+  "context_source": {
+    "source_id": "context",
+    "name": "context.json",
+    "media_type": "text/plain",
+    "position": "last in pack.sources (preparation_request appends it)"
+  },
+  "contexts": {
+    "context-distressed_restructuring.json": {
+      "pathway": "distressed_restructuring",
+      "sha256": "57237f32c72ddbab92ce77345b268b96f2d65618fcaff26fc791fecb39c24c47",
+      "bytes": 2355,
+      "description": "all six pins; CP-2E hedge pin blank (a partial pin)",
+      "issuer_name_line": 13
+    },
+    "context-covenant_refinancing.json": {
+      "pathway": "covenant_refinancing",
+      "sha256": "2d616815bab69b4d171375257fe935816ecb6d32d657828eb10361574c8ebcef",
+      "bytes": 2351,
+      "description": "all six pins; CP-2E hedge pin blank (a partial pin)",
+      "issuer_name_line": 13
+    },
+    "context-credit_snapshot.json": {
+      "pathway": "credit_snapshot",
+      "sha256": "ec44a98cd075bcb9c4865dc0daa467e45a9d25c4d1b8ae7635e4700dca263ee8",
+      "bytes": 2346,
+      "description": "all six pins; CP-2E hedge pin blank (a partial pin)",
+      "issuer_name_line": 13
+    },
+    "context-relative_value.json": {
+      "pathway": "relative_value",
+      "sha256": "d1bc8623583acf71976f4cddd781a6fa68595935c4afaeb0842281479c7639f4",
+      "bytes": 2345,
+      "description": "all six pins; CP-2E hedge pin blank (a partial pin)",
+      "issuer_name_line": 13
+    },
+    "context-credit_snapshot-hedge60.json": {
+      "pathway": "credit_snapshot",
+      "sha256": "279ecc3fe2e3c7587580fdf6b0266d715863aaaff2716f20d09d881cbc555756",
+      "bytes": 2348,
+      "description": "all six pins; CP-2E hedge pin 60",
+      "issuer_name_line": 13
+    },
+    "context-distressed_restructuring-no-cp2a.json": {
+      "pathway": "distressed_restructuring",
+      "sha256": "2d1ef9fd7a39c3b612c6e685cda2698d367df082eb052a865eddcd3a40251290",
+      "bytes": 1874,
+      "description": "all pins except cp2a (null): context present, module pin null",
+      "issuer_name_line": 13
+    },
+    "context-covenant_refinancing-no-cp2d.json": {
+      "pathway": "covenant_refinancing",
+      "sha256": "0a9bea0950ff6956734e6f3b0ba0ddb043225b36a29b87a4f9af0267906107b3",
+      "bytes": 2230,
+      "description": "all pins except cp2d (null): context present, module pin null",
+      "issuer_name_line": 13
+    },
+    "context-credit_snapshot-no-cp2e.json": {
+      "pathway": "credit_snapshot",
+      "sha256": "05df406c3c5ff94d3cc40347ee9127d6d0ae5b6e0e2555b85c044cb6f6586cf6",
+      "bytes": 2150,
+      "description": "all pins except cp2e (null): context present, module pin null",
+      "issuer_name_line": 13
+    },
+    "context-covenant_refinancing-no-cp3c.json": {
+      "pathway": "covenant_refinancing",
+      "sha256": "86e92727df2222df2c6fe1e050fb39c3b7c0e68147b35a0670e4cb957344bd8d",
+      "bytes": 2264,
+      "description": "all pins except cp3c (null): context present, module pin null",
+      "issuer_name_line": 13
+    },
+    "context-relative_value-no-cp3d.json": {
+      "pathway": "relative_value",
+      "sha256": "ded13153a0de5cdbb16dcb44d4cfcb1373edf74afc0999cce28487467273c098",
+      "bytes": 2261,
+      "description": "all pins except cp3d (null): context present, module pin null",
+      "issuer_name_line": 13
+    },
+    "context-distressed_restructuring-no-cp4c.json": {
+      "pathway": "distressed_restructuring",
+      "sha256": "a0c6343210f51df04972df9dc49caedbfb2b38c271d338cda31b2b454edf2d1d",
+      "bytes": 2260,
+      "description": "all pins except cp4c (null): context present, module pin null",
+      "issuer_name_line": 13
+    }
+  },
+  "modules": {
+    "CP-2A": {
+      "base_oracle": "cases/cp2a-owner",
+      "run": {
+        "run_id": "cp2a-owner-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-2A"
+        ]
+      },
+      "pack": {
+        "base_sources": [
+          {
+            "source_id": "identity",
+            "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+          },
+          {
+            "source_id": "financial",
+            "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
+          }
+        ],
+        "extra_source": "context (text/plain, last)"
+      },
+      "context_all": "context-distressed_restructuring.json",
+      "context_no_pin": "context-distressed_restructuring-no-cp2a.json",
+      "context_hedge60": null,
+      "chain": "the closed chain of the base oracle's positive case (its upstream literals unchanged) plus the context assessments in submissions.json context_overlays; the run (run_id, pathway, requested_modules) is the base run's",
+      "upstream_pins_checked": "no pinned upstream step"
+    },
+    "CP-2D": {
+      "base_oracle": "cases/cp2d-owner",
+      "run": {
+        "run_id": "slice-cp2d-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "covenant_refinancing",
+        "requested_modules": [
+          "CP-1",
+          "CP-1A",
+          "CP-2",
+          "CP-2D"
+        ]
+      },
+      "pack": {
+        "base_sources": [
+          {
+            "source_id": "identity",
+            "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+          },
+          {
+            "source_id": "financial",
+            "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
+          },
+          {
+            "source_id": "business",
+            "sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49"
+          }
+        ],
+        "extra_source": "context (text/plain, last)"
+      },
+      "context_all": "context-covenant_refinancing.json",
+      "context_no_pin": "context-covenant_refinancing-no-cp2d.json",
+      "context_hedge60": null,
+      "chain": "the closed chain of the base oracle's positive case (its upstream literals unchanged) plus the context assessments in submissions.json context_overlays; the run (run_id, pathway, requested_modules) is the base run's",
+      "upstream_pins_checked": "no pinned upstream step"
+    },
+    "CP-2E": {
+      "base_oracle": "cases/cp2e-owner",
+      "run": {
+        "run_id": "slice-cp2e-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": [
+          "CP-2E"
+        ]
+      },
+      "pack": {
+        "base_sources": [
+          {
+            "source_id": "identity",
+            "name": "Issuer identity and reporting scope note",
+            "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+            "status": "ready"
+          },
+          {
+            "source_id": "financial",
+            "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+            "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "status": "ready"
+          }
+        ],
+        "extra_source": "context (text/plain, last)"
+      },
+      "context_all": "context-credit_snapshot.json",
+      "context_no_pin": "context-credit_snapshot-no-cp2e.json",
+      "context_hedge60": "context-credit_snapshot-hedge60.json",
+      "chain": "the closed chain of the base oracle's positive case (its upstream literals unchanged) plus the context assessments in submissions.json context_overlays; the run (run_id, pathway, requested_modules) is the base run's",
+      "upstream_pins_checked": "no pinned upstream step"
+    },
+    "CP-3C": {
+      "base_oracle": "cases/cp3c-owner",
+      "run": {
+        "run_id": "slice-cp3c-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "covenant_refinancing",
+        "requested_modules": [
+          "CP-1",
+          "CP-1A",
+          "CP-2",
+          "CP-2D",
+          "CP-3C"
+        ]
+      },
+      "pack": {
+        "base_sources": [
+          {
+            "source_id": "identity",
+            "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+          },
+          {
+            "source_id": "financial",
+            "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
+          },
+          {
+            "source_id": "business",
+            "sha256": "f79a1ce9093e39f61e1e863b92bd842250ce715f6f9db26b66fa1d62889e1d49"
+          }
+        ],
+        "extra_source": "context (text/plain, last)"
+      },
+      "context_all": "context-covenant_refinancing.json",
+      "context_no_pin": "context-covenant_refinancing-no-cp3c.json",
+      "context_hedge60": null,
+      "chain": "the closed chain of the base oracle's positive case (its upstream literals unchanged) plus the context assessments in submissions.json context_overlays; the run (run_id, pathway, requested_modules) is the base run's",
+      "upstream_pins_checked": "every upstream step of the chain submits a value that equals the pin of the same context file (CP-4C chain: CP-2A scenarios 20/0, 40/0, 40/20, 100/0; CP-3C chain: CP-2D horizon 24 and minimum cash 10)"
+    },
+    "CP-3D": {
+      "base_oracle": "cases/cp3d-owner",
+      "run": {
+        "run_id": "slice-cp3d-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "relative_value",
+        "requested_modules": [
+          "CP-3D"
+        ]
+      },
+      "pack": {
+        "base_sources": [
+          {
+            "source_id": "identity",
+            "name": "Issuer identity and reporting scope note",
+            "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4",
+            "status": "ready"
+          },
+          {
+            "source_id": "financial",
+            "name": "Unaudited quarterly/FY2025 statements and complete facility schedule",
+            "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429",
+            "status": "ready"
+          },
+          {
+            "source_id": "market",
+            "name": "Third-party loan market quotation sheet",
+            "sha256": "c175d14bf4b1fd245d3c971bff6e9499a789aabc820cd340d0ea40e369f774b7",
+            "status": "ready"
+          }
+        ],
+        "extra_source": "context (text/plain, last)"
+      },
+      "context_all": "context-relative_value.json",
+      "context_no_pin": "context-relative_value-no-cp3d.json",
+      "context_hedge60": null,
+      "chain": "the closed chain of the base oracle's positive case (its upstream literals unchanged) plus the context assessments in submissions.json context_overlays; the run (run_id, pathway, requested_modules) is the base run's",
+      "upstream_pins_checked": "no pinned upstream step"
+    },
+    "CP-4C": {
+      "base_oracle": "cases/cp4c-owner",
+      "run": {
+        "run_id": "cp4c-owner-positive",
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": "Northbridge Synthetic Group",
+        "as_of": "2026-01-10",
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "distressed_restructuring",
+        "requested_modules": [
+          "CP-4C"
+        ]
+      },
+      "pack": {
+        "base_sources": [
+          {
+            "source_id": "identity",
+            "sha256": "74fe2ad422266bc01a43af025fed0aca5fdb5aa952c60c013efbbef0ba816ec4"
+          },
+          {
+            "source_id": "financial",
+            "sha256": "82d684ccaa230ca1ff5ada477b02b510c193b0deabf7cd749e420508f93c0429"
+          },
+          {
+            "source_id": "legal-covenants",
+            "sha256": "0f8accfde3ee2343306db00ead2aec8a15aed5bd84a22f5eb766dd859a6e70ec",
+            "gap_case_sha256": "ec59b199fb54fd01c4533c40871031b5bbb780e0275bf8a2fdfeae664914608c"
+          }
+        ],
+        "extra_source": "context (text/plain, last)"
+      },
+      "context_all": "context-distressed_restructuring.json",
+      "context_no_pin": "context-distressed_restructuring-no-cp4c.json",
+      "context_hedge60": null,
+      "chain": "the closed chain of the base oracle's positive case (its upstream literals unchanged) plus the context assessments in submissions.json context_overlays; the run (run_id, pathway, requested_modules) is the base run's",
+      "upstream_pins_checked": "every upstream step of the chain submits a value that equals the pin of the same context file (CP-4C chain: CP-2A scenarios 20/0, 40/0, 40/20, 100/0; CP-3C chain: CP-2D horizon 24 and minimum cash 10)"
+    }
+  },
+  "files_sha256": {
+    "context-covenant_refinancing-no-cp2d.json": "0a9bea0950ff6956734e6f3b0ba0ddb043225b36a29b87a4f9af0267906107b3",
+    "context-covenant_refinancing-no-cp3c.json": "86e92727df2222df2c6fe1e050fb39c3b7c0e68147b35a0670e4cb957344bd8d",
+    "context-covenant_refinancing.json": "2d616815bab69b4d171375257fe935816ecb6d32d657828eb10361574c8ebcef",
+    "context-credit_snapshot-hedge60.json": "279ecc3fe2e3c7587580fdf6b0266d715863aaaff2716f20d09d881cbc555756",
+    "context-credit_snapshot-no-cp2e.json": "05df406c3c5ff94d3cc40347ee9127d6d0ae5b6e0e2555b85c044cb6f6586cf6",
+    "context-credit_snapshot.json": "ec44a98cd075bcb9c4865dc0daa467e45a9d25c4d1b8ae7635e4700dca263ee8",
+    "context-distressed_restructuring-no-cp2a.json": "2d1ef9fd7a39c3b612c6e685cda2698d367df082eb052a865eddcd3a40251290",
+    "context-distressed_restructuring-no-cp4c.json": "a0c6343210f51df04972df9dc49caedbfb2b38c271d338cda31b2b454edf2d1d",
+    "context-distressed_restructuring.json": "57237f32c72ddbab92ce77345b268b96f2d65618fcaff26fc791fecb39c24c47",
+    "context-relative_value-no-cp3d.json": "ded13153a0de5cdbb16dcb44d4cfcb1373edf74afc0999cce28487467273c098",
+    "context-relative_value.json": "d1bc8623583acf71976f4cddd781a6fa68595935c4afaeb0842281479c7639f4",
+    "expected.json": "f2e7ef35fc42ca9605f4e210bbd4dfe9cda6aa7e3144af44b447ee5bc4d42aa8",
+    "submissions.json": "d32e8522ede32df6e969afe2ea01f31984496c131c5517a4088575af0f99494a"
+  },
+  "files_sha256_note": "sha256 of every other file this builder writes (manifest.json and builder/build.py are pinned by PINS.json at the freeze)"
+}

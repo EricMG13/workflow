@@ -1,0 +1,601 @@
+{
+  "printed_unplaced": [
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-0.identity.Registrant.ticker_exchange",
+      "quote_head": "Common Stock, par value $0.01 per share BGS New York Stock Exchange",
+      "quote_sha256": "c91791b332639a6095f1ecd9c8a89ed78481b1d5cd2af6252d31ba2726bf0f10",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.borrower",
+      "quote_head": "IHEARTCOMMUNICATIONS, INC., as the Borrower",
+      "quote_sha256": "f1ca1afb3f2c6a1ae199e13fe7e1b3a61540daa0ac8723026cef8aad29afc96e",
+      "source_id": "ca"
+    }
+  ],
+  "quote_misses": [
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-0.identity.Registrant.legal_name",
+      "quote_head": "Commission file number 001-32316 B&G FOODS, INC. (Exact name of Registrant as specified in",
+      "quote_sha256": "fd2b9d76fd263b44f9c859648e52145dc824b42fa346885a19484858e60b1011",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-0.identity.Registrant.ticker_exchange",
+      "quote_head": "Common Stock, par value $0.01 per share BGS New York Stock Exchange",
+      "quote_sha256": "c91791b332639a6095f1ecd9c8a89ed78481b1d5cd2af6252d31ba2726bf0f10",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.carrying_amount.2025-06-28",
+      "quote_head": "5.25% senior notes due 2027 529,310 480,349 (3)",
+      "quote_sha256": "eb9af3395b99f240c5e164d8488b41e4875c1a698e267a99b18382849f19a502",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.principal_outstanding.2025-06-28",
+      "quote_head": "5.25% senior notes due 2027 529,310",
+      "quote_sha256": "646464723469e6cc70d31644bb89b8b1bcab8ede8984f931a7a7d881c520fc0b",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.carrying_amount.2025-06-28",
+      "quote_head": "8.00% senior secured notes due 2028 $ 798,402 (4)",
+      "quote_sha256": "8892cea4e589b1668af704d688d29a842f2d2946c09a2b771f581e1476da1295",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.principal_outstanding.2025-06-28",
+      "quote_head": "8.00% senior secured notes due 2028 799,315",
+      "quote_sha256": "d4073f756bf4a888bb3dcdba7f6446be8bdaab717687d7c41bdcae4e154921ea",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Current_portion_of_long-term_debt.amount.2025-06-28",
+      "quote_head": "Current portion of long-term debt 5,625",
+      "quote_sha256": "4d485a8849502469930fe21f4d8cc886883abd5b0b241daa4a849deb15d5d802",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.carrying_amount.2025-06-28",
+      "quote_head": "Revolving credit loans $ 235,000",
+      "quote_sha256": "97dc56a316f3b79ec17cdf576a039cc66107e2cf103d56a37bf8e3117c08e6ef",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.principal_outstanding.2025-06-28",
+      "quote_head": "Long-term debt consists of the following, as of the dates indicated (in thousands): June 2",
+      "quote_sha256": "3c8d17f4aec45d1ce7a0a73fc99f5be7c801082ff2068c697f20e7ed2ccd0b89",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Total_contractual_maturities_aggregate_principal_.principal_outstanding.2025-06-28",
+      "quote_head": "Total $ 2,011,375",
+      "quote_sha256": "4e2ed9bbb628759905a0e0828f4bdff17a1e22f9bf2a64d618636b6b12d0aeb1",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Total_long-term_debt_net_of_costs_and_discount.carrying_amount.2025-06-28",
+      "quote_head": "Total long-term debt, net of unamortized deferred debt financing costs and discount 1,990,",
+      "quote_sha256": "460e90216dc5136f3ba3a1f16de454507cc325e29b4d2e6510dac4325bdfb2e2",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.carrying_amount.2025-06-28",
+      "quote_head": "Tranche B term loans due 2029 443,702 (2)",
+      "quote_sha256": "61395f13062a8f0115ae03e9e0c27f81349caabbad76df60add5e366082b5475",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.principal_outstanding.2025-06-28",
+      "quote_head": "Tranche B term loans due 2029 447,750",
+      "quote_sha256": "dd44fa51e4a28c6f6540d107f69a58d193577094ace526ce8f530d746934325f",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Unamortized_deferred_debt_financing_costs.amount.2025-06-28",
+      "quote_head": "Unamortized deferred debt financing costs (15,933)",
+      "quote_sha256": "401eebace055b94890285b68413a5f0e4c34a8c259b98937ddbe1371a2130b51",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.debt_stack.Unamortized_discount.amount.2025-06-28",
+      "quote_head": "Unamortized discount (4,961)",
+      "quote_sha256": "9729b608e7cba606cfe43dd724cd11bbd1c2a01e69d7ae84d1894fa1fb50b0cb",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2025-06-28",
+      "quote_head": "Cash and cash equivalents $ 54,084",
+      "quote_sha256": "dbd2590641726d8627d17a46fc4ef5187b6bc2e4e665ce8df777d9947b157ed3",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2025_remaining.aggregate_contractual_maturity.2025-06-28",
+      "quote_head": "2025 remaining $ 3,375",
+      "quote_sha256": "fa52cd6a3f34652e7edcf0f2e02f47688c858f1901d0ea8eb26a699442806894",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2026.aggregate_contractual_maturity.2025-06-28",
+      "quote_head": "2026 4,500",
+      "quote_sha256": "b2e5c3bfa5788e37e3d6f0c8849238aa23c1b28abbdb184620595e1623835092",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2027.aggregate_contractual_maturity.2025-06-28",
+      "quote_head": "2027 533,810",
+      "quote_sha256": "984aa747b92a64771772c93d78942b509026ec8310bf2498d3ba4e6181a1735d",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2028.aggregate_contractual_maturity.2025-06-28",
+      "quote_head": "2028 1,037,690",
+      "quote_sha256": "4f2b215ef7ae85cf14ad6656539a62711c5e0db800b1a16df3655e25045fe4cf",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2029.aggregate_contractual_maturity.2025-06-28",
+      "quote_head": "2029 432,000",
+      "quote_sha256": "64f9df7a3ea216fcf89154cb5102b9922b92c069db38bcf60c544c7610d084a8",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2030_and_thereafter.aggregate_contractual_maturity.2025-06-28",
+      "quote_head": "Thereafter — Total $ 2,011,375",
+      "quote_sha256": "da583a5ffaf51783bf1735db595353e0bb6f66f1038773ba848353a75c65e88d",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.drawn_balance.2025-06-28",
+      "quote_head": "Long-term debt consists of the following, as of the dates indicated (in thousands): June 2",
+      "quote_sha256": "3c8d17f4aec45d1ce7a0a73fc99f5be7c801082ff2068c697f20e7ed2ccd0b89",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2024-12-28",
+      "quote_head": "5.25% senior notes due 2027 529,310 480,349 (3) 550,000 522,500 (3)",
+      "quote_sha256": "a34bb78362bfa27be53e7b6475f506ed760eb7d5ac99f3108e69952e641e8c6f",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2025-06-28",
+      "quote_head": "5.25% senior notes due 2027 529,310 480,349 (3) 550,000 522,500 (3)",
+      "quote_sha256": "a34bb78362bfa27be53e7b6475f506ed760eb7d5ac99f3108e69952e641e8c6f",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2024-12-28",
+      "quote_head": "8.00% senior secured notes due 2028 $ 798,402 (4) $ 763,472 (3) $ 798,283 (4) $ 818,240 (3",
+      "quote_sha256": "1a2cea445bb64c4e4d7d77f9673e7e754f66cebeac7c882df2d088e13bc4e51e",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2025-06-28",
+      "quote_head": "8.00% senior secured notes due 2028 $ 798,402 (4) $ 763,472 (3) $ 798,283 (4) $ 818,240 (3",
+      "quote_sha256": "1a2cea445bb64c4e4d7d77f9673e7e754f66cebeac7c882df2d088e13bc4e51e",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2024-12-28",
+      "quote_head": "Revolving credit loans $ 235,000 $ 235,000 (1) $ 245,000 $ 245,000 (1)",
+      "quote_sha256": "44316a0fcac854356d4045922441d96375cacd8f4193693f22534a973297ef22",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2025-06-28",
+      "quote_head": "Revolving credit loans $ 235,000 $ 235,000 (1) $ 245,000 $ 245,000 (1)",
+      "quote_sha256": "44316a0fcac854356d4045922441d96375cacd8f4193693f22534a973297ef22",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2024-12-28",
+      "quote_head": "Tranche B term loans due 2029 443,702 (2) 403,769 (3) 445,568 (2) 445,568 (3)",
+      "quote_sha256": "0cf8e07d484c69de0a9989494139aeb9bdcb8528e0074f8bd4690445879feabd",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "bgs-relative-value",
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2025-06-28",
+      "quote_head": "Tranche B term loans due 2029 443,702 (2) 403,769 (3) 445,568 (2) 445,568 (3)",
+      "quote_sha256": "0cf8e07d484c69de0a9989494139aeb9bdcb8528e0074f8bd4690445879feabd",
+      "source_id": "bgs-10q-2025-06-28"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-0.identity.Borrower.legal_name",
+      "quote_head": "IHEARTCOMMUNICATIONS, INC., as the Borrower",
+      "quote_sha256": "f1ca1afb3f2c6a1ae199e13fe7e1b3a61540daa0ac8723026cef8aad29afc96e",
+      "source_id": "ca"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-0.identity.Registrant.legal_name",
+      "quote_head": "IHEARTMEDIA, INC. (Exact name of registrant as specified in its charter)",
+      "quote_sha256": "97fc4b75118e5b2fec2e5b7d41bdb02afb4ed870e2e907fc2ec82c2ab7e9fc71",
+      "source_id": "8k"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.principal_outstanding.2024-09-30",
+      "quote_head": "Incremental Term Loan Facility due 2026 401,220 401,220 Asset-based",
+      "quote_sha256": "5269797cf17d707820a8e60cc5fc686455afd697df71a3cbcf4a8e640844fe66",
+      "source_id": "q3"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30",
+      "quote_head": "4.75% Senior Secured Notes due 2028 500,000 500,000 Other secured",
+      "quote_sha256": "d347e3305097de1d97834d5a1b5dd54b58fc67cc95efba641964e4cf13d1dba8",
+      "source_id": "q3"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30",
+      "quote_head": "5.25% Senior Secured Notes due 2027 750,000 750,000 4.75%",
+      "quote_sha256": "6576eefc4c227946887e3847ae2a06ecac67fdbb11b58d164647b2394426be51",
+      "source_id": "q3"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30",
+      "quote_head": "6.375% Senior Secured Notes due 2026 800,000 800,000 5.25%",
+      "quote_sha256": "2906e44b42ab460ba611611d9560b88df226c0ea6aeabd6a371926eee8cf3632",
+      "source_id": "q3"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
+      "quote_head": "8.375% Senior Unsecured Notes due 2027 916,357 916,357 Other unsecured",
+      "quote_sha256": "effa5f1a71a4824a7d7bffb104164fbc9208a39f463a12dde2126427434ee835",
+      "source_id": "q3"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.principal_outstanding.2024-09-30",
+      "quote_head": "Term Loan Facility due 2026 $ 1,864,032 $ 1,864,032 Incremental Term Loan",
+      "quote_sha256": "cdd4cf328ec089bc086a55ae4e1893363f64bcddcd9bc3b20b8693a9e8be4717",
+      "source_id": "q3"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-4.exchange_dates.Exchange.8k_filing_date",
+      "quote_head": "Scott D. Hamilton Title: Senior Vice President, Chief Accounting Officer and Assistant Sec",
+      "quote_sha256": "74a69420adc03b915c53fc9e6a14377adf4926fcea45b0b403c75759f58e69ec",
+      "source_id": "8k"
+    },
+    {
+      "case_id": "ihrt-distressed-restructuring",
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.borrower",
+      "quote_head": "IHEARTCOMMUNICATIONS, INC., as the Borrower",
+      "quote_sha256": "f1ca1afb3f2c6a1ae199e13fe7e1b3a61540daa0ac8723026cef8aad29afc96e",
+      "source_id": "ca"
+    },
+    {
+      "case_id": "lth-covenant-refinancing",
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.state_of_incorporation",
+      "quote_head": "Delaware 47-3481985 (State or other jurisdiction of incorporation or organization)",
+      "quote_sha256": "3c8867ddd7fe33ee5a60b44305b86f2d0307d6477c16c1f0c9cb12c3e65142a8",
+      "source_id": "q225"
+    },
+    {
+      "case_id": "lth-covenant-refinancing",
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_margin_grid_before",
+      "quote_head": "1 > 3.502.25 to 1.00 and Otherwise 4.252.50% 3.251.50% 0.5000.250% 2 ≤ 3.50 to 1.00 and > ",
+      "quote_sha256": "c1ac62970d1dec2cb1e974a87d6b7e5dad013a17af0296a0fdfa0537b615b74f",
+      "source_id": "a13"
+    },
+    {
+      "case_id": "lth-covenant-refinancing",
+      "fact_id": "CP-4.amendment_14.14th_amendment.new_term_loans_principal",
+      "quote_head": "2024 NEW TERM LOAN COMMITMENT SCHEDULE 2024 New Term Lender 2024 New Term Loan Commitment ",
+      "quote_sha256": "0bcc1e7bb298b2a70e11e7e587e98e58f6c2a88210f389c2ad7a1ad6b797747a",
+      "source_id": "a14"
+    },
+    {
+      "case_id": "lth-covenant-refinancing",
+      "fact_id": "CP-4.operative_terms.operative_terms_at_2025_08_18.chain_completeness",
+      "quote_head": "ANNEX II AMENDMENTS TO CREDIT AGREEMENT [Changed pages to Conformed Credit Agreement follo",
+      "quote_sha256": "77065b4d361fa3e4326d93c5eb152a994c8fdc3722bff7f9d971fadb45ccfb08",
+      "source_id": "a15"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-0.identity.Credit_Agreement.borrower_entity",
+      "quote_head": "among NCR ATLEOS CORPORATION, as the Company and as a Borrower, The FOREIGN BORROWERS from",
+      "quote_sha256": "ff5d382746ef58616a056238ef6086032b85ef7901f2331d2e61878dc3c66271",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.state_of_incorporation",
+      "quote_head": "Maryland 92-3588560 (State or other jurisdiction of incorporation or organization)",
+      "quote_sha256": "5115ae7dc5d4893835f0ae389eb98a69969032ba05e6f69e89e88cfab063c12d",
+      "source_id": "natl-10q-2025-09-30"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_balance_sheet_lines_adjusted.line_items",
+      "quote_head": "Accounts payable 562 2 564 505 — 505 Payroll and benefits liabilities 147 (2) 145 149 — 14",
+      "quote_sha256": "11ad50f7018f2945109ff6478a0a9f73f44e9c208af1b995e40290dabe208615",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_balance_sheet_lines_adjusted.line_items",
+      "quote_head": "Long-term borrowings 2,855 4 2,859 2,938 — 2,938 Total liabilities 5,288 24 5,312",
+      "quote_sha256": "25e7218091cb8b0a88c2b4e428166dd9f1c23c4070294075919cb726f7325a37",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_balance_sheet_lines_adjusted.line_items",
+      "quote_head": "Accounts receivable, net $ 588 $ (7) $ 581 $ 710 $ (3) $ 707 Other current assets 242 (10)",
+      "quote_sha256": "d546a2edc7b505d8387909bd96db434e07f7f9dec252c1de56a99aebfc35f78e",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_balance_sheet_lines_adjusted.line_items",
+      "quote_head": "Retained earnings 231 (43) 188 147 (30) 117 Accumulated other comprehensive income (loss) ",
+      "quote_sha256": "def5a620ead64282a26a16aef036da329dbeb0578fa583f9ef4e1d0b74c08af1",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_income_statement_lines_adjusted.line_items",
+      "quote_head": "Income tax expense 47 (3) 44 239 (2) 237 Net income 92 (11) 81",
+      "quote_sha256": "5eed7cf74968da6942cd16f3fa37d781b75d820014d92b705976c755456aedc0",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_income_statement_lines_adjusted.line_items",
+      "quote_head": "Product revenue $ 995 $ (2) $ 993 $ 1,030 $ — $ 1,030 Service revenue 3,322 (10) 3,312 3,1",
+      "quote_sha256": "8c273fb7998e4890d65168704c3be1c6e357dc460748adbe8bfe016d255d4121",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-1.restatement.fy2024_income_statement_lines_adjusted.line_items",
+      "quote_head": "Selling, general and administrative expenses 518 3 521 585 — 585 Research and development ",
+      "quote_sha256": "c22acf8aab23db68ab2e57c64a39303ca948b64a9781995a651d630bc26a45c3",
+      "source_id": "natl-10ka-2024-12-31"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.debt_stack.other_debt_long_term_line.principal_long_term.2025-09-30",
+      "quote_head": "Other 1 7.17 % 3 7.17 % Total long-term debt",
+      "quote_sha256": "a165886c9234e774c2f9ba9539dc56b939e944a7ac733de490149aacf3591836",
+      "source_id": "natl-10q-2025-09-30"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "CATM HOLDINGS LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+      "quote_sha256": "0baa6859f19256245413363271f721531224f3e88c02a46e31b7c1b7749cd888",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "CARDTRONICS, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+      "quote_sha256": "111b242d310d5eaa9b18cb0496432de1a5a8867a2f073459414288f0b1d8f8fd",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "NCR FOREIGN INVESTCO 1, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: Pr",
+      "quote_sha256": "24fdbbdbfeaa4a01ebe3ceabbf8da89eaaa6ab6b2bb10ee13e0d0f9b8fbc3ecc",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "ATM DEPLOYER SERVICES, L.L.C. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: ",
+      "quote_sha256": "8140d677754845c0616b33bf5f68d296d35297ce362fb6707a8ea8e219afa6ff",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "CARDTRONICS USA, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: Presiden",
+      "quote_sha256": "8351aab589d4f3c6475c733010347882fb926dde6758228c63657b8c51f16643",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "CARDTRONICS HOLDINGS, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: Pres",
+      "quote_sha256": "a3942403ca1b334a483236fc4d69f9c1f4363b3f14e66846456d5b6aa55d18d9",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
+      "quote_head": "ATM NATIONAL, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
+      "quote_sha256": "d303467974736a5ab7bee6f510e6dcc83c6b80945d94ab494bc1a0b539c10fa3",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "natl-portfolio-decision",
+      "fact_id": "CP-4.credit_agreement.new_term_b_loans.funding_mechanics",
+      "quote_head": "Wells Fargo Bank, N.A. $ 6,198,242.61 Converting Term B Lenders1 $ 313,801,757.39",
+      "quote_sha256": "b083f14960984628e83254093db10c98b92313be620002509687bf1af1965371",
+      "source_id": "natl-refinancing-facility-agreement-2025-09-18"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.signature_date",
+      "quote_head": "Name: Jonathan M. Lyons Title: Senior Vice President and Chief Financial Officer (Principa",
+      "quote_sha256": "530bbdbb01357dd2c303f1f44a0573a1043578b88bb1966f75e5c0806a501178",
+      "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-0.identity.Registrant.principal_executive_office",
+      "quote_head": "9100 South Hills Blvd, Suite 300 Broadview Heights, Ohio 44147",
+      "quote_sha256": "11803f7447efd74655c51879ad2c794dec6fbab4a8cbe40ef2e7a353585455ca",
+      "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-0.identity.Registrant.state_of_incorporation",
+      "quote_head": "Delaware 47-3531161 (State or other jurisdiction of incorporation or organization)",
+      "quote_sha256": "525094ac9fa95d81ab425f2d235091db2a72e8d6d8e316627326b14082280d4c",
+      "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down_threshold_senior_secured_leverage",
+      "quote_head": "Category 2 Less than or equal to 2.00% 3.00% 3.00% 3.30:1.00",
+      "quote_sha256": "274b8c45dff28560e8608d84c57955dea10e66799e61aabf11e29ea86374b8e3",
+      "source_id": "SHC_legal_event_amendment_no4"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_term_sofr_initial",
+      "quote_head": "Category 1 Greater than 3.30:1.00 2.25% 3.25% 3.25%",
+      "quote_sha256": "b5f1f4faa2b787b6c5352bc9e1513f7ef38734dc1851691f5a99c63f1072edd1",
+      "source_id": "SHC_legal_event_amendment_no4"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-1D.ebitda_reconciliation.Interest expense, net.amount.2024-06-30",
+      "quote_head": "Adjusted Net Income 56,062 55,187 95,106 90,816 Interest expense, net 40,651 40,388 81,527",
+      "quote_sha256": "6f274c6b8e2ed7977c852c6c1e602ae079091f727b992b20d1f9bf8038fa2f83",
+      "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630"
+    },
+    {
+      "case_id": "shc-earnings-update",
+      "fact_id": "CP-1D.ebitda_reconciliation.Interest expense, net.amount.2025-06-30",
+      "quote_head": "Adjusted Net Income 56,062 55,187 95,106 90,816 Interest expense, net 40,651 40,388 81,527",
+      "quote_sha256": "6f274c6b8e2ed7977c852c6c1e602ae079091f727b992b20d1f9bf8038fa2f83",
+      "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.principal_executive_offices",
+      "quote_head": "Delaware (State or other jurisdiction of incorporation or organization) 41-2101738 (I.R.S.",
+      "quote_sha256": "86bdf70856644227115cb273a60e97d044c2b31a3c65d99bdc87090a6a2029ce",
+      "source_id": "Q1FY25"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.state_of_incorporation",
+      "quote_head": "Delaware (State or other jurisdiction of incorporation or organization) 41-2101738 (I.R.S.",
+      "quote_sha256": "86bdf70856644227115cb273a60e97d044c2b31a3c65d99bdc87090a6a2029ce",
+      "source_id": "Q1FY25"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.debt_totals.Current_portion_of_long_term_debt.carrying_amount_net.2024-12-28",
+      "quote_head": "Less: current portion 99 (1) — 98 Long-term debt $ 24,479 $ (130) $ (47) $ 24,302",
+      "quote_sha256": "f070dd04e93d85a77045de2f463f715bb2efdf89a27c2a14c55c15d776b9be92",
+      "source_id": "Q1FY25"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.debt_totals.Long_term_debt.carrying_amount_net.2024-12-28",
+      "quote_head": "Less: current portion 99 (1) — 98 Long-term debt $ 24,479 $ (130) $ (47) $ 24,302",
+      "quote_sha256": "f070dd04e93d85a77045de2f463f715bb2efdf89a27c2a14c55c15d776b9be92",
+      "source_id": "Q1FY25"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2024-12-28",
+      "quote_head": "Cash and cash equivalents $ 2,459 Availability on revolving credit facility 849 Cash liqui",
+      "quote_sha256": "86fecf6da2cba24dc20a41aa2991eb486506e9c300b644a146f1df753292d4c7",
+      "source_id": "Q1FY25"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.liquidity.Cash_liquidity_cash_plus_revolver_availability.amount.2024-12-28",
+      "quote_head": "Cash and cash equivalents $ 2,459 Availability on revolving credit facility 849 Cash liqui",
+      "quote_sha256": "86fecf6da2cba24dc20a41aa2991eb486506e9c300b644a146f1df753292d4c7",
+      "source_id": "Q1FY25"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2025.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2026.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2027.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2028.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2029.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Thereafter.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    },
+    {
+      "case_id": "tdg-credit-snapshot",
+      "fact_id": "CP-2.maturity_schedule.Total.scheduled_maturity.2024-09-30",
+      "quote_head": "Fiscal Years Ended September 30, 2025 $ 93 2026 92 2027 92 2028 6,637 2029 4,768 Thereafte",
+      "quote_sha256": "bcefb40ebe8b09041638a03ec481907b9575753f982a8e056b1355c5dbba2502",
+      "source_id": "K24"
+    }
+  ]
+}

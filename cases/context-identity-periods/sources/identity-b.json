@@ -1,0 +1,14 @@
+{
+  "source_id": "identity",
+  "name": "Issuer identity and reporting scope note",
+  "status": "ready",
+  "extraction_status": "complete",
+  "pages": [
+    {
+      "locator": "page:1",
+      "text": "NORTHBRIDGE SYNTHETIC GROUP\nIssuer identity and reporting scope note\nPublished January 10, 2026.\nNorthbridge Synthetic Group is the issuer and consolidated group.\nFiscal year end: December 31.\nThis invented case is test data, not evidence about a real issuer.\nThe borrower is Northbridge Holdings LLC.\nNo guarantor or restricted-group perimeter is established by this source set."
+    }
+  ],
+  "sha256": "16b1d3bfc16a1e87dd45a738802b3fb1405079f4edaa28aa4c43162153df0b2d",
+  "derivation": "cases/financial/manifest.json identity page:1 with its last sentence replaced by two: 'The borrower is Northbridge Holdings LLC.' and 'No guarantor or restricted-group perimeter is established by this source set.'; every earlier line byte-identical"
+}

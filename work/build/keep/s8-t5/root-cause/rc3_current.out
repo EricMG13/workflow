@@ -1,0 +1,18 @@
+offered      depth          [('refused', 'bad_arguments'), ('ok', None)] ('search_pack', {}) REPLAYS
+offered      surrogate_val  [('refused', 'bad_arguments'), ('ok', None)] ('search_pack', {}) REPLAYS
+offered      non_dict       [('refused', 'bad_arguments'), ('ok', None)] ('search_pack', {}) REPLAYS
+empty        depth          [('refused', 'bad_arguments'), ('ok', None)] ('', {}) MISMATCH identity_mismatch  <-- FAIL
+empty        surrogate_val  [('refused', 'bad_arguments'), ('ok', None)] ('', {}) MISMATCH identity_mismatch  <-- FAIL
+empty        non_dict       [('refused', 'bad_arguments'), ('ok', None)] ('', {}) MISMATCH identity_mismatch  <-- FAIL
+unknown      depth          [('refused', 'bad_arguments'), ('ok', None)] ('foo', {}) MISMATCH identity_mismatch  <-- FAIL
+unknown      surrogate_val  [('refused', 'bad_arguments'), ('ok', None)] ('foo', {}) MISMATCH identity_mismatch  <-- FAIL
+unknown      non_dict       [('refused', 'bad_arguments'), ('ok', None)] ('foo', {}) MISMATCH identity_mismatch  <-- FAIL
+extract      depth          [('refused', 'bad_arguments'), ('ok', None)] ('extract_statements', {}) MISMATCH identity_mismatch  <-- FAIL
+extract      surrogate_val  [('refused', 'bad_arguments'), ('ok', None)] ('extract_statements', {}) MISMATCH identity_mismatch  <-- FAIL
+extract      non_dict       [('refused', 'bad_arguments'), ('ok', None)] ('extract_statements', {}) MISMATCH identity_mismatch  <-- FAIL
+unencodable  depth          [('refused', 'not_permitted'), ('ok', None)] ('', {}) REPLAYS
+unencodable  surrogate_val  [('refused', 'not_permitted'), ('ok', None)] ('', {}) REPLAYS
+unencodable  non_dict       [('refused', 'not_permitted'), ('ok', None)] ('', {}) REPLAYS
+int          depth          [('refused', 'not_permitted'), ('ok', None)] ('', {}) REPLAYS
+int          surrogate_val  [('refused', 'not_permitted'), ('ok', None)] ('', {}) REPLAYS
+int          non_dict       [('refused', 'not_permitted'), ('ok', None)] ('', {}) REPLAYS

@@ -1,0 +1,26 @@
+source_context   'extract_statements'   deep      ('extract_statements', {}, 'refused', 'not_permitted') OK
+source_context   'extract_statements'   surr      ('extract_statements', {}, 'refused', 'not_permitted') OK
+source_context   'extract_statements'   non_dict  ('extract_statements', {}, 'refused', 'not_permitted') OK
+source_context   'search_pack'          deep      ('search_pack', {}, 'refused', 'bad_arguments') OK
+source_context   'search_pack'          surr      ('search_pack', {}, 'refused', 'bad_arguments') OK
+source_context   'search_pack'          non_dict  ('search_pack', {}, 'refused', 'bad_arguments') OK
+source_context   'foo'                  deep      ('foo', {}, 'refused', 'not_permitted') OK
+source_context   'foo'                  surr      ('foo', {}, 'refused', 'not_permitted') OK
+source_context   'foo'                  non_dict  ('foo', {}, 'refused', 'not_permitted') OK
+source_context   ''                     deep      ('', {}, 'refused', 'not_permitted') OK
+source_context   ''                     surr      ('', {}, 'refused', 'not_permitted') OK
+source_context   ''                     non_dict  ('', {}, 'refused', 'not_permitted') OK
+financials       'extract_statements'   deep      ('extract_statements', {}, 'refused', 'bad_arguments') OK
+financials       'extract_statements'   surr      ('extract_statements', {}, 'refused', 'bad_arguments') OK
+financials       'extract_statements'   non_dict  ('extract_statements', {}, 'refused', 'bad_arguments') OK
+financials       'search_pack'          deep      ('search_pack', {}, 'refused', 'bad_arguments') OK
+financials       'search_pack'          surr      ('search_pack', {}, 'refused', 'bad_arguments') OK
+financials       'search_pack'          non_dict  ('search_pack', {}, 'refused', 'bad_arguments') OK
+financials       'foo'                  deep      ('foo', {}, 'refused', 'not_permitted') OK
+financials       'foo'                  surr      ('foo', {}, 'refused', 'not_permitted') OK
+financials       'foo'                  non_dict  ('foo', {}, 'refused', 'not_permitted') OK
+financials       ''                     deep      ('', {}, 'refused', 'not_permitted') OK
+financials       ''                     surr      ('', {}, 'refused', 'not_permitted') OK
+financials       ''                     non_dict  ('', {}, 'refused', 'not_permitted') OK
+sealed and verified
+EXIT 0

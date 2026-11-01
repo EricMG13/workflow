@@ -136,7 +136,6 @@ def source_api() -> Any:
 def fresh_cp1_cache(monkeypatch):
     """The host's in-process CP-1 memo must never carry across tests (copied histories repeat)."""
     monkeypatch.setattr(source_api(), "_CP1_VERIFIED", {}, raising=False)
-    monkeypatch.setattr(source_api(), "_PARSED_MODULES", {}, raising=False)
     monkeypatch.setattr(source_api(), "_PARSED_PACKS", {}, raising=False)
 
 
@@ -524,7 +523,7 @@ def test_deep_json_arguments_cannot_escape_sanitized_refusal(tmp_path, pack):
         None,
     )
     assert result["source_evidence"] == EMPTY
-    assert json.dumps(result["arguments"]) == json.dumps({"nested": nested})
+    assert result["arguments"] == {}
 
 
 @pytest.mark.parametrize("step", ["narrative", "readiness", "quality"])
@@ -1472,7 +1471,7 @@ def test_cp4_fresh_epoch_and_retained_step_end_old_capability(warm_cp4_store):
         "{}",
         lambda *_: StepValidation(output="{}"),
     )
-    assert host.invoke("shell", {"x": float("nan")})["error_code"] == "bad_arguments"
+    assert host.invoke("shell", {"x": float("nan")})["error_code"] == "not_permitted"
     assert host.invoke("shell", {})["error_code"] == "stale_binding"
     with pytest.raises(api.SourceError, match="not_permitted"):
         api.SourceSession.from_execution(store, attempt.ticket_id, "legal_covenants")

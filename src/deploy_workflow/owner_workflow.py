@@ -100,6 +100,7 @@ from deploy_workflow.financial_workflow import (
 from deploy_workflow.host import SourceSession
 from deploy_workflow.owners import (
     cp1a,
+    cp1b,
     cp1c,
     cp1d,
     cp2,
@@ -114,6 +115,7 @@ from deploy_workflow.owners import (
     cp4,
     cp4c,
     cp5,
+    cp6,
     cp8,
     cpdr,
     cpl10,
@@ -127,6 +129,7 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-0",
         "CP-1",
         "CP-1A",
+        "CP-1B",
         "CP-2",
         "CP-3D",
         "CP-DR",
@@ -144,11 +147,12 @@ SUPPORTED_ANALYTICAL = frozenset(
         "CP-3C",
         "CP-2H",
         "CP-4C",
+        "CP-6",
     }
 )
 BLOCKED_EDGE = "Required upstream is unrun, stale or blocked"
-# G1-X §2: the fixed owner-core registry, one row per owner-only module (`registry.step_chain`
-# raises "has no live step contract"). Never caller-supplied; module tasks add their rows. A core
+# G1-X §2: the fixed owner-core registry, one row per owner-only module (`_owner_only`: no
+# registered `registry.step_chain`, or one whose `shared_live` is false). Never caller-supplied; module tasks add their rows. A core
 # supplies `STEP_IDS`, `SCHEMAS`, `submit` and, for steps with pack sources, `RULES`.
 _CORES: dict[str, ModuleType] = {
     "CP-DR": cpdr,
@@ -164,6 +168,7 @@ _CORES: dict[str, ModuleType] = {
     "CP-3C": cp3c,
     "CP-2H": cp2h,
     "CP-4C": cp4c,
+    "CP-1B": cp1b,
 }
 _QUALIFICATION = {
     "CP-1": PROMOTED,
@@ -186,6 +191,8 @@ _QUALIFICATION = {
     "CP-3C": cp3c.QUALIFICATION,
     "CP-2H": cp2h.QUALIFICATION,
     "CP-4C": cp4c.QUALIFICATION,
+    "CP-6": cp6.QUALIFICATION,
+    "CP-1B": cp1b.QUALIFICATION,
 }
 _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-0": _verify_cp0,
@@ -208,6 +215,8 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
     "CP-3C": cp3c.probe,
     "CP-2H": cp2h.probe,
     "CP-4C": cp4c.probe,
+    "CP-6": cp6.probe,
+    "CP-1B": cp1b.probe,
 }
 # The exact `read_inputs` view of each `module_context` or `step_context` step (S1a lease rev 2,
 # M4; G1-X §3: any step with an entry here may declare `inputs="module_context"`; CP-4 declares
@@ -227,6 +236,8 @@ _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "refinancing_risk": cp3c.view,
     "rating_triggers": cp2h.view,
     "restructuring_fulcrum": cp4c.view,
+    "committee_challenge": cp6.view,
+    "earnings_delta": cp1b.view,
 }
 # The validator each module's own entry hands `Execution.submit_step`: the verifier replays an
 # invalid step through it at the historical snapshot (S1a R4-2). Module tasks add their rows;
@@ -250,6 +261,8 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-3C": cp3c.ENTRY_VALIDATOR,
     "CP-2H": cp2h.ENTRY_VALIDATOR,
     "CP-4C": cp4c.ENTRY_VALIDATOR,
+    "CP-6": cp6.ENTRY_VALIDATOR,
+    "CP-1B": cp1b.ENTRY_VALIDATOR,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -294,6 +307,7 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_vii.cp3_relative_value import RelativeValueSubmission
     from deploy_vii.cp4_legal import CovenantInterpretationSubmission
     from deploy_vii.cp5_integrity import IntegritySubmission
+    from deploy_vii.cp6_committee import CommitteeSubmission
     from deploy_vii.downstream_readiness import DownstreamReview
     from deploy_vii.narrative import NarrativeReview
     from deploy_vii.quality import QualityReview
@@ -571,6 +585,20 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="analytical",
             publish=None,
         ),
+        "CP-1B": OwnerSpec(
+            module_id="CP-1B",
+            steps=(step("earnings_delta", cp1b.EarningsDeltaOwnerReview, inputs="module_context"),),
+            entry="owner_core",
+            kind="analytical",
+            publish=None,
+        ),
+        "CP-6": OwnerSpec(
+            module_id="CP-6",
+            steps=(step("committee_challenge", CommitteeSubmission, inputs="module_context"),),
+            entry="model_payload",
+            kind="analytical",
+            publish=None,
+        ),
     }
 
 
@@ -725,15 +753,24 @@ def _result_attempt(snapshot: ExecutionSnapshot, head: Head) -> Attempt:
     return attempt
 
 
+def _owner_only(module_id: str) -> bool:
+    """Whether the module is served by an owner core: it has no registered step chain, or one
+    whose `shared_live` is false (CP-1B's chain is registered for its pinned step name only, not
+    as a live contract)."""
+    try:
+        return not step_chain(module_id).shared_live
+    except ValueError:
+        return True
+
+
 def _sequence(module_id: str) -> tuple[str, ...]:
     """The module's journal step sequence: its live step contract, or its owner core's
-    `STEP_IDS` where `step_chain` has none (G1-X §2). An owner-only module without a core is a
+    `STEP_IDS` where it is owner-only (G1-X §2). An owner-only module without a core is a
     registration error and raises `KeyError` (`_check_specs` refuses it before any run)."""
-    try:
+    if not _owner_only(module_id):
         return step_chain(module_id).steps
-    except ValueError:
-        steps: tuple[str, ...] = tuple(_CORES[module_id].STEP_IDS)
-        return steps
+    steps: tuple[str, ...] = tuple(_CORES[module_id].STEP_IDS)
+    return steps
 
 
 def _owner_historical(store: Execution, binding: OwnerBinding) -> _FrozenExecution:
@@ -885,7 +922,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
 
     The entry is the one `submit_review` and `_entry_outcome` dispatch for the module:
     `cp0_review` for CP-0, `model_payload` for any other live-contract module, `owner_core` for
-    an owner-only one (`step_chain` raises "has no live step contract"). Every module but CP-0
+    an owner-only one (`_owner_only`: no step chain, or one that is not `shared_live`). Every module but CP-0
     and CP-1 has an `_ENTRY_VALIDATORS` row (§2). A live-contract module keeps its registry
     chain and the chain's pack and extraction tools. An owner-only module has a registered,
     complete core: `STEP_IDS` (nonempty and distinct, as `Execution.submit_step` requires) are
@@ -898,10 +935,7 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
     the financial `precheck` rules and CP-1 projection only on CP-0/CP-1, whose binding they
     take."""
     core = _CORES.get(module_id)
-    try:
-        chain: StepChain | None = step_chain(module_id)
-    except ValueError:
-        chain = None
+    chain: StepChain | None = None if _owner_only(module_id) else step_chain(module_id)
     entry = (
         "owner_core" if chain is None else "cp0_review" if module_id == "CP-0" else "model_payload"
     )
@@ -960,18 +994,6 @@ def _check_steps(module_id: str, spec: OwnerSpec) -> None:
             raise WorkflowError("not_permitted")
 
 
-def _upstream(graph: Mapping[str, set[str]], module_id: str) -> set[str]:
-    """Every producer `module_id` requires, directly or through other producers."""
-    found: set[str] = set()
-    pending = [module_id]
-    while pending:
-        for producer in graph.get(pending.pop(), ()):
-            if producer not in found:
-                found.add(producer)
-                pending.append(producer)
-    return found
-
-
 def _check_specs(
     pack: PreparedPack,
     specs: Mapping[str, OwnerSpec],
@@ -984,7 +1006,6 @@ def _check_specs(
     except ValueError:
         raise WorkflowError("not_permitted") from None
     seen_deterministic = False
-    graph = dependencies(pack.run.requested_modules)
     for module_id, extra in specs.items():
         if module_id not in planned and (
             module_id not in OWNER_SPECS or extra != OWNER_SPECS[module_id]
@@ -1008,12 +1029,6 @@ def _check_specs(
         # a lookup failure at the end of a run.
         if module_id not in SUPPORTED_ANALYTICAL or spec.publish or module_id not in _PROBES:
             raise WorkflowError("not_permitted")
-        if seen_deterministic:
-            # An analytical module may follow the deterministic one only when neither consumes
-            # the other, directly or through the producer graph (rulings 2026-10-28, round 2).
-            publisher = next(m for m in planned if OWNER_SPECS[m].kind == "deterministic")
-            if publisher in _upstream(graph, module_id) or module_id in _upstream(graph, publisher):
-                raise WorkflowError("not_permitted")
         _check_steps(module_id, spec)
     if any(OWNER_SPECS[m].kind == "deterministic" for m in planned):
         out = publication_directory
@@ -1054,6 +1069,9 @@ class OwnerWorkflow:
         self._limits: Counter[tuple[str, str, str]] = Counter()
         self._analytical = tuple(m for m in planned if self._specs[m].kind == "analytical")
         self._phase = "analytical"  # analytical | walked | complete | failed
+        # The publisher the walk is stopped at, until its publication settles (G1a).
+        self._resume_after: str | None = None
+        self._publisher_done = False
         self._sealed = False
         self._epoch_calls: list[OwnerCall] = []
         self._session: SourceSession | None = None
@@ -1075,6 +1093,21 @@ class OwnerWorkflow:
         if not any(OWNER_SPECS[m].kind == "analytical" for m in planned):
             raise WorkflowError("not_permitted")
         return cls(Execution.create(directory, pack), planned, publication_directory)
+
+    @property
+    def binding(self) -> OwnerBinding:
+        """The active step's binding (module, step, ticket, attempt); read-only (O5 Q1)."""
+        return self._binding
+
+    @property
+    def spec(self) -> StepSpec:
+        """The active step's spec; read-only (O5 Q1)."""
+        return self._spec
+
+    @property
+    def phase(self) -> str:
+        """The walk's phase (analytical, walked, complete or failed); read-only (O5 Q6)."""
+        return self._phase
 
     @property
     def _refused(self) -> bool:
@@ -1153,16 +1186,21 @@ class OwnerWorkflow:
         return False
 
     def _advance(self, module_id: str) -> None:
-        """Move past a settled or blocked module to the next planned analytical one."""
-        later = self._analytical[self._analytical.index(module_id) + 1 :]
-        if later:
-            self._begin(later[0])
-        else:
+        """Move past a settled, blocked or published module to the next planned one: an
+        analytical module is begun, the deterministic publisher is a stop (`publish` resumes the
+        walk after it), and none left ends the walk."""
+        later = self._plan[self._plan.index(module_id) + 1 :]
+        if not later:
             self._finish_walk()
+        elif self._specs[later[0]].kind == "deterministic":
+            self._phase = "walked"
+            self._resume_after = later[0]
+        else:
+            self._begin(later[0])
 
     def _finish_walk(self) -> None:
         self._phase = "walked"
-        if all(self._specs[m].kind == "analytical" for m in self._plan):
+        if self._publisher_done or all(self._specs[m].kind == "analytical" for m in self._plan):
             self._phase = "complete"
 
     def invoke(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -1385,6 +1423,7 @@ class OwnerWorkflow:
             reason = None
             files: dict[str, str] = {}
             status: Literal["published", "refused", "failed"] = "refused"
+            terminal = False
             try:
                 attempt = publisher.publish(self._store, output=output)
                 ticket = attempt.ticket_id
@@ -1399,7 +1438,6 @@ class OwnerWorkflow:
                     files=files,
                 )
                 status = "published"
-                self._phase = "complete"
             except Exception as error:
                 # Documented fail-closed: record why, finalize every owned partial publication.
                 reason = str(error)
@@ -1435,7 +1473,7 @@ class OwnerWorkflow:
                     if any(h.module_id == publisher.module_id for h in self._store.read().heads):
                         self._phase = "failed"
                 elif self._refused and isinstance(error, CpModelRefused):
-                    self._phase = "complete"
+                    terminal = True
             after = self._store.read()
             record = PublicationCall(
                 snapshot_before_sha256=before.content_hash(),
@@ -1448,12 +1486,26 @@ class OwnerWorkflow:
             _retain(self._store, "publications", record)
             self._publications.append(record)
             self._current_sha256 = after.content_hash()
-            return {
+            outcome = {
                 "status": "ok" if status == "published" else "refused",
                 "error_code": None
                 if status == "published"
                 else self._refusal_code() or "publication_refused",
                 "snapshot_sha256": self._current_sha256,
+            }
+            if (status == "published" or terminal) and self._phase != "failed":
+                # The publication settled: the walk resumes after the stop, or ends here. The
+                # result above is the publication's own, taken before the resume.
+                self._publisher_done = True
+                resume, self._resume_after = self._resume_after, None
+                self._phase = "analytical"
+                if resume is None:
+                    self._finish_walk()
+                else:
+                    self._advance(resume)
+            return {
+                **outcome,
+                "next_step": self._binding.step_id if self._phase == "analytical" else None,
             }
 
     def write_receipt(self, destination: Path) -> OwnerRunReceipt:
@@ -1613,14 +1665,18 @@ def _verify_transition(
 
 
 def _verify_chain(
-    receipt: OwnerRunReceipt, chain: Sequence[ExecutionSnapshot], deterministic: str | None
+    receipt: OwnerRunReceipt,
+    chain: Sequence[ExecutionSnapshot],
+    deterministic: str | None,
+    planned: tuple[str, ...],
 ) -> None:
     """R6-1: the recorded coordinates are one gapless chain from the created snapshot to the
     final one. Every begin, submission and publication is a transition `before -> after`;
     ordered along the ancestry, each starts where the previous one ended, the first at the root
-    and the last at the final snapshot (so a refusal, bound to the final or the first
-    publication's `before` by `_verify_walk`, sits at the walk's last `after`). Each transition
-    passes `_verify_transition`. Within a ticket, the first submission is bound to its begin's
+    and the last at the final snapshot (a refusal sits at the last `after` of the modules
+    planned before the publisher or at the final snapshot, by `_verify_walk`). The transitions
+    keep the walk's order: modules planned before the publisher, its publications, then modules
+    planned after it. Each transition passes `_verify_transition`. Within a ticket, the first submission is bound to its begin's
     `after` and each later one to the previous submission's `after`; every call and read is
     bound to one of those binding snapshots."""
     position = {snapshot.content_hash(): index for index, snapshot in enumerate(chain)}
@@ -1652,10 +1708,25 @@ def _verify_chain(
         for p in receipt.publications
     ]
     transitions.sort(key=lambda item: item[:2])
+    # The walk order is bound (F2): modules planned before the publisher, then its publications,
+    # then modules planned after it; a later module begun before the stop breaks the sequence.
+    module_of = {b.ticket_id: b.module_id for b in receipt.begins}
+    stop = planned.index(deterministic) if deterministic is not None else len(planned)
+    stage = 0
     cursor = 0
     for before, after, kind, ticket_id in transitions:
         if before != cursor or after < before:
             raise WorkflowError("identity_mismatch")
+        if kind == "publication":
+            phase = 1
+        else:
+            module_id = module_of.get(ticket_id or "")
+            if module_id not in planned:
+                raise WorkflowError("identity_mismatch")
+            phase = 0 if planned.index(module_id) < stop else 2
+        if phase < stage:
+            raise WorkflowError("identity_mismatch")
+        stage = phase
         cursor = after
         _verify_transition(chain[before], chain[after], kind, ticket_id, deterministic)
     if cursor != len(chain) - 1:
@@ -1674,7 +1745,13 @@ def _verify_chain(
             raise WorkflowError("identity_mismatch")
 
 
-def _verify_walk(store: Execution, receipt: OwnerRunReceipt, analytical: tuple[str, ...]) -> None:
+def _verify_walk(
+    store: Execution,
+    receipt: OwnerRunReceipt,
+    analytical: tuple[str, ...],
+    planned: tuple[str, ...],
+    deterministic: str | None,
+) -> None:
     """Planned analytical modules are settled, or the first unsettled one was refused."""
     snapshot = store.read()
     heads = {h.module_id for h in snapshot.heads}
@@ -1688,9 +1765,8 @@ def _verify_walk(store: Execution, receipt: OwnerRunReceipt, analytical: tuple[s
             continue
         if refused != {module_id}:
             raise WorkflowError("identity_mismatch")
-        if any(a.module_id == module_id for a in snapshot.attempts) or any(
-            m in heads for m in analytical[index + 1 :]
-        ):
+        # No later module may have been begun either: the walk ends at the refusal.
+        if any(a.module_id in analytical[index:] for a in snapshot.attempts):
             raise WorkflowError("identity_mismatch")
         break
     else:
@@ -1705,16 +1781,23 @@ def _verify_walk(store: Execution, receipt: OwnerRunReceipt, analytical: tuple[s
         later = analytical[analytical.index(blocked[0]) + 1 :]
         if later and later[0] not in heads:
             raise WorkflowError("identity_mismatch")
-    # The refusal ended the analytical walk. CP-MODEL may have published after it (H1), so the
-    # snapshot it refused on is the one before the first publication, else the final one.
-    refused_on = (
-        receipt.publications[0].snapshot_before_sha256
-        if receipt.publications
-        else snapshot.content_hash()
-    )
+    # The refusal ended the analytical walk. A module planned before CP-MODEL was refused before
+    # the stop, on the snapshot the first publication started from; one planned after it was
+    # refused after the publication, on the final snapshot, since later modules may have settled
+    # in between (F3). With no publication, the final snapshot.
+    before_stop = planned.index(deterministic) if deterministic is not None else len(planned)
+    final = snapshot.content_hash()
+
+    def refused_on(module_id: str) -> str:
+        if receipt.publications and planned.index(module_id) < before_stop:
+            return receipt.publications[0].snapshot_before_sha256
+        return final
+
     for refusal in receipt.refusals:
         before = _snapshot(store, refusal.snapshot_sha256)
-        if refusal.snapshot_sha256 != refused_on:
+        if refusal.module_id not in planned or refusal.snapshot_sha256 != refused_on(
+            refusal.module_id
+        ):
             raise WorkflowError("identity_mismatch")
         try:
             current_inputs(before, refusal.module_id)
@@ -2318,10 +2401,17 @@ def _verify(
     _verify_audit(store, receipt)
     _verify_begins(store, receipt, frozenset(analytical))
     _verify_attempts(snapshot, receipt, frozenset(analytical))
-    _verify_walk(store, receipt, analytical)
-    terminal = deterministic is not None and _terminal(snapshot.heads, snapshot.run, deterministic)
+    _verify_walk(store, receipt, analytical, planned, deterministic)
+    # Terminal is a property of the snapshot the publication started from: heads that settle
+    # after the stop cannot alter it.
+    stop = (
+        _snapshot(store, receipt.publications[0].snapshot_before_sha256)
+        if (deterministic is not None and receipt.publications)
+        else snapshot
+    )
+    terminal = deterministic is not None and _terminal(stop.heads, stop.run, deterministic)
     _verify_publications(store, receipt, terminal, deterministic)
-    _verify_chain(receipt, chain, deterministic)
+    _verify_chain(receipt, chain, deterministic, planned)
     _verify_calls_reads(store, receipt, OWNER_SPECS)
     valid, settlements = _verify_submissions(store, receipt, OWNER_SPECS)
     expected_steps = _verify_settlements(store, snapshot, settlements, analytical)
@@ -2357,14 +2447,15 @@ def _verify_publication_outcome(
         ):
             raise WorkflowError("identity_mismatch")
         with tempfile.TemporaryDirectory() as refused_directory:
+            stop = _snapshot(store, publication.snapshot_before_sha256)
             try:
                 publish_cp_model(
-                    _FrozenExecution(store, snapshot), output=Path(refused_directory) / "absent"
+                    _FrozenExecution(store, stop), output=Path(refused_directory) / "absent"
                 )
             except CpModelRefused as error:
                 expected = PublicationCall(
-                    snapshot_before_sha256=snapshot.content_hash(),
-                    snapshot_after_sha256=snapshot.content_hash(),
+                    snapshot_before_sha256=stop.content_hash(),
+                    snapshot_after_sha256=stop.content_hash(),
                     status="refused",
                     reason=str(error),
                     ticket_id=None,
@@ -2396,7 +2487,13 @@ def _verify_publication_outcome(
         last.status != "published"
         or last.ticket_id != model.ticket_id
         or last.files != receipt.model.files
-        or last.snapshot_after_sha256 != snapshot.content_hash()
+    ):
+        raise WorkflowError("identity_mismatch")
+    # Later modules may have settled since: the publication's `after` is an ancestor (the chain
+    # check anchors it) and holds the same CP-MODEL head as the final snapshot.
+    published = _snapshot(store, last.snapshot_after_sha256)
+    if next((h for h in published.heads if h.module_id == deterministic), None) != next(
+        (h for h in snapshot.heads if h.module_id == deterministic), None
     ):
         raise WorkflowError("identity_mismatch")
 

@@ -12,7 +12,7 @@ import re
 import sys
 import tempfile
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
@@ -22,7 +22,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-from deploy_vii.contracts import Contract, Hash, Identifier, Input, Run
+from deploy_vii.canonical_tables import CanonicalTables
+from deploy_vii.contracts import Contract, Hash, Identifier, Input, Run, Span
 from deploy_vii.cp0_workflow import submit_cp0_review
 from deploy_vii.cp1_quality import cp1_quality_inputs
 from deploy_vii.cp1_workflow import (
@@ -52,6 +53,7 @@ from deploy_vii.execution import (
     current_inputs,
 )
 from deploy_vii.live.context import narrative_evidence, readiness_inputs
+from deploy_vii.live.prompts import quality_scope
 from deploy_vii.live.schema import normalise
 from deploy_vii.live.submission import (
     PREFILLED,
@@ -70,6 +72,7 @@ from deploy_workflow.host import SourceSession
 from deploy_workflow.tools.source import SourceError
 from deploy_workflow.workflow import SourceEvidence, WorkflowError
 
+_LINE_LOCATOR = re.compile(r"line:([0-9]+)")
 Step = Literal[
     "source_readiness", "source_context", "financials", "narrative", "readiness", "quality"
 ]
@@ -299,12 +302,21 @@ def _historical(store: Execution, binding: FinancialBinding) -> _FrozenExecution
     return _FrozenExecution(store, snapshot)
 
 
+def _quality_read(registers: CanonicalTables) -> tuple[str, str]:
+    # Ruling item 87: serve prompts.quality_scope with each evidence record narrowed to
+    # kind and reference; the review stays bound to the full QualityInputs hash.
+    inputs = cp1_quality_inputs(registers)
+    scope = quality_scope(registers, inputs)
+    for entry in scope["evidence"]:
+        entry["record"] = {key: entry["record"][key] for key in ("kind", "reference")}
+    return inputs.content_hash(), json.dumps(scope, sort_keys=True, separators=(",", ":"))
+
+
 def _projection(store: Execution, binding: FinancialBinding) -> tuple[str, str]:
     historical = _historical(store, binding)
     attempt = next(a for a in historical.read().attempts if a.ticket_id == binding.ticket_id)
     if binding.step_id == "quality":
-        inputs = cp1_quality_inputs(cp1_registers(historical, attempt.ticket_id))
-        return inputs.content_hash(), inputs.model_dump_json()
+        return _quality_read(cp1_registers(historical, attempt.ticket_id))
     if binding.step_id not in ("narrative", "readiness"):
         raise WorkflowError("not_permitted")
     for index, step in enumerate(attempt.steps, 1):
@@ -342,6 +354,34 @@ def _filled(
     return filled.payload, resolved, filled.paths, filled.kinds
 
 
+def _statement_units(spans: Sequence[Span]) -> dict[str, str]:
+    """The statement units of one source's spans, by locator, each with its text (B22).
+
+    A source with a `page:N` span, or with any other kind of span, has one unit per
+    statement-heading span (its locator, its text). A line source (every span `line:N`) has one
+    unit per statement-heading line K, `line:K-E`, E being the line before the next heading that
+    does not directly follow another heading line, or the source's last line. A heading line
+    directly followed by another heading line starts one unit with it. A unit's text is its lines
+    joined by newlines."""
+    numbered = {
+        int(m.group(1)): span for span in spans if (m := _LINE_LOCATOR.fullmatch(span.locator))
+    }
+    if not spans or len(numbered) != len(spans):
+        return {s.locator: s.text for s in spans if STATEMENT_HEADING.search(s.text)}
+    marked = {n for n in numbered if STATEMENT_HEADING.search(numbered[n].text)}
+    headings = [n for n in sorted(marked) if n - 1 not in marked]
+    if not headings:
+        return {}
+    last = max(numbered)
+    ends = [*(n - 1 for n in headings[1:]), last]
+    return {
+        f"line:{first}-{end}": "\n".join(
+            numbered[n].text for n in range(first, end + 1) if n in numbered
+        )
+        for first, end in zip(headings, ends, strict=True)
+    }
+
+
 def _evidence_issues(
     store: Execution, binding: FinancialBinding, payload: str, evidence: SourceEvidence
 ) -> tuple[str, ...]:
@@ -360,13 +400,13 @@ def _evidence_issues(
         return tuple(issues)
     financial_ids = tuple(s.source_id for s in context.sources if s.classification == "financial")
     pack = store.pack()
-    required = {
-        (source.source_id, span.locator)
+    units = {
+        (source.source_id, locator): text
         for source in pack.sources
         if source.source_id in financial_ids and source.status == "ready"
-        for span in source.spans
-        if STATEMENT_HEADING.search(span.text)
+        for locator, text in _statement_units(source.spans).items()
     }
+    required = set(units)
     if not required or not required <= set(evidence.extracted):
         issues.append("Financials must extract every located statement page in this epoch")
     tables = seen_tables(PackTools(pack, sources=financial_ids), evidence.seen(), context)
@@ -379,13 +419,7 @@ def _evidence_issues(
         key = (table.source_id, table.locator)
         if key not in required:
             continue
-        page_text = next(
-            span.text
-            for source in pack.sources
-            if source.source_id == table.source_id
-            for span in source.spans
-            if span.locator == table.locator
-        )
+        page_text = units[key]
         if table.lines:
             measured.add(key)
         for extracted in table.lines:
@@ -403,7 +437,7 @@ def _evidence_issues(
                         and line.value.amount == value
                         and any(
                             c.source_id == table.source_id
-                            and c.locator == table.locator
+                            and c.locator == extracted.locator
                             and extracted.label in c.quote
                             for c in line.value.citations
                         )
@@ -425,26 +459,46 @@ def _evidence_issues(
 _STATEMENT_KINDS = (
     ("IS", ("INCOME STATEMENT", "STATEMENTS OF OPERATIONS")),
     ("CFS", ("CASH FLOW STATEMENT", "STATEMENTS OF CASH FLOWS")),
-    ("BS", ("BALANCE SHEET",)),
+    ("BS", ("BALANCE SHEET", "FINANCIAL POSITION")),
+)
+
+
+_CAPTION_PHRASES = (
+    ("CFS", ("CASH FLOW",)),
+    ("BS", ("BALANCE SHEET", "FINANCIAL POSITION")),
+    (
+        "IS",
+        (
+            "INCOME STATEMENT",
+            "STATEMENT OF OPERATIONS",
+            "STATEMENTS OF OPERATIONS",
+            "STATEMENT OF INCOME",
+            "STATEMENTS OF INCOME",
+            "STATEMENT OF EARNINGS",
+            "STATEMENTS OF EARNINGS",
+        ),
+    ),
 )
 
 
 def _statement(caption: str | None, page_text: str) -> str | None:
-    """A line's statement: its caption when that names one, else the page's one heading kind."""
-    upper = (caption or "").upper()
-    if "INCOME" in upper or "OPERATIONS" in upper:
-        return "IS"
-    if "CASH FLOW" in upper:
-        return "CFS"
-    if "BALANCE SHEET" in upper:
-        return "BS"
+    """A line's statement: the page's one heading kind; else a caption naming a statement outright.
+
+    A bare word such as INCOME in a caption names no statement.
+    """
     kinds = {
         kind
         for heading in STATEMENT_HEADING.finditer(page_text)
         for kind, words in _STATEMENT_KINDS
         if any(word in heading.group() for word in words)
     }
-    return kinds.pop() if len(kinds) == 1 else None
+    if len(kinds) == 1:
+        return kinds.pop()
+    upper = (caption or "").upper()
+    for kind, phrases in _CAPTION_PHRASES:
+        if any(phrase in upper for phrase in phrases):
+            return kind
+    return None
 
 
 _MONTHS = {
@@ -467,7 +521,12 @@ _MONTHS = {
         1,
     )
 }
-_FLOW_TYPES = {"Three": "QUARTER", "Six": "YTD", "Nine": "YTD", "Year": "FY"}
+_FLOW_TYPES = {
+    "Three": ("QUARTER", 3),
+    "Six": ("YTD", 6),
+    "Nine": ("YTD", 9),
+    "Year": ("FY", 12),
+}
 _SPAN_CELL = re.compile(
     r"(?:(Three|Six|Nine) Months Ended|(Year)s? Ended) ([A-Z][a-z]+) (\d{1,2}),?|"
     r"([A-Z][a-z]+) (\d{1,2}),?"
@@ -490,14 +549,15 @@ def _header_cells(header: str) -> list[str]:
     return re.split(r"\s*\|\s*|\s{2,}", header.strip())
 
 
-def _span(cell: str) -> tuple[str | None, str, str] | None:
-    """(period type, or None for a balance date; month; day) of a span cell."""
+def _span(cell: str) -> tuple[str | None, str, str, int] | None:
+    """(period type, or None for a balance date; month; day; month count) of a span cell."""
     found = _SPAN_CELL.fullmatch(cell)
     if found is None or (found[3] or found[5]) not in _MONTHS:
         return None
     if found[5] is not None:
-        return None, found[5], found[6]
-    return _FLOW_TYPES[found[1] or found[2]], found[3], found[4]
+        return None, found[5], found[6], 0
+    kind, months = _FLOW_TYPES[found[1] or found[2]]
+    return kind, found[3], found[4], months
 
 
 def _is_column_cell(cell: str) -> bool:
@@ -510,6 +570,19 @@ def _is_column_cell(cell: str) -> bool:
 def _date_cell(cell: str) -> str | None:
     found = _DATE_CELL.fullmatch(cell)
     return _iso(found[3], found[1], found[2]) if found else None
+
+
+_DAY_WINDOWS = {3: (84, 98), 6: (175, 189), 9: (266, 280), 12: (357, 371)}
+
+
+def _months(period: Any) -> int | None:
+    """The month count whose inclusive day-count window holds the period, else None."""
+    start: date | None = period.start_date
+    end: date | None = period.end_date
+    if start is None or end is None:
+        return None
+    days = (end - start).days + 1
+    return next((m for m, (low, high) in _DAY_WINDOWS.items() if low <= days <= high), None)
 
 
 def _hit(spec: tuple[str, ...], period: Any) -> bool:
@@ -534,7 +607,7 @@ def _hit(spec: tuple[str, ...], period: Any) -> bool:
             )
         )
     if kind == "flow":
-        return end == spec[2] and period.period_type == spec[1]
+        return end == spec[2] and period.period_type == spec[1] and _months(period) == int(spec[3])
     if kind == "balance":
         return end == spec[1] and period.period_type != "LTM"
     return False
@@ -562,18 +635,32 @@ def _single_spec(cell: str) -> tuple[str, ...]:
     return ("balance", iso) if iso else ("unsupported",)
 
 
+def _is_year_or_date(cell: str) -> bool:
+    return bool(_YEAR_CELL.fullmatch(cell) or _DATE_CELL.fullmatch(cell))
+
+
+def _column_year(cell: str, span: tuple[str | None, str, str, int]) -> str | None:
+    """The year of a column cell: a bare year, or a full date on a flow span's own month and day."""
+    if _YEAR_CELL.fullmatch(cell):
+        return cell
+    found = _DATE_CELL.fullmatch(cell)
+    if found is None or span[0] is None or found[1] != span[1] or int(found[2]) != int(span[2]):
+        return None
+    return found[3]
+
+
 def _span_specs(
-    spans: list[tuple[str | None, str, str]], years: list[str]
+    spans: list[tuple[str | None, str, str, int]], years: list[str]
 ) -> list[tuple[str, ...]]:
     """One spec per year column: span i covers the year columns i*n/k to (i+1)*n/k - 1."""
     width = len(years) // len(spans)
     specs: list[tuple[str, ...]] = []
     for index, year in enumerate(years):
-        kind, month, day = spans[index // width]
+        kind, month, day, months = spans[index // width]
         iso = _iso(year, month, day)
         if iso is None:
             return []
-        specs.append(("balance", iso) if kind is None else ("flow", kind, iso))
+        specs.append(("balance", iso) if kind is None else ("flow", kind, iso, str(months)))
     return specs
 
 
@@ -588,13 +675,25 @@ def _spec_row(headers: tuple[str, ...], index: int) -> list[tuple[str, ...]] | N
     if spans and all(spans):
         if index + 1 == len(headers):
             return None
-        row = _drop_label(_header_cells(headers[index + 1]), _YEAR_CELL.fullmatch)
+        row = _drop_label(_header_cells(headers[index + 1]), _is_year_or_date)
         count = len(row)
-        if not count or count % len(spans) or not all(_YEAR_CELL.fullmatch(c) for c in row):
+        if not count or count % len(spans):
             return None
-        return _span_specs([s for s in spans if s], row) or None
+        found = [s for s in spans if s]
+        width = count // len(found)
+        years = [_column_year(cell, found[i // width]) for i, cell in enumerate(row)]
+        if not all(years):
+            return None
+        return _span_specs(found, [y for y in years if y]) or None
     specs = [_single_spec(cell) for cell in _drop_label(cells, _is_column_cell)]
     return specs or None
+
+
+def _flow_span_row(header: str) -> bool:
+    """True when the header is a span row naming a flow period (Three/Six/Nine Months, Years)."""
+    cells = _drop_label(_header_cells(header), lambda c: _span(c) is not None)
+    spans = [_span(cell) for cell in cells]
+    return bool(spans) and all(spans) and any(s and s[0] for s in spans)
 
 
 def _column_periods(headers: tuple[str, ...], periods: Any) -> tuple[frozenset[str], ...] | None:
@@ -608,6 +707,8 @@ def _column_periods(headers: tuple[str, ...], periods: Any) -> tuple[frozenset[s
     for index in range(len(headers)):
         specs = _spec_row(headers, index)
         if specs is None:
+            if _flow_span_row(headers[index]):
+                return None
             continue
         found = []
         for spec in specs:
@@ -617,6 +718,8 @@ def _column_periods(headers: tuple[str, ...], periods: Any) -> tuple[frozenset[s
             found.append(ids)
         if len(found) == len(specs) and len(frozenset[str]().union(*found)) == sum(map(len, found)):
             return tuple(found)
+        if specs[0][0] == "flow":
+            return None
     return None
 
 

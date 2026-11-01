@@ -1,0 +1,3 @@
+# Sentinels run twice concurrently on T0 to define run-to-run noise.
+tests/test_owner_s1a.py::test_tampering_refuses_with_identity_mismatch[gap]
+tests/test_earnings_workflow.py::test_fresh_actual_owner_cases_settle_exact_values_lineage_claim_and_immutable_receipt[E-NO-YOY]

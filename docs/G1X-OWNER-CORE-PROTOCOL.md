@@ -11,7 +11,7 @@ Sources: review-precise-1 of CP-2A and CP-2D, review-precise-2 of CP-4
 - **Live-contract modules** (`registry.step_chain(m)` succeeds; today CP-4 `legal_covenants`,
   CP-3 `relative_value`, CP-6 `committee_challenge`): `entry="model_payload"` as now; the core
   supplies only the items of §2 marked *all*.
-- **Owner-only modules** (`step_chain` raises "has no live step contract"; CP-2A, CP-2D):
+- **Owner-only modules** (no registered `step_chain`, which raises "has no live step contract", or one whose `shared_live` is false; CP-2A, CP-2D, CP-1B). `owner_workflow._owner_only` applies this rule. Note: `host._owner_sequence` (host.py:791-796) still applies the old rule (`step_chain` raises); CP-1B never reaches it because it has no sources:
   `entry="owner_core"`; the core supplies every item of §2. No `src/deploy_vii` registry edit.
 
 ## 2. Core module attributes (positional signatures, matching G1's call sites)
@@ -70,13 +70,16 @@ caller-supplied; `_check_specs` requires `entry == "owner_core"` exactly for own
   record it is given (its issues, its unchanged snapshot) but cannot show the set is complete.
 
 ## 5. Plan ordering after CP-MODEL (built); not in G1-X
-- (Round 2 of `docs/rulings/2026-10-28-stage2.md`, built at `owner_workflow.py:1004-1010`.)
-  An analytical module may follow the deterministic CP-MODEL in a plan only when neither
-  consumes the other, directly or through `plan`'s producer graph (`_check_specs`); anything
-  else refuses `not_permitted`. Publication stays terminal: it runs once, in phase `walked`,
-  after every planned analytical module has its outcome. `_refused` and `_terminal` look only
-  at CP-MODEL's own required producers; the analytical walk order is `planned` with the
-  deterministic module skipped; at most one deterministic module per plan.
+- (Supersedes round 2 of `docs/rulings/2026-10-28-stage2.md`; Part B O1 G1a, user ruling B1.)
+  CP-MODEL is a stop in the walk: the walk runs the modules planned before it, stops (phase
+  `walked`), `publish` runs there, and after a published or terminally refused publication the
+  walk resumes with the modules planned after it. `_check_specs` no longer orders analytical
+  modules against CP-MODEL (CP-5's fan-in excludes it, `registry.py`). A clean publish failure
+  keeps the stop (two tries at most). The verifier binds the order: transitions of modules
+  before CP-MODEL, then its publications, then modules after it; a refusal before the stop sits
+  on the first publication's `before`, one after it on the final snapshot. `_refused` and
+  `_terminal` look only at CP-MODEL's own required producers (on the snapshot the publication
+  started from); at most one deterministic module per plan.
 - An owner-only `sources=True` step opens a real `SourceSession` only through the H1 fixed host
   mapping; until H1 lands, such steps are exercised by test-only sessions and no Stage 2 run of
   them is admitted (rulings round 4 A5; build order unchanged). A `_SOURCE_STEPS` row alone is not

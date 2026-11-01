@@ -37,9 +37,9 @@ PINS = {
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "cases/cp3-cp6-owner/manifest.json": "893c6310212113c3a5a31fc9804f22550ba4e297e51f14ba03952a2a7444a60b",
-    "cases/cp3-cp6-owner/submissions.json": "eaecbcd012c3d157d96362c288b842e7c25157aabffff831e68dcd23bffe6b0b",
-    "cases/cp3-cp6-owner/expected.json": "7428c9340cae7221157657bdc628e43717b3f61716c86d6b6775c5b46b162a3e",
+    "cases/cp3-cp6-owner/manifest.json": "7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe",
+    "cases/cp3-cp6-owner/submissions.json": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
+    "cases/cp3-cp6-owner/expected.json": "8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f",
 }
 
 

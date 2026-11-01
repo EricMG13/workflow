@@ -25,13 +25,13 @@ PINS = {
     "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
     # Text-checked only (the literal tables below are asserted to appear in them). A changed pin is the
     # prompt to re-run these checks and move the pin in the same commit; D12 registrations touch the first.
-    "src/deploy_vii/report_view.py": "c6b5b931ef5ca72c16d41d17463a4e3d7253d63e1046a9b432a155f571ba7483",
-    "src/deploy_vii/assets/app.js": "0f0fe30bf97384d46ebfba4d6d09bc1b179918d6c36cba03b7ef8ee149bf7706",
-    "src/deploy_vii/render.py": "7bf8d889fb8f5b74d84f0239664c801a1c0fcfbc3a40e32da6ea49f1cd8bf253",
+    "src/deploy_vii/report_view.py": "5dc981d72a690f3d0ce04fbd7711b56609bd99b3745a756069c795f84aa99514",
+    "src/deploy_vii/assets/app.js": "d31738e4f7e5f0c80e6a24357e16f0febe2e90ab8d0a5190dbaa4f3b6b0a8549",
+    "src/deploy_vii/render.py": "9805c343101a2f1d1de76ca6a6378cc97bf2952fe936e195f2acc4d45bf299ba",
     "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
-    "src/deploy_vii/registry.py": "adf30a0b3f54d2b4d80fa6397507386e49017f7e6ab6d1399a02c393cf33ebbc",
+    "src/deploy_vii/registry.py": "19ec267dff71aa89cbfdfbece02e1a44f6800306572e15f16029d3bd23dc880a",
     # Pinned for the credit_snapshot preset (PATHWAY_MODULES), which 0d's module_display reads.
-    "src/deploy_vii/contracts.py": "3b33bfc27add489700f101f4672ff5b22fc0c6276d2bc24545ec6a4d2ee4515e",
+    "src/deploy_vii/contracts.py": "618229c6da7db278f1bfa0688da2998bec2c4486a55fe8f1e50258715db76390",
 }
 
 
@@ -137,7 +137,7 @@ for text in (
     assert text in APP, text
 assert 'payload["nav"] = [row.model_dump(mode="json") for row in navigator(view)]' in RENDER
 assert "if module.status == \"rejected\":\n            continue" in RENDER
-assert '_NOT_CP5_FAN_IN = frozenset({"CP-5", "CP-6", "CP-8", "CP-MEMO", "CP-OS"})' in REG
+assert '_NOT_CP5_FAN_IN = frozenset({"CP-5", "CP-6", "CP-8", "CP-MEMO", "CP-MODEL", "CP-OS"})' in REG
 assert 'else "not_in_pathway" for m in modules()' in REG
 
 SHELL = read_pinned("src/deploy_vii/assets/shell.html")

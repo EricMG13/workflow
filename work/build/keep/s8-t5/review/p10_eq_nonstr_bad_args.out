@@ -1,0 +1,2 @@
+first: ('', {}, 'refused', 'bad_arguments')
+REFUSED identity_mismatch  <-- DESYNC

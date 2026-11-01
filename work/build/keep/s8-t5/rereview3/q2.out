@@ -1,0 +1,28 @@
+source_readiness 'search_pack'          surrogate args refused before host: bad_arguments
+source_readiness 'extract_statements'   surrogate args refused before host: bad_arguments
+source_readiness 'foo'                  surrogate args refused before host: bad_arguments
+source_readiness 'search_pack\ud800'          ('', {}, 'refused', 'not_permitted') OK
+source_readiness 'extract_statements\ud800'   ('', {}, 'refused', 'not_permitted') OK
+source_readiness 'foo'                        ('foo', {'query': 'x'}, 'refused', 'not_permitted') OK
+source_readiness ''                           ('', {}, 'refused', 'not_permitted') OK
+source_readiness 'extract_statements'         ('extract_statements', {'source_id': 'financial'}, 'refused', 'not_permitted') OK
+source_readiness submit valid ()
+source_context   'search_pack'          surrogate args refused before host: bad_arguments
+source_context   'extract_statements'   surrogate args refused before host: bad_arguments
+source_context   'foo'                  surrogate args refused before host: bad_arguments
+source_context   'search_pack\ud800'          ('', {}, 'refused', 'not_permitted') OK
+source_context   'extract_statements\ud800'   ('', {}, 'refused', 'not_permitted') OK
+source_context   'foo'                        ('foo', {'query': 'x'}, 'refused', 'not_permitted') OK
+source_context   ''                           ('', {}, 'refused', 'not_permitted') OK
+source_context   'extract_statements'         ('extract_statements', {'source_id': 'financial'}, 'refused', 'not_permitted') OK
+source_context submit valid ()
+financials       'search_pack'          surrogate args refused before host: bad_arguments
+financials       'extract_statements'   surrogate args refused before host: bad_arguments
+financials       'foo'                  surrogate args refused before host: bad_arguments
+financials       'search_pack\ud800'          ('', {}, 'refused', 'not_permitted') OK
+financials       'extract_statements\ud800'   ('', {}, 'refused', 'not_permitted') OK
+financials       'foo'                        ('foo', {'query': 'x'}, 'refused', 'not_permitted') OK
+financials       ''                           ('', {}, 'refused', 'not_permitted') OK
+financials       'extract_statements'         ('extract_statements', {'source_id': 'financial'}, 'refused', 'bad_arguments') OK
+financials submit valid ()
+EXIT 0

@@ -490,17 +490,17 @@ def _verify_cp1_attempt(
         raise ValueError("CP1 envelope differs")
 
 
-# In-process parse cache, never persisted. Key: a blob's SHA-256. Every `result`/`pack` call below
+# In-process pack parse cache, never persisted. Key: a pack blob's SHA-256. Every `pack` call below
 # still re-reads the blob and checks its bytes against that digest (`Execution._load`), so a
 # missing (SH-R12) or tampered (SH-R16) blob refuses exactly as before; only the pydantic parse
 # of bytes already proven identical to a previously parsed and canonical-hash-checked blob is
-# skipped. The cached models are frozen with tuple fields. No store or writer handle is cached.
-# ponytail: the ceiling is an entry count, not bytes: 4 entries is one history's working set, and a
-# cached CP-1 result can keep ~200 MiB alive (44 MB blob), so the worst case is ~800 MiB. Upgrade
-# path if that matters: cap by the summed blob size instead of the entry count.
+# skipped. The cached packs are frozen with tuple fields. No store or writer handle is cached.
+# Result modules are not cached here: `deploy_vii.execution._canonical_result` is the only result
+# parse cache, so a settled module is parsed once per process.
+# ponytail: the ceiling is an entry count, not bytes: 4 entries is one history's working set.
+# Upgrade path if memory matters: cap by the summed blob size instead of the entry count.
 _PARSED_LIMIT = 4
 _PARSED_LOCK = Lock()
-_PARSED_MODULES: dict[str, Module] = {}
 _PARSED_PACKS: dict[str, PreparedPack] = {}
 
 
@@ -512,19 +512,7 @@ def _remember(cache: dict[str, Any], digest: str, value: Any) -> None:
 
 
 class _ParsedExecution(Execution):
-    """Same store directory; `result` and `pack` skip re-parsing blobs proven byte-identical."""
-
-    def result(self, sha256: str) -> Module:
-        raw = self._load(sha256)  # reads and hash-checks the bytes on every call
-        with _PARSED_LOCK:
-            cached = _PARSED_MODULES.get(sha256)
-        if cached is not None:
-            return cached
-        module = Module.model_validate_json(raw)
-        if module.content_hash() != sha256:
-            raise ValueError("Execution result blob is not the canonical module")
-        _remember(_PARSED_MODULES, sha256, module)
-        return module
+    """Same store directory; `pack` skips re-parsing blobs proven byte-identical."""
 
     def pack(self, snapshot: ExecutionSnapshot | None = None) -> PreparedPack:
         snapshot = self.read() if snapshot is None else snapshot
@@ -599,14 +587,12 @@ def _submission_schema(module_id: str, step_id: str) -> type[Contract]:
     """The schema a settled producer's retained submission is re-parsed under, chosen by the
     producer's module (rulings round 10 item 2, H1 F1): `STEPS` for a live-contract module's own
     step; the registered G1-X core's `SCHEMAS` for an owner-only module whose only step it is.
-    Anything else (CP-1B `earnings_delta`, a core not registered, another module's step) has no
+    Anything else (a core not registered, another module's step) has no
     authentication rule here and is refused `not_permitted` before any payload is read."""
     from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
 
     schema: object
-    try:
-        step_chain(module_id)
-    except ValueError:
+    if owner_workflow._owner_only(module_id):
         core = owner_workflow._CORES.get(module_id)
         schemas = getattr(core, "SCHEMAS", None)
         if (
@@ -614,7 +600,7 @@ def _submission_schema(module_id: str, step_id: str) -> type[Contract]:
             or step_id in STEPS
             or not isinstance(schemas, Mapping)
         ):
-            raise SourceError("not_permitted") from None
+            raise SourceError("not_permitted")
         schema = schemas.get(step_id)
     else:
         definition = STEPS.get(step_id)
@@ -953,25 +939,37 @@ def _execution_state(
         raise SourceError("identity_mismatch") from None
 
 
+# The owner and financial layers re-parse every call receipt with pydantic
+# `model_validate_json`, whose JSON parser (jiter) refuses nesting deeper than 200.
+# The receipt wraps `arguments` in further levels (call object, record wrappers), so
+# the bound sits well below 200 to leave margin; `arguments` itself is depth 1.
+MAX_ARGUMENT_DEPTH = 100
+
+
 def _json_arguments(arguments: Any) -> dict[str, Any]:
     """JSON input must round-trip without coercing tuples, keys or numeric sentinels."""
 
-    def check(value: Any) -> None:
+    def check(value: Any, depth: int) -> None:
         if type(value) in (str, int, float, bool, type(None)):
             return
+        if depth > MAX_ARGUMENT_DEPTH:
+            raise ValueError("arguments nested too deeply")
         if type(value) is list:
             for item in value:
-                check(item)
+                check(item, depth + 1)
             return
         if type(value) is dict and all(type(key) is str for key in value):
             for item in value.values():
-                check(item)
+                check(item, depth + 1)
             return
         raise ValueError("not JSON")
 
     if type(arguments) is not dict:
         raise ValueError("arguments must be an object")
-    check(arguments)
+    check(arguments, 1)
+    # A lone surrogate in a key or value is a str but cannot be encoded as UTF-8;
+    # refuse it here so every later layer can serialise and retain the receipt.
+    json.dumps(arguments, ensure_ascii=False).encode("utf-8")
     return _detached(arguments)
 
 
@@ -1059,11 +1057,24 @@ class SourceSession:
             self._sequence += 1
             sequence = self._sequence
         call_id = str(uuid4())
-        name = tool_name if type(tool_name) is str else ""
+        # A name that cannot be represented (not an exact str, or not UTF-8 encodable) is
+        # refused as "" with {} before the arguments are looked at; no caller-object method
+        # runs. Receipt verification replays invoke(call.tool, call.arguments), which yields
+        # exactly this receipt.
+        if type(tool_name) is not str:
+            return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
+        try:
+            tool_name.encode("utf-8")
+        except UnicodeEncodeError:
+            return self._receipt(sequence, call_id, "", {}, "refused", None, "not_permitted")
+        name = tool_name
         try:
             copied = _json_arguments(arguments)
         except (ValueError, TypeError, RecursionError):
-            return self._receipt(sequence, call_id, name, {}, "refused", None, "bad_arguments")
+            # Replay runs stage(name, {}): not_permitted if the name is not offered,
+            # bad_arguments if it is. Record the same code.
+            code = "bad_arguments" if self._tools.offers(name) else "not_permitted"
+            return self._receipt(sequence, call_id, name, {}, "refused", None, code)
         if not self._operation.acquire(blocking=False):
             return self._receipt(sequence, call_id, name, copied, "refused", None, "not_permitted")
         try:

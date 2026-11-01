@@ -84,9 +84,10 @@ captions refuse; prose mentioning an absent FY statement is not a statement tabl
 
 Later `read_inputs` returns a current FinancialBinding, sequence, full typed input
 hash and projected string body. Narrative uses `live.context.narrative_evidence`;
-readiness uses `live.context.readiness_inputs`; quality uses authentic QualityInputs
-JSON only. Nested raw citations/quotes and catalogue record_json are not exposed.
-Historical `prompts.quality_scope` is forbidden. A read of the current source-free
+readiness uses `live.context.readiness_inputs`; quality serves `prompts.quality_scope`
+with each evidence record narrowed to kind and reference, bound to the full QualityInputs
+hash (ruling item 87). Nested raw citations/quotes and catalogue record_json are not
+exposed. A read of the current source-free
 inputs is required before submission. Refused raw-source calls are retained with
 no body; supplied arguments are detached from subsequent caller mutations.
 

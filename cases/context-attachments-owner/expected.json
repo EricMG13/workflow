@@ -1,0 +1,328 @@
+{
+  "schema_version": "context-attachments-owner-expected/1",
+  "derivation": "Hand-derived from the plan Task 0 table and Task 3 behaviour, the brief, and the rulings; builder cases/context-attachments-owner/builder/build.py (stdlib only). Upstream CP-4 limitations, T3 and source texts are copied from the pinned cases/cp4-owner files. No value comes from running the code under test.",
+  "tags": {
+    "P": "submit_review precheck refusal (owner_workflow _gate, run first; recomputed in replay)",
+    "V": "validate_review (reached only when the precheck passes)",
+    "M": "module output"
+  },
+  "draft_limitation": "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+  "texts": {
+    "absent_template": "attachments.<field>: source '<id>' is declared but not in the pack; add a source gap naming it",
+    "legal_executed_missing": "attachments.legal_documents: 'executed' documents are declared but no source is assessed executed or filed; add a source gap naming legal_documents",
+    "legal_draft_missing": "attachments.legal_documents: 'draft' documents are declared but no source is assessed draft; add a source gap naming legal_documents",
+    "context_refused_prefix": "Context refused: ",
+    "draft_wrong_context": "Draft authority needs a context that declares draft legal documents: {source_id}",
+    "not_legal_source (frozen, cp4_legal.py:476-478)": "{path}: {source_id} is not an executed or filed source (CP-0 authority {authority}, or the source is not ready)",
+    "gap_match_regex": "(?<![A-Za-z0-9_])<id>(?![A-Za-z0-9_])"
+  },
+  "attachment_ids": {
+    "portfolio_workbook": "portfolio",
+    "prior_case": "prior_case",
+    "management_bridge": "bridge"
+  },
+  "max_issues": 4,
+  "cases": {
+    "abs-refused": {
+      "P": {
+        "issues": [
+          "attachments.portfolio_workbook: source 'portfolio' is declared but not in the pack; add a source gap naming it",
+          "attachments.prior_case: source 'prior_case' is declared but not in the pack; add a source gap naming it",
+          "attachments.management_bridge: source 'bridge' is declared but not in the pack; add a source gap naming it"
+        ],
+        "count": 3,
+        "order": "portfolio_workbook, prior_case, management_bridge",
+        "journaled_steps": 0,
+        "attempt_consumed": false
+      },
+      "V": "not reached (the precheck refuses first)",
+      "M": null
+    },
+    "abs-gap-ok": {
+      "P": {
+        "issues": []
+      },
+      "V": {
+        "issues": [],
+        "note": "the review settles; asserted by the builder of Task 3 through submit_review, shape-checked by the preparer with validate_review"
+      },
+      "M": {
+        "T3": {
+          "identity": "issuer",
+          "financial": "issuer",
+          "legal-covenants": "executed",
+          "context": "unknown"
+        },
+        "T5_gap_ids": [
+          "portfolio-missing",
+          "prior-case-missing",
+          "bridge-missing"
+        ],
+        "note": "T3 authority per source and the three gaps are the review's own statements (readiness.py build_readiness T3/T5)"
+      }
+    },
+    "abs-present": {
+      "P": {
+        "issues": []
+      },
+      "V": {
+        "issues": []
+      },
+      "M": null,
+      "path_note": "unit test of precheck"
+    },
+    "abs-unready": {
+      "P": {
+        "issues": [
+          "attachments.management_bridge: source 'bridge' is declared but not in the pack; add a source gap naming it"
+        ],
+        "rule": "a pack source whose status is not ready is absent; the issue text is the same template as for a source that is not in the pack at all (plan Task 3: 'absent when no pack source has the id with status ready')"
+      },
+      "V": "unit test of precheck only",
+      "M": null
+    },
+    "none-declared": {
+      "P": {
+        "issues": []
+      },
+      "V": {
+        "issues": []
+      },
+      "M": {
+        "T3": {
+          "identity": "issuer",
+          "financial": "issuer",
+          "legal-covenants": "executed",
+          "context": "unknown"
+        },
+        "note": "equals today"
+      }
+    },
+    "legal-exec-missing": {
+      "P": {
+        "issues": [
+          "attachments.legal_documents: 'executed' documents are declared but no source is assessed executed or filed; add a source gap naming legal_documents"
+        ],
+        "journaled_steps": 0,
+        "attempt_consumed": false
+      },
+      "V": "not reached",
+      "M": null
+    },
+    "legal-exec-missing-gap": {
+      "P": {
+        "issues": [],
+        "note": "same pack, context and sources as legal-exec-missing, plus one `source` gap whose description contains legal_documents"
+      },
+      "V": {
+        "issues": []
+      },
+      "M": {
+        "T3": {
+          "identity": "issuer",
+          "financial": "issuer",
+          "context": "unknown"
+        },
+        "T5_gap_ids": [
+          "legal-documents-missing"
+        ]
+      }
+    },
+    "draft-ok": {
+      "P": {
+        "issues": []
+      },
+      "V": {
+        "issues": [],
+        "note": "today a shape error on authority 'draft'; Task 1 admits it for a draft context"
+      },
+      "M": {
+        "CP-0": {
+          "T3.legal-draft.authority": "draft",
+          "other_T3": {
+            "identity": "issuer",
+            "financial": "issuer",
+            "context": "unknown"
+          }
+        },
+        "CP-4": {
+          "admitted": true,
+          "legal_sources": [
+            "legal-draft"
+          ],
+          "own_limitations": {
+            "exact_order": [
+              "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
+              "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+              "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
+            ],
+            "contains_once": "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+            "also_contains": [
+              "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
+              "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
+            ],
+            "source": "the frozen cases/cp4-owner expected.json positive.CP-4.own_limitations (same gap and capacity text) with DRAFT_LIMITATION placed right after the gap limitations (plan Task 2, cp4_legal.py:1442), before the capacity limitation; dedup",
+            "total_count": 3
+          },
+          "T4D.1": {
+            "legal-draft": {
+              "CP-0 authority": "draft",
+              "Eligible for CP-4 citation": "Yes",
+              "Cited by CP-4": "Yes"
+            },
+            "identity": {
+              "CP-0 authority": "issuer",
+              "Eligible for CP-4 citation": "No",
+              "Cited by CP-4": "No"
+            },
+            "financial": {
+              "CP-0 authority": "issuer",
+              "Eligible for CP-4 citation": "No",
+              "Cited by CP-4": "No"
+            },
+            "context": {
+              "CP-0 authority": "unknown",
+              "Eligible for CP-4 citation": "No",
+              "Cited by CP-4": "No"
+            },
+            "columns": "cp4_legal.py:1209-1222 (Source ID|CP-0 authority|Eligible for CP-4 citation|Cited by CP-4|Limitation)"
+          }
+        }
+      }
+    },
+    "legal-draft-missing": {
+      "P": {
+        "issues": [
+          "attachments.legal_documents: 'draft' documents are declared but no source is assessed draft; add a source gap naming legal_documents"
+        ],
+        "journaled_steps": 0,
+        "attempt_consumed": false
+      },
+      "V": "not reached",
+      "M": null
+    },
+    "legal-draft-missing-gap": {
+      "P": {
+        "issues": [],
+        "note": "same pack, context and sources as legal-draft-missing, plus one `source` gap whose description contains legal_documents"
+      },
+      "V": {
+        "issues": []
+      },
+      "M": {
+        "T3": {
+          "identity": "issuer",
+          "financial": "issuer",
+          "context": "unknown"
+        },
+        "T5_gap_ids": [
+          "legal-documents-draft-missing"
+        ]
+      }
+    },
+    "draft-wrong-context": {
+      "P": {
+        "issues": [],
+        "why": "the context declares `executed`; the review assesses no executed or filed source, but its `source` gap names legal_documents, so the executed rule passes; all attachments are false"
+      },
+      "V": {
+        "issues": [
+          "Draft authority needs a context that declares draft legal documents: legal-draft"
+        ]
+      },
+      "M": null
+    },
+    "draft-wrong-context-no-context": {
+      "P": {
+        "issues": [],
+        "why": "no context source: context_facts returns None, the precheck gives ()"
+      },
+      "V": {
+        "issues": [
+          "Draft authority needs a context that declares draft legal documents: legal-draft"
+        ]
+      },
+      "M": null
+    },
+    "draft-cited-other": {
+      "P": {
+        "issues": []
+      },
+      "V": {
+        "issues": []
+      },
+      "M": {
+        "CP-4": {
+          "step_validation_issues_include": [
+            "capacity[3]: identity is not an executed or filed source (CP-0 authority issuer, or the source is not ready)"
+          ],
+          "wording": "frozen (plan Q2): the text keeps 'executed or filed'; `is not an executed, filed or draft source` is NOT used",
+          "journal": "the CP-4 step is rejected; the legal documents row still cites legal-draft (draft) and is not among the issues",
+          "not_among_issues": "documents[0] / the covenant rows quoting legal-draft"
+        }
+      }
+    },
+    "draft-uncited": {
+      "P": {
+        "issues": []
+      },
+      "V": {
+        "issues": []
+      },
+      "M": {
+        "CP-0": {
+          "T3": {
+            "identity": "issuer",
+            "financial": "issuer",
+            "legal-covenants": "executed",
+            "legal-draft": "draft",
+            "context": "unknown"
+          }
+        },
+        "CP-4": {
+          "own_limitations": {
+            "exact_order": [
+              "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
+              "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+              "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
+            ],
+            "contains_once": "One or more legal documents in this run are drafts, not executed or filed instruments; their covenant terms may change before signing.",
+            "also_contains": [
+              "Gap (Material): Security, guarantee, default, cure and voting terms are not supplied",
+              "Basket capacity amounts are not calculated: CP-4 quotes and interprets baskets in M8"
+            ],
+            "total_count": 3
+          },
+          "T4D.1": {
+            "legal-covenants": {
+              "CP-0 authority": "executed",
+              "Eligible for CP-4 citation": "Yes",
+              "Cited by CP-4": "Yes"
+            },
+            "legal-draft": {
+              "CP-0 authority": "draft",
+              "Eligible for CP-4 citation": "Yes",
+              "Cited by CP-4": "No"
+            }
+          },
+          "rule": "eligibility, not citation, triggers the limitation (plan Q4 and Task 2(c))"
+        }
+      }
+    },
+    "mismatch": {
+      "P": {
+        "issues": [
+          "Context refused: run.as_of: context has '2026-01-11' but the run has '2026-01-10'"
+        ],
+        "count": 1,
+        "journaled_steps": 0,
+        "attempt_consumed": false
+      },
+      "V": "not reached",
+      "M": null
+    }
+  },
+  "not_frozen_here": [
+    "the Task 1 (h) `Context source cannot be classified <authority>` and (d) `Draft authority refused, context invalid: <first problem>` lines belong to the Task 1 tests, which use these packs"
+  ]
+}

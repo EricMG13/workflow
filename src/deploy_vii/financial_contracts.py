@@ -7,9 +7,15 @@ preserve industrial/finance and other distinct perimeters without blending them.
 from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import (
+    Field,
+    SerializerFunctionWrapHandler,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from pydantic.config import JsonDict
 
 from deploy_vii.contracts import (
@@ -364,11 +370,33 @@ class StatementDisclosure(Contract):
     disclosure: Disclosure
 
 
+class CashScope(Contract):
+    """The balance-sheet lines, besides cash and equivalents, that the cash flow statement's cash
+    line includes. Cite the CFS cash line and the source span that names restricted cash."""
+
+    items: Annotated[
+        tuple[Literal["restricted_cash", "restricted_cash_noncurrent"], ...],
+        Field(min_length=1, max_length=2),
+    ]
+    citations: Located
+
+    @model_validator(mode="after")
+    def named_restricted_cash(self) -> Self:
+        if len(set(self.items)) != len(self.items):
+            raise ValueError("cash scope items must be distinct")
+        if not any("restricted cash" in " ".join(c.quote.split()).lower() for c in self.citations):
+            raise ValueError("cash scope requires a citation whose quote names restricted cash")
+        return self
+
+
 class CashMovementBridge(Contract):
     """Cash delta = reported NCF + signed source adjustments; never a plug.
 
     An empty component list explicitly assesses that no adjustment is needed.
     Components reference detail lines in the same period's source CFS.
+    `cash_scope` is null unless the CFS cash line includes restricted cash; then it lists the
+    balance-sheet restricted cash items (`restricted_cash`, `restricted_cash_noncurrent`) that
+    line adds to cash and equivalents, and the check sums every listed item's change.
     """
 
     bridge_id: Identifier
@@ -376,6 +404,15 @@ class CashMovementBridge(Contract):
     components: Annotated[tuple[StatementContribution, ...], Field(max_length=20000)]
     explanation: Text
     citations: Located
+    cash_scope: CashScope | None = None
+
+    # `content_hash` dumps defaults: without this, an undeclared scope would change every hash.
+    @model_serializer(mode="wrap")
+    def _omit_absent_cash_scope(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        if self.cash_scope is None:
+            data.pop("cash_scope", None)
+        return data
 
 
 class BalanceMovement(Contract):

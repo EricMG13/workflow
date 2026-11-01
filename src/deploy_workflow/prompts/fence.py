@@ -53,22 +53,28 @@ class UntrustedItem:
     text: str
 
 
+# Invisible but not Unicode Cf/Mn/Me: the Hangul fillers render as nothing (default-ignorable).
+_FILLERS = frozenset("\u115f\u1160\u3164\uffa0")
+
+
 def _normalised(body: str) -> str:
-    """The copy detection runs on (never emitted): NFKC folds fullwidth and other compatibility
-    forms of ``<``, and format characters (Unicode Cf: zero-width, BOM, word joiner) that would
-    split a marker are removed."""
-
-    def strip(text: str) -> str:
-        return "".join(c for c in text if unicodedata.category(c) != "Cf")
-
-    return strip(unicodedata.normalize("NFKC", strip(body)))
+    """The copy detection runs on (never emitted): NFKD folds compatibility forms of ``<`` and
+    splits a composed ``<`` + combining mark (U+226E is ``<`` + U+0338); format characters (Cf),
+    combining marks (Mn, Me: U+034F, variation selectors U+FE00-FE0F, U+E0100...) and the Hangul
+    fillers, which would split a marker visually, are removed."""
+    decomposed = unicodedata.normalize("NFKD", body)
+    return "".join(
+        c
+        for c in decomposed
+        if unicodedata.category(c) not in ("Cf", "Mn", "Me") and c not in _FILLERS
+    )
 
 
 def _refuse_markers(label: str, body: str) -> None:
     for marker in _MARKERS:
         if marker in body:
             raise FenceError(f"{label} contains the reserved delimiter {marker}")
-    if _OPENER in _normalised(body):
+    if _OPENER in body or _OPENER in _normalised(body):
         raise FenceError(f"{label} holds a block opener or a lookalike of one")
 
 

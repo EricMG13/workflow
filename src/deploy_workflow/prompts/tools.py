@@ -7,6 +7,8 @@ the parts tools to ``financials``. Here a step gets ``search_pack`` and ``read_p
 ``submit_<step>``. ``read_inputs`` is added by the loop itself.
 """
 
+from typing import Any, get_args
+
 from pydantic import BaseModel
 
 from deploy_vii.live.prompts import PromptError
@@ -17,7 +19,7 @@ from deploy_vii.registry import PACK_TOOLS
 from deploy_workflow.model.turn import ToolSpec
 from deploy_workflow.owner_workflow import OwnerBinding, StepSpec
 
-__all__ = ["model_schema", "tool_names", "tools_for"]
+__all__ = ["model_schema", "offered_schema", "tool_names", "tools_for"]
 
 
 def model_schema(spec: StepSpec) -> type[BaseModel]:
@@ -31,6 +33,65 @@ def model_schema(spec: StepSpec) -> type[BaseModel]:
         return spec.schema
     live = STEPS.get(spec.step_id)
     return live.schema if live is not None else spec.schema
+
+
+def _models(root: type[BaseModel]) -> dict[str, type[BaseModel]]:
+    """Every model reachable from ``root`` through field annotations, by class name (the name its
+    ``$defs`` entry carries), at any depth."""
+    found: dict[str, type[BaseModel]] = {}
+
+    def visit(annotation: Any) -> None:
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            if annotation.__name__ not in found:
+                found[annotation.__name__] = annotation
+                for field in annotation.model_fields.values():
+                    visit(field.annotation)
+            return
+        for arg in get_args(annotation):
+            visit(arg)
+
+    visit(root)
+    return found
+
+
+def _holds_none(annotation: Any) -> bool:
+    return (
+        annotation is Any
+        or annotation is type(None)
+        or any(_holds_none(arg) for arg in get_args(annotation))
+    )
+
+
+def _exact_nulls(properties: dict[str, Any], model: type[BaseModel]) -> None:
+    """Remove ``null`` from each property whose annotation cannot hold ``None`` (the strict copy
+    adds it to every defaulted field; the validator rejects it). One remaining branch is the
+    property itself, so a defaulted ``Literal`` becomes a one-value ``enum``."""
+    for name, prop in properties.items():
+        options = prop.get("anyOf")
+        field = model.model_fields.get(name)
+        if options is None or field is None or _holds_none(field.annotation):
+            continue
+        kept = [o for o in options if o != {"type": "null"}]
+        if len(kept) == 1:
+            properties[name] = {**{k: v for k, v in prop.items() if k != "anyOf"}, **kept[0]}
+        else:
+            properties[name] = {**prop, "anyOf": kept}
+
+
+def offered_schema(spec: StepSpec) -> dict[str, Any]:
+    """The schema shown in the prompt and offered as the submit tool's parameters: one object.
+    For every step but ``source_readiness`` it is the strict copy of ``model_schema``. CP-0's
+    owner path sends the model's payload to ``ReadinessReview`` unchanged (it skips ``normalise``),
+    so (F1) ``null`` is removed from every field that model cannot hold ``None`` in, at any depth,
+    which also pins ``schema_version`` to its literal."""
+    schema = strict_schema(model_schema(spec))
+    if spec.step_id != "source_readiness":
+        return schema
+    models = _models(spec.schema)
+    _exact_nulls(schema["properties"], spec.schema)
+    for name, definition in schema.get("$defs", {}).items():
+        _exact_nulls(definition.get("properties", {}), models[name])
+    return schema
 
 
 def tool_names(spec: StepSpec) -> tuple[str, ...]:
@@ -60,7 +121,7 @@ def tools_for(binding: OwnerBinding, spec: StepSpec) -> tuple[ToolSpec, ...]:
                 f"Submit the {spec.step_id} JSON object. Answers `valid`, `invalid` or `refused` "
                 "with the validator's issues."
             ),
-            "parameters": strict_schema(model_schema(spec)),
+            "parameters": offered_schema(spec),
         },
     }
     return tuple(

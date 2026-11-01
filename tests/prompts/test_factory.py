@@ -14,7 +14,7 @@ from prompt_support import spec_of
 from deploy_vii.business_context import cp1_context_facts
 from deploy_vii.contracts import Fact
 from deploy_vii.execution import Execution, head_of
-from deploy_vii.live.context import module_context
+from deploy_vii.live.context import declared_sources, module_context, readable_sources
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow import host
@@ -182,11 +182,9 @@ def test_p5a_a_cp0_payload_that_fits_the_offered_schema_is_accepted_by_the_valid
     offered = next(t for t in tools if t.name == "submit_source_readiness").parameters
     payload = json.loads(o2_case.payload_for("source_readiness"))
     # the strict schema requires every field; schema_version, which the frozen payload leaves to
-    # its default, is nullable there, and the prompt tells the model to write its literal
-    system = prompt_factory(pack, store)(walk.binding, walk.spec, ())[0].text
+    # its default, is pinned to its literal there (F1), which the model copies
     for key in set(offered["required"]) - set(payload):
-        literal = offered["properties"][key]["anyOf"][0]["enum"][0]
-        assert f'Write `{key}` as "{literal}", never null.' in system
+        (literal,) = offered["properties"][key]["enum"]
         payload[key] = literal
     assert set(offered["required"]) <= set(payload)
     assert set(payload) <= set(offered["properties"])  # nothing the schema forbids
@@ -228,12 +226,17 @@ def seeded_store(root: Path, module: str, command_row: str) -> tuple[Execution, 
 @pytest.fixture
 def listed_sources(monkeypatch: pytest.MonkeyPatch) -> None:
     """Hand-seeded heads are not verifiable producers, so ``session_sources`` would refuse them
-    (identity_mismatch); list the pack's sources instead. Only the source list is replaced."""
-    monkeypatch.setattr(
-        host,
-        "session_sources",
-        lambda store, ticket_id, step_id: tuple(s.source_id for s in store.pack().sources),
-    )
+    (identity_mismatch). Return the step's real scope instead, as ``host._execution_state``
+    computes it: the declared sources that are also readable (CP-3: its market sources)."""
+
+    def scope(store: Execution, ticket_id: str, step_id: str) -> tuple[str, ...]:
+        attempt = next(a for a in store.read().attempts if a.ticket_id == ticket_id)
+        ids = tuple(s.source_id for s in store.pack().sources)
+        declared = set(declared_sources(store, attempt, step_id, ids))
+        readable = set(readable_sources(store, attempt, step_id))
+        return tuple(i for i in ids if i in declared and i in readable)
+
+    monkeypatch.setattr(host, "session_sources", scope)
 
 
 def block_body(user: str, block_id: str) -> dict[str, Any]:
@@ -269,3 +272,12 @@ def test_h2_cp1a_lists_the_facts_of_an_accepted_cp1(tmp_path: Path, listed_sourc
     listed = block_body(user, "prepared-pack")["cp1_facts"]
     assert [row["ref"] for row in listed] == [f.fact_id for f in facts]
     assert "CP-1 is not accepted in this journal" not in user
+
+
+def test_h2_cp3_rule_5_names_only_the_market_scope(tmp_path: Path, listed_sources: None) -> None:
+    store, pack, attempt = seeded_store(tmp_path, "CP-3", "CP-3")
+    binding = OwnerBinding.model_construct(
+        step_id="relative_value", ticket_id=attempt.ticket_id, module_id="CP-3"
+    )
+    system = prompt_factory(pack, store)(binding, spec_of("relative_value"), ())[0].text
+    assert "declared sources: market." in system

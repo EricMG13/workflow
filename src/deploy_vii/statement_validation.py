@@ -93,7 +93,13 @@ OPTIONAL_ITEMS: dict[str, tuple[str, ...]] = {
         "lease_payments_in_financing",
         "interest_paid_in_financing",
     ),
-    "BS": ("rcf_drawn", "rcf_commitment", "net_accounts_receivable", "accounts_payable"),
+    "BS": (
+        "rcf_drawn",
+        "rcf_commitment",
+        "net_accounts_receivable",
+        "accounts_payable",
+        "restricted_cash_noncurrent",
+    ),
 }
 # Only identities with the same meaning are linked. IS cash interest/tax are
 # deliberately not aliases of the CFS cash-paid observations.

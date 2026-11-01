@@ -1,0 +1,1853 @@
+2f7c56ad docs: rulings 2026-10-31 s8-vii; D12 brief; ledger
+43b1f9d3 merge claude/s8-vii-lows: end-of-branch Low batch
+3f335106 style: stage 8-vii Low batch
+b8f78168 docs: stage 8-vii C complete, re-review probes, Low batch brief; ledger
+2c43a6c5 merge claude/s8-vii-c: CZR declared cash scope (deploy_vii; user-approved)
+1a23be4d docs: stage 8-vii B complete; A and B merged; ledger
+41979b19 merge claude/s8-vii-b: D1-D3 statement extractor (deploy_vii; user-approved)
+1f6d4e70 merge claude/s8-vii-a: H03 + H09 (deploy_vii; user-approved)
+edf5b196 docs: stage 8-vii B fix 1 results; ledger
+4ed0f63c fix: D1-D3 fix 1
+8408b4e0 docs: stage 8-vii C fix 1 results, B review and fix 1 brief; probes; ledger
+4cd7357f test: RED D1 fix 1
+1309b27b fix: cash scope fix 1
+45d1a456 test: RED cash scope fix 1
+ddbaf4b0 docs: stage 8-vii B report and review package; ledger
+8d072173 docs: stage 8-vii C reviews, probes, fix 1 brief; ledger
+d6cdaef6 docs: stage 8-vii C report and review package; ledger
+dd91959f test: fix cash scope fixtures
+d6ca9b63 fix: cash scope
+caadd630 test: RED cash scope
+42adb62a docs: stage 8-vii C plan and build brief; ledger
+0a4917ed fix: D1 D2 D3
+370b966b docs: stage 8-vii A report and review package; ledger
+24f0a5af test: RED D1 D2 D3
+61fe6d9d docs: stage 8-vii brief B (D1-D3, Modules amendment), CZR extractor golden; ledger
+a147d816 fix: H03 H09
+4be0c0b7 test: RED H03 H09
+71a20021 docs: stage 8-vii briefs (A H03+H09, C cash plan), common rules, ledger
+ src/deploy_vii/cash_bridge.py              |  57 ++-
+ src/deploy_vii/financial_contracts.py      |  43 ++-
+ src/deploy_vii/financial_reconciliation.py |  37 +-
+ src/deploy_vii/period_reconciliation.py    |  25 +-
+ src/deploy_vii/report_view.py              |   9 +-
+ src/deploy_vii/source_context.py           |  13 +-
+ src/deploy_vii/statement_extract.py        | 139 ++++++--
+ src/deploy_vii/statement_validation.py     |   8 +-
+ tests/test_cash_scope.py                   | 535 +++++++++++++++++++++++++++++
+ tests/test_czr_cash_scope.py               | 126 +++++++
+ tests/test_report_view_tl10_4.py           |  17 +
+ tests/test_source_context_blank.py         |  29 ++
+ tests/test_statement_extract_d1_d3.py      | 186 ++++++++++
+ 13 files changed, 1180 insertions(+), 44 deletions(-)
+diff --git a/src/deploy_vii/cash_bridge.py b/src/deploy_vii/cash_bridge.py
+index 0aa2c8a5..f43f6550 100644
+--- a/src/deploy_vii/cash_bridge.py
++++ b/src/deploy_vii/cash_bridge.py
+@@ -1,13 +1,17 @@
+ """Validate explicitly sourced cash movement adjustments, without inferring FX."""
+ 
+-from deploy_vii.financial_contracts import FinancialBook
++from datetime import timedelta
++
++from deploy_vii.financial_contracts import CashMovementBridge, FinancialBook, FinancialPeriod
++
++CASH_LINE_ITEMS = {"net_cash_change", "opening_cash", "closing_cash"}
+ 
+ 
+ def cash_bridge_issues(book: FinancialBook) -> tuple[str, ...]:
+     if not book.cash_movement_bridges:
+         return ()
+     periods = {p.period_id: p for p in book.periods}
+     lines = {(r.period_id, r.line_id): r for r in book.statement_lines}
+     targets = {(r.period_id, r.target_line_id) for r in book.statement_identities}
+     ids: set[str] = set()
+     assessed: set[str] = set()
+@@ -33,11 +37,62 @@ def cash_bridge_issues(book: FinancialBook) -> tuple[str, ...]:
+                 issues.append(f"Unknown cash adjustment line: {bridge_id} {line_id}")
+             elif (
+                 line.statement != "CFS"
+                 or line.line_kind != "detail"
+                 or key in targets
+                 or not (line.item_id == "fx_cash_effect" or line.item_id.startswith("other:"))
+             ):
+                 issues.append(
+                     f"Cash adjustment requires a source FX/perimeter detail: {bridge_id} {line_id}"
+                 )
++        if bridge.cash_scope is not None:
++            issues.extend(_scope_issues(book, bridge, period))
+     return tuple(issues)
++
++
++def _scope_issues(
++    book: FinancialBook, bridge: CashMovementBridge, period: FinancialPeriod | None
++) -> list[str]:
++    """A declared scope cites the period's CFS cash line and has its balances where checked."""
++    scope = bridge.cash_scope
++    assert scope is not None
++    bridge_id = bridge.bridge_id
++    issues: list[str] = []
++    cfs_cash = {
++        c
++        for r in book.statement_lines
++        if r.period_id == bridge.period_id and r.statement == "CFS" and r.item_id in CASH_LINE_ITEMS
++        for c in r.value.citations
++    }
++    # One citation must both be the CFS cash line and name restricted cash.
++    if not any(
++        c in cfs_cash and "restricted cash" in " ".join(c.quote.split()).lower()
++        for c in scope.citations
++    ):
++        issues.append(
++            f"Cash scope citation must cite the period's CFS cash line naming restricted cash: "
++            f"{bridge_id}"
++        )
++    if period is None or period.end_date is None:
++        return issues
++    days = [period.end_date]
++    if period.start_date is not None and period.start_date.toordinal() > 1:
++        days.append(period.start_date - timedelta(days=1))
++    for day in days:
++        ids = {p.period_id for p in book.periods if p.end_date == day}
++        for item in scope.items:
++            # The row the check reads: a conflict first, else the first stated amount.
++            rows = [
++                r
++                for r in book.statement_lines
++                if r.statement == "BS" and r.item_id == item and r.period_id in ids
++            ]
++            settled = [r for r in rows if r.value.status in {"known", "conflicting"}]
++            used = next((r for r in settled if r.value.status == "conflicting"), None) or next(
++                iter(settled), None
++            )
++            where = f"{bridge_id} {item} {day.isoformat()}"
++            if used is None:
++                issues.append(f"Declared cash scope balance missing: {where}")
++            elif "restricted" not in " ".join(used.label.split()).lower():
++                issues.append(f"Declared cash scope balance must be labelled restricted: {where}")
++    return issues
+diff --git a/src/deploy_vii/financial_contracts.py b/src/deploy_vii/financial_contracts.py
+index fb0b8cf2..388730d6 100644
+--- a/src/deploy_vii/financial_contracts.py
++++ b/src/deploy_vii/financial_contracts.py
+@@ -1,22 +1,28 @@
+ """CP-1 source observations, before Python normalization or calculation.
+ 
+ One book is one entity perimeter/accounting basis/currency/unit. Multiple books
+ preserve industrial/finance and other distinct perimeters without blending them.
+ """
+ 
+ from collections.abc import Callable
+ from datetime import date
+ from decimal import Decimal
+-from typing import Annotated, Literal, Self
+-
+-from pydantic import Field, field_validator, model_validator
++from typing import Annotated, Any, Literal, Self
++
++from pydantic import (
++    Field,
++    SerializerFunctionWrapHandler,
++    field_validator,
++    model_serializer,
++    model_validator,
++)
+ from pydantic.config import JsonDict
+ 
+ from deploy_vii.contracts import (
+     PREFILLED_MARKER,
+     Citation,
+     Claim,
+     Contract,
+     Hash,
+     Identifier,
+     Text,
+@@ -357,32 +363,63 @@ class StatementIdentity(Contract):
+     explanation: Text
+     citations: Located
+ 
+ 
+ class StatementDisclosure(Contract):
+     statement: Literal["IS", "CFS", "BS"]
+     period_id: Identifier
+     disclosure: Disclosure
+ 
+ 
++class CashScope(Contract):
++    """The balance-sheet lines, besides cash and equivalents, that the cash flow statement's cash
++    line includes. Cite the CFS cash line and the source span that names restricted cash."""
++
++    items: Annotated[
++        tuple[Literal["restricted_cash", "restricted_cash_noncurrent"], ...],
++        Field(min_length=1, max_length=2),
++    ]
++    citations: Located
++
++    @model_validator(mode="after")
++    def named_restricted_cash(self) -> Self:
++        if len(set(self.items)) != len(self.items):
++            raise ValueError("cash scope items must be distinct")
++        if not any("restricted cash" in " ".join(c.quote.split()).lower() for c in self.citations):
++            raise ValueError("cash scope requires a citation whose quote names restricted cash")
++        return self
++
++
+ class CashMovementBridge(Contract):
+     """Cash delta = reported NCF + signed source adjustments; never a plug.
+ 
+     An empty component list explicitly assesses that no adjustment is needed.
+     Components reference detail lines in the same period's source CFS.
++    `cash_scope` is null unless the CFS cash line includes restricted cash; then it lists the
++    balance-sheet restricted cash items (`restricted_cash`, `restricted_cash_noncurrent`) that
++    line adds to cash and equivalents, and the check sums every listed item's change.
+     """
+ 
+     bridge_id: Identifier
+     period_id: Identifier
+     components: Annotated[tuple[StatementContribution, ...], Field(max_length=20000)]
+     explanation: Text
+     citations: Located
++    cash_scope: CashScope | None = None
++
++    # `content_hash` dumps defaults: without this, an undeclared scope would change every hash.
++    @model_serializer(mode="wrap")
++    def _omit_absent_cash_scope(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
++        data: dict[str, Any] = handler(self)
++        if self.cash_scope is None:
++            data.pop("cash_scope", None)
++        return data
+ 
+ 
+ class BalanceMovement(Contract):
+     """One sourced equity/other balance movement, never a calculated residual."""
+ 
+     movement_id: Identifier
+     label: Text
+     period_id: Identifier
+     role: Literal["distribution", "capital_transaction", "oci", "perimeter", "period_flow", "other"]
+     value: Observation
+diff --git a/src/deploy_vii/financial_reconciliation.py b/src/deploy_vii/financial_reconciliation.py
+index 95faf17c..9243a694 100644
+--- a/src/deploy_vii/financial_reconciliation.py
++++ b/src/deploy_vii/financial_reconciliation.py
+@@ -503,79 +503,106 @@ def _ncf(book: FinancialBook, period: FinancialPeriod) -> Reconciliation:
+         "net_cash_change",
+         _account(book, period.period_id, "net_cash_change"),
+         terms,
+         "independent operating + investing + financing source equation leaves; "
+         "FX only if explicitly in the equation; canonical target sign conversion",
+         blocker="; ".join(blockers) or None,
+         context=(*contexts, *(target.sign_citations if target else ())),
+     )
+ 
+ 
++CASH_SCOPE = ("cash_and_equivalents", "restricted_cash", "restricted_cash_noncurrent")
++
++
++def cash_scope(bridge: CashMovementBridge | None) -> tuple[str, ...]:
++    """Cash and equivalents first, then the bridge's declared restricted cash items in order."""
++    declared = bridge.cash_scope.items if bridge and bridge.cash_scope else ()
++    return (CASH_SCOPE[0], *(item for item in CASH_SCOPE[1:] if item in declared))
++
++
+ def _cash_movement(book: FinancialBook, period: FinancialPeriod) -> Reconciliation:
+     opening = (
+         period.start_date - timedelta(days=1)
+         if period.start_date and period.start_date.toordinal() > 1
+         else None
+     )
+     bridge = next((b for b in book.cash_movement_bridges if b.period_id == period.period_id), None)
+     lines = {r.line_id: r for r in book.statement_lines if r.period_id == period.period_id}
+     adjustments = tuple(
+         _term(
+             part.line_id,
+             lines[part.line_id].value,
+             coefficient=-1 if part.coefficient == 1 else 1,
+             outflow=lines[part.line_id].sign_convention == "outflow_magnitude",
+         )
+         for part in (bridge.components if bridge else ())
+     )
++    scope = cash_scope(bridge)
++    formula = (
++        "closing cash - opening cash - signed source adjustments"
++        if bridge
++        else "closing cash - opening cash; no inferred FX or other cash adjustment"
++    )
++    if bridge and bridge.cash_scope:
++        names = " + ".join(scope)
++        formula = f"closing cash scope - opening cash scope ({names}) - signed source adjustments"
+     ncf = _check(
+         period,
+         "NCF_CASH_MOVEMENT",
+         "net_cash_change",
+         _account(book, period.period_id, "net_cash_change"),
+         (
+             _balance(book, period.end_date, "cash_and_equivalents"),
+             _balance(book, opening, "cash_and_equivalents", sign=-1),
++            *(
++                term
++                for item in scope[1:]
++                for term in (
++                    _statement_balance(book, period.end_date, item),
++                    _statement_balance(book, opening, item, sign=-1),
++                )
++            ),
+             *adjustments,
+         ),
+-        "closing cash - opening cash - signed source adjustments"
+-        if bridge
+-        else "closing cash - opening cash; no inferred FX or other cash adjustment",
++        formula,
+         context=(
+             *bridge.citations,
++            *(bridge.cash_scope.citations if bridge.cash_scope else ()),
+             *(c for part in bridge.components for c in lines[part.line_id].sign_citations),
+         )
+         if bridge
+         else (),
+     )
+     return ncf.model_copy(update={"cash_movement_bridges": (bridge,) if bridge else ()})
+ 
+ 
+ def _cash(book: FinancialBook, period: FinancialPeriod) -> tuple[Reconciliation, ...]:
+     return (
+         _statement_check(book, period, "CFS", "cfo_ncfo", "CFO_IDENTITY"),
+         _ncf(book, period),
+         _cash_movement(book, period),
+     )
+ 
+ 
+-def _statement_balance(book: FinancialBook, day: date | None, item: str) -> ReconciliationTerm:
++def _statement_balance(
++    book: FinancialBook, day: date | None, item: str, *, sign: Literal[-1, 1] = 1
++) -> ReconciliationTerm:
+     """Exact dated BS observation, retaining same-date conflicts and all evidence."""
+     ids = {p.period_id for p in book.periods if day is not None and p.end_date == day}
+     rows = [
+         r.value
+         for r in book.statement_lines
+         if r.period_id in ids and r.statement == "BS" and r.item_id == item
+     ]
+     conflict = next((v for v in rows if v.status == "conflicting"), None)
+     value = conflict or next((v for v in rows if v.amount is not None), next(iter(rows), None))
+-    term = _term(item, value)
++    term = _term(item, value, coefficient=sign)
+     return term.model_copy(
+         update={
+             "citations": tuple(dict.fromkeys(c for v in rows for c in _term(item, v).citations))
+         }
+     )
+ 
+ 
+ def _balance_movements(book: FinancialBook, period: FinancialPeriod) -> tuple[Reconciliation, ...]:
+     """Step 7: equity always checked; other sourced opening/closing bridges retained."""
+     bridges = {
+diff --git a/src/deploy_vii/period_reconciliation.py b/src/deploy_vii/period_reconciliation.py
+index 88ba9770..5083ea71 100644
+--- a/src/deploy_vii/period_reconciliation.py
++++ b/src/deploy_vii/period_reconciliation.py
+@@ -18,28 +18,31 @@ from deploy_vii.financial_contracts import (
+     FinancialReview,
+ )
+ from deploy_vii.financial_periods import (
+     HistoricalReport,
+     HistoricalValue,
+     PeriodConstruction,
+     _id,
+     historical_report,
+ )
+ from deploy_vii.financial_reconciliation import (
++    CASH_SCOPE,
+     CheckType,
+     Reconciliation,
+     ReconciliationTerm,
+     _account,
+     _balance,
+     _cash_movement,
+     _ncf,
++    _statement_balance,
+     _statement_check,
++    cash_scope,
+ )
+ from deploy_vii.model._cells import CONTEXT
+ from deploy_vii.model.dates import fiscal_year_number
+ from deploy_vii.model.history import FLOW_METRICS
+ from deploy_vii.preparation import PreparedPack
+ 
+ 
+ class PeriodTerm(Contract):
+     label: Text
+     value_id: Identifier | None
+@@ -271,48 +274,62 @@ def _period_cash(
+ 
+     Unadjusted legacy comparisons keep their own opening/closing boundary. Once
+     any contributing source uses a bridge, every contribution must be assessed
+     and its cash check must pass before the constructed check can agree.
+     """
+     opening = (
+         node.start_date - timedelta(days=1)
+         if node.start_date and node.start_date.toordinal() > 1
+         else None
+     )
+-    parts = [closing, _source(_balance(book, opening, "cash_and_equivalents", sign=-1))]
+     sources = _source_periods(report, node)
+-    assessments = {b.period_id for b in book.cash_movement_bridges}
++    assessments = {b.period_id: b for b in book.cash_movement_bridges}
+     adjusted = any(pid in assessments for pid, _ in sources)
++    # The restricted cash items any assessed source declares, in `CASH_SCOPE` order.
++    declared = {
++        item for pid, _ in sources if pid in assessments for item in cash_scope(assessments[pid])
++    }
++    scope = tuple(item for item in CASH_SCOPE if item in declared or item == CASH_SCOPE[0])
++    parts = [closing, _source(_balance(book, opening, "cash_and_equivalents", sign=-1))]
++    for item in scope[1:]:
++        parts.append(_source(_statement_balance(book, node.end_date, item)))
++        parts.append(_source(_statement_balance(book, opening, item, sign=-1)))
+     bridges: list[CashMovementBridge] = []
+     contexts: list[Citation] = []
+     blockers: list[str] = []
+     if adjusted:
+         periods = {p.period_id: p for p in book.periods}
+         for pid, sign in sources:
+             if pid not in assessments:
+                 parts.append(_cell(None, f"Unassessed cash bridge: {pid}", 1 if sign == 1 else -1))
+                 blockers.append(f"Unassessed cash bridge: {pid}")
+                 continue
+             assert pid is not None
+             source = _cash_movement(book, periods[pid])
+-            parts.extend(_source(term, sign) for term in source.components[2:])
++            own = cash_scope(assessments[pid])
++            if own != scope:
++                blockers.append(f"Cash scope differs across source periods: {pid}")
++            parts.extend(_source(term, sign) for term in source.components[2 * len(own) :])
+             bridges.extend(source.cash_movement_bridges)
+             contexts.extend(source.context_citations)
+             if source.status != "PASS":
+                 blockers.append(f"{pid}: {source.explanation}")
+     check = _compare(
+         node,
+         "NCF_CASH_MOVEMENT",
+         "net_cash_change",
+         reported,
+         tuple(parts),
+-        "closing cash - opening cash - signed period combination of source adjustments"
++        f"closing cash scope - opening cash scope ({' + '.join(scope)}) - signed period "
++        "combination of source adjustments"
++        if adjusted and len(scope) > 1
++        else "closing cash - opening cash - signed period combination of source adjustments"
+         if adjusted
+         else "closing cash - opening cash; no inferred FX plug",
+         blocker=node.limitation or "; ".join(blockers) or None,
+         context=tuple(contexts),
+     )
+     return check.model_copy(update={"cash_movement_bridges": tuple(bridges)})
+ 
+ 
+ def _bridges(
+     book: FinancialBook,
+diff --git a/src/deploy_vii/report_view.py b/src/deploy_vii/report_view.py
+index f5ad8477..ec1711de 100644
+--- a/src/deploy_vii/report_view.py
++++ b/src/deploy_vii/report_view.py
+@@ -1595,28 +1595,31 @@ def _columns_structure(
+ 
+ 
+ def _clip(text: str) -> str:
+     return text if len(text) <= _SUMMARY_LIMIT else text[: _SUMMARY_LIMIT - 1] + "…"
+ 
+ 
+ #: Fields whose known text facts are producer-composed or analyst run text, checked by the
+ #: module's own reference validation before storage and stored with its tokens: CP-8's resolved
+ #: claim text (``owners/cp8.py:2145-2186``), CP-L10's TL10.3 analyst text (``cpl10.py:1060-1073``,
+ #: stored at :804-826) and CP-2H's T2R.10 gap text (``cp2h.py:1523-1541``, :1608-1614, stored at
+-#: :1413-1424). Keyed by (module, table, field): a table mixes run text with free text (TL10.3
+-#: ``source_refs``, T2R.10 ``id``), and ``Fact.text`` is a plain string, so free text and verbatim
+-#: quotes may hold ``[sic]`` or ``[Reserved]`` and are shown as written.
++#: :1413-1424). CP-L10's TL10.4 ``decision_impact`` reuses the validated TL10.3
++#: ``credit_transmission`` text (``cpl10.py:860-870``, validated at :1060-1073). Keyed by
++#: (module, table, field): a table mixes run text with free text (TL10.3 ``source_refs``, T2R.10
++#: ``id``), and ``Fact.text`` is a plain string, so free text and verbatim quotes may hold
++#: ``[sic]`` or ``[Reserved]`` and are shown as written.
+ _RUN_TEXT_FIELDS = frozenset(
+     {
+         ("CP-8", "cp8.what_changed", "value"),
+         ("CP-L10", "TL10.3", "assessment"),
+         ("CP-L10", "TL10.3", "credit_transmission"),
++        ("CP-L10", "TL10.4", "decision_impact"),
+         ("CP-2H", "T2R.10", "gap"),
+         ("CP-2H", "T2R.10", "why_it_matters"),
+         ("CP-2H", "T2R.10", "affected_analysis"),
+         ("CP-2H", "T2R.10", "action"),
+     }
+ )
+ 
+ 
+ def _carries_reference(module_id: str, fact: Fact) -> bool:
+     """Whether a known text fact is run text that must go through ``resolve``.
+diff --git a/src/deploy_vii/source_context.py b/src/deploy_vii/source_context.py
+index 368fd31b..7c4676cd 100644
+--- a/src/deploy_vii/source_context.py
++++ b/src/deploy_vii/source_context.py
+@@ -345,47 +345,48 @@ def _blank_limitations(limitations: tuple[str, ...], where: str) -> Iterator[str
+     """OI-14: `Text` refuses only `""`; a limitation of whitespace or invisible characters
+     (`prose.is_blank`) renders a blank gap row. One issue per blank limitation; the text is
+     not echoed."""
+     for limitation in limitations:
+         if is_blank(limitation):
+             yield f"Empty limitation text: {where}"
+ 
+ 
+ def _lacks(assessment: SourceContext, scope: ReportingScope) -> Iterator[str]:
+     """Task 7.14, rule 1: a historical or period-end scope of a financial source states all
+-    four dimensions; one issue per missing field. Forecast and unspecified scopes, and a
+-    non-financial source's scopes, are not held to it."""
++    four dimensions; one issue per missing or blank (`prose.is_blank`) field. Forecast and
++    unspecified scopes, and a non-financial source's scopes, are not held to it."""
+     if assessment.classification == "financial" and scope.period_kind in STATED_KINDS:
+         for name in DIMENSIONS:
+-            if getattr(scope, name) is None:
++            value = getattr(scope, name)
++            if value is None or is_blank(value):
+                 yield f"Financial scope lacks {name}: {scope.scope_id}"
+ 
+ 
+ def _disagreements(review: SourceContextReview) -> Iterator[str]:
+     """Task 7.14 (batches e1-cp1-13/-14), rule 2: the historical and period-end scopes of one
+     entity, over every financial source, state the same four strings. Those are the scopes
+     `context_binding` and the financials prefill (`live.submission._period_scopes`) choose from
+     by entity and dates alone, so one book's periods must find one tuple. Compared exactly, with
+-    no normalisation; a null is rule 1's issue alone. One issue per entity and field, naming
+-    the scope ids that share each stated value, in review order."""
++    no normalisation; a null or blank is rule 1's issue alone. One issue per entity and field,
++    naming the scope ids that share each stated value, in review order."""
+     by_entity: dict[str, list[ReportingScope]] = {}
+     for source in review.sources:
+         if source.classification == "financial":
+             for scope in source.scopes:
+                 if scope.period_kind in STATED_KINDS:
+                     by_entity.setdefault(scope.entity_id, []).append(scope)
+     for entity_id, scopes in by_entity.items():
+         for name in DIMENSIONS:
+             stated: dict[str, list[str]] = {}
+             for scope in scopes:
+                 value = getattr(scope, name)
+-                if value is not None:
++                if value is not None and not is_blank(value):
+                     stated.setdefault(value, []).append(scope.scope_id)
+             if len(stated) > 1:
+                 yield (
+                     f"Financial scopes of one entity disagree on {name}: {entity_id} "
+                     + " vs ".join(", ".join(ids) for ids in stated.values())
+                 )
+ 
+ 
+ def _prose(item: BaseModel) -> Iterator[str]:
+     """Every text value of a contract outside its citations (a quote is source text, not a
+diff --git a/src/deploy_vii/statement_extract.py b/src/deploy_vii/statement_extract.py
+index 193bbaad..f913d855 100644
+--- a/src/deploy_vii/statement_extract.py
++++ b/src/deploy_vii/statement_extract.py
+@@ -1,50 +1,62 @@
+ """Python statement-line extraction from whitespace-aligned page text (task 8.10).
+ 
+ User decision "A" (24 Oct 2026): Python extracts the printed statement lines and the model maps,
+ corrects and cites them instead of retyping them. One call reads one page's text and reports
+ only what is printed: each data line's label, its raw numeric cells and their exact `Decimal`
+ values, the label's indent, the caption above it and the raw header lines above the first data
+ line. It never rounds and never guesses a unit, period, item, statement or sign convention (the
+-model maps `period_id` and `item_id`). A line the rules cannot parse is omitted, never stubbed,
+-and prose yields an empty table.
++model maps `period_id` and `item_id`). A line the rules cannot parse is never stubbed as
++data; a candidate such line (two or more tokens ending in a numeric cell) is recorded in
++`ExtractedTable.omitted` as printed, and prose yields an empty table.
+ 
+ Rules (docs/development/live-runner.md, "Statement extraction"):
+ 
+ - A line's cells are separated by two or more spaces, or by a ` | ` pipe (a table row printed
+   as `Label | 1,759 | 1,668`: the line is read as if each pipe were two spaces; a row of only
+   `-` runs and pipes gives no line, and a line holding a pipe is never a caption or a label
+   continuation). A data line is a label (with a letter)
+   followed, to the end of the line, by two or more numeric cells: `10,441`, `2.42`, `(1,234)`
+   (negative) or a lone em dash, en dash or hyphen (nil: value `None`, raw token kept). A `$`
+-  before a number, alone or attached, is folded into it and not kept in the raw value. A line
+-  whose cells are all bare four-digit years (`2025  2024`) is a header line, not data.
++  before a number, alone or attached, is folded into it and not kept in the raw value.
+ - A single cell of text with no digit and a lowercase letter, not ending in `:`, directly above
+   a data line (no blank line between) continues its label; such lines join the label with one
+   space and the indent is the first line's. A line ending in `:` is a sub-heading, not joined.
+ - A line with a letter, no lowercase letter and no digit is a caption; it applies to the data
+   lines that follow until the next caption.
+ - `headers` are the raw lines nearest above the first data line holding two or more four-digit
+   years or a month name, with the adjacent such lines above them (blank lines between allowed).
+-- A line whose numeric cells are all bare four-digit years from 1900 to 2099 with no `$` is
+-  omitted as a header line, even when it has a label: a note table of such values (share counts
+-  without commas, say) loses those lines (review risk 3; decision "C"'s completeness check
+-  must allow for it).
++- A line whose numeric cells are all bare four-digit years from 1900 to 2099 with no `$` is a
++  header line, not data, only when its label is empty, wholly parenthesised (`(In millions)`),
++  or made only of month names, period words (`Year ended December 31`) and unit or scale words
++  (`in millions, except per share data`). Any other label makes it a data line, read like any
++  other (`Net revenues  2025  1998`), so `headers` never holds a returned data line.
++- `omitted` lists, in page order, each candidate line the rules did not return as data: a
++  non-blank line of two or more whitespace-separated tokens (after the pipe rewrite) whose
++  last token is a numeric cell and which holds a letter or digit (a row of only nil dashes and
++  pipes is a separator), that is neither a returned data line, a returned header line
++  nor a header-shaped line ending in a bare four-digit year (a second table's period row). A
++  lone token (a page number) is never a candidate.
+ 
+ Flags (task 8.10b, review risks 1-2) inform the model and never drop a line:
+ 
+ - `more_values_than_header_years`: the line has more numeric cells than the table's header
+   lines hold four-digit years (counted over all header lines; none counted when the headers
+   name no year). A footnote marker `(1)` two spaces before the values reads as a value of -1.
+ - `label_ends_numeric`: the label's last token is a numeric cell (`1,234`, `$5`, `(12)`, a nil
+   dash). Two numbers one space apart are one text cell, so the scan stops there and they stay
+   in the label; a label ending in a year (`Balance, January 1, 2023`) is flagged too.
++- `footnote_marker`: the header lines hold N > 0 four-digit years and the line has N + 1 raw
++  values whose first is `(n)` (one or two digits, no `$`): that first cell is a footnote
++  marker, dropped from `raw_values` and `values` (the label is unchanged), and the line does
++  not also get `more_values_than_header_years`. With no year in the headers the marker still
++  reads as -1 and is flagged as above.
+ 
+ `ExtractedTable.source_id` names the table's source: `extract_pack_statements` sets it and
+ binds locators per source, so two sources may share a locator; `extract_statement_lines` sets
+ it only when given one.
+ """
+ 
+ import re
+ from collections.abc import Iterable, Mapping, Sequence
+ from dataclasses import dataclass, replace
+ from decimal import Decimal
+@@ -58,58 +70,82 @@ _NUMERIC_CELL = re.compile(rf"(?P<dollar>\$ ?)?(?P<raw>\((?:{_NUMBER})\)|(?:{_NU
+ _CELL = re.compile(r"\S+(?: \S+)*")
+ _YEAR = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
+ _BARE_YEAR = re.compile(r"(?:19|20)\d{2}")
+ _WORD = re.compile(r"[A-Za-z]+")
+ _PIPE = re.compile(r"[ \t]*\|[ \t]*")
+ _MONTH_NAMES = (
+     *("January", "February", "March", "April", "May", "June", "July", "August"),
+     *("September", "October", "November", "December"),
+ )
+ _MONTHS = frozenset((*_MONTH_NAMES, *(name.upper() for name in _MONTH_NAMES)))
+-LineFlag = Literal["more_values_than_header_years", "label_ends_numeric"]
++_FOOTNOTE = re.compile(r"\(\d{1,2}\)")
++_HEADER_WORDS = frozenset(
++    (
++        *(name.lower() for name in _MONTH_NAMES),
++        *("year", "years", "ended", "ending", "fiscal", "month", "months", "week", "weeks"),
++        *("quarter", "quarters", "period", "periods", "three", "six", "nine", "twelve"),
++        *("for", "the", "as", "of", "at", "and"),
++        *("in", "millions", "thousands", "billions", "dollars", "usd", "except", "per"),
++        *("share", "data", "par", "value", "amounts", "unaudited"),
++    )
++)
++LineFlag = Literal["more_values_than_header_years", "label_ends_numeric", "footnote_marker"]
+ MORE_VALUES_THAN_HEADER_YEARS: LineFlag = "more_values_than_header_years"
+ LABEL_ENDS_NUMERIC: LineFlag = "label_ends_numeric"
++FOOTNOTE_MARKER: LineFlag = "footnote_marker"
+ 
+ 
+ @dataclass(frozen=True)
+ class ExtractedLine:
+     """One printed data line. `line_no` is the 1-based line of the page text holding the values;
+     `raw_values[i]` is printed on that line and `values[i]` is its exact Decimal (None for a nil).
+     `flags` (module docstring) are computed, in a fixed order; they never drop the line.
+     """
+ 
+     locator: str
+     line_no: int
+     label: str
+     raw_values: tuple[str, ...]
+     values: tuple[Decimal | None, ...]
+     indent: int
+     caption: str | None
+     flags: tuple[LineFlag, ...] = ()
+ 
+ 
++@dataclass(frozen=True)
++class OmittedLine:
++    """A candidate line (module docstring) not returned as data: `line_no` is 1-based and `text`
++    the page line as printed."""
++
++    line_no: int
++    text: str
++
++
+ @dataclass(frozen=True)
+ class ExtractedTable:
+-    """The data lines of one page's text, in page order, with the raw header lines. `source_id`
+-    names the source the page belongs to (None: the text was given without one)."""
++    """The data lines of one page's text, in page order, with the raw header lines and the
++    candidate lines omitted. `source_id` names the source the page belongs to (None: the text
++    was given without one)."""
+ 
+     locator: str
+     headers: tuple[str, ...]
+     lines: tuple[ExtractedLine, ...]
+     source_id: str | None = None
++    omitted: tuple[OmittedLine, ...] = ()
+ 
+ 
+ @dataclass(frozen=True)
+ class _Cells:
+     label: str
+     raw_values: tuple[str, ...]
+     values: tuple[Decimal | None, ...]
++    first_dollar: bool  # a `$` is folded into the first cell
+ 
+ 
+ def _value(raw: str) -> Decimal | None:
+     if raw in _NILS:
+         return None
+     if raw.startswith("("):
+         # Built from the string, never by negation: `-Decimal` would round to the context.
+         return Decimal("-" + raw[1:-1].replace(",", ""))
+     return Decimal(raw.replace(",", ""))
+ 
+@@ -125,24 +161,40 @@ def _cells(line: str) -> _Cells | None:
+         if text == "$" and found and not found[-1][1]:
+             found[-1] = (found[-1][0], True)
+         elif match := _NUMERIC_CELL.fullmatch(text):
+             found.append((match["raw"], match["dollar"] is not None))
+         else:
+             break
+         start = cell.start()
+     label = line[:start].strip()
+     if len(found) < 2 or not _WORD.search(label):
+         return None
+-    if all(_BARE_YEAR.fullmatch(raw) and not dollar for raw, dollar in found):
++    if _is_period_label(label) and all(
++        _BARE_YEAR.fullmatch(raw) and not dollar for raw, dollar in found
++    ):
+         return None
+     raws = tuple(raw for raw, _ in reversed(found))
+-    return _Cells(label=label, raw_values=raws, values=tuple(_value(raw) for raw in raws))
++    return _Cells(
++        label=label,
++        raw_values=raws,
++        values=tuple(_value(raw) for raw in raws),
++        first_dollar=found[-1][1],
++    )
++
++
++def _is_period_label(label: str) -> bool:
++    """A label that makes a line of only bare years a header line (module docstring)."""
++    return (
++        not label
++        or (label.startswith("(") and label.endswith(")"))
++        or all(word.lower() in _HEADER_WORDS for word in _WORD.findall(label))
++    )
+ 
+ 
+ def _is_header(line: str) -> bool:
+     return len(_YEAR.findall(line)) >= 2 or bool(_MONTHS.intersection(_WORD.findall(line)))
+ 
+ 
+ def _is_caption(stripped: str) -> bool:
+     return (
+         "|" not in stripped
+         and bool(_WORD.search(stripped))
+@@ -155,85 +207,130 @@ def _is_continuation(stripped: str) -> bool:
+     return (
+         "|" not in stripped
+         and _CELL.fullmatch(stripped) is not None
+         and any(c.islower() for c in stripped)
+         and not any(c.isdigit() for c in stripped)
+         and not stripped.endswith(":")
+         and not _is_header(stripped)
+     )
+ 
+ 
+-def _headers(lines: Sequence[str], first: int) -> tuple[str, ...]:
+-    """The header block nearest above the 0-based line `first` (the first data line)."""
++def _header_indexes(lines: Sequence[str], first: int) -> tuple[int, ...]:
++    """The 0-based indexes of the header block nearest above the 0-based line `first` (the first
++    data line), in page order."""
+     index = first - 1
+     while index >= 0 and not _is_header(lines[index]):
+         index -= 1
+-    block: list[str] = []
++    block: list[int] = []
+     while index >= 0 and (_is_header(lines[index]) or not lines[index].strip()):
+         if lines[index].strip():
+-            block.append(lines[index])
++            block.append(index)
+         index -= 1
+     return tuple(reversed(block))
+ 
+ 
++def _is_omitted_candidate(line: str) -> bool:
++    tokens = (_PIPE.sub("  ", line) if "|" in line else line).split()
++    if not any(c.isalnum() for c in line):
++        return False  # a separator row of nil dashes and pipes
++    if len(tokens) < 2 or not _NUMERIC_CELL.fullmatch(tokens[-1]):
++        return False
++    # A second table's period row (`June 30, 2026 | December 31, 2025`) is not a lost value.
++    return not (_is_header(line) and _BARE_YEAR.fullmatch(tokens[-1]))
++
++
+ def _label_ends_numeric(label: str) -> bool:
+     tokens = label.split()
+     return bool(tokens) and _NUMERIC_CELL.fullmatch(tokens[-1]) is not None
+ 
+ 
+-def _flags(line: ExtractedLine, years: int) -> tuple[LineFlag, ...]:
++def _flags(line: ExtractedLine, years: int, footnote: bool) -> tuple[LineFlag, ...]:
+     flags: list[LineFlag] = []
+     if years and len(line.raw_values) > years:
+         flags.append(MORE_VALUES_THAN_HEADER_YEARS)
+     if _label_ends_numeric(line.label):
+         flags.append(LABEL_ENDS_NUMERIC)
++    if footnote:
++        flags.append(FOOTNOTE_MARKER)
+     return tuple(flags)
+ 
+ 
++def _footnote_marker(line: ExtractedLine, first_dollar: bool, years: int) -> bool:
++    return (
++        years > 0
++        and len(line.raw_values) == years + 1
++        and not first_dollar
++        and _FOOTNOTE.fullmatch(line.raw_values[0]) is not None
++    )
++
++
+ def extract_statement_lines(
+     text: str, locator: str, source_id: str | None = None
+ ) -> ExtractedTable:
+     """The printed data lines of one page's text (module docstring rules); prose yields none."""
+     lines = [line.removesuffix("\r") for line in text.split("\n")]
+     found: list[ExtractedLine] = []
++    first_dollars: list[bool] = []
+     first: int | None = None
+     caption: str | None = None
+     pending: list[str] = []  # continuation lines directly above the current line
+     for index, line in enumerate(lines):
+         stripped = line.strip()
+         cells = _cells(line)
+         if cells is not None:
+             first = index if first is None else first
+             head = pending[0] if pending else line
+             found.append(
+                 ExtractedLine(
+                     locator=locator,
+                     line_no=index + 1,
+                     label=" ".join((*(part.strip() for part in pending), cells.label)),
+                     raw_values=cells.raw_values,
+                     values=cells.values,
+                     indent=len(head) - len(head.lstrip()),
+                     caption=caption,
+                 )
+             )
++            first_dollars.append(cells.first_dollar)
+             pending = []
+         elif _is_caption(stripped):
+             caption = stripped
+             pending = []
+         elif _is_continuation(stripped):
+             pending.append(line)
+         else:
+             pending = []
+-    headers = () if first is None else _headers(lines, first)
++    header_at = () if first is None else _header_indexes(lines, first)
++    headers = tuple(lines[index] for index in header_at)
+     years = sum(len(_YEAR.findall(header)) for header in headers)
+-    flagged = tuple(replace(line, flags=_flags(line, years)) for line in found)
+-    return ExtractedTable(locator=locator, headers=headers, lines=flagged, source_id=source_id)
++    flagged: list[ExtractedLine] = []
++    for printed, first_dollar in zip(found, first_dollars, strict=True):
++        footnote = _footnote_marker(printed, first_dollar, years)
++        data = (
++            replace(printed, raw_values=printed.raw_values[1:], values=printed.values[1:])
++            if footnote
++            else printed
++        )
++        flagged.append(replace(data, flags=_flags(data, years, footnote)))
++    kept = {line.line_no - 1 for line in found}.union(header_at)
++    omitted = tuple(
++        OmittedLine(line_no=index + 1, text=text)
++        for index, text in enumerate(lines)
++        if index not in kept and _is_omitted_candidate(text)
++    )
++    return ExtractedTable(
++        locator=locator,
++        headers=headers,
++        lines=tuple(flagged),
++        source_id=source_id,
++        omitted=omitted,
++    )
+ 
+ 
+ def _objects(value: object, missing: str, not_object: str) -> list[Mapping[str, object]]:
+     if not isinstance(value, Sequence) or isinstance(value, str | bytes):
+         raise ValueError(missing)
+     objects: list[Mapping[str, object]] = []
+     for item in value:
+         if not isinstance(item, Mapping):
+             raise ValueError(not_object)
+         objects.append(item)
+diff --git a/src/deploy_vii/statement_validation.py b/src/deploy_vii/statement_validation.py
+index 9e95aa1f..a02dc452 100644
+--- a/src/deploy_vii/statement_validation.py
++++ b/src/deploy_vii/statement_validation.py
+@@ -86,21 +86,27 @@ OPTIONAL_ITEMS: dict[str, tuple[str, ...]] = {
+     "CFS": (
+         "investing_cash_flow",
+         "financing_cash_flow",
+         "fx_cash_effect",
+         "opening_cash",
+         "closing_cash",
+         "net_income",
+         "lease_payments_in_financing",
+         "interest_paid_in_financing",
+     ),
+-    "BS": ("rcf_drawn", "rcf_commitment", "net_accounts_receivable", "accounts_payable"),
++    "BS": (
++        "rcf_drawn",
++        "rcf_commitment",
++        "net_accounts_receivable",
++        "accounts_payable",
++        "restricted_cash_noncurrent",
++    ),
+ }
+ # Only identities with the same meaning are linked. IS cash interest/tax are
+ # deliberately not aliases of the CFS cash-paid observations.
+ ACCOUNT_LINKS: dict[tuple[str, str], str] = {
+     **{
+         ("IS", key): key
+         for key in (
+             "revenue",
+             "cogs",
+             "gross_profit",
+diff --git a/tests/test_cash_scope.py b/tests/test_cash_scope.py
+new file mode 100644
+index 00000000..5fbf12f7
+--- /dev/null
++++ b/tests/test_cash_scope.py
+@@ -0,0 +1,535 @@
++"""A declared cash scope: NCF_CASH_MOVEMENT sums the change in each declared scope balance.
++
++The books carry the CZR filing numbers (10-K FY2025, 10-Q Q2 2026). A missing scope balance is an
++absent input, never zero; a book without a declaration is byte-identical to the old contract.
++"""
++
++import hashlib
++from collections.abc import Collection, Mapping
++from datetime import date
++from decimal import Decimal
++from typing import Literal, NamedTuple
++
++import pytest
++from pydantic import ValidationError
++
++from deploy_vii.cash_bridge import cash_bridge_issues
++from deploy_vii.contracts import Citation
++from deploy_vii.financial_contracts import (
++    AccountObservation,
++    CashMovementBridge,
++    CashScope,
++    Disclosure,
++    FinancialBook,
++    FinancialPeriod,
++    Observation,
++    StatementLine,
++)
++from deploy_vii.financial_periods import HistoricalReport, PeriodConstruction, PeriodReference
++from deploy_vii.financial_reconciliation import Reconciliation, _cash_movement
++from deploy_vii.period_reconciliation import PeriodCheck, PeriodTerm, _period_cash
++
++SHA = "a" * 64
++Item = Literal["restricted_cash", "restricted_cash_noncurrent"]
++PeriodKind = Literal["QUARTER", "YTD", "FY", "LTM", "PERIOD_END"]
++Statement = Literal["IS", "CFS", "BS"]
++BOTH: tuple[Item, ...] = ("restricted_cash", "restricted_cash_noncurrent")
++D = Decimal
++# date -> (cash and equivalents, restricted cash, restricted and escrow cash in other LT assets)
++BALANCES = {
++    date(2024, 12, 31): (866, 95, 55),
++    date(2025, 6, 30): (982, 85, 19),
++    date(2025, 12, 31): (887, 85, 12),
++    date(2026, 6, 30): (965, 96, 16),
++}
++BS_QUOTES = {
++    "cash_and_equivalents": "Cash and cash equivalents",
++    "restricted_cash": "Restricted cash",
++    "restricted_cash_noncurrent": "Restricted and escrow cash included in other long-term assets",
++}
++
++
++class Flow(NamedTuple):
++    kind: PeriodKind
++    quarter: int | None
++    year: str
++    start: date
++    end: date
++    ncf: int
++
++
++FLOWS = {
++    "fy-2025": Flow("FY", None, "FY2025", date(2025, 1, 1), date(2025, 12, 31), -32),
++    "h1-2026": Flow("YTD", 2, "FY2026", date(2026, 1, 1), date(2026, 6, 30), 93),
++    "h1-2025": Flow("YTD", 2, "FY2025", date(2025, 1, 1), date(2025, 6, 30), 70),
++}
++NCF_QUOTE = {
++    "fy-2025": "Decrease in cash, cash equivalents and restricted cash | (32) | (127) | (160)",
++    "h1-2026": "Increase in cash, cash equivalents and restricted cash | 93 | 70",
++    "h1-2025": "Increase in cash, cash equivalents and restricted cash | 70 | 12",
++}
++SCOPE_FORMULA = (
++    "closing cash scope - opening cash scope "
++    "(cash_and_equivalents + restricted_cash + restricted_cash_noncurrent) "
++    "- signed source adjustments"
++)
++FY_CASH_LINE = "Cash scope citation must cite the period's CFS cash line naming restricted cash: "
++NONCURRENT_2024 = (date(2024, 12, 31), "restricted_cash_noncurrent")
++MISSING_2024 = (
++    "Declared cash scope balance missing: b-fy-2025 restricted_cash_noncurrent 2024-12-31"
++)
++
++
++def cite(quote: str, locator: str = "page:60") -> Citation:
++    return Citation(source_id="k", source_sha256=SHA, locator=locator, quote=quote)
++
++
++def observation(name: str, amount: int, citation: Citation) -> Observation:
++    return Observation(observation_id=name, status="known", amount=D(amount), citations=(citation,))
++
++
++def period(
++    pid: str,
++    kind: PeriodKind,
++    quarter: int | None,
++    year: str,
++    start: date | None,
++    end: date,
++) -> FinancialPeriod:
++    return FinancialPeriod(
++        period_id=pid,
++        fiscal_year=year,
++        fiscal_quarter=quarter,
++        period_type=kind,
++        start_date=start,
++        end_date=end,
++        day_count=None,
++        audit_status="unaudited",
++        currency="USD",
++        unit="MILLIONS",
++        accounting_basis="US GAAP",
++        entity_perimeter="Consolidated",
++        citations=(cite("period", "page:1"),),
++        limitation="Point-in-time balance sheet date, not a duration" if start is None else None,
++    )
++
++
++def line(
++    lid: str,
++    statement: Statement,
++    item: str,
++    pid: str,
++    amount: int,
++    citation: Citation,
++    *,
++    kind: Literal["detail", "subtotal", "total"] = "detail",
++    priority: int = 1,
++    label: str | None = None,
++) -> StatementLine:
++    return StatementLine(
++        line_id=lid,
++        statement=statement,
++        item_id=item,
++        label=label or item,
++        period_id=pid,
++        display_priority=priority,
++        line_kind=kind,
++        value=observation(f"obs-{lid}", amount, citation),
++    )
++
++
++def unsettled(status: Literal["missing", "not_applicable"], pid: str) -> StatementLine:
++    """A declared noncurrent row that carries no amount, only its reason."""
++    return StatementLine(
++        line_id=f"bs-{status}",
++        statement="BS",
++        item_id="restricted_cash_noncurrent",
++        label="restricted_cash_noncurrent",
++        period_id=pid,
++        display_priority=99,
++        line_kind="detail",
++        value=Observation(
++            observation_id=f"obs-{status}",
++            status=status,
++            amount=None,
++            citations=(),
++            reason="No such balance at that date",
++        ),
++    )
++
++
++def scope_of(items: tuple[Item, ...] = BOTH, citations: tuple[Citation, ...] = ()) -> CashScope:
++    return CashScope(items=items, citations=citations)
++
++
++def bridge(
++    pid: str,
++    items: tuple[Item, ...] | None = BOTH,
++    citations: tuple[Citation, ...] | None = None,
++) -> CashMovementBridge:
++    quote = cite(NCF_QUOTE[pid])
++    return CashMovementBridge(
++        bridge_id=f"b-{pid}",
++        period_id=pid,
++        components=(),
++        explanation="no FX or perimeter adjustment is printed",
++        citations=(quote,),
++        cash_scope=scope_of(items, citations or (quote,)) if items else None,
++    )
++
++
++def book(
++    flows: tuple[str, ...] = ("fy-2025", "h1-2026"),
++    scopes: Mapping[str, tuple[Item, ...] | None] | None = None,
++    *,
++    drop: Collection[tuple[date, str]] = (),
++    extra_lines: tuple[StatementLine, ...] = (),
++    declare: bool = True,
++    ncf_citations: Mapping[str, Citation] | None = None,
++    labels: Mapping[tuple[date, str], str] | None = None,
++) -> FinancialBook:
++    """`scopes` maps a bridged period to its declared items (None: bridge without scope)."""
++    if scopes is None:
++        scopes = {pid: BOTH if declare else None for pid in flows}
++    periods: list[FinancialPeriod] = []
++    lines: list[StatementLine] = []
++    order = 1
++    for day, values in BALANCES.items():
++        pid = f"bs-{day.isoformat()}"
++        periods.append(period(pid, "PERIOD_END", None, f"FY{day.year}", None, day))
++        for item, amount in zip(BS_QUOTES, values, strict=True):
++            if (day, item) in drop:
++                continue
++            quote = cite(f"{BS_QUOTES[item]} | {amount}", "page:61")
++            label = (labels or {}).get((day, item))
++            lines.append(
++                line(f"{pid}-{item}", "BS", item, pid, amount, quote, priority=order, label=label)
++            )
++            order += 1
++    for pid in flows:
++        flow_ = FLOWS[pid]
++        periods.append(period(pid, flow_.kind, flow_.quarter, flow_.year, flow_.start, flow_.end))
++        citation = (ncf_citations or {}).get(pid) or cite(NCF_QUOTE[pid])
++        lines.append(
++            line(
++                f"cfs-ncf-{pid}",
++                "CFS",
++                "net_cash_change",
++                pid,
++                flow_.ncf,
++                citation,
++                kind="total",
++                priority=order,
++            )
++        )
++        order += 1
++    disclosure = Disclosure(
++        status="not_applicable", explanation="none", citations=(cite("none", "page:1"),)
++    )
++    return FinancialBook(
++        book_id="czr",
++        entity_perimeter="Consolidated",
++        accounting_basis="US GAAP",
++        currency="USD",
++        unit="MILLIONS",
++        periods=tuple(periods),
++        accounts=(),
++        addbacks=(),
++        segments=(),
++        kpis=(),
++        facilities=(),
++        pro_forma=(),
++        statement_lines=(*lines, *extra_lines),
++        cash_movement_bridges=tuple(bridge(pid, items) for pid, items in scopes.items()),
++        segment_allocation=(),
++        addback_disclosure=disclosure,
++        segment_disclosure=disclosure,
++    )
++
++
++def signed(check: Reconciliation | PeriodCheck) -> list[Decimal]:
++    return [t.amount * t.coefficient for t in check.components if t.amount is not None]
++
++
++def flow(b: FinancialBook, pid: str) -> FinancialPeriod:
++    return next(p for p in b.periods if p.period_id == pid)
++
++
++def test_declared_fy_2025_sums_the_change_in_each_scope_balance() -> None:
++    b = book()
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert signed(check) == [887, -866, 85, -95, 12, -55]
++    assert check.calculated_value == D(-32)
++    assert check.difference == D(0)
++    assert check.status == "PASS"
++    assert check.formula == SCOPE_FORMULA
++    assert check.cash_movement_bridges == (b.cash_movement_bridges[0],)
++
++
++def test_declared_h1_2026_sums_the_change_in_each_scope_balance() -> None:
++    b = book()
++    check = _cash_movement(b, flow(b, "h1-2026"))
++    assert signed(check) == [965, -887, 96, -85, 16, -12]
++    assert check.calculated_value == D(93)
++    assert check.difference == D(0)
++    assert check.status == "PASS"
++    assert check.formula == SCOPE_FORMULA
++
++
++def test_restricted_cash_only_scope_passes_without_a_noncurrent_balance() -> None:
++    b = book(flows=("fy-2025",), scopes={"fy-2025": ("restricted_cash",)})
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert signed(check) == [887, -866, 85, -95]
++    assert check.calculated_value == D(11)
++    assert check.formula == (
++        "closing cash scope - opening cash scope (cash_and_equivalents + restricted_cash) "
++        "- signed source adjustments"
++    )
++
++
++@pytest.mark.parametrize(
++    ("pid", "calculated", "difference"), [("fy-2025", 21, 53), ("h1-2026", 78, -15)]
++)
++def test_undeclared_scope_keeps_the_cash_only_check(
++    pid: str, calculated: int, difference: int
++) -> None:
++    b = book(declare=False)
++    bridge_ = b.cash_movement_bridges[0 if pid == "fy-2025" else 1]
++    assert bridge_.cash_scope is None
++    assert "cash_scope" not in bridge_.model_dump_json()
++    check = _cash_movement(b, flow(b, pid))
++    assert [t.label for t in check.components] == ["cash_and_equivalents"] * 2
++    assert check.calculated_value == D(calculated)
++    assert check.difference == D(difference)
++    assert check.status == "BLOCK"
++    assert check.formula == "closing cash - opening cash - signed source adjustments"
++
++
++def test_undeclared_scope_without_a_bridge_keeps_the_old_formula() -> None:
++    b = book(scopes={})
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert check.formula == "closing cash - opening cash; no inferred FX or other cash adjustment"
++    assert [t.label for t in check.components] == ["cash_and_equivalents"] * 2
++
++
++def test_a_missing_scope_balance_is_an_absent_input_never_zero() -> None:
++    b = book(drop={NONCURRENT_2024})
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    missing = check.components[5]
++    assert (missing.label, missing.amount, missing.reason) == (
++        "restricted_cash_noncurrent",
++        None,
++        "Not supplied",
++    )
++    assert check.calculated_value is None
++    assert check.difference is None
++    assert check.status == "BLOCK"
++    assert check.explanation == "Missing reported value or complete independent components"
++
++
++def test_a_not_applicable_scope_balance_carries_its_reason() -> None:
++    na = unsettled("not_applicable", "bs-2024-12-31")
++    b = book(drop={NONCURRENT_2024}, extra_lines=(na,))
++    check = _cash_movement(b, flow(b, "fy-2025"))
++    assert check.components[5].amount is None
++    assert check.components[5].reason == "No such balance at that date"
++    assert check.calculated_value is None
++    assert check.status == "BLOCK"
++
++
++def test_cash_scope_contract_refuses_a_quote_that_does_not_name_restricted_cash() -> None:
++    with pytest.raises(ValidationError, match="names restricted cash"):
++        scope_of(BOTH, (cite("Total cash and cash equivalents | 887"),))
++
++
++def test_cash_scope_contract_accepts_the_quote_across_whitespace_and_case() -> None:
++    scope = scope_of(("restricted_cash",), (cite("Increase in cash and Restricted\n  CASH | 93"),))
++    assert scope.items == ("restricted_cash",)
++
++
++def test_cash_scope_contract_refuses_duplicate_items() -> None:
++    with pytest.raises(ValidationError, match="distinct"):
++        scope_of(("restricted_cash", "restricted_cash"), (cite(NCF_QUOTE["fy-2025"]),))
++
++
++def test_a_complete_declared_book_has_no_cash_scope_issue() -> None:
++    assert cash_bridge_issues(book(flows=("fy-2025",))) == ()
++
++
++def test_scope_citation_must_cite_the_period_cfs_cash_line() -> None:
++    other = cite("Net cash used in operating activities, excluding restricted cash | 1")
++    cfo = line("cfs-cfo", "CFS", "cfo_ncfo", "fy-2025", 1, other, kind="total")
++    b = book(flows=("fy-2025",), extra_lines=(cfo,))
++    off = b.model_copy(update={"cash_movement_bridges": (bridge("fy-2025", BOTH, (other,)),)})
++    assert cash_bridge_issues(off) == (FY_CASH_LINE + "b-fy-2025",)
++
++
++def test_scope_citation_met_by_two_different_citations_is_refused() -> None:
++    # One citation is the CFS cash line (no restricted cash named); another names restricted cash.
++    ncf_only = cite("Net decrease in cash and cash equivalents | (32) | (127)")
++    bs_restricted = cite("Restricted cash | 85 | 95", "page:61")
++    b = book(flows=("fy-2025",), declare=False, ncf_citations={"fy-2025": ncf_only})
++    split = b.model_copy(
++        update={"cash_movement_bridges": (bridge("fy-2025", BOTH, (ncf_only, bs_restricted)),)}
++    )
++    assert cash_bridge_issues(split) == (FY_CASH_LINE + "b-fy-2025",)
++
++
++def test_declared_item_without_a_balance_is_refused() -> None:
++    b = book(flows=("fy-2025",), drop={NONCURRENT_2024})
++    assert cash_bridge_issues(b) == (MISSING_2024,)
++
++
++@pytest.mark.parametrize("status", ["not_applicable", "missing"])
++def test_declared_item_with_an_unsettled_row_is_refused(
++    status: Literal["missing", "not_applicable"],
++) -> None:
++    row = unsettled(status, "bs-2024-12-31")
++    b = book(flows=("fy-2025",), drop={NONCURRENT_2024}, extra_lines=(row,))
++    assert cash_bridge_issues(b) == (MISSING_2024,)
++
++
++def test_declared_item_is_required_where_cash_is_only_an_explicit_account() -> None:
++    day = date(2024, 12, 31)
++    cash_cite = cite("Cash and cash equivalents | 866", "page:61")
++    account = AccountObservation(
++        metric_id="cash_and_equivalents",
++        period_id="bs-2024-12-31",
++        value=observation("acct-cash-2024", 866, cash_cite),
++    )
++    b = book(flows=("fy-2025",), drop={(day, "cash_and_equivalents"), NONCURRENT_2024})
++    b = b.model_copy(update={"accounts": (account,)})
++    assert cash_bridge_issues(b) == (MISSING_2024,)
++
++
++def test_declared_item_row_must_be_labelled_restricted() -> None:
++    b = book(flows=("fy-2025",), labels={NONCURRENT_2024: "Other long-term assets, net"})
++    assert cash_bridge_issues(b) == (
++        "Declared cash scope balance must be labelled restricted: "
++        "b-fy-2025 restricted_cash_noncurrent 2024-12-31",
++    )
++
++
++def test_a_book_without_any_declaration_serializes_as_before() -> None:
++    expected = (
++        '{"bridge_id":"b-fy-2025","period_id":"fy-2025","components":[],'
++        '"explanation":"no FX or perimeter adjustment is printed","citations":[{"source_id":"k",'
++        f'"source_sha256":"{SHA}","locator":"page:60","quote":"{NCF_QUOTE["fy-2025"]}"}}]}}'
++    )
++    b = book(declare=False)
++    first = b.cash_movement_bridges[0]
++    assert first.model_dump_json() == expected
++    assert first.content_hash() == hashlib.sha256(expected.encode()).hexdigest()
++    rec = _cash_movement(b, flow(b, "fy-2025"))
++    assert f'"cash_movement_bridges":[{expected}]' in rec.model_dump_json()
++    assert "cash_scope" not in rec.model_dump_json()
++    assert rec.content_hash() == hashlib.sha256(rec.model_dump_json().encode()).hexdigest()
++    pc = constructed(book(flows=tuple(FLOWS), scopes={pid: None for pid in FLOWS}))
++    assert "cash_scope" not in pc.model_dump_json()
++    assert pc.content_hash() == hashlib.sha256(pc.model_dump_json().encode()).hexdigest()
++
++
++def historical(b: FinancialBook, node: PeriodConstruction) -> HistoricalReport:
++    return HistoricalReport(
++        run_id="r",
++        issuer_id="czr",
++        as_of=date(2026, 6, 30),
++        pack_sha256=SHA,
++        review_sha256=SHA,
++        book_id=b.book_id,
++        entity_perimeter=b.entity_perimeter,
++        accounting_basis=b.accounting_basis,
++        currency=b.currency,
++        scale="MILLIONS",
++        periods=b.periods,
++        observations=(),
++        facility_normalizations=(),
++        input_rows=(),
++        columns=(),
++        constructions=(node,),
++        values=(),
++        limitations=(),
++    )
++
++
++def ltm_node() -> PeriodConstruction:
++    terms: tuple[tuple[str, Literal[-1, 1]], ...] = (
++        ("fy-2025", 1),
++        ("h1-2026", 1),
++        ("h1-2025", -1),
++    )
++    return PeriodConstruction(
++        construction_id="ltm-2026-06-30",
++        column_key="ltm",
++        label="LTM",
++        kind="LTM",
++        fiscal_year="FY2026",
++        fiscal_quarter=2,
++        start_date=date(2025, 7, 1),
++        end_date=date(2026, 6, 30),
++        days=365,
++        own_period_id=None,
++        stated_period_id=None,
++        terms=tuple(PeriodReference(kind="period", reference=r, coefficient=c) for r, c in terms),
++        formula="fy-2025 + h1-2026 - h1-2025",
++        limitation=None,
++    )
++
++
++def term(label: str, amount: int) -> PeriodTerm:
++    return PeriodTerm(
++        label=label,
++        value_id=None,
++        amount=D(amount),
++        observation_ids=(),
++        citations=(),
++        reason=None,
++    )
++
++
++def constructed(b: FinancialBook) -> PeriodCheck:
++    node = ltm_node()
++    return _period_cash(
++        b, historical(b, node), node, term("net_cash_change", -9), term("cash_and_equivalents", 965)
++    )
++
++
++def test_constructed_period_sums_scope_balances_at_the_construction_boundaries() -> None:
++    b = book(flows=tuple(FLOWS), scopes={pid: BOTH for pid in FLOWS})
++    check = constructed(b)
++    assert signed(check) == [965, -982, 96, -85, 16, -19]
++    assert check.calculated_value == D(-9)
++    assert check.difference == D(0)
++    assert check.status == "PASS"
++    assert check.formula == (
++        "closing cash scope - opening cash scope "
++        "(cash_and_equivalents + restricted_cash + restricted_cash_noncurrent) "
++        "- signed period combination of source adjustments"
++    )
++    assert [br.bridge_id for br in check.cash_movement_bridges] == [
++        "b-fy-2025",
++        "b-h1-2026",
++        "b-h1-2025",
++    ]
++
++
++def test_constructed_period_refuses_sources_with_different_scopes() -> None:
++    scopes: dict[str, tuple[Item, ...] | None] = {
++        "fy-2025": BOTH,
++        "h1-2026": BOTH,
++        "h1-2025": None,
++    }
++    check = constructed(book(flows=tuple(FLOWS), scopes=scopes))
++    assert check.status == "BLOCK"
++    assert check.calculated_value is None
++    assert "Cash scope differs across source periods: h1-2025" in check.explanation
++
++
++def test_constructed_period_without_any_scope_keeps_the_adjusted_formula_and_bytes() -> None:
++    b = book(flows=tuple(FLOWS), scopes={pid: None for pid in FLOWS})
++    check = constructed(b)
++    assert [t.label for t in check.components[:2]] == ["cash_and_equivalents"] * 2
++    assert check.formula == (
++        "closing cash - opening cash - signed period combination of source adjustments"
++    )
++    assert '"cash_scope"' not in check.model_dump_json()
+diff --git a/tests/test_czr_cash_scope.py b/tests/test_czr_cash_scope.py
+new file mode 100644
+index 00000000..c869202d
+--- /dev/null
++++ b/tests/test_czr_cash_scope.py
+@@ -0,0 +1,126 @@
++"""CZR with the filing's printed cash scope declared: both NCF_CASH_MOVEMENT checks agree.
++
++The recorded partial submission is loaded and extended in memory (the "restricted and escrow cash
++included in other long-term assets" balance, one scope declaration per flow period, and the two
++pages that print the balance); nothing under `cases/**` is edited. The run still stops at the
++calculation gate for the other open checks, so the reconciliation is captured as the audit builds it.
++"""
++
++import copy
++import json
++from decimal import Decimal
++from pathlib import Path
++from typing import Any
++
++import pytest
++from czr_runs import CASE, czr_closed
++
++from deploy_vii import canonical_audit
++from deploy_vii.financial_reconciliation import (
++    Reconciliation,
++    ReconciliationReport,
++    reconcile_financials,
++)
++
++NONCURRENT = "bs-restricted-and-escrow-cash-included-in-other-long-term-assets-net"
++BOTH = ["restricted_cash", "restricted_cash_noncurrent"]
++K_QUOTE = "Restricted and escrow cash included in other long-term assets, net | 12 | 55 | 16"
++Q_QUOTE = "Restricted and escrow cash included in other long-term assets, net | 16 | 19"
++# period -> (amount, source id, locator, quote)
++BALANCES = {
++    "bs-2025-12-31": ("12", "czr-fy2025-10k", "page:61", K_QUOTE),
++    "bs-2024-12-31": ("55", "czr-fy2025-10k", "page:61", K_QUOTE),
++    "bs-2026-06-30": ("16", "czr-q2-2026-10q", "page:10", Q_QUOTE),
++}
++
++
++def _declared(data: dict[str, Any]) -> dict[str, Any]:
++    stage = next(s for s in data["stages"] if s["step"] == "financials")
++    book = stage["submission"]["financial"]["books"][0]
++    shas = {
++        c["source_id"]: c["source_sha256"]
++        for row in book["statement_lines"]
++        for c in row["value"]["citations"]
++    }
++    top = max(row["display_priority"] for row in book["statement_lines"])
++    for period, (amount, source, locator, quote) in BALANCES.items():
++        citation = {
++            "source_id": source,
++            "source_sha256": shas[source],
++            "locator": locator,
++            "quote": quote,
++        }
++        book["statement_lines"].append(
++            {
++                "line_id": NONCURRENT,
++                "statement": "BS",
++                "item_id": "restricted_cash_noncurrent",
++                "label": "Restricted and escrow cash included in other long-term assets, net",
++                "period_id": period,
++                "display_priority": top + 1,
++                "line_kind": "detail",
++                "value": {
++                    "observation_id": f"{NONCURRENT}--{period}",
++                    "status": "known",
++                    "amount": amount,
++                    "citations": [citation],
++                },
++            }
++        )
++    for period in ("fy-2025", "h1-2026"):
++        line = next(
++            r
++            for r in book["statement_lines"]
++            if r["item_id"] == "net_cash_change" and r["period_id"] == period
++        )
++        citation = line["value"]["citations"][0]
++        book["cash_movement_bridges"].append(
++            {
++                "bridge_id": f"bridge-{period}",
++                "period_id": period,
++                "components": [],
++                "explanation": "No FX or perimeter adjustment is printed in the cash flow statement.",
++                "citations": [citation],
++                "cash_scope": {"items": BOTH, "citations": [citation]},
++            }
++        )
++    stage["calls"] += [
++        {
++            "tool": "read_pages",
++            "arguments": {"source_id": "czr-fy2025-10k", "first_page": 61, "last_page": 61},
++        },
++        {
++            "tool": "read_pages",
++            "arguments": {"source_id": "czr-q2-2026-10q", "first_page": 10, "last_page": 10},
++        },
++    ]
++    return data
++
++
++def test_czr_cash_movement_agrees_with_the_declared_scope(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    data = _declared(copy.deepcopy(json.loads((CASE / "submissions-partial.json").read_text())))
++    path = tmp_path / "submissions.json"
++    path.write_text(json.dumps(data), encoding="utf-8")
++    captured: list[ReconciliationReport] = []
++
++    def spy(*args: Any, **kwargs: Any) -> ReconciliationReport:
++        report = reconcile_financials(*args, **kwargs)
++        captured.append(report)
++        return report
++
++    monkeypatch.setattr(canonical_audit, "reconcile_financials", spy)
++    with pytest.raises(RuntimeError):
++        czr_closed(tmp_path / "run", path)
++    assert captured, "the audit never reconciled the financials"
++    checks: dict[str, Reconciliation] = {
++        c.period_id: c for c in captured[-1].checks if c.check_type == "NCF_CASH_MOVEMENT"
++    }
++    for period, calculated in (("fy-2025", Decimal(-32)), ("h1-2026", Decimal(93))):
++        check = checks[period]
++        assert (check.status, check.calculated_value, check.difference) == (
++            "PASS",
++            calculated,
++            Decimal(0),
++        )
+diff --git a/tests/test_report_view_tl10_4.py b/tests/test_report_view_tl10_4.py
+new file mode 100644
+index 00000000..8afd437a
+--- /dev/null
++++ b/tests/test_report_view_tl10_4.py
+@@ -0,0 +1,17 @@
++"""H03: CP-L10 TL10.4 `decision_impact` is stored with the analyst's `{TL10.2...}` reference
++tokens (it reuses TL10.3 `credit_transmission`, which `cpl10._text_issues` validates), so the
++report view resolves it like TL10.3 and shows the figure, never the raw token."""
++
++from test_connect_cpl10 import _tl10_3_facts, _tl10_3_page
++
++
++def test_tl10_4_decision_impact_shows_the_figure_not_the_reference() -> None:
++    _, topic, facts = _tl10_3_facts()
++    page = _tl10_3_page(facts)
++    transmission = page[f"TL10.3.{topic}.credit_transmission"]
++    impact = page[f"TL10.4.{topic}.decision_impact"]
++    for key in ("display", "table_display"):
++        assert "{" not in impact[key]
++        assert impact[key] == "A move of 3.75 US$ m reaches the credit view."
++        assert "3.75 US$ m" in impact[key]
++        assert impact[key] == transmission[key]
+diff --git a/tests/test_source_context_blank.py b/tests/test_source_context_blank.py
+index 611841b8..60db5415 100644
+--- a/tests/test_source_context_blank.py
++++ b/tests/test_source_context_blank.py
+@@ -135,10 +135,39 @@ def test_frozen_cp1_submissions_hold_no_blank_limitation() -> None:
+     """Parity: with no blank limitation in any frozen submission, the new rule adds no issue."""
+     seen = 0
+     for path in sorted((ROOT / "cases").rglob("submissions.json")):
+         for review in _reviews(json.loads(path.read_text())):
+             seen += 1
+             blanks = [text for text in _limitations(review) if is_blank(text)]
+             assert blanks == [], path
+             explanations = [s.get("event_scan_explanation", "x") for s in review["sources"]]
+             assert not any(is_blank(text) for text in explanations), path
+     assert seen > 0
++
++
++@pytest.mark.parametrize("field", ("accounting_basis", "entity_perimeter"))
++@pytest.mark.parametrize("blank", (" ", "\u200b"))
++def test_blank_scope_dimension_is_lacking(field: str, blank: str) -> None:
++    """H09: a blank `accounting_basis` or `entity_perimeter` on a financial historical scope is
++    rule 1's issue, as a null is; it must not pass and settle facts `publish_model` then refuses."""
++    doc = copy.deepcopy(CONTEXT)
++    scope = doc["sources"][1]["scopes"][0]
++    assert scope["period_kind"] in ("historical_duration", "period_end")
++    scope[field] = blank
++    assert _issues(doc) == (f"Financial scope lacks {field}: {scope['scope_id']}",)
++
++
++def test_blank_dimension_beside_stated_sibling_is_lacking_not_disagreement() -> None:
++    """H09: a blank is rule 1's issue alone; rule 2 must not count it as a second stated value."""
++    doc = copy.deepcopy(CONTEXT)
++    scopes = doc["sources"][1]["scopes"]
++    assert len(scopes) > 1
++    assert all(s["accounting_basis"] == "IFRS" for s in scopes)
++    scopes[0]["accounting_basis"] = "\u200b"
++    assert _issues(doc) == (f"Financial scope lacks accounting_basis: {scopes[0]['scope_id']}",)
++
++
++def test_visible_scope_dimensions_give_no_issue() -> None:
++    doc = copy.deepcopy(CONTEXT)
++    scope = doc["sources"][1]["scopes"][0]
++    assert (scope["accounting_basis"], scope["entity_perimeter"]) == ("IFRS", "consolidated group")
++    assert _issues(doc) == ()
+diff --git a/tests/test_statement_extract_d1_d3.py b/tests/test_statement_extract_d1_d3.py
+new file mode 100644
+index 00000000..3e7175b0
+--- /dev/null
++++ b/tests/test_statement_extract_d1_d3.py
+@@ -0,0 +1,186 @@
++"""D1-D3 of the statement extractor (stage 8-vii): omitted candidate lines, year-valued data
++rows and footnote markers. The filed CZR pages must read exactly as they did before."""
++
++import json
++from decimal import Decimal
++from pathlib import Path
++from typing import Any
++
++import pytest
++from czr_runs import make_pack
++
++from deploy_vii.statement_extract import OmittedLine, extract_statement_lines
++
++GOLDEN = json.loads((Path(__file__).parent / "czr_extract_golden.json").read_text("utf-8"))
++
++D2_HEAD = "(In millions)            Years Ended December 31,"
++D2_YEARS = "                              2025        2024"
++D2_PAGE = "\n".join(
++    [
++        "CONSOLIDATED STATEMENTS OF OPERATIONS",
++        D2_HEAD,
++        D2_YEARS,
++        "Net revenues                  2025        1998",
++        "Cost of revenues  (1)          900         800",
++        "Operating income               1125        1198",
++        "Weighted average shares        2010        1985",
++        "Net income                      700         650",
++    ]
++)
++
++D1_HEAD = "                         December 31, 2025    December 31, 2024"
++D1_PAGE = "\n".join(
++    [
++        "CONSOLIDATED BALANCE SHEETS",
++        D1_HEAD,
++        "Cash and equivalents  (1)          500             400",
++        "Goodwill                           120",
++        "Inventories                        n/m             300",
++        "Total assets 9,100 8,900",
++        "Total liabilities                  4,000           3,900",
++    ]
++)
++
++
++def test_d2_year_valued_rows_are_data_and_headers_stay_clean() -> None:
++    table = extract_statement_lines(D2_PAGE, "page:1")
++    assert table.headers == (D2_HEAD, D2_YEARS)
++    by_label = {line.label: line for line in table.lines}
++    assert by_label["Net revenues"].raw_values == ("2025", "1998")
++    assert by_label["Net revenues"].values == (Decimal(2025), Decimal(1998))
++    assert by_label["Weighted average shares"].raw_values == ("2010", "1985")
++    assert [line.label for line in table.lines] == [
++        "Net revenues",
++        "Cost of revenues",
++        "Operating income",
++        "Weighted average shares",
++        "Net income",
++    ]
++
++
++@pytest.mark.parametrize(
++    "caption",
++    [
++        "(In millions, except per share data)",
++        "(Dollars in millions, except par value)",
++        "Year ended December 31",
++        "Three Months Ended June 30,",
++        "$ in thousands",
++        "",
++    ],
++)
++def test_d2_period_and_unit_labels_stay_headers(caption: str) -> None:
++    year_row = f"{caption}  2026  2025"
++    page = f"ASSETS\n{year_row}\nCash and equivalents   10   20"
++    table = extract_statement_lines(page, "page:1")
++    assert table.headers == (year_row,)
++    assert [line.label for line in table.lines] == ["Cash and equivalents"]
++
++
++def test_d2_other_label_makes_a_year_row_data() -> None:
++    table = extract_statement_lines("Net revenues  2025  1998", "page:1")
++    assert [(line.label, line.raw_values) for line in table.lines] == [
++        ("Net revenues", ("2025", "1998"))
++    ]
++    assert table.headers == ()
++
++
++def test_d3_footnote_marker_is_dropped_and_flagged() -> None:
++    table = extract_statement_lines(D2_PAGE, "page:1")
++    cost = next(line for line in table.lines if line.label == "Cost of revenues")
++    assert cost.raw_values == ("900", "800")
++    assert cost.values == (Decimal(900), Decimal(800))
++    assert cost.flags == ("footnote_marker",)
++    others = [line for line in table.lines if line is not cost]
++    assert all(line.flags == () for line in others)
++
++
++def test_d3_without_header_years_the_marker_still_reads_as_minus_one() -> None:
++    page = "Cost of revenues  (1)  900  800"
++    (line,) = extract_statement_lines(page, "page:1").lines
++    assert line.raw_values == ("(1)", "900", "800")
++    assert line.values == (Decimal(-1), Decimal(900), Decimal(800))
++    assert line.flags == ()
++
++
++def test_d3_three_digit_parenthesis_and_dollar_first_cell_are_values() -> None:
++    page = "\n".join(
++        [
++            "Year ended December 31  2025  2024",
++            "Alpha  (123)  900  800",
++            "Beta  $ (1)  900  800",
++        ]
++    )
++    alpha, beta = extract_statement_lines(page, "page:1").lines
++    assert alpha.raw_values == ("(123)", "900", "800")
++    assert alpha.flags == ("more_values_than_header_years",)
++    assert beta.raw_values == ("(1)", "900", "800")
++    assert beta.flags == ("more_values_than_header_years",)
++
++
++def test_d1_unparsed_candidate_lines_are_omitted_in_page_order() -> None:
++    table = extract_statement_lines(D1_PAGE, "page:1")
++    assert table.omitted == (
++        OmittedLine(line_no=4, text="Goodwill                           120"),
++        OmittedLine(line_no=5, text="Inventories                        n/m             300"),
++        OmittedLine(line_no=6, text="Total assets 9,100 8,900"),
++    )
++
++
++def test_d1_clean_page_and_lone_page_number_omit_nothing() -> None:
++    clean = "\n".join(
++        [
++            "ASSETS",
++            "June 30, 2026 | December 31, 2025",
++            "Cash | 1 | 2",
++            "NOTES",
++            "June 30, 2026 | December 31, 2025",
++            "12",
++        ]
++    )
++    assert extract_statement_lines(clean, "page:1").omitted == ()
++    assert extract_statement_lines(D2_PAGE, "page:1").omitted == ()
++
++
++def test_d1_single_value_month_row_is_a_candidate() -> None:
++    page = "Cash  1  2\nBalance at December 31, 2024   1,234\r"
++    table = extract_statement_lines(page, "page:1")
++    assert table.omitted == (OmittedLine(line_no=2, text="Balance at December 31, 2024   1,234"),)
++
++
++def _golden_id(entry: dict[str, Any]) -> str:
++    return f"{entry['source_id']}-{entry['locator']}"
++
++
++@pytest.mark.parametrize("entry", GOLDEN, ids=_golden_id)
++def test_filed_czr_pages_read_as_they_did_before(entry: dict[str, Any]) -> None:
++    pack = make_pack()
++    source = next(s for s in pack.sources if s.source_id == entry["source_id"])
++    text = next(s.text for s in source.spans if s.locator == entry["locator"])
++    table = extract_statement_lines(text, entry["locator"], entry["source_id"])
++    assert list(table.headers) == entry["headers"]
++    got = [
++        {
++            "line_no": line.line_no,
++            "label": line.label,
++            "raw_values": list(line.raw_values),
++            "values": [None if v is None else str(v) for v in line.values],
++            "indent": line.indent,
++            "caption": line.caption,
++            "flags": list(line.flags),
++        }
++        for line in table.lines
++    ]
++    assert got == entry["lines"]
++
++
++@pytest.mark.parametrize("separator", ["- | - | -", "| - | - |", "  —  |  —  "])
++def test_d1_separator_row_of_nil_dashes_and_pipes_is_not_a_candidate(separator: str) -> None:
++    page = f"ASSETS\nCash  1  2\n{separator}\nDebt  3  4"
++    assert extract_statement_lines(page, "page:1").omitted == ()
++
++
++def test_d1_labelled_single_nil_row_stays_a_candidate() -> None:
++    row = "Goodwill                           —"
++    table = extract_statement_lines(f"Cash  1  2\n{row}", "page:1")
++    assert table.omitted == (OmittedLine(line_no=2, text=row),)

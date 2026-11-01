@@ -1,0 +1,85 @@
+name: pr
+
+on: pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          version: "0.12.5"
+          python-version: "3.13.15"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Scope
+        run: uv run --frozen python -I cases/prove/scope.py "$BASE" HEAD
+      - name: Pins
+        run: uv run --frozen python -I cases/pins.py --check
+      - name: Goldens
+        run: uv run --frozen python -I cases/goldens/check.py cases/goldens/*/
+      - name: Lint and types on changed files
+        run: |
+          set -euo pipefail
+          changed=$(git diff --name-only --diff-filter=d "$BASE...HEAD" -- '*.py' \
+            | grep -v '^src/deploy_vii/' || true)
+          typed=$(printf '%s\n' "$changed" \
+            | grep -E '^(src/deploy_workflow/|cases/prove/)' || true)
+          if [ -n "$changed" ]; then
+            echo "$changed" | xargs uv run --frozen ruff check
+            echo "$changed" | xargs uv run --frozen ruff format --check
+          else
+            echo "no changed python files for ruff"
+          fi
+          if [ -n "$typed" ]; then
+            echo "$typed" | xargs uv run --frozen mypy --follow-imports=silent
+          else
+            echo "no changed python files for mypy"
+          fi
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          version: "0.12.5"
+          python-version: "3.13.15"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Affected fast tests
+        run: |
+          set -euo pipefail
+          files=$(uv run --frozen python -I cases/prove/affected_tests.py --tier fast "$BASE" HEAD)
+          if [ -z "$files" ]; then
+            echo "no affected fast tests"
+            exit 0
+          fi
+          rc=0
+          # shellcheck disable=SC2086
+          uv run --frozen pytest $files -m "not live" --durations=25 || rc=$?
+          if [ "$rc" -eq 5 ]; then
+            echo "all selected tests deselected by -m 'not live'"
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi

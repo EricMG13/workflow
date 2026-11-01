@@ -1,0 +1,304 @@
+6673b51a fix: D2 D3 fix 2
+09e2392f test: RED D2 D3 fix 2
+ src/deploy_vii/statement_extract.py   | 42 +++++++++++++++++++--------
+ tests/test_statement_extract_d1_d3.py | 53 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 84 insertions(+), 11 deletions(-)
+diff --git a/src/deploy_vii/statement_extract.py b/src/deploy_vii/statement_extract.py
+index f913d855..3e582327 100644
+--- a/src/deploy_vii/statement_extract.py
++++ b/src/deploy_vii/statement_extract.py
+@@ -20,41 +20,42 @@ Rules (docs/development/live-runner.md, "Statement extraction"):
+   before a number, alone or attached, is folded into it and not kept in the raw value.
+ - A single cell of text with no digit and a lowercase letter, not ending in `:`, directly above
+   a data line (no blank line between) continues its label; such lines join the label with one
+   space and the indent is the first line's. A line ending in `:` is a sub-heading, not joined.
+ - A line with a letter, no lowercase letter and no digit is a caption; it applies to the data
+   lines that follow until the next caption.
+ - `headers` are the raw lines nearest above the first data line holding two or more four-digit
+   years or a month name, with the adjacent such lines above them (blank lines between allowed).
+ - A line whose numeric cells are all bare four-digit years from 1900 to 2099 with no `$` is a
+   header line, not data, only when its label is empty, wholly parenthesised (`(In millions)`),
+-  or made only of month names, period words (`Year ended December 31`) and unit or scale words
+-  (`in millions, except per share data`). Any other label makes it a data line, read like any
++  or made only of month names, period words (`Year ended December 31`, `Notes`) and unit or scale
++  words (`in millions, except per share data`). Any other label makes it a data line, read like any
+   other (`Net revenues  2025  1998`), so `headers` never holds a returned data line.
+ - `omitted` lists, in page order, each candidate line the rules did not return as data: a
+   non-blank line of two or more whitespace-separated tokens (after the pipe rewrite) whose
+   last token is a numeric cell and which holds a letter or digit (a row of only nil dashes and
+   pipes is a separator), that is neither a returned data line, a returned header line
+   nor a header-shaped line ending in a bare four-digit year (a second table's period row). A
+   lone token (a page number) is never a candidate.
+ 
+ Flags (task 8.10b, review risks 1-2) inform the model and never drop a line:
+ 
+ - `more_values_than_header_years`: the line has more numeric cells than the table's header
+   lines hold four-digit years (counted over all header lines; none counted when the headers
+   name no year). A footnote marker `(1)` two spaces before the values reads as a value of -1.
+ - `label_ends_numeric`: the label's last token is a numeric cell (`1,234`, `$5`, `(12)`, a nil
+   dash). Two numbers one space apart are one text cell, so the scan stops there and they stay
+   in the label; a label ending in a year (`Balance, January 1, 2023`) is flagged too.
+ - `footnote_marker`: the header lines hold N > 0 four-digit years and the line has N + 1 raw
+-  values whose first is `(n)` (one or two digits, no `$`): that first cell is a footnote
+-  marker, dropped from `raw_values` and `values` (the label is unchanged), and the line does
++  values whose first is `(n)` (one or two digits, no `$`) and ends left of the column where the
++  leftmost four-digit year of the header lines starts (both read after the pipe rewrite): that
++  first cell is a footnote marker, dropped from `raw_values` and `values` (the label is unchanged), and the line does
+   not also get `more_values_than_header_years`. With no year in the headers the marker still
+   reads as -1 and is flagged as above.
+ 
+ `ExtractedTable.source_id` names the table's source: `extract_pack_statements` sets it and
+ binds locators per source, so two sources may share a locator; `extract_statement_lines` sets
+ it only when given one.
+ """
+ 
+ import re
+ from collections.abc import Iterable, Mapping, Sequence
+@@ -78,21 +79,21 @@ _MONTH_NAMES = (
+ )
+ _MONTHS = frozenset((*_MONTH_NAMES, *(name.upper() for name in _MONTH_NAMES)))
+ _FOOTNOTE = re.compile(r"\(\d{1,2}\)")
+ _HEADER_WORDS = frozenset(
+     (
+         *(name.lower() for name in _MONTH_NAMES),
+         *("year", "years", "ended", "ending", "fiscal", "month", "months", "week", "weeks"),
+         *("quarter", "quarters", "period", "periods", "three", "six", "nine", "twelve"),
+         *("for", "the", "as", "of", "at", "and"),
+         *("in", "millions", "thousands", "billions", "dollars", "usd", "except", "per"),
+-        *("share", "data", "par", "value", "amounts", "unaudited"),
++        *("share", "data", "par", "value", "amounts", "unaudited", "note", "notes"),
+     )
+ )
+ LineFlag = Literal["more_values_than_header_years", "label_ends_numeric", "footnote_marker"]
+ MORE_VALUES_THAN_HEADER_YEARS: LineFlag = "more_values_than_header_years"
+ LABEL_ENDS_NUMERIC: LineFlag = "label_ends_numeric"
+ FOOTNOTE_MARKER: LineFlag = "footnote_marker"
+ 
+ 
+ @dataclass(frozen=True)
+ class ExtractedLine:
+@@ -132,59 +133,63 @@ class ExtractedTable:
+     source_id: str | None = None
+     omitted: tuple[OmittedLine, ...] = ()
+ 
+ 
+ @dataclass(frozen=True)
+ class _Cells:
+     label: str
+     raw_values: tuple[str, ...]
+     values: tuple[Decimal | None, ...]
+     first_dollar: bool  # a `$` is folded into the first cell
++    first_end: int  # the column where the first cell ends, in the line as read
+ 
+ 
+ def _value(raw: str) -> Decimal | None:
+     if raw in _NILS:
+         return None
+     if raw.startswith("("):
+         # Built from the string, never by negation: `-Decimal` would round to the context.
+         return Decimal("-" + raw[1:-1].replace(",", ""))
+     return Decimal(raw.replace(",", ""))
+ 
+ 
+ def _cells(line: str) -> _Cells | None:
+     """The label and trailing numeric cells of a data line, or None for any other line."""
+     if "|" in line:
+         line = _PIPE.sub("  ", line)
+     found: list[tuple[str, bool]] = []  # (raw, a `$` is folded in), right to left
+     start = len(line)
++    first_end = start
+     for cell in reversed(list(_CELL.finditer(line))):
+         text = cell.group()
+         if text == "$" and found and not found[-1][1]:
+             found[-1] = (found[-1][0], True)
+         elif match := _NUMERIC_CELL.fullmatch(text):
+             found.append((match["raw"], match["dollar"] is not None))
++            first_end = cell.end()
+         else:
+             break
+         start = cell.start()
+     label = line[:start].strip()
+     if len(found) < 2 or not _WORD.search(label):
+         return None
+     if _is_period_label(label) and all(
+         _BARE_YEAR.fullmatch(raw) and not dollar for raw, dollar in found
+     ):
+         return None
+     raws = tuple(raw for raw, _ in reversed(found))
+     return _Cells(
+         label=label,
+         raw_values=raws,
+         values=tuple(_value(raw) for raw in raws),
+         first_dollar=found[-1][1],
++        first_end=first_end,
+     )
+ 
+ 
+ def _is_period_label(label: str) -> bool:
+     """A label that makes a line of only bare years a header line (module docstring)."""
+     return (
+         not label
+         or (label.startswith("(") and label.endswith(")"))
+         or all(word.lower() in _HEADER_WORDS for word in _WORD.findall(label))
+     )
+@@ -247,71 +252,86 @@ def _flags(line: ExtractedLine, years: int, footnote: bool) -> tuple[LineFlag, .
+     flags: list[LineFlag] = []
+     if years and len(line.raw_values) > years:
+         flags.append(MORE_VALUES_THAN_HEADER_YEARS)
+     if _label_ends_numeric(line.label):
+         flags.append(LABEL_ENDS_NUMERIC)
+     if footnote:
+         flags.append(FOOTNOTE_MARKER)
+     return tuple(flags)
+ 
+ 
+-def _footnote_marker(line: ExtractedLine, first_dollar: bool, years: int) -> bool:
++def _year_column(headers: Sequence[str]) -> int | None:
++    """The column where the leftmost four-digit year of the header lines starts."""
++    starts = [
++        match.start()
++        for header in headers
++        if (match := _YEAR.search(_PIPE.sub("  ", header) if "|" in header else header))
++    ]
++    return min(starts, default=None)
++
++
++def _footnote_marker(
++    line: ExtractedLine, cells: _Cells, years: int, year_column: int | None
++) -> bool:
+     return (
+         years > 0
++        and year_column is not None
++        and cells.first_end < year_column
+         and len(line.raw_values) == years + 1
+-        and not first_dollar
++        and not cells.first_dollar
+         and _FOOTNOTE.fullmatch(line.raw_values[0]) is not None
+     )
+ 
+ 
+ def extract_statement_lines(
+     text: str, locator: str, source_id: str | None = None
+ ) -> ExtractedTable:
+     """The printed data lines of one page's text (module docstring rules); prose yields none."""
+     lines = [line.removesuffix("\r") for line in text.split("\n")]
+     found: list[ExtractedLine] = []
+-    first_dollars: list[bool] = []
++    read: list[_Cells] = []
+     first: int | None = None
+     caption: str | None = None
+     pending: list[str] = []  # continuation lines directly above the current line
+     for index, line in enumerate(lines):
+         stripped = line.strip()
+         cells = _cells(line)
+         if cells is not None:
+             first = index if first is None else first
+             head = pending[0] if pending else line
+             found.append(
+                 ExtractedLine(
+                     locator=locator,
+                     line_no=index + 1,
+                     label=" ".join((*(part.strip() for part in pending), cells.label)),
+                     raw_values=cells.raw_values,
+                     values=cells.values,
+                     indent=len(head) - len(head.lstrip()),
+                     caption=caption,
+                 )
+             )
+-            first_dollars.append(cells.first_dollar)
++            read.append(cells)
+             pending = []
+         elif _is_caption(stripped):
+             caption = stripped
+             pending = []
+         elif _is_continuation(stripped):
+             pending.append(line)
+         else:
+             pending = []
+     header_at = () if first is None else _header_indexes(lines, first)
+     headers = tuple(lines[index] for index in header_at)
+     years = sum(len(_YEAR.findall(header)) for header in headers)
+     flagged: list[ExtractedLine] = []
+-    for printed, first_dollar in zip(found, first_dollars, strict=True):
+-        footnote = _footnote_marker(printed, first_dollar, years)
++    year_column = _year_column(headers)
++    for printed, parsed in zip(found, read, strict=True):
++        footnote = _footnote_marker(printed, parsed, years, year_column)
+         data = (
+             replace(printed, raw_values=printed.raw_values[1:], values=printed.values[1:])
+             if footnote
+             else printed
+         )
+         flagged.append(replace(data, flags=_flags(data, years, footnote)))
+     kept = {line.line_no - 1 for line in found}.union(header_at)
+     omitted = tuple(
+         OmittedLine(line_no=index + 1, text=text)
+         for index, text in enumerate(lines)
+diff --git a/tests/test_statement_extract_d1_d3.py b/tests/test_statement_extract_d1_d3.py
+index 3e7175b0..3f8d950d 100644
+--- a/tests/test_statement_extract_d1_d3.py
++++ b/tests/test_statement_extract_d1_d3.py
+@@ -177,10 +177,63 @@ def test_filed_czr_pages_read_as_they_did_before(entry: dict[str, Any]) -> None:
+ @pytest.mark.parametrize("separator", ["- | - | -", "| - | - |", "  —  |  —  "])
+ def test_d1_separator_row_of_nil_dashes_and_pipes_is_not_a_candidate(separator: str) -> None:
+     page = f"ASSETS\nCash  1  2\n{separator}\nDebt  3  4"
+     assert extract_statement_lines(page, "page:1").omitted == ()
+ 
+ 
+ def test_d1_labelled_single_nil_row_stays_a_candidate() -> None:
+     row = "Goodwill                           —"
+     table = extract_statement_lines(f"Cash  1  2\n{row}", "page:1")
+     assert table.omitted == (OmittedLine(line_no=2, text=row),)
++
++
++def test_d3_first_value_under_a_change_column_is_not_a_footnote_marker() -> None:
++    year_row = "                                    2025        2024      Change"
++    page = "\n".join(
++        [
++            "                                    Year ended December 31,",
++            year_row,
++            "Revenues                            1,200       1,000       200",
++            "Other income (expense), net           (12)         (8)        (4)",
++            "Income tax benefit (provision)        (5)         10        (15)",
++        ]
++    )
++    table = extract_statement_lines(page, "page:1")
++    assert table.headers == (page.split("\n")[0], year_row)
++    assert [(line.label, line.raw_values, line.flags) for line in table.lines] == [
++        ("Revenues", ("1,200", "1,000", "200"), ("more_values_than_header_years",)),
++        (
++            "Other income (expense), net",
++            ("(12)", "(8)", "(4)"),
++            ("more_values_than_header_years",),
++        ),
++        (
++            "Income tax benefit (provision)",
++            ("(5)", "10", "(15)"),
++            ("more_values_than_header_years",),
++        ),
++    ]
++
++
++def test_d3_marker_right_of_the_first_year_column_is_a_value() -> None:
++    page = "Year ended December 31  2025  2024\nCost of revenues  900  (1)  800"
++    (line,) = extract_statement_lines(page, "page:1").lines
++    assert line.raw_values == ("900", "(1)", "800")
++    assert line.flags == ("more_values_than_header_years",)
++
++
++def test_d2_notes_header_row_stays_a_header() -> None:
++    year_row = "                       Notes        2025        2024"
++    page = "\n".join(
++        [
++            "CONSOLIDATED INCOME STATEMENT",
++            year_row,
++            "Revenue                    4       1,200       1,000",
++            "Cost of sales                       (700)       (600)",
++        ]
++    )
++    table = extract_statement_lines(page, "page:1")
++    assert table.headers == (year_row,)
++    assert [(line.label, line.raw_values, line.flags) for line in table.lines] == [
++        ("Revenue", ("4", "1,200", "1,000"), ("more_values_than_header_years",)),
++        ("Cost of sales", ("(700)", "(600)"), ()),
++    ]

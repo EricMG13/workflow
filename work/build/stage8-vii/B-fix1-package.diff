@@ -1,0 +1,142 @@
+4ed0f63c fix: D1-D3 fix 1
+4cd7357f test: RED D1 fix 1
+ src/deploy_vii/statement_extract.py   | 18 +++++++++++-------
+ tests/test_statement_extract_d1_d3.py | 12 ++++++++++++
+ 2 files changed, 23 insertions(+), 7 deletions(-)
+diff --git a/src/deploy_vii/statement_extract.py b/src/deploy_vii/statement_extract.py
+index 7dd76abc..f913d855 100644
+--- a/src/deploy_vii/statement_extract.py
++++ b/src/deploy_vii/statement_extract.py
+@@ -25,21 +25,22 @@ Rules (docs/development/live-runner.md, "Statement extraction"):
+   lines that follow until the next caption.
+ - `headers` are the raw lines nearest above the first data line holding two or more four-digit
+   years or a month name, with the adjacent such lines above them (blank lines between allowed).
+ - A line whose numeric cells are all bare four-digit years from 1900 to 2099 with no `$` is a
+   header line, not data, only when its label is empty, wholly parenthesised (`(In millions)`),
+   or made only of month names, period words (`Year ended December 31`) and unit or scale words
+   (`in millions, except per share data`). Any other label makes it a data line, read like any
+   other (`Net revenues  2025  1998`), so `headers` never holds a returned data line.
+ - `omitted` lists, in page order, each candidate line the rules did not return as data: a
+   non-blank line of two or more whitespace-separated tokens (after the pipe rewrite) whose
+-  last token is a numeric cell, that is neither a returned data line, a returned header line
++  last token is a numeric cell and which holds a letter or digit (a row of only nil dashes and
++  pipes is a separator), that is neither a returned data line, a returned header line
+   nor a header-shaped line ending in a bare four-digit year (a second table's period row). A
+   lone token (a page number) is never a candidate.
+ 
+ Flags (task 8.10b, review risks 1-2) inform the model and never drop a line:
+ 
+ - `more_values_than_header_years`: the line has more numeric cells than the table's header
+   lines hold four-digit years (counted over all header lines; none counted when the headers
+   name no year). A footnote marker `(1)` two spaces before the values reads as a value of -1.
+ - `label_ends_numeric`: the label's last token is a numeric cell (`1,234`, `$5`, `(12)`, a nil
+   dash). Two numbers one space apart are one text cell, so the scan stops there and they stay
+@@ -73,24 +74,25 @@ _WORD = re.compile(r"[A-Za-z]+")
+ _PIPE = re.compile(r"[ \t]*\|[ \t]*")
+ _MONTH_NAMES = (
+     *("January", "February", "March", "April", "May", "June", "July", "August"),
+     *("September", "October", "November", "December"),
+ )
+ _MONTHS = frozenset((*_MONTH_NAMES, *(name.upper() for name in _MONTH_NAMES)))
+ _FOOTNOTE = re.compile(r"\(\d{1,2}\)")
+ _HEADER_WORDS = frozenset(
+     (
+         *(name.lower() for name in _MONTH_NAMES),
+-        *"year years ended ending fiscal month months week weeks quarter quarters".split(),
+-        *"period periods three six nine twelve for the as of at and".split(),
+-        *"in millions thousands billions dollars usd except per share data par value".split(),
+-        *("amounts", "unaudited"),
++        *("year", "years", "ended", "ending", "fiscal", "month", "months", "week", "weeks"),
++        *("quarter", "quarters", "period", "periods", "three", "six", "nine", "twelve"),
++        *("for", "the", "as", "of", "at", "and"),
++        *("in", "millions", "thousands", "billions", "dollars", "usd", "except", "per"),
++        *("share", "data", "par", "value", "amounts", "unaudited"),
+     )
+ )
+ LineFlag = Literal["more_values_than_header_years", "label_ends_numeric", "footnote_marker"]
+ MORE_VALUES_THAN_HEADER_YEARS: LineFlag = "more_values_than_header_years"
+ LABEL_ENDS_NUMERIC: LineFlag = "label_ends_numeric"
+ FOOTNOTE_MARKER: LineFlag = "footnote_marker"
+ 
+ 
+ @dataclass(frozen=True)
+ class ExtractedLine:
+@@ -221,20 +223,22 @@ def _header_indexes(lines: Sequence[str], first: int) -> tuple[int, ...]:
+     block: list[int] = []
+     while index >= 0 and (_is_header(lines[index]) or not lines[index].strip()):
+         if lines[index].strip():
+             block.append(index)
+         index -= 1
+     return tuple(reversed(block))
+ 
+ 
+ def _is_omitted_candidate(line: str) -> bool:
+     tokens = (_PIPE.sub("  ", line) if "|" in line else line).split()
++    if not any(c.isalnum() for c in line):
++        return False  # a separator row of nil dashes and pipes
+     if len(tokens) < 2 or not _NUMERIC_CELL.fullmatch(tokens[-1]):
+         return False
+     # A second table's period row (`June 30, 2026 | December 31, 2025`) is not a lost value.
+     return not (_is_header(line) and _BARE_YEAR.fullmatch(tokens[-1]))
+ 
+ 
+ def _label_ends_numeric(label: str) -> bool:
+     tokens = label.split()
+     return bool(tokens) and _NUMERIC_CELL.fullmatch(tokens[-1]) is not None
+ 
+@@ -294,26 +298,26 @@ def extract_statement_lines(
+         elif _is_continuation(stripped):
+             pending.append(line)
+         else:
+             pending = []
+     header_at = () if first is None else _header_indexes(lines, first)
+     headers = tuple(lines[index] for index in header_at)
+     years = sum(len(_YEAR.findall(header)) for header in headers)
+     flagged: list[ExtractedLine] = []
+     for printed, first_dollar in zip(found, first_dollars, strict=True):
+         footnote = _footnote_marker(printed, first_dollar, years)
+-        line = (
++        data = (
+             replace(printed, raw_values=printed.raw_values[1:], values=printed.values[1:])
+             if footnote
+             else printed
+         )
+-        flagged.append(replace(line, flags=_flags(line, years, footnote)))
++        flagged.append(replace(data, flags=_flags(data, years, footnote)))
+     kept = {line.line_no - 1 for line in found}.union(header_at)
+     omitted = tuple(
+         OmittedLine(line_no=index + 1, text=text)
+         for index, text in enumerate(lines)
+         if index not in kept and _is_omitted_candidate(text)
+     )
+     return ExtractedTable(
+         locator=locator,
+         headers=headers,
+         lines=tuple(flagged),
+diff --git a/tests/test_statement_extract_d1_d3.py b/tests/test_statement_extract_d1_d3.py
+index f3d81e2a..3e7175b0 100644
+--- a/tests/test_statement_extract_d1_d3.py
++++ b/tests/test_statement_extract_d1_d3.py
+@@ -165,10 +165,22 @@ def test_filed_czr_pages_read_as_they_did_before(entry: dict[str, Any]) -> None:
+             "label": line.label,
+             "raw_values": list(line.raw_values),
+             "values": [None if v is None else str(v) for v in line.values],
+             "indent": line.indent,
+             "caption": line.caption,
+             "flags": list(line.flags),
+         }
+         for line in table.lines
+     ]
+     assert got == entry["lines"]
++
++
++@pytest.mark.parametrize("separator", ["- | - | -", "| - | - |", "  —  |  —  "])
++def test_d1_separator_row_of_nil_dashes_and_pipes_is_not_a_candidate(separator: str) -> None:
++    page = f"ASSETS\nCash  1  2\n{separator}\nDebt  3  4"
++    assert extract_statement_lines(page, "page:1").omitted == ()
++
++
++def test_d1_labelled_single_nil_row_stays_a_candidate() -> None:
++    row = "Goodwill                           —"
++    table = extract_statement_lines(f"Cash  1  2\n{row}", "page:1")
++    assert table.omitted == (OmittedLine(line_no=2, text=row),)

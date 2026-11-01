@@ -4,7 +4,7 @@ description: Use at each stage close or after a comparison changes in Deploy Wor
 ---
 # audit-prove-it
 
-The controller runs this skill. Mutations are never committed or pushed.
+The controller runs this skill. Mutations are never pushed or kept.
 
 1. **Target.** A `src/` file changed since the last audit (lane ledger); prefer money,
    ordering and receipt code.

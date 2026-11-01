@@ -29,7 +29,7 @@ and builder are three different agents (CLAUDE.md, Verifier gate).
    - evaluator judgment, only for rows no script decides: a fresh agent, told nothing about
      the build, inspects the surface; the controller drives the built-in browser for it.
 4. **Stop for the owner's approval of the table.**
-5. **Key.** The oracle preparer writes any new key under `cases/`, adds it to
+5. **Key.** The oracle preparer (`mx-feature`) writes any new key under `cases/`, adds it to
    `cases/pins.py` PATTERNS and re-pins, in a commit that touches no `src/` or `tests/` file.
    `mx-precise` reviews the key without reading the build.
 6. **Comparison.** The verifier author (`mx-feature`, not the builder) writes
@@ -37,8 +37,7 @@ and builder are three different agents (CLAUDE.md, Verifier gate).
    `<surface>: <key path>: expected <x>, got <y>`) and, when the check is reusable, a
    `.claude/skills/prove-<surface>/SKILL.md` naming when to run it and its exact argv.
    `mx-precise` reviews it.
-7. **Smoke.** The controller plants one bug the comparison must catch, confirms exit 1,
-   and reverts it.
+7. **Smoke.** A planter agent (`mx-feature`) plants one bug the comparison must catch, uncommitted; the controller confirms exit 1; the planter reverts it.
 8. **Record.** Fill the plan's Comparison column with the argv. A comparison over 5 minutes
    goes into `HEAVY` in `cases/prove/affected_tests.py`.
 

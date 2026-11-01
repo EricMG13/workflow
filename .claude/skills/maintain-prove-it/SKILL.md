@@ -15,7 +15,7 @@ The controller runs this skill and writes no code.
 3. **Fix the class.** The verifier author upgrades the comparison for the whole class, not
    the instance (the `tests/defect_classes.py` pattern: one shared case every module runs).
 4. **Red.** The controller confirms the upgraded comparison fails on the unfixed code.
-5. **Fix.** Only then is the product fix dispatched. Done is the comparison exiting 0.
+5. **Fix.** Only then is the product fix dispatched. Done is the gates and the comparison exiting 0. The verifier upgrade is its own task and does not use the product fix's rounds.
 6. **Ledger.** `escaped=<bug> gap=<class> verifier=<commit>` in the lane ledger.
 
 Never add a CLAUDE.md or AGENTS.md rule for the instance.

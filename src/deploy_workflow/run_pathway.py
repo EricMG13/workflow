@@ -97,10 +97,11 @@ MAX_OUTPUT_TOKENS = 98_304
 # measurements (pilot sol 4.314 and 4.317; Deploy VII sol min 4.885 over 36 calls) but it is not
 # below every measurement. The figures are per request and cumulative (the whole request is
 # resent each call). Run 2's non-ciphertext text measured 3.02 bytes per token cumulative and
-# 2.51-2.64 per financials call, so 3.0 has little slack there. T11 counts encrypted reasoning at
-# half its bytes, which shrinks that slack further: at call-19 size it falls from 30,808 to
-# 11,920 tokens (pinned table `cases/pilot-fixes/encrypted-reasoning-table.md`, on Modules'
-# branch `claude/cp1h-estimator-oracle`; it is not on this branch). A request over 272K true
+# 2.51-2.64 per financials call, so 3.0 has little slack there. T11 (on the same branch) counts
+# encrypted reasoning at half its bytes, which shrinks that slack further: at call-19 size it
+# falls from 30,808 to 11,920 tokens (pinned table
+# `cases/pilot-fixes/encrypted-reasoning-table.md`, on Modules' branch
+# `claude/cp1h-estimator-oracle`; neither is on this branch). A request over 272K true
 # tokens stops as UnknownCharge, so an under-estimate is never silent (MANAGER ruling (A): the
 # value stays at 3.0). The others stay at 1, which is sound by definition (a token is at least a
 # byte) and over-reserves (pilot opus 2.394-2.545, pilot deepseek 3.329-3.572).

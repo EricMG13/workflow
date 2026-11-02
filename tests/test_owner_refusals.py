@@ -34,8 +34,10 @@ from deploy_vii.execution import (
     NotAuthorized,
     current_inputs,
 )
+from deploy_vii.registry import plan
 from deploy_workflow.workflow import WorkflowError
 
+ROOT = Path(__file__).resolve().parents[1]
 owner: Any = importlib.import_module("deploy_workflow.owner_workflow")
 g1x: Any = importlib.import_module("test_owner_g1x")
 order_tests: Any = importlib.import_module("test_owner_order")
@@ -145,7 +147,7 @@ def _snapshot(
         as_of=date(2026, 1, 10),
         case_kind="synthetic",
         pathway="distressed_restructuring",
-        requested_modules=DISTRESSED,  # the frozen cp4c-owner plan; the preset adds CP-1C (Phase 7)
+        requested_modules=DISTRESSED,  # the ten modules the preset requested before Phase 7 (no CP-1C)
     )
     commands = tuple(Command(row_id=m, text=f"Run {m}") for m in runnable)
     heads = tuple(
@@ -198,18 +200,22 @@ def test_missing_inputs_are_in_plan_order_not_alphabetical() -> None:
 
 
 def test_missing_inputs_include_cp1c_when_the_preset_default_plans_it() -> None:
-    """Phase 7: the distressed preset plans CP-1C (after CP-1A, before CP-2A). The same CP-4C
-    refusal as above, over the preset's own request, names CP-1C in plan order."""
+    """Phase 7: the distressed preset plans CP-1C. The CP-4C refusal over the preset's own
+    request lists the frozen cp4c-owner `refused_begins` inputs plus every CP-4C optional
+    producer (methodology.json) the preset selects, in the registry's plan order."""
+    frozen = json.loads((ROOT / "cases/cp4c-owner/expected.json").read_text())
+    key = next(r for r in frozen["cases"]["refused"]["refused_begins"] if r["module_id"] == "CP-4C")
+    preset = PATHWAY_MODULES["distressed_restructuring"]
+    methodology = json.loads((ROOT / "src/deploy_vii/methodology.json").read_text())
+    optional = next(m for m in methodology if m["module_id"] == "CP-4C")["optional"]
+    wanted = {*key["missing_inputs"], *(m for m in optional if m in preset)}
+    assert "CP-1C" in wanted
     before = _snapshot(("CP-0",), DISTRESSED)
-    run = before.run.model_copy(
-        update={"requested_modules": PATHWAY_MODULES["distressed_restructuring"]}
-    )
+    run = before.run.model_copy(update={"requested_modules": preset})
     before = before.model_copy(update={"run": run})
     error = _error(before, "CP-4C")
-    assert owner._missing_inputs(before, "CP-4C", error) == (
-        ("CP-1", "CP-1C", "CP-2A", "CP-4", "CP-2G"),
-        (),
-    )
+    order = tuple(m for m in plan(preset) if m in wanted)
+    assert owner._missing_inputs(before, "CP-4C", error) == (order, ())
 
 
 def test_missing_inputs_names_a_blocked_producer_without_a_restricted_edge() -> None:

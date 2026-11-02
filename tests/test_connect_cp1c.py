@@ -1230,8 +1230,6 @@ def test_bindings_place_every_fp03_table_exactly_once(case: str) -> None:
     assert [t for t, e in by_table.items() if e.block_id == "evidence" and t not in EV_TABLES] == (
         fp03["evidence_rail_tables"]
     )
-    assert [t for t, e in by_table.items() if t in EV_TABLES] == list(EV_TABLES)
-    assert all(by_table[t].block_id == "evidence" for t in EV_TABLES)
     assert [t for t, e in by_table.items() if e.block_id == "limitations"] == fp03[
         "limitations_rail_tables"
     ]

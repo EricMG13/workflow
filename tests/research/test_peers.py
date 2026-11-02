@@ -247,7 +247,7 @@ def test_amount_from_quote_accepts_exactly_what_the_table_rule_accepts(token: st
 
 
 def renamed(case: Case, old: str, new: str) -> dict[str, Any]:
-    body = copy.deepcopy(case.body)
+    body: dict[str, Any] = copy.deepcopy(case.body)
     for section in ("candidates", "observations", "figures"):
         for row in body["peers"][section]:
             if row["peer_id"] == old:

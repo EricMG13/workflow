@@ -15,7 +15,7 @@ from collections.abc import Mapping, Sequence
 from datetime import date
 from decimal import Decimal
 from functools import partial
-from typing import TYPE_CHECKING, Final, Literal
+from typing import TYPE_CHECKING, Final, Literal, get_args
 
 from deploy_vii.contracts import Citation, Contract, Fact, Identifier, Source, Text
 from deploy_vii.readiness import citation_issues
@@ -53,10 +53,21 @@ NOT_AN_OPERAND: Final = "operand is not a CP-1C operand"
 NOT_A_CANDIDATE: Final = "peer_id is not a TDR.4 candidate"
 NOT_A_DATE: Final = "period_end is not a calendar date"
 NOT_EVIDENCE: Final = "citation is not an accepted ev-* item"
-# A peer id sits in the fact ids `TDR.6.<peer_id>.<operand>.<field>`; the longest operand and field
-# decide, and one id past this makes `Fact` raise after the binding write.
-_LONGEST_FACT_TAIL: Final = len("TDR.6.") + len(".interest.evidence_id")
-PEER_ID_MAX: Final = 160 - _LONGEST_FACT_TAIL
+# A peer id sits in every fact id of its rows: `TDR.4.<id>.<field>`, `TDR.5.<id>.<dimension>.<field>`
+# and `TDR.6.<id>.<operand>.<field>`. The longest tail decides (TDR.5 with `definition` and
+# `observation`); one id past this makes `Fact` raise after the binding write.
+LONGEST_OPERAND: Final = "interest"  # a test compares it with `cp1c.OPERANDS`
+
+
+def _longest_tail(prefix: str, middle: Sequence[str], columns: Sequence[str]) -> int:
+    return len(prefix) + max((len(m) + 1 for m in middle), default=0) + 1 + max(map(len, columns))
+
+
+PEER_ID_MAX: Final = 160 - max(
+    _longest_tail("TDR.4.", (), TDR4_COLUMNS),
+    _longest_tail("TDR.5.", get_args(Dimension), TDR5_COLUMNS),
+    _longest_tail("TDR.6.", (LONGEST_OPERAND,), TDR6_COLUMNS),
+)
 
 
 class CandidatePeer(Contract):
@@ -89,14 +100,14 @@ class PeerPack(Contract):
 
 
 def amount_from_quote(quote: str) -> Decimal | None:
-    """The figure a quote states, by CP-1C's table rule (``cp1c.AMOUNT``, at most
-    ``SHEET_DECIMALS`` decimal places); ``None`` when the quote is not exactly one such token."""
-    from deploy_workflow.owners.cp1c import AMOUNT, SHEET_DECIMALS
+    """The figure a quote states, read by CP-1C's own table rule (``cp1c._amount``); ``None``
+    when that rule refuses it or the quote is the not-stated token."""
+    from deploy_workflow.owners.cp1c import PeerTableError, _amount
 
-    match = AMOUNT.fullmatch(quote)
-    if match is None or len(match.group(1) or "") > SHEET_DECIMALS:
+    try:
+        return _amount(quote)
+    except PeerTableError:
         return None
-    return Decimal(quote)
 
 
 def period_end_date(token: str) -> date | None:

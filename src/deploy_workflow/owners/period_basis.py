@@ -208,9 +208,10 @@ def currency_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Cur
     if context is None:
         return DEFAULT_CURRENCY
     register = _period_register(cp1_facts)
+    currency = _check_currency(context, register)
     for period_id, row in register.items():
         _check_unit(period_id, row)
-    return _check_currency(context, register)
+    return currency
 
 
 def _row_dates(period_id: str, row: Mapping[str, Fact]) -> tuple[date, date]:

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from cpdr_peers_support import load, peers_case
 
 from deploy_vii.contracts import Input
 from deploy_vii.live.tools import UNBACKED_ABSENCE, UNREAD_PAGE, Seen
@@ -305,3 +306,18 @@ def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
         }
     ]
     assert body["sources"] == ["ev-1", "pack-1"]
+
+
+def test_every_tdr6_citation_line_must_have_been_read() -> None:
+    """O7d D1a: a figure's ``line:N`` citation is judged unread like an answer's (O7-R29)."""
+    case = peers_case()
+    body = json.dumps(case.body)
+    seen = seen_from(load("submissions.json")["tool_calls"]["research"])
+    assert s.research_rules(body, seen) == ()
+    figure = case.body["peers"]["figures"][0]["citation"]
+    unread = Seen(
+        read=seen.read - {(figure["source_id"], figure["locator"])}, searched=seen.searched
+    )
+    assert s.research_rules(body, unread) == (
+        f"{UNREAD_PAGE}: {figure['source_id']} {figure['locator']}",
+    )

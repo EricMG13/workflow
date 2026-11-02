@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 from cpdr_o7b1b_support import brief, evidence
+from cpdr_peers_support import peers_case
 
 from deploy_vii import prose
 from deploy_vii.contracts import validate_tables
@@ -370,3 +371,23 @@ def test_a_question_named_total_is_refused(
             review.claim_states(submission, renamed),
             given.period,
         )
+
+
+def test_validate_tables_passes_over_tdr1_to_tdr6() -> None:
+    """O7d D1a: the pack's three tables join TDR.1-3 with uniform columns, one fact per cell."""
+    case = peers_case()
+    submission = case.submission()
+    composed = t.compose(
+        case.brief,
+        submission,
+        case.evidence,
+        review.answer_counts(submission),
+        review.claim_states(submission, case.brief),
+        case.brief.as_of.isoformat(),
+    )
+    validate_tables(composed.tables, composed.facts)
+    key = case.key["tables"]
+    assert [tbl.table_id for tbl in composed.tables] == ["TDR.1", "TDR.2", "TDR.3", *list(key)[:3]]
+    assert {tbl.table_id: len(tbl.rows) for tbl in composed.tables if tbl.table_id in key} == {
+        name: len(key[name]["rows"]) for name in list(key)[:3]
+    }

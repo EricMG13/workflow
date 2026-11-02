@@ -16,13 +16,15 @@ import os
 import shutil
 import socket
 from collections.abc import Callable
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, NoReturn, cast
 
 import o2_case
 import pytest
+from cpdr_s1_support import ResearchCase
 from pydantic import BaseModel
 
 from deploy_vii.canonical_gaps import GapDetail, LedgerGap
@@ -30,6 +32,7 @@ from deploy_vii.contracts import PREFILLED_MARKER
 from deploy_vii.execution import Execution
 from deploy_vii.financial_periods import _id
 from deploy_vii.preparation import load_pack
+from deploy_vii.registry import plan as registry_plan
 from deploy_workflow import replay
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.financial_workflow import _filled
@@ -54,8 +57,10 @@ from deploy_workflow.replay import (
     ReplayRefused,
     ReplayRejected,
 )
+from deploy_workflow.research import evidence
 from deploy_workflow.run_inputs import CaseSource, RunInputError, check_arguments, stage_sources
 from deploy_workflow.run_pathway import run_pathway
+from deploy_workflow.tools.source import SourceTools
 
 EARLIER_ID = o2_case.RUN_ID  # the frozen payloads bind the pack of this run id
 RERUN_ID = "o2-synthetic-rerun"
@@ -1455,3 +1460,80 @@ def test_a_binding_naming_an_absent_snapshot_is_a_named_refusal(
     with pytest.raises(ReplayRefused):
         rerun_public(root, copy)
     assert not (root / "run").exists()
+
+
+# ---------------------------------------------------------------- CP-DR across a rerun (O7-R67)
+
+FIRST_INSTANT = datetime(2026, 11, 2, 5, 40, 0, tzinfo=UTC)
+LATER_INSTANT = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
+READ_EV1 = {"source_id": "ev-1", "first_page": 1, "last_page": 1}
+
+
+def stage_research(
+    root: Path, moment: datetime, monkeypatch: pytest.MonkeyPatch, **more: Any
+) -> Path:
+    """A CP-DR run staged under ``root`` with the research clock at ``moment``."""
+    monkeypatch.setattr(evidence, "research_clock", lambda: moment)
+    case = ResearchCase(root)
+    stage_sources(check_arguments(**case.arguments(root, **more)), root / "run")
+    return root / "run"
+
+
+def research_read(run: Path) -> dict[str, Any]:
+    """What ``read_pages`` answers for ``ev-1`` in ``run``: the session's own tools, the
+    retrieval times read from the run's ``research/evidence.json``."""
+    tools = SourceTools(
+        load_pack(run / "pack"),
+        ("ev-1",),
+        extraction=False,
+        retrieved=evidence.research_retrieved(run / "execution", ("ev-1",)),
+    )
+    body, _ = tools.stage("read_pages", READ_EV1)
+    return {"body": body, "status": "ok", "error_code": None}
+
+
+def test_a_cpdr_read_replays_across_a_rerun_staged_later(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7-R67: the retained read_pages body holds the earlier intake instant; the rerun, staged an
+    hour later with the earlier run named, answers the same body, so the replay does not diverge."""
+    earlier = stage_research(tmp_path / "earlier", FIRST_INSTANT, monkeypatch)
+    rerun = stage_research(
+        tmp_path / "rerun", LATER_INSTANT, monkeypatch, run_id="rerun-1", replay_from=earlier
+    )
+    kept = research_read(earlier)
+    assert "retrieved=2026-11-02T05:40:00Z" in str(kept["body"])
+    call = SimpleNamespace(
+        tool="read_pages",
+        arguments=READ_EV1,
+        status=kept["status"],
+        error_code=kept["error_code"],
+        body=kept["body"],
+        content_hash=lambda: "0" * 64,
+    )
+    workflow = SimpleNamespace(invoke=lambda tool, arguments: research_read(rerun))
+    retained = SimpleNamespace(calls={"call-1": call})
+    submission = SimpleNamespace(
+        binding=SimpleNamespace(
+            call_ids=("call-1",), binding=SimpleNamespace(module_id="CP-DR", step_id="research")
+        )
+    )
+    execution = tmp_path / "audit"
+    replay._replay_calls(cast(Any, workflow), cast(Any, retained), cast(Any, submission), execution)
+    assert not (execution / AUDIT / "faults").exists()
+
+
+def test_the_cpdr_edge_is_the_context_producer_edge_and_not_cp1as(
+    earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7 phase review I-2: with every module replayable, repairing CP-DR sends CP-1C and CP-2 live
+    (their context producer) and leaves CP-1A (its producer is CP-1) replayed; repairing CP-1C
+    leaves CP-DR and CP-1A replayed, so the CP-DR edge runs from producer to consumer only."""
+    monkeypatch.setattr(replay._Earlier, "unusable", lambda self, module: None)
+    planned = registry_plan((*PLANNED, "CP-1C", "CP-DR"))
+    by_dr = replay.plan_replay(earlier_run, planned, frozenset({"CP-DR"}))
+    assert {"CP-1C", "CP-2"} <= set(by_dr.live)
+    assert "CP-1A" in by_dr.replayed
+    by_cp1c = replay.plan_replay(earlier_run, planned, frozenset({"CP-1C"}))
+    assert {"CP-DR", "CP-1A"} <= set(by_cp1c.replayed)
+    assert "CP-1C" in by_cp1c.live

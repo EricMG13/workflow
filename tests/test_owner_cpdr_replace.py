@@ -19,12 +19,14 @@ import cpdr_runs as runs
 import pytest
 
 from deploy_vii.registry import plan
-from deploy_workflow.owner_workflow import AUDIT
+from deploy_workflow.owner_workflow import AUDIT, OwnerWorkflow
 from deploy_workflow.replay import (
     ReplayPackChanged,
     ReplayRecord,
     check_same_pack,
+    journal_unreplayable,
     plan_replay,
+    replay_module,
 )
 
 
@@ -90,6 +92,24 @@ def test_replacement_rerun(v1: Path, tmp_path: Path) -> None:
     # asserted here (the replay records hold none: see the report's ``Not verified``).
     calls = root / "calls.jsonl"
     assert not calls.exists() or calls.read_text(encoding="utf-8") == ""
+
+
+def test_a_cp1c_repair_replays_cp_dr_over_the_closed_run(v1: Path, tmp_path: Path) -> None:
+    """O7 phase fix M-1 (CI only, O7-R57): repairing CP-1C replays CP-0, CP-1 and CP-DR, the research
+    step's retained `read_pages` calls included, and no call diverges. CP-1C and what follows run
+    live in a real rerun; this node stops after the replays."""
+    expected = runs.oracle()["expected"]["replacement"]["plan_with_consumers"]
+    root = tmp_path / "v2"
+    root.mkdir()
+    runs.stage(root)
+    execution = root / "execution"
+    workflow = OwnerWorkflow.create(execution, runs.make_pack("v2"), publication_directory=None)
+    found = plan_replay(v1, plan(tuple(expected["requested"])), frozenset({"CP-1C"}))
+    assert "CP-DR" in found.replayed
+    journal_unreplayable(found, execution)
+    for module_id in found.replayed:
+        replay_module(workflow, v1, module_id, execution=execution)
+    assert not (execution / AUDIT / "faults").exists()
 
 
 def test_added_evidence_is_a_fresh_run() -> None:

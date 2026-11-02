@@ -1,5 +1,6 @@
 """Call-shape checks and source staging for run_pathway (O2 Task 2). Offline; no key read."""
 
+import json
 import os
 import signal
 import time
@@ -621,3 +622,29 @@ def test_intake_is_given_the_research_clocks_retrieval_time(
     rows = web_file("expected.json")["records"]["evidence_json"]["rows"]
     assert seen == [rows[0]["retrieved"]]
     assert {row["retrieved"] for row in rows} == set(seen)
+
+
+def test_a_rerun_keeps_the_earlier_retrieved_for_unchanged_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7-R67: staging a rerun that names the earlier run keeps that run's `retrieved` for an item
+    whose sha256 is a row of its `research/evidence.json`; a changed or new item takes the clock."""
+    earlier_clock = datetime(2026, 11, 2, 5, 40, 0, tzinfo=UTC)
+    later_clock = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
+    monkeypatch.setattr(evidence, "research_clock", lambda: earlier_clock)
+    first = tmp_path / "first"
+    stage_sources(check_arguments(**ResearchCase(first).arguments(first)), first / "run")
+    record = first / "run" / "research" / "evidence.json"
+    rows = json.loads(record.read_text(encoding="utf-8"))
+    rows[0]["sha256"] = "0" * 64  # ev-1 changed since: no row holds its bytes
+    record.write_text(json.dumps(rows[:-1]), encoding="utf-8")  # ev-3 is new: no row at all
+    monkeypatch.setattr(evidence, "research_clock", lambda: later_clock)
+    second = tmp_path / "second"
+    rerun = ResearchCase(second).arguments(second, run_id="rerun-1", replay_from=first / "run")
+    stage_sources(check_arguments(**rerun), second / "run")
+    staged = evidence.read_evidence(second / "run" / "research" / "evidence.json")
+    assert [(r["item_id"], r["retrieved"]) for r in staged] == [
+        ("ev-1", "2026-11-02T06:40:00Z"),
+        ("ev-2", "2026-11-02T05:40:00Z"),
+        ("ev-3", "2026-11-02T06:40:00Z"),
+    ]

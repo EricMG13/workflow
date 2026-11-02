@@ -280,6 +280,17 @@ def _fact(table: str, row: str, fact_id: str) -> Fact:
     return Fact(fact_id=fact_id, table_id=table, row_id=row, label="x", text="x", unit="text")
 
 
+def test_ev_table_labels_equal_the_oracle_titles() -> None:
+    """The three binding labels are the titles the Phase 7 oracle gives the tables."""
+    key = json.loads((ROOT / "cases/valuation-context-owner/expected.json").read_text())
+    titles = {t["table_id"]: t["title"] for t in key["cases"]["auto-public"]["cp1c"]["tables"]}
+    assert set(titles) >= set(NEW_TABLES)
+    cp1c = next(m for m in SHIPPED_MAPS if m.module_id == "CP-1C")
+    labels = {e.fact_coord.table_id: e.label for e in cp1c.entries}
+    for table in NEW_TABLES:
+        assert labels[table] == titles[table], table
+
+
 def test_validate_bindings_clean_on_new_tables() -> None:
     facts = tuple(_fact(t, "r1", f"{t}.r1.v") for t in (*FROZEN_EIGHT, *NEW_TABLES))
     run = _run()

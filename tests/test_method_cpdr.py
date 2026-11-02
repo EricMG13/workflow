@@ -20,6 +20,7 @@ from deploy_vii import registry
 from deploy_vii.bindings import Binding
 from deploy_vii.bindings.cpdr import CPDR
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
+from deploy_vii.execution import CONTEXT_PRODUCERS
 from deploy_workflow.research.contracts import METHOD_VERSION_CPDR
 from deploy_workflow.research.steps import DEFAULT_QUESTIONS, QUESTION_ID_MAX
 
@@ -30,6 +31,7 @@ KEY: dict[str, Any] = json.loads(
 METHOD_MD = ROOT / "src" / "deploy_vii" / "methods" / "cpdr.md"
 BINDINGS_PY = ROOT / "src" / "deploy_vii" / "bindings" / "cpdr.py"
 METHODOLOGY = ROOT / "src" / "deploy_vii" / "methodology.json"
+EXECUTION_PY = ROOT / "src" / "deploy_vii" / "execution.py"
 MANIFEST = ROOT / "docs" / "reuse" / "manifest.json"
 BASE = "312b2351"  # HEAD when S5 was dispatched: the vii files as S5 found them
 S5_COMMIT = "14fb0c328e028b30eb3ad330a2659ca933f6eb84"  # the S5 feat commit
@@ -183,6 +185,23 @@ def test_d12_record_carries_the_file_sha256(destination: str, path: Path) -> Non
         assert re.fullmatch(r"[0-9a-f]{40}", record["project_commit"])
         assert record["reason"].strip()
         assert _git_sha(record["project_commit"], destination) == record["sha256"]
+
+
+def test_d12_record_for_execution_py() -> None:
+    """O7c C1 (B31a): the last `execution.py` record is chained after the previous one, names the
+    commit that holds the file at its `sha256`, and carries the file's current bytes."""
+    records = _records("src/deploy_vii/execution.py")
+    previous, last = records[-2], records[-1]
+    assert last["prior_project_sha256"] == previous["sha256"]
+    assert last["imported_sha256"] == previous["imported_sha256"]
+    assert last["sha256"] == _sha(EXECUTION_PY)
+    assert re.fullmatch(r"[0-9a-f]{40}", last["project_commit"])
+    assert _git_sha(last["project_commit"], "src/deploy_vii/execution.py") == last["sha256"]
+    assert "O7c C1" in last["reason"] and "O7-R47" in last["reason"]
+    assert last["review"] == "work/context-plan/reviews/o7c-c1-review.md"
+    wanted = {k: tuple(v) for k, v in KEY["consumers"]["context_producers"].items()}
+    assert {k: v for k, v in CONTEXT_PRODUCERS.items() if k != "CP-1A"} == wanted
+    assert CONTEXT_PRODUCERS["CP-1A"] == ("CP-1",)
 
 
 def test_methodology_chain_runs_7d164d11_to_the_current_file() -> None:

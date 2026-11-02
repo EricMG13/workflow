@@ -2387,6 +2387,15 @@
       "sha256": "6f808d3e15278d9bf0484413fbaa9eb3bc4fdd1b86ad3551a81ad0ce8554d985",
       "reason": "repo-authored (not in files[]): B1: O7-R40 fix round 1 of the O7b-1c S5 review: no run-context cutoff (the cutoff is the as-of date, M1); a refused item's text, not the item, stays out of the pack, prompts and dossier, and the dossier lists it under Rejected items (L1); the prompt carries accepted items' text in UNTRUSTED_EVIDENCE blocks (L2); no module reads CP-DR output until O7d (I1). Chained after the S5 record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "b2d5396c820c95669dda6afee5aec0e84fb4f6abcbe991b2a4ed99a1041e84d4",
+      "project_commit": "a7493793eeac15d26e856bc2b1fc55a2a6c9d180",
+      "sha256": "7a03df5a429052ba2f3235e5095a4e8cf29b3577d67a387ce939adcec6eb9177",
+      "reason": "repo-authored (not in files[]): B31a: O7c C1, O7-R47: CONTEXT_PRODUCERS gains CP-1C and CP-2 over CP-DR, so a settled CP-DR head is a bound context input of both consumers (not a dependency edge) and a re-settled CP-DR stales them. One mapping entry pair; nothing else in the file changes.",
+      "review": "work/context-plan/reviews/o7c-c1-review.md"
     }
   ],
   "local_patch_lineage": [

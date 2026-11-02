@@ -48,7 +48,13 @@ class NoPrice(PricingError):
 
 
 class ContextTooLong(PricingError):
-    """The request is over the context the table has rates for."""
+    """The request's input-token bound is over the context the table has rates for.
+
+    For openai the bound is an estimate: ``run_pathway.BYTES_PER_TOKEN_LOWER_BOUND`` (3.0) turns
+    request bytes into tokens. A sol request whose true input exceeds the limit but whose
+    estimate does not is still sent; it is recorded as an unknown charge with its real
+    ``input_tokens``, its hold counts as spend, and the configuration is blocked until it is
+    settled. The long-context guard is an owner item (PF-R16)."""
 
 
 def _money(name: str, value: object) -> Decimal:
@@ -77,7 +83,8 @@ class ModelPrice:
     cached_read: Decimal | None = None
     cache_write_5m: Decimal | None = None  # Anthropic only
     cache_write_1h: Decimal | None = None  # Anthropic only
-    max_input_tokens: int | None = None  # a longer request has no listed rate: ContextTooLong
+    # a longer request has no listed rate: ContextTooLong (on an estimated bound; see its docstring)
+    max_input_tokens: int | None = None
     cache_write_listed: bool = (
         True  # False: ``cache_write`` only reserves; a charge needing it is unknown
     )
@@ -109,7 +116,9 @@ _SOL = ModelPrice(
     # cases/pricing/openai-sol-cache-write.json
     cache_write=Decimal("2.50"),
     output=Decimal("10.00"),
-    max_input_tokens=272_000,  # standard tier; long-context rates not supplied
+    # standard tier; long-context rates not supplied. The loop checks an estimate (bytes / 3.0 for
+    # openai), so a request truly over 272K can still be sent and settles as unknown (PF-R16).
+    max_input_tokens=272_000,
 )
 PRICES: Mapping[str, ModelPrice] = MappingProxyType(
     {

@@ -10,15 +10,25 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
 from deploy_vii import registry
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
-from deploy_vii.contracts import PATHWAY_MODULES, Fact, ModuleView, Run, View
-from deploy_vii.execution import Command, ExecutionSnapshot, Head, current_inputs
+from deploy_vii.contracts import PATHWAY_MODULES, Fact, Module, ModuleView, PathwayId, Run, View
+from deploy_vii.execution import (
+    Attempt,
+    Command,
+    ExecutionSnapshot,
+    Head,
+    blocked_ancestors,
+    current_inputs,
+    inherited_limitations,
+)
+
+HeadStatus = Literal["accepted", "restricted", "blocked", "stale"]
 
 ROOT = Path(__file__).resolve().parents[1]
 NEW_TABLES = ("T1C.9", "T1C.10", "T1C.11")
@@ -50,7 +60,7 @@ DISTRESSED_PLAN = (
     "CP-5",
 )
 # The five presets Phase 7 leaves alone, spelled out from HEAD (ff1dc983).
-OTHER_PRESETS = {
+OTHER_PRESETS: dict[PathwayId, tuple[str, ...]] = {
     "credit_snapshot": (
         "CP-0",
         "CP-1",
@@ -135,7 +145,7 @@ def _snapshot(heads: tuple[Head, ...]) -> ExecutionSnapshot:
 
 
 def _heads(
-    producers: tuple[str, ...], status: str = "accepted", ready: str = "CP-4C"
+    producers: tuple[str, ...], status: HeadStatus = "accepted", ready: str = "CP-4C"
 ) -> tuple[Head, ...]:
     heads = [
         Head(
@@ -150,7 +160,7 @@ def _heads(
         heads.append(
             Head(
                 module_id=module_id,
-                status=status,  # type: ignore[arg-type]
+                status=status,
                 result_sha256=f"{index + 1:x}" * 64,
                 inputs=(),
             )
@@ -184,9 +194,68 @@ def test_cp4c_inherits_cp1c_restriction_and_blocked_cp1c_restricts() -> None:
     assert all(i.status == "accepted" for k, i in got.items() if k not in {"CP-1C"})
 
 
+def _cp1c_limit_module(module_id: str, limits: tuple[str, ...]) -> Module:
+    return Module(
+        run_id="r1",
+        issuer_id="i1",
+        as_of=datetime.date(2026, 1, 1),
+        module_id=module_id,
+        status="restricted" if limits else "accepted",
+        limitations=limits,
+    )
+
+
+def _cp4c_inputs(cp1c_status: HeadStatus) -> tuple[ExecutionSnapshot, tuple[Any, ...]]:
+    upstream = DISTRESSED_PLAN[1 : DISTRESSED_PLAN.index("CP-4C")]
+    heads = tuple(
+        h.model_copy(update={"status": cp1c_status}) if h.module_id == "CP-1C" else h
+        for h in _heads(upstream, ready="CP-4C")
+    )
+    snapshot = _snapshot(heads)
+    return snapshot, current_inputs(snapshot, "CP-4C")
+
+
+def test_cp4c_inherits_cp1c_limitations_over_the_preset() -> None:
+    """Design 12(c): CP-4C carries the limitations of its bound CP-1C input. The edge is read
+    from the registry; the limitation text is the test's own input, so a constant cannot pass."""
+    assert "CP-1C" in _module("CP-4C").optional
+    snapshot, inputs = _cp4c_inputs("restricted")
+    limit = "CP-1C: the EV/EBITDA basis rests on a thin peer set"
+    modules = {"CP-1C": _cp1c_limit_module("CP-1C", (limit,))}
+
+    def load(head: Head) -> Module:
+        return modules.get(head.module_id) or _cp1c_limit_module(head.module_id, ())
+
+    attempt = Attempt(ticket_id="t1", module_id="CP-4C", inputs=inputs, number=0)
+    assert inherited_limitations(snapshot, attempt, (), load) == (limit,)
+    assert inherited_limitations(snapshot, attempt, (limit,), load) == ()  # never repeats own
+
+
+def test_blocked_cp1c_restricts_cp4c_over_the_preset() -> None:
+    """Design 12(c): a blocked CP-1C is a blocked ancestor of CP-4C (execution.settle restricts
+    CP-4C on any blocked ancestor); an accepted one is not."""
+    assert registry.edge_rule("CP-4C", "CP-1C") == "restricted"
+    snapshot, inputs = _cp4c_inputs("blocked")
+    assert blocked_ancestors(snapshot, inputs) == {"CP-1C"}
+    snapshot, inputs = _cp4c_inputs("accepted")
+    assert blocked_ancestors(snapshot, inputs) == frozenset()
+
+
+def test_missing_cp1c_head_refuses_cp2_begin_over_the_preset() -> None:
+    """Design 12(c): CP-2 lists CP-1C as optional, and the preset selects it, so CP-2 does not
+    begin while CP-1C has no head."""
+    assert "CP-1C" in registry.dependencies(DISTRESSED)["CP-2"]
+    upstream = DISTRESSED_PLAN[1 : DISTRESSED_PLAN.index("CP-2")]
+    without = tuple(m for m in upstream if m != "CP-1C")
+    with pytest.raises(ValueError, match="Required upstream is unrun, stale or blocked"):
+        current_inputs(_snapshot(_heads(without, ready="CP-2")), "CP-2")
+    bound = current_inputs(_snapshot(_heads(upstream, ready="CP-2")), "CP-2")
+    assert "CP-1C" in {item.input_id for item in bound}
+
+
 def test_other_presets_unchanged() -> None:
     for pathway, modules in OTHER_PRESETS.items():
-        assert PATHWAY_MODULES[pathway] == modules, pathway  # type: ignore[index]
+        assert PATHWAY_MODULES[pathway] == modules, pathway
     assert set(PATHWAY_MODULES) == {*OTHER_PRESETS, "distressed_restructuring"}
 
 

@@ -82,6 +82,7 @@ LOCK_FILE = ".driver.lock"
 #   opus-medium  125.72 for the five Opus pathways                         -> 25.144 -> 25.15
 #   deepseek-max 9.97 for one round of six, the DeepSeek line of the budget plan the user
 #                adopted ("Adopt it", 2026-10-31; work/model-testing/HANDOFF.md) -> 1.6617 -> 1.67
+# deepseek-max is not planned: user, 2026-11-02, "drop deepseek from testing".
 # Once a settled live run of the configuration exists, its measured cost replaces the estimate.
 RUN_ESTIMATE_USD: MappingABC[str, Decimal] = MappingProxyType(
     {
@@ -109,7 +110,9 @@ def plan_runs(stage: Stage) -> tuple[PlannedRun, ...]:
     """The (case_id, pathway, config_id) runs of a stage, one configuration at a time so a
     configuration that runs out of credit loses only its own tail."""
     if stage == "pilot":
-        return tuple((CASES[PILOT_PATHWAY], PILOT_PATHWAY, config) for config in CONFIGS)
+        return tuple(
+            (CASES[PILOT_PATHWAY], PILOT_PATHWAY, c.config_id) for c in CONFIGS.values() if c.roles
+        )
     if stage == "repair":
         repair = [c.config_id for c in CONFIGS.values() if "repair" in c.roles]
         return tuple(

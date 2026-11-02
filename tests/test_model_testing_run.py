@@ -207,6 +207,10 @@ def world(tmp_path: Path) -> World:
     return World(cases, corpus, recordings, tmp_path / "out")
 
 
+# the configurations a pilot plans; deepseek-max is defined but not planned (user, 2026-11-02)
+PLANNED = tuple(config for config, model in CONFIGS.items() if model.roles)
+
+
 def _run_dirs(out: Path) -> list[str]:
     return sorted(p.name for p in out.iterdir() if p.is_dir()) if out.is_dir() else []
 
@@ -215,17 +219,19 @@ def _run_dirs(out: Path) -> list[str]:
 
 
 def test_plan_counts() -> None:
-    assert len(plan_runs("pilot")) == 4
-    assert len(plan_runs("repair")) == 12
+    assert len(plan_runs("pilot")) == 3
+    assert len(plan_runs("repair")) == 6
     assert len(plan_runs("comparison")) == 11
 
 
 def test_plan_contents() -> None:
-    assert plan_runs("pilot") == tuple((PILOT_CASE, PILOT_PATHWAY, config) for config in CONFIGS)
+    # deepseek-max stays defined but no stage plans it (user, 2026-11-02: "drop deepseek from testing")
+    assert plan_runs("pilot") == tuple(
+        (PILOT_CASE, PILOT_PATHWAY, config) for config in ("sol-medium", "sol-high", "opus-medium")
+    )
     repair = plan_runs("repair")
-    assert {config for _, _, config in repair} == {"sol-medium", "deepseek-max"}
-    for config in ("sol-medium", "deepseek-max"):
-        assert [p for _, p, c in repair if c == config] == list(CASES)
+    assert {config for _, _, config in repair} == {"sol-medium"}
+    assert [p for _, p, c in repair] == list(CASES)
     comparison = plan_runs("comparison")
     assert [p for _, p, c in comparison if c == "sol-high"] == list(CASES)
     assert [p for _, p, c in comparison if c == "opus-medium"] == list(OPUS_PATHWAYS)
@@ -340,7 +346,7 @@ def test_score_and_report_take_no_run_arguments(world: World) -> None:
 
 def test_offline_pilot_scores(world: World, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
-    names = [f"pilot-{config}-{PILOT_PATHWAY}-1" for config in CONFIGS]
+    names = [f"pilot-{config}-{PILOT_PATHWAY}-1" for config in PLANNED]
     assert _run_dirs(world.out) == sorted(names)
     for name in names:
         body = json.loads((world.out / name / "run.json").read_text())
@@ -349,7 +355,7 @@ def test_offline_pilot_scores(world: World, capsys: pytest.CaptureFixture[str]) 
         assert body["stopped_reason"].startswith("RecordingMissing")
     scores = json.loads((world.out / "scores.json").read_text())["scores"]
     assert sorted(s["run_id"] for s in scores) == sorted(names)
-    assert {s["config_id"] for s in scores} == set(CONFIGS)
+    assert {s["config_id"] for s in scores} == set(PLANNED)
     for score in scores:
         assert score["outcome"] == "stopped" and score["passed"] is False
         assert [m["module_id"] for m in score["modules"]] == list(PATHWAY_MODULES[PILOT_PATHWAY])
@@ -394,7 +400,7 @@ def test_driver_never_writes_run_json(world: World, monkeypatch: pytest.MonkeyPa
 def test_the_real_run_pathway_writes_run_json_and_scoring_leaves_it_alone(world: World) -> None:
     run_stage("pilot", world.settings())
     before = {p: p.read_bytes() for p in sorted(world.out.rglob("run.json"))}
-    assert len(before) == 4  # written by the real run_pathway
+    assert len(before) == 3  # written by the real run_pathway
     assert main(world.argv("score")) == 0
     assert {p: p.read_bytes() for p in sorted(world.out.rglob("run.json"))} == before
 
@@ -449,7 +455,7 @@ def test_budget_exhausted_skips_config(world: World, capsys: pytest.CaptureFixtu
     _prior_live(world.out, "sol-medium", [unknown])
     result = run_stage("pilot", world.settings())
     assert [o.run_id for o in result.outcomes] == [
-        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in CONFIGS if config != "sol-medium"
+        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in PLANNED if config != "sol-medium"
     ]
     assert list(result.stopped) == ["sol-medium"]
     why = result.stopped["sol-medium"]
@@ -468,7 +474,7 @@ def test_a_spent_account_stops_every_config_on_it(world: World) -> None:
     result = run_stage("pilot", world.settings())
     assert set(result.stopped) == {"sol-medium", "sol-high"}  # both on the openai account
     assert [o.run_id for o in result.outcomes] == [
-        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in ("opus-medium", "deepseek-max")
+        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in ("opus-medium",)
     ]
 
 
@@ -497,7 +503,7 @@ def test_a_settlement_releases_the_stopped_config(world: World) -> None:
         encoding="utf-8",
     )
     result = run_stage("pilot", world.settings())
-    assert not result.stopped and len(result.outcomes) == 4
+    assert not result.stopped and len(result.outcomes) == 3
 
 
 def test_a_settlement_matching_nothing_stops_the_command(
@@ -805,7 +811,7 @@ def test_spend_in_a_sibling_out_counts(world: World) -> None:
     result = run_stage("pilot", world.settings())
     assert set(result.stopped) == {"sol-medium", "sol-high"}
     assert [o.run_id for o in result.outcomes] == [
-        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in ("opus-medium", "deepseek-max")
+        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in ("opus-medium",)
     ]
 
 
@@ -818,7 +824,7 @@ def test_a_crashed_run_in_a_sibling_out_stops_the_command(world: World) -> None:
 
 def test_a_folder_without_sources_or_run_json_is_not_a_run(world: World) -> None:
     (_sibling(world) / "notes").mkdir(parents=True)
-    assert len(run_stage("pilot", world.settings()).outcomes) == 4
+    assert len(run_stage("pilot", world.settings()).outcomes) == 3
 
 
 def test_out_outside_the_runs_root_is_refused(
@@ -840,11 +846,11 @@ def test_a_stage_rerun_into_the_same_out_gets_new_run_ids(world: World) -> None:
     pilot = ["pilot", *("--recordings", str(world.recordings))]
     assert main(world.argv(*pilot)) == 0
     assert main(world.argv(*pilot)) == 0
-    first = [f"pilot-{config}-{PILOT_PATHWAY}-1" for config in CONFIGS]
-    second = [f"pilot-{config}-{PILOT_PATHWAY}-2" for config in CONFIGS]
+    first = [f"pilot-{config}-{PILOT_PATHWAY}-1" for config in PLANNED]
+    second = [f"pilot-{config}-{PILOT_PATHWAY}-2" for config in PLANNED]
     assert _run_dirs(world.out) == sorted(first + second)
     scores = json.loads((world.out / "scores.json").read_text())["scores"]
-    assert len(scores) == 8
+    assert len(scores) == 6
     report = (world.out / "report.md").read_text()  # one column per config: the latest run
     assert "# Model comparison report" in report
 
@@ -992,7 +998,7 @@ def test_a_stage_command_holds_the_runs_root_lock_until_its_last_run(
 
     monkeypatch.setattr(run_module, "run_pathway", nested)
     run_stage("pilot", world.settings())
-    assert refused and all(refused) and len(real) == 4
+    assert refused and all(refused) and len(real) == 3
     capsys.readouterr()
 
 
@@ -1009,7 +1015,7 @@ def test_the_lock_is_released_when_the_command_ends_and_score_report_take_none(
         assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
         assert main(world.argv("score")) == 0 and main(world.argv("report")) == 0
     out2 = world.root / "second"
-    assert len(run_stage("pilot", world.settings(out=out2)).outcomes) == 4  # lock was free again
+    assert len(run_stage("pilot", world.settings(out=out2)).outcomes) == 3  # lock was free again
 
 
 def test_a_symlinked_run_directory_is_refused(

@@ -50,7 +50,7 @@ CONFIGS: Mapping[str, ModelConfig] = MappingProxyType(
             "openrouter",
             "deepseek/deepseek-v4.1-flash-1017",
             "max",
-            frozenset({"repair", "comparison"}),
+            frozenset(),  # defined for its recorded spend; no stage plans it (user, 2026-11-02)
         ),
     }
 )

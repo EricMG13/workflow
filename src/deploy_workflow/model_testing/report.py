@@ -10,7 +10,13 @@ from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
 
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_workflow.model.record import CallRecord
-from deploy_workflow.model_testing.budget import Runs, account_spend
+from deploy_workflow.model_testing.budget import (
+    Runs,
+    Settlement,
+    _key,
+    account_spend,
+    settled_amounts,
+)
 from deploy_workflow.model_testing.configs import ACCOUNTS, CASES, CONFIGS
 from deploy_workflow.model_testing.faults import FaultRecord
 from deploy_workflow.model_testing.pathway import PathwayScore
@@ -290,10 +296,10 @@ def _fault_key(fault: FaultRecord) -> tuple[str, str, str]:
     return (fault.fault_id, fault.case_id, fault.module_id)
 
 
-def _accounts_section(runs: Runs) -> list[str]:
+def _accounts_section(runs: Runs, settlements: Sequence[Settlement]) -> list[str]:
     rows: list[list[str]] = []
     for account_id, account in ACCOUNTS.items():
-        spend = account_spend(runs, account_id)
+        spend = account_spend(runs, account_id, settlements)
         usable = account.usable
         rows.append(
             [
@@ -313,10 +319,27 @@ def _agree(score: PathwayScore, meta: RunMeta) -> None:
             raise ValueError(f"score for run {score.run_id}: {field} differs from its run")
 
 
-def render_report(scores: Sequence[PathwayScore], runs: Runs, faults: Sequence[FaultRecord]) -> str:
+def render_report(
+    scores: Sequence[PathwayScore],
+    runs: Runs,
+    faults: Sequence[FaultRecord],
+    settlements: Sequence[Settlement] = (),
+) -> str:
+    amounts = settled_amounts(runs, settlements)
+    # A user-settled unknown charge counts at its settled amount in every cost figure.
+    costed: Runs = [
+        (
+            meta,
+            [
+                r.model_copy(update={"settled_usd": amounts[_key(r)]}) if _key(r) in amounts else r
+                for r in records
+            ],
+        )
+        for meta, records in runs
+    ]
     by_meta: dict[str, RunMeta] = {}
     by_run: dict[str, Sequence[CallRecord]] = {}
-    for meta, records in runs:
+    for meta, records in costed:
         if meta.run_id in by_run:
             raise ValueError(f"duplicate run_id {meta.run_id}")
         by_meta[meta.run_id] = meta
@@ -344,7 +367,7 @@ def render_report(scores: Sequence[PathwayScore], runs: Runs, faults: Sequence[F
             mine = [s for s in scores if s.pathway == pathway]
             if mine:
                 lines += _pathway_section(pathway, mine, by_run)
-        lines += _totals_section(scores, runs)
+        lines += _totals_section(scores, costed)
         lines += _faults_section(faults)
-        lines += _accounts_section(runs)
+        lines += _accounts_section(runs, settlements)
     return "\n".join(lines) + "\n"

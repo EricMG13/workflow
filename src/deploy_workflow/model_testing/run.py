@@ -691,7 +691,7 @@ def report_out(settings: Settings) -> Path:
         faults = read_faults(settings.out / FAULTS_FILE)
     except ValueError as error:  # the fault journal's one refusal: an unparsable record
         raise DriverError(f"{FAULTS_FILE}: {error}") from None
-    text = render_report(latest, runs, faults)
+    text = render_report(latest, runs, faults, settlements)
     skipped = {k: v for k, v in _read_exhausted(settings.out).items() if k not in CONFIGS}
     stopped = {**skipped, **current_stops(everywhere, settlements)}
     notes = _notes(stopped, settlements, everywhere)

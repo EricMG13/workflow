@@ -9,6 +9,7 @@ from typing import Any, Literal
 import pytest
 
 from deploy_workflow.model.record import CallRecord
+from deploy_workflow.model_testing.budget import Settlement
 from deploy_workflow.model_testing.configs import CONFIGS
 from deploy_workflow.model_testing.faults import FaultRecord
 from deploy_workflow.model_testing.pathway import PathwayScore
@@ -432,3 +433,41 @@ def test_stopped_runs_get_no_accuracy_figure_in_totals() -> None:
     text = render_report([stopped, settled, mixed_stopped], runs, [])
     assert _accuracy_cell(text, "opus-medium") == "n/a (1 stopped)"
     assert _accuracy_cell(text, "sol-medium") == "50.0% (1/2); 1 stopped"
+
+
+def test_report_applies_user_settlements_to_spend() -> None:
+    # sol-medium: one unknown call reserved 0.37, settled by the user at 0.0151735 -> $0.02.
+    # sol-high: one unknown call reserved 0.37, not settled -> "$0.37 reserved".
+    # openai Spend = 0.0151735 + 0.37 = 0.3851735 -> $0.39; usable = 130 * 0.9 = 117.00;
+    # Remaining = 117 - 0.3851735 = 116.6148265 -> $116.61.
+    settlement = Settlement(
+        run_id="r-sol",
+        module_id="CP-0",
+        step_id="s1",
+        attempt=0,
+        call_index=0,
+        settled_usd=Decimal("0.0151735"),
+        by="user",
+        date="2026-11-02",
+        source="provider dashboard",
+    )
+    scores = [
+        score("sol-medium", "r-sol", [module("CP-0", ["match"], True)]),
+        score("sol-high", "r-high", [module("CP-0", ["match"], True)]),
+    ]
+    runs: Runs = [
+        (meta(), [call(settled=None, reserved="0.37", run_id="r-sol")]),
+        (
+            meta("sol-high", "r-high"),
+            [call("sol-high", "r-high", settled=None, reserved="0.37")],
+        ),
+    ]
+    text = render_report(scores, runs, [], (settlement,))
+    totals = {
+        line.split("|")[1].strip(): line.split("|")[3].strip()
+        for line in text.splitlines()
+        if line.startswith(("| sol-medium |", "| sol-high |"))
+    }
+    assert totals["sol-medium"] == "$0.02"
+    assert totals["sol-high"] == "$0.37 reserved"
+    assert "| openai | $0.39 | $117.00 | $116.61 |" in text

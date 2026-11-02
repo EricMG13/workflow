@@ -44,7 +44,8 @@ def v1(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 def test_replacement_plan(v1: Path) -> None:
     expected = runs.oracle()["expected"]["replacement"]
-    found = plan_replay(v1, plan(tuple(expected["plan"]["requested"])), frozenset({"CP-DR"}))
+    repaired = frozenset(expected["plan"]["repaired"])
+    found = plan_replay(v1, plan(tuple(expected["plan"]["requested"])), repaired)
     assert found.earlier_run_id == expected["supersedes"]
     assert found.replayed == tuple(expected["plan"]["replayed"])
     assert found.live == tuple(expected["plan"]["live"])
@@ -84,6 +85,9 @@ def test_replacement_rerun(v1: Path, tmp_path: Path) -> None:
     attachments = json.loads((root / "research" / "attachments.json").read_text(encoding="utf-8"))
     assert attachments["supersedes"] == replacement["supersedes"]
     assert attachments["run_id"] == v2["run_id"]
+    # ``rerun_from`` drives no model (it replays and fills recorded literals), so a run directory
+    # without calls is the helper's own property; that no replayed step sent a request is not
+    # asserted here (the replay records hold none: see the report's ``Not verified``).
     calls = root / "calls.jsonl"
     assert not calls.exists() or calls.read_text(encoding="utf-8") == ""
 

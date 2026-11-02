@@ -25,15 +25,15 @@ def command(module_id: str) -> Fact:
     )
 
 
-def store_with(root: Path, requested: tuple[str, ...]) -> Execution:
-    """The store `root/store` and the staging `root/research` over the positive pack, whose
+def store_with(root: Path, requested: tuple[str, ...], name: str = "store") -> Execution:
+    """The store `root/<name>` (`execution` is the run layout) and the staging `root/research` over the positive pack, whose
     requested modules are `requested`."""
     pack = runs.make_pack("positive")
     pack = PreparedPack(
         run=pack.run.model_copy(update={"requested_modules": requested}), sources=pack.sources
     )
     runs.stage(root)
-    return Execution.create(root / "store", pack)
+    return Execution.create(root / name, pack)
 
 
 def hand_settle(store: Execution, module_id: str) -> Module:
@@ -70,9 +70,9 @@ def real_cpdr(store: Execution, research: str | None = None) -> None:
     assert step.journal.steps[-1].status == "valid", step.journal.steps[-1].issues
 
 
-def settled_through_cpdr(root: Path, requested: tuple[str, ...]) -> Execution:
+def settled_through_cpdr(root: Path, requested: tuple[str, ...], name: str = "store") -> Execution:
     """Every module before CP-DR in the plan hand-built, then CP-DR settled by its core."""
-    store = store_with(root, requested)
+    store = store_with(root, requested, name)
     for module_id in plan(requested):
         if module_id == cpdr.MODULE_ID:
             real_cpdr(store)

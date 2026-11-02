@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import socket
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -24,6 +25,7 @@ from deploy_vii.execution import Execution, current_inputs
 from deploy_vii.registry import edge_rule, plan
 from deploy_workflow import host
 from deploy_workflow import run_pathway as rp
+from deploy_workflow.model.redact import Redactor
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerBinding
 from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts.factory import prompt_factory
@@ -211,10 +213,6 @@ def test_a_consumer_bound_to_a_replaced_head_is_not_prompted(tmp_path: Path) -> 
 # --- attachments.json ---------------------------------------------------------------------------
 
 
-def _checked(run_id: str) -> Any:
-    return SimpleNamespace(run_id=run_id)
-
-
 def test_attachments_json_is_written_and_shaped(expected: dict[str, Any], tmp_path: Path) -> None:
     """Row 13: keys `#attachments/keys`, layout `/layout`, values `/positive`, hashes the record's
     (those `run.json` takes). The oracle run has no consumer."""
@@ -353,3 +351,73 @@ def test_a_removed_evidence_row_is_identity_mismatch_not_a_research_error(
     with pytest.raises(SourceError) as refused:
         host.session_sources(store, ticket.ticket_id, "peer_benchmark")
     assert refused.value.code == "identity_mismatch"
+
+
+# --- O7c C3 fix 1: `_finish_run` and the stop path (M-1, M-2) -----------------------------------
+
+
+def _finish(
+    root: Path, monkeypatch: pytest.MonkeyPatch, render: str | None, replayed: str | None = None
+) -> dict[str, Any]:
+    """`_finish_run` over the run directory `root` (store `root/execution`), the receipt seal and
+    the render stubbed (no closed fixture): the render's fault text, or None for success. The
+    dossier, attachments and `run.json` are the real code. Returns `run.json`."""
+    monkeypatch.setattr(rp, "verify_owner_run_receipt", lambda *a, **kw: None)
+    monkeypatch.setattr(rp, "_render", lambda *a, **kw: render)
+    workflow: Any = SimpleNamespace(write_receipt=lambda path: path.write_text("{}"))
+    checked: Any = SimpleNamespace(
+        cp_dr=True,
+        research=SimpleNamespace(manifest_sha256="0" * 64, ruling=None),
+        model=SimpleNamespace(config_id="x"),
+        case_id="cpdr-research-owner",
+        pathway="relative_value",
+        run_id="cpdr-research-owner-v2",
+        cap_usd=Decimal(1),
+        gate=None,
+    )
+    meta = rp._Meta(checked, (), False, Redactor(), replayed)
+    budget: Any = SimpleNamespace(spent=Decimal(0))
+    rp._finish_run(workflow, root, meta, budget)
+    body: dict[str, Any] = json.loads((root / "run.json").read_text(encoding="utf-8"))
+    return body
+
+
+def test_attachments_supersedes_is_the_replayed_run(
+    expected: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`#replacement/supersedes`: a rerun's `attachments.json` names the earlier run
+    (`_Meta.replayed_from`); the first run's is null."""
+    earlier = expected["replacement"]["supersedes"]
+    cc.settled_through_cpdr(tmp_path / "v2", ("CP-1", CPDR), "execution")
+    _finish(tmp_path / "v2", monkeypatch, None, earlier)
+    path = tmp_path / "v2" / "research" / "attachments.json"
+    assert json.loads(path.read_text(encoding="utf-8"))["supersedes"] == earlier
+    cc.settled_through_cpdr(tmp_path / "v1", ("CP-1", CPDR), "execution")
+    _finish(tmp_path / "v1", monkeypatch, None)
+    first = tmp_path / "v1" / "research" / "attachments.json"
+    assert json.loads(first.read_text(encoding="utf-8"))["supersedes"] is None
+
+
+def test_a_stop_after_cp_dr_records_the_heads_state(
+    expected: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`#run_json/cp_dr_state`: through `_finish_run`'s render stop, a settled head records
+    `positive`, a blocked head `blocked_head` (the render refuses a blocked head), no CP-DR head
+    null; the three hashes stay null on a stop."""
+    want = expected["run_json"]["cp_dr_state"]
+    settled = cc.settled_through_cpdr(tmp_path / "s", ("CP-1", CPDR), "execution")
+    body = _finish(tmp_path / "s", monkeypatch, "render: owner_render_scope")
+    assert body["cp_dr_state"] == want["positive"] and body["outcome"] == "stopped"
+    assert body["cp_dr_dossier_sha256"] is None and body["cp_dr_head_sha256"] is None
+    assert not (tmp_path / "s" / "research" / "attachments.json").exists()
+    assert cc.head(settled, CPDR).status != "blocked"
+
+    blocked = cc.settled_through_cpdr(tmp_path / "b", ("CP-1", CPDR), "execution")
+    runs.edit_head(blocked, CPDR, status="blocked")
+    body = _finish(tmp_path / "b", monkeypatch, "render: owner_render_blocked")
+    assert body["cp_dr_state"] == want["blocked_head"]
+
+    before = cc.store_with(tmp_path / "n", ("CP-1", CPDR), "execution")
+    cc.hand_settle(before, "CP-0")
+    body = _finish(tmp_path / "n", monkeypatch, "render: owner_render_scope")
+    assert body["cp_dr_state"] is None

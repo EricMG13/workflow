@@ -67,6 +67,28 @@
    "_source": "preparer text in the form of intake.parse_rows's IntakeError texts ('manifest row needs a non-empty locator'); the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no locator text"
   }
  },
+ "family_checks": {
+  "pipe": {
+   "family": "filing|annual",
+   "reason": "manifest row family contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold",
+   "_source": "preparer text, same form as locator_checks; the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no family text"
+  },
+  "line_feed": {
+   "family": "filing\nannual",
+   "reason": "manifest row family contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold",
+   "_source": "preparer text, same form as locator_checks; the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no family text"
+  },
+  "carriage_return": {
+   "family": "filing\rannual",
+   "reason": "manifest row family contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold",
+   "_source": "preparer text, same form as locator_checks; the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no family text"
+  },
+  "block_opener": {
+   "family": "filing <<<x",
+   "reason": "manifest row family contains <<<, which a dossier block cannot show",
+   "_source": "preparer text, same form as locator_checks; the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no family text"
+  }
+ },
  "is_public": {
   "vectors": [
    {"addr": "127.0.0.1", "public": false},

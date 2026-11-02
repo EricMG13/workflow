@@ -242,6 +242,15 @@ LOCATOR_CHECKS = {
 }
 LOCATOR_CELL = "manifest row locator contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold"
 LOCATOR_BLOCK = "manifest row locator contains <<<, which a dossier block cannot show"
+# O7-R69: a manifest row family that would break a dossier cell (shown in the dossier and TDR.2), refused at argument time
+FAMILY_CHECKS = {
+    "pipe": "filing|annual",
+    "line_feed": "filing\nannual",
+    "carriage_return": "filing\rannual",
+    "block_opener": "filing <<<x",
+}
+FAMILY_CELL = "manifest row family contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold"
+FAMILY_BLOCK = "manifest row family contains <<<, which a dossier block cannot show"
 MANIFEST = {
     "schema_version": "cpdr-web-retrieval-cases/1",
     "scope": "Key for web retrieval behind the live pause (O7b-2 D1-D8). SYNTHETIC: every host is an .example name resolved only by an injected resolver; every body says so.",
@@ -263,6 +272,7 @@ MANIFEST = {
     "ruling_texts": RULING_TEXTS,
     "url_checks": URL_CHECKS,
     "locator_checks": LOCATOR_CHECKS,
+    "family_checks": FAMILY_CHECKS,
     "probes": {
         "timeout": W1,
         "request": W1,
@@ -564,6 +574,14 @@ EXPECTED = {
             "_source": "preparer text in the form of intake.parse_rows's IntakeError texts ('manifest row needs a non-empty locator'); the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no locator text",
         }
         for n, u in M["locator_checks"].items()
+    },
+    "family_checks": {
+        n: {
+            "family": f,
+            "reason": FAMILY_BLOCK if "<<<" in f else FAMILY_CELL,
+            "_source": "preparer text, same form as locator_checks; the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no family text",
+        }
+        for n, f in M["family_checks"].items()
     },
     "is_public": {
         "vectors": [{"addr": a, "public": p} for a, p in VECTORS],

@@ -274,6 +274,12 @@
   "carriage_return": "https://sector-desk.example/notes\rx",
   "block_opener": "https://sector-desk.example/notes<<<x"
  },
+ "family_checks": {
+  "pipe": "filing|annual",
+  "line_feed": "filing\nannual",
+  "carriage_return": "filing\rannual",
+  "block_opener": "filing <<<x"
+ },
  "probes": {
   "timeout": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
   "request": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",

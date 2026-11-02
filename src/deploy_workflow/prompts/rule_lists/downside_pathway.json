@@ -78,6 +78,13 @@
    "checks": [
     "fn:deploy_workflow.owners.cp2a:_gap_label_issues"
    ]
+  },
+  {
+   "id": "downside_pathway.8",
+   "statement": "When the run context states a reporting currency or a current period that the CP-1 period register does not support (a currency the register does not report, an unusable register, or a blank period with a currency other than USD), the submission is refused alone, before the rest of it is read; a different submission does not cure it, only a corrected context or pack.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2a:validate_downside"
+   ]
   }
  ]
 }

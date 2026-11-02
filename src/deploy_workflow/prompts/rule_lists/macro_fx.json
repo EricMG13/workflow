@@ -98,6 +98,13 @@
     "oracle:cp2e:unread_financial_page_5",
     "oracle:cp2e:absence_without_search"
    ]
+  },
+  {
+   "id": "macro_fx.10",
+   "statement": "When the run context states a reporting currency, `reporting_currency.code_text` is that currency. When the run context's current period is not a fiscal-year or fourth-quarter one, or is blank with a currency other than USD, the submission is refused alone, before the rest of it is read; a different submission does not cure that, only a corrected context.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp2e:_validate_step"
+   ]
   }
  ]
 }

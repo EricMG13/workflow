@@ -2886,6 +2886,34 @@ def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | N
         return None, _basis_issue(error)
 
 
+def _view_offer(
+    pack: PreparedPack, upstream: Upstream, source: Source | None, basis: PeriodBasis | None
+) -> tuple[PeerSheet | None, dict[str, Fact]]:
+    """The peer sheet and the four CP-1 facts the view offers: nothing without a basis, and no
+    rows when the table rule cannot read a ready peers source."""
+    if basis is None:
+        return None, {}
+    facts = _cp1_metrics(upstream.cp1, basis)
+    try:
+        sheet = parse_peer_source(source, issuer_name=pack.run.issuer_name, currency=basis.currency)
+    except PeerTableError:
+        sheet = None
+    return sheet, facts
+
+
+def _peers_view(source: Source | None, sheet: PeerSheet | None) -> dict[str, object]:
+    present = source is not None and source.status == "ready"
+    return {
+        "state": "present" if present else "absent",
+        "source_id": None if source is None else source.source_id,
+        "pages": [] if source is None else [span.locator for span in source.spans],
+        "rows": []
+        if sheet is None
+        else [_view_row(f"p{n:02d}", row) for n, row in enumerate(sheet.peers, 1)],
+        "issuer_line": None if sheet is None else _view_row("issuer", sheet.issuer),
+    }
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The exact `read_inputs` view (lease key tree): the upstream statuses, the peer sheet's rows
     as the table rule reads them, the four CP-1 facts a `{ref|unit}` names through the module's
@@ -2893,33 +2921,15 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     citation or record is in it. A ready peers source the table rule cannot read shows no rows
     (the validator refuses every payload over it with `Peer table not found`)."""
     source = _peer_source(pack.sources)
-    present = source is not None and source.status == "ready"
     basis, issue = _view_basis(pack, upstream)
-    sheet = None
-    facts: dict[str, Fact] = {}
-    if basis is not None:
-        facts = _cp1_metrics(upstream.cp1, basis)
-        try:
-            sheet = parse_peer_source(
-                source, issuer_name=pack.run.issuer_name, currency=basis.currency
-            )
-        except PeerTableError:
-            sheet = None
+    sheet, facts = _view_offer(pack, upstream, source, basis)
     block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
             if item.input_id.startswith("CP-")
         ],
-        "peers": {
-            "state": "present" if present else "absent",
-            "source_id": None if source is None else source.source_id,
-            "pages": [] if source is None else [span.locator for span in source.spans],
-            "rows": []
-            if sheet is None
-            else [_view_row(f"p{n:02d}", row) for n, row in enumerate(sheet.peers, 1)],
-            "issuer_line": None if sheet is None else _view_row("issuer", sheet.issuer),
-        },
+        "peers": _peers_view(source, sheet),
         "cp1_facts": [
             {
                 "ref": f"T1C.3.issuer.{m.key}",
@@ -2940,9 +2950,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         },
         "inherited_limitations": list(upstream.inherited),
     }
-    if issue is not None:
-        block["context_issue"] = issue
-    return block
+    return block if issue is None else {**block, "context_issue": issue}
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:

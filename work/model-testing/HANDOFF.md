@@ -165,3 +165,20 @@ Prerequisites before any live run:
 - Every ruling and deferred minor is in `work/model-testing/framework-build-ledger.md`.
 - Task 11 brief must carry: a user-filled settlement record for unknown charges (MANAGER ruling 2026-11-01); stop on any run folder without run.json (crashed live run); a refusal's named inputs come from O3; a good_run whose receipt plan is the full preset is needed for a real-scorer `passed=True` test; check refusal names against the case (I5).
 - Task 6 brief must carry: check `module_commits` keys against golden modules (Task 5 I-1).
+
+## 9. Tasks 6 and 11, steps 2-4 (2026-11-02, same branch, from origin/codex/checkpoint 9c018f76)
+- User ruling via MANAGER, "Steps 2-4":
+  - CP-1 is scored against `financial_gold.json`: `cases.financial_gold_facts` loads the facts as
+    `CP-1.fin.*` golden facts.
+  - Row-key locator: `Locator.row_key`.
+  - Period-reference locator: `Locator.period_ref`, which resolves CP-1's T4.14 period register.
+  - The goldens were re-tagged by a separate oracle preparer.
+  - The golden and mapping files are pinned through `cases/pins.py`.
+- Task 11 run driver: `python -m deploy_workflow.model_testing pilot|repair|comparison|score|report`.
+  - It is offline by default and `--live` needs a ruling.
+  - Every run lives under `--runs-root`. Budget and stops read the whole root, under one flock.
+- Task 6 mapping tables: `cases/goldens/<case>/mapping.json`. The stage contract is
+  `work/model-testing/mapping/CONTEXT.md` and the reports are in `mapping/output/`.
+- Coverage: in-plan golden facts with a mapping entry, 360/1175 (31%), up from 18/816 at step 1.
+  Per case: TDG 95/235, SHC 55/222, BGS 59/142, LTH 51/231, IHRT 63/197, NATL 37/148.
+- Owner items: see the ledger, section "Tasks 6 and 11", and the merge request to MANAGER.

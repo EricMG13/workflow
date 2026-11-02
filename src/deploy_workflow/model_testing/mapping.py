@@ -24,11 +24,32 @@ class MappingError(ValueError):
     """A golden mapping cannot be used for scoring."""
 
 
+class RowKey(Contract):
+    """Finds a register row by the text of its key cell instead of a fixed row id (register
+    modules number rows in model submission order). ``aliases`` only help find the row."""
+
+    field: str = Field(min_length=1)
+    aliases: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _aliases_nonblank(self) -> RowKey:
+        if any(not a.strip() for a in self.aliases):
+            raise ValueError("row_key aliases must be non-blank")
+        return self
+
+
 class Locator(Contract):
     table_id: str = Field(min_length=1)
-    row_id: str = Field(min_length=1)
+    row_id: str | None = Field(default=None, min_length=1)
+    row_key: RowKey | None = None
     field: str = Field(min_length=1)
     period: str | None
+
+    @model_validator(mode="after")
+    def _one_row_locator(self) -> Locator:
+        if (self.row_id is None) == (self.row_key is None):
+            raise ValueError("locator needs exactly one of row_id or row_key")
+        return self
 
 
 class MappingEntry(Contract):
@@ -63,6 +84,8 @@ class Mapping(Contract):
         seen: set[tuple[str, str, str, str, str | None]] = set()
         for e in self.entries:
             loc = e.locator
+            if loc.row_id is None:
+                continue  # row-key entries are checked against the case's subjects
             key = (e.module, loc.table_id, loc.row_id, loc.field, loc.period)
             if key in seen:
                 raise ValueError(
@@ -85,6 +108,27 @@ def _no_dups(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise ValueError("duplicate key")
         out[k] = v
     return out
+
+
+def _check_row_key_collisions(m: Mapping, case: GoldenCase, name: str) -> None:
+    from deploy_workflow.model_testing.scoring import _text  # scoring imports this module
+
+    seen: list[tuple[tuple[str, str, str, str | None, str], set[str], str]] = []
+    for e in m.entries:
+        loc = e.locator
+        rk = loc.row_key
+        if rk is None:
+            continue
+        texts = {_text(str(case.facts[e.fact_id].get("subject", "")))}
+        texts.update(_text(a) for a in rk.aliases)
+        ident = (e.module, loc.table_id, loc.field, loc.period, rk.field)
+        for other_ident, other_texts, other_id in seen:
+            if other_ident == ident and texts & other_texts:
+                raise MappingError(
+                    f"{name}: row-key locators of {other_id} and {e.fact_id} collide in module "
+                    f"{e.module}: {loc.table_id}/{loc.field}/{loc.period} key {rk.field}"
+                )
+        seen.append((ident, texts, e.fact_id))
 
 
 def _check_against_case(m: Mapping, case: GoldenCase, name: str) -> None:
@@ -111,6 +155,7 @@ def _check_against_case(m: Mapping, case: GoldenCase, name: str) -> None:
             raise MappingError(
                 f"{name}: unmapped {u.fact_id}: {fact['module']} has no module_commits entry"
             )
+    _check_row_key_collisions(m, case, name)
     counts = Counter([e.fact_id for e in m.entries] + [u.fact_id for u in m.unmapped])
     for fid, n in counts.items():
         if n > 1:

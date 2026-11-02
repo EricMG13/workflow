@@ -12,7 +12,13 @@ from hypothesis import strategies as st
 
 from deploy_vii.contracts import Citation, Fact, Module
 from deploy_workflow.model_testing.cases import GoldenCase, checker
-from deploy_workflow.model_testing.mapping import Locator, Mapping, MappingEntry, Unmapped
+from deploy_workflow.model_testing.mapping import (
+    Locator,
+    Mapping,
+    MappingEntry,
+    RowKey,
+    Unmapped,
+)
 from deploy_workflow.model_testing.scoring import (
     JUDGMENT_MODULES,
     ModuleScore,
@@ -91,7 +97,7 @@ def _cite() -> tuple[Citation, ...]:
 def _fact(entry: MappingEntry, *, traced: bool = True, **kw: Any) -> Fact:
     loc = entry.locator
     base: dict[str, Any] = {
-        "fact_id": "f-" + loc.row_id,
+        "fact_id": f"f-{loc.row_id}",
         "label": "x",
         "table_id": loc.table_id,
         "row_id": loc.row_id,
@@ -245,7 +251,7 @@ def test_inherited_excluded() -> None:
 def test_untraced_fails() -> None:
     score, _, entry = _one(IHRT_BILLIONS, IHRT, amount=Decimal(3900000000), traced=False)
     assert score.facts[0].outcome == "match"
-    assert score.untraced == ("f-" + entry.locator.row_id,)
+    assert score.untraced == (f"f-{entry.locator.row_id}",)
     assert score.passed is False
     # a calculation id counts as a trace
     ok, _, _ = _one(
@@ -719,3 +725,113 @@ def test_not_applicable_golden_is_a_gap_not_a_value() -> None:
     )
     assert _score(twice, case, mapping).facts[0].outcome == "invented"
     assert _score(None, case, mapping, head="absent").facts[0].outcome == "gap_ok"
+
+
+def _rk_entry(fid: str, module: str = "CP-2", **rk: Any) -> MappingEntry:
+    return MappingEntry(
+        fact_id=fid,
+        module=module,
+        locator=Locator(
+            table_id="t",
+            row_key=RowKey(field="name", **rk),
+            field="f",
+            period="2025-06-30",
+        ),
+    )
+
+
+def _row(
+    row: str, key: str | None, value: Decimal | None, period: str | None = "2025-06-30"
+) -> list[Fact]:
+    """A register row: a key cell (field name) and a value cell (field f)."""
+    facts = [
+        Fact(
+            fact_id=f"k-{row}",
+            label="x",
+            table_id="t",
+            row_id=row,
+            field="name",
+            period=None,
+            text=key,
+            citations=_cite(),
+        )
+    ]
+    if value is not None:
+        facts.append(
+            Fact(
+                fact_id=f"v-{row}",
+                label="x",
+                table_id="t",
+                row_id=row,
+                field="f",
+                period=period,
+                amount=value,
+                unit="USD",
+                citations=_cite(),
+            )
+        )
+    return facts
+
+
+_RK_GOLD = Decimal(3900000000)
+
+
+def _rk_score(facts: list[Fact], **rk: Any) -> tuple[ModuleScore, GoldenCase]:
+    case = _case(IHRT, IHRT_BILLIONS)
+    entry = _rk_entry(IHRT_BILLIONS, **rk)
+    return _score(_module(facts), case, _mapping(case, [entry])), case
+
+
+def _subject() -> str:
+    return str(_case(IHRT, IHRT_BILLIONS).facts[IHRT_BILLIONS]["subject"])
+
+
+def test_row_key_finds_row_by_subject() -> None:
+    facts = _row("r01", "Other", Decimal(1)) + _row("r03", _subject(), _RK_GOLD)
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "match"
+    assert score.passed
+
+
+def test_row_key_alias_finds_row() -> None:
+    facts = _row("r02", "Senior Notes 2029", _RK_GOLD)
+    score, _ = _rk_score(facts, aliases=("senior notes 2029",))
+    assert score.facts[0].outcome == "match"
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "missing_in_output"
+
+
+def test_row_key_normalises_case_and_space() -> None:
+    facts = _row("r07", "  " + _subject().upper().replace(" ", "   ") + " ", _RK_GOLD)
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "match"
+
+
+def test_row_key_no_row_is_missing() -> None:
+    score, _ = _rk_score(_row("r01", "Other", _RK_GOLD))
+    assert score.facts[0].outcome == "missing_in_output"
+    assert not score.passed
+
+
+def test_row_key_two_rows_is_mismatch() -> None:
+    facts = _row("r01", _subject(), _RK_GOLD) + _row("r02", _subject(), _RK_GOLD)
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "mismatch"
+    assert score.facts[0].observed == "2 facts at one locator"
+
+
+def test_row_key_period_must_match() -> None:
+    score, _ = _rk_score(_row("r03", _subject(), _RK_GOLD, period="2024-06-30"))
+    assert score.facts[0].outcome == "missing_in_output"
+
+
+def test_row_key_fact_not_unscored() -> None:
+    facts = _row("r03", _subject(), _RK_GOLD) + _row("r04", "Other", Decimal(5))
+    score, _ = _rk_score(facts)
+    assert score.unscored == 1  # only r04's value; the located r03 value is scored
+
+
+def test_row_id_locator_unchanged() -> None:
+    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(3900000000))
+    assert score.facts[0].outcome == "match"
+    assert score.unscored == 0

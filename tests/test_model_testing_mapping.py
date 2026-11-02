@@ -222,3 +222,73 @@ def test_real_case_two_modules(tmp_path: Path) -> None:
     pending = m.pending(case)
     assert pending and all(case.facts[f]["module"] == "CP-1B" for f in pending)
     assert len(m.entries) + len(m.unmapped) + len(pending) == len(case.facts)
+
+
+def _rk_entry(fid: str, module: str = "CP-0", **rk: Any) -> dict[str, Any]:
+    return {
+        "fact_id": fid,
+        "module": module,
+        "locator": {
+            "table_id": "t",
+            "row_key": {"field": "name", **rk},
+            "field": "f",
+            "period": None,
+        },
+    }
+
+
+def _rk_case(subject_a: str, subject_b: str) -> GoldenCase:
+    case = _case()
+    facts = dict(case.facts)
+    facts["a0"] = {**facts["a0"], "subject": subject_a}
+    facts["a1"] = {**facts["a1"], "subject": subject_b}
+    return GoldenCase(
+        case_id=case.case_id,
+        pathway=case.pathway,
+        case_dir=case.case_dir,
+        context_path=case.context_path,
+        facts=MappingProxyType(facts),
+        out_of_plan=case.out_of_plan,
+        financial_gold_path=case.financial_gold_path,
+        financial_gold_sha256=case.financial_gold_sha256,
+    )
+
+
+def test_locator_needs_row_id_or_row_key(tmp_path: Path) -> None:
+    neither = _entry("a0", "CP-0")
+    del neither["locator"]["row_id"]
+    with pytest.raises(MappingError, match="row_id or row_key"):
+        load_mapping(_write(tmp_path, _doc(entries=[neither])), _case())
+    both = _rk_entry("a0")
+    both["locator"]["row_id"] = "r01"
+    with pytest.raises(MappingError, match="row_id or row_key"):
+        load_mapping(_write(tmp_path, _doc(entries=[both])), _case())
+
+
+def test_row_key_entries_collide_on_shared_key_text(tmp_path: Path) -> None:
+    case = _rk_case("Term Loan B", "  term LOAN  b ")
+    doc = _doc(entries=[_rk_entry("a0"), _rk_entry("a1")], unmapped=[])
+    with pytest.raises(MappingError, match="a0.*a1|a1.*a0"):
+        load_mapping(_write(tmp_path, doc), case)
+    # a shared alias collides too
+    case = _rk_case("Term Loan B", "Revolver")
+    doc = _doc(entries=[_rk_entry("a0"), _rk_entry("a1", aliases=["TERM loan b"])], unmapped=[])
+    with pytest.raises(MappingError, match="collide"):
+        load_mapping(_write(tmp_path, doc), case)
+
+
+def test_row_key_distinct_subjects_ok(tmp_path: Path) -> None:
+    case = _rk_case("Term Loan B", "Revolver")
+    doc = _doc(entries=[_rk_entry("a0"), _rk_entry("a1")], unmapped=[])
+    m = load_mapping(_write(tmp_path, doc), case)
+    assert [e.locator.row_key is not None for e in m.entries] == [True, True]
+    # a row-id and a row-key entry never collide
+    doc = _doc(entries=[_rk_entry("a0"), _entry("a1", "CP-0")], unmapped=[])
+    assert len(load_mapping(_write(tmp_path, doc), case).entries) == 2
+
+
+def test_row_id_mapping_still_loads(tmp_path: Path) -> None:
+    m = load_mapping(_write(tmp_path, _doc()), _case())
+    loc = m.entries[0].locator
+    assert loc.row_id == "a0"
+    assert loc.row_key is None

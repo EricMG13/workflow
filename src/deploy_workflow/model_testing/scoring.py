@@ -159,12 +159,31 @@ def _observed_text(fact: Fact | None, golden: Any) -> str | None:
     return fact.text
 
 
-def _locate(module: Module | None, entry: MappingEntry) -> list[Fact]:
+def _locate(module: Module | None, entry: MappingEntry, golden: Any) -> list[Fact]:
     if module is None:
         return []
     loc = entry.locator
-    key = (loc.table_id, loc.row_id, loc.field, loc.period)
-    return [f for f in module.facts if (f.table_id, f.row_id, f.field, f.period) == key]
+    rk = loc.row_key
+    if rk is None:
+        key = (loc.table_id, loc.row_id, loc.field, loc.period)
+        return [f for f in module.facts if (f.table_id, f.row_id, f.field, f.period) == key]
+    candidates = {_text(str(golden["subject"]))} | {_text(a) for a in rk.aliases}
+    rows = {
+        f.row_id
+        for f in module.facts
+        if f.table_id == loc.table_id
+        and f.field == rk.field
+        and f.text is not None
+        and _text(f.text) in candidates
+    }
+    return [
+        f
+        for f in module.facts
+        if f.table_id == loc.table_id
+        and f.row_id in rows
+        and f.field == loc.field
+        and f.period == loc.period
+    ]
 
 
 def _has_value(fact: Fact | None) -> bool:
@@ -319,8 +338,9 @@ def score_module(
     unscored = 0
     if live is not None:
         mapped_locators = {
-            (e.locator.table_id, e.locator.row_id, e.locator.field, e.locator.period)
+            (f.table_id, f.row_id, f.field, f.period)
             for e in entries
+            for f in _locate(live, e, case.facts[e.fact_id])
         }
         for fact in live.facts:
             if fact.status != "known" or fact.amount is None:
@@ -348,7 +368,9 @@ def score_module(
                 )
             )
             continue
-        scored = _score_entry(entry, _locate(live, entry), golden, live, upstream_mismatches)
+        scored = _score_entry(
+            entry, _locate(live, entry, golden), golden, live, upstream_mismatches
+        )
         if refused_honestly and scored.outcome == "missing_in_output":
             scored = gap(entry.fact_id, golden)
         scores.append(scored)

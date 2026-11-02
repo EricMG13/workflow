@@ -410,9 +410,23 @@ class _Rules:
 
     # -- field readers (the form's fld) ------------------------------------------------
 
-    def text(self, path: str, value: str, req: bool = False) -> None:
+    def text(self, path: str, value: str, req: bool = False, cell: bool = False) -> None:
+        """``cell``: the text is shown in a dossier table cell (a research question), so the
+        dossier's own cell rule and its block-opener rule refuse it here, before any run."""
+        from deploy_workflow.research.dossier import (
+            breaks_a_table_cell,
+        )  # dossier imports this module
+
         if req and not value.strip():
             self.bad(path, "required.")
+        if cell and breaks_a_table_cell(value):
+            self.bad(
+                path,
+                "contains a pipe character, a line feed or a carriage return, "
+                "which a dossier table cell cannot hold.",
+            )
+        elif cell and "<<<" in value:
+            self.bad(path, "contains <<<, which a dossier block cannot show.")
 
     def number(
         self,
@@ -705,7 +719,7 @@ class _Rules:
         questions = self.ctx.research_questions
         self.too_many("research_questions", len(questions), _MAX_Q)
         for i, q in enumerate(questions):
-            self.text(f"research_questions[{i}].text", q.text, req=True)
+            self.text(f"research_questions[{i}].text", q.text, req=True, cell=True)
 
 
 def _valid_date(value: str) -> bool:

@@ -116,6 +116,7 @@ from deploy_workflow.financial_workflow import (
 from deploy_workflow.host import MAX_ARGUMENT_DEPTH, SourceSession
 from deploy_workflow.model.redact import Redactor
 from deploy_workflow.owners import (
+    cp0_attachments,
     cp1a,
     cp1b,
     cp1c,
@@ -666,6 +667,7 @@ class OwnerBinding(Contract):
 # payload. Issues refuse the submission before any rule and before the journal; the verifier
 # recomputes it for every submission. Module tasks add their rows (live-contract or owner-only).
 _PRECHECKS: dict[str, Callable[[Execution, OwnerBinding, str], tuple[str, ...]]] = {
+    "CP-0": cp0_attachments.precheck,
     "CP-4": cp4.precheck,
 }
 

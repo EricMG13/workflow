@@ -91,7 +91,8 @@ def cp0_literal(pack: PreparedPack) -> str:
     document = json.loads(_fw().readiness(pack))
     document["consumers"].append(oracle()["submissions"]["cp0_consumer_row_cpl10"])
     _with_context_source(document, pack, "cp0_readiness_source")
-    return json.dumps(document)
+    legal_gap = importlib.import_module("preset_walks").with_legal_gap
+    return json.dumps(legal_gap(pack, document))
 
 
 def cp1_context_literal(pack: PreparedPack) -> str:

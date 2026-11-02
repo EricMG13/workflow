@@ -20,6 +20,7 @@ promotion-gated test is the only caller.
 import importlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import s1a_runs as s1
@@ -29,7 +30,7 @@ from deploy_vii.contracts import PATHWAY_MODULES, Run, Source
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import dependencies, plan
 from deploy_workflow.owner_workflow import OwnerWorkflow
-from deploy_workflow.owners import cp1b
+from deploy_workflow.owners import cp0_attachments, cp1b
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_RULE = "Assess every prepared source exactly once"
@@ -263,7 +264,25 @@ def earnings_cp0(pack: PreparedPack) -> str:
     row = next(c for c in frozen["consumers"] if c["module_id"] == "CP-1D")
     rows = review["consumers"]
     review["consumers"] = [*rows[:2], row, *rows[2:]]
-    return json.dumps(review, ensure_ascii=False)
+    return json.dumps(with_legal_gap(pack, review), ensure_ascii=False)
+
+
+def with_legal_gap(pack: PreparedPack, review: dict[str, Any]) -> dict[str, Any]:
+    """`review` plus the frozen `legal-documents-missing` source gap (P5T3-R7/R8), only when the
+    CP-0 attachments gate would refuse it for exactly that reason: the pack's context declares
+    executed legal documents, no legal source is assessed, and the review has no such gap. Every
+    other pack's review is returned unchanged. The gap is read from the o2 oracle."""
+    stored = json.dumps(review, ensure_ascii=False)
+    store: Any = SimpleNamespace(pack=lambda: pack)
+    if cp0_attachments.precheck(store, None, stored) != (cp0_attachments.LEGAL_EXECUTED_MISSING,):
+        return review
+    frozen = json.loads((ROOT / "cases/o2-synthetic/submissions.json").read_text())
+    gap = next(
+        g
+        for g in frozen["positive"]["readiness_review"]["gaps"]
+        if g["gap_id"] == "legal-documents-missing"
+    )
+    return {**review, "gaps": [*review["gaps"], gap]}
 
 
 def cp1b_payload() -> str:

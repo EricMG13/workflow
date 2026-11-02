@@ -273,7 +273,7 @@
   "{{CP0_RESULT_SHA256}}": "CP-0 head result_sha256 of the run (settled by the product; unknowable without running it)",
   "{{CP1_RESULT_SHA256}}": "CP-1 head result_sha256 of the run",
   "{{BRIEF_SHA256}}": "O7-P8 hash of the brief body once M_CP0 and M_CP1 are substituted",
-  "{{CPDR_RESULT_SHA256}}": "the CP-DR head result_sha256 = sha256 of the dossier bytes once M_BRIEF is substituted (plan architecture, consumers bullet)",
+  "{{CPDR_RESULT_SHA256}}": "the CP-DR head result_sha256 = deploy_vii Module.content_hash() of the head (src/deploy_vii/execution.py); recorded as run.json.cp_dr_head_sha256; the dossier's own sha256 is run.json.cp_dr_dossier_sha256",
   "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>": "the pack hash in the CP-0 and CP-1 literals (copied from cases/cp1c-owner/submissions.json)",
   "{{PREFILLED:inputs_sha256}}": "readiness-step inputs hash (copied from cases/cp1c-owner)",
   "{{EVID:ISR}} {{EVID:ISV}} {{EVID:CFS}} {{EVID:BS}} {{GAP_IDS}}": "CP-1 catalogue bindings (copied from cases/cp1c-owner)"

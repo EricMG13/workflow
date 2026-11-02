@@ -1555,8 +1555,8 @@ RUN_TIME_MARKERS = {
     M_CP0: "CP-0 head result_sha256 of the run (settled by the product; unknowable without running it)",
     M_CP1: "CP-1 head result_sha256 of the run",
     M_BRIEF: "O7-P8 hash of the brief body once M_CP0 and M_CP1 are substituted",
-    M_CPDR: "the CP-DR head result_sha256 = sha256 of the dossier bytes once M_BRIEF is substituted (plan architecture, "
-    "consumers bullet)",
+    M_CPDR: "the CP-DR head result_sha256 = deploy_vii Module.content_hash() of the head (src/deploy_vii/execution.py); "
+    "recorded as run.json.cp_dr_head_sha256; the dossier's own sha256 is run.json.cp_dr_dossier_sha256",
     "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>": "the pack hash in the CP-0 and CP-1 literals (copied from cases/cp1c-owner/submissions.json)",
     "{{PREFILLED:inputs_sha256}}": "readiness-step inputs hash (copied from cases/cp1c-owner)",
     "{{EVID:ISR}} {{EVID:ISV}} {{EVID:CFS}} {{EVID:BS}} {{GAP_IDS}}": "CP-1 catalogue bindings (copied from cases/cp1c-owner)",
@@ -1804,9 +1804,11 @@ for _tag, _run, _doss, _readiness, _tables, _answers, _states in (
         "template_text": _doss,
         "template_sha256": file_sha(_doss),
         "run_time_markers": [M_BRIEF],
-        "head_result_sha256": M_CPDR,
-        "head_result_rule": f"sha256 of template_text after substituting {M_BRIEF} with the run's brief_sha256 equals the "
-        f"CP-DR head result_sha256 ({M_CPDR}); the test checks it by this rule",
+        "dossier_sha256_rule": f"sha256 of template_text after substituting {M_BRIEF} with the run's brief_sha256 equals both "
+        "the sha256 of the written research/dossier.md and run.json.cp_dr_dossier_sha256; the test checks it by this rule",
+        "head_hash_rule": f"the CP-DR head's result_sha256 ({M_CPDR}) is deploy_vii's Module.content_hash() of the head "
+        "(src/deploy_vii/execution.py), not the dossier hash; the run records it as run.json.cp_dr_head_sha256",
+        "run_json_fields": ["cp_dr_head_sha256", "cp_dr_dossier_sha256"],
     }
 
 cases = {}
@@ -1978,6 +1980,7 @@ expected = {
             "edit_after_lock": {"exception": "BriefInvalid", "message": "hash mismatch"},
             "fence_terminator": {
                 "reason_suffix": FENCE_REFUSAL["reason_suffix"],
+                "dossier_shown_reason": "the item holds a reserved block delimiter, so its text is not shown here",
                 "where": "rejected at intake",
             },
         },

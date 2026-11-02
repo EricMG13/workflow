@@ -4068,8 +4068,12 @@
     "run_time_markers": [
      "{{BRIEF_SHA256}}"
     ],
-    "head_result_sha256": "{{CPDR_RESULT_SHA256}}",
-    "head_result_rule": "sha256 of template_text after substituting {{BRIEF_SHA256}} with the run's brief_sha256 equals the CP-DR head result_sha256 ({{CPDR_RESULT_SHA256}}); the test checks it by this rule"
+    "dossier_sha256_rule": "sha256 of template_text after substituting {{BRIEF_SHA256}} with the run's brief_sha256 equals both the sha256 of the written research/dossier.md and run.json.cp_dr_dossier_sha256; the test checks it by this rule",
+    "head_hash_rule": "the CP-DR head's result_sha256 ({{CPDR_RESULT_SHA256}}) is deploy_vii's Module.content_hash() of the head (src/deploy_vii/execution.py), not the dossier hash; the run records it as run.json.cp_dr_head_sha256",
+    "run_json_fields": [
+     "cp_dr_head_sha256",
+     "cp_dr_dossier_sha256"
+    ]
    }
   },
   "v2": {
@@ -7977,8 +7981,12 @@
     "run_time_markers": [
      "{{BRIEF_SHA256}}"
     ],
-    "head_result_sha256": "{{CPDR_RESULT_SHA256}}",
-    "head_result_rule": "sha256 of template_text after substituting {{BRIEF_SHA256}} with the run's brief_sha256 equals the CP-DR head result_sha256 ({{CPDR_RESULT_SHA256}}); the test checks it by this rule"
+    "dossier_sha256_rule": "sha256 of template_text after substituting {{BRIEF_SHA256}} with the run's brief_sha256 equals both the sha256 of the written research/dossier.md and run.json.cp_dr_dossier_sha256; the test checks it by this rule",
+    "head_hash_rule": "the CP-DR head's result_sha256 ({{CPDR_RESULT_SHA256}}) is deploy_vii's Module.content_hash() of the head (src/deploy_vii/execution.py), not the dossier hash; the run records it as run.json.cp_dr_head_sha256",
+    "run_json_fields": [
+     "cp_dr_head_sha256",
+     "cp_dr_dossier_sha256"
+    ]
    },
    "differs_from_positive": {
     "answers_changed": [
@@ -8183,6 +8191,7 @@
    },
    "fence_terminator": {
     "reason_suffix": "contains the reserved delimiter <<<END>>>",
+    "dossier_shown_reason": "the item holds a reserved block delimiter, so its text is not shown here",
     "where": "rejected at intake"
    }
   }

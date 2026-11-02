@@ -25,8 +25,10 @@ import o2_case
 import pytest
 from pydantic import BaseModel
 
+from deploy_vii.canonical_gaps import GapDetail, LedgerGap
 from deploy_vii.contracts import PREFILLED_MARKER
 from deploy_vii.execution import Execution
+from deploy_vii.financial_periods import _id
 from deploy_vii.preparation import load_pack
 from deploy_workflow import replay
 from deploy_workflow import run_pathway as rp
@@ -715,6 +717,115 @@ def test_the_cpdr_brief_and_research_run_id_are_rebound_and_nothing_else() -> No
         other = json.dumps({**payload, "run_id": "someone-else"})
         assert replay._rebind("CP-DR", step, other, earlier, rerun) == (other, ())
         assert replay._rebind("CP-2", step, text, earlier, rerun) == (text, ())
+
+
+# ------------------------------------------------------------ the CP-1 readiness gap ids (O7-R62)
+
+CASES = Path(__file__).resolve().parents[1] / "cases" / "cpdr-research-owner"
+ARTIFACTS = ("a", "a", "b", "c", "c", "c")
+
+
+def _ledger_gaps(book: str, artifacts: tuple[str, ...], run: str) -> tuple[LedgerGap, ...]:
+    """One gap per artifact, ids as the product builds them (``_id`` over the content hash);
+    ``run`` stands in for the run-dependent report hash that the artifact hash carries."""
+    out: list[LedgerGap] = []
+    for index, artifact in enumerate(artifacts):
+        detail = GapDetail(
+            origin="source_context",
+            artifact_sha256=hashlib.sha256(f"{artifact}-{run}".encode()).hexdigest(),
+            reference=f"ref-{index}",
+            metric=None,
+            periods=(),
+            description=f"gap {index}",
+            severity="WARN",
+            downstream_impact="limited",
+            recommended_action="retain",
+            citations=(),
+        )
+        out.append(LedgerGap(gap_id=_id("cp1-gap", book, detail.content_hash()), **dict(detail)))
+    return tuple(out)
+
+
+def _readiness_text(gaps: tuple[LedgerGap, ...]) -> str:
+    """The case's ``cp1_readiness`` payload with ``{{GAP_IDS}}`` bound to the gaps' ids, in order,
+    as ``tests/cp1d_runs.py`` binds it; the evidence placeholders stay (no run binds them here)."""
+    document = json.loads((CASES / "submissions.json").read_text(encoding="utf-8"))
+    payload = document["cp1_readiness"]["payload"]
+    payload.pop("inputs_sha256")
+    for consumer in payload["consumers"]:
+        for gap in consumer["gaps"]:
+            gap["gap_ids"] = [g.gap_id for g in gaps]
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def _gap_ids_of(text: str) -> list[list[str]]:
+    return [g["gap_ids"] for c in json.loads(text)["consumers"] for g in c["gaps"]]
+
+
+def test_the_cp1_readiness_gap_ids_are_rebound_by_position_in_order() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS, "v2")
+    assert {g.gap_id for g in earlier}.isdisjoint(g.gap_id for g in rerun)
+    text = _readiness_text(earlier)
+    rewritten, rebound = replay._rebind_gap_ids(text, earlier, rerun)
+    assert _gap_ids_of(rewritten) == [[g.gap_id for g in rerun]]
+    expected = json.loads(text)
+    expected["consumers"][0]["gaps"][0]["gap_ids"] = [g.gap_id for g in rerun]
+    assert json.loads(rewritten) == expected  # nothing else in the payload moved
+    assert [(r.path, json.loads(r.old), json.loads(r.new)) for r in rebound] == [
+        (
+            "consumers.0.gaps.0.gap_ids",
+            [g.gap_id for g in earlier],
+            [g.gap_id for g in rerun],
+        )
+    ]
+
+
+def test_the_cp1_readiness_rebound_names_equal_the_key() -> None:
+    expected = json.loads((CASES / "expected.json").read_text(encoding="utf-8"))
+    key = expected["replacement"]["rebound"]["CP-1 readiness"]
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS, "v2")
+    _, rebound = replay._rebind_gap_ids(_readiness_text(earlier), earlier, rerun)
+    assert [r.path.rsplit(".", 1)[-1] for r in rebound] == key
+    assert ("CP-1", "readiness") in replay.REBOUND_GAP_IDS
+
+
+def test_a_pair_that_differs_beyond_the_artifact_hash_leaves_the_text_unchanged() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = list(_ledger_gaps("book", ARTIFACTS, "v2"))
+    rerun[2] = rerun[2].model_copy(update={"description": "another gap"})
+    text = _readiness_text(earlier)
+    assert replay._rebind_gap_ids(text, earlier, tuple(rerun)) == (text, ())
+
+
+def test_lists_of_different_lengths_leave_the_text_unchanged() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS[:-1], "v2")
+    text = _readiness_text(earlier)
+    assert replay._rebind_gap_ids(text, earlier, rerun) == (text, ())
+
+
+def test_an_artifact_map_that_is_not_one_to_one_leaves_the_text_unchanged() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    text = _readiness_text(earlier)
+    # one earlier artifact hash meets two rerun hashes
+    split = list(_ledger_gaps("book", ARTIFACTS, "v2"))
+    split[1] = split[1].model_copy(update={"artifact_sha256": "f" * 64})
+    assert replay._rebind_gap_ids(text, earlier, tuple(split)) == (text, ())
+    # two earlier artifact hashes meet one rerun hash
+    merged = list(_ledger_gaps("book", ARTIFACTS, "v2"))
+    merged[2] = merged[2].model_copy(update={"artifact_sha256": merged[0].artifact_sha256})
+    assert replay._rebind_gap_ids(text, earlier, tuple(merged)) == (text, ())
+
+
+def test_an_id_the_earlier_ledger_does_not_hold_is_left_for_the_validator() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS, "v2")
+    document = json.loads(_readiness_text(earlier))
+    document["consumers"][0]["gaps"][0]["gap_ids"] = ["cp1-gap:unknown"]
+    text = json.dumps(document)
+    assert replay._rebind_gap_ids(text, earlier, rerun) == (text, ())
 
 
 # ================================================================================== part C

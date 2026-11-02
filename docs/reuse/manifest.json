@@ -2195,6 +2195,31 @@
       "sha256": "d7c78ba0bdb6cae78053e76dfce08e35f6c545ae53cfdcb1da01861b32c54233",
       "reason": "P5T6-R2 (applied recommendation, B31a), Phase 5 Task 6: comment and docstring wording only: the Upstream.legal_sources comment, the fail-closed comment in the citation check and the context_block docstring say executed, filed or draft, where they said executed or filed. No code and no frozen text changes; the Q2 refusal wording is byte-identical.",
       "review": "mx-adversary ac773829, mx-precise affb28ba"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
+      "project_commit": "9f32bbd3b182f669d4a8ef54e6a1d1c90b0679d4",
+      "sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+      "reason": "Phase 7 Task 1: CP-1C registers T1C.9-T1C.11 (EV/EBITDA admission, statistics, basis selection) after T1C.8; CP-4C optional gains CP-1C (not required: no new required edge).",
+      "review": "docs/rulings/ruling P7-R4; .superpowers/sdd/2026-10-31-phase-7-valuation/task-1-repin-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/contracts.py",
+      "imported_sha256": "ee1b27f912804ab81887401a99177f99068247e8c4ba53c000b0d3fde0205e74",
+      "prior_project_sha256": "618229c6da7db278f1bfa0688da2998bec2c4486a55fe8f1e50258715db76390",
+      "project_commit": "1c3e60504047494ba5df3710f63ac89bd86fc038",
+      "sha256": "b07965cc3907da1911c29a09bfea8b4559fb1c27dfc57c7e89eab97f1a3d0ee3",
+      "reason": "Phase 7 Task 1: CP-1C added to the distressed_restructuring preset after CP-1A; plan order becomes CP-0, CP-1, CP-1A, CP-1C, CP-2A, CP-4, CP-2, CP-2G, CP-2H, CP-4C, CP-5.",
+      "review": ".superpowers/sdd/2026-10-31-phase-7-valuation/task-1-report.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp1c.py",
+      "project_commit": "1c3e60504047494ba5df3710f63ac89bd86fc038",
+      "sha256": "e9fb112034d6e35647210c305b0d5396b7836c77ac8904b9855daecbea79125e",
+      "reason": "Phase 7 Task 1: first record (Ruled Q6; the file was project-authored, no import baseline). Binds T1C.9-T1C.11 to the evidence rail as text (slots cp1c-t1c-9..11). Pre-change sha256 229c5d0f129b3ef79a8266a843990e8f7ce03edbbfc37d4abc901d9a6889531c.",
+      "review": ".superpowers/sdd/2026-10-31-phase-7-valuation/task-1-report.md"
     }
   ],
   "local_patch_lineage": [

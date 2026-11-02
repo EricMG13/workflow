@@ -84,6 +84,11 @@
    "aliases": []
   },
   {
+   "module_id": "CP-DR",
+   "title": "Deep research",
+   "aliases": []
+  },
+  {
    "module_id": "CP-1C",
    "title": "Peer benchmark",
    "aliases": []
@@ -163,11 +168,6 @@
   {
    "module_id": "CP-8",
    "title": "Decision ledger post mortem",
-   "aliases": []
-  },
-  {
-   "module_id": "CP-DR",
-   "title": "Deep research",
    "aliases": []
   },
   {
@@ -333,6 +333,25 @@
      }
     },
     {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
      "module_id": "CP-1C",
      "title": "Peer benchmark",
      "aliases": [],
@@ -597,25 +616,6 @@
      }
     },
     {
-     "module_id": "CP-DR",
-     "title": "Deep research",
-     "aliases": [],
-     "number": null,
-     "in_pathway": false,
-     "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
-     "href": "#CP-DR",
-     "group": "footer",
-     "target": {
-      "page_title": "CP-DR · Deep research",
-      "status_chip_word": "Not in this Pathway",
-      "has_output": false,
-      "empty_state": "not_part_of_pathway",
-      "limitations_panel": false
-     }
-    },
-    {
      "module_id": "CP-L10",
      "title": "Financial change screen",
      "aliases": [
@@ -770,6 +770,7 @@
       "word": "Not in this Pathway",
       "module_ids": [
        "CP-1B",
+       "CP-DR",
        "CP-1C",
        "CP-1D",
        "CP-2A",
@@ -778,7 +779,6 @@
        "CP-2H",
        "CP-4C",
        "CP-8",
-       "CP-DR",
        "CP-L10",
        "CP-MEMO",
        "CP-OS",
@@ -1069,6 +1069,7 @@
      "numbered_matches": [],
      "footer_matches": [
       "CP-1B",
+      "CP-DR",
       "CP-1C",
       "CP-1D",
       "CP-2A",
@@ -1077,7 +1078,6 @@
       "CP-2H",
       "CP-4C",
       "CP-8",
-      "CP-DR",
       "CP-L10",
       "CP-MEMO",
       "CP-OS",
@@ -1210,6 +1210,25 @@
      }
     },
     {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
      "module_id": "CP-1C",
      "title": "Peer benchmark",
      "aliases": [],
@@ -1474,25 +1493,6 @@
      }
     },
     {
-     "module_id": "CP-DR",
-     "title": "Deep research",
-     "aliases": [],
-     "number": null,
-     "in_pathway": false,
-     "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
-     "href": "#CP-DR",
-     "group": "footer",
-     "target": {
-      "page_title": "CP-DR · Deep research",
-      "status_chip_word": "Not in this Pathway",
-      "has_output": false,
-      "empty_state": "not_part_of_pathway",
-      "limitations_panel": false
-     }
-    },
-    {
      "module_id": "CP-L10",
      "title": "Financial change screen",
      "aliases": [
@@ -1647,6 +1647,7 @@
       "word": "Not in this Pathway",
       "module_ids": [
        "CP-1B",
+       "CP-DR",
        "CP-1C",
        "CP-1D",
        "CP-2A",
@@ -1655,7 +1656,6 @@
        "CP-2H",
        "CP-4C",
        "CP-8",
-       "CP-DR",
        "CP-L10",
        "CP-MEMO",
        "CP-OS",
@@ -1946,6 +1946,7 @@
      "numbered_matches": [],
      "footer_matches": [
       "CP-1B",
+      "CP-DR",
       "CP-1C",
       "CP-1D",
       "CP-2A",
@@ -1954,7 +1955,6 @@
       "CP-2H",
       "CP-4C",
       "CP-8",
-      "CP-DR",
       "CP-L10",
       "CP-MEMO",
       "CP-OS",
@@ -2080,6 +2080,25 @@
      "group": "footer",
      "target": {
       "page_title": "CP-1B · Earnings delta",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
       "status_chip_word": "Not in this Pathway",
       "has_output": false,
       "empty_state": "not_part_of_pathway",
@@ -2344,25 +2363,6 @@
      "group": "footer",
      "target": {
       "page_title": "CP-8 · Decision ledger post mortem",
-      "status_chip_word": "Not in this Pathway",
-      "has_output": false,
-      "empty_state": "not_part_of_pathway",
-      "limitations_panel": false
-     }
-    },
-    {
-     "module_id": "CP-DR",
-     "title": "Deep research",
-     "aliases": [],
-     "number": null,
-     "in_pathway": false,
-     "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
-     "href": "#CP-DR",
-     "group": "footer",
-     "target": {
-      "page_title": "CP-DR · Deep research",
       "status_chip_word": "Not in this Pathway",
       "has_output": false,
       "empty_state": "not_part_of_pathway",
@@ -2525,6 +2525,7 @@
       "word": "Not in this Pathway",
       "module_ids": [
        "CP-1B",
+       "CP-DR",
        "CP-1C",
        "CP-1D",
        "CP-2A",
@@ -2533,7 +2534,6 @@
        "CP-2H",
        "CP-4C",
        "CP-8",
-       "CP-DR",
        "CP-L10",
        "CP-MEMO",
        "CP-OS",
@@ -2823,6 +2823,7 @@
      "numbered_matches": [],
      "footer_matches": [
       "CP-1B",
+      "CP-DR",
       "CP-1C",
       "CP-1D",
       "CP-2A",
@@ -2831,7 +2832,6 @@
       "CP-2H",
       "CP-4C",
       "CP-8",
-      "CP-DR",
       "CP-L10",
       "CP-MEMO",
       "CP-OS",
@@ -2955,6 +2955,25 @@
      "group": "footer",
      "target": {
       "page_title": "CP-1B · Earnings delta",
+      "status_chip_word": "Not in this Pathway",
+      "has_output": false,
+      "empty_state": "not_part_of_pathway",
+      "limitations_panel": false
+     }
+    },
+    {
+     "module_id": "CP-DR",
+     "title": "Deep research",
+     "aliases": [],
+     "number": null,
+     "in_pathway": false,
+     "color": "#9AA0B4",
+     "glyph": "na",
+     "word": "Not in this Pathway",
+     "href": "#CP-DR",
+     "group": "footer",
+     "target": {
+      "page_title": "CP-DR · Deep research",
       "status_chip_word": "Not in this Pathway",
       "has_output": false,
       "empty_state": "not_part_of_pathway",
@@ -3226,25 +3245,6 @@
      }
     },
     {
-     "module_id": "CP-DR",
-     "title": "Deep research",
-     "aliases": [],
-     "number": null,
-     "in_pathway": false,
-     "color": "#9AA0B4",
-     "glyph": "na",
-     "word": "Not in this Pathway",
-     "href": "#CP-DR",
-     "group": "footer",
-     "target": {
-      "page_title": "CP-DR · Deep research",
-      "status_chip_word": "Not in this Pathway",
-      "has_output": false,
-      "empty_state": "not_part_of_pathway",
-      "limitations_panel": false
-     }
-    },
-    {
      "module_id": "CP-L10",
      "title": "Financial change screen",
      "aliases": [
@@ -3399,6 +3399,7 @@
       "word": "Not in this Pathway",
       "module_ids": [
        "CP-1B",
+       "CP-DR",
        "CP-1C",
        "CP-1D",
        "CP-2A",
@@ -3407,7 +3408,6 @@
        "CP-2H",
        "CP-4C",
        "CP-8",
-       "CP-DR",
        "CP-L10",
        "CP-MEMO",
        "CP-OS",
@@ -3696,6 +3696,7 @@
      "numbered_matches": [],
      "footer_matches": [
       "CP-1B",
+      "CP-DR",
       "CP-1C",
       "CP-1D",
       "CP-2A",
@@ -3704,7 +3705,6 @@
       "CP-2H",
       "CP-4C",
       "CP-8",
-      "CP-DR",
       "CP-L10",
       "CP-MEMO",
       "CP-OS",

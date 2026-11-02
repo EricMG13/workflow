@@ -201,6 +201,16 @@ def _percent(matched: int, scored: int) -> str:
     return f"{_quantise(value, '0.1')}% ({matched}/{scored})"
 
 
+def _accuracy(matched: int, scored: int, stopped: int) -> str:
+    """Accuracy of settled runs only: a stopped run produced nothing, and golden ``missing``
+    facts pass on absent output, so its module scores are not an accuracy."""
+    if stopped == 0:
+        return _percent(matched, scored)
+    if scored == 0:
+        return f"n/a ({stopped} stopped)"
+    return f"{_percent(matched, scored)}; {stopped} stopped"
+
+
 def _median(values: Sequence[Decimal]) -> Decimal | None:
     if not values:
         return None
@@ -215,12 +225,16 @@ def _totals_section(scores: Sequence[PathwayScore], runs: Runs) -> list[str]:
     configs = _config_order({s.config_id for s in scores} | {m.config_id for m, _ in runs})
     rows: list[list[str]] = []
     for config_id in configs:
-        matched = scored = 0
+        matched = scored = stopped = 0
         for s in scores:
-            if s.config_id == config_id:
-                for module in s.modules:
-                    m, n, _, _ = _counts(module)
-                    matched, scored = matched + m, scored + n
+            if s.config_id != config_id:
+                continue
+            if s.outcome != "settled":
+                stopped += 1
+                continue
+            for module in s.modules:
+                m, n, _, _ = _counts(module)
+                matched, scored = matched + m, scored + n
         mine = [(meta, records) for meta, records in runs if meta.config_id == config_id]
         records = [r for _, rs in mine for r in rs]
         live = [r for meta, rs in mine if meta.mode == "live" for r in rs]
@@ -230,7 +244,7 @@ def _totals_section(scores: Sequence[PathwayScore], runs: Runs) -> list[str]:
         rows.append(
             [
                 config_id,
-                _percent(matched, scored),
+                _accuracy(matched, scored, stopped),
                 _cost_text(live),
                 _cost_text(offline),
                 _tokens_text(_tokens(records)),

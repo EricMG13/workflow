@@ -398,3 +398,32 @@ def test_scores_of_one_pathway_share_a_case() -> None:
     runs: Runs = [(meta(), [call()]), (other_meta, [call("opus-medium", "r-op")])]
     with pytest.raises(ValueError, match="case_id"):
         render_report([one, two], runs, [])
+
+
+def _accuracy_cell(text: str, config_id: str) -> str:
+    row = next(line for line in text.splitlines() if line.startswith(f"| {config_id} |"))
+    return row.split("|")[2].strip()
+
+
+def test_stopped_runs_get_no_accuracy_figure_in_totals() -> None:
+    # opus-medium: its only run stopped; the golden-missing pass (gap_ok) would read 1/1 = 100.0%.
+    stopped = score("opus-medium", "r-op", [module("CP-0", ["gap_ok"], True)], stopped="budget")
+    # sol-medium: earnings_update settled (match, mismatch = 1/2); credit_snapshot stopped
+    # (match, match = 2/2 that must not count).
+    settled = score("sol-medium", "r-sol", [module("CP-0", ["match", "mismatch"], False)])
+    mixed_stopped = score(
+        "sol-medium", "r-sol2", [module("CP-0", ["match", "match"], True)], stopped="budget"
+    ).model_copy(update={"pathway": "credit_snapshot"})
+    runs: Runs = [
+        (meta("opus-medium", "r-op", stopped="budget"), [call("opus-medium", "r-op")]),
+        (meta(run_id="r-sol"), [call()]),
+        (
+            meta(run_id="r-sol2", stopped="budget").model_copy(
+                update={"pathway": "credit_snapshot"}
+            ),
+            [call(run_id="r-sol2")],
+        ),
+    ]
+    text = render_report([stopped, settled, mixed_stopped], runs, [])
+    assert _accuracy_cell(text, "opus-medium") == "n/a (1 stopped)"
+    assert _accuracy_cell(text, "sol-medium") == "50.0% (1/2); 1 stopped"

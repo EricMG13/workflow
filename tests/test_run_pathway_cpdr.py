@@ -40,8 +40,8 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts import factory
 from deploy_workflow.prompts.fence import UntrustedItem
-from deploy_workflow.research import evidence
 from deploy_workflow.research import contracts as c
+from deploy_workflow.research import evidence
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.research.intake import IntakeError
 from deploy_workflow.run_inputs import ResearchManifestInvalid, check_arguments, stage_sources

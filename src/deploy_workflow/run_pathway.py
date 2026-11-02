@@ -32,7 +32,7 @@ from deploy_vii.execution import Execution
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_vii.registry import plan
-from deploy_workflow.model.adapter import LiveAdapter, ModelAdapter, RecordingMissing
+from deploy_workflow.model.adapter import GateResult, LiveAdapter, ModelAdapter, RecordingMissing
 from deploy_workflow.model.budget import Budget, BudgetError
 from deploy_workflow.model.loop import (
     OWN_FORM,
@@ -76,6 +76,7 @@ from deploy_workflow.run_inputs import (
     HTML_MEDIA,
     CaseSource,
     CheckedRun,
+    ResearchStaging,
     RunDirInvalid,
     RunInputError,
     RunOutcome,
@@ -252,6 +253,27 @@ def _check_research(checked: CheckedRun, run_dir: Path) -> None:
         raise ResumeMismatch("the refused research items are not the staged run's")
     if manifest_sha != research.manifest_sha256:
         raise ResumeMismatch("the research manifest is not the staged run's")
+    _check_web(research, staged)
+
+
+def _check_web(research: ResearchStaging, staged: Path) -> None:
+    """N1 for the web arguments (O7b-2 D5): the fetch records and the ruling must be the staged
+    run's. The fetches are made again on a resume, so a changed page is a changed record. A run
+    staged without a ruling holds neither file."""
+    fetches, ruling_sha = staged / evidence.FETCHES_FILE, staged / evidence.RULING_SHA_FILE
+    if research.ruling is None:
+        if fetches.exists() or ruling_sha.exists():
+            raise ResumeMismatch("the run was staged with a research ruling; none was given")
+        return
+    try:
+        recorded = evidence.read_fetches(fetches)
+        recorded_ruling = evidence.read_manifest_sha(ruling_sha)
+    except (OSError, ValueError):  # EvidenceRecordInvalid is a ValueError
+        raise ResumeRefused(f"{staged} is missing or unreadable") from None
+    if recorded != research.fetches:
+        raise ResumeMismatch("the fetched pages are not the staged run's")
+    if recorded_ruling != research.ruling.sha256:
+        raise ResumeMismatch("the research ruling is not the staged run's")
 
 
 def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> None:
@@ -375,6 +397,17 @@ class CpDrRecord:
     head_sha256: str | None = None
 
 
+def _ruling_keys(ruling: GateResult | None) -> dict[str, Any]:
+    """The ``run.json`` keys of the ruling that lifted the web pause (O7b-2 D2); none without one."""
+    if ruling is None:
+        return {}
+    return {
+        "research_ruling_path": str(ruling.path),
+        "research_ruling_sha256": ruling.sha256,
+        "research_ruling_date": ruling.date.isoformat(),
+    }
+
+
 def _cp_dr_keys(checked: CheckedRun, record: CpDrRecord | None) -> dict[str, Any]:
     """The ``run.json`` keys that exist only for a CP-DR run (a ``cp_dr=False`` file is unchanged).
     The brief, dossier and head hashes are null until the walk has settled the head."""
@@ -387,6 +420,7 @@ def _cp_dr_keys(checked: CheckedRun, record: CpDrRecord | None) -> dict[str, Any
         "cp_dr_brief_sha256": held.brief_sha256,
         "cp_dr_dossier_sha256": held.dossier_sha256,
         "cp_dr_head_sha256": held.head_sha256,
+        **_ruling_keys(checked.research.ruling),
     }
 
 
@@ -859,6 +893,7 @@ def run_pathway(
     run_id: str,
     cp_dr: bool = False,
     research_manifest: Path | None = None,
+    research_ruling: Path | None = None,
     resume: bool = False,
     replay_from: Path | None = None,
     repaired: frozenset[str] = frozenset(),
@@ -879,7 +914,10 @@ def run_pathway(
     ``run.json.replayed_from_run`` is the earlier ``run_id``. A rerun is a fresh run: not a resume.
     ``cp_dr=True`` takes a ``research_manifest`` (and a manifest takes ``cp_dr=True``); intake runs
     in ``check_arguments``, so a refused manifest raises before anything is written, and the staged
-    run holds ``research/evidence.json`` and ``research/rejected.json``."""
+    run holds ``research/evidence.json`` and ``research/rejected.json``. ``research_ruling`` (a user
+    ruling lifting the pause for ``web-retrieval``) lets the manifest's url rows be fetched: it is
+    checked before anything resolves, the fetches are staged in ``research/fetches.json``, the ruling
+    in ``run.json``, and a resume refuses a changed fetch record or ruling."""
     redactor = Redactor()
     with _redacted_stderr(redactor):
         checked = check_arguments(
@@ -894,6 +932,7 @@ def run_pathway(
             run_id=run_id,
             cp_dr=cp_dr,
             research_manifest=research_manifest,
+            research_ruling=research_ruling,
             resume=resume,
         )
         entries = _source_entries(checked, sources, context)

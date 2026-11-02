@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import stat
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -31,12 +32,21 @@ from deploy_vii.preparation import (
 )
 from deploy_workflow.context import CONTEXT_SOURCE_ID, RunContext, load_context, preparation_request
 from deploy_workflow.html_text import convert_html
-from deploy_workflow.model.adapter import GateResult, LiveAdapter, ModelAdapter, RecordedAdapter
+from deploy_workflow.model.adapter import (
+    GateResult,
+    LiveAdapter,
+    ModelAdapter,
+    RecordedAdapter,
+    check_ruling,
+)
 from deploy_workflow.model.turn import ModelSpec
-from deploy_workflow.research import evidence
+from deploy_workflow.research import evidence, webfetch
 from deploy_workflow.research.contracts import ReservedSourceId, refuse_reserved
 from deploy_workflow.research.intake import (
+    MAX_ITEM_BYTES,
     AcceptedItem,
+    Fetcher,
+    ManifestRow,
     RefusedItem,
     effective_cutoff,
     intake,
@@ -116,6 +126,10 @@ class ResearchManifestInvalid(RunInputError):
     code = "research_manifest_invalid"
 
 
+class ResearchRulingUnused(RunInputError):
+    code = "research_ruling_unused"
+
+
 class BadCap(RunInputError):
     code = "bad_cap"
 
@@ -159,12 +173,15 @@ class StagedFile:
 class ResearchStaging:
     """What intake decided, held until ``stage_sources`` writes it: the manifest file's sha256, the
     accepted items (each yields its ``EvidenceItem``) with the one retrieval time they share (O7-R13),
-    and the refused items."""
+    and the refused items. A run that fetched (O7b-2) also holds the record of each attempted fetch
+    and the ``research_ruling`` that lifted the web pause (``ruling`` is set exactly then)."""
 
     manifest_sha256: str
     retrieved: str
     accepted: tuple[AcceptedItem, ...]
     refused: tuple[RefusedItem, ...]
+    fetches: tuple[webfetch.FetchRecord, ...] = ()
+    ruling: GateResult | None = None
 
 
 @dataclass(frozen=True)
@@ -289,7 +306,46 @@ def _case_files(
     return files, requests
 
 
-def _research_staging(manifest: Path, context: RunContext) -> ResearchStaging:
+_WEB_CONFIG = "web-retrieval"
+_RULING_UNUSED = "a research_ruling is only read when the research manifest has a url row"
+
+
+def _web_fetcher() -> Fetcher:
+    """The production fetcher: the system resolver, the pinned TLS connection, the item byte cap and
+    ``time.monotonic`` as both the connection's clock and the fetch's (O7-R51, O7-R53). The module
+    attributes are read at call time, so a test replaces them."""
+
+    def fetcher(
+        url: str, hosts: frozenset[str]
+    ) -> tuple[webfetch.FetchRecord, bytes | None, str | None]:
+        return webfetch.fetch(
+            url,
+            manifest_hosts=hosts,
+            resolver=webfetch.system_resolver,
+            connect=webfetch.pinned_connection,
+            cap=MAX_ITEM_BYTES,
+            clock=time.monotonic,
+        )
+
+    return fetcher
+
+
+def _web_access(
+    rows: Sequence[ManifestRow], research_ruling: Path | None
+) -> tuple[GateResult | None, Fetcher | None]:
+    """The web gate (O7b-2 D1, D2), before anything resolves. No ruling: no fetcher, so a url row
+    is refused by ``intake`` naming the ruling it needs. A ruling with no url row is unused; a ruling
+    that does not lift the pause for ``web-retrieval`` raises ``LivePauseInForce``."""
+    if research_ruling is None:
+        return None, None
+    if not any(row.url is not None for row in rows):
+        raise ResearchRulingUnused(_RULING_UNUSED)
+    return check_ruling(_WEB_CONFIG, research_ruling), _web_fetcher()
+
+
+def _research_staging(
+    manifest: Path, context: RunContext, research_ruling: Path | None = None
+) -> ResearchStaging:
     """Read the research manifest and assess every row; writes nothing. Item refusals are listed on
     the result; a malformed manifest or a wrong row raises (``IntakeError`` and its kin)."""
     raw = read_capped(manifest)
@@ -299,21 +355,29 @@ def _research_staging(manifest: Path, context: RunContext) -> ResearchStaging:
         raise ResearchManifestInvalid(f"{manifest}: not valid JSON") from None
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
         raise ResearchManifestInvalid(f"{manifest}: not a JSON list of rows")
+    parsed = parse_rows(rows)
+    ruling, fetcher = _web_access(parsed, research_ruling)
     as_of = date.fromisoformat(context.run.as_of)
     moment = evidence.research_clock()  # read once: the retrieval time and 'today' agree
+    retrieved = evidence.retrieved_text(moment)
     result = intake(
-        parse_rows(rows),
+        parsed,
         base_dir=manifest.parent,
         dest_dir=None,
         as_of=as_of,
         cutoff=effective_cutoff(as_of, context.run.cutoff),  # O7b-2 D9: min(as_of, run.cutoff)
         today=moment.date(),
+        max_bytes=MAX_ITEM_BYTES,
+        fetch=fetcher,
+        retrieved=retrieved,
     )
     return ResearchStaging(
         hashlib.sha256(raw).hexdigest(),
-        evidence.retrieved_text(moment),
+        retrieved,
         result.accepted,
         result.refused,
+        result.fetches if ruling is not None else (),
+        ruling,
     )
 
 
@@ -343,11 +407,13 @@ def _with_cp_dr(request: PreparationRequest) -> PreparationRequest:
     return request.model_copy(update={"run": widened})
 
 
-def _research_arguments(cp_dr: bool, manifest: Path | None) -> None:
+def _research_arguments(cp_dr: bool, manifest: Path | None, ruling: Path | None) -> None:
     if cp_dr and manifest is None:
         raise ResearchManifestRequired("cp_dr=True needs a research_manifest")
     if manifest is not None and not cp_dr:
         raise ResearchManifestUnused("a research_manifest is only read when cp_dr=True")
+    if ruling is not None and manifest is None:
+        raise ResearchRulingUnused(_RULING_UNUSED)
 
 
 def check_arguments(
@@ -363,13 +429,15 @@ def check_arguments(
     run_id: str,
     cp_dr: bool = False,
     research_manifest: Path | None = None,
+    research_ruling: Path | None = None,
     resume: bool = False,
 ) -> CheckedRun:
     """Every call-shape check, in order, before any write. Raises a ``RunInputError``
     subclass, ``ContextRefused``, ``UndecodableHtml`` or a CP-DR ``ResearchError``; never writes.
+    A ``research_ruling`` is read only when the research manifest has a url row.
     ``resume`` skips the check that ``run_dir`` is new: ``run_pathway`` checks a run directory it
     resumes itself."""
-    _research_arguments(cp_dr, research_manifest)
+    _research_arguments(cp_dr, research_manifest, research_ruling)
     if not resume:
         _check_run_dir(run_dir)
     gate = _check_adapter(adapter, model)
@@ -384,7 +452,7 @@ def check_arguments(
     files, requests = _case_files(sources, source_raw)
     staging = None
     if research_manifest is not None:
-        staging = _research_staging(research_manifest, run_context)
+        staging = _research_staging(research_manifest, run_context, research_ruling)
         research_files, research_requests = _research_files(staging)
         files.extend(research_files)
         requests.extend(research_requests)
@@ -447,6 +515,11 @@ def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
         evidence.write_manifest_sha(
             research / evidence.MANIFEST_SHA_FILE, checked.research.manifest_sha256
         )
+        if checked.research.ruling is not None:  # a web run: its fetch records and its ruling
+            evidence.write_fetches(research / evidence.FETCHES_FILE, checked.research.fetches)
+            evidence.write_manifest_sha(
+                research / evidence.RULING_SHA_FILE, checked.research.ruling.sha256
+            )
     os.mkdir(sources)
     for staged in checked.files:
         _write_new(sources, staged.filename, staged.data)
@@ -473,6 +546,7 @@ __all__ = [
     "ResearchManifestInvalid",
     "ResearchManifestRequired",
     "ResearchManifestUnused",
+    "ResearchRulingUnused",
     "ResearchStaging",
     "RunDirExists",
     "RunDirInvalid",

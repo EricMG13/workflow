@@ -22,6 +22,7 @@ EVIDENCE_FILE: Final = "evidence.json"
 REJECTED_FILE: Final = "rejected.json"
 FETCHES_FILE: Final = "fetches.json"
 MANIFEST_SHA_FILE: Final = "manifest.sha256"
+RULING_SHA_FILE: Final = "ruling.sha256"
 _KEYS: Final = (
     "item_id",
     "family",

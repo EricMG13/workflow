@@ -1,0 +1,63 @@
+{
+ "schema": "pilot-limits-key/1",
+ "what": "Live-run limits for the pilot rerun (MANAGER relay 2026-11-02 of Modules' Deploy VII comparison, commit 41d4ea7b): PF-R11..PF-R13",
+ "max_output_tokens": 98304,
+ "documented_max_output_tokens": {
+  "sol-medium": {
+   "value": 128000,
+   "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol ('128,000 max output tokens'), fetched 2026-11-02"
+  },
+  "sol-high": {
+   "value": 128000,
+   "source": "same as sol-medium"
+  },
+  "opus-medium": {
+   "value": 128000,
+   "source": "https://platform.claude.com/docs/en/models/overview (Claude Opus 5.5 'Max output 128K tokens', synchronous Messages API), fetched 2026-11-02"
+  },
+  "deepseek-max": {
+   "value": 131072,
+   "source": "https://openrouter.ai/api/v1/models/deepseek/deepseek-v4.1-flash-1017/endpoints: lowest max_completion_tokens over the 43 endpoints (Particle AI, PrimeIntellect, Venice), fetched 2026-11-02"
+  }
+ },
+ "providers_global_cap": 131072,
+ "reservation_output_usd_per_call": {
+  "sol-medium": "0.98304000",
+  "sol-high": "0.98304000",
+  "opus-medium": "1.966080",
+  "deepseek-max": "0.17694720"
+ },
+ "bytes_per_token_lower_bound": {
+  "openai": "3.0",
+  "anthropic": "1",
+  "openrouter": "1"
+ },
+ "bytes_per_token_basis": {
+  "openai": "Measured with this repo's _request_bytes: pilot sol calls 4.314 and 4.317 bytes per token (2 calls, about 22 KB). Deploy VII live gpt-6.1-sol: min 4.885 over 36 calls up to 396,912 request bytes (artifacts/model-tests/**/metrics.json, read-only). 3.0 is Deploy VII's configured ratio and keeps a margin of at least 1.44x below every measurement.",
+  "anthropic": "Pilot opus measured 2.394-2.545, below 3.0, so no ratio above 1 is ruled here; 1 is sound by definition (a token is at least a byte) and over-reserves.",
+  "openrouter": "Pilot deepseek measured 3.329-3.572, Deploy VII deepseek min 3.791; kept at 1 (only Sol's 272K ContextTooLong was reported as blocking); owner item to revisit after the pilot."
+ },
+ "overall_s": 1800,
+ "overall_s_basis": "Deploy VII sol-high took 692 s for 55K output tokens; 98,304 output tokens at that rate is about 1240 s, under 1800.",
+ "ruled_by": "controller, PF-R11..PF-R13 (apply-recommendations, MANAGER relay), 2026-11-02",
+ "context_too_long_configs": [
+  "sol-high",
+  "sol-medium"
+ ],
+ "context_check": {
+  "rule": "ContextTooLong fires only where a price sets max_input_tokens (pricing.reservation_usd); only gpt-6.1-sol does (272000, standard tier). At 1 byte per token, opus and deepseek bounds stay inside the providers' windows.",
+  "deepseek-max": {
+   "largest_deploy_vii_request_bytes": 845575,
+   "bound_tokens_at_1": 845639,
+   "smallest_endpoint_context": 1000000,
+   "real_prompt_tokens": 138583
+  },
+  "opus-medium": {
+   "context_window": 1000000,
+   "deploy_vii_request_bytes": null,
+   "pilot_max_request_bytes": 71339
+  },
+  "cost_of_1": "over-reservation only, e.g. about 5.6 USD input plus 1.97 USD output for a 700 KB Opus call, held for the call"
+ },
+ "amended_by": "MANAGER check on PF-R12 (controller, 2026-11-02)"
+}

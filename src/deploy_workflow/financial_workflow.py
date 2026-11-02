@@ -79,6 +79,7 @@ Step = Literal[
 SOURCE_STEPS = ("source_readiness", "source_context", "financials")
 FILES = ("model.html", "calculation.json", "receipt.json")
 MAX_CALLS = 16
+MAX_INVOKES = 32  # pack-tool calls per step; only source steps hold pack tools
 MAX_MESSAGES = 128
 MAX_LINE = 4 * 1024 * 1024
 # A located statement page holds a whole line that is a statement heading: the synthetic
@@ -809,7 +810,7 @@ class FinancialWorkflow:
         with self._locked():
             self._current()
             key = (self._binding.ticket_id, self._binding.step_id, "invoke")
-            if self._phase != "analytical" or self._limits[key] >= MAX_CALLS:
+            if self._phase != "analytical" or self._limits[key] >= MAX_INVOKES:
                 raise WorkflowError("not_permitted")
             self._limits[key] += 1
             if self._session is None:
@@ -1207,9 +1208,9 @@ def _verify(
             raise WorkflowError("identity_mismatch")
     if len({c.call_id for c in receipt.calls}) != len(receipt.calls):
         raise WorkflowError("identity_mismatch")
-    for records in (receipt.calls, receipt.input_reads):
+    for records, cap in ((receipt.calls, MAX_INVOKES), (receipt.input_reads, MAX_CALLS)):
         counts = Counter((record.binding.ticket_id, record.binding.step_id) for record in records)
-        if any(count > MAX_CALLS for count in counts.values()):
+        if any(count > cap for count in counts.values()):
             raise WorkflowError("identity_mismatch")
     submission_counts = Counter(
         (s.binding.binding.ticket_id, s.binding.binding.step_id) for s in receipt.submissions
@@ -1224,7 +1225,7 @@ def _verify(
         prior = [
             c for c in receipt.calls if c.binding == call.binding and c.sequence < call.sequence
         ]
-        if call.sequence != len(prior) + 1 or call.sequence > MAX_CALLS:
+        if call.sequence != len(prior) + 1 or call.sequence > MAX_INVOKES:
             raise WorkflowError("identity_mismatch")
         if call.binding.step_id in SOURCE_STEPS:
             if key not in replayed:

@@ -55,7 +55,8 @@ CASE_ID = "o2-synthetic"
 RUN_ID = "o2-synthetic-portfolio-decision"
 PATHWAY: PathwayId = "portfolio_decision"
 # opus-medium (spec 7.1; effort medium is the only one its row allows) has no listed input limit in
-# pricing.py, so run_pathway's own token bound applies unchanged. SOL_MODEL is the pinned limitation.
+# pricing.py, so the 1-byte-per-token bound applies. SOL_MODEL runs under the openai lower bound
+# (run_pathway.BYTES_PER_TOKEN_LOWER_BOUND, PF-R12), which keeps its narrative request in context.
 MODEL = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
 SOL_MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
 # Test-authored cap: the opus-medium reservations for the CP-1 requests (each sized from the request

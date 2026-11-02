@@ -1,0 +1,15 @@
+{
+ "schema": "read-window-key/1",
+ "what": "deploy_vii.live.tools read_pages bound on a line source (B22 follow-up, PF-R7)",
+ "max_spans_per_read": 5,
+ "max_line_read_bytes": 8192,
+ "allowed_on_line_source": "last-first+1 <= max_spans_per_read, OR (last-first+1 <= max_lines_per_line_read AND the measured bytes <= max_line_read_bytes); the line-count check comes before any iteration over the range",
+ "measure": "sum of len(span.text.encode('utf-8')) over the located line:N spans first..last; a line the source does not hold counts 0",
+ "page_sources": "unchanged: at most max_spans_per_read pages, refusal text unchanged",
+ "line_refusal": "bad arguments: on a line source, at most 5 lines, or at most 200 lines totalling 8192 bytes, per call",
+ "tool_description": "Verbatim text of pages first_page..last_page of one source (at most 5 pages; on a line source, at most 5 lines, or at most 200 lines totalling 8192 bytes), each page or line as a SOURCE block with its locator.",
+ "why": "Model-testing pilot 2026-11-02: under B22 an HTML filing is a line source, so 5 spans are about 1.3 KB per call and 16 calls see about 80 lines of a 1.6 MB pack (MANAGER root-cause note).",
+ "ruled_by": "controller, PF-R7 (B31a), 2026-11-02",
+ "max_lines_per_line_read": 200,
+ "amended_by": "PF-R9 (controller gate finding PF1-G1: an unbounded last_page made both loops unbounded)"
+}

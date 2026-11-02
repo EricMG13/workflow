@@ -719,7 +719,7 @@ RUNS = [
 ]
 
 H2_REFUSAL = "run.current_period h2-2026: forecast years need an fy or q4 base"
-MISMATCH_REFUSAL = "reporting_currency EUR, but CP-1 reports USD"
+MISMATCH_REFUSAL = "run.reporting_currency EUR, but CP-1 reports USD"
 RESIDUAL = {"CP-1C": "Period basis: " + MISMATCH_REFUSAL}
 
 

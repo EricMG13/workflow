@@ -623,27 +623,27 @@
       "period_basis": null,
       "refusal": {
         "exception": "PeriodRefused",
-        "message": "reporting_currency EUR, but CP-1 reports USD",
+        "message": "run.reporting_currency EUR, but CP-1 reports USD",
         "rule": "Task 1: T4.14 currency must equal run.reporting_currency; Task 2 prefixes CP-1C's issue with 'Period basis: '"
       },
       "modules": {
         "CP-1C": {
           "outcome": "refused",
           "layer": "entry validator",
-          "issue_contains": "reporting_currency EUR, but CP-1 reports USD",
+          "issue_contains": "run.reporting_currency EUR, but CP-1 reports USD",
           "figures_produced": false,
-          "issue_exact": "Period basis: reporting_currency EUR, but CP-1 reports USD"
+          "issue_exact": "Period basis: run.reporting_currency EUR, but CP-1 reports USD"
         },
         "CP-2D": {
           "outcome": "refused",
           "layer": "entry validator",
-          "issue_contains": "reporting_currency EUR, but CP-1 reports USD",
+          "issue_contains": "run.reporting_currency EUR, but CP-1 reports USD",
           "figures_produced": false
         },
         "CP-3C": {
           "outcome": "refused",
           "layer": "entry validator",
-          "issue_contains": "reporting_currency EUR, but CP-1 reports USD",
+          "issue_contains": "run.reporting_currency EUR, but CP-1 reports USD",
           "figures_produced": false
         }
       },

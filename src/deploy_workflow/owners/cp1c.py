@@ -1263,17 +1263,31 @@ def _tie_out_settled(
     )
 
 
-PACK_LIMITATIONS = (
-    (
-        "Peer figures come from the CP-DR peer pack: each amount is read by Python from the "
-        "figure quoted in a supplied evidence item and is unaudited; no peer is restated to "
-        "the issuer's basis."
+# The lines a composed sheet adds to the module's limitations, by whether it is the CP-DR pack's.
+SOURCE_LIMITATIONS: Mapping[bool, tuple[str, ...]] = {
+    False: (
+        (
+            "Peer figures come from the peer summary source, which is supplied by a data "
+            "desk and unaudited; no peer is restated to the issuer's basis."
+        ),
+        (
+            "Peer ratios use the definitions stated in the peer summary; the issuer line on "
+            "the same summary is tied to CP-1 in the definition alignment table."
+        ),
     ),
-    (
-        "Peer ratios are computed from the located operands; the CP-DR peer pack carries no "
-        "issuer line, so the issuer is not tied out to a peer summary and its ratios are CP-1's."
+    True: (
+        (
+            "Peer figures come from the CP-DR peer pack: each amount is read by Python from the "
+            "figure quoted in a supplied evidence item and is unaudited; no peer is restated to "
+            "the issuer's basis."
+        ),
+        (
+            "Peer ratios are computed from the located operands; the CP-DR peer pack carries no "
+            "issuer line, so the issuer is not tied out to a peer summary and its ratios are "
+            "CP-1's."
+        ),
     ),
-)
+}
 
 GAP_FIELDS = (
     ("gap", "Gap"),
@@ -1298,24 +1312,6 @@ def _gaps(c: _Composer, gaps: Sequence[Gap]) -> None:
         c.row("T1C.7", r, f"Gap {n}", ["id", *(name for name, _ in GAP_FIELDS)])
 
 
-def _source_limitations(present: bool, pack: bool, absent: str) -> tuple[str, ...]:
-    if present and pack:
-        return PACK_LIMITATIONS
-    if present:
-        return (
-            (
-                "Peer figures come from the peer summary source, which is supplied by a data "
-                "desk and unaudited; no peer is restated to the issuer's basis."
-            ),
-            (
-                "Peer ratios use the definitions stated in the peer summary; the issuer line on "
-                "the same summary is tied to CP-1 in the definition alignment table."
-            ),
-        )
-    # round 5 P1: the reason names a missing or a not-ready source
-    return (f"{absent}: no peer universe, median, position or outlier flag can be formed.",)
-
-
 def _limitations(
     present: bool,
     pack: bool,
@@ -1325,7 +1321,11 @@ def _limitations(
     stats: Mapping[str, _Stat | None],
     gaps: Sequence[Gap],
 ) -> tuple[str, ...]:
-    out = list(_source_limitations(present, pack, absent))
+    out: list[str] = []
+    if present:
+        out += SOURCE_LIMITATIONS[pack]
+    else:  # round 5 P1: the reason names a missing or a not-ready source
+        out.append(f"{absent}: no peer universe, median, position or outlier flag can be formed.")
     out += [  # round 6 B1
         f"The issuer's {m.label[0].lower()}{m.label[1:]} is not available in CP-1 "
         f"({own.reason}), so its difference from the peer median, its position and its "

@@ -2,11 +2,13 @@
 
 import os
 import signal
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Self
 
 import pytest
+from cpdr_s1_support import ResearchCase, key_file
 
 from deploy_vii.preparation import MAX_BYTES, load_pack, prepare
 from deploy_workflow.context import ContextRefused
@@ -19,6 +21,7 @@ from deploy_workflow.model.adapter import (
     live_adapter,
 )
 from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.research import evidence
 from deploy_workflow.run_inputs import (
     AdapterRefused,
     BadCap,
@@ -26,9 +29,10 @@ from deploy_workflow.run_inputs import (
     BadSourceId,
     CaseSource,
     ConfigMismatch,
-    CpDrNotBuilt,
     DuplicateSource,
     PathwayMismatch,
+    ResearchManifestRequired,
+    ResearchManifestUnused,
     RunDirExists,
     RunDirInvalid,
     SourceTooLarge,
@@ -186,8 +190,64 @@ def test_undecodable_html_refused(args: dict[str, Any], tmp_path: Path) -> None:
     refused(args, UndecodableHtml)
 
 
-def test_cp_dr_refused(args: dict[str, Any]) -> None:
-    refused(args, CpDrNotBuilt, cp_dr=True)
+def test_cp_dr_without_a_manifest_refused(args: dict[str, Any]) -> None:
+    refused(args, ResearchManifestRequired, cp_dr=True)
+
+
+def test_a_manifest_without_cp_dr_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    case = ResearchCase(tmp_path / "case")
+    refused(args, ResearchManifestUnused, research_manifest=case.manifest_path)
+    refused(args, ResearchManifestUnused, cp_dr=False, research_manifest=case.manifest_path)
+
+
+@pytest.mark.parametrize("source_id", ["ev-1", "EV-7", "peers", "cp-dr-dossier"])
+def test_reserved_research_ids(args: dict[str, Any], source_id: str) -> None:
+    """Plan 4 row 2: a case source named like a research id is BadSourceId with the key's text."""
+    texts = key_file("expected.json")["intake"]["refusal_texts"]["reserved_id"]
+    args["sources"][1] = CaseSource(source_id, args["sources"][1].path, "text/plain")
+    with pytest.raises(BadSourceId) as caught:
+        check_arguments(**args)
+    if source_id in texts:
+        assert str(caught.value) == texts[source_id]
+    assert not os.path.lexists(args["run_dir"])
+
+
+def test_cp_dr_checks_the_manifest_and_writes_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    moment = datetime(2026, 11, 2, 5, 40, 0, 999999, tzinfo=UTC)
+    monkeypatch.setattr(evidence, "research_clock", lambda: moment)
+    case = ResearchCase(tmp_path)
+    arguments = {**case.arguments(tmp_path), "adapter": RecordedAdapter(MODEL, {})}
+    before = sorted(tmp_path.rglob("*"))
+    checked = check_arguments(**arguments)
+    assert sorted(tmp_path.rglob("*")) == before
+    assert [f.filename for f in checked.files] == [
+        "identity.txt",
+        "financial.txt",
+        "ev-1.txt",
+        "ev-2.txt",
+        "ev-3.txt",
+        "context.json",
+    ]
+    assert {f.media_type for f in checked.files if f.source_id.startswith("ev-")} == {"text/plain"}
+    assert "CP-DR" in checked.request.run.requested_modules
+    assert checked.research is not None
+    key = key_file("expected.json")["intake"]
+    assert [a.item_id for a in checked.research.accepted] == [x["item_id"] for x in key["accepted"]]
+    assert [r.locator for r in checked.research.refused] == sorted(
+        r["locator"] for r in key["rejected_json"]["entries"]
+    )
+    assert checked.research.retrieved == "2026-11-02T05:40:00Z"  # to the second, UTC (O7-R13)
+    assert (
+        checked.research.manifest_sha256
+        == key_file("manifest.json")["research_manifest"]["file_sha256"]
+    )
+
+
+def test_presets_are_untouched_by_cp_dr(args: dict[str, Any]) -> None:
+    preset = check_arguments(**args).request.run.requested_modules
+    assert "CP-DR" not in preset
 
 
 def test_over_cap_source_refused_and_read_is_bounded(

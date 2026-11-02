@@ -77,6 +77,18 @@ def test_copies_are_hashed_and_refused_items_are_not_copied(
     assert len(list((tmp_path / "out").iterdir())) == len(expected["intake"]["accepted"])
 
 
+def test_dest_dir_none_assesses_only_and_writes_nothing(
+    tmp_path: Path, manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    """O7-R12: ``dest_dir=None`` returns the same result as a copying run and creates no file."""
+    copied = run_intake(tmp_path / "copy", manifest)
+    result = run_intake(tmp_path / "assess", manifest, dest_dir=None)
+    assert result == copied
+    assert [a.text for a in result.accepted] == [a.text for a in copied.accepted]
+    assert sorted(p.name for p in (tmp_path / "assess").iterdir()) == ["in"]
+    assert [a.item_id for a in result.accepted] == expected["intake"]["pack_sources"][2:]
+
+
 def test_rejected_json_and_refusal_texts_equal_the_key(
     tmp_path: Path, manifest: dict[str, Any], expected: dict[str, Any]
 ) -> None:

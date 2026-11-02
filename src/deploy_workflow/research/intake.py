@@ -233,13 +233,14 @@ def intake(
     rows: Sequence[ManifestRow],
     *,
     base_dir: Path,
-    dest_dir: Path,
+    dest_dir: Path | None,
     as_of: date,
     cutoff: date,
     today: date,
     max_bytes: int = MAX_ITEM_BYTES,
 ) -> IntakeResult:
-    """Accept or refuse each row in manifest order; accepted items are copied to ``dest_dir``.
+    """Accept or refuse each row in manifest order; accepted items are copied to ``dest_dir``
+    (``None`` assesses only and writes nothing: the text is on each ``AcceptedItem``, O7-R12).
 
     A wrong input raises (reserved or stray source_id, a url row while web retrieval is paused, a
     path outside ``base_dir``, cutoff after ``as_of``); item refusals are listed on the result.
@@ -262,9 +263,10 @@ def intake(
             refused.append(result)
         else:
             accepted.append(result)
-    for item in accepted:
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        (dest_dir / f"{item.item_id}.txt").write_bytes(item.text.encode("utf-8"))
+    if dest_dir is not None:
+        for item in accepted:
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            (dest_dir / f"{item.item_id}.txt").write_bytes(item.text.encode("utf-8"))
     return IntakeResult(tuple(accepted), tuple(refused))
 
 

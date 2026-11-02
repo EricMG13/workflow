@@ -2485,6 +2485,22 @@
       "sha256": "bf786ddbf10ccbff2d6a6179337b7f4f9c676236614154a89e0bed7230af1600",
       "reason": "repo-authored (not in files[]): B9 (O7d D2 fix 2, O7-R65, B31a): wording only; the universe sentence (line 20), the definitions clause (line 21) and the one-adapter scope list (line 29) are true on the CP-DR peer-sheet path as well: Python admits the TDR.4 candidates first (currency, unit, period ends, the issuer's name) and lists the rest in T1C.7, the operands are the TDR.6 figures, and the ev-* items the figures cite are in scope. Chained after the O7d D2 fix 1 record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "547dc50efda5a35e2dededbb6f8aac03c32b4dc369a82d3d8fdc91e2f48c8893",
+      "project_commit": "4e38b041eb44dd82fb29aaa7240d579a6604dd9f",
+      "sha256": "9cf2bf6dac6a8dac039e0d63a2d5cb6aee444284ec14af7e6cac29c16fce86ec",
+      "reason": "repo-authored (not in files[]): B31a: O7 end batch 2 (end batch review L3): the Consumers line (64) says CP-1C reads the bound head's TDR.6 figures (its read_inputs view and its peer sheet) when the peer pack is bound, not 'through its source session'. Nothing else changes. Chained after the O7 end batch record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "prior_project_sha256": "bf786ddbf10ccbff2d6a6179337b7f4f9c676236614154a89e0bed7230af1600",
+      "project_commit": "1e6c56412dbe4802ea501586df317fdb1fee8640",
+      "sha256": "8836094d4ce388c36941d8a1c7e34f6e01e53121e127c3c2c5c077af89a0d1b0",
+      "reason": "repo-authored (not in files[]): B9 (O7 end batch 2, D2 re-review L-a, B31a): line 29 says the scope holds every held ev-* research item, which the analyst and the pack figures may cite, instead of only the items the pack figures cite (cp1c.in_scope and host._OWNER_SCOPES hold every held ev-* item). Nothing else changes. Chained after the O7d D2 fix 2 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-2-review.md"
     }
   ],
   "local_patch_lineage": [

@@ -284,18 +284,29 @@ def test_d12_records_for_the_vii_files_are_chained_after_d1b_and_cite_the_end_ba
         d1b = [r for r in records if r["review"] == D1B_REVIEW]
         assert d1b, destination
         assert "O7d D1b" in d1b[-1]["reason"], destination
-        end = records[-1]
-        assert end["review"] == END_BATCH_REVIEW, destination
+        ends = [r for r in records if r["review"] == END_BATCH_REVIEW]
+        assert len(ends) == 1, destination
+        end = ends[0]
+        at = records.index(end)
         assert "O7 end batch" in end["reason"], destination
-        assert end["prior_project_sha256"] == records[-2]["sha256"], destination
-        assert records[-2] is d1b[-1], destination
-        assert end["sha256"] == _sha(path), destination
-        assert end["sha256"] != records[-2]["sha256"], destination
+        assert end["prior_project_sha256"] == records[at - 1]["sha256"], destination
+        assert records[at - 1] is d1b[-1], destination
+        assert end["sha256"] != records[at - 1]["sha256"], destination
         assert _git_sha(end["project_commit"], destination) == end["sha256"], destination
+        # O7 end batch 2 (L3): methods/cpdr.md has one more record, chained after the end batch one.
+        later = records[at + 1 :]
+        assert len(later) == (1 if destination.endswith("cpdr.md") else 0), destination
+        for after in later:
+            assert after["review"] == END_BATCH_2_REVIEW, destination
+            assert "O7 end batch 2" in after["reason"], destination
+            assert after["prior_project_sha256"] == end["sha256"], destination
+            assert _git_sha(after["project_commit"], destination) == after["sha256"], destination
+        assert (later[-1] if later else end)["sha256"] == _sha(path), destination
 
 
 D1B_REVIEW = ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
 END_BATCH_REVIEW = ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
+END_BATCH_2_REVIEW = ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-2-review.md"
 
 
 def test_method_states_the_peer_pack_rules_and_the_opt_in() -> None:

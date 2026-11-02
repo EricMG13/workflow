@@ -12,6 +12,7 @@ Receipt-bearing run directories come from the Task 8 G1 owner run (``test_model_
 from __future__ import annotations
 
 import dataclasses
+import fcntl
 import hashlib
 import http.client
 import json
@@ -19,7 +20,7 @@ import runpy
 import shutil
 import socket
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -709,7 +710,7 @@ def test_a_receipt_naming_a_module_outside_the_preset_is_refused(gap_out: Path) 
     body = json.loads(path.read_text())
     next(r for r in body["refusals"] if r["module_id"] == "CP-1")["missing_inputs"] = ["CP-8"]
     path.write_text(json.dumps(body))
-    with pytest.raises(ValueError, match="CP-8"):
+    with pytest.raises(DriverError, match="CP-8"):
         _score(gap_out)
 
 
@@ -936,3 +937,113 @@ def test_key_shaped_settlement_text_never_reaches_the_report(
     assert main(world.argv("report")) == 2
     assert fake not in capsys.readouterr().err
     assert fake not in (world.out / "report.md").read_text()
+
+
+# ------------------------------------------------------------------ review round 2
+
+
+def test_a_stage_command_holds_the_runs_root_lock_until_its_last_run(
+    world: World, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A second stage command under the same root fails at once, while the first is mid-run."""
+    refused: list[bool] = []
+    real = _settled_double(monkeypatch)
+    inner: Callable[..., RunOutcome] = vars(run_module)["run_pathway"]
+
+    def nested(**kwargs: Any) -> RunOutcome:
+        other = world.root / "other-out"
+        with pytest.raises(DriverError, match="another stage command"):
+            run_stage("pilot", world.settings(out=other))
+        assert main(world.argv("pilot", "--recordings", str(world.recordings))) in (0, 2)
+        refused.append(not other.exists())
+        return inner(**kwargs)
+
+    monkeypatch.setattr(run_module, "run_pathway", nested)
+    run_stage("pilot", world.settings())
+    assert refused and all(refused) and len(real) == 4
+    capsys.readouterr()
+
+
+def test_the_lock_is_released_when_the_command_ends_and_score_report_take_none(
+    world: World,
+) -> None:
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    lock = world.root / ".driver.lock"
+    assert lock.is_file()
+    with lock.open("a") as held:
+        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)  # another command is running
+        with pytest.raises(DriverError, match="another stage command"):
+            run_stage("pilot", world.settings(out=world.root / "second"))
+        assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
+        assert main(world.argv("score")) == 0 and main(world.argv("report")) == 0
+    out2 = world.root / "second"
+    assert len(run_stage("pilot", world.settings(out=out2)).outcomes) == 4  # lock was free again
+
+
+def test_a_symlinked_run_directory_is_refused(
+    world: World, capsys: pytest.CaptureFixture[str]
+) -> None:
+    elsewhere = world.root.parent / "external-runs"
+    unknown = budget_tests.call("sol-high", None, reserved="40", status="unknown")
+    _prior_live(elsewhere, "sol-high", [unknown], run_id="linked-run")
+    world.root.mkdir(exist_ok=True)
+    (world.root / "linked-run").symlink_to(elsewhere / "linked-run", target_is_directory=True)
+    with pytest.raises(DriverError, match="linked-run.*symbolic link"):
+        run_stage("pilot", world.settings())
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
+    assert "linked-run" in capsys.readouterr().err
+    assert not world.out.exists()
+
+
+def test_live_needs_an_explicit_absolute_runs_root(
+    world: World, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ruling = tmp_path / "r.md"
+    ruling.write_text("x\n", encoding="utf-8")
+    relative = dataclasses.replace(
+        world.settings(recordings=None),
+        live=True,
+        ruling=ruling,
+        runs_root=run_module.DEFAULT_RUNS_ROOT,
+    )
+    with pytest.raises(DriverError, match="absolute --runs-root"):
+        run_stage("pilot", relative)
+    argv = ["pilot", "--out", str(world.out), "--cases", str(world.cases)]
+    argv += ["--corpus", str(world.corpus), "--live", "--ruling", str(ruling)]
+    assert main(argv) == 2  # no --runs-root: the relative default
+    err = capsys.readouterr().err
+    assert "--runs-root" in err and "worktree" in err
+    # offline commands may keep the relative default
+    offline = world.settings(runs_root=run_module.DEFAULT_RUNS_ROOT)
+    run_module.check_settings(dataclasses.replace(offline, out=run_module.DEFAULT_RUNS_ROOT / "x"))
+
+
+def test_the_report_states_the_resolved_runs_root(world: World) -> None:
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    assert f"Runs root: {world.root.resolve()}" in (world.out / "report.md").read_text()
+
+
+def test_score_out_lets_a_defect_in_the_scorer_propagate(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+
+    def defect(*args: Any, **kwargs: Any) -> None:
+        raise ValueError("a defect")
+
+    monkeypatch.setattr(run_module, "score_run", defect)
+    with pytest.raises(ValueError, match="a defect") as caught:
+        run_module.score_out(world.settings())
+    assert type(caught.value) is ValueError  # not turned into a named refusal
+    monkeypatch.undo()
+    monkeypatch.setattr(run_module, "render_report", defect)
+    with pytest.raises(ValueError, match="a defect") as again:
+        run_module.report_out(world.settings())
+    assert type(again.value) is ValueError
+
+
+def test_scores_that_no_longer_match_the_runs_are_a_named_refusal(world: World) -> None:
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    shutil.rmtree(world.out / f"pilot-sol-high-{PILOT_PATHWAY}-1")
+    with pytest.raises(DriverError, match="pilot-sol-high.*score command"):
+        run_module.report_out(world.settings())

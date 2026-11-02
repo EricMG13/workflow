@@ -9,12 +9,14 @@ R2 gate. The driver's own check of the ruling path is a pre-check for a clear me
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import re
 import sys
+from collections.abc import Iterator, Sequence
 from collections.abc import Mapping as MappingABC
-from collections.abc import Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, ROUND_UP, Context, Decimal, localcontext
 from pathlib import Path
@@ -23,7 +25,7 @@ from typing import Literal
 
 from pydantic import ValidationError
 
-from deploy_vii.contracts import Contract, PathwayId
+from deploy_vii.contracts import PATHWAY_MODULES, Contract, PathwayId
 from deploy_workflow.context import ContextRefused
 from deploy_workflow.html_text import UndecodableHtml
 from deploy_workflow.model import adapter as adapter_module
@@ -70,6 +72,7 @@ REPORT_FILE = "report.md"
 FAULTS_FILE = "faults.jsonl"
 EXHAUSTED_FILE = "exhausted.json"
 DEFAULT_RUNS_ROOT = Path("artifacts/model-testing")
+LOCK_FILE = ".driver.lock"
 
 # Per-run amount a live run must be able to cover before any run has been measured. Basis: spec
 # 7.2 (docs/superpowers/specs/2026-10-31-model-testing-design.md, section 7.2 "Budget"), each
@@ -157,6 +160,11 @@ def _precheck_ruling(ruling: Path) -> None:
 
 
 def check_settings(settings: Settings) -> None:
+    if settings.live and not settings.runs_root.is_absolute():
+        raise DriverError(
+            "--live needs an explicit absolute --runs-root: the default is relative, so each "
+            "worktree would keep its own ledger and miss spend recorded elsewhere"
+        )
     if not settings.out.resolve().is_relative_to(settings.runs_root.resolve()):
         raise DriverError(
             f"--out {settings.out} is outside --runs-root {settings.runs_root}: spend stored "
@@ -230,8 +238,12 @@ def _run_dirs(root: Path) -> list[Path]:
     found: list[Path] = []
     pending = [root] if root.is_dir() else []
     while pending:
-        children = sorted(p for p in pending.pop().iterdir() if p.is_dir() and not p.is_symlink())
-        for child in children:
+        for child in sorted(p for p in pending.pop().iterdir() if p.is_dir()):
+            if child.is_symlink():
+                raise DriverError(
+                    f"{child} is a symbolic link: its runs would go uncounted; "
+                    "move the folder in or remove the link"
+                )
             if (child / "run.json").is_file() or (child / "sources").is_dir():
                 found.append(child)
             else:
@@ -474,14 +486,28 @@ def _record_stopped(out: Path, stopped: MappingABC[str, str]) -> None:
     path.write_text(body.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
 
+@contextmanager
+def _root_lock(root: Path) -> Iterator[None]:
+    """An exclusive lock on the runs root, held from before the first budget and run_id read until
+    the last run returns. A second stage command fails at once rather than waiting."""
+    # ponytail: one lock per runs-root; per-config locks if parallel stages are ever needed
+    root.mkdir(parents=True, exist_ok=True)
+    with (root / LOCK_FILE).open("a") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise DriverError(
+                f"another stage command holds {root / LOCK_FILE}; wait for it to finish"
+            ) from None
+        yield
+
+
 def run_stage(stage: Stage, settings: Settings) -> StageResult:
     """Run every planned run of a stage. Everything that can be refused is refused before the
     first run: the arguments, a crashed run folder, the settlements, the cases and their sources,
     and each configuration's adapter (the live gate included)."""
     check_settings(settings)
     planned = plan_runs(stage)
-    runs = load_runs(settings.runs_root)
-    settlements = load_all_settlements(settings.runs_root, settings.out)
     case_ids = {case for case, _, _ in planned}
     if stage == "comparison":
         case_ids.add(CASES[DISTRESSED_PATHWAY])
@@ -490,12 +516,15 @@ def run_stage(stage: Stage, settings: Settings) -> StageResult:
     for _, _, config_id in planned:
         if config_id not in adapters:
             adapters[config_id] = _adapter(settings, _spec(config_id))
-    driver = _Driver(stage, settings, inputs, adapters, settlements, runs)
-    for case_id, pathway, config_id in planned:
-        driver.run(case_id, pathway, config_id)
-    if stage == "comparison":
-        driver.distressed_on_opus()
-    _record_stopped(settings.out, driver.stopped)
+    with _root_lock(settings.runs_root):
+        runs = load_runs(settings.runs_root)
+        settlements = load_all_settlements(settings.runs_root, settings.out)
+        driver = _Driver(stage, settings, inputs, adapters, settlements, runs)
+        for case_id, pathway, config_id in planned:
+            driver.run(case_id, pathway, config_id)
+        if stage == "comparison":
+            driver.distressed_on_opus()
+        _record_stopped(settings.out, driver.stopped)
     return StageResult(tuple(driver.outcomes), MappingProxyType(dict(driver.stopped)))
 
 
@@ -505,6 +534,18 @@ def run_stage(stage: Stage, settings: Settings) -> StageResult:
 class _Scores(Contract):
     schema_version: Literal["model-testing-scores/1"]
     scores: tuple[PathwayScore, ...]
+
+
+def _check_refusal_names(meta: RunMeta, refusals: MappingABC[str, tuple[str, ...]]) -> None:
+    """A refusal naming a module or input outside the pathway preset is refused, by name."""
+    preset = set(PATHWAY_MODULES[meta.pathway])
+    for module_id, inputs in refusals.items():
+        for name in (module_id, *inputs):
+            if name not in preset:
+                raise DriverError(
+                    f"run {meta.run_id}: the receipt's refusal of {module_id} names {name}, "
+                    f"outside the {meta.pathway} preset"
+                )
 
 
 def score_out(settings: Settings) -> Path:
@@ -520,12 +561,9 @@ def score_out(settings: Settings) -> Path:
         if meta.case_id not in inputs:
             inputs[meta.case_id] = load_inputs(meta.case_id, settings.cases, settings.corpus)
         scored = inputs[meta.case_id]
-        try:
-            scores.append(
-                score_run(folder, scored.case, scored.mapping, refusals=receipt_refusals(folder))
-            )
-        except ValueError as error:  # score_run's documented refusals (case, receipt, names)
-            raise DriverError(f"run {meta.run_id}: {error}") from None
+        refusals = receipt_refusals(folder)
+        _check_refusal_names(meta, refusals)
+        scores.append(score_run(folder, scored.case, scored.mapping, refusals=refusals))
     path = settings.out / SCORES_FILE
     body = _Scores(schema_version="model-testing-scores/1", scores=tuple(scores))
     path.write_text(body.model_dump_json(indent=2) + "\n", encoding="utf-8")
@@ -598,6 +636,26 @@ def _latest(scores: Sequence[PathwayScore]) -> tuple[PathwayScore, ...]:
     return tuple(sorted(best.values(), key=lambda x: x.run_id))
 
 
+def _check_scores_match(
+    scores: Sequence[PathwayScore], runs: Sequence[tuple[RunMeta, tuple[CallRecord, ...]]]
+) -> None:
+    """Scores written before a run folder changed or went away are stale: name the run."""
+    by_run = {meta.run_id: meta for meta, _ in runs}
+    for score in scores:
+        meta = by_run.get(score.run_id)
+        if meta is None or (meta.config_id, meta.pathway, meta.case_id) != (
+            score.config_id,
+            score.pathway,
+            score.case_id,
+        ):
+            raise DriverError(
+                f"{SCORES_FILE} does not match the run folders (run {score.run_id}); "
+                "run the score command again"
+            )
+        if score.pathway not in CASES:
+            raise DriverError(f"run {score.run_id}: pathway {score.pathway} is not a golden")
+
+
 def report_out(settings: Settings) -> Path:
     """Write ``report.md`` from ``scores.json`` (the latest run per pathway and configuration),
     the run folders and ``faults.jsonl``. The stopped configurations are derived from the runs
@@ -613,16 +671,18 @@ def report_out(settings: Settings) -> Path:
     runs = load_runs(settings.out)
     everywhere = load_runs(settings.runs_root)
     settlements = load_all_settlements(settings.runs_root, settings.out)
+    latest = _latest(scores)
+    _check_scores_match(latest, runs)
     try:
         faults = read_faults(settings.out / FAULTS_FILE)
-        text = render_report(_latest(scores), runs, faults)
-    except ValueError as error:  # the report's and the fault journal's documented refusals
-        raise DriverError(f"report: {error}") from None
+    except ValueError as error:  # the fault journal's one refusal: an unparsable record
+        raise DriverError(f"{FAULTS_FILE}: {error}") from None
+    text = render_report(latest, runs, faults)
     skipped = {k: v for k, v in _read_exhausted(settings.out).items() if k not in CONFIGS}
     stopped = {**skipped, **current_stops(everywhere, settlements)}
     notes = _notes(stopped, settlements, everywhere)
-    if notes:
-        text += "\n" + "\n".join(notes)
+    notes += ["## Runs root", "", f"Runs root: {settings.runs_root.resolve()}", ""]
+    text += "\n" + "\n".join(notes)
     path = settings.out / REPORT_FILE
     path.write_text(text, encoding="utf-8")
     return path

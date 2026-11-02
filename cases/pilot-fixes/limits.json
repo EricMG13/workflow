@@ -39,5 +39,25 @@
  },
  "overall_s": 1800,
  "overall_s_basis": "Deploy VII sol-high took 692 s for 55K output tokens; 98,304 output tokens at that rate is about 1240 s, under 1800.",
- "ruled_by": "controller, PF-R11..PF-R13 (apply-recommendations, MANAGER relay), 2026-11-02"
+ "ruled_by": "controller, PF-R11..PF-R13 (apply-recommendations, MANAGER relay), 2026-11-02",
+ "context_too_long_configs": [
+  "sol-high",
+  "sol-medium"
+ ],
+ "context_check": {
+  "rule": "ContextTooLong fires only where a price sets max_input_tokens (pricing.reservation_usd); only gpt-6.1-sol does (272000, standard tier). At 1 byte per token, opus and deepseek bounds stay inside the providers' windows.",
+  "deepseek-max": {
+   "largest_deploy_vii_request_bytes": 845575,
+   "bound_tokens_at_1": 845639,
+   "smallest_endpoint_context": 1000000,
+   "real_prompt_tokens": 138583
+  },
+  "opus-medium": {
+   "context_window": 1000000,
+   "deploy_vii_request_bytes": null,
+   "pilot_max_request_bytes": 71339
+  },
+  "cost_of_1": "over-reservation only, e.g. about 5.6 USD input plus 1.97 USD output for a 700 KB Opus call, held for the call"
+ },
+ "amended_by": "MANAGER check on PF-R12 (controller, 2026-11-02)"
 }

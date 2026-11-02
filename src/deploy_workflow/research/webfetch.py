@@ -35,7 +35,7 @@ SOURCE_HEADER = "header:last-modified"
 SOURCE_BODY = "body:published-line"
 
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
-_CONTENT_LENGTH = re.compile(r"[0-9]+")
+_CONTENT_LENGTH = re.compile(r"[0-9]{1,18}")
 _PUBLISHED_LINE = re.compile(r"^Published:[ \t]*(\d{4}-\d{2}-\d{2})", re.MULTILINE)
 # RFC 3986's URL characters; anything else (spaces, controls, `|`, `<`, non-ASCII) is not a URL here.
 _URL_CHARS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*")

@@ -169,3 +169,26 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 
 ## Phase 8 Task 4 owner item (2026-11-01)
 - A context with a blank run.current_period takes the default FY2025 basis when its currency is USD (P8-R3, which keeps the frozen Phase 6 pins-context cases). A 2026 run with a blank base therefore refuses at selection instead of inferring its year. Whether a blank base should derive its year from CP-1 is an owner decision.
+
+## Phase 8 Task 3 owner items (2026-11-01)
+- CP-1D's `parse_bridge` never reads the currency or scale on the bridge's basis line ("; EUR; amounts in millions"). A USD or thousands bridge under an EUR run, or an EUR bridge under the USD default, composes, and every T1D.1 amount is stamped in the run's currency, in millions. This predates Phase 8, which widens the exposure (adversary P1; probes `probe_bridge_currency.py` and `probe_bridge_currency_default.py`, both exit 1). The reviewer rates it Medium.
+- CP-1D's view raises `ValueError` when CP-1 holds no T4.10 facts for the run's LTM column. Under `read_inputs` that is an `InternalError` fault, not a refusal. This also predates Phase 8; P8-R5 fixes only the context, period and currency refusals.
+
+## Phase 5 Task 3 owner items (2026-11-01)
+- Four CP-0 paths call `submit_cp0_review` without the owner workflow's `_PRECHECKS`, so a context pack sent through them gets no attachments or legal gate: `financial_workflow.py:899` (the CLI), `earnings_workflow.py:2680` and `:2835`, `workflow.py:531`, and `deploy_vii/live/submission.py:1102`. The plan scoped Task 3 to the owner workflow (adversary I4).
+- The model is never told the attachments rule. No `source_readiness` rule states it, `fence.cp0_run_context_block` shows only `legal_documents`, and the rule-coverage check cannot see a precheck. This is an O6 rule-list item (adversary I5).
+- Gaps in the legal rule's matching (adversary I1, I2 and I3):
+  - the legal gap is matched by plain substring, so `illegal_documents_x` passes;
+  - any ready source assessed `filed` or `executed` satisfies the executed rule, non-legal sources included;
+  - the frozen regex is ASCII-only, ruling Q5.
+- No test kills the replay-recompute skip mutant in `OwnerWorkflow.open` for any module (`probe_site_mutant_replay_all.py`). This predates Phase 5.
+
+## Phase 8 Task 5 owner items (2026-11-02)
+- A non-calendar fiscal year (July-June, April-March, 52/53-week) is refused by CP-2G and CP-2H (P8T5-R1). Deriving forecast windows from `ltm_start`/`ltm_end` + k years needs an owner rule for 52/53-week years and a pinned key.
+- CP-2A money break levels are copied into CP-2G in the run's currency with no check (`cp2g.py:2059` `_cp2a_copy`). An EUR run copies a USD 50 level as EUR 50. The parent did the same under USD. This predates Phase 8.
+
+## Phase 8 Task 4 owner item, added (2026-11-02)
+- With a blank USD base, CP-2D and CP-3C bind the 2025 figures from a CP-1 whose latest year is 2026 but which also carries 2025 rows. The labels are honest, and the parent behaved the same. Whether vii ever emits such a two-year T4.14 register is unverified (adversary L3, `probe_blank_usd_two_year.py`).
+
+## Phase 8 Task 7 owner item (2026-11-02)
+- A plain USD CP-L10 `Upstream` accepts a known operand in another currency (EUR). A frozen `test_method_cpl10` assertion pins this, so the Phase 8 currency check covers non-USD runs only (`RunUpstream`, P8T7-R8). Whether a USD run should refuse a non-USD operand is the owner's call.

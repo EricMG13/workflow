@@ -1760,215 +1760,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_premium_prepayment",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "soft_call_premium_prepayment",
-   "period_end": null,
-   "status": "known",
-   "value": "1.00",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > Section 2.18",
-     "quote": "a prepayment premium of 1.00% of the aggregate principal amount of the Closing Date Term Loans being prepaid",
-     "printed": "1.00%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_payment_on_amendment",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "soft_call_payment_on_amendment",
-   "period_end": null,
-   "status": "known",
-   "value": "1.00",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > Section 2.18",
-     "quote": "a payment equal to 1.00% of the aggregate principal amount of the applicable Closing Date Term Loans outstanding",
-     "printed": "1.00%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_period",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "soft_call_period",
-   "period_end": null,
-   "status": "known",
-   "value": "On or prior to the six-month anniversary of the Amendment No. 15 Effective Date (August 18, 2025)",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > Section 2.18",
-     "quote": "on or prior to the six-month anniversary of the Amendment No. 1415 Effective Date",
-     "printed": "six-month anniversary"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.repricing_transaction_definition",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "repricing_transaction_definition",
-   "period_end": null,
-   "status": "known",
-   "value": "Repricing Transaction = new debt or conversion with an All-In Yield below that of the 2025 Refinancing Term Loans used to prepay them, or any effective reduction in their All-In Yield by amendment or waiver; excludes events not primarily to lower All-In Yield (incl. Change of Control, Qualifying IPO, Enterprise Transformative Event) and Sale-Leaseback Transactions",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > \"Repricing Transaction\"",
-     "quote": "provided that a Repricing Transaction shall not include (i) any event described in clause (1) or (2) above that is not consummated for the primary purpose of lowering",
-     "printed": "primary purpose of lowering"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.all_in_yield_definition",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "all_in_yield_definition",
-   "period_end": null,
-   "status": "known",
-   "value": "All-In Yield includes margin, OID and upfront fees (equated to a 4-year life), and any floor to the extent the reference rate is below it; excludes arrangement, underwriting and similar fees",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a14",
-     "locator": "Annex I > \"All-In Yield\"",
-     "quote": "OID and upfront fees shall be equated to an interest rate assuming a 4-year life to maturity",
-     "printed": "4-year life"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_bps",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "incremental_mfn_bps",
-   "period_end": null,
-   "status": "known",
-   "value": "50",
-   "value_type": "bps",
-   "unit": "bps",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > Section 2.14(8)",
-     "quote": "exceeds the All-In Yield of any 2024 New2025 Refinancing Term Loans by more than 50 basis points",
-     "printed": "50 basis points"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_sunset",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2025 Refinancing Term Loans (15th)",
-   "field": "incremental_mfn_sunset",
-   "period_end": null,
-   "status": "known",
-   "value": "MFN applies only prior to the one year anniversary of the Amendment No. 14 Effective Date (November 5, 2024) while the term loans remain outstanding",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > Section 2.14(8)",
-     "quote": "prior to the one year anniversary of the Amendment No. 14 Effective Date",
-     "printed": "one year anniversary"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_premium",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2024 New Term Loans (14th), prior soft call",
-   "field": "soft_call_premium",
-   "period_end": null,
-   "status": "known",
-   "value": "1.00",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a14",
-     "locator": "Annex I > Section 2.18",
-     "quote": "a prepayment premium of 1.00% of the aggregate principal amount of the Closing Date Term Loans being prepaid",
-     "printed": "1.00%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_period",
-   "module": "CP-3C",
-   "topic": "repricing_protection",
-   "subject": "2024 New Term Loans (14th), prior soft call",
-   "field": "soft_call_period",
-   "period_end": null,
-   "status": "known",
-   "value": "Six-month anniversary of the Amendment No. 14 Effective Date (November 5, 2024); lapsed before the 15th Amendment reset it",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a14",
-     "locator": "Annex I > Section 2.18",
-     "quote": "on or prior to the six-month anniversary of the Amendment No. 1114 Effective Date",
-     "printed": "six-month anniversary"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_at_2025_06_30.2025-06-30",
-   "module": "CP-3C",
+   "fact_id": "CP-1.margin.term_loan_margin_step_downs.term_loan_margin_at_2025_06_30.2025-06-30",
+   "module": "CP-1",
    "topic": "margin",
    "subject": "Term loan margin step-downs",
    "field": "term_loan_margin_at_2025_06_30",
@@ -1990,123 +1783,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th",
-   "module": "CP-3C",
-   "topic": "margin",
-   "subject": "Term loan margin step-downs",
-   "field": "term_loan_margin_after_15th",
-   "period_end": null,
-   "status": "known",
-   "value": "2.00",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Annex II > \"Applicable Rate\" (a)",
-     "quote": "(a) with respect to 2025 Refinancing Term Loans, (i) 2.00% for SOFR Loans",
-     "printed": "2.00%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_initial_14th.2024-12-31",
-   "module": "CP-3C",
-   "topic": "margin",
-   "subject": "Term loan margin step-downs",
-   "field": "term_loan_margin_initial_14th",
-   "period_end": "2024-12-31",
-   "status": "known",
-   "value": "2.50",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k24",
-     "locator": "Note 8 > New Term Loan Facility",
-     "quote": "bear interest at a rate per annum of equal to SOFR plus an applicable margin of 2.50% (subject to a certain ratings-based step-down)",
-     "printed": "2.50%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_2025_06_30",
-   "module": "CP-3C",
-   "topic": "margin",
-   "subject": "Term loan margin step-downs",
-   "field": "margin_cut_by_15th_vs_2025_06_30",
-   "period_end": null,
-   "status": "known",
-   "value": "0.25",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [],
-   "derivation": {
-    "op": "difference",
-    "operands": [
-     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_at_2025_06_30.2025-06-30",
-     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_initial_14th",
-   "module": "CP-3C",
-   "topic": "margin",
-   "subject": "Term loan margin step-downs",
-   "field": "margin_cut_by_15th_vs_initial_14th",
-   "period_end": null,
-   "status": "known",
-   "value": "0.50",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [],
-   "derivation": {
-    "op": "difference",
-    "operands": [
-     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_initial_14th.2024-12-31",
-     "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.margin.term_loan_margin_step_downs.ratings_step_down_event.2025-06-30",
-   "module": "CP-3C",
-   "topic": "margin",
-   "subject": "Term loan margin step-downs",
-   "field": "ratings_step_down_event",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "Ratings-based step-down of 0.25% (S&P issuer credit rating upgrade on June 18, 2025) took the term loan margin from 2.50% to 2.25% effective June 19, 2025; revolver margin stepped down 0.25% on the same date",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Term Loan Facility",
-     "quote": "With the upgrade of our issuer credit rating by S&P Global Ratings on June 18, 2025, our applicable margin was reduced by 0.25% to 2.25% effective on June 19, 2025.",
-     "printed": "June 18, 2025"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_sofr_at_2025_06_30.2025-06-30",
-   "module": "CP-3C",
+   "fact_id": "CP-1.margin.revolving_credit_facility_margin.revolver_margin_sofr_at_2025_06_30.2025-06-30",
+   "module": "CP-1",
    "topic": "margin",
    "subject": "Revolving Credit Facility margin",
    "field": "revolver_margin_sofr_at_2025_06_30",
@@ -2128,132 +1806,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_base_at_2025_06_30.2025-06-30",
-   "module": "CP-3C",
-   "topic": "margin",
-   "subject": "Revolving Credit Facility margin",
-   "field": "revolver_margin_base_at_2025_06_30",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "1.00",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Revolving Credit Facility",
-     "quote": "SOFR plus an applicable margin of 2.00% or base rate plus 1.00% (after the ratings-based step down of 0.25% effective June 19, 2025)",
-     "printed": "1.00%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.make_whole",
-   "module": "CP-3C",
-   "topic": "notes_call_protection",
-   "subject": "6.000% Senior Secured Notes due 2031",
-   "field": "make_whole",
-   "period_end": null,
-   "status": "known",
-   "value": "Before November 15, 2027: redeem some or all at 100% plus a make-whole premium plus accrued interest",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k24",
-     "locator": "Note 8 > 6.000% Senior Secured Notes",
-     "quote": "At any time prior to November 15, 2027, we may redeem some or all of the 6.000% Senior Secured Notes at a redemption price equal to 100% of the principal amount of the 6.000% Senior Secured Notes redeemed plus a “make-whole” premium",
-     "printed": "make-whole"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.annual_10pct_redemption_price",
-   "module": "CP-3C",
-   "topic": "notes_call_protection",
-   "subject": "6.000% Senior Secured Notes due 2031",
-   "field": "annual_10pct_redemption_price",
-   "period_end": null,
-   "status": "known",
-   "value": "103",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k24",
-     "locator": "Note 8 > 6.000% Senior Secured Notes",
-     "quote": "we may redeem up to 10% of the original aggregate principal amount of the 6.000% Senior Secured Notes during each calendar year at a redemption price equal to 103% of the principal amount",
-     "printed": "103%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.equity_clawback_price_40pct",
-   "module": "CP-3C",
-   "topic": "notes_call_protection",
-   "subject": "6.000% Senior Secured Notes due 2031",
-   "field": "equity_clawback_price_40pct",
-   "period_end": null,
-   "status": "known",
-   "value": "106",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k24",
-     "locator": "Note 8 > 6.000% Senior Secured Notes",
-     "quote": "we may choose to redeem up to 40.0% of the aggregate principal amount of the 6.000% Senior Secured Notes outstanding with the proceeds of certain equity offerings at a redemption price equal to 106% of the principal amount",
-     "printed": "106%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.redemption_prices_from_2027_11_15",
-   "module": "CP-3C",
-   "topic": "notes_call_protection",
-   "subject": "6.000% Senior Secured Notes due 2031",
-   "field": "redemption_prices_from_2027_11_15",
-   "period_end": null,
-   "status": "missing",
-   "value": null,
-   "value_type": "percent",
-   "unit": null,
-   "scale": null,
-   "evidence": [],
-   "derivation": null,
-   "gap_reason": "The 10-K says that from November 15, 2027 the notes are redeemable “at the redemption prices set forth in the Indenture”; the price schedule is in the Indenture, which is not in the corpus."
-  },
-  {
-   "fact_id": "CP-3C.notes_call_protection.market_pricing_quotes_for_the_term_loan_and_notes.market_price",
-   "module": "CP-3C",
-   "topic": "notes_call_protection",
-   "subject": "Market pricing / quotes for the term loan and notes",
-   "field": "market_price",
-   "period_end": null,
-   "status": "missing",
-   "value": null,
-   "value_type": "decimal",
-   "unit": null,
-   "scale": null,
-   "evidence": [],
-   "derivation": null,
-   "gap_reason": "No market quote, price talk or OID for the 2025 Refinancing Term Loans or the notes is in the corpus; user-supplied (context quotes)."
-  },
-  {
-   "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.principal_outstanding.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.term_loan_facility_2024_new_term_loans.principal_outstanding.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "Term Loan Facility (2024 New Term Loans)",
    "field": "principal_outstanding",
@@ -2275,8 +1829,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.revolving_credit_facility.drawn_principal.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "Revolving Credit Facility",
    "field": "drawn_principal",
@@ -2298,8 +1852,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.principal_outstanding.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.6_000_senior_secured_notes.principal_outstanding.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "6.000% Senior Secured Notes",
    "field": "principal_outstanding",
@@ -2321,8 +1875,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.mortgage_notes.principal_outstanding.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.mortgage_notes.principal_outstanding.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "Mortgage Notes",
    "field": "principal_outstanding",
@@ -2344,8 +1898,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.other_debt.principal_outstanding.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.other_debt.principal_outstanding.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "Other debt",
    "field": "principal_outstanding",
@@ -2436,29 +1990,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.total_debt_less_unamortized_discounts_and_issuance_costs.carrying_amount.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Total debt less unamortized discounts and issuance costs",
-   "field": "carrying_amount",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "1515911",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Total debt less row, June 30, 2025 column (USD thousands as printed)",
-     "quote": "Total debt less unamortized debt discounts and issuance costs 1,515,911",
-     "printed": "1,515,911"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-2.debt_stack.current_maturities_of_debt.amount.2025-06-30",
    "module": "CP-2",
    "topic": "debt_stack",
@@ -2499,55 +2030,6 @@
      "locator": "Note 7 Debt > \"Debt consisted of the following\" table > Long-term debt row, June 30, 2025 column (USD thousands as printed)",
      "quote": "Long-term debt, less current maturities $ 1,493,038",
      "printed": "$ 1,493,038"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.total_debt_principal_sum_of_components_excluding_fair_value_adjustment.principal_total.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Total debt principal (sum of components, excluding fair value adjustment)",
-   "field": "principal_total",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "1534149",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [],
-   "derivation": {
-    "op": "sum",
-    "operands": [
-     "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.principal_outstanding.2025-06-30",
-     "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-06-30",
-     "CP-2.debt_stack.6_000_senior_secured_notes.principal_outstanding.2025-06-30",
-     "CP-2.debt_stack.mortgage_notes.principal_outstanding.2025-06-30",
-     "CP-2.debt_stack.other_debt.principal_outstanding.2025-06-30"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.total_future_maturities_of_long_term_debt.principal_total_per_maturity_table.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Total future maturities of long-term debt",
-   "field": "principal_total_per_maturity_table",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "1534149",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "Total future maturities of long-term debt $ 1,534,149",
-     "printed": "$ 1,534,149"
     }
    ],
    "derivation": null,
@@ -2600,8 +2082,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.maturity",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.6_000_senior_secured_notes.maturity",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "6.000% Senior Secured Notes",
    "field": "maturity",
@@ -2623,8 +2105,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.coupon",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.6_000_senior_secured_notes.coupon",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "6.000% Senior Secured Notes",
    "field": "coupon",
@@ -2640,29 +2122,6 @@
      "locator": "Note 8 > 6.000% Senior Secured Notes",
      "quote": "bear interest at a rate of 6.00% per annum payable semi-annually in arrears on May 15 and November 15",
      "printed": "6.00%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.guarantee",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "6.000% Senior Secured Notes",
-   "field": "guarantee",
-   "period_end": null,
-   "status": "known",
-   "value": "Guaranteed on a senior secured basis by LTF Intermediate Holdings, Inc. and each wholly owned domestic restricted subsidiary that guarantees the New Term Loan Facility; pari passu first lien with the Credit Facilities",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k24",
-     "locator": "Note 8 > 6.000% Senior Secured Notes",
-     "quote": "guaranteed on a senior secured basis by LTF Intermediate Holdings, Inc., the direct parent of the Issuer",
-     "printed": "LTF Intermediate Holdings, Inc."
     }
    ],
    "derivation": null,
@@ -2692,8 +2151,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.revolving_credit_facility.commitments_usd_millions.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.revolving_credit_facility.commitments_usd_millions.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "Revolving Credit Facility",
    "field": "commitments_usd_millions",
@@ -2715,8 +2174,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_usd_millions.2025-06-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack.revolving_credit_facility.drawn_usd_millions.2025-06-30",
+   "module": "CP-1",
    "topic": "debt_stack",
    "subject": "Revolving Credit Facility",
    "field": "drawn_usd_millions",
@@ -2738,76 +2197,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_usd_millions.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Revolving Credit Facility",
-   "field": "letters_of_credit_usd_millions",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "31.5",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Revolving Credit Facility",
-     "quote": "there were $31.5 million of outstanding letters of credit",
-     "printed": "$31.5 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_usd_millions_printed.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Revolving Credit Facility",
-   "field": "availability_usd_millions_printed",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "618.5",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Revolving Credit Facility",
-     "quote": "resulting in total revolver availability of $618.5 million",
-     "printed": "$618.5 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_recomputed_usd_millions.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Revolving Credit Facility",
-   "field": "availability_recomputed_usd_millions",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "618.5",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [],
-   "derivation": {
-    "op": "difference",
-    "operands": [
-     "CP-2.debt_stack.revolving_credit_facility.commitments_usd_millions.2025-06-30",
-     "CP-2.debt_stack.revolving_credit_facility.drawn_usd_millions.2025-06-30",
-     "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_usd_millions.2025-06-30"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-2.debt_stack.cash_and_cash_equivalents.amount_usd_millions.2025-06-30",
    "module": "CP-2",
    "topic": "debt_stack",
@@ -2825,75 +2214,6 @@
      "locator": "MD&A Liquidity",
      "quote": "Total cash and cash equivalents at June 30, 2025 was $175.5 million",
      "printed": "$175.5 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.cash_plus_revolver_availability.amount_usd_millions_printed.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Cash plus revolver availability",
-   "field": "amount_usd_millions_printed",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "794.0",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "MD&A Liquidity",
-     "quote": "resulting in total cash and availability under our Revolving Credit Facility of $794.0 million",
-     "printed": "$794.0 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.cash_plus_revolver_availability.recomputed_usd_millions.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Cash plus revolver availability",
-   "field": "recomputed_usd_millions",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "794.0",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [],
-   "derivation": {
-    "op": "sum",
-    "operands": [
-     "CP-2.debt_stack.cash_and_cash_equivalents.amount_usd_millions.2025-06-30",
-     "CP-2.debt_stack.revolving_credit_facility.availability_usd_millions_printed.2025-06-30"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.cash_and_cash_equivalents.balance_sheet_amount.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Cash and cash equivalents",
-   "field": "balance_sheet_amount",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "175509",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Condensed Consolidated Balance Sheets > Cash and cash equivalents (USD thousands as printed)",
-     "quote": "Cash and cash equivalents $ 175,509",
-     "printed": "$ 175,509"
     }
    ],
    "derivation": null,
@@ -2923,213 +2243,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack.future_maturities_july_2025_through_june_2026.principal_due.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Future maturities: July 2025 through June 2026",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "22873",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "July 2025 through June 2026 $ 22,873",
-     "printed": "$ 22,873"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.future_maturities_july_2026_through_june_2027.principal_due.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Future maturities: July 2026 through June 2027",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "31824",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "July 2026 through June 2027 31,824",
-     "printed": "31,824"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.future_maturities_july_2027_through_june_2028.principal_due.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Future maturities: July 2027 through June 2028",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "11504",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "July 2027 through June 2028 11,504",
-     "printed": "11,504"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.future_maturities_july_2028_through_june_2029.principal_due.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Future maturities: July 2028 through June 2029",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "10189",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "July 2028 through June 2029 10,189",
-     "printed": "10,189"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.future_maturities_july_2029_through_june_2030.principal_due.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Future maturities: July 2029 through June 2030",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "10199",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "July 2029 through June 2030 10,199",
-     "printed": "10,199"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.future_maturities_thereafter.principal_due.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Future maturities: Thereafter",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "1447560",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "Thereafter 1,447,560",
-     "printed": "1,447,560"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.notional_usd_millions.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Interest rate swaps on Term Loan Facility",
-   "field": "notional_usd_millions",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "995.0",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 6 > Interest Rate Swaps",
-     "quote": "At June 30, 2025, the aggregate notional amount associated with these interest rate swaps was $995.0 million",
-     "printed": "$995.0 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.fixed_rate_paid.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Interest rate swaps on Term Loan Facility",
-   "field": "fixed_rate_paid",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "3.409",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 6 > Interest Rate Swaps",
-     "quote": "we make fixed interest payments at 3.409% in exchange for receiving variable interest payments based on SOFR",
-     "printed": "3.409%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.effective_fixed_rate_after_swaps.2025-06-30",
-   "module": "CP-2",
-   "topic": "debt_stack",
-   "subject": "Term Loan Facility (2024 New Term Loans)",
-   "field": "effective_fixed_rate_after_swaps",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "5.659",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Term Loan Facility",
-     "quote": "the effective fixed interest rate associated with our outstanding Term Loan Facility borrowings at June 30, 2025 was 5.659%",
-     "printed": "5.659%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-2.obligors.borrower.name",
    "module": "CP-2",
    "topic": "obligors",
@@ -3147,374 +2260,6 @@
      "locator": "Preamble",
      "quote": "LIFE TIME, INC. (formerly known as LIFE TIME FITNESS, INC.), a Minnesota corporation and successor in interest to LTF MERGER SUB, INC., as borrower (the “Borrower”)",
      "printed": "LIFE TIME, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.holdings.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Holdings",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Intermediate Holdings, Inc., a Delaware corporation (Holdings and Guarantor; direct parent of the Borrower)",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Preamble",
-     "quote": "LTF INTERMEDIATE HOLDINGS, INC., a Delaware corporation (“Holdings”)",
-     "printed": "LTF INTERMEDIATE HOLDINGS, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.administrative_agent.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Administrative Agent",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "Deutsche Bank AG New York Branch, Administrative Agent",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Preamble",
-     "quote": "DEUTSCHE BANK AG NEW YORK BRANCH, as administrative agent",
-     "printed": "DEUTSCHE BANK AG NEW YORK BRANCH"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_club_operations_company_inc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF CLUB OPERATIONS COMPANY, INC.",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Club Operations Company, Inc.",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF CLUB OPERATIONS COMPANY, INC., as Guarantor",
-     "printed": "LTF CLUB OPERATIONS COMPANY, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_operations_holdings_inc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF OPERATIONS HOLDINGS, INC.",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Operations Holdings, Inc.",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF OPERATIONS HOLDINGS, INC., as Guarantor",
-     "printed": "LTF OPERATIONS HOLDINGS, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_management_services_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF MANAGEMENT SERVICES, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Management Services, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF MANAGEMENT SERVICES, LLC, as Guarantor",
-     "printed": "LTF MANAGEMENT SERVICES, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_construction_company_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF CONSTRUCTION COMPANY, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Construction Company, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF CONSTRUCTION COMPANY, LLC, as Guarantor",
-     "printed": "LTF CONSTRUCTION COMPANY, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_restaurant_company_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF RESTAURANT COMPANY, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Restaurant Company, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF RESTAURANT COMPANY, LLC, as Guarantor",
-     "printed": "LTF RESTAURANT COMPANY, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_club_management_company_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF CLUB MANAGEMENT COMPANY, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Club Management Company, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF CLUB MANAGEMENT COMPANY, LLC, as Guarantor",
-     "printed": "LTF CLUB MANAGEMENT COMPANY, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_triathlon_series_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF TRIATHLON SERIES, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Triathlon Series, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF TRIATHLON SERIES, LLC, as Guarantor",
-     "printed": "LTF TRIATHLON SERIES, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_athlinks_inc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor ATHLINKS, INC.",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "Athlinks, Inc.",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "ATHLINKS, INC., as Guarantor",
-     "printed": "ATHLINKS, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_architecture_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF ARCHITECTURE, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Architecture, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF ARCHITECTURE, LLC, as Guarantor",
-     "printed": "LTF ARCHITECTURE, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_lease_company_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF LEASE COMPANY, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Lease Company, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF LEASE COMPANY, LLC, as Guarantor",
-     "printed": "LTF LEASE COMPANY, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_holdings_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF REAL ESTATE HOLDINGS, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Real Estate Holdings, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF REAL ESTATE HOLDINGS, LLC, as Guarantor",
-     "printed": "LTF REAL ESTATE HOLDINGS, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_company_inc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF REAL ESTATE COMPANY, INC.",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Real Estate Company, Inc.",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF REAL ESTATE COMPANY, INC., as Guarantor",
-     "printed": "LTF REAL ESTATE COMPANY, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_educational_programs_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF EDUCATIONAL PROGRAMS, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Educational Programs, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF EDUCATIONAL PROGRAMS, LLC, as Guarantor",
-     "printed": "LTF EDUCATIONAL PROGRAMS, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_ground_lease_company_llc.name",
-   "module": "CP-2",
-   "topic": "obligors",
-   "subject": "Subsidiary Guarantor LTF GROUND LEASE COMPANY, LLC",
-   "field": "name",
-   "period_end": null,
-   "status": "known",
-   "value": "LTF Ground Lease Company, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Signature pages (Subsidiary Guarantors)",
-     "quote": "LTF GROUND LEASE COMPANY, LLC, as Guarantor",
-     "printed": "LTF GROUND LEASE COMPANY, LLC"
     }
    ],
    "derivation": null,
@@ -3551,29 +2296,6 @@
    "evidence": [],
    "derivation": null,
    "gap_reason": "User input (context assumptions.cp2d.horizon_months)."
-  },
-  {
-   "fact_id": "CP-2D.near_term_debt_service.principal_due_july_2025_through_june_2026.principal_due.2025-06-30",
-   "module": "CP-2D",
-   "topic": "near_term_debt_service",
-   "subject": "Principal due July 2025 through June 2026",
-   "field": "principal_due",
-   "period_end": "2025-06-30",
-   "status": "known",
-   "value": "22873",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 7 > Future Maturities of Long-Term Debt (USD thousands as printed)",
-     "quote": "July 2025 through June 2026 $ 22,873",
-     "printed": "$ 22,873"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
   },
   {
    "fact_id": "CP-1A.profile.life_time_group_holdings_inc.legal_form_and_role",
@@ -3829,190 +2551,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.ticker",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "ticker",
-   "period_end": null,
-   "status": "known",
-   "value": "LTH",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Cover page > Section 12(b) securities",
-     "quote": "Common stock, par value $0.01 per share LTH The New York Stock Exchange",
-     "printed": "LTH"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.exchange",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "exchange",
-   "period_end": null,
-   "status": "known",
-   "value": "The New York Stock Exchange",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Cover page > Section 12(b) securities",
-     "quote": "Common stock, par value $0.01 per share LTH The New York Stock Exchange",
-     "printed": "The New York Stock Exchange"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.state_of_incorporation",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "state_of_incorporation",
-   "period_end": null,
-   "status": "known",
-   "value": "Delaware",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Cover page",
-     "quote": "Delaware 47-3481985 (State or other jurisdiction of incorporation or organization)",
-     "printed": "Delaware"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.principal_executive_offices",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "principal_executive_offices",
-   "period_end": null,
-   "status": "known",
-   "value": "2902 Corporate Place Chanhassen, Minnesota 55317",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Cover page",
-     "quote": "2902 Corporate Place Chanhassen, Minnesota 55317 (952) 947-0000 (Address of principal executive offices",
-     "printed": "2902 Corporate Place Chanhassen, Minnesota 55317"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.commission_file_number",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "commission_file_number",
-   "period_end": null,
-   "status": "known",
-   "value": "001-40887",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Cover page",
-     "quote": "Commission File Number: 001-40887",
-     "printed": "001-40887"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.filer_status",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "filer_status",
-   "period_end": null,
-   "status": "known",
-   "value": "Large accelerated filer",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Cover page > filer check boxes",
-     "quote": "Large accelerated filer ☒ Accelerated filer ☐",
-     "printed": "Large accelerated filer ☒"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.fiscal_year_end",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "fiscal_year_end",
-   "period_end": null,
-   "status": "known",
-   "value": "December 31",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k24",
-     "locator": "Cover page",
-     "quote": "For the fiscal year ended December 31, 2024",
-     "printed": "December 31, 2024"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Life_Time_Group_Holdings.business_description",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Life Time Group Holdings, Inc.",
-   "field": "business_description",
-   "period_end": null,
-   "status": "known",
-   "value": "Primarily dedicated to providing premium health, fitness and wellness experiences at athletic country club destinations",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q225",
-     "locator": "Note 1 Nature of Business",
-     "quote": "We are primarily dedicated to providing premium health, fitness and wellness experiences at our athletic country club destinations",
-     "printed": "premium health, fitness and wellness experiences"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-0.identity.Life_Time_Group_Holdings.borrower_entity",
    "module": "CP-0",
    "topic": "identity",
@@ -4076,75 +2614,6 @@
      "locator": "Cover page",
      "quote": "For the fiscal year ended December 31, 2024",
      "printed": "December 31, 2024"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.documents.13th_Amendment.agreement_date",
-   "module": "CP-0",
-   "topic": "documents.13th_Amendment",
-   "subject": "13th Amendment to the Credit Agreement",
-   "field": "agreement_date",
-   "period_end": null,
-   "status": "known",
-   "value": "2024-09-20",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a13",
-     "locator": "Amendment preamble",
-     "quote": "This THIRTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of September 20, 2024",
-     "printed": "September 20, 2024"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.documents.14th_Amendment.agreement_date",
-   "module": "CP-0",
-   "topic": "documents.14th_Amendment",
-   "subject": "14th Amendment to the Credit Agreement",
-   "field": "agreement_date",
-   "period_end": null,
-   "status": "known",
-   "value": "2024-11-05",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a14",
-     "locator": "Amendment preamble",
-     "quote": "This FOURTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of November 5, 2024",
-     "printed": "November 5, 2024"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.documents.15th_Amendment.agreement_date",
-   "module": "CP-0",
-   "topic": "documents.15th_Amendment",
-   "subject": "15th Amendment to the Credit Agreement",
-   "field": "agreement_date",
-   "period_end": null,
-   "status": "known",
-   "value": "2025-08-18",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "a15",
-     "locator": "Amendment preamble",
-     "quote": "This FIFTEENTH AMENDMENT TO THE CREDIT AGREEMENT, dated as of August 18, 2025",
-     "printed": "August 18, 2025"
     }
    ],
    "derivation": null,
@@ -4330,6 +2799,274 @@
   {
    "module": "CP-5",
    "why": "Judgment module (credit view and recommendation); graded by rubric, not facts."
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_premium_prepayment: repricing_protection / 2025 Refinancing Term Loans (15th) / soft_call_premium_prepayment: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_payment_on_amendment: repricing_protection / 2025 Refinancing Term Loans (15th) / soft_call_payment_on_amendment: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_period: repricing_protection / 2025 Refinancing Term Loans (15th) / soft_call_period: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.repricing_transaction_definition: repricing_protection / 2025 Refinancing Term Loans (15th) / repricing_transaction_definition: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.all_in_yield_definition: repricing_protection / 2025 Refinancing Term Loans (15th) / all_in_yield_definition: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_bps: repricing_protection / 2025 Refinancing Term Loans (15th) / incremental_mfn_bps: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_sunset: repricing_protection / 2025 Refinancing Term Loans (15th) / incremental_mfn_sunset: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_premium: repricing_protection / 2024 New Term Loans (14th), prior soft call / soft_call_premium: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_period: repricing_protection / 2024 New Term Loans (14th), prior soft call / soft_call_period: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th: margin / Term loan margin step-downs / term_loan_margin_after_15th: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_initial_14th.2024-12-31: margin / Term loan margin step-downs / term_loan_margin_initial_14th @ 2024-12-31: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_2025_06_30: margin / Term loan margin step-downs / margin_cut_by_15th_vs_2025_06_30: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_initial_14th: margin / Term loan margin step-downs / margin_cut_by_15th_vs_initial_14th: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.margin.term_loan_margin_step_downs.ratings_step_down_event.2025-06-30: margin / Term loan margin step-downs / ratings_step_down_event @ 2025-06-30: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_base_at_2025_06_30.2025-06-30: margin / Revolving Credit Facility margin / revolver_margin_base_at_2025_06_30 @ 2025-06-30: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.make_whole: notes_call_protection / 6.000% Senior Secured Notes due 2031 / make_whole: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.annual_10pct_redemption_price: notes_call_protection / 6.000% Senior Secured Notes due 2031 / annual_10pct_redemption_price: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.equity_clawback_price_40pct: notes_call_protection / 6.000% Senior Secured Notes due 2031 / equity_clawback_price_40pct: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.redemption_prices_from_2027_11_15: notes_call_protection / 6.000% Senior Secured Notes due 2031 / redemption_prices_from_2027_11_15: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-3C",
+   "why": "CP-3C.notes_call_protection.market_pricing_quotes_for_the_term_loan_and_notes.market_price: notes_call_protection / Market pricing / quotes for the term loan and notes / market_price: no module field; CP-3C writes T3D.1/T3D.2 refinancing-burden arithmetic (src/deploy_workflow/owners/cp3c.py:1340-1450) and T3D.7-T3D.9 text rows that hold no facts (cp3c.py:1165); no soft-call, repricing, MFN, margin-grid or note-redemption term"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.total_debt_less_unamortized_discounts_and_issuance_costs.carrying_amount.2025-06-30: covered by financial_gold total_debt FY2025Q2"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.total_debt_principal_sum_of_components_excluding_fair_value_adjustment.principal_total.2025-06-30: debt_stack / Total debt principal (sum of components, excluding fair value adjustment) / principal_total @ 2025-06-30: no module field; aggregate: CP-1 writes per-facility principal rows (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)), no total-principal cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.total_future_maturities_of_long_term_debt.principal_total_per_maturity_table.2025-06-30: debt_stack / Total future maturities of long-term debt / principal_total_per_maturity_table @ 2025-06-30: no module field; aggregate: CP-1 writes per-facility principal rows (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)), no total-principal cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.6_000_senior_secured_notes.guarantee: debt_stack / 6.000% Senior Secured Notes / guarantee: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_usd_millions.2025-06-30: debt_stack / Revolving Credit Facility / letters_of_credit_usd_millions @ 2025-06-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); no LC or availability-after-LC cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.revolving_credit_facility.availability_usd_millions_printed.2025-06-30: debt_stack / Revolving Credit Facility / availability_usd_millions_printed @ 2025-06-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); no LC or availability-after-LC cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.revolving_credit_facility.availability_recomputed_usd_millions.2025-06-30: debt_stack / Revolving Credit Facility / availability_recomputed_usd_millions @ 2025-06-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); no LC or availability-after-LC cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.cash_plus_revolver_availability.amount_usd_millions_printed.2025-06-30: debt_stack / Cash plus revolver availability / amount_usd_millions_printed @ 2025-06-30: no module field; CP-1 liquidity KPI = cash + undrawn_rcf with no LC deduction, so it differs from this printed amount (CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.cash_plus_revolver_availability.recomputed_usd_millions.2025-06-30: debt_stack / Cash plus revolver availability / recomputed_usd_millions @ 2025-06-30: no module field; CP-1 liquidity KPI = cash + undrawn_rcf with no LC deduction, so it differs from this printed amount (CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.cash_and_cash_equivalents.balance_sheet_amount.2025-06-30: covered by financial_gold cash FY2025Q2"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.future_maturities_july_2025_through_june_2026.principal_due.2025-06-30: debt_stack / Future maturities: July 2025 through June 2026 / principal_due @ 2025-06-30: no module field; CP-1 writes maturity_date per facility (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-2D a per-facility wall (src/deploy_workflow/owners/cp2d.py:1418-1460), no fiscal-year bucket cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.future_maturities_july_2026_through_june_2027.principal_due.2025-06-30: debt_stack / Future maturities: July 2026 through June 2027 / principal_due @ 2025-06-30: no module field; CP-1 writes maturity_date per facility (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-2D a per-facility wall (src/deploy_workflow/owners/cp2d.py:1418-1460), no fiscal-year bucket cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.future_maturities_july_2027_through_june_2028.principal_due.2025-06-30: debt_stack / Future maturities: July 2027 through June 2028 / principal_due @ 2025-06-30: no module field; CP-1 writes maturity_date per facility (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-2D a per-facility wall (src/deploy_workflow/owners/cp2d.py:1418-1460), no fiscal-year bucket cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.future_maturities_july_2028_through_june_2029.principal_due.2025-06-30: debt_stack / Future maturities: July 2028 through June 2029 / principal_due @ 2025-06-30: no module field; CP-1 writes maturity_date per facility (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-2D a per-facility wall (src/deploy_workflow/owners/cp2d.py:1418-1460), no fiscal-year bucket cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.future_maturities_july_2029_through_june_2030.principal_due.2025-06-30: debt_stack / Future maturities: July 2029 through June 2030 / principal_due @ 2025-06-30: no module field; CP-1 writes maturity_date per facility (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-2D a per-facility wall (src/deploy_workflow/owners/cp2d.py:1418-1460), no fiscal-year bucket cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.future_maturities_thereafter.principal_due.2025-06-30: debt_stack / Future maturities: Thereafter / principal_due @ 2025-06-30: no module field; CP-1 writes maturity_date per facility (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-2D a per-facility wall (src/deploy_workflow/owners/cp2d.py:1418-1460), no fiscal-year bucket cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.notional_usd_millions.2025-06-30: debt_stack / Interest rate swaps on Term Loan Facility / notional_usd_millions @ 2025-06-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no swap notional, swap rate or effective-rate cell; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839) holds no swap field"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.fixed_rate_paid.2025-06-30: debt_stack / Interest rate swaps on Term Loan Facility / fixed_rate_paid @ 2025-06-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no swap notional, swap rate or effective-rate cell; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839) holds no swap field"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.effective_fixed_rate_after_swaps.2025-06-30: debt_stack / Term Loan Facility (2024 New Term Loans) / effective_fixed_rate_after_swaps @ 2025-06-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no swap notional, swap rate or effective-rate cell; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839) holds no swap field"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.holdings.name: obligors / Holdings / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.administrative_agent.name: obligors / Administrative Agent / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_club_operations_company_inc.name: obligors / Subsidiary Guarantor LTF CLUB OPERATIONS COMPANY, INC. / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_operations_holdings_inc.name: obligors / Subsidiary Guarantor LTF OPERATIONS HOLDINGS, INC. / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_management_services_llc.name: obligors / Subsidiary Guarantor LTF MANAGEMENT SERVICES, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_construction_company_llc.name: obligors / Subsidiary Guarantor LTF CONSTRUCTION COMPANY, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_restaurant_company_llc.name: obligors / Subsidiary Guarantor LTF RESTAURANT COMPANY, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_club_management_company_llc.name: obligors / Subsidiary Guarantor LTF CLUB MANAGEMENT COMPANY, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_triathlon_series_llc.name: obligors / Subsidiary Guarantor LTF TRIATHLON SERIES, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_athlinks_inc.name: obligors / Subsidiary Guarantor ATHLINKS, INC. / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_architecture_llc.name: obligors / Subsidiary Guarantor LTF ARCHITECTURE, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_lease_company_llc.name: obligors / Subsidiary Guarantor LTF LEASE COMPANY, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_holdings_llc.name: obligors / Subsidiary Guarantor LTF REAL ESTATE HOLDINGS, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_company_inc.name: obligors / Subsidiary Guarantor LTF REAL ESTATE COMPANY, INC. / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_educational_programs_llc.name: obligors / Subsidiary Guarantor LTF EDUCATIONAL PROGRAMS, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.obligors.subsidiary_guarantor_ltf_ground_lease_company_llc.name: obligors / Subsidiary Guarantor LTF GROUND LEASE COMPANY, LLC / name: no module field; no module in the covenant_refinancing plan writes obligor or guarantor-name fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2D",
+   "why": "CP-2D.near_term_debt_service.principal_due_july_2025_through_june_2026.principal_due.2025-06-30: near_term_debt_service / Principal due July 2025 through June 2026 / principal_due @ 2025-06-30: no module field; CP-2D writes T2E tables with positional row ids (src/deploy_workflow/owners/cp2d.py:1244, :1400), T2E.4 one row per facility (src/deploy_workflow/owners/cp2d.py:1418-1460 wall table per facility); no 12-month maturity bucket cell"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.ticker: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / ticker) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.exchange: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / exchange) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.state_of_incorporation: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / state_of_incorporation) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.principal_executive_offices: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / principal_executive_offices) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.commission_file_number: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / commission_file_number) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.filer_status: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / filer_status) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.fiscal_year_end: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / fiscal_year_end) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Life_Time_Group_Holdings.business_description: CP-0 identity/document fact (identity / Life Time Group Holdings, Inc. / business_description) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.documents.13th_Amendment.agreement_date: covered by the kept CP-4 amendment date facts (CP-4.amendment_*.date): CP-4 writes the amendment date in its date_or_amendment cell of the numbered document-register rows (src/deploy_vii/cp4_legal.py:1215, :1245); CP-0 has no such field (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.documents.14th_Amendment.agreement_date: covered by the kept CP-4 amendment date facts (CP-4.amendment_*.date): CP-4 writes the amendment date in its date_or_amendment cell of the numbered document-register rows (src/deploy_vii/cp4_legal.py:1215, :1245); CP-0 has no such field (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.documents.15th_Amendment.agreement_date: covered by the kept CP-4 amendment date facts (CP-4.amendment_*.date): CP-4 writes the amendment date in its date_or_amendment cell of the numbered document-register rows (src/deploy_vii/cp4_legal.py:1215, :1245); CP-0 has no such field (src/deploy_vii/readiness.py:474)"
   }
  ],
  "needs_user_input": [

@@ -92,6 +92,7 @@ from deploy_workflow import host
 from deploy_workflow.financial_workflow import (
     FILES,
     MAX_CALLS,
+    MAX_INVOKES,
     MAX_LINE,
     MAX_MESSAGES,
     FinancialBinding,
@@ -785,7 +786,7 @@ class OwnerFault(Contract):
     """A `faults/` record: a failure the run cannot continue from, written before the error is
     raised. `kind` names the audit kind (or `journal`) and `digest` the record it concerns.
     `InputsTooLarge` (a `read_inputs` body over `MAX_INPUT_BYTES`) and `CallLimit` (a call refused
-    at `MAX_CALLS`) name the step's `binding`, and the former its `size` and `cap`; neither holds
+    at `MAX_CALLS`, or `MAX_INVOKES` for an invoke) name the step's `binding`, and the former its `size` and `cap`; neither holds
     the body. `InternalError` (G7) is an exception that escaped a workflow method, or an
     `internal_error` receipt of a source session: the `operation`, the exception's class and a
     bounded, escaped `detail`; never a payload. A faults record is outside the receipt's compared set and replay's call bodies."""
@@ -2173,12 +2174,14 @@ class OwnerWorkflow:
             self._phase = "complete"
 
     def _at_cap(self, call_kind: Literal["invoke", "read_inputs", "submit_review"]) -> NoReturn:
-        """Refuse a call past `MAX_CALLS` for its step: a `CallLimit` fault is journaled (the
-        binding, never a body), then the same `not_permitted` refusal as before is raised."""
+        """Refuse a call past its cap for its step (`MAX_INVOKES` for `invoke`, else `MAX_CALLS`):
+        a `CallLimit` fault is journaled (the binding, never a body), then the same
+        `not_permitted` refusal as before is raised."""
+        cap = MAX_INVOKES if call_kind == "invoke" else MAX_CALLS
         _retain(
             self._store,
             "faults",
-            OwnerFault(code="CallLimit", binding=self._binding, cap=MAX_CALLS, call_kind=call_kind),
+            OwnerFault(code="CallLimit", binding=self._binding, cap=cap, call_kind=call_kind),
         )
         raise WorkflowError("not_permitted")
 
@@ -2188,7 +2191,7 @@ class OwnerWorkflow:
             if self._phase != "analytical":  # no module is active: there is no binding to read
                 raise WorkflowError("not_permitted")
             key = (self._binding.ticket_id, self._binding.step_id, "invoke")
-            if self._limits[key] >= MAX_CALLS:
+            if self._limits[key] >= MAX_INVOKES:
                 self._at_cap("invoke")
             self._limits[key] += 1
             if self._session is None:
@@ -2596,9 +2599,9 @@ def _verify_audit(store: Execution, receipt: OwnerRunReceipt) -> None:
             raise WorkflowError("identity_mismatch")
     if len({c.call_id for c in receipt.calls}) != len(receipt.calls):
         raise WorkflowError("identity_mismatch")
-    for records in (receipt.calls, receipt.input_reads):
+    for records, cap in ((receipt.calls, MAX_INVOKES), (receipt.input_reads, MAX_CALLS)):
         counts = Counter((r.binding.ticket_id, r.binding.step_id) for r in records)
-        if any(count > MAX_CALLS for count in counts.values()):
+        if any(count > cap for count in counts.values()):
             raise WorkflowError("identity_mismatch")
     sub_counts = Counter(
         (s.binding.binding.ticket_id, s.binding.binding.step_id) for s in receipt.submissions
@@ -3011,7 +3014,7 @@ def _verify_calls_reads(
         prior = [
             c for c in receipt.calls if c.binding == call.binding and c.sequence < call.sequence
         ]
-        if call.sequence != len(prior) + 1 or call.sequence > MAX_CALLS:
+        if call.sequence != len(prior) + 1 or call.sequence > MAX_INVOKES:
             raise WorkflowError("identity_mismatch")
         if _step(specs, call.binding.module_id, call.binding.step_id).sources:
             if key not in replayed:

@@ -37,8 +37,10 @@ from deploy_workflow.model.adapter import (
 )
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.model.loop import PromptFor, ToolLoop
+from deploy_workflow.model.pricing import money_text
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.model.turn import CONFIG_PROVIDERS, ModelSpec
+from deploy_workflow.model_testing.configs import CONFIGS
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
 from deploy_workflow.prompts import factory as factory_module
 from deploy_workflow.prompts.compose import NoPrompt
@@ -63,6 +65,9 @@ HTML = b"<html><body><table><tr><td>Revenue</td><td>1,234</td></tr></table></bod
 SECRET = "sk-or-v1-TESTONLY123456"
 RULING = "lifts: live-provider-pause\nby: user\ndate: 2026-11-01\nconfigs: sol-medium\n"
 TINY = Decimal("0.0000001")
+# Above the first call's reservation, which holds MAX_OUTPUT_TOKENS of output (about 0.98 USD at
+# the sol rate) plus the input bound: the fixtures' cap must clear it (PF-R14).
+CAP = Decimal(5)
 OFFLINE_KEYS = {
     "case_id",
     "pathway",
@@ -108,7 +113,7 @@ def args(tmp_path: Path) -> dict[str, Any]:
         "pathway": "credit_snapshot",
         "model": MODEL,
         "adapter": recorded_adapter(MODEL, recordings),
-        "cap_usd": Decimal(1),
+        "cap_usd": CAP,
         "run_dir": tmp_path / "run",
         "run_id": "run-1",
     }
@@ -215,6 +220,30 @@ def test_the_default_composer_is_the_o6_composer(
     run_pathway(**args)
     assert [r.step_id for r in composed] == ["source_readiness"] and len(sent) == 1
     assert sent[0].messages == real_compose(composed[0])  # what the model got is O6's output
+
+
+CONFIG_SPECS = [ModelSpec(m.config_id, m.provider, m.model, m.effort) for m in CONFIGS.values()]
+
+
+@pytest.mark.parametrize("spec", CONFIG_SPECS, ids=lambda spec: spec.config_id)
+def test_the_loop_gets_the_providers_bytes_per_token_bound(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch, spec: ModelSpec
+) -> None:
+    """The seam is ToolLoop's constructor keyword, spied on the class ``run_pathway`` builds,
+    for a run of each configuration."""
+    limits = json.loads((ROOT / "cases" / "pilot-fixes" / "limits.json").read_text("utf-8"))
+    key = limits["bytes_per_token_lower_bound"]
+    given: list[Decimal] = []
+
+    class Spy(ToolLoop):
+        def __init__(self, *a: Any, **kw: Any) -> None:
+            given.append(kw["bytes_per_token"])
+            super().__init__(*a, **kw)
+
+    monkeypatch.setattr(rp, "ToolLoop", Spy)
+    recordings = Path(args["run_dir"]).parent / "recordings"
+    run_pathway(**{**args, "model": spec, "adapter": recorded_adapter(spec, recordings)})
+    assert given == [Decimal(key[CONFIG_PROVIDERS[spec.config_id]])]
 
 
 def _o2_run(
@@ -357,7 +386,7 @@ def test_the_offline_run_json_key_set_and_sources(args: dict[str, Any]) -> None:
     body = run_json(args["run_dir"])
     assert set(body) == OFFLINE_KEYS
     assert body["mode"] == "offline" and body["cp_dr_invoked"] is False
-    assert body["replayed_from_run"] is None and body["cap_usd"] == "1"
+    assert body["replayed_from_run"] is None and body["cap_usd"] == money_text(CAP)
     assert body["config_id"] == "sol-medium" and body["pathway"] == "credit_snapshot"
     html, text, context = body["sources"]
     assert html["sha256"] == hashlib.sha256(HTML).hexdigest()  # the original bytes
@@ -1004,10 +1033,11 @@ def calls_of(run_dir: Path) -> list[dict[str, Any]]:
 
 def test_a_fresh_run_creates_cap_json_once(killed: dict[str, Any]) -> None:
     run_dir = killed["run_dir"]
-    assert json.loads((run_dir / "cap.json").read_text()) == {"cap_usd": "1", "mode": "offline"}
+    recorded = {"cap_usd": money_text(CAP), "mode": "offline"}
+    assert json.loads((run_dir / "cap.json").read_text()) == recorded
     with pytest.raises(rp.CapExists):
-        rp._create_cap(run_dir, Decimal(2), "offline")
-    assert json.loads((run_dir / "cap.json").read_text()) == {"cap_usd": "1", "mode": "offline"}
+        rp._create_cap(run_dir, CAP + 1, "offline")
+    assert json.loads((run_dir / "cap.json").read_text()) == recorded
 
 
 def test_resume_continues_call_index_and_digest_and_counts_the_spend_once(
@@ -1116,8 +1146,8 @@ HIGH = ModelSpec("sol-high", "openai", "gpt-6.1-sol", "high")
 @pytest.mark.parametrize(
     "change",
     [
-        {"cap_usd": Decimal(2)},
-        {"cap_usd": Decimal("0.5")},
+        {"cap_usd": CAP + 1},
+        {"cap_usd": CAP / 2},
         {"run_id": "run-2"},
         {"case_id": "case-2"},
         {"model": HIGH},
@@ -1441,8 +1471,8 @@ def test_a_live_run_resumed_offline_is_refused(
     [
         '{"cap_usd": "sNaN", "mode": "offline"}',
         '{"cap_usd": "NaN", "mode": "offline"}',
-        '{"cap_usd": "1"}',
-        '{"cap_usd": "1", "mode": "x"}',
+        f'{{"cap_usd": "{money_text(CAP)}"}}',
+        f'{{"cap_usd": "{money_text(CAP)}", "mode": "x"}}',
         "[]",
         "not json",
     ],

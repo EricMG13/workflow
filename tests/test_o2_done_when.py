@@ -36,12 +36,15 @@ from deploy_workflow import financial_workflow
 from deploy_workflow.financial_workflow import STATEMENT_HEADING
 from deploy_workflow.model import transport as transport_module
 from deploy_workflow.model.adapter import recorded_adapter
+from deploy_workflow.model.pricing import PRICES, reservation_usd
 from deploy_workflow.model.record import arguments_sha256
 from deploy_workflow.model.turn import load_arguments
 from deploy_workflow.owner_workflow import OwnerRunReceipt, OwnerWorkflow, verify_owner_run_receipt
 from deploy_workflow.run_inputs import RunOutcome
+from deploy_workflow.run_pathway import MAX_OUTPUT_TOKENS
 from deploy_workflow.workflow import WorkflowError
 
+ROOT = Path(__file__).resolve().parents[1]
 OFFLINE_KEYS = {
     "case_id",
     "pathway",
@@ -324,19 +327,27 @@ def assert_replay_equals_authoring(authored: o2_case.Authored, replayed: RunOutc
     assert set(bodies[1]) == OFFLINE_KEYS and bodies[1]["mode"] == "offline"
 
 
-def test_the_default_token_bound_stops_the_walk_at_narrative(tmp_path: Path) -> None:
-    """Pins today's behaviour on sol-medium (the opus-medium walk has no listed input limit): ``run_pathway`` builds its ToolLoop with ``bytes_per_token`` 1, which
-    sizes the narrative step's second request (the read body is about 669 KB) above the model's
-    listed context, so a run stops there with ``ContextTooLong``. A product gap, reported."""
+def test_the_sol_token_bound_sends_the_narrative_request(tmp_path: Path) -> None:
+    """On sol-medium (the opus-medium walk has no listed input limit) the narrative step's second
+    request is about 669 KB. At ``bytes_per_token`` 1 it was sized above the model's listed context
+    and refused as ``ContextTooLong``, a product gap this test once pinned. PF-R12 closed the gap:
+    ``run_pathway`` now gives an OpenAI run the key's lower bound, so the request is sent."""
+    key = json.loads((ROOT / "cases" / "pilot-fixes" / "limits.json").read_text("utf-8"))
+    assert Decimal(key["bytes_per_token_lower_bound"]["openai"]) == Decimal("3.0")
     authored = o2_case.author(tmp_path, answers=o2_case.ALL_STEPS[:4], model=o2_case.SOL_MODEL)
-    assert authored.outcome.stopped_reason is not None
-    assert authored.outcome.stopped_reason.startswith("ContextTooLong: ")
-    last = records_of(authored.run_dir)[-1]
-    assert (last["step_id"], last["call_index"], last["error_class"]) == (
-        "narrative",
-        1,
-        "ContextTooLong",
-    )
+    records = records_of(authored.run_dir)
+    assert not [r for r in records if r["error_class"] == "ContextTooLong"]
+    stopped = authored.outcome.stopped_reason
+    assert stopped is None or not stopped.startswith("ContextTooLong: ")
+    (narrative,) = [r for r in records if (r["step_id"], r["call_index"]) == ("narrative", 1)]
+    reserved = Decimal(narrative["reserved_usd"])
+    assert reserved > 0  # a refused record holds nothing (CallRecord.refused); this one was sent
+    # The reservation embodies the run's token bound; solve it back for the input tokens.
+    sol = PRICES["sol-medium"]
+    output_part = reservation_usd(sol, 0, MAX_OUTPUT_TOKENS)
+    tokens = (reserved - output_part) * 10**6 / max(sol.input, sol.cache_write)
+    assert sol.max_input_tokens is not None
+    assert 0 < tokens <= sol.max_input_tokens
 
 
 def test_the_frozen_business_context_assesses_every_prepared_source(tmp_path: Path) -> None:

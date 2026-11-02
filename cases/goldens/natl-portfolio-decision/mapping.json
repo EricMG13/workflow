@@ -1,0 +1,1386 @@
+{
+  "schema_version": "golden-mapping/1",
+  "case_id": "natl-portfolio-decision",
+  "preparer": "mx-feature (Task 6 preparer, re-run)",
+  "reviewer": "mx-precise (Task 6 review)",
+  "module_commits": {
+    "CP-0": "0c39637aeb31cdc31892c61878e29264411e79a7",
+    "CP-1": "6c81d0bae47e515fec33f3c048f594b9e6de5e47",
+    "CP-2": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618"
+  },
+  "entries": [
+    {
+      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.legal_name",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "issuer",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.term_a_1.principal_outstanding.2025-09-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term A-1 Loans",
+            "Term A-1 Loan",
+            "Term A-1 Facility"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.term_a_2.principal_outstanding.2025-09-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term A-2 Loans",
+            "Term A-2 Loan",
+            "Term A-2 Facility"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.term_b.principal_outstanding.2025-09-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term B Loans",
+            "Term B Loan",
+            "Term B Facility",
+            "New Term B Loans"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.revolving_credit_facility.maturity",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving Credit Facilities",
+            "Revolver",
+            "RCF"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.9_500_senior_secured_notes_due_2029.coupon",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "9.500% Senior Secured Notes",
+            "Senior Secured Notes due 2029",
+            "9.5% Senior Secured Notes due 2029"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.9_500_senior_secured_notes_due_2029.maturity",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "9.500% Senior Secured Notes",
+            "Senior Secured Notes due 2029",
+            "9.5% Senior Secured Notes due 2029"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.debt_stack.9_500_senior_secured_notes_due_2029.carrying_amount.2025-09-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "9.500% Senior Secured Notes",
+            "Senior Secured Notes due 2029",
+            "9.5% Senior Secured Notes due 2029"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "PERIOD_END"
+          }
+        }
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    }
+  ],
+  "unmapped": [
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_outstanding.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.aggregate_principal_amount_stated.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.current_portion_of_senior_secured_credit_facility.principal_current_portion.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_long_term_portion.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_outstanding_from_table_lines.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_a_1.original_aggregate_principal",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_a_2.original_aggregate_principal",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_b_before_2025_refinancing.original_aggregate_principal",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facilities_sum_of_original_tranche_amounts.original_aggregate_principal",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.commitment.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_outstanding.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_commitment_less_drawn_less_letters_of_credit.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_share_of_commitment.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.principal_outstanding.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_atmaas_financing_program.principal_outstanding.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_short_term_line.principal_current.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt_long_term_line.principal_long_term.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.principal_stated.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.principal_from_components.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_short_term_borrowings.carrying_amount.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_long_term_debt.carrying_amount.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.discount_and_deferred_financing_fees.amount.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.carrying_amount_from_balance_sheet_lines.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt.principal_less_carrying.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.cash_and_cash_equivalents.balance.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.restricted_cash_current.balance.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.long_term_restricted_cash_in_other_assets.balance.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.cash_held_by_foreign_subsidiaries.balance.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.total_debt_principal_less_cash_and_cash_equivalents.amount.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.trade_receivables_facility.purchase_commitment_limit.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-2.liquidity.trade_receivables_facility.receivables_sold_and_derecognized.2025-09-30",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-1.restatement.form_10_k_a_for_fy2024.purpose",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.original_fy2024_10_k.filed_date",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.form_10_k_a_for_fy2024.filed_date",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.misstatements.materiality_and_form_of_correction",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.misstatements.primary_cause",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.misstatements.other_causes",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.periods_revised_in_the_10_k_a.annual_and_quarterly",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.periods_revised_in_the_q3_2025_10_q.prior_year_comparatives",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.q1_and_q2_2025_interim_periods.revision_status",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.material_weakness_as_of_2024_12_31.description",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.fy2024_income_statement_lines_adjusted.line_items",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.fy2024_balance_sheet_lines_adjusted.line_items",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.fy2024_debt_related_items_revised.line_items",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.cash_flows.effect_on_operating_cash_flow",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-1.restatement.executive_compensation.clawback",
+      "reason": "CP-1 result has no table or field for restatement narrative (its financial tables hold statement lines, accounts, facility terms and reconciliations), so no module output can hold this text"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2025_09_30.period_covered.2025-09-30",
+      "reason": "CP-0 (build_readiness) writes one P3 period per source at a row keyed by the pack source_id, as model free text; the row id is the pack builder id and the text is not a fixed date, so no fixed locator holds this period"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_K/A_2024_12_31.period_covered.2024-12-31",
+      "reason": "CP-0 (build_readiness) writes one P3 period per source at a row keyed by the pack source_id, as model free text; the row id is the pack builder id and the text is not a fixed date, so no fixed locator holds this period"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Other_debt_ATMaaS_financing_program.master_loan_agreement_capacity",
+      "reason": "CP-2 (credit_synthesis) is judgments only: it writes model prose registers (T2.1, T2.7, T2.10-T2.12, cp2.*) and copies CP-1 facts into cp1_references at model-chosen indices; it stores no debt-stack or liquidity figure, so no fixed locator holds this value"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:net_income_total",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:capex_payment_amount",
+      "reason": "CP-1 T4.15 has one capex id (capex_and_intangible_investment, outflow negative), already mapped from capex_signed_cashflow; this positive-magnitude metric has no id of its own and a second entry would reuse the locator"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:total_debt",
+      "reason": "gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:principal",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:current_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:current_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:total_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:total_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:total_equity",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:net_income_total",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:capex_payment_amount",
+      "reason": "CP-1 T4.15 has one capex id (capex_and_intangible_investment, outflow negative), already mapped from capex_signed_cashflow; this positive-magnitude metric has no id of its own and a second entry would reuse the locator"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:principal",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:current_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:current_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:total_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:total_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:total_equity",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:net_income_total",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:capex_payment_amount",
+      "reason": "CP-1 T4.15 has one capex id (capex_and_intangible_investment, outflow negative), already mapped from capex_signed_cashflow; this positive-magnitude metric has no id of its own and a second entry would reuse the locator"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:principal",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:current_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:current_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:total_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:total_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:total_equity",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:net_income_total",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:capex_payment_amount",
+      "reason": "CP-1 T4.15 has one capex id (capex_and_intangible_investment, outflow negative), already mapped from capex_signed_cashflow; this positive-magnitude metric has no id of its own and a second entry would reuse the locator"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:principal",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:current_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:current_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:total_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:total_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:total_equity",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:net_income_total",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:capex_payment_amount",
+      "reason": "CP-1 T4.15 has one capex id (capex_and_intangible_investment, outflow negative), already mapped from capex_signed_cashflow; this positive-magnitude metric has no id of its own and a second entry would reuse the locator"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:cash",
+      "reason": "same locator as CP-1.fin.NATL:FY2024Q4:cash (PERIOD_END 2024-12-31 shared by the FY balance and its Q4 twin)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:total_debt",
+      "reason": "gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:principal",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:current_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:current_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:total_assets",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:total_liabilities",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:total_equity",
+      "reason": "CP-1 T4.15 has no metric id for this metric (ACCOUNT_FIELDS lacks it; net income, balance-sheet totals and gold principal sit only in statement-line tables with model-chosen line ids and labels, or in T4.18 per facility)"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:DA",
+      "reason": "CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) so depreciation_amortization is negative while the gold is positive; sign differs, no equivalent id"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024Q4:capex_signed_cashflow",
+      "reason": "NATL prints capitalized software and IP purchases, which CP-1 capex_and_intangible_investment includes; not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:DA",
+      "reason": "CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) so depreciation_amortization is negative while the gold is positive; sign differs, no equivalent id"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:capex_signed_cashflow",
+      "reason": "NATL prints capitalized software and IP purchases, which CP-1 capex_and_intangible_investment includes; not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:DA",
+      "reason": "CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) so depreciation_amortization is negative while the gold is positive; sign differs, no equivalent id"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:capex_signed_cashflow",
+      "reason": "NATL prints capitalized software and IP purchases, which CP-1 capex_and_intangible_investment includes; not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:DA",
+      "reason": "CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) so depreciation_amortization is negative while the gold is positive; sign differs, no equivalent id"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:capex_signed_cashflow",
+      "reason": "NATL prints capitalized software and IP purchases, which CP-1 capex_and_intangible_investment includes; not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:DA",
+      "reason": "CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) so depreciation_amortization is negative while the gold is positive; sign differs, no equivalent id"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2024:capex_signed_cashflow",
+      "reason": "NATL prints capitalized software and IP purchases, which CP-1 capex_and_intangible_investment includes; not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q1:total_debt",
+      "reason": "gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q2:total_debt",
+      "reason": "gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is not the same quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.NATL:FY2025Q3:total_debt",
+      "reason": "gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is not the same quantity"
+    }
+  ]
+}

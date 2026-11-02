@@ -1,0 +1,64 @@
+{
+ "schema": "pricing-key/1",
+ "what": "OpenAI gpt-6.1-sol cache-write pricing (configs sol-medium, sol-high), standard tier, short context",
+ "source": {
+  "pricing_page": "https://developers.openai.com/api/docs/pricing",
+  "caching_guide": "https://developers.openai.com/api/docs/guides/prompt-caching",
+  "fetched": "2026-11-02",
+  "snapshot": "work/context-plan/provider-docs-2026-11-02-sol-cache.md",
+  "fetched_by": "controller"
+ },
+ "sol": {
+  "usd_per_million": {
+   "input": "2.00",
+   "cached_read": "0.10",
+   "cache_write_30m": "2.50",
+   "output": "10.00"
+  },
+  "max_input_tokens": 272000,
+  "write_tier_priced": "30m",
+  "default_ttl_when_prompt_cache_options_omitted": "30m"
+ },
+ "pilot_charges": [
+  {
+   "raw_usage": {
+    "input_tokens": 5162,
+    "input_tokens_details": {
+     "cache_write_tokens": 5159,
+     "cached_tokens": 0
+    },
+    "output_tokens": 227,
+    "output_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "usd": "0.01517350",
+   "cost_status": "computed"
+  },
+  {
+   "raw_usage": {
+    "input_tokens": 5165,
+    "input_tokens_details": {
+     "cache_write_tokens": 5162,
+     "cached_tokens": 0
+    },
+    "output_tokens": 233,
+    "output_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "usd": "0.01524100",
+   "cost_status": "computed"
+  }
+ ],
+ "reservation_at_max_input": {
+  "input_tokens": 272000,
+  "max_output": 0,
+  "usd": "0.68000000"
+ },
+ "request_prompt_cache_options": {
+  "mode": "implicit",
+  "ttl": "30m"
+ },
+ "request_prompt_cache_options_note": "Responses API field (caching guide, re-fetched 2026-11-02): mode implicit|explicit, ttl 30m (default)|12h; sent explicitly so the priced 30m tier cannot change with a provider default (PF-R6)."
+}

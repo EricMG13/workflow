@@ -32,7 +32,7 @@ from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot
 from deploy_vii.live.prompts import build
 from deploy_vii.live.tools import submit_name, tool_specs
 from deploy_vii.preparation import PreparedPack
-from deploy_workflow.financial_workflow import MAX_CALLS
+from deploy_workflow.financial_workflow import MAX_CALLS, MAX_INVOKES
 from deploy_workflow.model.adapter import AdapterReply, ModelAdapter
 from deploy_workflow.model.budget import Budget, BudgetError, OverrunStop
 from deploy_workflow.model.pricing import (
@@ -797,9 +797,10 @@ class ToolLoop:
             result, failure = _caught(partial(self._call, call, kind))
             returned = True
             if isinstance(failure, WorkflowError) and failure.code == "not_permitted":
-                if self._counts[key] >= MAX_CALLS:  # the 17th call of a kind in one step
+                limit = MAX_INVOKES if kind == "invoke" else MAX_CALLS
+                if self._counts[key] >= limit:  # one call past the kind's per-step limit
                     record["refusal_code"] = "CallLimit"
-                    out.stop = ("CallLimit", f"more than {MAX_CALLS} {kind} calls in one step")
+                    out.stop = ("CallLimit", f"more than {limit} {kind} calls in one step")
                     return out
                 # any other not_permitted is a refusal the model sees (F14)
                 refused = dump_json({"status": "refused", "error_code": "not_permitted"})

@@ -19,7 +19,7 @@ from urllib.parse import urlsplit
 
 CONNECT_S = 30.0
 IDLE_S = 120.0  # spec §8
-OVERALL_S = 900.0  # Q3
+OVERALL_S = 1800.0  # PF-R13: Deploy VII sol-high took 692 s for 55K output tokens (limits.json)
 READ_CHUNK_BYTES = 64 * 1024
 
 

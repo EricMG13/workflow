@@ -48,7 +48,13 @@ class NoPrice(PricingError):
 
 
 class ContextTooLong(PricingError):
-    """The request is over the context the table has rates for."""
+    """The request's input-token bound is over the context the table has rates for.
+
+    For openai the bound is an estimate: ``run_pathway.BYTES_PER_TOKEN_LOWER_BOUND`` (3.0) turns
+    request bytes into tokens. A sol request whose true input exceeds the limit but whose
+    estimate does not is still sent; it is recorded as an unknown charge with its real
+    ``input_tokens``, its hold counts as spend, and the configuration is blocked until it is
+    settled. The long-context guard is an owner item (PF-R16)."""
 
 
 def _money(name: str, value: object) -> Decimal:
@@ -77,7 +83,8 @@ class ModelPrice:
     cached_read: Decimal | None = None
     cache_write_5m: Decimal | None = None  # Anthropic only
     cache_write_1h: Decimal | None = None  # Anthropic only
-    max_input_tokens: int | None = None  # a longer request has no listed rate: ContextTooLong
+    # a longer request has no listed rate: ContextTooLong (on an estimated bound; see its docstring)
+    max_input_tokens: int | None = None
     cache_write_listed: bool = (
         True  # False: ``cache_write`` only reserves; a charge needing it is unknown
     )
@@ -104,10 +111,14 @@ _UNKNOWN = Priced(None, "unknown")
 _SOL = ModelPrice(
     input=Decimal("2.00"),
     cached_read=Decimal("0.10"),
-    cache_write=Decimal("2.00"),  # not stated (ledger :2): reserved at input, never charged
-    cache_write_listed=False,
+    # the 30-minute write rate: the OpenAI request pins ``prompt_cache_options`` to ttl "30m"
+    # (``providers.OPENAI_PROMPT_CACHE_OPTIONS``, PF-R6); source:
+    # cases/pricing/openai-sol-cache-write.json
+    cache_write=Decimal("2.50"),
     output=Decimal("10.00"),
-    max_input_tokens=272_000,  # standard tier; long-context rates not supplied
+    # standard tier; long-context rates not supplied. The loop checks an estimate (bytes / 3.0 for
+    # openai), so a request truly over 272K can still be sent and settles as unknown (PF-R16).
+    max_input_tokens=272_000,
 )
 PRICES: Mapping[str, ModelPrice] = MappingProxyType(
     {
@@ -157,7 +168,7 @@ def _openai_like(price: ModelPrice, usage: Usage) -> Decimal | None:
     if n_in is None or n_out is None or price.cached_read is None:
         return None
     cached = usage.cached_read_tokens or 0  # absent: all at the input rate, never an undercharge
-    written = usage.cache_write_tokens or 0  # not a documented OpenAI field: absent means none
+    written = usage.cache_write_tokens or 0  # input_tokens_details.cache_write_tokens; absent: none
     fresh = n_in - cached - written
     if fresh < 0 or (written and not price.cache_write_listed):
         return None

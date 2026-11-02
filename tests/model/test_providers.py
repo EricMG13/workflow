@@ -4,6 +4,7 @@ import http.client
 import json
 import socket
 from decimal import Decimal
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -38,6 +39,7 @@ from deploy_workflow.model.turn import (
     Usage,
 )
 
+KEY_FILE = Path(__file__).parents[2] / "cases" / "pricing" / "openai-sol-cache-write.json"
 KEY = "sk-or-v1-TESTONLYabcdef0123456789"
 SOL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
 OPUS = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
@@ -1073,3 +1075,12 @@ def test_decoded_tool_arguments_are_guarded_when_a_later_item_exits_early(provid
         ).encode()
     result = parse(cast(Provider, provider), 200, body, {}, Redactor())
     assert isinstance(result, ProviderError) and result.error_class == "KeyReflected"
+
+
+def test_openai_body_pins_prompt_cache_options_to_the_priced_30m_tier() -> None:
+    """The request sends the cache option the key pins, and its ttl is the tier the table prices
+    (the key's #request_prompt_cache_options and #sol/write_tier_priced)."""
+    key = json.loads(KEY_FILE.read_text(encoding="utf-8"))
+    body = _body(build(SOL, _request(), KEY))
+    assert body["prompt_cache_options"] == key["request_prompt_cache_options"]
+    assert body["prompt_cache_options"]["ttl"] == key["sol"]["write_tier_priced"]

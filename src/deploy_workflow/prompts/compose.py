@@ -36,7 +36,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import extraction_coverage, live_consumers
 from deploy_vii.registry import modules
 from deploy_workflow.context import RunContext
-from deploy_workflow.financial_workflow import MAX_CALLS
+from deploy_workflow.financial_workflow import MAX_CALLS, MAX_INVOKES
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import StepSpec
 from deploy_workflow.owners import pins as owner_pins
@@ -280,9 +280,9 @@ def _rule5(request: PromptRequest, contract: str) -> str:
     if pack_tools:
         shared = f"{', '.join(pack_tools[:-1])} and {pack_tools[-1]}"
         budgets.append(
-            f"{shared} share {MAX_CALLS} calls in one step"
+            f"{shared} share {MAX_INVOKES} calls in one step"
             if len(pack_tools) > 1
-            else f"{pack_tools[0]} at most {MAX_CALLS} calls in one step"
+            else f"{pack_tools[0]} at most {MAX_INVOKES} calls in one step"
         )
     if spec.inputs != "none":
         budgets.append(f"read_inputs at most {MAX_CALLS} calls")

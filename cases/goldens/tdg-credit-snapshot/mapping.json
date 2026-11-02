@@ -1,0 +1,2814 @@
+{
+  "schema_version": "golden-mapping/1",
+  "case_id": "tdg-credit-snapshot",
+  "preparer": "mx-feature (Task 6 preparer, re-run)",
+  "reviewer": "mx-precise (Task 6 review)",
+  "module_commits": {
+    "CP-0": "eeab0b8fecda6ee1a74b16c66711503e12928583",
+    "CP-1": "df26ea82249fc062a8beb8dba3d51f1caf5fdf23",
+    "CP-1A": "0daac2cc5ba33d477b8143d3373bc75f622de5a4",
+    "CP-2": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+    "CP-3": "68ebc369347121ce505488a8808661e643751d52",
+    "CP-4": "a2243308037a6bc6b86536ce5c801b0c73f01271"
+  },
+  "entries": [
+    {
+      "fact_id": "CP-0.identity.TransDigm_Group_Incorporated.legal_name",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "issuer",
+        "period": null
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:CFO:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:adjusted_EBITDA:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_signed_cashflow:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:cash:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:operating_profit:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:reported_EBITDA:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:revenue:FY2024Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-03-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:CFO:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:adjusted_EBITDA:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_signed_cashflow:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:cash:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:operating_profit:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:reported_EBITDA:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:revenue:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-06-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:CFO:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:adjusted_EBITDA:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_signed_cashflow:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:cash:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:operating_profit:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:reported_EBITDA:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:revenue:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:CFO:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:adjusted_EBITDA:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_signed_cashflow:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:cash:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:operating_profit:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:reported_EBITDA:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:revenue:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:CFO:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:adjusted_EBITDA:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_signed_cashflow:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:operating_profit:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:reported_EBITDA:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:revenue:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5_50_2027_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.50% 2027 Notes",
+            "5.50% senior subordinated notes due 2027"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5_50_2027_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.50% 2027 Notes",
+            "5.50% senior subordinated notes due 2027"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5_50_2027_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.50% 2027 Notes",
+            "5.50% senior subordinated notes due 2027"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5_50_2027_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.50% 2027 Notes",
+            "5.50% senior subordinated notes due 2027"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2028_Secured_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2028 Secured Notes",
+            "6.75% secured notes due 2028"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2028_Secured_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2028 Secured Notes",
+            "6.75% secured notes due 2028"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2028_Secured_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2028 Secured Notes",
+            "6.75% secured notes due 2028"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2028_Secured_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2028 Secured Notes",
+            "6.75% secured notes due 2028"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_625_2029_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.625% 2029 Notes",
+            "4.625% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_625_2029_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.625% 2029 Notes",
+            "4.625% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_625_2029_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.625% 2029 Notes",
+            "4.625% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_625_2029_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.625% 2029 Notes",
+            "4.625% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2029_Secured_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2029 Secured Notes",
+            "6.375% secured notes due 2029"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2029_Secured_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2029 Secured Notes",
+            "6.375% secured notes due 2029"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2029_Secured_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2029 Secured Notes",
+            "6.375% secured notes due 2029"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2029_Secured_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2029 Secured Notes",
+            "6.375% secured notes due 2029"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_875_2029_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.875% 2029 Notes",
+            "4.875% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_875_2029_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.875% 2029 Notes",
+            "4.875% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_875_2029_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.875% 2029 Notes",
+            "4.875% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.4_875_2029_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "4.875% 2029 Notes",
+            "4.875% senior subordinated notes due 2029"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2030_Secured_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2030 Secured Notes",
+            "6.875% secured notes due 2030"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2030_Secured_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2030 Secured Notes",
+            "6.875% secured notes due 2030"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2030_Secured_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2030 Secured Notes",
+            "6.875% secured notes due 2030"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2030_Secured_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2030 Secured Notes",
+            "6.875% secured notes due 2030"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2031_Secured_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2031 Secured Notes",
+            "7.125% secured notes due 2031"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2031_Secured_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2031 Secured Notes",
+            "7.125% secured notes due 2031"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2031_Secured_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2031 Secured Notes",
+            "7.125% secured notes due 2031"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2031_Secured_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2031 Secured Notes",
+            "7.125% secured notes due 2031"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2032_Secured_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2032 Secured Notes",
+            "6.625% secured notes due 2032"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2032_Secured_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2032 Secured Notes",
+            "6.625% secured notes due 2032"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2032_Secured_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2032 Secured Notes",
+            "6.625% secured notes due 2032"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2032_Secured_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2032 Secured Notes",
+            "6.625% secured notes due 2032"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2033_Secured_Notes.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2033 Secured Notes",
+            "6.00% secured notes due 2033"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2033_Secured_Notes.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2033 Secured Notes",
+            "6.00% secured notes due 2033"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2033_Secured_Notes.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2033 Secured Notes",
+            "6.00% secured notes due 2033"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.2033_Secured_Notes.interest_rate.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "2033 Secured Notes",
+            "6.00% secured notes due 2033"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_I.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche I",
+            "Tranche I",
+            "Tranche I term loans"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_I.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche I",
+            "Tranche I",
+            "Tranche I term loans"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_I.interest_rate_terms.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche I",
+            "Tranche I",
+            "Tranche I term loans"
+          ]
+        },
+        "field": "margin_or_coupon",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_J.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche J",
+            "Tranche J",
+            "Tranche J term loans"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_J.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche J",
+            "Tranche J",
+            "Tranche J term loans"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_J.interest_rate_terms.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche J",
+            "Tranche J",
+            "Tranche J term loans"
+          ]
+        },
+        "field": "margin_or_coupon",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_K.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche K",
+            "Tranche K",
+            "Tranche K term loans"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_K.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche K",
+            "Tranche K",
+            "Tranche K term loans"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_K.interest_rate_terms.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche K",
+            "Tranche K",
+            "Tranche K term loans"
+          ]
+        },
+        "field": "margin_or_coupon",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_L.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche L",
+            "Tranche L",
+            "Tranche L term loans"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_L.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche L",
+            "Tranche L",
+            "Tranche L term loans"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Term_loan_Tranche_L.interest_rate_terms.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan Tranche L",
+            "Tranche L",
+            "Tranche L term loans"
+          ]
+        },
+        "field": "margin_or_coupon",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Trade_receivable_securitization_facility.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Short-term borrowings—trade receivable securitization facility",
+            "Trade receivable securitization facility"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Trade_receivable_securitization_facility.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Short-term borrowings—trade receivable securitization facility",
+            "Trade receivable securitization facility"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Trade_receivable_securitization_facility.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Short-term borrowings—trade receivable securitization facility",
+            "Trade receivable securitization facility"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Trade_receivable_securitization_facility.interest_rate_terms.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Short-term borrowings—trade receivable securitization facility",
+            "Trade receivable securitization facility"
+          ]
+        },
+        "field": "margin_or_coupon",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Government_refundable_advances.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Government refundable advances"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Government_refundable_advances.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Government refundable advances"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Finance_lease_obligations.principal_outstanding.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Finance lease obligations"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Finance_lease_obligations.carrying_amount_net.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Finance lease obligations"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.revolver.Revolving_credit_facility.commitments.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "commitment",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.revolver.Revolving_credit_facility.drawn_balance.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "drawn_amount",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.revolver.Revolving_credit_facility.maturity_date.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.revolver.Revolving_credit_facility.drawn_rate_terms.2024-12-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "margin_or_coupon",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    }
+  ],
+  "unmapped": [
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2024_03_30.period_covered.2024-03-30",
+      "reason": "Row id is the pack source_id, which run staging supplies; no module code fixes it. P3 has no key cell naming the filing (fields family, entity, period, version_relationship), so a row_key cannot find the row; the period cell is reviewer text"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2024_06_29.period_covered.2024-06-29",
+      "reason": "Row id is the pack source_id, which run staging supplies; no module code fixes it. P3 has no key cell naming the filing (fields family, entity, period, version_relationship), so a row_key cannot find the row; the period cell is reviewer text"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_K_2024_09_30.period_covered.2024-09-30",
+      "reason": "Row id is the pack source_id, which run staging supplies; no module code fixes it. P3 has no key cell naming the filing (fields family, entity, period, version_relationship), so a row_key cannot find the row; the period cell is reviewer text"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2024_12_28.period_covered.2024-12-28",
+      "reason": "Row id is the pack source_id, which run staging supplies; no module code fixes it. P3 has no key cell naming the filing (fields family, entity, period, version_relationship), so a row_key cannot find the row; the period cell is reviewer text"
+    },
+    {
+      "fact_id": "CP-1A.segments.TransDigm.reporting_segment_count.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.segments.Power_Control.reporting_segment_name.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.segments.Airframe.reporting_segment_name.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.segments.Non_aviation.reporting_segment_name.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.TransDigm.sector_description",
+      "reason": "The golden is the Item 1 business description; company_description/company/sector is a different cell and business_description is model-written prose compared by exact text, so it is not tied at a fixed locator"
+    },
+    {
+      "fact_id": "CP-1A.profile.TransDigm.aftermarket_share_of_net_sales.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.TransDigm.proprietary_share_of_net_sales.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.TransDigm.businesses_acquired_since_1993.2024-09-30",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.TransDigm.sponsor_or_controlling_holder",
+      "reason": "Absence of a sponsor can show as any numbered ownership_register / T2D.2 row or an empty-table none row; no fixed locator"
+    },
+    {
+      "fact_id": "CP-1A.acquisitions.CPI_s_Electron_Device_Business.purchase_price.2024-06-06",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.acquisitions.CPI_s_Electron_Device_Business.segment.2024-06-06",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.acquisitions.Raptor_Scientific.purchase_price_as_first_reported.2024-07-31",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.acquisitions.Raptor_Scientific.purchase_price_latest.2024-07-31",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.acquisitions.Raptor_Scientific.segment.2024-07-31",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.acquisitions.Product_lines_acquired_in_Q1_FY2025.purchase_price.2024-12-28",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.7_125_Senior_Secured_Notes_due_2031_issuance.principal.2023-11-28",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Tranche_J_term_loans_Amendment_No_13.principal.2023-11-28",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Revolving_credit_facility_refinancing_Amendment_No_14.commitments_after.2024-02-27",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.6_375_Senior_Secured_Notes_due_2029_initial.principal.2024-02-27",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.6_625_Senior_Secured_Notes_due_2032.principal.2024-02-27",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.6_25_Secured_Notes_due_2026_redemption.principal_redeemed.2024-03-28",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.2029_Secured_Notes_add_on.principal.2024-03-22",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.7_50_Senior_Subordinated_Notes_due_2027_redemption.principal_redeemed.2024-04-22",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.6_00_Senior_Secured_Notes_due_2033.principal.2024-09-19",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Tranche_L_term_loans_Amendment_No_17.principal.2024-09-19",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Special_cash_dividend_75_00_per_share.amount_paid.2024-10-18",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Common_stock_repurchases_Q1_FY2025.amount.2024-12-28",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Trade_receivable_securitization_facility_draw_Q1_FY2025.amount_drawn.2024-12-28",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Term_loans.principal_outstanding.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.debt_totals.Debt_excluding_securitization_facility.principal_outstanding.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.debt_totals.Total_gross_principal_including_securitization_facility.principal_outstanding.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.letters_of_credit_outstanding.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.availability.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.liquidity.Cash_liquidity_cash_plus_revolver_availability.amount.2024-12-28",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2025.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2026.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2027.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2028.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2029.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Thereafter.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Total.scheduled_maturity.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.debt_totals.Debt_excluding_securitization_facility.principal_outstanding.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Reconciliation_gross_debt_excl_securitization_less_finance_leases.amount.2024-09-30",
+      "reason": "CP-2 (cp2_synthesis) writes only model prose (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front rows) and cp1_references/refNN copies of CP-1 figures numbered by first prose reference; no row holds this figure at a fixed id or under a key cell"
+    },
+    {
+      "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.maintenance_covenants_elsewhere.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.test_trigger_usage.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.test_trigger_usage_amount.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.maximum_consolidated_net_leverage_ratio.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.maximum_net_leverage_after_material_acquisition.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Revolving_credit_facility_springing_financial_covenant.ratio_definition.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Incremental_facilities_condition.maximum_consolidated_net_leverage_ratio.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Incremental_facilities_condition.maximum_consolidated_secured_net_debt_ratio.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Credit_Agreement_and_Indentures.restrictive_covenant_scope.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Credit_Agreement.latest_amendment_affecting_covenants.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Compliance.company_statement.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-4.covenants.Event_of_default_remedies.collateral_includes_cash.2024-12-28",
+      "reason": "CP-4 covenant rows (T4.3, T4.9, T4C.x) are numbered r01.. in model submission order; the covenant-name column is the row header and is not a fact, so no row_key can find the row; thresholds are text cells, not numbers"
+    },
+    {
+      "fact_id": "CP-3.market_quotes.TransDigm_debt_instruments.observed_quotes_or_price_talk",
+      "reason": "T3.3/none exists only for an empty register; model market-evidence rows get ids m01.. in submission order, so no fixed locator can catch an invented quote"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Tranche_K_replacement_of_Tranche_H_and_Tranche_I_repricing_Amendment_No_15.tranche_i_repriced_principal.2024-03-22",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Tranche_K_replacement_of_Tranche_H_and_Tranche_I_repricing_Amendment_No_15.tranche_h_replaced_by_tranche_k_principal.2024-03-22",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Tranche_J_and_I_term_loans_Amendment_No_16.tranche_j_repriced_principal.2024-06-04",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1A.financing_events.Tranche_J_and_I_term_loans_Amendment_No_16.tranche_i_extended_to_tranche_j_principal.2024-06-04",
+      "reason": "CP-1A registers number rows r01.. in model submission order. Keyed registers drop the row-header (name) column, so no row_key can find the row; transaction_summary and events_timeline keep their first column, but neither has a numeric field, so the value sits only in model-written prose"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_payment_amount:FY2024Q2",
+      "reason": "CP-1 has one capex account (capex_and_intangible_investment) normalised to a negative outflow; the gold positive payment amount has no separate T4.15 metric id (the signed gold fact is mapped to it)"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_assets:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_liabilities:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_current:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_attributable_parent:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_total:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:principal:FY2024Q2",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_assets:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_noncurrent_carrying:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_liabilities:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_payment_amount:FY2024Q3",
+      "reason": "CP-1 has one capex account (capex_and_intangible_investment) normalised to a negative outflow; the gold positive payment amount has no separate T4.15 metric id (the signed gold fact is mapped to it)"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_assets:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_liabilities:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_current:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_attributable_parent:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_total:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:principal:FY2024Q3",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_assets:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_noncurrent_carrying:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_liabilities:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_payment_amount:FY2024Q4",
+      "reason": "CP-1 has one capex account (capex_and_intangible_investment) normalised to a negative outflow; the gold positive payment amount has no separate T4.15 metric id (the signed gold fact is mapped to it)"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_assets:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_liabilities:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_current:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_attributable_parent:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_total:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:principal:FY2024Q4",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_assets:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_noncurrent_carrying:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_liabilities:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_payment_amount:FY2025Q1",
+      "reason": "CP-1 has one capex account (capex_and_intangible_investment) normalised to a negative outflow; the gold positive payment amount has no separate T4.15 metric id (the signed gold fact is mapped to it)"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_assets:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_liabilities:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_current:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_attributable_parent:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_total:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:principal:FY2025Q1",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_assets:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:long_term_debt_noncurrent_carrying:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_liabilities:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:capex_payment_amount:FY2024",
+      "reason": "CP-1 has one capex account (capex_and_intangible_investment) normalised to a negative outflow; the gold positive payment amount has no separate T4.15 metric id (the signed gold fact is mapped to it)"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_assets:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:current_liabilities:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_attributable_parent:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:net_income_total:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:principal:FY2024",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_assets:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_liabilities:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity_consolidated:FY2024Q2",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity_consolidated:FY2024Q3",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity_consolidated:FY2024Q4",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity_consolidated:FY2025Q1",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_equity_consolidated:FY2024",
+      "reason": "Not a T4.15 account: ACCOUNT_FIELDS (model_interface.py) has no such metric id; the value would sit in a statement-view cell whose field id is the model-declared period_id, which neither row_key nor period_ref can reach"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_financing_debt_including_finance_leases:FY2024Q2",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_financing_debt_including_finance_leases:FY2024Q3",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_financing_debt_including_finance_leases:FY2024Q4",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_financing_debt_including_finance_leases:FY2025Q1",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_financing_debt_including_finance_leases:FY2024",
+      "reason": "No T4.15 metric id holds this gold metric: ACCOUNT_FIELDS has total_debt, senior_secured_debt and unsecured_debt but no principal or financing-debt-including-leases account"
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Finance_lease_obligations.principal_outstanding.2024-09-30",
+      "reason": "Balance at 2024-09-30 from the 10-K: T4.14 may hold a QUARTER (FY2024Q4), an FY and a PERIOD_END period with this end date, and the debt-register row may sit on any of them, so period_type cannot be stated without guessing"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:DA:FY2024Q2",
+      "reason": "Sign: CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) while the gold DA is positive, so no T4.15 value can equal it"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:DA:FY2024Q3",
+      "reason": "Sign: CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) while the gold DA is positive, so no T4.15 value can equal it"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:DA:FY2024Q4",
+      "reason": "Sign: CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) while the gold DA is positive, so no T4.15 value can equal it"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:DA:FY2025Q1",
+      "reason": "Sign: CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) while the gold DA is positive, so no T4.15 value can equal it"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:DA:FY2024",
+      "reason": "Sign: CP-1 writes outflow metrics as -abs (history.py:143, model_interface.py:200) while the gold DA is positive, so no T4.15 value can equal it"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_debt:FY2024Q2",
+      "reason": "Definition: the gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is a different quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_debt:FY2024Q3",
+      "reason": "Definition: the gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is a different quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_debt:FY2024Q4",
+      "reason": "Definition: the gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is a different quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_debt:FY2025Q1",
+      "reason": "Definition: the gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is a different quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:total_debt:FY2024",
+      "reason": "Definition: the gold total_debt includes finance leases; CP-1 keeps lease_obligations separate, so total_debt is a different quantity"
+    },
+    {
+      "fact_id": "CP-1.fin.TDG:cash:FY2024",
+      "reason": "Same locator as CP-1.fin.TDG:cash:FY2024Q4 (a balance at 2024-09-30 on the PERIOD_END period)"
+    }
+  ]
+}

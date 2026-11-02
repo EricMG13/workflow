@@ -1,0 +1,1854 @@
+{
+  "schema_version": "golden-mapping/1",
+  "case_id": "shc-earnings-update",
+  "preparer": "mx-feature (Task 6 preparer, re-run)",
+  "reviewer": "mx-precise (Task 6 review)",
+  "module_commits": {
+    "CP-0": "eeab0b8fecda6ee1a74b16c66711503e12928583",
+    "CP-1": "9a85a6942ca4a63bf4a6a1c49bf03efe1910f3d6",
+    "CP-1B": "438317d342f7e0f93808d3d8c769887182162be2",
+    "CP-1D": "5d5b6861247f4165d23e46a05b935b1f16325d97"
+  },
+  "entries": [
+    {
+      "fact_id": "CP-0.identity.Registrant.legal_name",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "issuer",
+        "period": null
+      }
+    },
+    {
+      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.period_end",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "reporting_period",
+        "period": null
+      }
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_revenues.2025-06-30",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.1",
+        "row_id": "revenue",
+        "field": "current",
+        "period": "q2-2025"
+      }
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_revenues.2024-06-30",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.1",
+        "row_id": "revenue",
+        "field": "prior",
+        "period": "q2-2024"
+      }
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.net_revenues_change.2025-06-30",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.1",
+        "row_id": "revenue",
+        "field": "delta",
+        "period": "q2-2024->q2-2025"
+      },
+      "depends_on": [
+        "CP-1B.period_comparison.Consolidated.net_revenues.2025-06-30",
+        "CP-1B.period_comparison.Consolidated.net_revenues.2024-06-30"
+      ]
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2025-06-30",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.1",
+        "row_id": "adjusted_ebitda",
+        "field": "current",
+        "period": "q2-2025"
+      }
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2024-06-30",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.1",
+        "row_id": "adjusted_ebitda",
+        "field": "prior",
+        "period": "q2-2024"
+      }
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Consolidated.adjusted_ebitda_change.2025-06-30",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.1",
+        "row_id": "adjusted_ebitda",
+        "field": "delta",
+        "period": "q2-2024->q2-2025"
+      },
+      "depends_on": [
+        "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2025-06-30",
+        "CP-1B.period_comparison.Consolidated.adjusted_ebitda.2024-06-30"
+      ]
+    },
+    {
+      "fact_id": "CP-1B.guidance.FY2025 company outlook.guidance",
+      "module": "CP-1B",
+      "locator": {
+        "table_id": "T1B.3",
+        "row_id": "guidance",
+        "field": "assessment",
+        "period": "q2-2024->q2-2025"
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:CFO:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:adjusted_EBITDA:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:cash:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revenue:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:CFO:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:adjusted_EBITDA:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:cash:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revenue:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:CFO:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:adjusted_EBITDA:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:cash:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revenue:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:CFO:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:adjusted_EBITDA:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:cash:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revenue:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:CFO:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:adjusted_EBITDA:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revenue:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).principal_outstanding_gross.2025-06-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan due 2031",
+            "Refinancing Term Loans",
+            "Term Loan B"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).carrying_amount_net.2025-06-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan due 2031",
+            "Refinancing Term Loans",
+            "Term Loan B"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Secured notes due 2031.principal_outstanding_gross.2025-06-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Secured notes due 2031",
+            "Senior secured notes due 2031",
+            "Senior Secured Notes"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).maturity_date",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Term loan due 2031",
+            "Refinancing Term Loans",
+            "Term Loan B"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Secured notes due 2031.coupon_fixed",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Secured notes due 2031",
+            "Senior secured notes due 2031",
+            "Senior Secured Notes"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Secured notes due 2031.maturity_date",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Secured notes due 2031",
+            "Senior secured notes due 2031",
+            "Senior Secured Notes"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Revolving Credit Facility.drawn_balance.2025-06-30",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving Credit Facility",
+            "Revolver"
+          ]
+        },
+        "field": "drawn_amount",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_context.Revolving Credit Facility.maturity_date",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving Credit Facility",
+            "Revolver"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_signed_cashflow:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_signed_cashflow:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_signed_cashflow:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_signed_cashflow:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_signed_cashflow:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_profit:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_profit:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_profit:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_profit:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_profit:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:reported_EBITDA:FY2024",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:reported_EBITDA:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:reported_EBITDA:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:reported_EBITDA:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:reported_EBITDA:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_carrying:FY2024Q3",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_carrying:FY2024Q4",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-31",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_carrying:FY2025Q1",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-31",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_carrying:FY2025Q2",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-30",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    }
+  ],
+  "unmapped": [
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.net_revenues.2025-06-30",
+      "reason": "CP-1B T1B.1 has consolidated rows only (revenue, ebitda, adjusted_ebitda, ebitda_margin, cfo_reported, capex, fcf); no segment revenue row exists"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.net_revenues.2024-06-30",
+      "reason": "CP-1B T1B.1 has consolidated rows only (revenue, ebitda, adjusted_ebitda, ebitda_margin, cfo_reported, capex, fcf); no segment revenue row exists"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income.2025-06-30",
+      "reason": "CP-1B T1B.1 has no segment income row"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income.2024-06-30",
+      "reason": "CP-1B T1B.1 has no segment income row"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.net_revenues.2025-06-30",
+      "reason": "CP-1B T1B.1 has consolidated rows only (revenue, ebitda, adjusted_ebitda, ebitda_margin, cfo_reported, capex, fcf); no segment revenue row exists"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.net_revenues.2024-06-30",
+      "reason": "CP-1B T1B.1 has consolidated rows only (revenue, ebitda, adjusted_ebitda, ebitda_margin, cfo_reported, capex, fcf); no segment revenue row exists"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.segment_income.2025-06-30",
+      "reason": "CP-1B T1B.1 has no segment income row"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nordion.segment_income.2024-06-30",
+      "reason": "CP-1B T1B.1 has no segment income row"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.net_revenues.2025-06-30",
+      "reason": "CP-1B T1B.1 has consolidated rows only (revenue, ebitda, adjusted_ebitda, ebitda_margin, cfo_reported, capex, fcf); no segment revenue row exists"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.net_revenues.2024-06-30",
+      "reason": "CP-1B T1B.1 has consolidated rows only (revenue, ebitda, adjusted_ebitda, ebitda_margin, cfo_reported, capex, fcf); no segment revenue row exists"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income.2025-06-30",
+      "reason": "CP-1B T1B.1 has no segment income row"
+    },
+    {
+      "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income.2024-06-30",
+      "reason": "CP-1B T1B.1 has no segment income row"
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_term_sofr_initial",
+      "reason": "CP-1B writes no debt-terms table; no field holds pricing margins"
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_abr_initial",
+      "reason": "CP-1B writes no debt-terms table; no field holds pricing margins"
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_tier_in_effect_at_2025-06-30.2025-06-30",
+      "reason": "CP-1B writes no debt-terms table; no field holds the margin tier in effect"
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.total_commitments.2025-06-30",
+      "reason": "CP-1B writes no facility or liquidity table; no field holds revolver commitments"
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.letters_of_credit_issued.2025-06-30",
+      "reason": "CP-1B writes no facility table; no field holds letters of credit"
+    },
+    {
+      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.availability.2025-06-30",
+      "reason": "CP-1B writes no facility table; no field holds revolver availability"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Net income (loss).amount.2025-06-30",
+      "reason": "CP-1D has no net income cell: T1D.1 rows are management-bridge items (row ids a01.. by bridge order, none here since management_bridge is false) plus a fixed stmt row of recorded add-backs"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Net income (loss).amount.2024-06-30",
+      "reason": "CP-1D has no net income cell; it also writes one period only (CP-1 adjusted_ebitda period)"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Amortization of intangible assets.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item: the case has no management bridge (management_bridge false), so T1D.1 has no item rows, and a bridge row id would be a01.. by source order"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Amortization of intangible assets.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case, and CP-1D writes one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Share-based compensation.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Share-based compensation.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Loss on refinancing of debt.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Loss on refinancing of debt.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.(Gain) loss on FX and derivatives not designated as hedges, net.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.(Gain) loss on FX and derivatives not designated as hedges, net.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Business optimization expenses.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Business optimization expenses.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Professional services relating to EO sterilization facilities.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Professional services relating to EO sterilization facilities.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Illinois EO litigation settlements.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Illinois EO litigation settlements.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Accretion of asset retirement obligations.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Accretion of asset retirement obligations.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax benefit associated with pre-tax adjustments.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax benefit associated with pre-tax adjustments.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted Net Income.amount.2025-06-30",
+      "reason": "CP-1D has no adjusted net income cell; it restates adjusted EBITDA add-backs, not net income"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted Net Income.amount.2024-06-30",
+      "reason": "CP-1D has no adjusted net income cell"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Interest expense, net.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Interest expense, net.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Depreciation.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Depreciation.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax provision applicable to Adjusted Net Income.amount.2025-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge in this case"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Income tax provision applicable to Adjusted Net Income.amount.2024-06-30",
+      "reason": "10-Q reconciliation line is not a bridge item; no management bridge, one period only"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted EBITDA.amount.2025-06-30",
+      "reason": "T1D.3/start/value carries CP-1 adjusted_ebitda_ltm (trailing twelve months) on CP-1's period, not the 3-month Q2 2025 figure; a different quantity, so not tied"
+    },
+    {
+      "fact_id": "CP-1D.ebitda_reconciliation.Adjusted EBITDA.amount.2024-06-30",
+      "reason": "CP-1D writes one period only (CP-1 LTM adjusted EBITDA in T1D.3/start/value); no cell holds the Q2 2024 3-month figure"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_payment_amount:FY2024Q3",
+      "reason": "gold capex_payment_amount is positive but CP-1 writes capex as -abs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_assets:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_liabilities:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_current:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_noncurrent:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_current:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_noncurrent:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_debt_gross_principal_less_cash:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_attributable_parent:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_total:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_current:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_noncurrent:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_current:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_noncurrent:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revolver_availability:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_assets:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt:FY2024Q3",
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2024Q3; two entries cannot share it"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_equity:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_liabilities:FY2024Q3",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_payment_amount:FY2024Q4",
+      "reason": "gold capex_payment_amount is positive but CP-1 writes capex as -abs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_assets:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_liabilities:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_current:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_noncurrent:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_current:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_noncurrent:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:management_adjusted_ebitda_reconciliation_gap:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_debt_gross_principal_less_cash:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_attributable_parent:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_total:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_current:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_noncurrent:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_current:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_noncurrent:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revolver_availability:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_assets:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt:FY2024Q4",
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2024Q4; two entries cannot share it"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_equity:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_liabilities:FY2024Q4",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_payment_amount:FY2025Q1",
+      "reason": "gold capex_payment_amount is positive but CP-1 writes capex as -abs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_assets:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_liabilities:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_current:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_noncurrent:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_current:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_noncurrent:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_debt_gross_principal_less_cash:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_attributable_parent:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_total:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_current:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_noncurrent:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_current:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_noncurrent:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revolver_availability_at_2025_03_31:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_assets:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt:FY2025Q1",
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2025Q1; two entries cannot share it"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_equity:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_liabilities:FY2025Q1",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_payment_amount:FY2025Q2",
+      "reason": "gold capex_payment_amount is positive but CP-1 writes capex as -abs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_assets:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_liabilities:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_current:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_noncurrent:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_current:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_noncurrent:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_debt_gross_principal_less_cash:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_attributable_parent:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_total:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_current:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_noncurrent:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_current:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_noncurrent:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revolver_availability:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_assets:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt:FY2025Q2",
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2025Q2; two entries cannot share it"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_equity:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_liabilities:FY2025Q2",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:capex_payment_amount:FY2024",
+      "reason": "gold capex_payment_amount is positive but CP-1 writes capex as -abs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_assets:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:current_liabilities:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_current:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:debt_carrying_noncurrent:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_current:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:finance_lease_noncurrent:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_debt_gross_principal_less_cash:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_attributable_parent:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:net_income_total:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_current:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:operating_lease_noncurrent:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_current:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:principal_noncurrent:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:revolver_availability:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_assets:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt:FY2024",
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2024Q4; two entries cannot share it"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_equity:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_liabilities:FY2024",
+      "reason": "T4.15 has no metric id for this line (ACCOUNT_FIELDS omits it; net income and balance-sheet totals are statement lines whose item and line ids are chosen by the model)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_financing_debt_including_finance_leases:FY2024Q3",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_financing_debt_including_finance_leases:FY2024Q4",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_financing_debt_including_finance_leases:FY2025Q1",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_financing_debt_including_finance_leases:FY2025Q2",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_financing_debt_including_finance_leases:FY2024",
+      "reason": "no T4.15 metric id for this debt, lease or liquidity metric; CP-1 holds debt per facility in T4.18 (run-time facility ids), not as this total or component"
+    },
+    {
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).rate_floor",
+      "reason": "T4.18 floor_bps carries unit basis_points while the golden rate floor is a percent; the scorer accepts only fraction or point units for a percent golden, so the two cannot be compared"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:DA:FY2024Q3",
+      "reason": "CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) but the gold DA is positive, so the sign differs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:DA:FY2024Q4",
+      "reason": "CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) but the gold DA is positive, so the sign differs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:DA:FY2025Q1",
+      "reason": "CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) but the gold DA is positive, so the sign differs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:DA:FY2025Q2",
+      "reason": "CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) but the gold DA is positive, so the sign differs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:DA:FY2024",
+      "reason": "CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) but the gold DA is positive, so the sign differs; no CP-1 metric compares"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:cash:FY2024",
+      "reason": "same locator as CP-1.fin.SHC:cash:FY2024Q4 (an FY balance and its Q4 twin share one PERIOD_END locator)"
+    },
+    {
+      "fact_id": "CP-1.fin.SHC:total_debt_carrying:FY2024",
+      "reason": "same locator as CP-1.fin.SHC:total_debt_carrying:FY2024Q4 (an FY balance and its Q4 twin share one PERIOD_END locator)"
+    }
+  ]
+}

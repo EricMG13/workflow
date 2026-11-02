@@ -244,3 +244,34 @@ def test_amount_from_quote_accepts_exactly_what_the_table_rule_accepts(token: st
     except cp1c.PeerTableError:
         rule = None
     assert p.amount_from_quote(token) == rule
+
+
+def renamed(case: Case, old: str, new: str) -> dict[str, Any]:
+    body = copy.deepcopy(case.body)
+    for section in ("candidates", "observations", "figures"):
+        for row in body["peers"][section]:
+            if row["peer_id"] == old:
+                row["peer_id"] = new
+    return body
+
+
+def test_a_maximal_peer_id_composes_every_table_without_a_validation_error(case: Case) -> None:
+    """The longest fact id (a TDR.5 ``<id>.definition.observation``) stays within the bound."""
+    body = renamed(case, "p05", "x" * p.PEER_ID_MAX)
+    assert case.issues(body) == ()
+    composed = case.composed(body)
+    assert max(len(f.fact_id) for f in composed.facts) <= 160
+    assert [i.text for i in case.issues(renamed(case, "p05", "x" * (p.PEER_ID_MAX + 1)))] == [
+        f"peer_id has no dot and is at most {p.PEER_ID_MAX} long"
+    ]
+
+
+def test_the_longest_operand_in_the_bound_is_the_longest_cp1c_operand() -> None:
+    assert max(len(key) for key, _ in cp1c.OPERANDS) == len(p.LONGEST_OPERAND)
+
+
+def test_a_tdr5_peer_id_absent_from_tdr4_is_the_issue(case: Case) -> None:
+    body = copy.deepcopy(case.body)
+    row = body["peers"]["observations"][0]
+    row["peer_id"] = "p99"
+    assert [str(i) for i in case.issues(body)] == [f"p99.{row['dimension']}: {p.NOT_A_CANDIDATE}"]

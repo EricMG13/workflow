@@ -641,6 +641,23 @@ def test_resume_with_an_edited_fetch_record_is_refused(
     assert not (args["run_dir"] / "run.json").exists()
 
 
+def test_resume_with_a_reindented_fetch_record_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7b-2 S4 review L-1: `fetches.json` is compared as bytes (`evidence.fetches_bytes`), not as
+    parsed records; the key pins the file's sha256 (`#records/fetches_json/file_sha256`)."""
+    _, args = web_run(tmp_path, monkeypatch)
+    (args["run_dir"] / "run.json").unlink()
+    fetches = args["run_dir"] / "research" / "fetches.json"
+    key = web_file("expected.json")["records"]["fetches_json"]["file_sha256"]
+    assert hashlib.sha256(fetches.read_bytes()).hexdigest() == key
+    records = json.loads(fetches.read_text("utf-8"))
+    fetches.write_text(json.dumps(records, indent=4) + "\n", encoding="utf-8")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+    assert not (args["run_dir"] / "run.json").exists()
+
+
 def test_resume_with_a_removed_fetch_record_is_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -267,10 +267,12 @@ def _check_web(research: ResearchStaging, staged: Path) -> None:
         return
     try:
         recorded = evidence.read_fetches(fetches)
+        raw = fetches.read_bytes()
         recorded_ruling = evidence.read_manifest_sha(ruling_sha)
     except (OSError, ValueError):  # EvidenceRecordInvalid is a ValueError
         raise ResumeRefused(f"{staged} is missing or unreadable") from None
-    if recorded != research.fetches:
+    # the shape check (read_fetches), then the file's bytes: a re-indented copy is a changed record
+    if recorded != research.fetches or raw != evidence.fetches_bytes(research.fetches):
         raise ResumeMismatch("the fetched pages are not the staged run's")
     if recorded_ruling != research.ruling.sha256:
         raise ResumeMismatch("the research ruling is not the staged run's")

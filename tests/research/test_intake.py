@@ -667,9 +667,17 @@ def test_a_retrieved_instant_is_the_fences_retrieval_time(
 def located_fetch(body: bytes, media: str, located: str) -> it.Fetcher:
     def fetcher(url: str, hosts: frozenset[str]) -> Any:
         record = webfetch.FetchRecord(
-            url, "93.184.216.34", 200, len(body), hashlib.sha256(body).hexdigest(),
-            located, webfetch.SOURCE_HEADER, 0, None, None,
-        )  # fmt: skip
+            url,
+            "93.184.216.34",
+            200,
+            len(body),
+            hashlib.sha256(body).hexdigest(),
+            located,
+            webfetch.SOURCE_HEADER,
+            0,
+            None,
+            None,
+        )
         return record, body, media
 
     return fetcher

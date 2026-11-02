@@ -2,6 +2,7 @@
 
 import os
 import signal
+import time
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -11,6 +12,7 @@ import pytest
 from cpdr_s1_support import ResearchCase, WebCase, key_file, web_file
 
 from deploy_vii.preparation import MAX_BYTES, load_pack, prepare
+from deploy_workflow import run_inputs
 from deploy_workflow.context import ContextRefused
 from deploy_workflow.html_text import UndecodableHtml, convert_html
 from deploy_workflow.model import adapter as adapter_module
@@ -21,7 +23,7 @@ from deploy_workflow.model.adapter import (
     live_adapter,
 )
 from deploy_workflow.model.turn import ModelSpec
-from deploy_workflow.research import evidence
+from deploy_workflow.research import evidence, webfetch
 from deploy_workflow.research.contracts import EvidenceFetchRefused
 from deploy_workflow.run_inputs import (
     AdapterRefused,
@@ -577,3 +579,44 @@ def test_a_ruling_without_a_manifest_is_unused(tmp_path: Path) -> None:
     arguments.update(cp_dr=False, research_manifest=None, research_ruling=ruling)
     with pytest.raises(ResearchRulingUnused):
         check_arguments(**arguments)
+
+
+def test_the_production_fetcher_uses_the_monotonic_clock_and_the_real_connection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """O7b-2 S4 review L-2: `_web_fetcher()` hands `webfetch.fetch` `time.monotonic` as the clock
+    (a mutant to `time.time` survived), the system resolver, the pinned connection and the item
+    byte cap, all read at call time."""
+    seen: dict[str, Any] = {}
+
+    def spy(url: str, **kwargs: Any) -> tuple[None, None, None]:
+        seen.update(kwargs, url=url)
+        return None, None, None
+
+    monkeypatch.setattr(webfetch, "fetch", spy)
+    run_inputs._web_fetcher()("https://sector-desk.example/x", frozenset({"sector-desk.example"}))
+    assert seen["clock"] is time.monotonic
+    assert seen["resolver"] is webfetch.system_resolver
+    assert seen["connect"] is webfetch.pinned_connection
+    assert seen["cap"] == run_inputs.MAX_ITEM_BYTES
+    assert seen["manifest_hosts"] == frozenset({"sector-desk.example"})
+
+
+def test_intake_is_given_the_research_clocks_retrieval_time(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7b-2 S4 review L-2: `intake`'s `retrieved` is the instant the research clock gave, the one
+    every `#records/evidence_json/rows/*/retrieved` records (a mutant that dropped it survived)."""
+    seen: list[str] = []
+    real = run_inputs.intake
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        seen.append(kwargs["retrieved"])
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(run_inputs, "intake", spy)
+    _case, arguments = web_arguments(tmp_path, monkeypatch)
+    check_arguments(**arguments)
+    rows = web_file("expected.json")["records"]["evidence_json"]["rows"]
+    assert seen == [rows[0]["retrieved"]]
+    assert {row["retrieved"] for row in rows} == set(seen)

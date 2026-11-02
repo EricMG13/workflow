@@ -496,16 +496,6 @@ def test_the_repair_prompt_carries_the_module_issues_when_no_step_failed(tmp_pat
 # ---------------------------------------------------------------- call limit, tool results
 
 
-def test_the_seventeenth_call_of_a_kind_in_a_step_is_the_call_limit(tmp_path: Path) -> None:
-    searches = [tool_call("search_pack", query="identity") for _ in range(17)]
-    rig = make_rig(tmp_path, [ok(*searches)])
-    assert _stop(rig).reason == "CallLimit"
-    (record,) = rig.records()
-    assert record["error_class"] == "CallLimit" and len(record["tool_calls"]) == 17
-    assert record["tool_calls"][15]["refusal_code"] is None
-    assert record["tool_calls"][16]["refusal_code"] == "CallLimit"
-
-
 def test_the_thirty_third_invoke_in_a_step_is_the_call_limit(tmp_path: Path) -> None:
     searches = [tool_call("search_pack", query="identity") for _ in range(33)]
     rig = make_rig(tmp_path, [ok(*searches)])
@@ -829,13 +819,13 @@ def test_a_no_submit_stop_exports_as_the_ok_turn(
 def test_a_call_limit_stop_exports_with_the_calls_it_reached(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    rig = _live(tmp_path, monkeypatch, [_body(*_reads(18))])
+    rig = _live(tmp_path, monkeypatch, [_body(*_reads(34))])
     assert _stop(rig).reason == "CallLimit"
     (record,) = rig.records()
-    assert record["error_class"] == "CallLimit" and len(record["tool_calls"]) == 17
+    assert record["error_class"] == "CallLimit" and len(record["tool_calls"]) == 33
     assert _export(rig, tmp_path / "out.jsonl") == 1
     line = json.loads((tmp_path / "out.jsonl").read_text())
-    assert len(line["response"]["tool_calls"]) == 18  # the whole turn, as the provider sent it
+    assert len(line["response"]["tool_calls"]) == 34  # the whole turn, as the provider sent it
 
 
 def test_a_workflow_exception_stop_exports_with_the_calls_it_reached(
@@ -874,7 +864,7 @@ def test_every_stop_written_after_an_ok_reply_is_a_loop_stop(
     for number, script in enumerate(
         [
             ok(text="prose"),
-            ok(*[tool_call("search_pack", query="x") for _ in range(17)]),
+            ok(*[tool_call("search_pack", query="x") for _ in range(33)]),
             ok(tool_call("search_pack", query="x"), submit("source_readiness", "{}")),
             ok(type(read_identity())("", "read_pages", {})),
         ]
@@ -892,12 +882,12 @@ def test_every_stop_written_after_an_ok_reply_is_a_loop_stop(
 def test_a_stop_record_with_a_longer_call_list_than_the_turn_does_not_export(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    rig = _live(tmp_path, monkeypatch, [_body(*_reads(18))])
+    rig = _live(tmp_path, monkeypatch, [_body(*_reads(34))])
     _stop(rig)
     lines = rig.log._calls.read_text().splitlines()
     record = json.loads(lines[0])
     record["tool_calls"].append(dict(record["tool_calls"][0]))
-    record["tool_calls"].append(dict(record["tool_calls"][0]))  # 19 calls recorded, 18 sent
+    record["tool_calls"].append(dict(record["tool_calls"][0]))  # 35 calls recorded, 34 sent
     rig.log._calls.write_text(json.dumps(record) + "\n")
     with pytest.raises(ExportMismatch):
         _export(rig, tmp_path / "out.jsonl")
@@ -905,7 +895,7 @@ def test_a_stop_record_with_a_longer_call_list_than_the_turn_does_not_export(
 
 @pytest.mark.parametrize(
     "bodies",
-    [[_body(text="prose only")], [_body(*_reads(18))]],
+    [[_body(text="prose only")], [_body(*_reads(34))]],
     ids=["no-submit", "call-limit"],
 )
 def test_replaying_the_export_reproduces_the_records_and_the_stop(
@@ -1030,7 +1020,7 @@ def test_a_resumed_step_keeps_its_digest_and_continues_call_index_from_the_file(
 
 def test_a_resumed_step_keeps_its_used_counts_so_the_caps_still_bind(tmp_path: Path) -> None:
     workflow, _ = owner_start(tmp_path)
-    for _ in range(16):
+    for _ in range(32):
         assert workflow.invoke(
             "read_pages", {"source_id": "identity", "first_page": 1, "last_page": 1}
         )
@@ -1038,7 +1028,7 @@ def test_a_resumed_step_keeps_its_used_counts_so_the_caps_still_bind(tmp_path: P
     loop, adapter = _resumed(tmp_path, [ok(read_identity()), ok(gap_submit())])
     with pytest.raises(StepStopped) as caught:
         loop.run()
-    assert caught.value.reason == "CallLimit"  # the 17th invoke, counted from the retained 16
+    assert caught.value.reason == "CallLimit"  # the 33rd invoke, counted from the retained 32
     assert len(adapter.sent) == 1
 
 

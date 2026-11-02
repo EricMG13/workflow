@@ -32,7 +32,7 @@ from pydantic import BaseModel
 
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow import run_pathway as rp
-from deploy_workflow.financial_workflow import MAX_CALLS, MAX_LINE
+from deploy_workflow.financial_workflow import MAX_CALLS, MAX_INVOKES, MAX_LINE
 from deploy_workflow.host import MAX_ARGUMENT_DEPTH
 from deploy_workflow.model.record import LOOP_STOPS
 from deploy_workflow.owner_workflow import (
@@ -270,9 +270,9 @@ def test_a_receipt_after_an_inputs_too_large_fault_still_verifies(
 
 
 @pytest.mark.usefixtures("owner_world")
-def test_the_seventeenth_call_is_refused_and_journaled_with_the_binding(tmp_path: Path) -> None:
+def test_the_thirty_third_invoke_is_refused_and_journaled_with_the_binding(tmp_path: Path) -> None:
     workflow = _source_context_world(tmp_path)
-    for _ in range(MAX_CALLS):
+    for _ in range(MAX_INVOKES):
         call = workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
         assert call["status"] == "ok"
     assert _faults(workflow) == []
@@ -282,9 +282,9 @@ def test_the_seventeenth_call_is_refused_and_journaled_with_the_binding(tmp_path
         workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
     assert caught.value.code == "not_permitted"
     (fault,) = _faults(workflow)
-    assert (fault.code, fault.cap, fault.call_kind) == ("CallLimit", MAX_CALLS, "invoke")
+    assert (fault.code, fault.cap, fault.call_kind) == ("CallLimit", MAX_INVOKES, "invoke")
     assert fault.binding == binding and fault.size is None
-    assert workflow.state().invokes_used == MAX_CALLS
+    assert workflow.state().invokes_used == MAX_INVOKES
     assert len(_audit_files(workflow, "calls")) == retained  # the refused call left no record
 
 
@@ -350,9 +350,9 @@ def test_the_cap_binds_the_step_across_repair_epochs_and_a_new_attempt_starts_af
     assert (retry.ticket_id, retry.attempt) == (first.ticket_id, first.attempt)
     assert workflow.state().invokes_used == 3
     reads()
-    for _ in range(MAX_CALLS - 6):
+    for _ in range(MAX_INVOKES - 6):
         workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
-    assert workflow.state().invokes_used == MAX_CALLS  # both epochs drew on one budget
+    assert workflow.state().invokes_used == MAX_INVOKES  # both epochs drew on one budget
     at_cap = workflow.binding
     with pytest.raises(WorkflowError):
         workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
@@ -439,14 +439,14 @@ def test_the_loop_stops_on_the_call_cap_by_name(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The workflow's `CallLimit` fault and the loop's own `CallLimit` stop agree: the model asks
-    for the 17th call of a kind and the run stops under that name."""
+    for one call past a kind's cap and the run stops under that name."""
 
     class Searcher(o2_case.ScriptAdapter):
         def _plan(self, step_id: str, reads: list[str]) -> list[tuple[str, dict[str, Any]]]:
             if step_id != "source_readiness":
                 return super()._plan(step_id, reads)
             search = ("search_pack", {"query": "subsequent", "source_id": "financial"})
-            return [search] * (MAX_CALLS + 1)
+            return [search] * (MAX_INVOKES + 1)
 
     recordings = tmp_path / "recordings"
     recordings.mkdir()

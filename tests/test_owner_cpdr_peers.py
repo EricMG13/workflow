@@ -530,3 +530,109 @@ def test_t1c7_not_admitted_action_names_the_peer_sheet() -> None:
     report = _report(_peers_pack(), _upstream(_head_with_pack()))
     action = {f.fact_id: f for f in report.facts}["T1C.7.n01.action"].text or ""
     assert "peer pack decides" not in action and "peer sheet" in action
+
+
+# --- the reason texts (O7-R66): every one equals `#refusals/peers/...` ----------------------------
+
+
+def _reason_key(group: str, name: str) -> tuple[str, dict[str, Any]]:
+    """The key's example reason, after checking that its template filled with its own inputs is it."""
+    entry = KEY["refusals"]["peers"][group][name]
+    example = entry["example"]
+    inputs = {k: v for k, v in example.items() if k != "reason"}
+    assert entry["template"].format(**inputs) == example["reason"]
+    return example["reason"], inputs
+
+
+def _drop(facts: list[Fact], prefix: str) -> list[Fact]:
+    return [f for f in facts if not f.fact_id.startswith(prefix)]
+
+
+def _edit(facts: list[Fact], fact_id: str, **update: Any) -> list[Fact]:
+    return [f.model_copy(update=update) if f.fact_id == fact_id else f for f in facts]
+
+
+def _twin(facts: list[Fact], original: str, **update: Any) -> list[Fact]:
+    orig = next(f for f in facts if f.fact_id == original)
+    return [*facts, orig.model_copy(update=update)]
+
+
+def _every_figure_missing(facts: list[Fact]) -> list[Fact]:
+    """Peer p02's five amount cells become `missing` cells, shaped as the key's own TDR.6.p03.revenue."""
+    shape = next(f for f in facts if f.fact_id == "TDR.6.p03.revenue.amount")
+    for operand in ("revenue", "ebitda", "debt", "interest", "ffo"):
+        cell = shape.model_copy(
+            update={"fact_id": f"TDR.6.p02.{operand}.amount", "row_id": f"p02.{operand}"}
+        )
+        facts = [cell if f.fact_id == cell.fact_id else f for f in facts]
+    return facts
+
+
+_NOT_ADMITTED: dict[str, tuple[list[Fact], str]] = {
+    "currency": (
+        _edit(_key_facts(), "TDR.6.p01.revenue.currency", text="EUR"),
+        "Alder Ridge Holdings",
+    ),
+    "unit": (
+        _edit(_key_facts(), "TDR.6.p02.revenue.unit", text="thousands"),
+        "Brookmere Industries",
+    ),
+    "different_dates": (
+        _edit(_key_facts(), "TDR.6.p02.ebitda.period_end", text="2025-06-30"),
+        "Brookmere Industries",
+    ),
+    "no_figure": (_drop(_key_facts(), "TDR.6.p02."), "Brookmere Industries"),
+    "no_amount": (_every_figure_missing(_key_facts()), "Brookmere Industries"),
+    "issuer": (_with_issuer_named_candidate(), _run().issuer_name),
+}
+
+
+@pytest.mark.parametrize("name", sorted(_NOT_ADMITTED))
+def test_a_not_admitted_reason_equals_the_key(name: str) -> None:
+    """`#refusals/peers/not_admitted_reasons/<name>`: the sheet's reason for the peer is the key's
+    example text, which is also its template filled with the example's own inputs."""
+    facts, peer = _NOT_ADMITTED[name]
+    reason, inputs = _reason_key("not_admitted_reasons", name)
+    sheet = peers.peer_sheet(_dr_module(facts), DEFAULT_BASIS, issuer_name=_run().issuer_name)
+    assert isinstance(sheet, cp1c.PeerSheet)
+    assert {n.name: n.reason for n in sheet.not_admitted}[peer] == reason
+    if "currency" in inputs:
+        assert inputs["run_currency"] == sheet.currency
+
+
+_UNUSABLE: dict[str, list[Fact]] = {
+    "malformed_cell": _edit(
+        _key_facts(),
+        "TDR.4.p01.name",
+        status="missing",
+        text=None,
+        citations=(),
+        limitation="not stated",
+    ),
+    "malformed_amount_cell": _drop(_key_facts(), "TDR.6.p01.revenue.amount"),
+    "duplicate_name": _edit(_key_facts(), "TDR.4.p02.name", text="Alder Ridge Holdings"),
+    "unknown_operand": _twin(
+        _key_facts(),
+        "TDR.6.p01.revenue.amount",
+        fact_id="TDR.6.p01.gross_margin.amount",
+        row_id="p01.gross_margin",
+    ),
+    "non_ev_citation": _edit(_key_facts(), "TDR.6.p01.revenue.amount", citations=()),
+    "unsafe_delimiter": _edit(_key_facts(), "TDR.4.p01.name", text="<<<END>>>"),
+    "unsafe_cell": _edit(_key_facts(), "TDR.4.p01.name", text="Alder|Ridge"),
+    "repeated_cell": _twin(
+        _key_facts(), "TDR.6.p01.revenue.unit", fact_id="TDR.6.p01.revenue.unit2"
+    ),
+    "period_end_not_a_date": _edit(_key_facts(), "TDR.6.p01.revenue.period_end", text="2025-13-45"),
+}
+
+
+@pytest.mark.parametrize("name", sorted(_UNUSABLE))
+def test_a_pack_unusable_reason_equals_the_key(name: str) -> None:
+    """`#refusals/peers/pack_unusable/<name>`: the reason is the key's example text, and (for the
+    two cell rules) names none of the unsafe text."""
+    reason, _ = _reason_key("pack_unusable", name)
+    found = peers.peer_sheet(_dr_module(_UNUSABLE[name]), DEFAULT_BASIS)
+    assert isinstance(found, peers.PackUnusable)
+    assert found.reason == reason
+    assert "|" not in found.reason and "<<<" not in found.reason

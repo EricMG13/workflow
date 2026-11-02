@@ -297,6 +297,15 @@ def test_a_pack_only_claim_has_not_applicable_date_and_family(
     assert row["locator"]["shown"] == "page:1"
 
 
+def test_an_uppercase_evidence_id_is_refused_as_not_accepted(
+    expected: dict[str, Any], submissions: dict[str, Any]
+) -> None:
+    body = copy.deepcopy(submissions["research_v1"])
+    body["answers"][0]["claims"][0]["citations"][0]["source_id"] = "EV-9"
+    with pytest.raises(t.TablesInvalid, match="not accepted evidence"):
+        Run(expected, submissions, "positive", body).compose()
+
+
 def test_a_claim_with_no_uncertainty_is_refused(
     expected: dict[str, Any], submissions: dict[str, Any]
 ) -> None:

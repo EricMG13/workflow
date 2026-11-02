@@ -15,6 +15,7 @@ from typing import Any, Final
 from deploy_vii.contracts import Citation, Fact, ReportTable, TableColumn, TableRow
 from deploy_vii.contracts import Claim as ModuleClaim
 from deploy_workflow.research.contracts import (
+    RESERVED_PREFIX,
     ClaimState,
     EvidenceItem,
     ResearchBrief,
@@ -33,7 +34,6 @@ from deploy_workflow.research.review import (
 GAP_SHOWN: Final = "∅ G#"
 NOT_APPLICABLE_SHOWN: Final = "not applicable"
 PACK_LIMITATION: Final = "A pack source carries no publication date or family."
-EVIDENCE_PREFIX: Final = "ev-"
 FOCUS_LIMITATION: Final = "A default question carries no focus module."
 LOCAL_LIMITATION: Final = (
     "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run."
@@ -209,7 +209,7 @@ def _check_cited(
     unknown = [
         c.source_id
         for c in citations
-        if c.source_id.startswith(EVIDENCE_PREFIX) and c.source_id not in items
+        if c.source_id.casefold().startswith(RESERVED_PREFIX) and c.source_id not in items
     ]
     if unknown:
         raise TablesInvalid(f"claim {claim_id} cites {', '.join(unknown)}, not accepted evidence")

@@ -712,9 +712,21 @@ def test_auto_public_store_binds_the_cp1c_selected_multiple(tmp_path: Path) -> N
     for row in key["cp4c"]["valuations"]:
         case = row["case_id"]
         assert facts[f"T4E.3.{case}.ev"].amount == Decimal(row["ev_exact"])
+        assert facts[f"T4E.3.{case}.ebitda"].amount == Decimal(row["ebitda_exact"])
+        assert facts[f"T4E.3.{case}.multiple"].amount == Decimal(row["multiple_exact"])
         assert facts[f"T4E.3.{case}.multiple"].formula == row["multiple_formula"]
         assert facts[f"T4E.3.{case}.implied_ltm_multiple"].amount == Decimal(
             row["implied_ltm_multiple_exact"]
         )
     assert module.limitations.count(key["cp4c"]["added_limitation"]) == 1
-    assert list(store.head_module(cp1c_head).limitations) == key["cp1c"]["settled_limitations"]
+    assert [i.input_id for i in module.inputs[:-1]] == key["cp4c"]["inputs"]
+    settled = key["cp1c"]["settled_limitations"]
+    assert list(store.head_module(cp1c_head).limitations) == settled
+    # what CP-4C inherits from CP-1C: the key's lines CP-4C does not state itself (it states the
+    # synthetic line, which is deduplicated out of the inherited list), in the key's order
+    owed = [t for t in settled if t not in module.limitations]
+    assert owed
+    assert [t for t in module.inherited_limitations if t in settled] == owed
+    view = cp4c.cp4c_upstream(store=store, attempt=attempt)
+    # the upstream view still lists the synthetic line; the settlement drops it as CP-4C's own
+    assert [t for t in view.inherited if t in settled and t not in module.limitations] == owed

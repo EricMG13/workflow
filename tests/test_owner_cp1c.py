@@ -606,7 +606,8 @@ def test_d3_the_reader_exposes_the_pinned_facts_of_the_genuine_head(
 def test_auto_public_store_settles_the_key_limitations(tmp_path: Path) -> None:
     """Store level, no promotion (CP-0 and CP-1 are hand-built modules settled through
     `begin`/`finish`): the `auto-public` pack runs `cp1c.submit` over a real `Execution`, and the
-    settled head equals `valuation-context-owner/expected.json#cases/auto-public/cp1c`."""
+    settled head's status and limitations equal `module_status` and `settled_limitations` of
+    `valuation-context-owner/expected.json#cases/auto-public/cp1c`."""
     key = valuation_context.case_of("auto-public")["cp1c"]
     pack = valuation_context.pack_of("auto-public")
     store = Execution.create(tmp_path / "store", pack)

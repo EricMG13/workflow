@@ -187,7 +187,9 @@ def _args_json(call: ToolCall) -> str:
 
 
 # PF-R6: sent explicitly so the write tier is the 30m one the price table charges.
-OPENAI_PROMPT_CACHE_OPTIONS: Mapping[str, str] = MappingProxyType({"mode": "implicit", "ttl": "30m"})
+OPENAI_PROMPT_CACHE_OPTIONS: Mapping[str, str] = MappingProxyType(
+    {"mode": "implicit", "ttl": "30m"}
+)
 
 
 def _openai_body(spec: ModelSpec, request: TurnRequest, effort: str) -> dict[str, Any]:

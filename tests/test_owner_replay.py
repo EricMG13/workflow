@@ -687,6 +687,34 @@ def test_the_cp1_financials_run_id_is_rebound_and_nothing_else() -> None:
     assert replay._rebind("CP-2", "credit_synthesis", text, earlier, rerun) == (text, ())
 
 
+def test_the_cpdr_brief_and_research_run_id_are_rebound_and_nothing_else() -> None:
+    """CP-DR's model-written ``run_id`` (checked against the run) is the one field rewritten;
+    the frozen brief and research submissions otherwise stay as the earlier run wrote them."""
+    frozen = json.loads(
+        (
+            Path(__file__).resolve().parents[1]
+            / "cases"
+            / "cpdr-research-owner"
+            / "submissions.json"
+        ).read_text(encoding="utf-8")
+    )
+    earlier_id = frozen["research_v1"]["run_id"]
+    earlier = replay._Identity("a" * 64, earlier_id)
+    rerun = replay._Identity("b" * 64, RERUN_ID)
+    payloads = {
+        "brief": {"run_id": earlier_id, "questions": frozen["brief"]["model_tailored"]},
+        "research": frozen["research_v1"],
+    }
+    for step, payload in payloads.items():
+        text = json.dumps(payload)
+        rewritten, rebound = replay._rebind("CP-DR", step, text, earlier, rerun)
+        assert [(r.path, r.old, r.new) for r in rebound] == [("run_id", earlier_id, RERUN_ID)]
+        assert json.loads(rewritten) == {**payload, "run_id": RERUN_ID}
+        other = json.dumps({**payload, "run_id": "someone-else"})
+        assert replay._rebind("CP-DR", step, other, earlier, rerun) == (other, ())
+        assert replay._rebind("CP-2", step, text, earlier, rerun) == (text, ())
+
+
 # ================================================================================== part C
 # the rerun through run_pathway
 

@@ -10,15 +10,18 @@ connection (pack, CP-1 head, tool use) and orchestration concerns join this file
 """
 
 import hashlib
+import importlib
 import json
 import re
+from bisect import bisect_left
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import ROUND_HALF_EVEN, Context, Decimal
 from itertools import pairwise
-from typing import Literal
+from types import ModuleType
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -60,8 +63,19 @@ from deploy_vii.live.tools import Seen, unread_citation_issues
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling
+from deploy_workflow.context import ContextRefused, RunContext, Valuation, context_facts
+from deploy_workflow.context_cites import context_text
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.cp2g import select_cp1
+
+if TYPE_CHECKING:
+    from deploy_workflow.owners.valuation_basis import (
+        Admission,
+        AdmittedRecord,
+        Selection,
+        SetStats,
+    )
 
 MODULE_ID = "CP-1C"
 
@@ -73,6 +87,7 @@ MIN_INCLUDED_PEERS = 3
 OUTLIER_FRACTION = Decimal("0.5")
 # Below this many included peers a limitation says medians move with one peer (oracle wording).
 THIN_UNIVERSE = 5
+THIN_LINE = "Medians over fewer than five peers move with a single peer."
 
 PEERS_SOURCE_ID = "peers"
 P1_HEADER = "Peer  Period end  Revenue  Adjusted EBITDA  Total debt  Interest expense  FFO"
@@ -461,6 +476,11 @@ class PeerBenchmarkInputs:
     sources: tuple[Source, ...]  # host-scoped pack sources; the peer table is read from "peers"
     cp1_metrics: Mapping[str, Fact]  # CP-1 T4.10 LTM facts by metric key
     submission: PeerBenchmarkSubmission
+    # Phase 7: the run's context file, its source (the lines it cites) and CP-1's LTM adjusted
+    # EBITDA fact. All three stay None without a context, and then T1C.9-T1C.11 are not composed.
+    context: RunContext | None = None
+    context_source: Source | None = None
+    cp1_ebitda: Fact | None = None
 
 
 @dataclass(frozen=True)
@@ -1297,6 +1317,383 @@ def _absence(sources: Sequence[Source]) -> str:
     return NO_PEER_SOURCE if source is None or source.status == "ready" else NO_READY_PEER_SOURCE
 
 
+# --- the context's EV/EBITDA tables T1C.9-T1C.11 (Phase 7, Design 3-10) ------------------------------
+# Composed only when the pack holds a `context` source with a valuation to show; the eight tables
+# above are the default and are not touched. The arithmetic is `owners/valuation_basis.py`, which
+# imports this module, so it is imported on first use (`_vbasis`). Oracle:
+# cases/valuation-context-owner/expected.json (`cases.<case>.cp1c`).
+
+JsonPath = tuple[str | int, ...]
+EvStatus = Literal["known", "missing", "not_applicable"]
+
+EV_TABLES: Mapping[str, str] = {
+    "T1C.9": "EV/EBITDA records",
+    "T1C.10": "EV/EBITDA statistics",
+    "T1C.11": "Valuation basis selection",
+}
+EV_COLUMNS: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "T1C.9": (
+        ("kind", "Kind"),
+        ("name", "Name"),
+        ("figures_date", "Figures dated"),
+        ("source", "Source"),
+        ("currency", "Currency"),
+        ("ebitda_period", "EBITDA period"),
+        ("ev", "Enterprise value"),
+        ("ebitda", "EBITDA"),
+        ("multiple", "EV/EBITDA"),
+        ("flag", "Outlier flag"),
+        ("result", "Result"),
+    ),
+    "T1C.10": (
+        ("n_total", "Records"),
+        ("n_admitted", "Admitted"),
+        ("min", "Minimum"),
+        ("median", "Median"),
+        ("max", "Maximum"),
+        ("outliers", "Outliers"),
+    ),
+    "T1C.11": (
+        ("requested_basis", "Requested basis"),
+        ("selected_basis", "Selected basis"),
+        ("reason", "Reason"),
+        ("ebitda_basis", "EBITDA basis"),
+        ("selected_multiple", "Selected multiple"),
+        ("issuer_ebitda", "Issuer EBITDA"),
+        ("implied_ev", "Implied enterprise value"),
+    ),
+}
+EV_ROW_HEADERS: Mapping[str, str] = {"T1C.9": "Record", "T1C.10": "Set", "T1C.11": "Selection"}
+# What a consumer reads from a head that holds T1C.11 (Design 10); a frozen head has none of them.
+EV_READER_FACTS: tuple[str, ...] = (
+    "T1C.11.selection.selected_multiple",
+    "T1C.11.selection.selected_basis",
+    "T1C.11.selection.ebitda_basis",
+    "T1C.11.selection.implied_ev",
+)
+SELECTION_TABLE = "T1C.11"
+
+NOT_STATED_BY_USER = "Not stated by the user"
+NO_DATE_PERIOD = "Date not stated by the user"
+NO_RECORDS = "No peer or precedent records are in the context"
+EXCLUDED_FROM_STATS = "Not meaningful: the record is excluded from the statistics"
+NO_FIGURES = "Excluded: no peer figures in the context"
+SINGLE_VALUE = " (a single value: min, median and max are the value)"
+RESULT_FORMULA = (
+    "Included when EV and EBITDA are above zero and the record is dated within the window"
+)
+FLAG_FORMULA = "Outlier when the absolute deviation from the set median is above one half"
+ISSUER_EBITDA_FORMULA = "CP-1 LTM adjusted EBITDA (T4.10)"
+CP1_REF = (
+    "cp1:ebitda"  # derives_from entry naming the CP-1 fact, which is not a fact of this module
+)
+# Design 8: until O7d's TDR.6 pack exists, these peer sources give no figures and no fallback.
+PUBLIC_GAPS: Mapping[str, str] = {
+    "cp_dr_public": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)",
+    "user_list": "No peer figures: user_list peers need the peer lookup (O7d)",
+}
+USER_FIGURES_LINE = (
+    "The EV and EBITDA figures of the peers and precedents are the user's own entries in the "
+    "context file; CP-1C does not verify them against a source."
+)
+CURRENCY_PERIOD_LINE = (
+    "The peers' and precedents' currency and EBITDA period are not stated by the user; each "
+    "multiple assumes its EV and EBITDA share both, and the selected multiple is applied to the "
+    "issuer's LTM Q4 25 EBITDA."
+)
+# The formula of a selected multiple, by the basis that was selected.
+SELECTED_FORMULAS: Mapping[str, str] = {
+    "public_comps": "median of the admitted public comps' multiples, rounded half-even to 2 dp",
+    "precedents": "median of the admitted precedents' multiples, rounded half-even to 2 dp",
+    "blend": "(public comps median + precedents median) / 2, rounded half-even to 2 dp",
+    "issuer_trading": "issuer enterprise value / CP-1 LTM adjusted EBITDA, rounded half-even to 2 dp",
+    "user_multiple": "user-supplied multiple",
+}
+
+
+def _vbasis() -> ModuleType:
+    """`valuation_basis` (it imports this module for its constants), imported on first use."""
+    return importlib.import_module("deploy_workflow.owners.valuation_basis")
+
+
+def shows_valuation(valuation: Valuation) -> bool:
+    """Design 9: the context has a valuation to show. A peer source that gives no figures shows
+    only for a basis that needs peers; a basis that needs no peers (`precedents`, `issuer_trading`,
+    `user_multiple`) shows without any."""
+    peer_basis = valuation.basis in ("auto", "public_comps", "blend")
+    return (
+        valuation.peer_source == "user_comps"
+        or (valuation.peer_source in PUBLIC_GAPS and peer_basis)
+        or bool(valuation.precedents)
+        or valuation.basis in ("auto", "issuer_trading", "user_multiple")
+    )
+
+
+# --- citing the context file by line ---
+
+
+class _LineWalk:
+    """The 1-based line of every value of a JSON text, by path (member names and list indexes)."""
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.at = 0
+        self.lines: dict[JsonPath, int] = {}
+        self.breaks = [i for i, char in enumerate(text) if char == "\n"]
+
+    def peek(self) -> str:
+        return self.text[self.at : self.at + 1]
+
+    def skip(self) -> None:
+        while self.peek() in (" ", "\t", "\r", "\n"):
+            self.at += 1
+
+    def scalar(self) -> object:
+        value, self.at = json.JSONDecoder().raw_decode(self.text, self.at)
+        return value
+
+    def node(self, path: JsonPath) -> None:
+        self.skip()
+        self.lines[path] = bisect_left(self.breaks, self.at) + 1
+        opener = self.peek()
+        if opener == "{":
+            self.members(path)
+        elif opener == "[":
+            self.elements(path)
+        else:
+            self.scalar()
+
+    def members(self, path: JsonPath) -> None:
+        self.at += 1
+        self.skip()
+        while self.peek() != "}":
+            name = str(self.scalar())
+            self.skip()
+            self.at += 1  # the colon
+            self.node((*path, name))
+            self.next_item()
+        self.at += 1
+
+    def elements(self, path: JsonPath) -> None:
+        self.at += 1
+        self.skip()
+        index = 0
+        while self.peek() != "]":
+            self.node((*path, index))
+            self.next_item()
+            index += 1
+        self.at += 1
+
+    def next_item(self) -> None:
+        self.skip()
+        if self.peek() == ",":
+            self.at += 1
+            self.skip()
+
+
+@dataclass(frozen=True)
+class _ContextCites:
+    """A citation of one value of the context file: its `line:<n>` span, the line as written."""
+
+    source: Source
+    lines: Mapping[JsonPath, int]
+
+    def __call__(self, *paths: JsonPath) -> tuple[Citation, ...]:
+        return tuple(self.one(path) for path in paths)
+
+    def one(self, path: JsonPath) -> Citation:
+        if path not in self.lines or self.source.sha256 is None:
+            raise ValueError(f"The context file has no citable value at {path}")
+        number = self.lines[path]
+        span = self.source.spans[number - 1]
+        if span.locator != f"line:{number}":
+            raise ValueError(
+                f"The context source span {number} is {span.locator}, not line:{number}"
+            )
+        return Citation(
+            source_id=self.source.source_id,
+            source_sha256=self.source.sha256,
+            locator=span.locator,
+            quote=span.text.strip(),
+        )
+
+
+def context_cites(source: Source) -> _ContextCites:
+    """The citer of `source`; ValueError when the source cannot be read by line."""
+    try:
+        walk = _LineWalk(context_text(source))
+        walk.node(())
+    except ValueError as error:  # context_text, the JSON decoder
+        raise ValueError(f"the context source cannot be cited by line: {error}") from error
+    return _ContextCites(source, walk.lines)
+
+
+# --- admission, statistics and selection over the context (the arithmetic is valuation_basis) ---
+
+
+@dataclass(frozen=True)
+class _EvRow:
+    row_id: str
+    kind: str  # "peer" or "precedent"
+    name: str
+    paths: Mapping[str, JsonPath]  # field -> the value's path in the context file
+    record: "AdmittedRecord | None"  # None: a user_list name, which has no figures
+    admission: "Admission | None" = None
+
+
+@dataclass(frozen=True)
+class _EvSet:
+    set_id: str  # "public_comps" or "precedents"
+    label: str
+    start: date
+    rows: tuple[_EvRow, ...]
+    stats: "SetStats"
+
+    def admitted(self) -> tuple[_EvRow, ...]:
+        return tuple(r for r in self.rows if r.admission is not None and r.admission.included)
+
+
+@dataclass(frozen=True)
+class _EvPlan:
+    valuation: Valuation
+    as_of: date
+    public: _EvSet
+    precedents: _EvSet
+    selection: "Selection"
+    ebitda: Fact  # CP-1's LTM adjusted EBITDA, as CP-4C reads it
+    ebitda_amount: Decimal | None  # its amount when it is a known positive MILLIONS amount
+
+    @property
+    def sets(self) -> tuple[_EvSet, ...]:
+        return (self.public, self.precedents)
+
+
+_PEER_KEYS = {"name": "name", "figures_date": "as_of"}
+_PRECEDENT_KEYS = {"name": "target", "figures_date": "date"}
+
+
+def _figure_row(
+    kind: str,
+    row_id: str,
+    path: JsonPath,
+    keys: Mapping[str, str],
+    values: tuple[
+        str, str, str, str, str
+    ],  # name, date, source, EV, EBITDA as the file writes them
+) -> _EvRow:
+    name, when, source, ev, ebitda = values
+    record = _vbasis().AdmittedRecord(
+        "user_comps",
+        kind,
+        name,
+        date.fromisoformat(when) if when else None,
+        source,
+        Decimal(ev),
+        Decimal(ebitda),
+    )
+    named = {**keys, "source": "source", "ev": "ev_m", "ebitda": "ebitda_m"}
+    return _EvRow(row_id, kind, name, {f: (*path, key) for f, key in named.items()}, record)
+
+
+def _precedent_rows(valuation: Valuation) -> list[_EvRow]:
+    return [
+        _figure_row(
+            "precedent",
+            f"x{n:02d}",
+            ("valuation", "precedents", n - 1),
+            _PRECEDENT_KEYS,
+            (p.target, p.date, p.source, p.ev_m, p.ebitda_m),
+        )
+        for n, p in enumerate(valuation.precedents, 1)
+    ]
+
+
+def _peer_rows(valuation: Valuation) -> list[_EvRow]:
+    if valuation.peer_source == "user_comps":
+        return [
+            _figure_row(
+                "peer",
+                f"e{n:02d}",
+                ("valuation", "peers", n - 1),
+                _PEER_KEYS,
+                (p.name, p.as_of, p.source, p.ev_m, p.ebitda_m),
+            )
+            for n, p in enumerate(valuation.peers, 1)
+        ]
+    if valuation.peer_source == "user_list":  # names only; the figures need the peer lookup (O7d)
+        return [
+            _EvRow(
+                f"e{n:02d}", "peer", p.name, {"name": ("valuation", "peers", n - 1, "name")}, None
+            )
+            for n, p in enumerate(valuation.peers, 1)
+        ]
+    return []
+
+
+def _ev_set(set_id: str, label: str, months: int, rows: list[_EvRow], as_of: date) -> _EvSet:
+    vb = _vbasis()
+    figures = [r.record for r in rows if r.record is not None]
+    admissions = iter(vb.admit(figures, as_of, months))
+    done = tuple(
+        replace(r, admission=next(admissions)) if r.record is not None else r for r in rows
+    )
+    held = [r.admission for r in done if r.admission is not None]
+    stats = (
+        vb.stats(held)
+        if len(held) == len(done)
+        else vb.SetStats(len(done), 0, None, None, None, None)
+    )
+    return _EvSet(set_id, label, vb.window_start(as_of, months), done, stats)
+
+
+def _selection(
+    valuation: Valuation, public: _EvSet, precedents: _EvSet, ebitda: Decimal | None
+) -> "Selection":
+    """`select_basis`, with the Design 8 gaps for the peer sources that give no figures."""
+    vb = _vbasis()
+    chosen: Selection = vb.select_basis(
+        valuation.basis,
+        tuple(r.admission for r in public.rows if r.admission),
+        tuple(r.admission for r in precedents.rows if r.admission),
+        valuation.issuer_market,
+        valuation.user_multiple,
+        ebitda,
+    )
+    gap = PUBLIC_GAPS.get(valuation.peer_source)
+    if gap is None:
+        return chosen
+    if valuation.basis == "public_comps":
+        return replace(chosen, selected_basis=None, multiple=None, reason=gap, implied_ev=None)
+    if valuation.basis == "auto" and chosen.selected_basis == vb.INSUFFICIENT:
+        if valuation.peer_source == "user_list":
+            return replace(chosen, selected_basis=None, reason=gap)
+        thin = f"precedents {precedents.stats.n_admitted} admitted of {vb.MIN_ADMITTED} required"
+        return replace(chosen, reason=f"{gap}; {thin}")
+    return chosen
+
+
+def _ev_plan(inputs: PeerBenchmarkInputs) -> _EvPlan:
+    context, ebitda = inputs.context, inputs.cp1_ebitda
+    if context is None or ebitda is None:
+        raise ValueError("The EV/EBITDA tables need the context and CP-1's LTM adjusted EBITDA")
+    vb, valuation = _vbasis(), context.valuation
+    as_of = date.fromisoformat(context.run.as_of)
+    public = _ev_set("public_comps", "Public comps", vb.PEER_MONTHS, _peer_rows(valuation), as_of)
+    precedents = _ev_set(
+        "precedents", "Precedents", vb.PRECEDENT_MONTHS, _precedent_rows(valuation), as_of
+    )
+    usable = (
+        ebitda.status == "known"
+        and ebitda.unit == "MILLIONS"
+        and ebitda.period is not None
+        and ebitda.amount is not None
+        and ebitda.amount > 0
+    )
+    amount = ebitda.amount if usable else None
+    selection = _selection(valuation, public, precedents, amount)
+    return _EvPlan(valuation, as_of, public, precedents, selection, ebitda, amount)
+
+
 def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     """Facts, tables and limitations; needs one assessment per sheet peer."""
     cp1 = _cp1_facts(inputs)
@@ -1603,13 +2000,33 @@ def _inputs(
     """The one store adapter: the run's issuer name, the pack sources in the fixed H1 scope, the
     four selected CP-1 facts and the submission, as the Stage 1 input object. Used by `submit`
     (through the validator), `probe` and `view`. Raises ValueError when the CP-1 head does not
-    hold exactly one fact per metric."""
-    return PeerBenchmarkInputs(
+    hold exactly one fact per metric, and ContextRefused when the pack's context is refused."""
+    base = PeerBenchmarkInputs(
         issuer_name=pack.run.issuer_name,
         sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
         cp1_metrics=_cp1_metrics(upstream.cp1),
         submission=submission,
     )
+    return _with_context(base, pack, upstream.cp1.facts)
+
+
+def _with_context(
+    inputs: PeerBenchmarkInputs, pack: PreparedPack, cp1_facts: Iterable[Fact]
+) -> PeerBenchmarkInputs:
+    """`inputs` with the pack's context, its source and CP-1's LTM adjusted EBITDA, selected as
+    CP-4C selects it, when the context has a valuation to show. A pack without a context source
+    is returned unchanged. ContextRefused when the context is refused or cannot be cited by line;
+    ValueError when CP-1 does not hold exactly one EBITDA fact."""
+    context = context_facts(pack)
+    if context is None or not shows_valuation(context.valuation):
+        return replace(inputs, context=context)
+    source = next(s for s in pack.sources if s.source_id == "context")
+    try:
+        context_cites(source)
+    except ValueError as error:
+        raise ContextRefused([f"sources.context: {error}"]) from error
+    ebitda = select_cp1(cp1_facts)["ebitda"]
+    return replace(inputs, context=context, context_source=source, cp1_ebitda=ebitda)
 
 
 def _stale_issues(upstream: Upstream) -> list[str]:
@@ -1755,6 +2172,8 @@ def _checked(
     try:
         inputs = _inputs(pack, submission, upstream)
         _cp1_facts(inputs)  # the Stage 1 rules on the selected facts (unit, amount, period)
+    except ContextRefused as error:  # a context that cannot be read is a named issue, not "none"
+        return (clipped(("Context refused: ", str(error))),), None
     except ValueError as error:
         return (clipped(("CP-1 facts unavailable: ", str(error))),), None
     issues = calculation_issues(inputs)

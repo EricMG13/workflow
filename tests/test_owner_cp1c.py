@@ -29,6 +29,7 @@ from typing import Any
 import cp1c_runs as runs
 import pytest
 import refusal_view
+import test_cp1c_valuation_context as valuation_context
 import test_method_cp1c as stage1
 import view_tree
 from defect_classes import model_text_failures
@@ -525,6 +526,17 @@ def test_a4_an_edited_step_output_is_caught_by_the_blob_hash(
 
 
 # --- A7 D8 and the bindings on the settled heads; D3 open -----------------------------------------
+
+
+@pytest.mark.parametrize("name", valuation_context.CASES)
+def test_tables_within_registry(name: str) -> None:
+    """Phase 7: the tables CP-1C composes over a context (the eight, then T1C.9-T1C.11) are all
+    registered for CP-1C, and the eight alone are too (store-free: the direct composition)."""
+    mine = set(next(m for m in registry.modules() if m.module_id == MODULE).table_ids)
+    composed = {t.table_id for t in valuation_context.result_of(name).tables}
+    assert composed == {*cp1c.TABLES, *cp1c.EV_TABLES}
+    assert composed <= mine
+    assert set(cp1c.TABLES) <= mine
 
 
 @pytest.mark.parametrize("case", stage1.CASES)

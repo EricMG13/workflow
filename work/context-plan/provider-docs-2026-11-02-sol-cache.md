@@ -22,3 +22,12 @@ The page itself does not say which write tier is the default.
 
 ## The pilot's replies (the controller's grep of the live recordings)
 The two replies carry `"input_tokens_details":{"cache_write_tokens":5159,"cached_tokens":0}` and `{"cache_write_tokens":5162,…}`, with no `cache_write_tokens_details` split.
+
+## Re-fetch of the prompt-caching guide (later on 2026-11-02, for PF-R6)
+- `prompt_cache_options` is a field of the Responses API. It takes:
+  - `mode`, either `"implicit"` or `"explicit"`. With implicit, OpenAI places a breakpoint at the end of the latest eligible message.
+  - `ttl`, either `"30m"` (the default) or `"12h"`. A request-level `ttl` applies to the implicit breakpoint.
+- The guide's examples include `{"mode": "explicit", "ttl": "30m"}` and `{"mode": "implicit"}`.
+- Unsupported values return `400 invalid_request_error`. Omitting both settings keeps the default `"30m"` behaviour.
+- Write rates are totals, not surcharges: 1.25× input for 30m and 2.5× for 12h. They are priced on `ttl_30m_tokens` and `ttl_12h_tokens` respectively.
+- `cache_write_tokens_details.{ttl_30m_tokens, ttl_12h_tokens}` do not overlap and sum to `cache_write_tokens`. The guide says both are returned, but the pilot's replies carried neither.

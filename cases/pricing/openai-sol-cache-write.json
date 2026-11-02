@@ -55,5 +55,10 @@
   "input_tokens": 272000,
   "max_output": 0,
   "usd": "0.68000000"
- }
+ },
+ "request_prompt_cache_options": {
+  "mode": "implicit",
+  "ttl": "30m"
+ },
+ "request_prompt_cache_options_note": "Responses API field (caching guide, re-fetched 2026-11-02): mode implicit|explicit, ttl 30m (default)|12h; sent explicitly so the priced 30m tier cannot change with a provider default (PF-R6)."
 }

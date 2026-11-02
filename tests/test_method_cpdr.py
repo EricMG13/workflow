@@ -273,22 +273,29 @@ def test_methodology_chain_runs_7d164d11_to_the_current_file() -> None:
         assert after_record["prior_project_sha256"] == before_record["sha256"], "chain broken"
 
 
-def test_d12_records_for_the_vii_files_are_chained_and_cite_d1b() -> None:
-    """O7d D1b (B31a): one new record per vii text file, chained after its previous record."""
+def test_d12_records_for_the_vii_files_are_chained_after_d1b_and_cite_the_end_batch() -> None:
+    """O7d D1b (B31a): a record per vii text file, chained after its previous record; the O7 end
+    batch (D1b review I4) adds one more per file, chained after the D1b record."""
     for destination, path in (
         ("src/deploy_vii/bindings/cpdr.py", BINDINGS_PY),
         ("src/deploy_vii/methods/cpdr.md", METHOD_MD),
     ):
         records = _records(destination)
-        previous, last = records[-2], records[-1]
-        assert last["prior_project_sha256"] == previous["sha256"], destination
-        assert last["sha256"] == _sha(path), destination
-        assert last["sha256"] != previous["sha256"], destination
-        assert "O7d D1b" in last["reason"], destination
-        assert last["review"] == D1B_REVIEW, destination
+        d1b = [r for r in records if r["review"] == D1B_REVIEW]
+        assert d1b, destination
+        assert "O7d D1b" in d1b[-1]["reason"], destination
+        end = records[-1]
+        assert end["review"] == END_BATCH_REVIEW, destination
+        assert "O7 end batch" in end["reason"], destination
+        assert end["prior_project_sha256"] == records[-2]["sha256"], destination
+        assert records[-2] is d1b[-1], destination
+        assert end["sha256"] == _sha(path), destination
+        assert end["sha256"] != records[-2]["sha256"], destination
+        assert _git_sha(end["project_commit"], destination) == end["sha256"], destination
 
 
 D1B_REVIEW = ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
+END_BATCH_REVIEW = ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
 
 
 def test_method_states_the_peer_pack_rules_and_the_opt_in() -> None:
@@ -311,7 +318,8 @@ def test_method_states_the_peer_pack_rules_and_the_opt_in() -> None:
     assert opt_in, "the opt-in clause names peer_source cp_dr_public"
     assert "`CP-1C`" in opt_in[0] and "requested" in opt_in[0]
     assert PEERS["opt_in_matrix"]["rule"].split(" (")[0].startswith("peer_pack = cp_dr")
-    assert "No module reads CP-DR output until O7d" in TEXT, "kept sentence"
+    assert "until O7d" not in TEXT, "CP-1C and CP-2 read CP-DR output (O7c C3, O7d D1b)"
+    assert "each prompt carries the dossier block" in TEXT
 
 
 def test_method_states_the_context_cutoff_and_the_web_retrieval_gate() -> None:

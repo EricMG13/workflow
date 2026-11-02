@@ -2453,6 +2453,22 @@
       "sha256": "7a409ea65998636e1e141dc5142ef8bf1c17c3ce865733d904056d7de4985321",
       "reason": "repo-authored (not in files[]): B9 (O7d D2, B31a): omission 5 (line 22) adds that, when CP-DR's peer pack is bound, its located peer figures are market data the pack carries; the O7d gap paragraph (line 59) now says cp_dr_public peers come from the bound CP-DR head's TDR.6 (a held peers source beside them is a named conflict), that those figures carry no enterprise value so T1C.9 to T1C.11 keep the gap with the amended wording, and that user_list still needs the lookup. Nothing else changes. Chained after the Release 3 end batch record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-report.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "a7fa3c90ad650a0f708706d3c0f34c0bb65eac5ec088242f2399ede69fc8d09a",
+      "project_commit": "bf5575aef1a9b3a029f280aab9010d035032577a",
+      "sha256": "547dc50efda5a35e2dededbb6f8aac03c32b4dc369a82d3d8fdc91e2f48c8893",
+      "reason": "repo-authored (not in files[]): B31a: O7 end batch (D1b review I4): the Scope and Consumers lines no longer say no module reads CP-DR output until O7d; they say CP-1C and CP-2 read the settled head (each prompt carries the dossier block; CP-1C also reads TDR.6 when the peer pack is bound). Nothing else changes. Chained after the O7d D1b fix record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cpdr.py",
+      "prior_project_sha256": "48ce9d3aaecf6a4323142f708d785cc7114090f3e03fa47b360a6b104baa9d08",
+      "project_commit": "bf5575aef1a9b3a029f280aab9010d035032577a",
+      "sha256": "e9486d074ef14c987d70db2fda556a34dc129352d139b6d8681624e8fb22de9a",
+      "reason": "repo-authored (not in files[]): B1: O7 end batch (D1b review I4): the docstring says the settled head is read by CP-1C and CP-2 (the dossier block; CP-1C also TDR.6), not through a Front Page block; no binding, block, slot or unit changes. Chained after the O7d D1b record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
     }
   ],
   "local_patch_lineage": [

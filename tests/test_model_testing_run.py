@@ -1144,3 +1144,46 @@ def test_an_in_flight_run_folder_is_named_as_such(world: World) -> None:
     (world.out / "live-run" / "sources").mkdir(parents=True)
     with pytest.raises(DriverError, match=r"no run\.json yet \(in flight or crashed\)"):
         load_runs(world.out)
+
+
+def _settlement_body(run_id: str, call_index: int = 0) -> str:
+    entry = {
+        "run_id": run_id,
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": call_index,
+        "settled_usd": "1.00",
+        "by": "eric",
+        "date": "2026-11-02",
+        "source": "provider invoice",
+    }
+    return json.dumps({"schema_version": "charge-settlement/1", "entries": [entry]})
+
+
+def test_report_ignores_a_sibling_folders_settlement(world: World) -> None:
+    """A settlement for a run in a sibling out folder is not matched against this out's runs."""
+    unknown = budget_tests.call("deepseek-max", None, reserved="3.25", status="unknown")
+    _prior_live(_sibling(world), "deepseek-max", [unknown], pathway="credit_snapshot")
+    (_sibling(world) / "settlements.json").write_text(
+        _settlement_body("prior-live"), encoding="utf-8"
+    )
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    (world.out / "report.md").unlink(missing_ok=True)
+    assert main(world.argv("report")) == 0
+    assert (world.out / "report.md").is_file()
+
+
+def test_report_refuses_a_settlement_naming_an_out_run_but_no_record(
+    world: World, capsys: pytest.CaptureFixture[str]
+) -> None:
+    unknown = budget_tests.call("deepseek-max", None, reserved="3.25", status="unknown")
+    _prior_live(world.out, "deepseek-max", [unknown], pathway="credit_snapshot")
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    (world.out / "settlements.json").write_text(
+        _settlement_body("prior-live", call_index=99), encoding="utf-8"
+    )
+    (world.out / "report.md").unlink()
+    assert main(world.argv("report")) == 2
+    assert "matches no record" in capsys.readouterr().err
+    assert not (world.out / "report.md").exists()

@@ -691,7 +691,11 @@ def report_out(settings: Settings) -> Path:
         faults = read_faults(settings.out / FAULTS_FILE)
     except ValueError as error:  # the fault journal's one refusal: an unparsable record
         raise DriverError(f"{FAULTS_FILE}: {error}") from None
-    text = render_report(latest, runs, faults, settlements)
+    # the table matches settlements against this out's runs only; a settlement naming a run in a
+    # sibling folder is matched there, and an orphan is still refused through current_stops/_notes
+    own_runs = {meta.run_id for meta, _ in runs}
+    own_settlements = tuple(s for s in settlements if s.run_id in own_runs)
+    text = render_report(latest, runs, faults, own_settlements)
     skipped = {k: v for k, v in _read_exhausted(settings.out).items() if k not in CONFIGS}
     stopped = {**skipped, **current_stops(everywhere, settlements)}
     notes = _notes(stopped, settlements, everywhere)

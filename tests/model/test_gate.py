@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import re
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import NoReturn, cast
@@ -128,15 +129,39 @@ def test_gate_refuses_a_directory(tmp_path: Path) -> None:
         check_live_gate(spec_for("sol-medium"), root, rulings_root=root)
 
 
-def test_every_real_ruling_refuses_every_config() -> None:
-    files = sorted((REPO / "docs" / "rulings").rglob("*"))
+# The answer key: the only real ruling that lifts the pause, and the configs it lifts. A new
+# lifting ruling fails the test below until someone updates this on purpose.
+LIFTING = {
+    "2026-11-02-model-testing-live.md": frozenset(
+        {"sol-medium", "sol-high", "opus-medium", "deepseek-max"}
+    )
+}
+
+
+def test_only_the_model_testing_ruling_lifts_the_pause() -> None:
+    root = REPO / "docs" / "rulings"
+    files = sorted(p for p in root.rglob("*") if p.is_file())
     assert files, "the real docs/rulings must exist"
+    relative = {p: p.relative_to(root).as_posix() for p in files}
+    assert set(LIFTING) <= set(relative.values()), "a pinned lifting ruling is missing"
     for path in files:
-        if not path.is_file():
-            continue
+        lifted = LIFTING.get(relative[path], frozenset())
         for config_id in CONFIG_MODELS:
-            with pytest.raises(LivePauseInForce):
-                check_live_gate(spec_for(config_id), path)
+            if config_id in lifted:
+                result = check_live_gate(spec_for(config_id), path)
+                assert result.path == path.resolve()
+                assert str(result.date) == "2026-11-02"
+            else:
+                with pytest.raises(LivePauseInForce):
+                    check_live_gate(spec_for(config_id), path)
+    for name, lifted in LIFTING.items():
+        path = root / name
+        found = re.findall(
+            r"^[ \t]*configs:[ \t]*(.*?)[ \t]*$", path.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        assert len(found) == 1, "the ruling must have a single configs: line"
+        tokens = [t for t in re.split(r"[\s,]+", found[0]) if t]
+        assert set(tokens) == lifted and len(tokens) == len(lifted)
 
 
 # ------------------------------------------------------------------ F11 trap

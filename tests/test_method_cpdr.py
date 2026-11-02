@@ -123,8 +123,8 @@ def test_md_table_titles_are_the_r7_titles() -> None:
         for column in tables[table_id]["columns"]:
             assert f"`{column}`" in cells[3]
     for table_id in SIX[3:]:
-        row = next(line for line in LINES if line.startswith(f"| {table_id} |"))
-        assert row.strip("|").split("|")[-1].strip() == "Evidence"
+        line = next(line for line in LINES if line.startswith(f"| {table_id} |"))
+        assert line.strip("|").split("|")[-1].strip() == "Evidence"
 
 
 def test_binding_labels_are_the_r7_titles() -> None:

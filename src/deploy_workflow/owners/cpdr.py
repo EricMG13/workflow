@@ -193,6 +193,20 @@ def _context_cutoff(pack: PreparedPack) -> date:
     return effective_cutoff(pack.run.as_of, "" if context is None else context.run.cutoff)
 
 
+def _peer_pack(pack: PreparedPack, run: Run) -> bool:
+    """The peer-pack opt-in (O7-R47 Q4): the context asks for CP-DR public peers and the run asks for
+    CP-1C, the only reader of the pack. A run without a context file asks for nothing."""
+    try:
+        context = context_facts(pack)
+    except ContextRefused:
+        raise WorkflowError("identity_mismatch") from None
+    return (
+        context is not None
+        and context.valuation.peer_source == "cp_dr_public"
+        and "CP-1C" in run.requested_modules
+    )
+
+
 def _anchor(snapshot: ExecutionSnapshot) -> Anchor:
     """The CP-0 and CP-1 heads the brief binds (``check_begin`` ran at the begin)."""
     heads = {head.module_id: head.result_sha256 for head in snapshot.heads}
@@ -226,7 +240,7 @@ def _fence_issues(texts: Iterable[tuple[str, str]]) -> tuple[str, ...]:
 
 def _research_texts(submission: ResearchSubmission) -> Iterator[tuple[str, str]]:
     """Every model-written text the dossier shows: claims, contrary entries, uncertainty and
-    limitation."""
+    limitation, and the peer pack's names, basis notes and observations."""
     for answer in submission.answers:
         qid = answer.question_id
         yield from ((qid, claim.text) for claim in answer.claims)
@@ -236,6 +250,11 @@ def _research_texts(submission: ResearchSubmission) -> Iterator[tuple[str, str]]
             if entry.limitation is not None:
                 yield qid, entry.limitation
         yield from ((qid, text) for text in (answer.uncertainty, answer.limitation) if text)
+    if submission.peers is not None:  # the model-written cells of TDR.4 and TDR.5
+        for peer in submission.peers.candidates:
+            yield from ((peer.peer_id, text) for text in (peer.name, peer.basis_note))
+        for obs in submission.peers.observations:
+            yield f"{obs.peer_id}.{obs.dimension}", obs.observation
 
 
 # --- the brief step ---------------------------------------------------------------------------
@@ -280,7 +299,7 @@ def _validate_brief(store: Execution, pack: PreparedPack, attempt: Attempt) -> S
             cutoff=_context_cutoff(pack),
             questions=merge_questions(_context_questions(pack), tailored_of(parsed)),
             anchor=_anchor(snapshot),
-            peer_pack=False,
+            peer_pack=_peer_pack(pack, run),
         )
     except BriefInvalid as error:  # a model-written question the lock refuses: the model repairs
         return StepValidation(issues=bounded_issues((str(error),)))
@@ -391,6 +410,7 @@ def brief_view(store: Execution, attempt: Attempt) -> tuple[str, str]:
             context_questions=_context_questions(pack),
             as_of=run.as_of,
             cutoff=_context_cutoff(pack),
+            peer_pack=_peer_pack(pack, run),
             sources=[
                 s.source_id for s in pack.sources if not s.source_id.startswith(RESERVED_PREFIX)
             ],

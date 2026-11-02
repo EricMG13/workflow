@@ -73,6 +73,29 @@
    "checks": [
     "fn:deploy_workflow.owners.cpdr:_run_issues"
    ]
+  },
+  {
+   "id": "research.11",
+   "statement": "When `read_inputs` shows `peer_pack: true`, also submit `peers` with `candidates`, `observations` and `figures`, each cited to an `ev-*` span that `read_pages` returned; when it shows `peer_pack: false`, submit no `peers`, and a submission that holds `peers` is refused.",
+   "checks": [
+    "fn:deploy_workflow.research.peers:peer_issues"
+   ]
+  },
+  {
+   "id": "research.12",
+   "statement": "A `figures` entry names a `peer_id`, an `operand`, a `unit`, a `currency` and a `period_end`, and cites a quote that states the amount: you type no amount, and no field of inclusion, comparability, normalisation or statistic. The `operand` is one of revenue, ebitda, debt, interest and ffo, and every `peer_id` of an observation or a figure is the `peer_id` of a candidate. A figure whose `period_end` is after the cutoff of `read_inputs`, or whose quote gives no readable amount, is recorded as missing, not accepted.",
+   "checks": [
+    "fn:deploy_workflow.research.peers:peer_issues",
+    "fn:deploy_workflow.owners.cpdr:_parse"
+   ]
+  },
+  {
+   "id": "research.13",
+   "statement": "A peer `name`, `basis_note` and `observation` each hold no block delimiter such as `<<<`, no lookalike of one, no line break and no `|`; a `basis_note` and an `observation` also contain no digit or figure and not the word recommend.",
+   "checks": [
+    "fn:deploy_workflow.research.peers:peer_issues",
+    "fn:deploy_workflow.owners.cpdr:_fence_issues"
+   ]
   }
  ]
 }

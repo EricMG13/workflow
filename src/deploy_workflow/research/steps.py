@@ -161,10 +161,12 @@ def brief_view_body(
     context_questions: Sequence[tuple[str, str]],
     as_of: date,
     cutoff: date,
+    peer_pack: bool,
     sources: Sequence[str],
 ) -> str:
     """The brief step's ``read_inputs`` body as compact JSON: the fixed defaults, the run's
-    context questions (ids as ``lock_brief`` assigns them), the bound and the held sources."""
+    context questions (ids as ``lock_brief`` assigns them), the bound, whether the run asks for
+    the peer pack (Python decides it; the brief carries no field for it) and the held sources."""
     return _compact(
         {
             "default_questions": [
@@ -177,6 +179,7 @@ def brief_view_body(
             "limits": {"max_questions": MAX_QUESTIONS},
             "as_of": as_of.isoformat(),
             "cutoff": cutoff.isoformat(),
+            "peer_pack": peer_pack,
             "sources": list(sources),
         }
     )
@@ -190,6 +193,8 @@ def research_view_body(
     return _compact(
         {
             "brief_sha256": brief.brief_sha256,
+            "cutoff": brief.cutoff.isoformat(),
+            "peer_pack": brief.peer_pack,
             "questions": [
                 {
                     "question_id": q.question_id,

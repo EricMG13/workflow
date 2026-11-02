@@ -2404,6 +2404,14 @@
       "sha256": "3f36135000f92c3d6d59d116d47f3413231572ed0cdb9975ea6ac8d2267f6ed7",
       "reason": "repo-authored (not in files[]): B1/B31a: O7b-2 S5: the method states the context cutoff (the earlier of the as-of date and run.cutoff, D9) and the web-retrieval gate (a URL row is fetched only under a user ruling lifting the live-provider pause for web-retrieval; otherwise refused before anything is written). Replaces the as-of-date cutoff and URL-refused lines. Chained after the O7-R40 fix-round record.",
       "review": "work/context-plan/reviews/o7b2-s5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "3f36135000f92c3d6d59d116d47f3413231572ed0cdb9975ea6ac8d2267f6ed7",
+      "project_commit": "61e335702bfa6ed35dc75644a302b76edaca0b99",
+      "sha256": "06322fe0d92e793ed5990da3c481a37ffd2335554f8aead9ac95c9513b7f92a9",
+      "reason": "repo-authored (not in files[]): B31a: O7b-2 S5 fix round 1: ruling O7-R56 and the S5 review M-1/L-1: line 3 no longer says no web is used (the web is used only to fetch the user's URL rows under the ruling Intake names) and line 26 says an item names a file or an https url. Chained after the S5 record.",
+      "review": "work/context-plan/reviews/o7b2-s5-review.md"
     }
   ],
   "local_patch_lineage": [

@@ -182,7 +182,7 @@
   "cases/pins-context-owner/expected.json": "d25fbf661bae908e7d61ea261f94c5437a0692782750b597278574d8320b67f1",
   "cases/pins-context-owner/manifest.json": "94048ee9f73c371f95d916049e61163c5041744dd0829bff59ad8e0b82976404",
   "cases/pins-context-owner/submissions.json": "d32e8522ede32df6e969afe2ea01f31984496c131c5517a4088575af0f99494a",
-  "cases/valuation-context-owner/builder/build.py": "29bca31739cc97f5e0f5e98d68173e84437d45ac97689ce832a63627322c513f",
+  "cases/valuation-context-owner/builder/build.py": "49a8a5f78e0103d9fcc078146631e29144964a914ab02930574509c1bc09cb18",
   "cases/valuation-context-owner/contexts/auto-dr-public.json": "adb19749473b7e51af9c60ea5b46fb0f129836d22c7fb58ee3f985c2275b8fb7",
   "cases/valuation-context-owner/contexts/auto-public-private.json": "2574b55dce398a88fca3b8038c55c2b2538286a9520a67b2389d8644e26f5ecd",
   "cases/valuation-context-owner/contexts/auto-public.json": "2b4998fb970bf6321fe15e0ce5540bdd2d93fc7aaef9f7b712cdd1e49409266d",
@@ -200,6 +200,6 @@
   "cases/valuation-context-owner/contexts/user-multiple.json": "e17a46bdca76ac51eaabef56e610b5671dc51078fcafd25e5dd496fb1121f00b",
   "cases/valuation-context-owner/contexts/window-edges.json": "1b170618fb2a2b83351151fb5c7c27ceaf1daa738486e329ebc13a70e2f991e9",
   "cases/valuation-context-owner/expected.json": "76697efd49f577d4e2a617bb0a75879f304283b9d692a9256d2668f4e5aab7a1",
-  "cases/valuation-context-owner/manifest.json": "64f81a89d46c208b0e7588c85e79ae62b316afb7cf008314e1731d3be4220bf3",
+  "cases/valuation-context-owner/manifest.json": "2065581fbb7a5374a93f735e87486806c3fd2a1bb6d19a9c69f758109c32ce2e",
   "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e"
 }

@@ -6,7 +6,7 @@
   "inputs_pinned": {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
-    "cases/cp1c-owner/manifest.json": "851d1b8df0b61c08f11a79003d98dd80d8872fb61213049b1138110dec517b6d",
+    "cases/cp1c-owner/manifest.json": "1d670f764e63c6c6e3a0cb0cbc7bb26b8b9d9c70a56609f10d9a3e5ef0119101",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
     "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
     "cases/cp4c-owner/manifest.json": "3f0570ffbf4a52baedbedac4112310432af9a18302c32922a8123e7f40e5db98",
@@ -374,7 +374,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "29bca31739cc97f5e0f5e98d68173e84437d45ac97689ce832a63627322c513f",
+    "sha256": "49a8a5f78e0103d9fcc078146631e29144964a914ab02930574509c1bc09cb18",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {

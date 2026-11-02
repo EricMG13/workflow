@@ -29,7 +29,7 @@ OUT = ROOT / "cases" / "valuation-context-owner"
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
-    "cases/cp1c-owner/manifest.json": "851d1b8df0b61c08f11a79003d98dd80d8872fb61213049b1138110dec517b6d",
+    "cases/cp1c-owner/manifest.json": "1d670f764e63c6c6e3a0cb0cbc7bb26b8b9d9c70a56609f10d9a3e5ef0119101",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
     "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
     "cases/cp4c-owner/manifest.json": "3f0570ffbf4a52baedbedac4112310432af9a18302c32922a8123e7f40e5db98",

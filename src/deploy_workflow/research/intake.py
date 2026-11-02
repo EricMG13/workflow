@@ -7,30 +7,29 @@ body. Text is read as UTF-8; HTML is reduced to text with the stdlib parser only
 
 import hashlib
 import json
+import os
+import stat
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
-from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
+from deploy_vii.preparation import MAX_BYTES, MAX_EXPANDED_BYTES
+from deploy_workflow.html_text import UndecodableHtml, convert_html
 from deploy_workflow.prompts.fence import FenceError, UntrustedItem, untrusted_evidence_block
 from deploy_workflow.research.contracts import (
     CutoffViolation,
     EvidenceFetchRefused,
+    EvidenceItem,
     ResearchError,
     refuse_reserved,
 )
 
-# The plan names no per-item cap; this is the intake default, set explicitly by a caller.
-MAX_ITEM_BYTES = 2_000_000
+# The per-item cap is prepare's own read limit (O7-R3), so an accepted item never fails at prepare.
+MAX_ITEM_BYTES = MAX_BYTES
 ROW_KEYS = ("path", "url", "family", "published", "locator", "tag", "source_id")
 _HTML_SUFFIXES = frozenset({".html", ".htm"})
-_BLOCK_TAGS = frozenset(
-    {"p", "div", "br", "li", "ul", "ol", "tr", "table", "section", "article", "blockquote", "pre"}
-    | {"h1", "h2", "h3", "h4", "h5", "h6", "hr", "header", "footer"}
-)
-_SKIPPED_TAGS = frozenset({"script", "style"})
 
 
 class IntakeError(ResearchError):
@@ -56,6 +55,16 @@ class AcceptedItem:
     locator: str
     sha256: str
     text: str
+
+    def evidence_item(self) -> EvidenceItem:
+        return EvidenceItem(
+            item_id=self.item_id,
+            origin="supplied",
+            sha256=self.sha256,
+            locator=self.locator,
+            published=self.published,
+            family=self.family,
+        )
 
 
 @dataclass(frozen=True)
@@ -110,33 +119,6 @@ def parse_rows(rows: Sequence[Mapping[str, Any]]) -> tuple[ManifestRow, ...]:
     return tuple(parsed)
 
 
-class _TextExtractor(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.parts: list[str] = []
-        self.skipping = 0
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        self.skipping += tag in _SKIPPED_TAGS
-        self.parts.append("\n" if tag in _BLOCK_TAGS else "")
-
-    def handle_endtag(self, tag: str) -> None:
-        self.skipping = max(0, self.skipping - (tag in _SKIPPED_TAGS))
-        self.parts.append("\n" if tag in _BLOCK_TAGS else "")
-
-    def handle_data(self, data: str) -> None:
-        self.parts.append("" if self.skipping else data)
-
-
-def html_to_text(markup: str) -> str:
-    """Visible text of an HTML page: script and style dropped, block tags become line breaks."""
-    extractor = _TextExtractor()
-    extractor.feed(markup)
-    extractor.close()
-    lines = (" ".join(line.split()) for line in "".join(extractor.parts).splitlines())
-    return "\n".join(line for line in lines if line)
-
-
 def _refusal(row: ManifestRow, reason: str) -> RefusedItem:
     return RefusedItem(row.locator, row.family, row.published, reason)
 
@@ -159,17 +141,48 @@ def _resolve(base_dir: Path, relative: str) -> Path:
     return target
 
 
-def _read(row: ManifestRow, source: Path, max_bytes: int) -> str | RefusedItem:
-    raw = source.read_bytes()
-    if len(raw) > max_bytes:
-        return _refusal(
-            row, f"evidence item {row.locator} exceeds the byte cap of {max_bytes} bytes"
-        )
+class _ItemRefused(Exception):
+    """A reason an item cannot be taken (unreadable, over the cap, NUL); becomes a listed refusal."""
+
+
+def _read_capped(source: Path, cap: int) -> bytes:
+    """Mirror of ``run_inputs.read_capped`` with the caller's cap: one descriptor, opened without
+    blocking, ``fstat`` for a regular file (FIFO, directory, device refused), at most cap + 1 bytes."""
     try:
-        text = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        return _refusal(row, f"evidence item {row.locator} is not valid UTF-8")
-    return html_to_text(text) if source.suffix.lower() in _HTML_SUFFIXES else text
+        fd = os.open(source, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+    except (OSError, ValueError) as error:
+        raise _ItemRefused(
+            f"cannot be opened ({getattr(error, 'strerror', None) or error})"
+        ) from None
+    try:
+        regular = stat.S_ISREG(os.fstat(fd).st_mode)
+    except OSError as error:
+        os.close(fd)
+        raise _ItemRefused(f"cannot be examined ({error.strerror})") from None
+    if not regular:
+        os.close(fd)
+        raise _ItemRefused("is not a regular file")
+    try:
+        with os.fdopen(fd, "rb") as handle:
+            return handle.read(cap + 1)
+    except OSError as error:
+        raise _ItemRefused(f"cannot be read ({error.strerror})") from None
+
+
+def _text(source: Path, max_bytes: int) -> str:
+    """The item's text as prepare will see it, or a refusal reason."""
+    raw = _read_capped(source, max_bytes)
+    if len(raw) > max_bytes:
+        raise _ItemRefused(f"exceeds the byte cap of {max_bytes} bytes")
+    if source.suffix.lower() in _HTML_SUFFIXES:
+        text = convert_html(raw).text.rstrip("\n")
+    else:
+        text = raw.decode("utf-8-sig")
+        if "\x00" in text:
+            raise _ItemRefused("holds NUL bytes, which prepare does not accept")
+    if len(text.encode("utf-8")) > MAX_EXPANDED_BYTES:
+        raise _ItemRefused(f"expands beyond {MAX_EXPANDED_BYTES} bytes")
+    return text
 
 
 def _fence_refusal(
@@ -186,6 +199,35 @@ def _fence_refusal(
     return None
 
 
+def _assess(
+    row: ManifestRow,
+    path: str,
+    source: Path,
+    item_id: str,
+    dates: tuple[date, date, date],
+    max_bytes: int,
+) -> AcceptedItem | RefusedItem:
+    as_of, cutoff, today = dates
+    if refusal := _date_refusal(row, as_of, cutoff, today):
+        return refusal
+    try:
+        text = _text(source, max_bytes)
+    except (_ItemRefused, UnicodeDecodeError, UndecodableHtml) as error:
+        return _refusal(row, f"evidence item {row.locator} {_why(error)}")
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if refusal := _fence_refusal(row, item_id, digest, text, as_of.isoformat()):
+        return refusal
+    return AcceptedItem(item_id, path, row.family, row.published, row.locator, digest, text)
+
+
+def _why(error: Exception) -> str:
+    if isinstance(error, UnicodeDecodeError):
+        return "is not valid UTF-8"
+    if isinstance(error, UndecodableHtml):
+        return f"is not decodable HTML ({error})"
+    return str(error)
+
+
 def intake(
     rows: Sequence[ManifestRow],
     *,
@@ -200,6 +242,7 @@ def intake(
 
     A wrong input raises (reserved or stray source_id, a url row while web retrieval is paused, a
     path outside ``base_dir``, cutoff after ``as_of``); item refusals are listed on the result.
+    Every row is assessed before anything is copied, so a raise leaves no copy behind.
     """
     if cutoff > as_of:
         raise IntakeError(f"cutoff {cutoff} is after as_of {as_of}")
@@ -211,24 +254,16 @@ def intake(
             raise IntakeError("manifest rows take no source_id: ids are assigned as ev-<n>")
         if row.path is None:
             raise EvidenceFetchRefused("url rows need web retrieval, which is not available")
-        if refusal := _date_refusal(row, as_of, cutoff, today):
-            refused.append(refusal)
-            continue
-        text = _read(row, _resolve(base_dir, row.path), max_bytes)
-        if isinstance(text, RefusedItem):
-            refused.append(text)
-            continue
-        body = text.encode("utf-8")
-        digest = hashlib.sha256(body).hexdigest()
+        source = _resolve(base_dir, row.path)
         item_id = f"ev-{len(accepted) + 1}"
-        if refusal := _fence_refusal(row, item_id, digest, text, as_of.isoformat()):
-            refused.append(refusal)
-            continue
+        result = _assess(row, row.path, source, item_id, (as_of, cutoff, today), max_bytes)
+        if isinstance(result, RefusedItem):
+            refused.append(result)
+        else:
+            accepted.append(result)
+    for item in accepted:
         dest_dir.mkdir(parents=True, exist_ok=True)
-        (dest_dir / f"{item_id}.txt").write_bytes(body)
-        accepted.append(
-            AcceptedItem(item_id, row.path, row.family, row.published, row.locator, digest, text)
-        )
+        (dest_dir / f"{item.item_id}.txt").write_bytes(item.text.encode("utf-8"))
     return IntakeResult(tuple(accepted), tuple(refused))
 
 

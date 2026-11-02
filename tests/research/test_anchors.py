@@ -30,7 +30,7 @@ def settled(
     run: Run, module_id: str, inputs: tuple[Input, ...] = (), **over: Any
 ) -> a.SettledAnchor:
     module = Module(
-        run_id=run.run_id,
+        run_id=over.get("run_id", run.run_id),
         issuer_id=over.get("issuer_id", run.issuer_id),
         as_of=over.get("as_of", run.as_of),
         module_id=module_id,
@@ -109,10 +109,10 @@ def test_input_cp0_hash_altered_by_one_digit(
     manifest: dict[str, Any], expected: dict[str, Any]
 ) -> None:
     run = run_of(manifest)
-    cp0, cp1 = pair(run)
+    cp0, _ = pair(run)
     good = cp0.head.result_sha256
     bad = good[:-1] + ("0" if good[-1] != "0" else "1")
-    altered = with_head(cp1, inputs=(Input(input_id="CP-0", sha256=bad),))
+    altered = settled(run, "CP-1", (Input(input_id="CP-0", sha256=bad),))
     assert refused(cp0, altered, run).reason == key_reason(expected, "input_cp0_hash")
 
 
@@ -134,7 +134,7 @@ def test_unsound_pairs_are_named(manifest: dict[str, Any]) -> None:
     assert refused(None, cp1, run).reason == "CP-0 head is missing"
     assert refused(cp0, None, run).reason == "CP-1 head is missing"
     assert refused(cp1, cp0, run).reason == "CP-0 slot holds module CP-1"
-    assert refused(cp0, with_head(cp1, inputs=()), run).reason == "CP-1 head records no CP-0 input"
+    assert refused(cp0, settled(run, "CP-1"), run).reason == "CP-1 head records no CP-0 input"
     assert refused(forged, cp1, run).reason == (
         "CP-0 head result_sha256 is not the hash of its settled module"
     )
@@ -148,3 +148,61 @@ def test_status_is_checked_before_identity(
     assert refused(with_head(cp0, status="blocked"), cp1, run).reason == key_reason(
         expected, "blocked_cp0"
     )
+
+
+def test_other_runs_pair_is_refused(manifest: dict[str, Any]) -> None:
+    run = run_of(manifest)
+    over = {"run_id": "other-run"}
+    cp0, cp1 = pair(run, over, over)
+    assert refused(cp0, cp1, run).reason == (
+        f"run mismatch: the heads carry run_id other-run, the run's run_id is {run.run_id}"
+    )
+
+
+def test_head_must_be_its_modules_own_record(manifest: dict[str, Any]) -> None:
+    run = run_of(manifest)
+    cp0, cp1 = pair(run)
+    other = settled(run, "CP-1", (Input(input_id="CP-0", sha256="e" * 64),))
+    rewired = with_head(other, inputs=cp1.head.inputs)
+    assert (
+        refused(cp0, rewired, run).reason == "CP-1 head inputs are not those of its settled module"
+    )
+    blocked = settled(run, "CP-0", status="blocked")
+    claims_accepted = with_head(blocked, status="accepted")
+    assert (
+        "CP-0 head status accepted is not its settled module's (blocked)"
+        == refused(claims_accepted, cp1, run).reason
+    )
+
+
+@pytest.mark.parametrize("position", [0, 31, 63])
+def test_any_digit_of_the_cp0_input_hash_counts(
+    manifest: dict[str, Any], expected: dict[str, Any], position: int
+) -> None:
+    run = run_of(manifest)
+    cp0, _ = pair(run)
+    good = cp0.head.result_sha256
+    bad = good[:position] + ("0" if good[position] != "0" else "1") + good[position + 1 :]
+    altered = settled(run, "CP-1", (Input(input_id="CP-0", sha256=bad),))
+    assert refused(cp0, altered, run).reason == key_reason(expected, "input_cp0_hash")
+
+
+def test_cp1_status_is_checked_before_identity_and_lineage(
+    manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    run = run_of(manifest)
+    over = {"issuer_id": "other-issuer"}
+    cp0, cp1 = pair(run, over, over)
+    assert refused(cp0, with_head(cp1, status="blocked"), run).reason == key_reason(
+        expected, "blocked_cp1"
+    )
+
+
+def test_identity_is_checked_before_lineage(
+    manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    run = run_of(manifest)
+    over = {"issuer_id": "other-issuer"}
+    cp0, _ = pair(run, over, over)
+    altered = settled(run, "CP-1", (Input(input_id="CP-0", sha256="e" * 64),), **over)
+    assert refused(cp0, altered, run).reason == key_reason(expected, "issuer_mismatch")

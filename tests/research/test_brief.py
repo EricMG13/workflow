@@ -1,5 +1,6 @@
 """O7b-1a: brief tailoring merge, ordering, 1-32, lock and edit-after-lock (expected.json#brief)."""
 
+import hashlib
 import json
 from datetime import date
 from pathlib import Path
@@ -132,3 +133,91 @@ def test_invalid_briefs_are_refused_and_nothing_is_written(
     with pytest.raises(c.BriefInvalid, match=match):
         lock(tmp_path, manifest, submissions, **over)
     assert not (tmp_path / "research" / "brief.json").exists()
+
+
+def test_every_hashed_field_edit_is_hash_mismatch(tmp_path: Path, expected: dict[str, Any]) -> None:
+    vector = expected["brief"]["rule_vector_not_a_case_value"]["body"]
+    stored = b.rebuild_brief(vector)
+    edits: dict[str, Any] = {
+        "peer_pack": lambda d: d.__setitem__("peer_pack", True),
+        "peer_pack_str": lambda d: d.__setitem__("peer_pack", "yes"),
+        "as_of": lambda d: d.__setitem__("as_of", "2026-01-09"),
+        "version": lambda d: d.__setitem__("version", "cp-dr/2026-11-01"),
+        "anchor": lambda d: d["anchor"].__setitem__("cp0_sha256", "A" * 64),
+        "no_questions": lambda d: d.__setitem__("questions", []),
+        "receivers": lambda d: d["questions"][0].__setitem__("receivers", []),
+        "extra": lambda d: d.__setitem__("note", "added"),
+        "anchor_removed": lambda d: d.pop("anchor"),
+    }
+    for name, edit in edits.items():
+        path = tmp_path / f"{name}.json"
+        b.write_locked_brief(path, stored)
+        body = json.loads(path.read_text(encoding="utf-8"))
+        edit(body)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        with pytest.raises(c.BriefInvalid) as caught:
+            b.load_locked_brief(path, stored.brief_sha256)
+        assert str(caught.value) == expected["brief"]["edit_after_lock"]["message"], name
+
+
+@pytest.mark.parametrize("content", ["[1, 2]", '{"questions": [', "\xff"])
+def test_non_object_or_truncated_file_is_hash_mismatch(tmp_path: Path, content: str) -> None:
+    path = tmp_path / "brief.json"
+    path.write_bytes(content.encode("latin-1"))
+    with pytest.raises(c.BriefInvalid, match="^hash mismatch$"):
+        b.load_locked_brief(path, "0" * 64)
+
+
+def test_brief_file_bytes_equal_the_keys_template(
+    tmp_path: Path, manifest: dict[str, Any], submissions: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    key = expected["cases"]["positive"]["brief"]
+    assert hashlib.sha256(key["template_file"].encode()).hexdigest() == key["template_file_sha256"]
+    brief = lock(tmp_path, manifest, submissions, tailored=tailored(submissions, 6))
+    want = (
+        key["template_file"]
+        .replace("{{CP0_RESULT_SHA256}}", ANCHOR.cp0_sha256)
+        .replace("{{CP1_RESULT_SHA256}}", ANCHOR.cp1_sha256)
+        .replace("{{BRIEF_SHA256}}", brief.brief_sha256)
+    )
+    assert (tmp_path / "research" / "brief.json").read_text(encoding="utf-8") == want
+
+
+def test_thirty_two_context_questions_keep_every_one(
+    tmp_path: Path, manifest: dict[str, Any], submissions: dict[str, Any]
+) -> None:
+    ctx = [(f"context question {i}", "CP-DR") for i in range(c.MAX_QUESTIONS)]
+    brief = lock(tmp_path, manifest, submissions, context_questions=ctx)
+    assert [q.question_id for q in brief.questions] == [
+        f"ctx-{i}" for i in range(1, c.MAX_QUESTIONS + 1)
+    ]
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        b.TailoredQuestion("x", "t", "context"),
+        b.TailoredQuestion("ctx-9", "t", "custom"),
+        b.TailoredQuestion("t0", "t", "custom"),
+    ],
+)
+def test_a_malformed_question_past_the_cut_is_refused_not_dropped(
+    tmp_path: Path, manifest: dict[str, Any], submissions: dict[str, Any], bad: b.TailoredQuestion
+) -> None:
+    good = [b.TailoredQuestion(f"t{i}", f"q{i}", "custom") for i in range(40)]
+    with pytest.raises(c.BriefInvalid):
+        lock(tmp_path, manifest, submissions, tailored=[*good, bad])
+    assert not (tmp_path / "research" / "brief.json").exists()
+
+
+def test_a_changed_stored_hash_alone_is_hash_mismatch(
+    tmp_path: Path, expected: dict[str, Any]
+) -> None:
+    stored = b.rebuild_brief(expected["brief"]["rule_vector_not_a_case_value"]["body"])
+    path = tmp_path / "brief.json"
+    b.write_locked_brief(path, stored)
+    body = json.loads(path.read_text(encoding="utf-8"))
+    body["brief_sha256"] = "0" * 64
+    path.write_text(json.dumps(body), encoding="utf-8")
+    with pytest.raises(c.BriefInvalid, match="^hash mismatch$"):
+        b.load_locked_brief(path, stored.brief_sha256)

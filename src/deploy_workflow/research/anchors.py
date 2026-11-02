@@ -31,12 +31,21 @@ def _own(slot: str, anchor: SettledAnchor | None) -> SettledAnchor:
         raise CpDrNotAnchored(f"{slot} head is {anchor.head.status}")
     if anchor.module.module_id != slot or anchor.module.content_hash() != anchor.head.result_sha256:
         raise CpDrNotAnchored(f"{slot} head result_sha256 is not the hash of its settled module")
+    # The pairing deploy_vii's ExecutionStore.head_module makes (execution.py:629-641).
+    if anchor.head.inputs != anchor.module.inputs:
+        raise CpDrNotAnchored(f"{slot} head inputs are not those of its settled module")
+    if anchor.head.status != anchor.module.status:
+        raise CpDrNotAnchored(
+            f"{slot} head status {anchor.head.status} is not its settled module's "
+            f"({anchor.module.status})"
+        )
     return anchor
 
 
 # (label, Module attribute, wording when both heads agree, the run's side).
 _IDENTITY = (
     ("issuer", "issuer_id", "CP-0 and CP-1 heads carry issuer {}", "the run's issuer is {}"),
+    ("run", "run_id", "the heads carry run_id {}", "the run's run_id is {}"),
     ("period", "as_of", "the heads carry as_of {}", "the run's as_of is {}"),
     ("method version", "method_version", "the heads carry {}", "the run's method version is {}"),
 )

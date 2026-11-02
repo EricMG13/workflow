@@ -4,6 +4,7 @@ The tailoring model call and the owner step are O7b-1c; the tailored list is an 
 orders (context questions first, OD4), bounds (1-32, cut from the tail), hashes and locks.
 """
 
+import hashlib
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -38,15 +39,22 @@ def _context(index: int, text: str, focus_module: str) -> ResearchQuestion:
 
 
 def _tailored(item: TailoredQuestion) -> ResearchQuestion:
-    if item.kind == "context":
-        raise BriefInvalid(f"tailored question {item.question_id} cannot have kind context")
-    if item.question_id.startswith(CONTEXT_PREFIX):
-        raise BriefInvalid(
-            f"tailored question id {item.question_id} uses the {CONTEXT_PREFIX} prefix"
-        )
     return ResearchQuestion(
         question_id=item.question_id, text=item.text, kind=item.kind, receivers=_ALL_RECEIVERS
     )
+
+
+def _check_tailored(tailored: Sequence[TailoredQuestion]) -> None:
+    """Refuse a malformed tailored question wherever it sits, not only inside the kept 32."""
+    seen: set[str] = set()
+    for item in tailored:
+        if item.kind == "context":
+            raise BriefInvalid(f"tailored question {item.question_id} cannot have kind context")
+        if item.question_id.startswith(CONTEXT_PREFIX):
+            raise BriefInvalid(f"tailored question id {item.question_id} uses the ctx- prefix")
+        if item.question_id in seen:
+            raise BriefInvalid(f"a brief repeats the question_id {item.question_id}")
+        seen.add(item.question_id)
 
 
 def merge_questions(
@@ -55,6 +63,7 @@ def merge_questions(
     """Context questions first (``ctx-1``...), then the tailored list, cut to 32 from the tail."""
     if len(context_questions) > MAX_QUESTIONS:
         raise BriefInvalid(f"{len(context_questions)} context questions exceed {MAX_QUESTIONS}")
+    _check_tailored(tailored)
     leading = [_context(i, text, focus) for i, (text, focus) in enumerate(context_questions, 1)]
     return (*leading, *(_tailored(item) for item in tailored[: MAX_QUESTIONS - len(leading)]))
 
@@ -65,7 +74,8 @@ def write_locked_brief(path: Path, brief: ResearchBrief) -> None:
         raise BriefInvalid(f"brief already locked at {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(brief.model_dump(mode="json"), indent=1, ensure_ascii=False) + "\n",
+        json.dumps(brief.model_dump(mode="json"), sort_keys=True, indent=1, ensure_ascii=False)
+        + "\n",
         encoding="utf-8",
     )
 
@@ -108,19 +118,32 @@ def rebuild_brief(body: dict[str, Any]) -> ResearchBrief:
         fields["questions"] = [
             ResearchQuestion.model_validate(q, strict=False) for q in fields["questions"]
         ]
+        return ResearchBrief.build(**fields)
     except (KeyError, TypeError, ValueError) as error:
         raise BriefInvalid(f"brief body is malformed: {error}") from error
-    return ResearchBrief.build(**fields)
+
+
+def body_sha256(body: dict[str, Any]) -> str:
+    """O7-P8: sha256 of the body without ``brief_sha256``, sorted keys, compact separators."""
+    hashed = {k: v for k, v in body.items() if k != "brief_sha256"}
+    text = json.dumps(hashed, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def load_locked_brief(path: Path, locked_sha256: str) -> ResearchBrief:
     """Read the brief back; any edit since the lock is ``BriefInvalid("hash mismatch")``.
 
-    Two checks: the file's body must hash to its own ``brief_sha256``, and that hash must be the
-    one recorded at the lock (``run.json``), so rewriting both in the file is caught too.
+    The raw stored body is hashed first and compared with both the hash stored in the file and
+    the one recorded at the lock (``run.json``), so rewriting both in the file is caught too.
+    Only a body that passes is validated; an unreadable or non-object file is the same refusal.
     """
-    stored: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-    rebuilt = rebuild_brief(stored)
-    if stored.get("brief_sha256") != rebuilt.brief_sha256 or rebuilt.brief_sha256 != locked_sha256:
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BriefInvalid(HASH_MISMATCH) from error
+    if not isinstance(stored, dict):
         raise BriefInvalid(HASH_MISMATCH)
-    return rebuilt
+    computed = body_sha256(stored)
+    if stored.get("brief_sha256") != computed or computed != locked_sha256:
+        raise BriefInvalid(HASH_MISMATCH)
+    return rebuild_brief(stored)

@@ -71,7 +71,12 @@ from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
-from deploy_workflow.owners.period_basis import PeriodRefused, currency_of, run_currency
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_CURRENCY,
+    PeriodRefused,
+    currency_of,
+    run_currency,
+)
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2A"
@@ -1578,7 +1583,7 @@ def _stated_currency(cp1: Iterable[Fact]) -> str:
         for f in cp1
         if f.table_id == "T4.14" and f.field == "currency" and f.status == "known" and f.text
     }
-    return stated.pop() if len(stated) == 1 else "USD"
+    return stated.pop() if len(stated) == 1 else DEFAULT_CURRENCY.currency
 
 
 def _run_currency(pack: PreparedPack, cp1: Iterable[Fact]) -> str:

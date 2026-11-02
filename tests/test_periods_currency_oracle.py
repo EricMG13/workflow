@@ -221,14 +221,6 @@ ALLOWED: dict[tuple[str, str], str] = {
     ): DEFAULT_CURRENCY,
     (
         "cp1b.py",
-        'return ContextPair(None, (clipped(("Context refused: ", str(error))),)), "USD"',
-    ): "refused context offers no pair; the currency is unused (P8-R5)",
-    (
-        "cp1b.py",
-        'return ContextPair(None, (clipped((str(error),)),)), "USD"',
-    ): "refused currency offers no pair; the currency is unused (P8-R5)",
-    (
-        "cp1b.py",
         "2025 register, q3-2025 -> q4-2025 and fy-2024 -> fy-2025). With a context naming both periods",
     ): "docstring describing the default (no-context) 2025 register pair",
     (
@@ -252,15 +244,8 @@ ALLOWED: dict[tuple[str, str], str] = {
     ): DEFAULT_CURRENCY,
     (
         "cp2a.py",
-        'return stated.pop() if len(stated) == 1 else "USD"',
-    ): "the T4.14 currency, else USD only for a refused context (no figure is offered)",
-    (
-        "cp2a.py",
         'pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream, currency: str = "USD"',
     ): DEFAULT_CURRENCY,
-    ("cp2e.py", 'if context.run.reporting_currency != "USD":'): (
-        "blank base keeps the default year only for the default currency (ruling P8-R3)"
-    ),
     ("cpl10.py", 'self, table: str, row: str, cp1: Mapping[str, Fact], currency: str = "USD"'): (
         DEFAULT_CURRENCY
     ),

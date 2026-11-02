@@ -41,7 +41,7 @@ from deploy_workflow.context_periods import resolve
 from deploy_workflow.earnings import EarningsDeltaReport, _periods, build_earnings_delta_in
 from deploy_workflow.earnings_workflow import OwnerError, _operands, _own_limits, compose_delta
 from deploy_workflow.owners.cp1a import probe_one_step
-from deploy_workflow.owners.period_basis import PeriodRefused, currency_basis
+from deploy_workflow.owners.period_basis import DEFAULT_CURRENCY, PeriodRefused, currency_basis
 from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-1B"
@@ -320,9 +320,11 @@ def _context_state(module: ModuleView, pack: PreparedPack) -> tuple[ContextPair,
         fixed = context_pair(module, pack)
         return fixed, run_currency(module, pack)
     except ContextRefused as error:
-        return ContextPair(None, (clipped(("Context refused: ", str(error))),)), "USD"
+        return ContextPair(
+            None, (clipped(("Context refused: ", str(error))),)
+        ), DEFAULT_CURRENCY.currency
     except CurrencyRefused as error:
-        return ContextPair(None, (clipped((str(error),)),)), "USD"
+        return ContextPair(None, (clipped((str(error),)),)), DEFAULT_CURRENCY.currency
 
 
 def _default_pairs(rows: Mapping[str, Mapping[str, Fact]]) -> tuple[tuple[str, str], ...]:

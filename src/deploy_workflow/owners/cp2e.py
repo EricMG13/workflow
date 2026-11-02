@@ -54,6 +54,7 @@ from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.period_basis import DEFAULT_CURRENCY
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 from deploy_workflow.workflow import WorkflowError
 
@@ -433,7 +434,7 @@ def periods_of(pack: PreparedPack) -> Periods:
         return Periods(DEFAULT_PERIODS.year, as_of)
     base = context.run.current_period
     if not base:
-        if context.run.reporting_currency != "USD":
+        if context.run.reporting_currency != DEFAULT_CURRENCY.currency:
             raise PeriodRefused(
                 f"run.current_period is blank and run.reporting_currency is "
                 f"{context.run.reporting_currency}: the statement year cannot be dated"

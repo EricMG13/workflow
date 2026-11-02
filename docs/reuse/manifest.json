@@ -2201,7 +2201,7 @@
       "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "prior_project_sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
       "project_commit": "9f32bbd3b182f669d4a8ef54e6a1d1c90b0679d4",
-      "sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+      "sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
       "reason": "Phase 7 Task 1: CP-1C registers T1C.9-T1C.11 (EV/EBITDA admission, statistics, basis selection) after T1C.8; CP-4C optional gains CP-1C (not required: no new required edge).",
       "review": "docs/rulings/ruling P7-R4; .superpowers/sdd/2026-10-31-phase-7-valuation/task-1-repin-review.md"
     },

@@ -1,0 +1,118 @@
+name: checkpoint
+
+on:
+  push:
+    branches: [codex/checkpoint]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          version: "0.12.5"
+          python-version: "3.13.15"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Pins
+        run: uv run --frozen python -I cases/pins.py --check
+      # Goldens (cases/goldens/check.py) is not run here: it defaults --corpus to a local
+      # absolute path under the gitignored artifacts/public-corpus/v1, so it needs the local corpus.
+
+  heavy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      RUN_PROMOTION: "1"
+      PYTHONPATH: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        file:
+          - tests/test_owner_rendering.py
+          - tests/test_owner_workflow.py
+          - tests/test_owner_s1a.py
+          - tests/test_financial_workflow.py
+          - tests/test_financial_render.py
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          version: "0.12.5"
+          python-version: "3.13.15"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Heavy test file
+        env:
+          TEST_FILE: ${{ matrix.file }}
+        run: |
+          set -euo pipefail
+          echo "$TEST_FILE"
+          rc=0
+          uv run --frozen pytest "$TEST_FILE" -m "not live" --durations=25 || rc=$?
+          if [ "$rc" -eq 5 ]; then
+            echo "all selected tests deselected by -m 'not live'"
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      RUN_PROMOTION: "1"
+      PYTHONPATH: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          version: "0.12.5"
+          python-version: "3.13.15"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Shard tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          find tests -name 'test_*.py' | sort \
+            | grep -v -x -F \
+              -e tests/test_owner_rendering.py \
+              -e tests/test_owner_workflow.py \
+              -e tests/test_owner_s1a.py \
+              -e tests/test_financial_workflow.py \
+              -e tests/test_financial_render.py \
+            | awk -v s="$SHARD" '(NR-1) % 8 == s' > "$RUNNER_TEMP/shard.txt"
+          echo "shard $SHARD files:"
+          cat "$RUNNER_TEMP/shard.txt"
+          [ -s "$RUNNER_TEMP/shard.txt" ] || { echo "empty shard"; exit 0; }
+          mapfile -t files < "$RUNNER_TEMP/shard.txt"
+          rc=0
+          uv run --frozen pytest "${files[@]}" -m "not live" --durations=25 || rc=$?
+          if [ "$rc" -eq 5 ]; then
+            echo "all selected tests deselected by -m 'not live'"
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi

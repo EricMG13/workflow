@@ -94,8 +94,9 @@ Dispatch (user, 2026-10-28):
 - An implementer's first step enters a worktree cut from the lane tip and checks
   that `git rev-parse HEAD` equals the tip; stop on mismatch. Before launching a
   cohort, dispatch one agent and confirm it starts on the right commit.
-- At most six Opus agents run at once across a session. Checks of a diff that
-  only applies LEAD's ruling text go to `mx-feature`, not an Opus reviewer.
+- At most 15 subagents run at once per session, of any model; there is no
+  separate Opus cap (user, 2026-11-01). Checks of a diff that only applies
+  LEAD's ruling text go to `mx-feature`, not an Opus reviewer.
 
 Module stage routing (user, 2026-10-28; plan
 `docs/superpowers/plans/2026-10-28-verified-module-builds.md`). Stage 1 keeps its

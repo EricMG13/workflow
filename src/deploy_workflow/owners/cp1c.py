@@ -2615,6 +2615,16 @@ def _inputs(
     return _with_context(base, pack, upstream.cp1.facts)
 
 
+def _citable_context_source(pack: PreparedPack) -> Source:
+    """The pack's context source; ContextRefused when it cannot be cited by line."""
+    source = next(s for s in pack.sources if s.source_id == "context")
+    try:
+        context_cites(source)
+    except ValueError as error:
+        raise ContextRefused([f"sources.context: {error}"]) from error
+    return source
+
+
 def _with_context(
     inputs: PeerBenchmarkInputs, pack: PreparedPack, cp1_facts: Iterable[Fact]
 ) -> PeerBenchmarkInputs:
@@ -2625,11 +2635,7 @@ def _with_context(
     context = context_facts(pack)
     if context is None or not shows_valuation(context.valuation):
         return replace(inputs, context=context)
-    source = next(s for s in pack.sources if s.source_id == "context")
-    try:
-        context_cites(source)
-    except ValueError as error:
-        raise ContextRefused([f"sources.context: {error}"]) from error
+    source = _citable_context_source(pack)
     ebitda = select_cp1(cp1_facts, inputs.basis)["ebitda"]
     return replace(inputs, context=context, context_source=source, cp1_ebitda=ebitda)
 
@@ -2877,28 +2883,55 @@ def _view_row(row_id: str, row: PeerRow) -> dict[str, object]:
     }
 
 
-def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
-    """The run's basis for the view, or the issue line `_checked` returns for the same refusal
-    (P8-R5: `read_inputs` never raises on a context, period or currency refusal)."""
+def _view_default(upstream: Upstream) -> tuple[PeriodBasis | None, dict[str, Fact]]:
+    """What `DEFAULT_BASIS` selects for a refused context (P8T4-R2, as cp2d): nothing when the
+    CP-1 head holds no such column."""
     try:
-        return run_basis(context_facts(pack), upstream.cp1.facts), None
-    except (ContextRefused, PeriodRefused) as error:
-        return None, _basis_issue(error)
-
-
-def _view_offer(
-    pack: PreparedPack, upstream: Upstream, source: Source | None, basis: PeriodBasis | None
-) -> tuple[PeerSheet | None, dict[str, Fact]]:
-    """The peer sheet and the four CP-1 facts the view offers: nothing without a basis, and no
-    rows when the table rule cannot read a ready peers source."""
-    if basis is None:
+        return DEFAULT_BASIS, _cp1_metrics(upstream.cp1, DEFAULT_BASIS)
+    except ValueError:
         return None, {}
-    facts = _cp1_metrics(upstream.cp1, basis)
+
+
+def _view_context_use(pack: PreparedPack, upstream: Upstream, basis: PeriodBasis) -> None:
+    """The checks `_with_context` makes of a context with a valuation: citable by line, and one
+    EBITDA fact in CP-1's column."""
+    context = context_facts(pack)
+    if context is not None and shows_valuation(context.valuation):
+        _citable_context_source(pack)
+        select_cp1(upstream.cp1.facts, basis)
+
+
+def _view_selection(
+    pack: PreparedPack, upstream: Upstream
+) -> tuple[PeriodBasis | None, dict[str, Fact], str | None]:
+    """(basis, facts, issue) the view offers. A refusal the validator states becomes the same
+    issue line and the view never raises (P8-R5, P8T2-R3). A refused context still offers what
+    the default basis selects (P8T2-R1, P8T2-R2); a refused period, currency or CP-1 selection
+    offers nothing."""
     try:
-        sheet = parse_peer_source(source, issuer_name=pack.run.issuer_name, currency=basis.currency)
+        basis = run_basis(context_facts(pack), upstream.cp1.facts)
+        facts = _cp1_metrics(upstream.cp1, basis)
+        _view_context_use(pack, upstream, basis)
+    except ContextRefused as error:
+        return *_view_default(upstream), _basis_issue(error)
+    except PeriodRefused as error:
+        return None, {}, _basis_issue(error)
+    except ValueError as error:  # the validator's `CP-1 facts unavailable` line
+        return None, {}, clipped(("CP-1 facts unavailable: ", str(error)))
+    return basis, facts, None
+
+
+def _view_sheet(
+    pack: PreparedPack, source: Source | None, basis: PeriodBasis | None
+) -> PeerSheet | None:
+    """The peer sheet the view reads under the basis's currency: none without a basis, and none
+    when the table rule cannot read a ready peers source."""
+    if basis is None:
+        return None
+    try:
+        return parse_peer_source(source, issuer_name=pack.run.issuer_name, currency=basis.currency)
     except PeerTableError:
-        sheet = None
-    return sheet, facts
+        return None
 
 
 def _peers_view(source: Source | None, sheet: PeerSheet | None) -> dict[str, object]:
@@ -2921,8 +2954,8 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     citation or record is in it. A ready peers source the table rule cannot read shows no rows
     (the validator refuses every payload over it with `Peer table not found`)."""
     source = _peer_source(pack.sources)
-    basis, issue = _view_basis(pack, upstream)
-    sheet, facts = _view_offer(pack, upstream, source, basis)
+    basis, facts, issue = _view_selection(pack, upstream)
+    sheet = _view_sheet(pack, source, basis)
     block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}

@@ -24,8 +24,8 @@ TDR.3 has one row per question plus the `total` row, which is the sum of the que
 ## Intake
 
 - Each research item names a file, a family, a publication date, a locator and the tag `research`. Python assigns the ids `ev-1`, `ev-2` and so on, in manifest order. The user cannot choose one.
-- An item dated after the cutoff is refused. The cutoff is the as-of date. An undated item is refused when the as-of date is before today.
-- A URL row is refused while web retrieval is unavailable.
+- An item dated after the cutoff is refused. The cutoff is the earlier of the as-of date and the context's `run.cutoff`; with no `run.cutoff` it is the as-of date. An undated item is refused when the as-of date is before today.
+- A URL row is fetched only when the run names a user ruling that lifts the live-provider pause for `web-retrieval` (`research_ruling`); without one every URL row is refused before anything is written, and the refusal names the ruling the run needs. A fetched item is `https` only, from the user's manifest, with every address public, at most three redirects, the same byte cap, and a recorded url, address, status, size and hash in `research/fetches.json`; a publication date found in the response can refuse an item, never admit one.
 - The per-item cap is `preparation.MAX_BYTES`, applied to the raw read.
 - The converted text limit is the same `preparation.MAX_BYTES`, because the pack refuses any staged source above it. HTML is reduced to text with the standard library parser only.
 - URL locators with `?`, `=`, `&`, `%` or `#` are refused by the fence header rule (a locator must match `[A-Za-z0-9][A-Za-z0-9._:+/-]*`), because a header field is placed in the header line of its evidence block.

@@ -38,6 +38,7 @@ from deploy_workflow.research.contracts import ReservedSourceId, refuse_reserved
 from deploy_workflow.research.intake import (
     AcceptedItem,
     RefusedItem,
+    effective_cutoff,
     intake,
     parse_rows,
     write_rejected,
@@ -305,7 +306,7 @@ def _research_staging(manifest: Path, context: RunContext) -> ResearchStaging:
         base_dir=manifest.parent,
         dest_dir=None,
         as_of=as_of,
-        cutoff=as_of,  # O7-R19: the cutoff is the as-of date
+        cutoff=effective_cutoff(as_of, context.run.cutoff),  # O7b-2 D9: min(as_of, run.cutoff)
         today=moment.date(),
     )
     return ResearchStaging(

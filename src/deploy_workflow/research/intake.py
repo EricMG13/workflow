@@ -124,6 +124,14 @@ def _refusal(row: ManifestRow, reason: str) -> RefusedItem:
     return RefusedItem(row.locator, row.family, row.published, reason)
 
 
+def effective_cutoff(as_of: date, context_cutoff: str) -> date:
+    """The research cutoff: ``min(as_of, run.cutoff)``; an absent context cutoff is the as-of date
+    (O7b-2 D9, OD5; the context reader already refuses a later one)."""
+    if context_cutoff == "":
+        return as_of
+    return min(as_of, date.fromisoformat(context_cutoff))
+
+
 def _date_refusal(row: ManifestRow, as_of: date, cutoff: date, today: date) -> RefusedItem | None:
     if row.published is None:
         if as_of < today:

@@ -61,7 +61,7 @@ from deploy_workflow.research.contracts import (
     ResearchBrief,
 )
 from deploy_workflow.research.dossier import DossierInput, breaks_a_table_cell, brief_json
-from deploy_workflow.research.intake import RefusedItem
+from deploy_workflow.research.intake import RefusedItem, effective_cutoff
 from deploy_workflow.research.review import (
     ResearchSubmission,
     answer_counts,
@@ -172,6 +172,16 @@ def _context_questions(pack: PreparedPack) -> tuple[tuple[str, str], ...]:
     return tuple((q.text, q.focus_module) for q in context.research_questions)
 
 
+def _context_cutoff(pack: PreparedPack) -> date:
+    """The research cutoff of the run: ``min(as_of, run.cutoff)`` of its context file (O7b-2 D9);
+    the as-of date when the file is absent or sets no cutoff."""
+    try:
+        context = context_facts(pack)
+    except ContextRefused:
+        raise WorkflowError("identity_mismatch") from None
+    return effective_cutoff(pack.run.as_of, "" if context is None else context.run.cutoff)
+
+
 def _anchor(snapshot: ExecutionSnapshot) -> Anchor:
     """The CP-0 and CP-1 heads the brief binds (``check_begin`` ran at the begin)."""
     heads = {head.module_id: head.result_sha256 for head in snapshot.heads}
@@ -251,12 +261,12 @@ def _validate_brief(store: Execution, pack: PreparedPack, attempt: Attempt) -> S
     )
     if issues:
         return StepValidation(issues=bounded_issues(issues))
-    try:  # O7-R19: the cutoff is the as-of date
+    try:
         brief = ResearchBrief.build(
             issuer_id=run.issuer_id,
             run_id=run.run_id,
             as_of=run.as_of,
-            cutoff=run.as_of,
+            cutoff=_context_cutoff(pack),
             questions=merge_questions(_context_questions(pack), tailored_of(parsed)),
             anchor=_anchor(snapshot),
             peer_pack=False,
@@ -369,7 +379,7 @@ def brief_view(store: Execution, attempt: Attempt) -> tuple[str, str]:
         brief_view_body(
             context_questions=_context_questions(pack),
             as_of=run.as_of,
-            cutoff=run.as_of,
+            cutoff=_context_cutoff(pack),
             sources=[
                 s.source_id for s in pack.sources if not s.source_id.startswith(RESERVED_PREFIX)
             ],

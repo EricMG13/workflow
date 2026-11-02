@@ -20,7 +20,7 @@ from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import ValidationError
+from pydantic import SerializerFunctionWrapHandler, ValidationError, model_serializer
 
 from deploy_vii.contracts import Contract, PathwayId, Run
 from deploy_vii.preparation import (
@@ -73,6 +73,16 @@ class RunSettings(Contract):
     current_period: str
     prior_period: str
     reporting_currency: str
+    cutoff: str = ""  # absent = the as-of date (O7b-2 D9)
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_cutoff(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """A file that never set ``cutoff`` dumps without it, so the context files and goldens
+        written before the field existed round-trip unchanged (O7b-2 Q12)."""
+        dumped: dict[str, Any] = handler(self)
+        if self.cutoff == "":
+            dumped.pop("cutoff", None)
+        return dumped
 
 
 class Identity(Contract):
@@ -489,6 +499,7 @@ class _Rules:
     def run_section(self) -> None:
         run = self.ctx.run
         self.date("run.as_of", run.as_of, req=True)
+        self.date("run.cutoff", run.cutoff, after=True)
         earnings = run.run_type == "earnings"
         for name in ("current_period", "prior_period"):
             value = getattr(run, name)

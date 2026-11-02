@@ -33,6 +33,7 @@ from cpdr_s1_support import ResearchCase
 from deploy_vii import registry
 from deploy_vii.contracts import validate_tables
 from deploy_vii.execution import Execution, Head
+from deploy_vii.preparation import SourceRequest, prepare_source
 from deploy_workflow import owner_workflow
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model.loop import StepStopped
@@ -754,8 +755,8 @@ def cutoff_context(monkeypatch: pytest.MonkeyPatch) -> None:
         document = json.loads("\n".join(span.text for span in source.spans))
         document["run"]["cutoff"] = _cutoff_key()["cutoff"]["context"]
         raw = (json.dumps(document, indent=2) + "\n").encode("utf-8")
-        return runs.prepare_source(
-            runs.SourceRequest(source_id="context", path="context.json", media_type="text/plain"),
+        return prepare_source(
+            SourceRequest(source_id="context", path="context.json", media_type="text/plain"),
             raw,
         )
 

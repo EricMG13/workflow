@@ -136,6 +136,7 @@
   "cases/cpdr-research-owner/manifest.json": "6baf6aaaaac0e87ed817e9f30bd442fd285e6ec61d69c7ab5a5e469fab0f217b",
   "cases/cpdr-research-owner/submissions.json": "c93c730815e773625c1eda0db38a6586a682a8746e12ab6e44843392c0d89cf1",
   "cases/cpdr-web-retrieval/builder/build.py": "307130c94c81c1f3c3f8daf37a2f92398bb8529f87e00c9ca5f27059cad94696",
+  "cases/cpdr-web-retrieval/expected.json": "46a9cf1f8e1a3f9058608dc44179eb10c1877a16009cdcc1531c8af0a7c15915",
   "cases/cpdr-web-retrieval/manifest.json": "51c1d8ef7e725d0a53d8969fb6ff68913b05225d0fe4805aaa0063c32613e0d4",
   "cases/cpl10-owner/builder/build.py": "e6a6dd41f9f360be53a5fec107855c4fa882ac76d64f767c36ca0aef4114562f",
   "cases/cpl10-owner/expected.json": "285915140dbd7722e406ce96bb11c20ab5f5ce370e6649748299f4809695ce45",

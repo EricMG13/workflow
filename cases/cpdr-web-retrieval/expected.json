@@ -1,0 +1,453 @@
+{
+ "schema_version": "cpdr-web-retrieval-expected/1",
+ "derivation_note": "Built by cases/cpdr-web-retrieval/builder/build.py from manifest.json; every hash from embedded bytes. Reasons not marked _source are written here by the oracle preparer; they name no code path.",
+ "gate": {
+  "no_ruling": {
+   "exception": "EvidenceFetchRefused",
+   "text": "url rows need web retrieval, which is paused: give research_ruling, a user ruling under docs/rulings with lifts: live-provider-pause, by: user, date: and a configs: line naming web-retrieval"
+  },
+  "configs_missing": {
+   "exception": "LivePauseInForce",
+   "text": "the ruling does not list 'web-retrieval'",
+   "_source": "src/deploy_workflow/model/adapter.py:192 (the configs: token test, with config_id 'web-retrieval')"
+  },
+  "lifts_missing": {
+   "exception": "LivePauseInForce",
+   "text": "the ruling needs exactly one lifts: line",
+   "_source": "src/deploy_workflow/model/adapter.py:179 (with key 'lifts')"
+  },
+  "good": {
+   "config_id": "web-retrieval",
+   "date": "2026-11-02",
+   "sha256": "033176386cd60396d96473659e9cebbf704aecc8c1fc2e848eca9029556142f3"
+  },
+  "resolver_calls_before_gate": 0,
+  "unused_ruling": {
+   "exception": "ResearchRulingUnused",
+   "text": "a research_ruling is only read when the research manifest has a url row",
+   "_note": "mirrors src/deploy_workflow/run_inputs.py:349 (ResearchManifestUnused)"
+  }
+ },
+ "url_checks": {
+  "http": {
+   "url": "http://sector-desk.example/x",
+   "reason": "url http://sector-desk.example/x: the scheme must be https"
+  },
+  "file": {"url": "file:///etc/passwd", "reason": "url file:///etc/passwd: the scheme must be https"},
+  "ftp": {
+   "url": "ftp://sector-desk.example/x",
+   "reason": "url ftp://sector-desk.example/x: the scheme must be https"
+  },
+  "data": {"url": "data:text/plain,hi", "reason": "url data:text/plain,hi: the scheme must be https"},
+  "userinfo": {
+   "url": "https://user:pw@sector-desk.example/x",
+   "reason": "url https://user:pw@sector-desk.example/x: a user name or password is not allowed"
+  },
+  "empty_host": {"url": "https:///x", "reason": "url https:///x: the host is missing"}
+ },
+ "is_public": {
+  "vectors": [
+   {"addr": "127.0.0.1", "public": false},
+   {"addr": "10.0.0.5", "public": false},
+   {"addr": "169.254.169.254", "public": false},
+   {"addr": "100.64.0.1", "public": false},
+   {"addr": "224.0.0.1", "public": false},
+   {"addr": "0.0.0.0", "public": false},
+   {"addr": "240.0.0.1", "public": false},
+   {"addr": "203.0.113.10", "public": false},
+   {"addr": "8.8.8.8", "public": true},
+   {"addr": "93.184.216.34", "public": true},
+   {"addr": "::1", "public": false},
+   {"addr": "::", "public": false},
+   {"addr": "fe80::1", "public": false},
+   {"addr": "ff02::1", "public": false},
+   {"addr": "::ffff:10.0.0.1", "public": false},
+   {"addr": "::ffff:8.8.8.8", "public": true},
+   {"addr": "2001:db8::1", "public": false},
+   {"addr": "2606:4700::1111", "public": true}
+  ],
+  "rule": "ipaddress is_global after unwrapping ::ffff:a.b.c.d, and not multicast",
+  "_note": "ipaddress reports is_global True for the multicast vectors 224.0.0.1 and ff02::1 (Python 3.14.6); they are not public. For every other vector, and for every non-multicast address, public == ipaddress is_global of the unwrapped address, so a property test must exclude multicast from the is_global comparison.",
+  "ipaddress_is_global": {
+   "127.0.0.1": false,
+   "10.0.0.5": false,
+   "169.254.169.254": false,
+   "100.64.0.1": false,
+   "224.0.0.1": true,
+   "0.0.0.0": false,
+   "240.0.0.1": false,
+   "203.0.113.10": false,
+   "8.8.8.8": true,
+   "93.184.216.34": true,
+   "::1": false,
+   "::": false,
+   "fe80::1": false,
+   "ff02::1": true,
+   "::ffff:10.0.0.1": false,
+   "::ffff:8.8.8.8": true,
+   "2001:db8::1": false,
+   "2606:4700::1111": true
+  }
+ },
+ "hosts": {
+  "_note": "Public addresses are 93.184.216.x, which ipaddress reports is_global (the documentation ranges 203.0.113.0/24 and 198.51.100.0/24 are not global, so they are not used for public hosts); build.py asserts is_global for every address labelled public and not-global (after unwrapping ::ffff:a.b.c.d) for every address labelled private (O7-R46). Nothing dials these addresses. A host is public only when every address it resolves to is public. Host probes use https://<host>/probe fetched with manifest_hosts = #manifest_hosts plus the probe host.",
+  "sector-desk.example": {"addresses": ["93.184.216.34"], "public": true, "class": "public", "reason": null},
+  "trade-press.example": {
+   "addresses": ["93.184.216.35", "10.0.0.5"],
+   "public": false,
+   "class": "private",
+   "reason": "host trade-press.example resolves to 10.0.0.5, which is not a public address"
+  },
+  "loop.example": {
+   "addresses": ["127.0.0.1"],
+   "public": false,
+   "class": "loopback",
+   "reason": "host loop.example resolves to 127.0.0.1, which is not a public address"
+  },
+  "metadata.example": {
+   "addresses": ["169.254.169.254"],
+   "public": false,
+   "class": "link-local",
+   "reason": "host metadata.example resolves to 169.254.169.254, which is not a public address"
+  },
+  "six-loop.example": {
+   "addresses": ["::1"],
+   "public": false,
+   "class": "loopback",
+   "reason": "host six-loop.example resolves to ::1, which is not a public address"
+  },
+  "mapped.example": {
+   "addresses": ["::ffff:10.0.0.1"],
+   "public": false,
+   "class": "private",
+   "reason": "host mapped.example resolves to ::ffff:10.0.0.1, which is not a public address"
+  },
+  "link.example": {
+   "addresses": ["fe80::1"],
+   "public": false,
+   "class": "link-local",
+   "reason": "host link.example resolves to fe80::1, which is not a public address"
+  },
+  "redirect-a.example": {"addresses": ["93.184.216.40"], "public": true, "class": "public", "reason": null},
+  "redirect-b.example": {"addresses": ["93.184.216.41"], "public": true, "class": "public", "reason": null},
+  "redirect-c.example": {"addresses": ["93.184.216.42"], "public": true, "class": "public", "reason": null},
+  "redirect-d.example": {"addresses": ["93.184.216.43"], "public": true, "class": "public", "reason": null},
+  "outside.example": {"addresses": ["93.184.216.50"], "public": true, "class": "public", "reason": null}
+ },
+ "redirects": {
+  "three_hops_ok": {
+   "url": "https://redirect-a.example/three-hops",
+   "hops": 3,
+   "status": 200,
+   "reason": null,
+   "resolved_hosts": ["redirect-a.example", "redirect-b.example", "redirect-c.example", "redirect-d.example"]
+  },
+  "fourth_hop": {
+   "url": "https://redirect-a.example/four-hops",
+   "hops": 3,
+   "status": 302,
+   "reason": "https://redirect-a.example/four-hops redirected more than 3 times",
+   "resolved_hosts": ["redirect-a.example", "redirect-b.example", "redirect-c.example", "redirect-d.example"]
+  },
+  "to_http": {
+   "url": "https://redirect-a.example/to-http",
+   "hops": 0,
+   "status": 302,
+   "reason": "redirect to http://redirect-b.example/plain refused: the scheme must be https",
+   "resolved_hosts": ["redirect-a.example"]
+  },
+  "to_non_manifest_host": {
+   "url": "https://redirect-a.example/to-outside",
+   "hops": 0,
+   "status": 302,
+   "reason": "redirect to host outside.example refused: not a host named in the manifest",
+   "resolved_hosts": ["redirect-a.example"]
+  },
+  "to_private": {
+   "url": "https://redirect-a.example/to-private",
+   "hops": 1,
+   "status": 302,
+   "reason": "host trade-press.example resolves to 10.0.0.5, which is not a public address",
+   "resolved_hosts": ["redirect-a.example", "trade-press.example"]
+  },
+  "_note": "hops = redirects followed; the limit is 3, a fourth redirect is refused. status is the last response read; resolved_hosts are the hosts the resolver was asked about, in order."
+ },
+ "request": {
+  "method": "GET",
+  "path": "/notes/supply-costs?edition=2&lang=en",
+  "headers": {"Host": "sector-desk.example", "User-Agent": "deploy-workflow-cpdr", "Accept": "text/html, text/plain"},
+  "verbatim_url": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en"
+ },
+ "connection": {
+  "host": "sector-desk.example",
+  "ip": "93.184.216.34",
+  "port": 443,
+  "server_hostname": "sector-desk.example",
+  "check_hostname": true,
+  "verify_mode": "CERT_REQUIRED",
+  "resolver_calls_per_hop": 1,
+  "probe_url": "https://sector-desk.example/notes/header-dated"
+ },
+ "proxy": {
+  "env": {"HTTPS_PROXY": "http://127.0.0.1:9", "https_proxy": "http://127.0.0.1:9"},
+  "ip_received": "93.184.216.34"
+ },
+ "timeout": {
+  "total_seconds": 30,
+  "url": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
+  "reason": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en took longer than 30 seconds"
+ },
+ "cap": {
+  "cap": 600,
+  "at_cap_sha256": "f0398105e48c5b2ff42d0a576046766ed3d4abec02c56f2df3f0978d41f08a18",
+  "over_cap_reason": "https://sector-desk.example/notes/over-cap body is larger than the 600-byte cap",
+  "max_read_request": 601
+ },
+ "published": {
+  "header_case": {
+   "url": "https://sector-desk.example/notes/header-dated",
+   "published_located": "2025-12-15",
+   "published_source": "header:last-modified",
+   "disposition": "accepted",
+   "reason": null
+  },
+  "body_case": {
+   "url": "https://sector-desk.example/notes/body-dated",
+   "published_located": "2025-12-22",
+   "published_source": "body:published-line",
+   "disposition": "accepted",
+   "reason": null
+  },
+  "located_after_cutoff": {
+   "url": "https://sector-desk.example/notes/body-late",
+   "published_located": "2026-02-03",
+   "published_source": "body:published-line",
+   "disposition": "refused",
+   "reason": "evidence item https://sector-desk.example/notes/body-late has a located publication date 2026-02-03 after the cutoff 2026-01-10"
+  },
+  "neither": {
+   "url": "https://sector-desk.example/notes/no-date",
+   "published_located": null,
+   "published_source": null,
+   "disposition": "refused",
+   "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
+  },
+  "located_cannot_admit": {
+   "url": "https://sector-desk.example/notes/located-only",
+   "published_located": "2025-12-21",
+   "published_source": "body:published-line",
+   "disposition": "refused",
+   "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
+  },
+  "_source": "the undated reason is src/deploy_workflow/research/intake.py:130 (holds for any run date after as_of); located_after_cutoff is written here"
+ },
+ "text": {
+  "html_case": {
+   "url": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
+   "converted_text": "Synthetic sector desk note.\nSupply of industrial products is concentrated.\nThis invented case is test data, not evidence about real issuers.",
+   "converted_sha256": "58facb6ded19e04ca329e331ea8131c7ce05f8fdad4b46e10e6942ff769c2630",
+   "rule": "head dropped, one line per <p>, trailing newline stripped (tests/test_html_text.py; tests/research/test_intake.py:214)"
+  },
+  "plain_case": {
+   "url": "https://sector-desk.example/notes/header-dated",
+   "sha256": "2af742900be046442aa101da6bf2ab2ce114965e9e965d1024592f1cbc811f1e"
+  },
+  "unsupported_media_reason": "https://sector-desk.example/notes/report.pdf returned unsupported media type application/pdf"
+ },
+ "records": {
+  "fetches_json": {
+   "file_bytes": "[\n {\n  \"url\": \"https://sector-desk.example/notes/supply-costs?edition=2&lang=en\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 219,\n  \"sha256\": \"2fe0943649a7f06dc3cedbae40173f5eac9a89f87d93ff4b0c1f8815a7d6062e\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": \"ev-2\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://sector-desk.example/notes/header-dated\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 94,\n  \"sha256\": \"2af742900be046442aa101da6bf2ab2ce114965e9e965d1024592f1cbc811f1e\",\n  \"published_located\": \"2025-12-15\",\n  \"published_source\": \"header:last-modified\",\n  \"hops\": 0,\n  \"item_id\": \"ev-3\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://sector-desk.example/notes/body-dated\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 114,\n  \"sha256\": \"3a752b8a71ef7703be3a19ddcaaaf11a51a8c2305e3203a7fb310fdb04edaee2\",\n  \"published_located\": \"2025-12-22\",\n  \"published_source\": \"body:published-line\",\n  \"hops\": 0,\n  \"item_id\": \"ev-4\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://sector-desk.example/notes/body-late\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 114,\n  \"sha256\": \"b672fba2e884357c7f8fc4f74524e7ede7c8bfd8f25d5622df72c9226a7d9e62\",\n  \"published_located\": \"2026-02-03\",\n  \"published_source\": \"body:published-line\",\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"evidence item https://sector-desk.example/notes/body-late has a located publication date 2026-02-03 after the cutoff 2026-01-10\"\n },\n {\n  \"url\": \"https://sector-desk.example/notes/no-date\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 106,\n  \"sha256\": \"7d7982cadf079195787ece7bd6015e2c6ac0704bfbc18126d025c4b9e07c0b77\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n },\n {\n  \"url\": \"https://sector-desk.example/notes/located-only\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 126,\n  \"sha256\": \"e798c2973cdfc9e774921ec207f8147538756478b0c3e173c9a9adcefcf63d3d\",\n  \"published_located\": \"2025-12-21\",\n  \"published_source\": \"body:published-line\",\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n },\n {\n  \"url\": \"https://sector-desk.example/notes/at-cap\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 600,\n  \"sha256\": \"f0398105e48c5b2ff42d0a576046766ed3d4abec02c56f2df3f0978d41f08a18\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": \"ev-5\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://sector-desk.example/notes/over-cap\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"https://sector-desk.example/notes/over-cap body is larger than the 600-byte cap\"\n },\n {\n  \"url\": \"https://sector-desk.example/notes/server-error\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 500,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"https://sector-desk.example/notes/server-error answered status 500\"\n },\n {\n  \"url\": \"https://sector-desk.example/notes/report.pdf\",\n  \"resolved_ip\": \"93.184.216.34\",\n  \"status\": 200,\n  \"bytes\": 18,\n  \"sha256\": \"105156e58646c5274f4f7420d8cd21020fc3cca3eeffb8453fbd3b5859675a7c\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"https://sector-desk.example/notes/report.pdf returned unsupported media type application/pdf\"\n },\n {\n  \"url\": \"https://redirect-a.example/three-hops\",\n  \"resolved_ip\": \"93.184.216.43\",\n  \"status\": 200,\n  \"bytes\": 111,\n  \"sha256\": \"f0588b414b5003d5ee67264bb711b147d9ab847e4ed49a5297059d0d6d5fe2e6\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 3,\n  \"item_id\": \"ev-6\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://redirect-a.example/four-hops\",\n  \"resolved_ip\": \"93.184.216.43\",\n  \"status\": 302,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 3,\n  \"item_id\": null,\n  \"reason\": \"https://redirect-a.example/four-hops redirected more than 3 times\"\n },\n {\n  \"url\": \"https://redirect-a.example/to-http\",\n  \"resolved_ip\": \"93.184.216.40\",\n  \"status\": 302,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"redirect to http://redirect-b.example/plain refused: the scheme must be https\"\n },\n {\n  \"url\": \"https://redirect-a.example/to-outside\",\n  \"resolved_ip\": \"93.184.216.40\",\n  \"status\": 302,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"redirect to host outside.example refused: not a host named in the manifest\"\n },\n {\n  \"url\": \"https://redirect-a.example/to-private\",\n  \"resolved_ip\": \"93.184.216.40\",\n  \"status\": 302,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 1,\n  \"item_id\": null,\n  \"reason\": \"host trade-press.example resolves to 10.0.0.5, which is not a public address\"\n },\n {\n  \"url\": \"https://redirect-b.example/anchor\",\n  \"resolved_ip\": \"93.184.216.41\",\n  \"status\": 200,\n  \"bytes\": 90,\n  \"sha256\": \"16382cf8bc66bc845b7f99c05c0de62b7bb0da1817fa5717a02cb60dd215e159\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": \"ev-7\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://redirect-c.example/anchor\",\n  \"resolved_ip\": \"93.184.216.42\",\n  \"status\": 200,\n  \"bytes\": 90,\n  \"sha256\": \"a2d6a831e1123bbf420cffc672e1b42a53d5682eeb5611c6d9d1fb6d817664c2\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": \"ev-8\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://redirect-d.example/anchor\",\n  \"resolved_ip\": \"93.184.216.43\",\n  \"status\": 200,\n  \"bytes\": 90,\n  \"sha256\": \"951ef3f22e939832a9d44e7ae9cb17fac8982cf543dc9e3f7f2642f8c940ac47\",\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": \"ev-9\",\n  \"reason\": null\n },\n {\n  \"url\": \"https://trade-press.example/anchor\",\n  \"resolved_ip\": null,\n  \"status\": null,\n  \"bytes\": null,\n  \"sha256\": null,\n  \"published_located\": null,\n  \"published_source\": null,\n  \"hops\": 0,\n  \"item_id\": null,\n  \"reason\": \"host trade-press.example resolves to 10.0.0.5, which is not a public address\"\n }\n]\n",
+   "file_sha256": "b2cf796198e04123011986bb83bb0a79af74eb2a6d6bb89abffce3e3ad527582",
+   "shape": "one record per url row in manifest order: url, resolved_ip (last connection made), status (last response read), bytes and sha256 (raw body, set exactly when a 200 body was read within the cap), published_located, published_source, hops (redirects followed), item_id (set iff accepted), reason (set iff the item was refused, at any stage); json.dumps indent 1 plus a newline"
+  },
+  "evidence_json": {
+   "rows": [
+    {
+     "item_id": "ev-1",
+     "family": "registry-filings",
+     "published": "2025-12-16",
+     "locator": "evidence/local-note.txt",
+     "sha256": "fd0faa41632f6a40e7a38533af5154a23db520eff2d4c6bca7960fba0c2f121d",
+     "path": "evidence/local-note.txt",
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "supplied",
+     "url": null
+    },
+    {
+     "item_id": "ev-2",
+     "family": "sector-desk-notes",
+     "published": "2025-12-18",
+     "locator": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
+     "sha256": "58facb6ded19e04ca329e331ea8131c7ce05f8fdad4b46e10e6942ff769c2630",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en"
+    },
+    {
+     "item_id": "ev-3",
+     "family": "sector-desk-notes",
+     "published": "2025-12-20",
+     "locator": "https://sector-desk.example/notes/header-dated",
+     "sha256": "2af742900be046442aa101da6bf2ab2ce114965e9e965d1024592f1cbc811f1e",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://sector-desk.example/notes/header-dated"
+    },
+    {
+     "item_id": "ev-4",
+     "family": "sector-desk-notes",
+     "published": "2025-12-28",
+     "locator": "https://sector-desk.example/notes/body-dated",
+     "sha256": "3a752b8a71ef7703be3a19ddcaaaf11a51a8c2305e3203a7fb310fdb04edaee2",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://sector-desk.example/notes/body-dated"
+    },
+    {
+     "item_id": "ev-5",
+     "family": "sector-desk-notes",
+     "published": "2025-12-10",
+     "locator": "https://sector-desk.example/notes/at-cap",
+     "sha256": "f0398105e48c5b2ff42d0a576046766ed3d4abec02c56f2df3f0978d41f08a18",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://sector-desk.example/notes/at-cap"
+    },
+    {
+     "item_id": "ev-6",
+     "family": "redirect-notes",
+     "published": "2025-12-14",
+     "locator": "https://redirect-a.example/three-hops",
+     "sha256": "f0588b414b5003d5ee67264bb711b147d9ab847e4ed49a5297059d0d6d5fe2e6",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://redirect-a.example/three-hops"
+    },
+    {
+     "item_id": "ev-7",
+     "family": "redirect-notes",
+     "published": "2025-12-17",
+     "locator": "https://redirect-b.example/anchor",
+     "sha256": "16382cf8bc66bc845b7f99c05c0de62b7bb0da1817fa5717a02cb60dd215e159",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://redirect-b.example/anchor"
+    },
+    {
+     "item_id": "ev-8",
+     "family": "redirect-notes",
+     "published": "2025-12-17",
+     "locator": "https://redirect-c.example/anchor",
+     "sha256": "a2d6a831e1123bbf420cffc672e1b42a53d5682eeb5611c6d9d1fb6d817664c2",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://redirect-c.example/anchor"
+    },
+    {
+     "item_id": "ev-9",
+     "family": "redirect-notes",
+     "published": "2025-12-17",
+     "locator": "https://redirect-d.example/anchor",
+     "sha256": "951ef3f22e939832a9d44e7ae9cb17fac8982cf543dc9e3f7f2642f8c940ac47",
+     "path": null,
+     "retrieved": "2026-11-02T05:40:00Z",
+     "origin": "web",
+     "url": "https://redirect-d.example/anchor"
+    }
+   ]
+  },
+  "rejected_json": {
+   "entries": [
+    {
+     "locator": "https://redirect-a.example/four-hops",
+     "family": "redirect-notes",
+     "published": "2025-12-14",
+     "reason": "https://redirect-a.example/four-hops redirected more than 3 times"
+    },
+    {
+     "locator": "https://redirect-a.example/to-http",
+     "family": "redirect-notes",
+     "published": "2025-12-14",
+     "reason": "redirect to http://redirect-b.example/plain refused: the scheme must be https"
+    },
+    {
+     "locator": "https://redirect-a.example/to-outside",
+     "family": "redirect-notes",
+     "published": "2025-12-14",
+     "reason": "redirect to host outside.example refused: not a host named in the manifest"
+    },
+    {
+     "locator": "https://redirect-a.example/to-private",
+     "family": "redirect-notes",
+     "published": "2025-12-14",
+     "reason": "host trade-press.example resolves to 10.0.0.5, which is not a public address"
+    },
+    {
+     "locator": "https://sector-desk.example/notes/body-late",
+     "family": "sector-desk-notes",
+     "published": "2026-01-05",
+     "reason": "evidence item https://sector-desk.example/notes/body-late has a located publication date 2026-02-03 after the cutoff 2026-01-10"
+    },
+    {
+     "locator": "https://sector-desk.example/notes/located-only",
+     "family": "sector-desk-notes",
+     "published": null,
+     "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
+    },
+    {
+     "locator": "https://sector-desk.example/notes/no-date",
+     "family": "sector-desk-notes",
+     "published": null,
+     "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
+    },
+    {
+     "locator": "https://sector-desk.example/notes/over-cap",
+     "family": "sector-desk-notes",
+     "published": "2025-12-11",
+     "reason": "https://sector-desk.example/notes/over-cap body is larger than the 600-byte cap"
+    },
+    {
+     "locator": "https://sector-desk.example/notes/report.pdf",
+     "family": "sector-desk-notes",
+     "published": "2025-12-13",
+     "reason": "https://sector-desk.example/notes/report.pdf returned unsupported media type application/pdf"
+    },
+    {
+     "locator": "https://sector-desk.example/notes/server-error",
+     "family": "sector-desk-notes",
+     "published": "2025-12-12",
+     "reason": "https://sector-desk.example/notes/server-error answered status 500"
+    },
+    {
+     "locator": "https://trade-press.example/anchor",
+     "family": "trade-press-archive",
+     "published": "2025-12-17",
+     "reason": "host trade-press.example resolves to 10.0.0.5, which is not a public address"
+    }
+   ],
+   "file_bytes": "[\n {\n  \"locator\": \"https://redirect-a.example/four-hops\",\n  \"family\": \"redirect-notes\",\n  \"published\": \"2025-12-14\",\n  \"reason\": \"https://redirect-a.example/four-hops redirected more than 3 times\"\n },\n {\n  \"locator\": \"https://redirect-a.example/to-http\",\n  \"family\": \"redirect-notes\",\n  \"published\": \"2025-12-14\",\n  \"reason\": \"redirect to http://redirect-b.example/plain refused: the scheme must be https\"\n },\n {\n  \"locator\": \"https://redirect-a.example/to-outside\",\n  \"family\": \"redirect-notes\",\n  \"published\": \"2025-12-14\",\n  \"reason\": \"redirect to host outside.example refused: not a host named in the manifest\"\n },\n {\n  \"locator\": \"https://redirect-a.example/to-private\",\n  \"family\": \"redirect-notes\",\n  \"published\": \"2025-12-14\",\n  \"reason\": \"host trade-press.example resolves to 10.0.0.5, which is not a public address\"\n },\n {\n  \"locator\": \"https://sector-desk.example/notes/body-late\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2026-01-05\",\n  \"reason\": \"evidence item https://sector-desk.example/notes/body-late has a located publication date 2026-02-03 after the cutoff 2026-01-10\"\n },\n {\n  \"locator\": \"https://sector-desk.example/notes/located-only\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": null,\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n },\n {\n  \"locator\": \"https://sector-desk.example/notes/no-date\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": null,\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n },\n {\n  \"locator\": \"https://sector-desk.example/notes/over-cap\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2025-12-11\",\n  \"reason\": \"https://sector-desk.example/notes/over-cap body is larger than the 600-byte cap\"\n },\n {\n  \"locator\": \"https://sector-desk.example/notes/report.pdf\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2025-12-13\",\n  \"reason\": \"https://sector-desk.example/notes/report.pdf returned unsupported media type application/pdf\"\n },\n {\n  \"locator\": \"https://sector-desk.example/notes/server-error\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2025-12-12\",\n  \"reason\": \"https://sector-desk.example/notes/server-error answered status 500\"\n },\n {\n  \"locator\": \"https://trade-press.example/anchor\",\n  \"family\": \"trade-press-archive\",\n  \"published\": \"2025-12-17\",\n  \"reason\": \"host trade-press.example resolves to 10.0.0.5, which is not a public address\"\n }\n]\n",
+   "file_sha256": "5478eaf6e37bf961027bb44436edd5a7f931551c1013724b67e259a87fa9f748"
+  },
+  "pack_sources": ["identity", "financial", "ev-1", "ev-2", "ev-3", "ev-4", "ev-5", "ev-6", "ev-7", "ev-8", "ev-9"]
+ },
+ "run_json": {
+  "keys": ["research_ruling_path", "research_ruling_sha256", "research_ruling_date"],
+  "absent_without_ruling": true,
+  "ruling_date": "2026-11-02",
+  "ruling_sha256": "033176386cd60396d96473659e9cebbf704aecc8c1fc2e848eca9029556142f3"
+ },
+ "method": {
+  "sentences": [
+   "An item dated after the cutoff is refused. The cutoff is the earlier of the as-of date and the context's `run.cutoff`; with no `run.cutoff` it is the as-of date.",
+   "A URL row is fetched only when the run names a user ruling that lifts the live-provider pause for `web-retrieval` (`research_ruling`); without one every URL row is refused before anything is written, and the refusal names the ruling the run needs. A fetched item is `https` only, from the user's manifest, with every address public, at most three redirects, the same byte cap, and a recorded url, address, status, size and hash in `research/fetches.json`; a publication date found in the response can refuse an item, never admit one."
+  ],
+  "_source": "docs/superpowers/plans (O7b-2 plan) section S5 Text, verbatim"
+ }
+}

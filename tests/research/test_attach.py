@@ -204,7 +204,9 @@ def test_consumers_inherit_cpdr_limitations(expected: dict[str, Any], tmp_path: 
     # The same rule through `inherited_limitations` over a fresh CP-1C attempt.
     snapshot = settled.store.read()
     attempt = next(a for a in snapshot.attempts if a.module_id == "CP-1C")
-    again = inherited_limitations(snapshot, attempt, (), settled.store.head_module)
+    again = inherited_limitations(
+        snapshot, attempt, consumer.limitations, settled.store.head_module
+    )
     assert [t for t in again if t in head_module.limitations] == carried
 
 

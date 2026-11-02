@@ -41,6 +41,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
+from deploy_workflow.research.contracts import RESERVED_PREFIX
 from deploy_workflow.research.evidence import research_hashes, research_retrieved
 from deploy_workflow.tools.source import SourceError, SourceTools
 
@@ -85,6 +86,17 @@ def _without_research(pack: PreparedPack) -> tuple[str, ...]:
     return tuple(s.source_id for s in pack.sources if not s.source_id.startswith("ev-"))
 
 
+def _held_with_research(*source_ids: str) -> Callable[[PreparedPack], tuple[str, ...]]:
+    """The named sources the pack holds, then every held research item (`ev-*`), in pack order
+    (O7c C1, O7-R47). A held source that is not ready stays named, as for `_held`."""
+    named = frozenset(source_ids)
+    return lambda pack: tuple(
+        s.source_id
+        for s in pack.sources
+        if s.source_id in named or s.source_id.startswith(RESERVED_PREFIX)
+    )
+
+
 # H1 (G1-X §3, §5): the fixed readable-source scope of each owner-only sourced step, as its lease
 # pins it. Never caller-supplied and never `live.context.SOURCE_SCOPES` (deploy_vii never imports
 # deploy_workflow). A row here applies only to a module without a live step contract. One
@@ -104,8 +116,9 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-DR", "brief"): _without_research,
             # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
             ("CP-DR", "research"): _every_held,
-            # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers.
-            ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
+            # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers;
+            # O7c C1 (O7-R47): then every held `ev-*`, which CP-1C may cite. `owners/cp1c.in_scope`.
+            ("CP-1C", "peer_benchmark"): _held_with_research("identity", "financial", "peers"),
             # docs/CP2E-OWNER-LEASE.md:40: the financial source only, never identity.
             ("CP-2E", "macro_fx"): _held("financial"),
             # docs/CP2H-OWNER-LEASE.md:36, :46: identity, financial, ratings and, when the pack

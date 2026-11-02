@@ -75,6 +75,7 @@ from deploy_workflow.owners.period_basis import (
     PeriodRefused,
     run_basis,
 )
+from deploy_workflow.research.contracts import RESERVED_PREFIX
 
 if TYPE_CHECKING:
     from deploy_workflow.owners.valuation_basis import (
@@ -2516,8 +2517,17 @@ STEP_IDS = (STEP_ID,)
 QUALIFICATION = Qualification(implementation="implemented")
 SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: PeerBenchmarkSubmission}
 # The fixed H1 mapping (`host._OWNER_SCOPES[("CP-1C", "peer_benchmark")]`, lease :33): identity,
-# financial and, when the pack holds it, peers; a held source stays in scope in pack order.
+# financial, peers when the pack holds it, then every held research item (`ev-*`, O7c C1,
+# O7-R47); a held source stays in scope in pack order.
 SCOPE = frozenset({"identity", "financial", PEERS_SOURCE_ID})
+
+
+def in_scope(source_id: str) -> bool:
+    """The O7c scope predicate (`host._OWNER_SCOPES` row): the named `SCOPE` sources and every
+    supplied research item (`ev-*`), which CP-1C may cite by `line:N` like a peers page."""
+    return source_id in SCOPE or source_id.startswith(RESERVED_PREFIX)
+
+
 CP0, CP1 = "CP-0", "CP-1"
 SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
 # Rulings stage 2 round 5 item 9: the admitted shape issue of text `json_object` refuses.
@@ -2611,7 +2621,7 @@ def _inputs(
     basis = run_basis(context_facts(pack), upstream.cp1.facts)
     base = PeerBenchmarkInputs(
         issuer_name=pack.run.issuer_name,
-        sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
+        sources=tuple(s for s in pack.sources if in_scope(s.source_id)),
         cp1_metrics=_cp1_metrics(upstream.cp1, basis),
         submission=submission,
         basis=basis,

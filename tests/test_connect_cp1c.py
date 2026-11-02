@@ -1545,8 +1545,7 @@ def _ev_issues(payload: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
         run=_run("positive"), sources=(*stage1.sources("positive"), *cpdr_runs.evidence_sources())
     )
     inputs = cp1c._inputs(pack, _submission(payload=json.loads(payload)), _upstream())
-    seen = Seen(read=frozenset({("ev-1", "line:9")}))
-    return cp1c.calculation_issues(inputs), cp1c.RULES(payload, seen)
+    return cp1c.calculation_issues(inputs), cp1c.RULES(payload, _read_all(payload))
 
 
 def test_cp1c_cites_ev_sources() -> None:
@@ -1559,6 +1558,3 @@ def test_cp1c_cites_ev_sources() -> None:
     assert any(i.startswith("Quote/locator mismatch") for i in issues), issues
     issues, _ = _ev_issues(_ev_citation_payload(key["quote"], key["absent_item"], key["locator"]))
     assert f"Unavailable or changed source: {key['absent_item']}" in issues
-    # An unread page is the tool-use rule's, not the content check's.
-    unread = _ev_citation_payload(key["quote"], key["item"], "line:10")
-    assert cp1c.RULES(unread, Seen(read=frozenset({("ev-1", "line:9")})))

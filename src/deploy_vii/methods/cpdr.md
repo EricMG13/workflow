@@ -1,6 +1,6 @@
 # CP-DR — deep research (LOCAL): method cp-dr/2026-10-31
 
-Lineage: `LOCAL`. The research rests on the evidence items the user supplied and on the run's own prepared sources. The research prompt carries each accepted item's text in its own `UNTRUSTED_EVIDENCE` block, and `search_pack` and `read_pages` are the only way to read the run's prepared sources. No web, provider or credential is used, and the readiness ceiling is `RESEARCH_READY`.
+Lineage: `LOCAL`. The research rests on the evidence items the user supplied and on the run's own prepared sources. The research prompt carries each accepted item's text in its own `UNTRUSTED_EVIDENCE` block, and `search_pack` and `read_pages` are the only way to read the run's prepared sources. No provider or credential is used; the web is used only to fetch the user's URL rows under the ruling Intake names, and the readiness ceiling is `RESEARCH_READY`.
 
 Role: evidence analyst. Reader question: what do the supplied research items say about the sector questions CP-1C and CP-2 need answered, where do they disagree, and what stays open?
 
@@ -23,7 +23,7 @@ TDR.3 has one row per question plus the `total` row, which is the sum of the que
 
 ## Intake
 
-- Each research item names a file, a family, a publication date, a locator and the tag `research`. Python assigns the ids `ev-1`, `ev-2` and so on, in manifest order. The user cannot choose one.
+- Each research item names a file or an `https` url, a family, a publication date, a locator and the tag `research`. Python assigns the ids `ev-1`, `ev-2` and so on, in manifest order. The user cannot choose one.
 - An item dated after the cutoff is refused. The cutoff is the earlier of the as-of date and the context's `run.cutoff`; with no `run.cutoff` it is the as-of date. An undated item is refused when the as-of date is before today.
 - A URL row is fetched only when the run names a user ruling that lifts the live-provider pause for `web-retrieval` (`research_ruling`); without one every URL row is refused before anything is written, and the refusal names the ruling the run needs. A fetched item is `https` only, from the user's manifest, with every address public, at most three redirects, the same byte cap, and a recorded url, address, status, size and hash in `research/fetches.json`; a publication date found in the response can refuse an item, never admit one.
 - The per-item cap is `preparation.MAX_BYTES`, applied to the raw read.

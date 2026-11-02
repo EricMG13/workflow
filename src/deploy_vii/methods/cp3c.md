@@ -57,7 +57,7 @@ Derived cells and citations (lease acceptance 1; manifest `fact_copy_rule`):
   calculation id, with no citation of its own.
 - An analyst-judgment cell and a gap cell carry neither a citation nor a calculation id, unless
   the gap is a copy (it then keeps its upstream fact's).
-- Every US$ m cell, a gap included, carries currency USD and scale 1e6, as CP-1 and CP-2D write
+- Every money cell, a gap included (`US$ m` for USD, `<code> m` for another currency), carries the run's reporting currency (USD by default) and scale 1e6, as CP-1 and CP-2D write
   theirs. A claim cites what the bound names and the referenced cells it lists cite, each
   citation once; a copy of an analyst fact is never referenced by a claim.
 
@@ -81,8 +81,8 @@ Guard limits (accepted costs, recorded with the Stage 2 connection):
   or `cp2d_reader` and the CP-2D head's cells disagree. These are upstream integrity failures,
   not analyst issues.
 - The reporting currency is CP-1 `cash_closing`'s, which must be set. When cash closing is not
-  known, it is the currency the known US$ m facts state; when none states one, the run raises
-  (an invariant), never a stamped default. Every other known US$ m fact must state the same.
+  known, it is the currency the known money facts state; when none states one, the run raises
+  (an invariant), never a stamped default. Every other known money fact must state the same, and the currency must be the run's reporting currency.
 - A term CP-1 or CP-2D reports missing makes its dependants gaps that say it is not stated; a
   conflicting or not applicable term (or minimum cash) names that status in the same frame.
 - The run-rate flow (CP-2D T2E.3.r01) is read from its cell: `cp2d_reader` does not expose it

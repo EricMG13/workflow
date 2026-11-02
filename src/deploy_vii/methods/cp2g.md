@@ -8,10 +8,10 @@ Moved from the draft at Stage 2 (`docs/CP2G-OWNER-LEASE.md` Files). The r14 CP-2
 
 ## Method
 
-- Base period: the one CP-1 T4.10 column "LTM Q4 25"; forecast years FY2026 to FY2028 (annual, three years, one fiscal year of source).
+- Base period: the one CP-1 T4.10 column, the LTM Q4 column of the run's base year (LTM Q4 25 when the run has no context); forecast years the three fiscal years after the base year (annual, three years, one fiscal year of source).
 - Base case: revenue grows by the analyst rate; EBITDA is revenue x margin; cash interest is the analyst rate x opening debt; cash taxes and working capital are one share of revenue; capital expenditure is a share of revenue; free cash flow is EBITDA less those outflows; debt falls by the analyst's repayment; cash moves by free cash flow less distributions and repayment and is never floored (negative cash is an unfunded requirement, not a plug).
 - Downside: CP-2A's settled scenario shock (EBITDA decline, interest increase) applied to every forecast year on the base path; every other driver is held.
-- Break tests: CP-2A's settled levels re-tested along the path (free cash flow at or below zero, coverage floor, and the analyst-mapped leverage and coverage watch levels), plus the analyst's minimum liquidity. The first year a test is met is a fiscal year, "Not reached by FY2028", or missing with the root reason.
+- Break tests: CP-2A's settled levels re-tested along the path (free cash flow at or below zero, coverage floor, and the analyst-mapped leverage and coverage watch levels), plus the analyst's minimum liquidity. The first year a test is met is a fiscal year, "Not reached by" the third forecast year (FY2028 when the run has no context), or missing with the root reason.
 - Zero, missing, not applicable and blocked are distinct everywhere; a ratio with a non-positive denominator is missing, not zero.
 
 ## Left out of the method (LEAD ruling 1; each is a stated limitation or follow-up)
@@ -32,11 +32,11 @@ Moved from the draft at Stage 2 (`docs/CP2G-OWNER-LEASE.md` Files). The r14 CP-2
 
 ## Observation: FY2025 borrowing (ruling M4)
 
-The financial source (page 3, cash flow statement) reports FY2025 debt issuance of 5.00 (1.25 in each quarter) and debt repayment of 0, so net debt issuance is 5.00; the balance sheet (page 4) shows total debt rising from 45 at the opening 2024-12-31 balance to 50 at 2025-12-31, with no stated repayment, and the pack states no noncash debt change. The forward model assumes no new borrowing in FY2026 to FY2028 and repayments of the analyst's choosing, so "no borrowing" is a real departure from the observed FY2025 pattern, not a neutral default. The `T2H.5` new-borrowing column was dropped (it would have shown a known 0.00 for a modelling omission); the own limitation "New borrowing is not modelled" stays, and this paragraph records the observation for the reader of the adaptation.
+The financial source (page 3, cash flow statement) reports FY2025 debt issuance of 5.00 (1.25 in each quarter) and debt repayment of 0, so net debt issuance is 5.00; the balance sheet (page 4) shows total debt rising from 45 at the opening 2024-12-31 balance to 50 at 2025-12-31, with no stated repayment, and the pack states no noncash debt change. The forward model assumes no new borrowing in the three fiscal years after the base year (FY2026 to FY2028 in this example) and repayments of the analyst's choosing, so "no borrowing" is a real departure from the observed FY2025 pattern, not a neutral default. The `T2H.5` new-borrowing column was dropped (it would have shown a known 0.00 for a modelling omission); the own limitation "New borrowing is not modelled" stays, and this paragraph records the observation for the reader of the adaptation.
 
 ## Tables
 
-T2H.1 Upstream register; T2H.2 Historical-to-base bridge (CP-1 restatements as own calculated facts, the FY2025 free cash flow identity, CP-1D supported figures); T2H.3 Assumption register (analyst drivers, CP-2A shock copies, minimum liquidity); T2H.4 Operating forecast; T2H.5 Debt and cash (opening debt, repayment, closing debt, interest, opening cash, free cash flow, distributions, closing cash, undrawn revolver, accessible liquidity); T2H.6 Credit metrics (FY2025 headroom is not applicable: minimum liquidity is a forecast-year assumption); T2H.7 Break-point timing; T2H.8 Deleveraging path; T2H.9 Gaps ledger.
+T2H.1 Upstream register; T2H.2 Historical-to-base bridge (CP-1 restatements as own calculated facts, the base year's free cash flow identity (FY2025 when the run has no context), CP-1D supported figures); T2H.3 Assumption register (analyst drivers, CP-2A shock copies, minimum liquidity); T2H.4 Operating forecast; T2H.5 Debt and cash (opening debt, repayment, closing debt, interest, opening cash, free cash flow, distributions, closing cash, undrawn revolver, accessible liquidity); T2H.6 Credit metrics (the base-year headroom is not applicable: minimum liquidity is a forecast-year assumption); T2H.7 Break-point timing; T2H.8 Deleveraging path; T2H.9 Gaps ledger.
 
 ## Rendering
 

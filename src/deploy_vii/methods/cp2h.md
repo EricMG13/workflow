@@ -10,8 +10,8 @@ Written at Stage 2 from the lease's "Adaptation record" (`docs/CP2H-OWNER-LEASE.
 
 - Metrics: a trigger's source label maps to one CP-2G ratio ("Total debt to EBITDA" `total_leverage`, "Net debt to EBITDA" `net_leverage`, "EBITDA to cash interest" `interest_coverage`, "Free cash flow to total debt" `fcf_to_debt`). Thresholds "N.NNx" are multiples, "N.N%" fractions, "Not stated" missing.
 - Headroom: `threshold - metric` ("Above") or `metric - threshold` ("Below"), one subtraction in the 38-digit half-even context; a percent metric gives percentage points.
-- Reached: strict (equal is not reached and shows zero headroom). First year: the first of FY2026-FY2028 the trigger is reached; a year not calculable before it makes the answer missing with its root reason; none reached and all calculable is "Not reached by FY2028".
-- T2R.4 FY2025 `actual` is an own copy of CP-2G `T2H.6.a25.<field>`; `check` compares it with the CP-1 reported ratio exactly.
+- Reached: strict (equal is not reached and shows zero headroom). First year: the first of the three fiscal years after the base year the trigger is reached; a year not calculable before it makes the answer missing with its root reason; none reached and all calculable is "Not reached by" the third forecast year (FY2028 when the run has no context).
+- T2R.4 base-year `actual` (FY2025 when the run has no context) is an own copy of CP-2G `T2H.6.a25.<field>`; `check` compares it with the CP-1 reported ratio exactly.
 - Notches: the absolute difference of the combined-scale positions (for context rows, the fixed S&P, Moody's and Fitch combined-scale table); a withdrawn or unrated agency has no position.
 - Zero, missing and not applicable stay distinct everywhere; a missing CP-2G ratio keeps CP-2G's own limitation.
 

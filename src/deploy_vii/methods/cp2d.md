@@ -29,7 +29,7 @@ Guard limits (accepted costs, recorded with the Stage 2 connection):
 - A basis_refs id the view does not offer is refused; a ref is matched exactly.
 - A schedule term CP-1 reports missing (currency, maturity date, principal, amortisation) makes
   the dependent maturity-wall cells and the funding gap a gap with a limitation. It is never
-  read as zero, and it is not an FX conversion: a facility not in USD is not summed.
+  read as zero, and it is not an FX conversion: a facility not in the run's reporting currency (USD by default) is not summed.
 - The adapter refuses (the step stays pending; nothing is settled) when a binding selects zero
   or several CP-1 facts, a money fact is not US dollars in millions, or the FY alias of a
   facility disagrees with its quarter row. These are CP-1 integrity failures, not analyst issues.

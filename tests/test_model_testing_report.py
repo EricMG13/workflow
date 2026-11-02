@@ -406,8 +406,13 @@ def _accuracy_cell(text: str, config_id: str) -> str:
 
 
 def test_stopped_runs_get_no_accuracy_figure_in_totals() -> None:
-    # opus-medium: its only run stopped; the golden-missing pass (gap_ok) would read 1/1 = 100.0%.
-    stopped = score("opus-medium", "r-op", [module("CP-0", ["gap_ok"], True)], stopped="budget")
+    # opus-medium: its only run stopped; the golden-missing pass (gap_ok) would read 2/2 = 100.0%; two modules, one run, so it counts 1 stopped.
+    stopped = score(
+        "opus-medium",
+        "r-op",
+        [module("CP-0", ["gap_ok"], True), module("CP-1A", ["gap_ok"], True)],
+        stopped="budget",
+    )
     # sol-medium: earnings_update settled (match, mismatch = 1/2); credit_snapshot stopped
     # (match, match = 2/2 that must not count).
     settled = score("sol-medium", "r-sol", [module("CP-0", ["match", "mismatch"], False)])

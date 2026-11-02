@@ -17,12 +17,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import test_cp1c_valuation_context as valuation
 import test_method_cp1c as stage1
 import test_method_cp4c as cp4c_tests
-from test_connect_cp1c import _cp1_module, _upstream
+from test_connect_cp1c import SYNTHETIC, _cp1_module, _upstream
+from test_connect_cp1c import _submission as _connect_submission
 from test_period_basis import _oracle_facts
 
 from deploy_vii.contracts import Fact, Module, Run, Source
+from deploy_vii.execution import Attempt, ExecutionSnapshot, candidate_issues, settle, text_sha256
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.context import load_context
 from deploy_workflow.owners import cp1c, cp2g
@@ -215,7 +218,7 @@ def test_composed_facts_tables_and_limitations_equal_the_key(label: str) -> None
     own limitation, the EV tables T1C.9-T1C.11 included, equals the oracle's."""
     want = ORACLE[SETTLED[label]]
     inputs, got = _composed(label)
-    assert inputs.basis.ltm_tag == "LTM Q4 26"
+    assert inputs.basis.ltm_tag == EXPECTED["period_basis"][SETTLED[label]]["ltm_tag"]
     shas = {"peers": PEERS_SHA[SETTLED[label]], "context": RUNS[label]["context_sha256"]}
     assert [i.fact.fact_id for i in got.facts] == [f["fact_id"] for f in want["facts"]]
     by_id = {i.fact.fact_id: i for i in got.facts}
@@ -231,7 +234,7 @@ def test_composed_facts_tables_and_limitations_equal_the_key(label: str) -> None
         }
         for t in got.tables
     ]
-    # the key's EV tables also list their columns, which the report (not the composer) adds
+    # the composer yields rows only; the columns are CP-1C's report's (next test)
     assert tables == [{k: t[k] for k in ("table_id", "title", "rows")} for t in want["tables"]]
     assert list(got.limitations) == want["own_limitations"]
     assert [(c.claim_id, c.text) for c in got.claims] == [
@@ -288,22 +291,22 @@ def test_the_2025_selection_finds_nothing_in_a_2026_head() -> None:
     assert len(cp1c._cp1_metrics(head, basis)) == 4
 
 
-def test_blank_usd_run_over_a_2026_head_is_refused_at_selection() -> None:
-    """P8-R3 guard: the blank-base USD fail-open binds the 2025 labels, so a 2026 CP-1 is an
-    issue line from the validator, not a mislabelled composition."""
+def _blank_usd_pack() -> PreparedPack:
+    """R1's pack with a blank `current_period` (the P8-R3 fail-open: the 2025 labels bind)."""
     pack = _pack("R1")
     context = json.loads(_context_bytes("R1"))
     context["run"]["current_period"] = ""
-    blank = PreparedPack(
-        run=pack.run,
-        sources=(
-            *pack.sources[:-1],
-            prepare_source(
-                SourceRequest(source_id="context", path="blank.json", media_type="text/plain"),
-                (json.dumps(context, indent=2, ensure_ascii=False) + "\n").encode(),
-            ),
-        ),
+    request = SourceRequest(source_id="context", path="blank.json", media_type="text/plain")
+    source = prepare_source(
+        request, (json.dumps(context, indent=2, ensure_ascii=False) + "\n").encode()
     )
+    return PreparedPack(run=pack.run, sources=(*pack.sources[:-1], source))
+
+
+def test_blank_usd_run_over_a_2026_head_is_refused_at_selection() -> None:
+    """P8-R3 guard: the blank-base USD fail-open binds the 2025 labels, so a 2026 CP-1 is an
+    issue line from the validator, not a mislabelled composition."""
+    blank = _blank_usd_pack()
     issues = cp1c.validate_peer_benchmark(
         pack=blank, submission=_submission("USD"), upstream=_upstream(_cp1_head("R1"))
     )
@@ -402,4 +405,172 @@ def test_view_of_a_settled_run_offers_the_run_column_and_rows() -> None:
     assert [f["period"] for f in facts] == [m["period"] for m in key]
     assert [f["shown"] for f in facts] == [m["shown"] for m in key]
     peers = block["peers"]
-    assert isinstance(peers, dict) and len(peers["rows"]) == 5
+    assert isinstance(peers, dict)
+    assert len(peers["rows"]) == ORACLE["EUR"]["operands_summary"]["peers_in_source"]
+
+
+# --- the report's tables, the settled head (L1, L2) ----------------------------------------------------
+
+
+def _report(label: str) -> cp1c.PeerBenchmarkReport:
+    return cp1c.peer_benchmark(
+        pack=_pack(label),
+        submission=_submission(SETTLED[label]),
+        upstream=_upstream(_cp1_head(label)),
+    )
+
+
+@pytest.mark.parametrize("label", sorted(SETTLED))
+def test_report_table_columns_equal_the_key(label: str) -> None:
+    """The EV tables' columns are CP-1C's own (`_columns`); the key pins them per table."""
+    want = {t["table_id"]: t for t in ORACLE[SETTLED[label]]["tables"]}
+    got = {t.table_id: t for t in _report(label).tables}
+    assert list(got) == list(want)
+    for table_id in cp1c.EV_TABLES:
+        assert [c.model_dump() for c in got[table_id].columns] == want[table_id]["columns"]
+
+
+@pytest.mark.parametrize("label", sorted(SETTLED))
+def test_settled_head_status_and_limitations_equal_the_key(label: str) -> None:
+    """`settle` over the candidate (store-free, as test_connect_cp1c's settlement test): the head's
+    status and settled limitations are the key's. The synthetic line is the frozen case's."""
+    want = ORACLE[SETTLED[label]]
+    pack, up = _pack(label), _upstream(_cp1_head(label))
+    candidate = cp1c.cp1c_module(_report(label), inputs=up.bound, attempt=0)
+    payload = candidate.model_dump_json()
+    attempt = Attempt(
+        ticket_id="t1",
+        module_id="CP-1C",
+        inputs=up.bound,
+        number=0,
+        payload_sha256=text_sha256(payload),
+    )
+    snapshot = ExecutionSnapshot(run=pack.run, pack_sha256=pack.content_hash(), attempts=(attempt,))
+    assert candidate_issues(snapshot, attempt, candidate, pack=pack) == ()
+    finished, head = settle(
+        snapshot,
+        attempt,
+        payload,
+        lambda supplied: () if supplied == candidate else ("Candidate differs",),
+        pack=pack,
+        load=lambda _head: candidate,
+    )
+    assert finished.issues == ()
+    assert head.status == want["module_status"]
+    assert list(head.limitations) == want["settled_limitations"]
+    assert want["settled_limitations"][-1] == SYNTHETIC
+
+
+# --- basis-dependent text the settled runs do not reach (L3) -------------------------------------------
+
+
+def _eur_with_comps() -> cp1c.PeerBenchmarkReport:
+    """R6 (EUR fy-2026) with the frozen auto-public valuation block, its peers dated inside the
+    run's window, so the EV records and the selected multiple are known."""
+    auto = json.loads(valuation.context_bytes("auto-public"))
+    context = json.loads(_context_bytes("R6"))
+    context["valuation"] = auto["valuation"]
+    for peer in context["valuation"]["peers"]:
+        peer["as_of"] = peer["as_of"].replace("2025-", "2026-").replace("2024-", "2026-")
+    request = SourceRequest(source_id="context", path="r6-comps.json", media_type="text/plain")
+    source = prepare_source(
+        request, (json.dumps(context, indent=2, ensure_ascii=False) + "\n").encode()
+    )
+    pack = _pack("R6")
+    pack = PreparedPack(run=pack.run, sources=(*pack.sources[:-1], source))
+    return cp1c.peer_benchmark(
+        pack=pack, submission=_submission("EUR"), upstream=_upstream(_cp1_head("R6"))
+    )
+
+
+def test_currency_period_line_names_the_runs_ltm_tag() -> None:
+    """Text the key does not pin: the line's wording is the default's with the run's tag."""
+    key = EXPECTED["period_basis"]["EUR"]
+    line = next(
+        (l for l in _eur_with_comps().limitations if l.startswith("The peers' and precedents'")),
+        None,
+    )
+    forbidden = EXPECTED["runs"]["R6"]["stale_period_literals_forbidden_in_emitted_period_strings"]
+    assert line is not None
+    assert line.endswith(f"issuer's {key['ltm_tag']} EBITDA.")
+    assert [s for s in forbidden if s in line] == []
+
+
+def test_implied_ev_and_issuer_ebitda_carry_the_runs_currency_and_period() -> None:
+    """A known implied EV (the key's runs select no multiple): T1C.11 follows the basis."""
+    facts = {f.fact_id: f for f in _eur_with_comps().facts}
+    key = EXPECTED["period_basis"]["EUR"]
+    for fact_id in ("T1C.11.selection.issuer_ebitda", "T1C.11.selection.implied_ev"):
+        fact = facts[fact_id]
+        assert fact.status == "known", fact_id
+        assert (fact.currency, fact.period) == (key["currency"], key["ltm_period"]), fact_id
+
+
+# --- the view under a refusal (M1, P8-R3, P8-R5, P8T2-R1 to R3) -----------------------------------------
+
+
+def _offered(block: dict[str, object]) -> list[Any]:
+    facts = block["cp1_facts"]
+    assert isinstance(facts, list)
+    return facts
+
+
+def _valuation_upstream() -> cp1c.Upstream:
+    return _upstream(valuation.full_cp1())
+
+
+@pytest.mark.parametrize("name", valuation.CASES)
+def test_view_of_a_blank_usd_context_is_the_default_selection(name: str) -> None:
+    """P8-R3 in the view: every frozen valuation context (blank current_period, USD) is accepted
+    by the validator and offers the four CP-1 facts with no `context_issue`."""
+    pack, up = valuation.pack_of(name), _valuation_upstream()
+    base = valuation.base_case(name)
+    issues = cp1c.validate_peer_benchmark(
+        pack=pack, submission=_connect_submission(base), upstream=up
+    )
+    block = cp1c.context_block(pack=pack, upstream=up)
+    assert issues == ()
+    assert "context_issue" not in block
+    assert len(_offered(block)) == len(cp1c.METRICS)
+
+
+def test_view_of_a_refused_context_carries_the_issue_and_the_default_selection() -> None:
+    """P8-R5 with P8T2-R1: a context refusal never raises out of the view; `context_issue` is
+    the validator's line and the default basis's four facts are offered (the parent's view)."""
+    up, pack = _valuation_upstream(), valuation.pack_of("auto-public")
+    other = PreparedPack(
+        run=pack.run.model_copy(update={"issuer_id": "other"}), sources=pack.sources
+    )
+    issues = cp1c.validate_peer_benchmark(
+        pack=other, submission=_connect_submission("no_peers"), upstream=up
+    )
+    block = cp1c.context_block(pack=other, upstream=up)
+    assert len(issues) == 1 and issues[0].startswith("Context refused: ")
+    assert block["context_issue"] == issues[0]
+    assert len(_offered(block)) == len(cp1c.METRICS)
+
+
+def test_view_of_an_uncitable_context_carries_the_validators_line() -> None:
+    """P8T2-R2: the `_with_context` refusal (a context source not citable by line) reaches the view."""
+    up, pack = _valuation_upstream(), valuation.pack_of("auto-public")
+    broken = pack.sources[-1].model_copy(update={"media_type": "application/pdf"})
+    pdf = PreparedPack(run=pack.run, sources=(*pack.sources[:-1], broken))
+    issues = cp1c.validate_peer_benchmark(
+        pack=pdf, submission=_connect_submission("no_peers"), upstream=up
+    )
+    block = cp1c.context_block(pack=pdf, upstream=up)
+    assert len(issues) == 1 and issues[0].startswith("Context refused: ")
+    assert block["context_issue"] == issues[0]
+    assert len(_offered(block)) == len(cp1c.METRICS)
+
+
+def test_view_of_a_blank_usd_run_over_a_2026_head_names_the_validators_line() -> None:
+    """P8T2-R3: the blank-USD fail-open over a 2026 CP-1 is a stated refusal, so the view returns
+    with the validator's `CP-1 facts unavailable` line and offers nothing; it does not raise."""
+    pack = _blank_usd_pack()
+    up = _upstream(_cp1_head("R1"))
+    issues = cp1c.validate_peer_benchmark(pack=pack, submission=_submission("USD"), upstream=up)
+    block = cp1c.context_block(pack=pack, upstream=up)
+    assert len(issues) == 1 and issues[0].startswith("CP-1 facts unavailable: ")
+    assert block["context_issue"] == issues[0]
+    assert block["cp1_facts"] == []

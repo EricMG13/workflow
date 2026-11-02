@@ -21,7 +21,7 @@ from datetime import date
 from decimal import ROUND_HALF_EVEN, Context, Decimal
 from itertools import pairwise
 from types import ModuleType
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -1694,6 +1694,572 @@ def _ev_plan(inputs: PeerBenchmarkInputs) -> _EvPlan:
     return _EvPlan(valuation, as_of, public, precedents, selection, ebitda, amount)
 
 
+# --- the facts of T1C.9-T1C.11 ---
+
+
+class _EvEmitter:
+    """The facts and rows of the three tables. Citations are written here, one per user figure
+    (`value_class` source) and the same lines on every fact derived from it; nothing is inherited
+    afterwards, so a fact that mixes the context with CP-1 (the implied EV) carries none."""
+
+    def __init__(self, cite: _ContextCites) -> None:
+        self.cite = cite
+        self.items: list[PeerFact] = []
+        self.rows: dict[str, list[TableRow]] = {table: [] for table in EV_TABLES}
+
+    def put(
+        self,
+        ref: Ref,
+        *,
+        status: EvStatus = "known",
+        text: str | None = None,
+        amount: Decimal | None = None,
+        unit: str | None = None,
+        period: str | None = None,
+        decimals: int | None = None,
+        currency: str | None = None,
+        value_class: Literal["source", "normalized", "calculated"] | None = None,
+        formula: str | None = None,
+        derives: Sequence[str] = (),
+        citations: tuple[Citation, ...] = (),
+        limitation: str | None = None,
+    ) -> str:
+        table, row, name = ref
+        known = status == "known"
+        fact = Fact(
+            fact_id=_fid(ref),
+            label=dict(EV_COLUMNS[table])[name],
+            table_id=table,
+            row_id=row,
+            field=name,
+            status=status,
+            text=text,
+            amount=amount,
+            unit=unit,
+            currency=currency,
+            scale=Decimal(1_000_000) if unit == "MILLIONS" else Decimal(1),
+            decimals=decimals,
+            period=period,
+            citations=citations,
+            calculation_id=f"calc:{_fid(ref)}" if known and value_class == "calculated" else None,
+            value_class=value_class if known else None,
+            formula=formula if known else None,
+            limitation=limitation,
+        )
+        self.items.append(PeerFact(fact, tuple(derives)))
+        return fact.fact_id
+
+    def text(
+        self,
+        ref: Ref,
+        value: str,
+        value_class: Literal["source", "normalized", "calculated"],
+        **kw: Any,
+    ) -> str:
+        return self.put(ref, text=value, value_class=value_class, **kw)
+
+    def gap(self, ref: Ref, reason: str, status: EvStatus = "missing", **kw: Any) -> str:
+        return self.put(ref, status=status, limitation=reason, **kw)
+
+    def line(self, table: str, row_id: str, label: str, fact_ids: Sequence[str]) -> None:
+        self.rows[table].append(TableRow(row_id=row_id, label=label, fact_ids=tuple(fact_ids)))
+
+
+def _not_calculable(admitted: int) -> str:
+    return f"Not calculable: {admitted} admitted of {MIN_INCLUDED_PEERS} required"
+
+
+def _date_fact(e: _EvEmitter, row: _EvRow, record: "AdmittedRecord") -> str:
+    ref = ("T1C.9", row.row_id, "figures_date")
+    if record.figures_date is None:
+        return e.gap(ref, NOT_STATED_BY_USER)
+    return e.text(
+        ref, record.figures_date.isoformat(), "source", citations=e.cite(row.paths["figures_date"])
+    )
+
+
+def _multiple_fact(e: _EvEmitter, row: _EvRow, admission: "Admission", period: str) -> str:
+    ref = ("T1C.9", row.row_id, "multiple")
+    if admission.multiple is None:  # EV or EBITDA is not a positive finite amount
+        reason = "Not meaningful: " + admission.reason.removeprefix("Excluded: ")
+        return e.gap(ref, reason, status="not_applicable", unit=MULTIPLE, period=period)
+    return e.put(
+        ref,
+        amount=admission.multiple,
+        unit=MULTIPLE,
+        period=period,
+        decimals=2,
+        value_class="calculated",
+        formula="EV / EBITDA",
+        derives=(f"T1C.9.{row.row_id}.ev", f"T1C.9.{row.row_id}.ebitda"),
+        citations=e.cite(row.paths["ev"], row.paths["ebitda"]),
+    )
+
+
+def _flag_fact(e: _EvEmitter, row: _EvRow, admission: "Admission", ev_set: _EvSet) -> str:
+    ref = ("T1C.9", row.row_id, "flag")
+    if not admission.included:
+        return e.gap(ref, EXCLUDED_FROM_STATS, status="not_applicable")
+    median = ev_set.stats.median
+    if median is None:
+        return e.gap(ref, _not_calculable(ev_set.stats.n_admitted))
+    found = outlier(admission.multiple, median) if admission.multiple is not None else None
+    if found is None:  # a zero median cannot arise from admitted (positive) multiples
+        return e.gap(ref, "Not meaningful: the set median is zero", status="not_applicable")
+    derives = (f"T1C.9.{row.row_id}.multiple", f"T1C.10.{ev_set.set_id}.median")
+    return e.text(ref, found[1], "normalized", formula=FLAG_FORMULA, derives=derives)
+
+
+def _figure_facts(e: _EvEmitter, row: _EvRow, ev_set: _EvSet, admission: "Admission") -> list[str]:
+    t, r, record = "T1C.9", row.row_id, admission.record
+    period = f"As of {record.figures_date}" if record.figures_date else NO_DATE_PERIOD
+    kind = "Public comp" if row.kind == "peer" else "Precedent"
+
+    def money(name: str, amount: Decimal) -> str:
+        return e.put(
+            (t, r, name),
+            amount=amount,
+            unit="MILLIONS",
+            period=period,
+            decimals=SHEET_DECIMALS,
+            value_class="source",
+            citations=e.cite(row.paths[name]),
+        )
+
+    ids = [
+        e.text((t, r, "kind"), kind, "normalized"),
+        e.text((t, r, "name"), row.name, "source", citations=e.cite(row.paths["name"])),
+        _date_fact(e, row, record),
+        e.text((t, r, "source"), record.source, "source", citations=e.cite(row.paths["source"])),
+        e.text((t, r, "currency"), NOT_STATED_BY_USER, "normalized"),
+        e.text((t, r, "ebitda_period"), NOT_STATED_BY_USER, "normalized"),
+        money("ev", record.ev),
+        money("ebitda", record.ebitda),
+        _multiple_fact(e, row, admission, period),
+        _flag_fact(e, row, admission, ev_set),
+        e.text(
+            (t, r, "result"),
+            admission.reason,
+            "normalized",
+            formula=RESULT_FORMULA,
+            derives=(f"{t}.{r}.figures_date", f"{t}.{r}.ev", f"{t}.{r}.ebitda"),
+        ),
+    ]
+    return ids
+
+
+def _name_facts(e: _EvEmitter, row: _EvRow, gap: str) -> list[str]:
+    """A user_list name: its figures need the peer lookup, so every figure cell is a named gap."""
+    t, r = "T1C.9", row.row_id
+    ids = [
+        e.text((t, r, "kind"), "Public comp", "normalized"),
+        e.text((t, r, "name"), row.name, "source", citations=e.cite(row.paths["name"])),
+    ]
+    for name, _label in EV_COLUMNS[t][2:]:
+        ref = (t, r, name)
+        if name == "flag":
+            ids.append(e.gap(ref, EXCLUDED_FROM_STATS, status="not_applicable"))
+        elif name == "result":
+            ids.append(e.text(ref, NO_FIGURES, "normalized", formula=RESULT_FORMULA))
+        else:
+            unit = {"ev": "MILLIONS", "ebitda": "MILLIONS", "multiple": MULTIPLE}.get(name)
+            period = NO_DATE_PERIOD if unit else None
+            ids.append(e.gap(ref, gap, unit=unit, period=period))
+    return ids
+
+
+def _emit_none_row(e: _EvEmitter, plan: _EvPlan) -> None:
+    """No record at all: a named gap when the peer source should have supplied them (Design 8)."""
+    valuation = plan.valuation
+    gap = PUBLIC_GAPS.get(valuation.peer_source)
+    status: EvStatus
+    if gap is not None and valuation.basis in ("auto", "public_comps"):
+        status, reason = "missing", gap
+    else:
+        status, reason = "not_applicable", NO_RECORDS
+    ids = [e.gap(("T1C.9", "none", name), reason, status=status) for name, _ in EV_COLUMNS["T1C.9"]]
+    e.line("T1C.9", "none", "No records", ids)
+
+
+def _emit_records(e: _EvEmitter, plan: _EvPlan) -> None:
+    rows = [(row, ev_set) for ev_set in plan.sets for row in ev_set.rows]
+    if not rows:
+        _emit_none_row(e, plan)
+    gap = PUBLIC_GAPS.get(plan.valuation.peer_source, "")
+    for row, ev_set in rows:
+        if row.admission is None:
+            ids = _name_facts(e, row, gap)
+        else:
+            ids = _figure_facts(e, row, ev_set, row.admission)
+        e.line("T1C.9", row.row_id, row.name, ids)
+
+
+def _stat_gap(e: _EvEmitter, ref: Ref, reason: str, unit: str, period: str) -> str:
+    return e.gap(ref, reason, unit=unit, period=period)
+
+
+def _emit_set(e: _EvEmitter, ev_set: _EvSet, as_of: date) -> None:
+    t, r, stats = "T1C.10", ev_set.set_id, ev_set.stats
+    period = f"Window {ev_set.start} to {as_of}"
+    results = tuple(f"T1C.9.{x.row_id}.result" for x in ev_set.rows)
+    admitted = ev_set.admitted()
+    multiples = tuple(f"T1C.9.{x.row_id}.multiple" for x in admitted)
+    cites = tuple(c for x in admitted for c in e.cite(x.paths["ev"], x.paths["ebitda"]))
+    thin = _not_calculable(stats.n_admitted)
+
+    def count(name: str, value: int, formula: str, derives: Sequence[str]) -> str:
+        return e.put(
+            (t, r, name),
+            amount=Decimal(value),
+            unit="records",
+            period=period,
+            value_class="calculated",
+            formula=formula,
+            derives=derives,
+        )
+
+    def multiple(name: str, value: Decimal | None, formula: str, missing: str) -> str:
+        ref = (t, r, name)
+        if value is None:
+            return _stat_gap(e, ref, missing, MULTIPLE, period)
+        return e.put(
+            ref,
+            amount=value,
+            unit=MULTIPLE,
+            period=period,
+            decimals=2,
+            value_class="calculated",
+            formula=formula,
+            derives=multiples,
+            citations=cites,
+        )
+
+    none_admitted = "Not calculable: no admitted records"
+
+    def outliers() -> str:
+        if stats.outliers is None:
+            return _stat_gap(e, (t, r, "outliers"), thin, "records", period)
+        return count(
+            "outliers",
+            stats.outliers,
+            "count of admitted records whose absolute deviation from the median is above one half",
+            tuple(f"T1C.9.{x.row_id}.flag" for x in admitted),
+        )
+
+    ids = [
+        count("n_total", stats.n_total, "count of records in the set", results),
+        count(
+            "n_admitted",
+            stats.n_admitted,
+            "count of records admitted (EV and EBITDA above zero, dated within the window)",
+            results,
+        ),
+        multiple(
+            "min", stats.minimum, "smallest multiple among the admitted records", none_admitted
+        ),
+        multiple(
+            "median",
+            stats.median,
+            "median of the admitted records' multiples; even count: (a + b) / 2; "
+            "fewer than 3 admitted: not calculated",
+            thin,
+        ),
+        multiple(
+            "max", stats.maximum, "largest multiple among the admitted records", none_admitted
+        ),
+        outliers(),
+    ]
+    e.line(t, r, ev_set.label, ids)
+
+
+def _issuer_multiple(plan: _EvPlan) -> Decimal | None:
+    """The issuer's own EV / CP-1 EBITDA, exact, when the selection computed it."""
+    market, amount = plan.valuation.issuer_market, plan.ebitda_amount
+    if plan.selection.multiple is None or amount is None:
+        return None
+    ev = (
+        Decimal(market.ev_m)
+        if market.ev_m
+        else CTX.add(Decimal(market.market_cap_m), Decimal(market.net_debt_m))
+    )
+    return CTX.divide(ev, amount)
+
+
+def _basis_paths(valuation: Valuation) -> tuple[JsonPath, ...]:
+    """The context values the issuer or user multiple stands on."""
+    if valuation.basis == "issuer_trading":
+        market = ("valuation", "issuer_market")
+        if valuation.issuer_market.ev_m:
+            return ((*market, "ev_m"),)
+        return ((*market, "market_cap_m"), (*market, "net_debt_m"))
+    if valuation.basis == "user_multiple":
+        return (
+            ("valuation", "user_multiple", "value"),
+            ("valuation", "user_multiple", "rationale"),
+        )
+    return ()
+
+
+def _emit_single(
+    e: _EvEmitter,
+    row_id: str,
+    label: str,
+    period: str,
+    value: Decimal | None,
+    formula: str,
+    value_class: Literal["source", "calculated"],
+    cites: tuple[Citation, ...],
+) -> None:
+    """issuer_trading and user_multiple: one value, so min, median and max are that value."""
+    t = "T1C.10"
+
+    def count(name: str, amount: int, text: str) -> str:
+        return e.put(
+            (t, row_id, name),
+            amount=Decimal(amount),
+            unit="records",
+            period=period,
+            value_class="calculated",
+            formula=text,
+        )
+
+    def cell(name: str) -> str:
+        ref = (t, row_id, name)
+        if value is None:
+            return _stat_gap(e, ref, "Not calculable: no multiple", MULTIPLE, period)
+        return e.put(
+            ref,
+            amount=value,
+            unit=MULTIPLE,
+            period=period,
+            decimals=2,
+            value_class=value_class,
+            formula=formula + SINGLE_VALUE,
+            citations=cites,
+        )
+
+    ids = [
+        count("n_total", 1, "count of records in the set"),
+        count("n_admitted", 0 if value is None else 1, "count of records with a multiple"),
+        cell("min"),
+        cell("median"),
+        cell("max"),
+        e.gap(
+            (t, row_id, "outliers"),
+            "Not meaningful: a single value has no outlier test",
+            status="not_applicable",
+            unit="records",
+            period=period,
+        ),
+    ]
+    e.line(t, row_id, label, ids)
+
+
+def _emit_stats(e: _EvEmitter, plan: _EvPlan) -> None:
+    valuation = plan.valuation
+    if valuation.basis in ("auto", "public_comps", "blend") or plan.public.stats.n_total:
+        _emit_set(e, plan.public, plan.as_of)
+    if valuation.basis in ("precedents", "blend") or plan.precedents.stats.n_total:
+        _emit_set(e, plan.precedents, plan.as_of)
+    if valuation.basis == "issuer_trading":
+        multiple, paths = _issuer_multiple(plan), _basis_paths(valuation)
+        _emit_single(
+            e,
+            "issuer_trading",
+            "Issuer trading",
+            f"As of {valuation.issuer_market.as_of}",
+            multiple,
+            "issuer enterprise value / CP-1 LTM adjusted EBITDA",
+            "calculated",
+            e.cite(*paths) if multiple is not None else (),
+        )
+    if valuation.basis == "user_multiple":
+        value = plan.selection.multiple
+        _emit_single(
+            e,
+            "user_multiple",
+            "User multiple",
+            NOT_STATED_BY_USER,
+            value,
+            "user-supplied multiple",
+            "source",
+            e.cite(*_basis_paths(valuation)[:1]) if value is not None else (),
+        )
+
+
+def _selected_cites(e: _EvEmitter, plan: _EvPlan) -> tuple[Citation, ...]:
+    """The lines the selected multiple stands on: each set's admitted records, then the
+    issuer's or the user's own values."""
+    chosen = {
+        "public_comps": (plan.public,),
+        "precedents": (plan.precedents,),
+        "blend": (plan.public, plan.precedents),
+    }.get(plan.selection.selected_basis or "", ())
+    found = [
+        c for s in chosen for r in s.admitted() for c in e.cite(r.paths["ev"], r.paths["ebitda"])
+    ]
+    return (*found, *e.cite(*_basis_paths(plan.valuation)))
+
+
+def _selected_multiple(e: _EvEmitter, plan: _EvPlan) -> str:
+    sel, ref = plan.selection, (SELECTION_TABLE, "selection", "selected_multiple")
+    period = f"EBITDA basis: {sel.ebitda_basis}"
+    if sel.multiple is None:
+        return e.gap(ref, sel.reason, unit=MULTIPLE, period=period)
+    basis = sel.selected_basis or ""
+    medians = tuple(
+        f"T1C.10.{s}.median"
+        for s in ("public_comps", "precedents")
+        if basis == s or basis == "blend"
+    )
+    return e.put(
+        ref,
+        amount=sel.multiple,
+        unit=MULTIPLE,
+        period=period,
+        decimals=2,
+        value_class="source" if basis == "user_multiple" else "calculated",
+        formula=SELECTED_FORMULAS[basis],
+        derives=medians,
+        citations=_selected_cites(e, plan),
+    )
+
+
+def _implied_gap(plan: _EvPlan) -> str:
+    sel = plan.selection
+    if sel.multiple is None:
+        return "Not calculable: no selected multiple"
+    if sel.ebitda_basis == "NTM":
+        return f"Not calculable: {_vbasis().NTM_NOT_APPLIED}"
+    return f"Not calculable: {_vbasis().EBITDA_GAP}"
+
+
+def _emit_ebitda_facts(e: _EvEmitter, plan: _EvPlan) -> tuple[str, str]:
+    """(issuer_ebitda, implied_ev): CP-1's LTM adjusted EBITDA and the selected multiple on it."""
+    sel, cp1 = plan.selection, plan.ebitda
+    t, r, period = SELECTION_TABLE, "selection", cp1.period
+    ebitda_ref, implied_ref = (t, r, "issuer_ebitda"), (t, r, "implied_ev")
+    if plan.ebitda_amount is None:
+        gap = _vbasis().EBITDA_GAP
+        ebitda_id = e.gap(ebitda_ref, gap, unit="MILLIONS", period=period)
+    else:
+        ebitda_id = e.put(
+            ebitda_ref,
+            amount=plan.ebitda_amount,
+            unit="MILLIONS",
+            period=period,
+            decimals=SHEET_DECIMALS,
+            currency=cp1.currency,
+            value_class="calculated",
+            formula=ISSUER_EBITDA_FORMULA,
+            derives=(CP1_REF,),
+        )
+    if sel.implied_ev is None:
+        return ebitda_id, e.gap(implied_ref, _implied_gap(plan), unit="MILLIONS", period=period)
+    implied_id = e.put(
+        implied_ref,
+        amount=sel.implied_ev,
+        unit="MILLIONS",
+        period=period,
+        decimals=SHEET_DECIMALS,
+        currency=cp1.currency,
+        value_class="calculated",
+        formula="selected multiple x CP-1 LTM adjusted EBITDA",
+        derives=(f"{t}.{r}.selected_multiple", ebitda_id),
+    )
+    return ebitda_id, implied_id
+
+
+def _ebitda_basis_fact(e: _EvEmitter, plan: _EvPlan) -> str:
+    """The EBITDA basis the multiple is on: the user's own label (cited) for the issuer's trading
+    multiple and the user's multiple, else the text that none is stated."""
+    sel, valuation = plan.selection, plan.valuation
+    ref = (SELECTION_TABLE, "selection", "ebitda_basis")
+    if valuation.basis == "issuer_trading" and sel.ebitda_basis in ("LTM", "NTM"):
+        return e.text(
+            ref,
+            sel.ebitda_basis,
+            "source",
+            citations=e.cite(("valuation", "issuer_market", "ebitda_basis")),
+        )
+    if valuation.basis == "user_multiple" and sel.ebitda_basis in ("LTM", "NTM"):
+        return e.text(
+            ref,
+            sel.ebitda_basis,
+            "source",
+            citations=e.cite(("valuation", "user_multiple", "basis")),
+        )
+    return e.text(ref, sel.ebitda_basis, "normalized")
+
+
+def _emit_selection(e: _EvEmitter, plan: _EvPlan) -> None:
+    sel, t, r = plan.selection, SELECTION_TABLE, "selection"
+    ids = [
+        e.text(
+            (t, r, "requested_basis"),
+            sel.requested,
+            "source",
+            citations=e.cite(("valuation", "basis")),
+        )
+    ]
+    if sel.selected_basis is not None:
+        ids.append(e.text((t, r, "selected_basis"), sel.selected_basis, "normalized"))
+    else:
+        ids.append(e.gap((t, r, "selected_basis"), sel.reason))
+    ids.append(e.text((t, r, "reason"), sel.reason, "normalized"))
+    ids.append(_ebitda_basis_fact(e, plan))
+    ids.append(_selected_multiple(e, plan))
+    ids += _emit_ebitda_facts(e, plan)
+    e.line(t, r, "Selection", ids)
+
+
+@dataclass(frozen=True)
+class _EvComposed:
+    facts: tuple[PeerFact, ...]
+    tables: tuple[PeerTable, ...]
+    limitations: tuple[str, ...]
+
+
+def _ev_limitations(plan: _EvPlan) -> tuple[str, ...]:
+    """The limitations of the context's valuation, in the oracle's order."""
+    valuation, sel = plan.valuation, plan.selection
+    lines: list[str] = []
+    if any(row.record is not None for s in plan.sets for row in s.rows):
+        lines += [USER_FIGURES_LINE, CURRENCY_PERIOD_LINE]
+    if any(MIN_INCLUDED_PEERS <= s.stats.n_admitted < THIN_UNIVERSE for s in plan.sets):
+        lines.append(THIN_LINE)
+    market, user = valuation.issuer_market, valuation.user_multiple
+    if valuation.basis == "issuer_trading":
+        lines.append(
+            f"The issuer's trading figures are the user's own entries (source: {market.source}, "
+            f"dated {market.as_of}); CP-1C does not verify them against a market source."
+        )
+    if valuation.basis == "user_multiple":
+        lines.append(
+            f"The selected multiple is user-supplied ({user.basis} basis; rationale: "
+            f"{user.rationale}); CP-1C does not verify it."
+        )
+    if sel.multiple is None:
+        lines.append(f"Valuation basis not selected: {sel.reason}.")
+    return tuple(lines)
+
+
+def _ev_compose(inputs: PeerBenchmarkInputs) -> _EvComposed | None:
+    """T1C.9-T1C.11, their facts and limitations; None when the pack has no context or the
+    context has no valuation to show (the eight tables are then the whole head)."""
+    if inputs.context is None or not shows_valuation(inputs.context.valuation):
+        return None
+    if inputs.context_source is None:
+        raise ValueError("The EV/EBITDA tables cite the context source, which is not supplied")
+    plan = _ev_plan(inputs)
+    e = _EvEmitter(context_cites(inputs.context_source))
+    _emit_records(e, plan)
+    _emit_stats(e, plan)
+    _emit_selection(e, plan)
+    tables = tuple(PeerTable(t, title, tuple(e.rows[t])) for t, title in EV_TABLES.items())
+    return _EvComposed(tuple(e.items), tables, _ev_limitations(plan))
+
+
 def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     """Facts, tables and limitations; needs one assessment per sheet peer."""
     cp1 = _cp1_facts(inputs)
@@ -1710,8 +2276,12 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     _tie_out(c, sheet, cp1)
     _gaps(c, inputs.submission.gaps)
     tables = tuple(PeerTable(t, title, tuple(c.rows[t])) for t, title in TABLES.items())
+    ev = _ev_compose(inputs)  # Phase 7: T1C.9-T1C.11 after the eight, only over a context
     limitations = _limitations(present, c.absent, cp1, peers, stats, inputs.submission.gaps)
-    return _Composed(_with_lineage(c.items), tables, limitations, peers, stats, c.absent)
+    if ev:  # Phase 7: the context's lines follow the frozen list, none repeated
+        limitations += tuple(line for line in ev.limitations if line not in limitations)
+    facts = _with_lineage(c.items) + (ev.facts if ev else ())
+    return _Composed(facts, tables + (ev.tables if ev else ()), limitations, peers, stats, c.absent)
 
 
 def _claims(composed: _Composed, submission: PeerBenchmarkSubmission) -> tuple[Claim, ...]:
@@ -2133,6 +2703,11 @@ _ROW_HEADERS: Mapping[str, str] = {
 }
 
 
+def _columns(table_id: str) -> tuple[tuple[str, str], ...]:
+    """A table's columns: the eight tables' own, or T1C.9-T1C.11's when the head holds them."""
+    return EV_COLUMNS[table_id] if table_id in EV_COLUMNS else _COLUMNS[table_id]
+
+
 def _report(
     pack: PreparedPack, submission: PeerBenchmarkSubmission, result: PeerBenchmarkResult
 ) -> PeerBenchmarkReport:
@@ -2145,10 +2720,10 @@ def _report(
                 table_id=table.table_id,
                 title=table.title,
                 columns=tuple(
-                    TableColumn(field=f, label=label) for f, label in _COLUMNS[table.table_id]
+                    TableColumn(field=f, label=label) for f, label in _columns(table.table_id)
                 ),
                 rows=table.rows,
-                row_header=_ROW_HEADERS[table.table_id],
+                row_header=EV_ROW_HEADERS.get(table.table_id) or _ROW_HEADERS[table.table_id],
             )
             for table in result.tables
         ),
@@ -2468,13 +3043,22 @@ def cp1c_reader(store: Execution, head: Head) -> Cp1cHead:
     if status == "blocked":
         return Cp1cHead(status=status, head_sha256=head.result_sha256)
     module = store.head_module(head)
-    facts = {f.fact_id: f for f in module.facts}
-    missing = [fact_id for fact_id in READER_FACTS if fact_id not in facts]
-    if missing:
-        raise ValueError(f"CP-1C: the head has no fact {missing[0]}")
     return Cp1cHead(
         status=status,
         head_sha256=head.result_sha256,
-        facts=tuple(facts[fact_id] for fact_id in READER_FACTS),
+        facts=reader_facts(module),
         limitations=module.limitations,
     )
+
+
+def reader_facts(module: Module) -> tuple[Fact, ...]:
+    """The pinned facts of a settled CP-1C module, verbatim: `READER_FACTS`, then `EV_READER_FACTS`
+    when the module holds T1C.11 (a frozen head has none). A missing fact raises."""
+    facts = {f.fact_id: f for f in module.facts}
+    wanted = READER_FACTS
+    if any(table.table_id == SELECTION_TABLE for table in module.tables):
+        wanted = (*READER_FACTS, *EV_READER_FACTS)
+    missing = [fact_id for fact_id in wanted if fact_id not in facts]
+    if missing:
+        raise ValueError(f"CP-1C: the head has no fact {missing[0]}")
+    return tuple(facts[fact_id] for fact_id in wanted)

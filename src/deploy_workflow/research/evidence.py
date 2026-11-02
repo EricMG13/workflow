@@ -199,11 +199,14 @@ def read_fetches(path: Path) -> tuple[FetchRecord, ...]:
 
 
 def write_manifest_sha(path: Path, digest: str) -> None:
-    """Record the research manifest's sha256 at staging (``research/manifest.sha256``)."""
+    """Record a sha256 at staging: the research manifest's (``research/manifest.sha256``) and the
+    web-pause ruling's (``research/ruling.sha256``), each one hex digest and a newline."""
     path.write_text(digest + "\n", encoding="ascii")
 
 
 def read_manifest_sha(path: Path) -> str:
+    """The digest ``write_manifest_sha`` recorded, in ``manifest.sha256`` or ``ruling.sha256``;
+    a file that cannot be read is ``EvidenceRecordInvalid``."""
     try:
         return path.read_text(encoding="ascii").strip()
     except (OSError, ValueError) as error:

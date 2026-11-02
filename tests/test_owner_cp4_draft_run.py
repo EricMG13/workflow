@@ -17,19 +17,24 @@ needs the real CP-1 promotion (11-26 minutes), so it is collected and skipped he
 import importlib
 import json
 import os
+import re
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from deploy_vii import cp4_legal
+from deploy_vii.delivery import cp0_view
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
+from deploy_vii.render import render
 from deploy_workflow.context import context_facts
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow, verify_owner_run_receipt
 
 attach: Any = importlib.import_module("test_owner_cp0_attachments")
 runs: Any = importlib.import_module("cp4_runs")
 s1a: Any = importlib.import_module("s1a_runs")
+draft: Any = importlib.import_module("test_cp4_draft")
 
 CASE = attach.CASE
 EXPECTED = attach.EXPECTED
@@ -118,6 +123,48 @@ def test_the_same_review_is_refused_when_the_pack_froze_the_executed_context(
     assert list(issues) == [EXPECTED["texts"]["legal_executed_missing"]]
 
 
+# --- fast part: the rendered report (ruling P5T2-R6) --------------------------------------------
+
+
+def _rendered_cp4() -> dict[str, Any]:
+    """The CP-4 module of the settled `draft-ok` report as the delivered HTML carries it: the
+    report composed by `cp4_legal`, bound as a Module, shown through `delivery.cp0_view` and
+    `render` (the path `delivery.py` publishes), then read back from the page's `report-data`
+    block, which is what the page's script displays."""
+    pack, _upstream = draft._upstream(DRAFT_CASE)
+    module = cp4_legal.cp4_module(draft._report(DRAFT_CASE), draft._inputs(pack), 1)
+    page = render(cp0_view(pack, module.model_copy(update={"status": "restricted"}), accepted=True))
+    found = re.search(
+        r'<script id="report-data" type="application/json">(.*?)</script>', page, re.DOTALL
+    )
+    assert found is not None
+    data = json.loads(found.group(1))
+    shown: dict[str, Any] = next(m for m in data["modules"] if m["module_id"] == "CP-4")
+    return shown
+
+
+def test_the_rendered_cp4_report_states_the_draft_limitation() -> None:
+    shown = _rendered_cp4()
+    want = EXPECTED["cases"][DRAFT_CASE]["M"]["CP-4"]["own_limitations"]
+    assert shown["limitations"].count(DRAFT_LIMITATION) == 1
+    assert shown["limitations"] == want["exact_order"]
+    assert len(shown["limitations"]) == want["total_count"]
+
+
+def test_the_rendered_t4d1_row_of_the_draft_source_equals_the_key() -> None:
+    shown = _rendered_cp4()
+    table = next(t for t in shown["tables"] if t["table_id"] == "T4D.1")
+    facts = {f["fact_id"]: f for f in shown["facts"]}
+    rows = {
+        row["label"]: [facts[i]["table_display"] for i in row["fact_ids"][:3]]
+        for row in table["rows"]
+    }
+    want = EXPECTED["cases"][DRAFT_CASE]["M"]["CP-4"]["T4D.1"]
+    for label, cells in want.items():
+        if isinstance(cells, dict):
+            assert rows[label] == list(cells.values()), label
+
+
 # --- slow part: CP-1, CP-4 and the receipt (release CI) -----------------------------------------
 
 _PROMOTION = pytest.mark.skipif(
@@ -165,8 +212,8 @@ def test_the_cp4_head_carries_the_draft_limitation_once(
     limitations = list(store.head_module(head).limitations)
     want = EXPECTED["cases"][DRAFT_CASE]["M"]["CP-4"]["own_limitations"]
     assert limitations.count(DRAFT_LIMITATION) == 1
-    own = [x for x in limitations if x in want["exact_order"]]
-    assert own == want["exact_order"]
+    assert limitations == want["exact_order"]
+    assert len(limitations) == want["total_count"]
 
 
 @_PROMOTION

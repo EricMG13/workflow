@@ -5,7 +5,7 @@ and its own after them, Python puts the run's context questions first, bounds th
 the tail, hashes it and locks it as ``research/brief.json`` (``research/brief.py``). The
 ``research`` step answers the locked brief from the held sources, ``ev-*`` items included; Python
 checks the answers (``research/review.py``, ``research/steps.py``), composes TDR.1-3
-(``research/tables.py``) and settles the head. Nothing here asks the model for a figure.
+(``research/tables.py``; TDR.4-6 too when the brief asks for the peer pack) and settles the head. Nothing here asks the model for a figure.
 
 Protocol (docs/G1X-OWNER-CORE-PROTOCOL.md section 2): ``STEP_IDS``, ``SCHEMAS``, ``QUALIFICATION``,
 ``RULES``, ``ENTRY_VALIDATOR``, ``brief_view``, ``research_view``, ``probe`` and ``submit``. The
@@ -362,8 +362,9 @@ def ENTRY_VALIDATOR(store: Execution, pack: PreparedPack, attempt: Attempt) -> S
 
 
 def _candidate(store: Execution, attempt: Attempt, output: str) -> Module:
-    """The CP-DR candidate: TDR.1-3 over the locked brief and the reviewed submission, bound to
-    the attempt's inputs, the brief and the submission."""
+    """The CP-DR candidate: TDR.1-3 (and TDR.4-6 when the brief asks for the peer pack) over the
+    locked brief and the reviewed submission, bound to the attempt's inputs, the brief and the
+    submission."""
     submission = ResearchSubmission.model_validate_json(output)
     brief = _brief_of(store, attempt)
     composed = compose(

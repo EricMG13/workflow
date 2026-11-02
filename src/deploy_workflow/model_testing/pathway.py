@@ -45,6 +45,31 @@ def _receipt(path: Path) -> OwnerRunReceipt:
         raise JournalError("owner-run.json: not a valid owner run receipt") from None
 
 
+def receipt_refusals(run_dir: Path) -> dict[str, tuple[str, ...]]:
+    """The inputs each refused module named as missing, read from the run's owner receipt (the
+    O3 ``RefusedBegin.missing_inputs`` record). A module whose refusal names nothing is left out;
+    a directory without a receipt has none."""
+    path = run_dir / "owner-run.json"
+    if not path.is_file():
+        return {}
+    receipt = _receipt(path)
+    return {r.module_id: tuple(r.missing_inputs) for r in receipt.refusals if r.missing_inputs}
+
+
+def _check_refusal_names(pathway: PathwayId, named: MappedRefusals) -> None:
+    """Every module and input a refusal names must belong to the pathway preset; anything else
+    is refused, never scored as an excused gap."""
+    preset = set(PATHWAY_MODULES[pathway])
+    for module_id, inputs in named.items():
+        if module_id not in preset:
+            raise ValueError(f"refusals name module {module_id}, outside the {pathway} preset")
+        for name in inputs:
+            if name not in preset:
+                raise ValueError(
+                    f"refusal of {module_id} names input {name}, outside the {pathway} preset"
+                )
+
+
 def _problem_code(error: ValueError) -> str:
     """The refusal's short code. Both verifiers refuse with a bare code (``WorkflowError.code``
     or an ``owner_render_*`` message); any other text could carry a path or an input value, so it
@@ -129,14 +154,15 @@ def score_run(
     refusals: MappedRefusals | None = None,
 ) -> PathwayScore:
     """Score one run directory. ``refusals`` maps a refused module to the inputs it named as
-    missing (empty until the orchestrator records them; a refused module without an entry scores
-    as refused with nothing named)."""
+    missing (``receipt_refusals`` reads them from the receipt; a refused module without an entry
+    scores as refused with nothing named). Names outside the pathway preset raise ``ValueError``."""
     meta, _ = read_run(run_dir)
     if meta.case_id != case.case_id:
         raise CaseError(f"run {meta.run_id} is case {meta.case_id}, not {case.case_id}")
     if meta.pathway != case.pathway:
         raise CaseError(f"run {meta.run_id} is pathway {meta.pathway}, not {case.pathway}")
     named = {} if refusals is None else refusals
+    _check_refusal_names(meta.pathway, named)
     receipt_path = run_dir / "owner-run.json"
     if receipt_path.is_file():
         receipt = _receipt(receipt_path)

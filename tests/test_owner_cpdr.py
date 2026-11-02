@@ -32,7 +32,7 @@ import pytest
 from cpdr_s1_support import ResearchCase
 
 from deploy_vii import registry
-from deploy_vii.contracts import validate_tables
+from deploy_vii.contracts import Citation, validate_tables
 from deploy_vii.execution import Execution, Head
 from deploy_vii.preparation import SourceRequest, prepare_source
 from deploy_workflow import owner_workflow
@@ -48,6 +48,8 @@ from deploy_workflow.research.anchors import check_anchors
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.research.dossier import render_dossier
 from deploy_workflow.research.intake import RefusedItem, write_rejected
+from deploy_workflow.research.peers import AlignmentObservation, CandidatePeer, PeerPack
+from deploy_workflow.research.review import ResearchSubmission
 from deploy_workflow.run_inputs import check_arguments
 from deploy_workflow.workflow import WorkflowError
 
@@ -804,3 +806,118 @@ def test_brief_view_carries_the_effective_cutoff(tmp_path: Path, cutoff_context:
     store, _ticket = runs.seeded("positive", tmp_path)
     _digest, body = cpdr.brief_view(store, store.read().attempts[-1])
     assert re.search(rf"cutoff\D{{0,4}}{want}", body), body
+
+
+# --- the peer-pack opt-in (O7d D1b, plan row 16) -------------------------------------------------
+
+PEERS_KEY: dict[str, Any] = json.loads(
+    (ROOT / "cases" / "cpdr-peers-owner" / "expected.json").read_text("utf-8")
+)
+OPT_IN_ROWS = [tuple(row) for row in PEERS_KEY["opt_in_matrix"]["rows"]]
+USER_PEERS = {
+    "user_list": [{"name": "Peer One", "ticker": "", "ev_m": "", "ebitda_m": "", "as_of": ""}],
+    "user_comps": [
+        {
+            "name": "Peer One",
+            "ticker": "",
+            "ev_m": "100",
+            "ebitda_m": "10",
+            "as_of": "2025-12-31",
+            "source": "annual report",
+        }
+    ],
+}
+
+
+def _variant(monkeypatch: pytest.MonkeyPatch, peer_source: str, cp1c_requested: bool) -> None:
+    """The driver's run and pack with `valuation.peer_source` and the CP-1C request set."""
+    original_source, original_run = runs.context_source, runs.run_of
+
+    def source(case: str) -> Any:
+        found = original_source(case)
+        document = json.loads("\n".join(span.text for span in found.spans))
+        document["valuation"]["peer_source"] = peer_source
+        document["valuation"]["peers"] = [
+            {"source": "", **row} for row in USER_PEERS.get(peer_source, [])
+        ]
+        raw = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+        return prepare_source(
+            SourceRequest(source_id="context", path="context.json", media_type="text/plain"), raw
+        )
+
+    def run(case: str) -> Any:
+        modules = ("CP-1", "CP-DR", "CP-1C") if cp1c_requested else ("CP-1", "CP-DR")
+        return original_run(case).model_copy(update={"requested_modules": modules})
+
+    monkeypatch.setattr(runs, "context_source", source)
+    monkeypatch.setattr(runs, "run_of", run)
+
+
+@pytest.mark.parametrize(
+    "peer_source, cp_dr, cp1c_requested, want",
+    OPT_IN_ROWS,
+    ids=["-".join(str(cell) for cell in row[:3]) for row in OPT_IN_ROWS],
+)
+def test_pack_requested_only_with_cp_dr_public(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    peer_source: str,
+    cp_dr: bool,
+    cp1c_requested: bool,
+    want: bool,
+) -> None:
+    """`cpdr-peers-owner#opt_in_matrix`: the brief step locks `peer_pack` by the Q4 rule on hand-built
+    packs, and both `read_inputs` views state it. A row with `cp_dr` false has no brief at all (the
+    step is never begun), so its key value is false by the rule and nothing is run for it."""
+    if not cp_dr:
+        assert want is False, "no CP-DR step, no brief, no pack"
+        return
+    _variant(monkeypatch, peer_source, cp1c_requested)
+    store, ticket = runs.seeded("positive", tmp_path)
+    brief_body = json.loads(cpdr.brief_view(store, store.read().attempts[-1])[1])
+    assert brief_body["peer_pack"] is want
+    step = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, runs.defaults_only("positive"), None)
+    assert step.journal.steps[-1].status == "valid"
+    assert locked_brief(store)["peer_pack"] is want
+    research_body = json.loads(cpdr.research_view(store, store.read().attempts[-1])[1])
+    assert research_body["peer_pack"] is want
+
+
+def test_the_frozen_case_keeps_peer_pack_false(tmp_path: Path) -> None:
+    """`cpdr-research-owner#brief/peer_pack`: requested [CP-1, CP-DR] under `cp_dr_public` still
+    locks false, and the peers key names that same case in its matrix."""
+    frozen = PEERS_KEY["opt_in_matrix"]["frozen_case"]
+    assert frozen["peer_pack"] is False and frozen["cp1c_requested"] is False
+    want = runs.oracle()["expected"]["brief"]["peer_pack"]
+    assert want is False
+    store, ticket = runs.seeded("positive", tmp_path)
+    assert runs.run_of("positive").requested_modules == ("CP-1", "CP-DR")
+    cpdr.submit(store, ticket, cpdr.BRIEF_STEP, runs.defaults_only("positive"), None)
+    assert locked_brief(store)["peer_pack"] is want
+
+
+def test_peer_pack_texts_are_fence_checked() -> None:
+    """The model-written TDR.4 and TDR.5 cells (`name`, `basis_note`, `observation`) join the
+    dossier fence check beside the claim texts."""
+    citation = Citation(source_id="ev-1", source_sha256="0" * 64, locator="line:1", quote="q")
+    submission = ResearchSubmission(
+        run_id="r",
+        answers=(),
+        peers=PeerPack(
+            candidates=(
+                CandidatePeer(peer_id="p1", name="NAME", basis_note="BASIS", citation=citation),
+            ),
+            observations=(
+                AlignmentObservation(
+                    peer_id="p1", dimension="period", observation="OBS", citation=citation
+                ),
+            ),
+            figures=(),
+        ),
+    )
+    assert list(cpdr._research_texts(submission)) == [
+        ("p1", "NAME"),
+        ("p1", "BASIS"),
+        ("p1.period", "OBS"),
+    ]
+    assert list(cpdr._research_texts(submission.model_copy(update={"peers": None}))) == []

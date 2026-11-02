@@ -268,7 +268,11 @@ def test_the_brief_view_names_the_defaults_the_context_and_the_limits(
     ctx = [(q["text"], q["focus_module"]) for q in manifest["context"]["research_questions"]]
     body = json.loads(
         s.brief_view_body(
-            context_questions=ctx, as_of=date(2026, 1, 10), cutoff=date(2026, 1, 10), sources=("a",)
+            context_questions=ctx,
+            as_of=date(2026, 1, 10),
+            cutoff=date(2026, 1, 10),
+            sources=("a",),
+            peer_pack=True,
         )
     )
     key = expected["brief"]
@@ -278,6 +282,7 @@ def test_the_brief_view_names_the_defaults_the_context_and_the_limits(
     assert [q["focus_module"] for q in body["context_questions"]] == ["CP-1C", "CP-2"]
     assert body["limits"] == {"max_questions": c.MAX_QUESTIONS}
     assert (body["as_of"], body["cutoff"], body["sources"]) == ("2026-01-10", "2026-01-10", ["a"])
+    assert body["peer_pack"] is True
 
 
 def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
@@ -297,6 +302,7 @@ def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
     )
     assert [q["question_id"] for q in body["questions"]] == expected["brief"]["question_ids"]
     assert body["brief_sha256"] == brief.brief_sha256
+    assert body["peer_pack"] is brief.peer_pack is False
     assert body["evidence"] == [
         {
             "item_id": "ev-1",

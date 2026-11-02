@@ -236,6 +236,30 @@ def test_an_existing_step_carries_its_contract_rules_whole(step_id: str) -> None
         assert statement in STEP_CONTRACTS[step_id]
 
 
+PEER_PACK_RULES: dict[str, tuple[str, ...]] = {
+    # O7d D1b: the peer-pack rules of the research step; each statement names these phrases
+    "research.11": ("`peer_pack: true`", "`peers`", "`peer_pack: false`", "no `peers`"),
+    "research.12": ("`period_end`", "after the cutoff", "no readable amount", "you type no amount"),
+    "research.13": ("`name`", "`basis_note`", "`observation`", "`<<<`"),
+}
+
+
+def test_the_peer_pack_rules_are_stated_checked_and_in_the_prompt() -> None:
+    listed = {r.id: r for r in rules.load_rules("research")}
+    text = (Path(rules.__file__).parent / "texts" / "research.md").read_text(encoding="utf-8")
+    for rule_id, phrases in PEER_PACK_RULES.items():
+        rule = listed[rule_id]
+        for phrase in phrases:
+            assert phrase in rule.statement, (rule_id, phrase)
+        assert f"[{rule_id}] {rule.statement}" in text, rule_id
+        assert rule.checks, rule_id
+    assert "fn:deploy_workflow.research.peers:peer_issues" in listed["research.11"].checks
+    assert "fn:deploy_workflow.research.peers:peer_issues" in listed["research.12"].checks
+    assert "fn:deploy_workflow.owners.cpdr:_fence_issues" in listed["research.13"].checks
+    brief = (Path(rules.__file__).parent / "texts" / "brief.md").read_text(encoding="utf-8")
+    assert "`peer_pack`" in brief, "the brief step is told what the view's peer_pack means"
+
+
 @pytest.mark.parametrize("step_id", STEPS)
 def test_every_rule_has_a_check(step_id: str) -> None:
     for rule in rules.load_rules(step_id):

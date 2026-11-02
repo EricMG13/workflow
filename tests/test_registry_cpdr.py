@@ -32,6 +32,18 @@ def test_the_cpdr_row_is_the_keys_row() -> None:
     assert ROW["purpose_contains"] in row.purpose
 
 
+def test_methodology_registers_tdr4_to_6() -> None:
+    """Row 20: `methodology.json` registers TDR.1-6 for CP-DR, in the key's order, and every table
+    the peers key composes is among them (D0b registered them; D1b's bindings render them)."""
+    wanted = ["TDR.1", "TDR.2", "TDR.3", "TDR.4", "TDR.5", "TDR.6"]
+    assert ROW["table_ids"] == wanted
+    assert list(_row().table_ids) == ROW["table_ids"]
+    peers: dict[str, Any] = json.loads(
+        (ROOT / "cases/cpdr-peers-owner/expected.json").read_text(encoding="utf-8")
+    )
+    assert {t for t in peers["tables"] if t.startswith("TDR.")} <= set(_row().table_ids)
+
+
 def test_the_cpdr_row_sits_directly_before_cp1c() -> None:
     ids = [m.module_id for m in registry.modules()]
     assert ids.index("CP-DR") + 1 == ids.index("CP-1C")

@@ -2361,6 +2361,14 @@
       "sha256": "aca3194d336b5edeb0b9ae92d3778e8443faaee76a8bb35189f300a9e4df2ae7",
       "reason": "repo-authored (not in files[]): B1: O7b-1c S5 relabels the three CP-DR bindings to the R7 table titles (Locked questions and recipients; Claims and located evidence; Answers, contrary evidence, uncertainty and downstream use) and updates the docstring; no binding, block, slot or unit changes. First D12 record for this file (no import baseline).",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "bd5d5816e366a01bd55218a98bd09db823dfe020ad4704147fe685fee2109cf2",
+      "project_commit": "b1598c22fd357d72d6e60db953ddf5d11fc2e54e",
+      "sha256": "6f808d3e15278d9bf0484413fbaa9eb3bc4fdd1b86ad3551a81ad0ce8554d985",
+      "reason": "repo-authored (not in files[]): B1: O7-R40 fix round 1 of the O7b-1c S5 review: no run-context cutoff (the cutoff is the as-of date, M1); a refused item's text, not the item, stays out of the pack, prompts and dossier, and the dossier lists it under Rejected items (L1); the prompt carries accepted items' text in UNTRUSTED_EVIDENCE blocks (L2); no module reads CP-DR output until O7d (I1). Chained after the S5 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
     }
   ],
   "local_patch_lineage": [

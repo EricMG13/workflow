@@ -447,7 +447,7 @@ def blocked_cp0_run(tmp_path: Path) -> tuple[Any, Any, Any]:
     workflow = OwnerWorkflow.create(execution, pack, publication_directory=None)
     checked: Any = SimpleNamespace(
         cp_dr=True,
-        research=None,
+        research=SimpleNamespace(manifest_sha256="0" * 64, ruling=None),
         model=o2_case.MODEL,
         case_id="cpdr-research-owner",
         pathway=pack.run.pathway,

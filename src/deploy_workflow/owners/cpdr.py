@@ -38,6 +38,7 @@ from deploy_vii.execution import (
     bounded_issues,
     settle,
 )
+from deploy_vii.live.prompts import PromptError
 from deploy_vii.live.schema import json_object, normalise
 from deploy_vii.live.submission import Submitted, _with_rules
 from deploy_vii.preparation import PreparedPack
@@ -59,8 +60,14 @@ from deploy_workflow.research.contracts import (
     BriefInvalid,
     EvidenceItem,
     ResearchBrief,
+    ResearchError,
 )
-from deploy_workflow.research.dossier import DossierInput, breaks_a_table_cell, brief_json
+from deploy_workflow.research.dossier import (
+    DossierInput,
+    breaks_a_table_cell,
+    brief_json,
+    render_dossier,
+)
 from deploy_workflow.research.intake import RefusedItem, effective_cutoff
 from deploy_workflow.research.review import (
     ResearchSubmission,
@@ -97,11 +104,15 @@ QUALIFICATION = Qualification(implementation="implemented")
 RULES = research_rules
 BRIEF_FILE = "brief.json"
 DOSSIER_FILE = "dossier.md"
+ATTACHMENTS_FILE = "attachments.json"
 NOT_LOCKED = "brief is not locked: research/brief.json is missing"
 RELOCKED = (
     "the brief is locked by an earlier attempt of this run; submit the same questions as that "
     "attempt"
 )
+DOSSIER_BLOCK_ID = "cp-dr-dossier"  # #consumers/prompt/block_id
+DOSSIER_LOCATOR = "research/dossier.md"
+CONSUMERS = ("CP-1C", "CP-2")  # the modules whose prompt carries the dossier block
 ROOT_NOT_OBJECT = "(root): payload is not a JSON object the journal can store"
 
 
@@ -471,6 +482,13 @@ def probe(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> No
         s.status != "valid" for s in attempt.steps
     ):
         raise WorkflowError("identity_mismatch")
+    try:
+        _rebuild(store, snapshot, attempt)
+    except ResearchError as error:  # O7-R54 L-a: a research-record fault is a head not authentic
+        raise WorkflowError("identity_mismatch") from error
+
+
+def _rebuild(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
     frozen = _FrozenExecution(store, snapshot)
     pack = store.pack(snapshot)
     output = ""
@@ -515,26 +533,60 @@ def check_begin(store: Execution, snapshot: ExecutionSnapshot) -> Anchor:
     return check_anchors(anchored("CP-0"), anchored("CP-1"), snapshot.run)
 
 
+def _evidence_items(research: Path) -> tuple[UntrustedItem, ...]:
+    """Every accepted item's full text, each checked against its recorded hash (O7-R14)."""
+    items = []
+    for row in record.read_evidence(research / record.EVIDENCE_FILE):
+        data = (research.parent / "sources" / f"{row['item_id']}.txt").read_bytes()
+        if hashlib.sha256(data).hexdigest() != row["sha256"]:
+            raise record.EvidenceRecordInvalid(f"the staged text of {row['item_id']} changed")
+        items.append(
+            UntrustedItem(
+                row["item_id"], row["sha256"], row["locator"], row["retrieved"], data.decode()
+            )
+        )
+    return tuple(items)
+
+
+def dossier_item(store: Execution, attempt: Attempt, research: Path) -> tuple[UntrustedItem, ...]:
+    """O7c C3 (O7-R47 Q1): the CP-DR dossier as the one untrusted item a consumer's prompt carries.
+    Built from the settled head at prompt time (``render_dossier(dossier_input(...))``, never
+    ``dossier.md``); its hash is the dossier's own, the one ``run.json`` records. An attempt that
+    binds no CP-DR input gets none. A ticket bound to a head that is no longer the head is refused:
+    the block is never built from another head. The retrieval instant is the evidence record's
+    (one intake instant for every row)."""
+    bound = next((i for i in attempt.inputs if i.input_id == MODULE_ID), None)
+    if bound is None:
+        return ()
+    head = next((h for h in store.read().heads if h.module_id == MODULE_ID), None)
+    if head is None or head.result_sha256 != bound.sha256:
+        raise PromptError(f"the CP-DR head is not the one {attempt.module_id} was begun on")
+    text = render_dossier(dossier_input(store, head, research)).markdown
+    moments = {str(r["retrieved"]) for r in record.read_evidence(research / record.EVIDENCE_FILE)}
+    if len(moments) != 1:
+        raise record.EvidenceRecordInvalid("the evidence record has no single retrieval instant")
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return (UntrustedItem(DOSSIER_BLOCK_ID, digest, DOSSIER_LOCATOR, moments.pop(), text),)
+
+
 def untrusted_items(
-    research: Path,
+    research: Path, store: Execution | None = None
 ) -> "Callable[[OwnerBinding, StepSpec], tuple[UntrustedItem, ...]]":
     """The prompt factory's ``untrusted_for`` for a run whose staging is ``research``: the research
-    step carries every accepted item's full text (O7-R14); every other step carries none."""
+    step carries every accepted item's full text (O7-R14); CP-1C and CP-2 carry the dossier block
+    when their ticket binds the CP-DR head (``dossier_item``); every other step carries none.
+    ``store`` defaults to ``<run>/execution``, read only for a consumer step."""
 
     def hook(binding: "OwnerBinding", spec: "StepSpec") -> tuple[UntrustedItem, ...]:
-        if (binding.module_id, binding.step_id) != (MODULE_ID, RESEARCH_STEP):
+        if (binding.module_id, binding.step_id) == (MODULE_ID, RESEARCH_STEP):
+            return _evidence_items(research)
+        if binding.module_id not in CONSUMERS:
             return ()
-        items = []
-        for row in record.read_evidence(research / record.EVIDENCE_FILE):
-            data = (research.parent / "sources" / f"{row['item_id']}.txt").read_bytes()
-            if hashlib.sha256(data).hexdigest() != row["sha256"]:
-                raise record.EvidenceRecordInvalid(f"the staged text of {row['item_id']} changed")
-            items.append(
-                UntrustedItem(
-                    row["item_id"], row["sha256"], row["locator"], row["retrieved"], data.decode()
-                )
-            )
-        return tuple(items)
+        held = Execution(research.parent / "execution") if store is None else store
+        attempt = next((a for a in held.read().attempts if a.ticket_id == binding.ticket_id), None)
+        if attempt is None:
+            raise PromptError(f"no attempt for ticket {binding.ticket_id}")
+        return dossier_item(held, attempt, research)
 
     return hook
 

@@ -307,6 +307,13 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
 
 
 _OWN_FORM = OWN_FORM
+
+
+class AttachmentsInvalid(ValueError):
+    """``research/attachments.json`` cannot be written. It is written after the receipt seal, so
+    this is a named post-seal stop (``AttachmentsInvalid: ...`` in ``run.json``), not a crash."""
+
+
 _FAULTS = (
     StepStopped,
     BudgetError,
@@ -321,6 +328,7 @@ _FAULTS = (
     BriefInvalid,  # a locked brief that was changed is not repairable by the model
     DossierInvalid,  # the settled head cannot be written as the dossier layout
     DossierMismatch,  # the dossier is not bound to the brief the head recorded
+    AttachmentsInvalid,  # post-seal: research/attachments.json cannot be written (O7c C3)
     evidence.EvidenceRecordInvalid,  # the staged evidence record or an item's text changed
 )
 
@@ -396,6 +404,21 @@ class CpDrRecord:
     dossier_sha256: str | None = None
     head_sha256: str | None = None
 
+    @property
+    def state(self) -> str | None:
+        """``run.json.cp_dr_state`` (O7-R47 Q2): ``settled`` once the dossier is written,
+        ``blocked`` for a blocked head, ``None`` with no CP-DR head."""
+        if self.dossier_sha256 is not None:
+            return "settled"
+        return None if self.head_sha256 is None else "blocked"
+
+
+def _stopped_cp_dr_state(reason: str | None) -> str | None:
+    """``refused`` for the O7-R20 anchor stop (its reason keeps the ``CpDrNotAnchored: `` form
+    through a loop stop, O7-R32); a stop for any other reason records nothing of CP-DR's state."""
+    anchored = f"{CpDrNotAnchored.__name__}: "
+    return "refused" if reason is not None and reason.startswith(anchored) else None
+
 
 def _ruling_keys(ruling: GateResult | None) -> dict[str, Any]:
     """The ``run.json`` keys of the ruling that lifted the web pause (O7b-2 D2); none without one."""
@@ -408,9 +431,12 @@ def _ruling_keys(ruling: GateResult | None) -> dict[str, Any]:
     }
 
 
-def _cp_dr_keys(checked: CheckedRun, record: CpDrRecord | None) -> dict[str, Any]:
+def _cp_dr_keys(
+    checked: CheckedRun, record: CpDrRecord | None, stopped_reason: str | None = None
+) -> dict[str, Any]:
     """The ``run.json`` keys that exist only for a CP-DR run (a ``cp_dr=False`` file is unchanged).
-    The brief, dossier and head hashes are null until the walk has settled the head."""
+    The brief, dossier and head hashes are null until the walk has settled the head;
+    ``cp_dr_state`` is ``settled``, ``blocked``, ``refused`` (the anchor stop) or null."""
     if not checked.cp_dr or checked.research is None:
         return {}
     held = CpDrRecord() if record is None else record
@@ -420,6 +446,7 @@ def _cp_dr_keys(checked: CheckedRun, record: CpDrRecord | None) -> dict[str, Any
         "cp_dr_brief_sha256": held.brief_sha256,
         "cp_dr_dossier_sha256": held.dossier_sha256,
         "cp_dr_head_sha256": held.head_sha256,
+        "cp_dr_state": _stopped_cp_dr_state(stopped_reason) or held.state,
         **_ruling_keys(checked.research.ruling),
     }
 
@@ -444,6 +471,43 @@ def write_dossier(store: Execution, research: Path) -> CpDrRecord:
         dossier_sha256=hashlib.sha256(dossier).hexdigest(),
         head_sha256=head.result_sha256,
     )
+
+
+ATTACHMENTS_VERSION = "cp-dr/2026-10-31"  # cases/cpdr-research-owner/expected.json#attachments
+
+
+def write_attachments(store: Execution, research: Path, run_id: str, record: CpDrRecord) -> None:
+    """After ``write_dossier`` (post-seal): ``research/attachments.json`` for a settled head, the
+    consumers' ids in plan order (the modules whose settled head binds this CP-DR head), sorted
+    keys, two-space indent, one trailing LF. A run with no settled head writes none."""
+    if record.dossier_sha256 is None or record.head_sha256 is None:
+        return
+    snapshot = store.read()
+    held = {head.module_id: head for head in snapshot.heads}
+    consumers = [
+        module_id
+        for module_id in plan(store.pack(snapshot).run.requested_modules)
+        if module_id in held
+        and module_id != cpdr.MODULE_ID
+        and any(
+            i.input_id == cpdr.MODULE_ID and i.sha256 == record.head_sha256
+            for i in store.head_module(held[module_id]).inputs
+        )
+    ]
+    body = {
+        "brief_sha256": record.brief_sha256,
+        "consumers": consumers,
+        "dossier_sha256": record.dossier_sha256,
+        "run_id": run_id,
+        "supersedes": None,
+        "version": ATTACHMENTS_VERSION,
+    }
+    try:
+        (research / cpdr.ATTACHMENTS_FILE).write_text(
+            json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    except OSError as error:
+        raise AttachmentsInvalid(f"{cpdr.ATTACHMENTS_FILE} cannot be written") from error
 
 
 def _staged_entries(checked: CheckedRun, run_dir: Path) -> tuple[dict[str, Any], ...]:
@@ -487,7 +551,7 @@ def _write_run_json(
         "cap_usd": money_text(checked.cap_usd),
         "sources": list(meta.entries),
         "cp_dr_invoked": checked.cp_dr,
-        **_cp_dr_keys(checked, record),
+        **_cp_dr_keys(checked, record, stopped_reason),
         "replayed_from_run": meta.replayed_from,
         "outcome": outcome,
         "stopped_reason": stopped_reason,
@@ -559,11 +623,11 @@ def _finish_run(workflow: OwnerWorkflow, run_dir: Path, meta: _Meta, budget: Bud
     failure = _render(workflow, run_dir, shown)
     if failure is not None:
         return _stop(run_dir, meta, failure, budget.spent)
-    record = (
-        write_dossier(Execution(run_dir / "execution"), run_dir / evidence.RESEARCH_DIR)
-        if meta.checked.cp_dr
-        else None
-    )
+    record = None
+    if meta.checked.cp_dr:
+        store, research = Execution(run_dir / "execution"), run_dir / evidence.RESEARCH_DIR
+        record = write_dossier(store, research)
+        write_attachments(store, research, meta.checked.run_id, record)
     _write_run_json(run_dir, meta, "settled", None, record)
     return RunOutcome(meta.checked.run_id, run_dir, "settled", None, budget.spent)
 

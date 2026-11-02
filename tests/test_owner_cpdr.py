@@ -690,3 +690,45 @@ def test_forged_fact_is_refused_by_the_probe(closed: Closed, tmp_path: Path) -> 
         WorkflowError, match="stale_binding"
     ):  # the sealed head hash no longer binds
         verify_owner_run_receipt(Execution(moved / "execution"), receipt)
+
+
+# --- model text the dossier table cell would refuse is a step issue (O7-R49) ------------------------
+
+CELL_ISSUE = "holds a line break or a | and cannot be written in a table cell"
+
+
+def test_a_line_break_in_a_question_text_is_a_brief_step_issue(tmp_path: Path) -> None:
+    store, ticket = runs.seeded("positive", tmp_path)
+    body = json.loads(runs.defaults_only("positive"))
+    body["questions"][0]["text"] = (
+        "Which producers supply the sector,\nand how concentrated is supply?"
+    )
+    qid = body["questions"][0]["question_id"]
+    step = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, json.dumps(body), None).journal.steps[-1]
+    assert step.status == "invalid"
+    assert f"{qid}: {CELL_ISSUE}" in step.issues
+    assert not (tmp_path / "research" / "brief.json").exists()
+
+
+@pytest.mark.parametrize("field", ["claim", "uncertainty", "limitation"])
+def test_a_line_break_or_pipe_in_a_research_text_is_a_research_step_issue(
+    tmp_path: Path, field: str
+) -> None:
+    store, ticket = runs.locked("positive", tmp_path)
+    payload = json.loads(runs.research_payload("positive"))
+    answers = {a["question_id"]: a for a in payload["answers"]}
+    if field == "uncertainty":
+        qid = "competition"
+        answers[qid]["uncertainty"] = "Two sentences of uncertainty.\nThe second one on a new line."
+    elif field == "claim":
+        qid = "competition"
+        answers[qid]["claims"][0]["text"] = "Producers A | B lead the sector by volume"
+    else:
+        qid = "valuation-context"
+        answers[qid]["limitation"] = "Not found | the items are silent"
+    step = cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, json.dumps(payload), None).journal.steps[
+        -1
+    ]
+    assert step.status == "invalid"
+    assert f"{qid}: {CELL_ISSUE}" in step.issues
+    assert all(h.module_id != "CP-DR" for h in store.read().heads)

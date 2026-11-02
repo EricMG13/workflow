@@ -256,3 +256,15 @@ def test_financial_gold_status_carried() -> None:
     nat = "CP-1.fin.NATL:FY2025Q1:adjusted_EBITDA"
     both = {"amount": Decimal(175), "scale": Decimal(1000000), "unit": "USD", "limitation": "x"}
     assert _score_one(nat, **both) == "conflict_ok"
+
+
+@pytest.mark.parametrize(
+    ("drop", "key"),
+    [("file:periods", "periods"), ("file:facts", "facts"), ("fact:metric", "metric")],
+)
+def test_financial_gold_malformed_refused(drop: str, key: str) -> None:
+    gold = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    where, _, name = drop.partition(":")
+    del (gold if where == "file" else gold["facts"][0])[name]
+    with pytest.raises(CaseError, match=rf"my_gold\.json.*{key}"):
+        financial_gold_facts(gold, "my_gold.json")

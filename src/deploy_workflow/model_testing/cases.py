@@ -94,12 +94,27 @@ def _gold_evidence(fact: Mapping[str, Any], unit: str, scale: str) -> list[dict[
     return out
 
 
-def financial_gold_facts(gold: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
-    """CP-1 golden facts, keyed ``CP-1.fin.<financial fact id>``, from a financial_gold file."""
-    ends = {p["period_id"]: p.get("end") for p in gold["periods"]}
+def financial_gold_facts(
+    gold: Mapping[str, Any], name: str = "financial_gold"
+) -> dict[str, dict[str, Any]]:
+    """CP-1 golden facts, keyed ``CP-1.fin.<financial fact id>``, from a financial_gold file.
+    ``name`` (the file path) is shown in refusals."""
+
+    def need(item: Any, key: str, where: str) -> Any:
+        if not isinstance(item, Mapping) or key not in item:
+            raise CaseError(f"{name}: {where} lacks {key!r}")
+        return item[key]
+
+    periods = need(gold, "periods", "file")
+    facts = need(gold, "facts", "file")
+    if not isinstance(periods, list) or not isinstance(facts, list):
+        raise CaseError(f"{name}: 'periods' and 'facts' must be lists")
+    ends = {need(p, "period_id", "a period"): p.get("end") for p in periods}
     out: dict[str, dict[str, Any]] = {}
-    for fact in gold["facts"]:
+    for fact in facts:
         fin_id = _gold_id(fact)
+        for key in ("metric", "period_id", "status", "value"):
+            need(fact, key, f"fact {fin_id}")
         fid = f"CP-1.fin.{fin_id}"
         if fid in out:
             raise CaseError(f"financial_gold repeats fact id {fin_id}")
@@ -157,7 +172,7 @@ def load_case(case_dir: Path, corpus: Path) -> GoldenCase:
     gold_bytes = gold_path.read_bytes()
     if hashlib.sha256(gold_bytes).hexdigest() != gold["sha256"]:
         raise CaseError(f"{case_dir.name}: financial_gold changed after the check: sha256")
-    fin = financial_gold_facts(json.loads(gold_bytes))
+    fin = financial_gold_facts(json.loads(gold_bytes), str(gold_path))
     if "CP-1" in in_plan:
         clash = sorted(set(fin) & set(facts))
         if clash:

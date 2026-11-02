@@ -166,10 +166,10 @@
             ],
             "facts_added": 24,
             "own_limitations_added": [
-              "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required."
+              "Valuation basis not selected: No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required."
             ],
             "selected_basis": "Insufficient Information",
-            "gap": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+            "gap": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required",
             "window": "Window 2026-01-10 to 2027-01-10"
           },
           "limitation_counts": {
@@ -839,10 +839,10 @@
             ],
             "facts_added": 24,
             "own_limitations_added": [
-              "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required."
+              "Valuation basis not selected: No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required."
             ],
             "selected_basis": "Insufficient Information",
-            "gap": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+            "gap": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required",
             "window": "Window 2026-01-10 to 2027-01-10"
           },
           "limitation_counts": {
@@ -5304,7 +5304,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.name",
@@ -5315,7 +5315,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.figures_date",
@@ -5326,7 +5326,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.source",
@@ -5337,7 +5337,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.currency",
@@ -5348,7 +5348,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.ebitda_period",
@@ -5359,7 +5359,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.ev",
@@ -5370,7 +5370,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.ebitda",
@@ -5381,7 +5381,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.multiple",
@@ -5392,7 +5392,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.flag",
@@ -5403,7 +5403,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.result",
@@ -5414,7 +5414,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.10.public_comps.n_total",
@@ -5536,8 +5536,8 @@
             "field": "reason",
             "label": "Reason",
             "status": "known",
-            "text": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
-            "shown": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+            "text": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required",
+            "shown": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required",
             "value_class": "normalized"
           },
           {
@@ -5562,7 +5562,7 @@
             "period": "EBITDA basis: Not stated by the user",
             "amount_exact": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required"
           },
           {
             "fact_id": "T1C.11.selection.issuer_ebitda",
@@ -6306,7 +6306,7 @@
           "Outlier flags use a fixed distance of half the peer median; they are screens, not credit judgments.",
           "Peer positioning is a description of the peer set and is not a valuation or a recommendation; relative value belongs to CP-3.",
           "Gap (Material): The peer summary is unaudited and covers a handful of peers.",
-          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required."
+          "Valuation basis not selected: No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required."
         ],
         "settled_limitations": [
           "Peer figures come from the peer summary source, which is supplied by a data desk and unaudited; no peer is restated to the issuer's basis.",
@@ -6316,7 +6316,7 @@
           "Outlier flags use a fixed distance of half the peer median; they are screens, not credit judgments.",
           "Peer positioning is a description of the peer set and is not a valuation or a recommendation; relative value belongs to CP-3.",
           "Gap (Material): The peer summary is unaudited and covers a handful of peers.",
-          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required.",
+          "Valuation basis not selected: No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required.",
           "Synthetic case; not real issuer qualification"
         ],
         "module_status": "restricted",
@@ -18638,7 +18638,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.name",
@@ -18649,7 +18649,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.figures_date",
@@ -18660,7 +18660,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.source",
@@ -18671,7 +18671,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.currency",
@@ -18682,7 +18682,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.ebitda_period",
@@ -18693,7 +18693,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.ev",
@@ -18704,7 +18704,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.ebitda",
@@ -18715,7 +18715,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.multiple",
@@ -18726,7 +18726,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.flag",
@@ -18737,7 +18737,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.9.none.result",
@@ -18748,7 +18748,7 @@
             "status": "missing",
             "text": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure"
           },
           {
             "fact_id": "T1C.10.public_comps.n_total",
@@ -18870,8 +18870,8 @@
             "field": "reason",
             "label": "Reason",
             "status": "known",
-            "text": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
-            "shown": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required",
+            "text": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required",
+            "shown": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required",
             "value_class": "normalized"
           },
           {
@@ -18896,7 +18896,7 @@
             "period": "EBITDA basis: Not stated by the user",
             "amount_exact": null,
             "shown": null,
-            "limitation": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required"
+            "limitation": "No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required"
           },
           {
             "fact_id": "T1C.11.selection.issuer_ebitda",
@@ -19640,7 +19640,7 @@
           "Outlier flags use a fixed distance of half the peer median; they are screens, not credit judgments.",
           "Peer positioning is a description of the peer set and is not a valuation or a recommendation; relative value belongs to CP-3.",
           "Gap (Material): The peer summary is unaudited and covers a handful of peers.",
-          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required."
+          "Valuation basis not selected: No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required."
         ],
         "settled_limitations": [
           "Peer figures come from the peer summary source, which is supplied by a data desk and unaudited; no peer is restated to the issuer's basis.",
@@ -19650,7 +19650,7 @@
           "Outlier flags use a fixed distance of half the peer median; they are screens, not credit judgments.",
           "Peer positioning is a description of the peer set and is not a valuation or a recommendation; relative value belongs to CP-3.",
           "Gap (Material): The peer summary is unaudited and covers a handful of peers.",
-          "Valuation basis not selected: No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d); precedents 0 admitted of 3 required.",
+          "Valuation basis not selected: No peer figures: the CP-DR peer pack carries no enterprise value figure; precedents 0 admitted of 3 required.",
           "Synthetic case; not real issuer qualification"
         ],
         "module_status": "restricted",

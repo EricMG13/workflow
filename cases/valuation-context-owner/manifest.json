@@ -374,7 +374,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "49a8a5f78e0103d9fcc078146631e29144964a914ab02930574509c1bc09cb18",
+    "sha256": "95355f409c14011d392c4b37dd190c1930c583c998b56808a4f0af26fe71ed70",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {
@@ -394,7 +394,7 @@
     "contexts/user-list.json": "76484b05df453b04a235197021c0e1c9364a025e861eacd9c3911785c0e658f9",
     "contexts/user-multiple.json": "e17a46bdca76ac51eaabef56e610b5671dc51078fcafd25e5dd496fb1121f00b",
     "contexts/window-edges.json": "1b170618fb2a2b83351151fb5c7c27ceaf1daa738486e329ebc13a70e2f991e9",
-    "expected.json": "76697efd49f577d4e2a617bb0a75879f304283b9d692a9256d2668f4e5aab7a1"
+    "expected.json": "5406eaaf8f6dd8a3c3e9271ab9ae8b18f781213ff5c4a8ad2c0e5ea47b373d09"
   },
   "files_sha256_note": "every output except manifest.json and README.md (README is hand-written)"
 }

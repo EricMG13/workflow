@@ -40,7 +40,7 @@
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
-    "cases/valuation-context-owner/expected.json": "76697efd49f577d4e2a617bb0a75879f304283b9d692a9256d2668f4e5aab7a1"
+    "cases/valuation-context-owner/expected.json": "5406eaaf8f6dd8a3c3e9271ab9ae8b18f781213ff5c4a8ad2c0e5ea47b373d09"
   },
   "mapping_rules": {
     "years": "every 4-digit calendar year +1 in one regex pass over every string and key (2024->2025, 2025->2026, 2026->2027, 2029->2030; the business note's 2011 and 2019 shift too, 'every calendar year')",

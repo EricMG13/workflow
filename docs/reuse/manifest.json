@@ -2412,6 +2412,31 @@
       "sha256": "06322fe0d92e793ed5990da3c481a37ffd2335554f8aead9ac95c9513b7f92a9",
       "reason": "repo-authored (not in files[]): B31a: O7b-2 S5 fix round 1: ruling O7-R56 and the S5 review M-1/L-1: line 3 no longer says no web is used (the web is used only to fetch the user's URL rows under the ruling Intake names) and line 26 says an item names a file or an https url. Chained after the S5 record.",
       "review": "work/context-plan/reviews/o7b2-s5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "project_commit": "cffca98b7217f006e0ee60fa8213d17dcf98aaee",
+      "sha256": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
+      "reason": "O7d D0b (O7-R59, O7-R47 OD12): the CP-DR registry row gains TDR.4-6 (candidate peers, provisional alignment observations, located peer/transaction figures) for the peer pack; the preparer's change, chained here by the D1b builder after the 8b19c74b record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D0b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cpdr.py",
+      "prior_project_sha256": "aca3194d336b5edeb0b9ae92d3778e8443faaee76a8bb35189f300a9e4df2ae7",
+      "project_commit": "f413cfb0ac044cc460e32c633d5c05e032094a94",
+      "sha256": "48ce9d3aaecf6a4323142f708d785cc7114090f3e03fa47b360a6b104baa9d08",
+      "reason": "repo-authored (not in files[]): B1: O7d D1b adds three Evidence bindings, TDR.4 (Candidate peers), TDR.5 (Provisional alignment observations) and TDR.6 (Located peer/transaction figures), slots cpdr-tdr-4 to cpdr-tdr-6, with the R7 titles; the three S5 bindings are unchanged. Chained after the S5 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "06322fe0d92e793ed5990da3c481a37ffd2335554f8aead9ac95c9513b7f92a9",
+      "project_commit": "f413cfb0ac044cc460e32c633d5c05e032094a94",
+      "sha256": "e899818c038516068deece464c3f4252621272becc014b5cb89bf9b8906ee493",
+      "reason": "repo-authored (not in files[]): B31a: O7d D1b adds the TDR.4-6 table rows and a The peer pack section (located figures only, no amount typed by the model, no CP-1C ownership field, period end on or before the cutoff, the Q4 opt-in clause: peer_source cp_dr_public with CP-1C requested); every earlier sentence stays. Chained after the O7b-2 S5 fix record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
     }
   ],
   "local_patch_lineage": [
@@ -2438,31 +2463,6 @@
       "companion_test": "tests/test_upstream_tools.py",
       "companion_test_sha256": "b95bc0a2816a16fdfe775023af773e232af8872c762e6cb280e6b76f5239b665",
       "reason": "Add the admitted v2 CP-5 integrity upstream transport over CP-1/CP-1B; preserves baseline, A2 and CP1B pager project bytes."
-    },
-    {
-      "destination": "src/deploy_vii/methodology.json",
-      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
-      "prior_project_sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
-      "project_commit": "cffca98b7217f006e0ee60fa8213d17dcf98aaee",
-      "sha256": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
-      "reason": "O7d D0b (O7-R59, O7-R47 OD12): the CP-DR registry row gains TDR.4-6 (candidate peers, provisional alignment observations, located peer/transaction figures) for the peer pack; the preparer's change, chained here by the D1b builder after the 8b19c74b record.",
-      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D0b-review.md"
-    },
-    {
-      "destination": "src/deploy_vii/bindings/cpdr.py",
-      "prior_project_sha256": "aca3194d336b5edeb0b9ae92d3778e8443faaee76a8bb35189f300a9e4df2ae7",
-      "project_commit": "f413cfb0ac044cc460e32c633d5c05e032094a94",
-      "sha256": "48ce9d3aaecf6a4323142f708d785cc7114090f3e03fa47b360a6b104baa9d08",
-      "reason": "repo-authored (not in files[]): B1: O7d D1b adds three Evidence bindings, TDR.4 (Candidate peers), TDR.5 (Provisional alignment observations) and TDR.6 (Located peer/transaction figures), slots cpdr-tdr-4 to cpdr-tdr-6, with the R7 titles; the three S5 bindings are unchanged. Chained after the S5 record.",
-      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
-    },
-    {
-      "destination": "src/deploy_vii/methods/cpdr.md",
-      "prior_project_sha256": "06322fe0d92e793ed5990da3c481a37ffd2335554f8aead9ac95c9513b7f92a9",
-      "project_commit": "f413cfb0ac044cc460e32c633d5c05e032094a94",
-      "sha256": "e899818c038516068deece464c3f4252621272becc014b5cb89bf9b8906ee493",
-      "reason": "repo-authored (not in files[]): B31a: O7d D1b adds the TDR.4-6 table rows and a The peer pack section (located figures only, no amount typed by the model, no CP-1C ownership field, period end on or before the cutoff, the Q4 opt-in clause: peer_source cp_dr_public with CP-1C requested); every earlier sentence stays. Chained after the O7b-2 S5 fix record.",
-      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
     }
   ]
 }

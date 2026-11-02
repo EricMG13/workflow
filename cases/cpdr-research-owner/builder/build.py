@@ -1864,6 +1864,104 @@ assert (
     == json.loads(BRIEF_TEMPLATE[RUN_V2])["questions"]
 )
 
+# --- O7c C0: consumers, attachments, cp_dr_state, delivery scope, tool_use, replacement (derived from the method and O7-R47) ---
+_EV1_L9 = EVIDENCE[0]["text"].split("\n")[8]
+_NOT_IN_ITEM = "The desk expects a rating action on the issuer within the quarter."
+assert _EV1_L9.startswith("The desk describes the sector as trading at a discount") and not any(
+    _NOT_IN_ITEM in e["text"] for e in EVIDENCE
+)
+_VAL = next(a for a in ANSWERS_V1 if a["question_id"] == "valuation-context")["limitation"]
+_LOCAL = "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run."
+_SYNTH = "Synthetic case; not real issuer qualification"
+_PLAN = {
+    "plan_without_cpdr": ["CP-0", "CP-1", "CP-1C"],
+    "plan_with_cpdr": ["CP-0", "CP-1", "CP-DR", "CP-1C"],
+    "plan_cp2_with_cpdr": ["CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2"],
+}
+assert all(_PLAN["plan_with_cpdr"].index("CP-DR") < _PLAN["plan_with_cpdr"].index("CP-1C") for _ in "x")
+CONSUMERS = {
+    "context_producers": {"CP-1C": ["CP-DR"], "CP-2": ["CP-DR"]},
+    "context_producers_note": "added to execution.CONTEXT_PRODUCERS; the CP-1A entry is unchanged",
+    "input_form": "Input(input_id='CP-DR', sha256=<CP-DR head result_sha256>, status=<head status>)",
+    "positive_status": "restricted",
+    **_PLAN,
+    "plan_check": "each plan tuple was checked with deploy_vii.registry.plan in a scratch archive at ce3c9787; no CP-DR in dependencies()['CP-1C']",
+    "rejection_text": "Candidate does not bind the exact current upstream inputs",
+    "rejection_source": "src/deploy_vii/execution.py:292 (candidate_issues)",
+    "stale_note": "Input changed: CP-DR; rerun required",
+    "stale_source": "src/deploy_vii/execution.py:320 (invalidate: f'Input changed: {changed}; rerun required')",
+    "inherited": {
+        "positive": [_LOCAL, f"valuation-context: {_VAL}", _SYNTH],
+        "order": "execution.settle keeps own = dedupe(candidate.limitations, synthetic line); candidate.limitations = [LOCAL_LIMITATION, 'question_id: limitation' per answer]; inherited_limitations lists them for a bound input",
+        "_source": "src/deploy_workflow/research/tables.py:38-40 and :440-442; src/deploy_vii/execution.py:459-463",
+        "pack_source_line": "PACK_LIMITATION (tables.py:36) sits on TDR.2 cells of a pack-source claim, not in module.limitations; this run has no pack-source claim, so it is not listed",
+    },
+    "cp1c_scope": {
+        "positive_pack": ["identity", "financial", "ev-1", "ev-2", "ev-3"],
+        "rule": "identity, financial, peers when held, then every held ev-* in pack order",
+    },
+    "cp1c_cite": {
+        "item": "ev-1",
+        "locator": "line:9",
+        "quote": _EV1_L9,
+        "not_in_item": _NOT_IN_ITEM,
+        "absent_item": "ev-9",
+    },
+    "cp2": {
+        "sources": False,
+        "citation_fields": [],
+        "note": "CreditSynthesisSubmission has no citation field; a `citations` member is a shape refusal",
+    },
+    "prompt": {
+        "block_id": "cp-dr-dossier",
+        "label": "The block cp-dr-dossier is supplied research context, not an analytical upstream, and not authority for conclusions.",
+        "sha256_rule": "equals run.json cp_dr_dossier_sha256 and the sha256 of research/dossier.md",
+        "absent_when": "the attempt binds no CP-DR input (blocked or no CP-DR run)",
+    },
+}
+ATTACHMENTS = {
+    "keys": ["brief_sha256", "consumers", "dossier_sha256", "run_id", "supersedes", "version"],
+    "layout": "sorted keys, two-space indent, LF, one trailing LF",
+    "positive": {"consumers": [], "supersedes": None, "version": CPDR_VERSION},
+    "rule": "consumers = module ids whose settled head binds an Input CP-DR, in registry.plan order",
+}
+RUN_JSON_STATE = {
+    "values": ["settled", "blocked", "refused", None],
+    "positive": "settled",
+    "blocked_cp0": "refused",
+    "blocked_head": "blocked",
+    "note": "O7-R47 Q2: refused is the O7-R20 anchor stop (joins refusals/anchors/blocked_cp0); a blocked head continues and CP-5 settles restricted over the fan-in edge (registry.py:88-93); null when the run stops before CP-DR for another reason",
+}
+DELIVERY = {
+    "scope": {
+        "scope_id": "slice-cpdr-research",
+        "pathway": "relative_value",
+        "requested_modules": ["CP-1", "CP-DR"],
+        "case_kind": "synthetic",
+        "sections": [],
+    },
+    "banner": {
+        "complete": "Local research evidence and limitations only, from the supplied items. No Front Page block on this page is qualified.",
+        "replaces": "src/deploy_workflow/owner_rendering.py:363-364 ('Local research agenda coverage only, shown as evidence and limitations. ...')",
+    },
+    "rails": {"evidence_rail": ["TDR.1", "TDR.2"], "limitations_rail": ["TDR.3"]},
+    "receipt": "render-receipt.json records sections == [] and one rail proof per destination",
+}
+REPLACEMENT = {
+    "plan": {"requested": ["CP-1", "CP-DR"], "repaired": ["CP-DR"], "replayed": ["CP-0", "CP-1"], "live": ["CP-DR"]},
+    "plan_with_consumers": {"requested": ["CP-1C", "CP-2", "CP-DR"], "repaired": ["CP-DR"], "live": ["CP-DR", "CP-1C", "CP-2"]},
+    "rebound": {"CP-0 source_readiness": ["pack_sha256"], "CP-1 financials": ["run_id"]},
+    "rebound_source": "src/deploy_workflow/replay.py:55-60 (REBOUND_FIELDS)",
+    "supersedes": RUN_V1,
+    "earlier_tree": "no file under the v1 run directory changes (tree hash equal)",
+    "pack_changed_text": "the sources or the run differ from the earlier run's: use a fresh run",
+    "pack_changed_source": "src/deploy_workflow/replay.py:343-345 (check_same_pack)",
+}
+TOOL_USE_CPDR = (
+    "brief: read_inputs once, read_pages over identity and financial only, zero ev-* reads; research: read_inputs once, "
+    "ok read_pages over line:<n> for every cited line, search_pack over each searched item (calls in tool_use.calls)"
+)
+
 expected = {
     "schema_version": "cpdr-research-owner-cases/1",
     "derivation_note": "Hand-derived by cases/cpdr-research-owner/builder/build.py from the frozen pages of "
@@ -1991,7 +2089,13 @@ expected = {
         "over each searched item backs the not_found claim; headers follow the documented rule "
         "(a span matches when it holds any query term, case-insensitive substring)",
         "calls": "submissions.json tool_calls.research",
+        "CP-DR": TOOL_USE_CPDR,
     },
+    "consumers": CONSUMERS,
+    "attachments": ATTACHMENTS,
+    "run_json": {"cp_dr_state": RUN_JSON_STATE},
+    "delivery": DELIVERY,
+    "replacement": REPLACEMENT,
     "registry_after_o7b1": REGISTRY_AFTER,
     "evidence_rail": ["TDR.1", "TDR.2"],
     "limitations_rail": ["TDR.3"],

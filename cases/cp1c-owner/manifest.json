@@ -234,7 +234,8 @@
  },
  "host_scope": {
   "CP-1C": "fixed H1 mapping, never caller-supplied: identity, financial and peers when the prepared pack holds a source with id 'peers' (no_peers: identity and financial)",
-  "protocol": "docs/G1X-OWNER-CORE-PROTOCOL.md section 3: an owner-only step may combine a module_context view with pack sources"
+  "protocol": "docs/G1X-OWNER-CORE-PROTOCOL.md section 3: an owner-only step may combine a module_context view with pack sources",
+  "o7c_amendment": "O7c (O7-R47 Q11): the mapping above is the pre-O7c form; once a CP-DR head is bound to CP-1C its scope also holds every held ev-* source, in pack order after peers (cases/cpdr-research-owner/expected.json#consumers/cp1c_scope)"
  },
  "d8": {
   "cp1c_table_ids_today": [

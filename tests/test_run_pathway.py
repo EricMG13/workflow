@@ -39,7 +39,8 @@ from deploy_workflow.model.budget import Budget
 from deploy_workflow.model.loop import PromptFor, ToolLoop
 from deploy_workflow.model.pricing import money_text
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import CONFIG_MODELS, CONFIG_PROVIDERS, ModelSpec
+from deploy_workflow.model.turn import CONFIG_PROVIDERS, ModelSpec
+from deploy_workflow.model_testing.configs import CONFIGS
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
 from deploy_workflow.prompts import factory as factory_module
 from deploy_workflow.prompts.compose import NoPrompt
@@ -221,10 +222,7 @@ def test_the_default_composer_is_the_o6_composer(
     assert sent[0].messages == real_compose(composed[0])  # what the model got is O6's output
 
 
-CONFIG_SPECS = [
-    ModelSpec(config, provider, CONFIG_MODELS[config], config.rsplit("-", 1)[1])
-    for config, provider in CONFIG_PROVIDERS.items()
-]
+CONFIG_SPECS = [ModelSpec(m.config_id, m.provider, m.model, m.effort) for m in CONFIGS.values()]
 
 
 @pytest.mark.parametrize("spec", CONFIG_SPECS, ids=lambda spec: spec.config_id)

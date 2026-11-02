@@ -100,9 +100,16 @@
   },
   {
    "id": "restructuring_fulcrum.10",
-   "statement": "Do not write Python's pinned-multiple line in a gap, a claim name or a valuation label, in any case or spacing; Python adds that line when a multiple is pinned.",
+   "statement": "Do not write Python's pinned-multiple line or Python's CP-1C selected-multiple line in a gap, a claim name or a valuation label, in any case or spacing: a text that holds `The EV multiple is the CP-1C selected multiple`, `which governs, so the selection is not applied` or `No alignment is made between an LTM or NTM multiple and a forecast year` is refused; Python adds those lines when a multiple is pinned or selected.",
    "checks": [
     "fn:deploy_workflow.owners.cp4c:_gap_label_issues"
+   ]
+  },
+  {
+   "id": "restructuring_fulcrum.11",
+   "statement": "When `read_inputs` offers `selected_multiple`, every valuation `multiple` equals it at two decimals (`7` equals `7.00`) and none is `not assessed`; when the context pins the EV multiple, the pin governs and the selected multiple is not applied; Python adds the selection line to the limitations.",
+   "checks": [
+    "fn:deploy_workflow.owners.cp4c:_multiple_issues"
    ]
   }
  ]

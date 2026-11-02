@@ -382,6 +382,7 @@ NOT_ISSUE_SITES: Mapping[str, str] = {
     "fn:deploy_workflow.owners.cp1c:_limitations": OWN_TEXT,
     "fn:deploy_workflow.owners.cp2h:_own_limitations": OWN_TEXT,
     "fn:deploy_workflow.owners.cp4c:_own_limitations": OWN_TEXT,
+    "fn:deploy_workflow.owners.cp4c:_selection_line": OWN_TEXT,
     "fn:deploy_workflow.owners.cp2e:own_limitations": "builds the step's own limitations text",
     **{
         f"fn:deploy_workflow.owners.{c}": CLAIM_TEXT

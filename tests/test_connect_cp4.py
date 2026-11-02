@@ -219,7 +219,7 @@ def test_inputs_refuses_a_step_that_reads_nothing(monkeypatch: pytest.MonkeyPatc
 
 def _receipt(digest: str, body: str, sequence: int = 1) -> Any:
     read = SimpleNamespace(binding=BINDING, sequence=sequence, inputs_sha256=digest, body=body)
-    return SimpleNamespace(calls=[], input_reads=[read])
+    return SimpleNamespace(calls=[], input_reads=[read], submissions=())
 
 
 def test_verifier_recomputes_a_step_context_read_through_inputs(

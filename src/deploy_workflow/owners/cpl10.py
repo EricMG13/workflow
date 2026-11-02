@@ -49,6 +49,7 @@ from deploy_vii.execution import (
     Head,
     Qualification,
     StepValidation,
+    clipped,
     inherited_limitations,
     text_sha256,
 )
@@ -60,6 +61,8 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, status_display
+from deploy_workflow.context import ContextRefused, context_facts
+from deploy_workflow.context_periods import quarters_ending_at, resolve
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.workflow import WorkflowError
@@ -286,14 +289,88 @@ class UpstreamError(ValueError):
     Only this is reported to the analyst as an issue; a store-integrity failure is not."""
 
 
-def bind_operands(facts: Iterable[Fact]) -> dict[str, Fact]:
+_ORDINAL = ("first", "second", "third", "fourth")
+_CONTEXT_QUARTER = re.compile(r"q([1-4])-(\d{4})")
+
+
+def _period_date(row: Mapping[str, Fact], field: str) -> date | None:
+    fact = row.get(field)
+    if fact is None or fact.status != "known" or fact.text is None:
+        return None
+    try:
+        return date.fromisoformat(fact.text)
+    except ValueError:
+        return None
+
+
+def _quarter_of(period: str, row: Mapping[str, Fact]) -> Quarter:
+    start, end = _period_date(row, "start_date"), _period_date(row, "end_date")
+    match = _CONTEXT_QUARTER.fullmatch(period)
+    if start is None or end is None or start > end or match is None:
+        raise UpstreamError(f"CP-1 T4.14 period {period} has no valid start and end dates")
+    number, year = match.groups()
+    return Quarter(
+        f"Q{number} {year[2:]} ({start} to {end})",
+        f"Q{number} {year[2:]}: {start} to {end}",
+        f"the {_ORDINAL[int(number) - 1]} quarter of {year}",
+    )
+
+
+class ContextPeriodNotQuarter(UpstreamError):
+    """The context's current period is not a quarter: the read offers no quarter list."""
+
+
+def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
+    """The CP-1 T4.14 rows by `period_id`, as `earnings._periods` reads them: a repeated field of
+    one row, a row without a known `period_id` and two rows sharing one `period_id` all refuse."""
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in facts:
+        if fact.table_id != "T4.14":
+            continue
+        row = rows.setdefault(fact.row_id, {})
+        if fact.field in row:
+            raise UpstreamError("CP-1 T4.14 register is unusable: ambiguous_coordinate")
+        row[fact.field] = fact
+    register: dict[str, dict[str, Fact]] = {}
+    for row in rows.values():
+        identity = row.get("period_id")
+        if identity is None or identity.status != "known" or not identity.text:
+            raise UpstreamError("CP-1 T4.14 register is unusable: incomplete_register")
+        if identity.text in register:
+            raise UpstreamError("CP-1 T4.14 register is unusable: ambiguous_coordinate")
+        register[identity.text] = row
+    return register
+
+
+def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarter, ...]:
+    """The four quarters ending at the context's `current_period`, dated from the CP-1 T4.14 rows
+    in `facts` (the period register, not T4.10). A quarter with no single T4.14 period refuses; a
+    `current_period` that is not a quarter raises `ContextPeriodNotQuarter`."""
+    try:
+        wanted = quarters_ending_at(current_period)
+    except ValueError as error:
+        raise ContextPeriodNotQuarter("context_period_not_quarter") from error
+    rows = _period_register(facts)
+    quarters = []
+    for period in wanted:
+        key = resolve(period, rows)
+        if key is None:
+            raise UpstreamError(f"unbound CP-1 operand: {period} (no CP-1 T4.14 period)")
+        quarters.append(_quarter_of(period, rows[key]))
+    return tuple(quarters)
+
+
+def bind_operands(
+    facts: Iterable[Fact], quarters: tuple[Quarter, ...] = QUARTERS
+) -> dict[str, Fact]:
     """The 28 T4.10 operands by label; zero or several matches refuse (never zero, never first)."""
+    labels = tuple(f"{q.column} · {t.cp1_metric}" for t in TOPICS for q in quarters)
     found: dict[str, list[Fact]] = {}
     for fact in facts:
-        if fact.table_id == "T4.10" and fact.label in OPERAND_LABELS:
+        if fact.table_id == "T4.10" and fact.label in labels:
             found.setdefault(fact.label, []).append(fact)
     bound: dict[str, Fact] = {}
-    for label in OPERAND_LABELS:
+    for label in labels:
         matches = found.get(label, [])
         if len(matches) != 1:
             raise UpstreamError(f"unbound CP-1 operand: {label} ({len(matches)} matches)")
@@ -313,11 +390,17 @@ class Upstream:
     cp1_result_sha256: str
     cp1_facts: Mapping[str, Fact]  # '<column> · <metric>' -> CP-1 T4.10 fact
     inherited_limitations: tuple[str, ...] = ()  # CP-0 then CP-1 head limitations (the view)
+    quarters: tuple[Quarter, ...] = QUARTERS  # the four offered quarters, oldest first
+    context_issue: str | None = None  # a context fact that leaves no quarters to offer
+
+    @property
+    def periods(self) -> tuple[str, ...]:
+        return tuple(q.period for q in self.quarters)
 
     def __post_init__(self) -> None:
         for topic in TOPICS:
             scales = set()
-            for quarter in QUARTERS:
+            for quarter in self.quarters:
                 label = f"{quarter.column} · {topic.cp1_metric}"
                 fact = self.cp1_facts.get(label)
                 if fact is None or fact.label != label:
@@ -335,7 +418,8 @@ class Upstream:
                 raise UpstreamError(f"CP-1 operands of {topic.topic_id} differ in scale")
 
     def operand(self, topic: Topic, period: str) -> Fact:
-        return self.cp1_facts[f"{QUARTERS[PERIODS.index(period)].column} · {topic.cp1_metric}"]
+        column = self.quarters[self.periods.index(period)].column
+        return self.cp1_facts[f"{column} · {topic.cp1_metric}"]
 
 
 # --- the screening rule -------------------------------------------------------------------------
@@ -465,11 +549,13 @@ class PairScreen:
 
 def view_topics(upstream: Upstream, *, gap_ref: str) -> tuple[ViewTopic, ...]:
     """The four quarter values of each topic as the ``read_inputs`` view shows them."""
+    if not upstream.quarters:  # a context with no quarter offers none
+        return ()
     out = []
     for topic in TOPICS:
         unit_class: UnitClass = "amount" if topic.unit == "MILLIONS" else "multiple"
         values = []
-        for period in PERIODS:
+        for period in upstream.periods:
             fact = upstream.operand(topic, period)
             shown = (
                 format_value(fact.amount, unit_class, "known", decimals=2)
@@ -491,8 +577,8 @@ def pair_screens(upstream: Upstream) -> tuple[PairScreen, ...]:
             b,
             tuple((r.topic.topic_id, r.screen.materiality) for r in screen_pair(upstream, a, b)),
         )
-        for i, a in enumerate(PERIODS)
-        for b in PERIODS[i + 1 :]
+        for i, a in enumerate(upstream.periods)
+        for b in upstream.periods[i + 1 :]
     )
 
 
@@ -971,7 +1057,7 @@ def _compose(upstream: Upstream, sub: ChangeScreenSubmission) -> _Composed:
     pair_period = f"{a} -> {b}"
     cp1 = upstream.cp1_facts
     counts = {key: sum(1 for r in rows if r.screen.materiality == word) for key, word in _COUNTS}
-    words = {q.period: q.words for q in QUARTERS}
+    words = {q.period: q.words for q in upstream.quarters}
     tables = (
         ("TL10.1", _scope_rows(upstream, rows, pair_period)),
         ("TL10.2", [(r.topic.label, _topic_row(r, pair_period, cp1)) for r in rows]),
@@ -1008,16 +1094,19 @@ def _parse(
         return shape_issues(error)
 
 
-def _comparison_issues(comparison: Comparison) -> list[str]:
+def _comparison_issues(
+    comparison: Comparison, quarters: tuple[Quarter, ...] = QUARTERS
+) -> list[str]:
+    periods = tuple(q.period for q in quarters)
     issues = [
         f"comparison.{name}: not an offered period"
         for name, period in (
             ("from_period", comparison.from_period),
             ("to_period", comparison.to_period),
         )
-        if period not in PERIODS
+        if period not in periods
     ]
-    if not issues and PERIODS.index(comparison.to_period) <= PERIODS.index(comparison.from_period):
+    if not issues and periods.index(comparison.to_period) <= periods.index(comparison.from_period):
         issues.append("comparison: to_period must come after from_period")
     return issues
 
@@ -1125,7 +1214,7 @@ def validate_screen(
     sub = _parse(submission)
     if isinstance(sub, tuple):
         return sub
-    issues = _comparison_issues(sub.comparison)
+    issues = _comparison_issues(sub.comparison, upstream.quarters)
     if issues:
         return tuple(issues)
     composed = _compose(upstream, sub)
@@ -1220,6 +1309,18 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
     refuse) and the limitations the settled module will inherit."""
     snapshot = store.read()
     cp0, cp1 = (_bound(store, attempt, m) for m in (CP0, CP1))
+    # A run context fixes the offered quarters (ruling 6). A refused context refuses the read;
+    # a current period that is no quarter leaves a view with no quarter list (oracle ctx-fy-l10).
+    try:
+        context = context_facts(store.pack(snapshot))
+    except ContextRefused as error:
+        raise UpstreamError(clipped(("Context refused: ", str(error)))) from error
+    current = "" if context is None else context.run.current_period
+    context_issue = None
+    try:
+        quarters = context_quarters(current, cp1[1].facts) if current else QUARTERS
+    except ContextPeriodNotQuarter as error:
+        quarters, context_issue = (), str(error)
     own = (*OWN_LIMITATIONS, *((_SYNTHETIC,) if snapshot.run.case_kind == "synthetic" else ()))
     return Upstream(
         issuer_name=snapshot.run.issuer_name,
@@ -1228,8 +1329,10 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
         cp0_result_sha256=cp0[0].sha256,
         cp1_status_word=status_display(cp1[0].status)[1],
         cp1_result_sha256=cp1[0].sha256,
-        cp1_facts=bind_operands(cp1[1].facts),
+        cp1_facts=bind_operands(cp1[1].facts, quarters),
         inherited_limitations=inherited_limitations(snapshot, attempt, own, store.head_module),
+        quarters=quarters,
+        context_issue=context_issue,
     )
 
 
@@ -1261,12 +1364,12 @@ def context_block(*, upstream: Upstream) -> dict[str, object]:
         }
         for t in view_topics(upstream, gap_ref=_VIEW_GAP)
     ]
-    return {
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": CP0, "status": upstream.cp0_status_word},
             {"module_id": CP1, "status": upstream.cp1_status_word},
         ],
-        "periods": [{"period": q.period, "column": q.column} for q in QUARTERS],
+        "periods": [{"period": q.period, "column": q.column} for q in upstream.quarters],
         "topics": topics,
         "pair_screens": [
             {
@@ -1279,6 +1382,9 @@ def context_block(*, upstream: Upstream) -> dict[str, object]:
         "rules": SCREEN_RULES,
         "inherited_limitations": list(upstream.inherited_limitations),
     }
+    if upstream.context_issue is not None:
+        block["context_issue"] = upstream.context_issue
+    return block
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
@@ -1358,6 +1464,8 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
         upstream = cpl10_upstream(store, attempt)
     except UpstreamError as error:  # an integrity failure of the store is not caught here
         return StepValidation(issues=(f"CP-L10: {error}",))
+    if upstream.context_issue is not None:
+        return StepValidation(issues=(f"CP-L10: {upstream.context_issue}",))
     issues = validate_screen(submission=payload, upstream=upstream)
     if issues:
         return StepValidation(issues=issues)

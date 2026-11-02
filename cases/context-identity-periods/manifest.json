@@ -325,7 +325,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "e134a50d829f95e696a41ec6301f937879f315fbe822b6e3e19d55a21ae5f2b8",
+    "sha256": "37fc0684e8f504c0b5b635ef3d0cb469b298e111047706021a73d128c1331cce",
     "run": "python3 -I cases/context-identity-periods/builder/build.py"
   },
   "files_sha256": {
@@ -346,7 +346,7 @@
     "expected.json": "2f31d33129aea420b3a247860887751b780532d3b9b29c36ebafff83faadb9ce",
     "overlays.json": "fd454ec9a19225bc4869d36c04fce78e1e45de5fe34312a2348d2e089ece47e1",
     "sources/identity-b.json": "010c83577f92a14f2e108caa9909dabd375d3cf9765f424122f2d1047be92a14",
-    "submissions-b.json": "edeba5b70dea36ded727ff5b3d1031f23e59a7a3c55fb4585738604ba6408371"
+    "submissions-b.json": "6b77cad1754de550e3d42f1a88c63662c7715d41b0dbbfc916bfedce1457f62a"
   },
   "files_sha256_note": "every output except manifest.json and README.md (README is hand-written)"
 }

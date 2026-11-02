@@ -8,12 +8,15 @@ receipt, "store bytes unchanged", and the settled navigator state. Front Page bl
 population are blocked on G2 (Stage 3). Fast checks live in `tests/test_connect_cpl10.py`.
 """
 
+import datetime
 import hashlib
 import importlib
 import json
+import os
 import shutil
 from collections.abc import Iterator
 from decimal import Decimal
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -33,8 +36,10 @@ from cpl10_runs import (
 from deploy_vii import report_view
 from deploy_vii.contracts import Citation, Fact, Module, Run, validate_tables
 from deploy_vii.execution import (
+    Attempt,
     Execution,
     NotAuthorized,
+    StepValidation,
     head_of,
     inherited_limitations,
 )
@@ -171,38 +176,13 @@ def _cites(cp1: dict[str, Fact], labels: list[str]) -> tuple[Citation, ...]:
     return one_per_page(tuple(c for label in labels for c in cp1[label].citations))
 
 
-@pytest.mark.parametrize("case", [POSITIVE, LIMITED])
-def test_closed_run_equals_the_oracle_cell_for_cell(
-    base: tuple[OwnerWorkflow, PreparedPack], tmp_path: Path, case: str
+def _check_facts(
+    want_facts: list[dict[str, Any]], module: Module, cp1: dict[str, Fact], heads: dict[str, Any]
 ) -> None:
-    store, receipt, view_body = _closed(base, tmp_path, case)
-    want = EXPECTED["cases"][case]
-    snapshot = store.read()
-    heads = {h.module_id: h for h in snapshot.heads}
-    assert {m: h.status for m, h in heads.items()} == dict.fromkeys(
-        ("CP-0", "CP-1", "CP-L10"), "restricted"
-    )
-    # the receipt verifies and verification leaves the store bytes unchanged
-    before = _tree(tmp_path)
-    ow.verify_owner_run_receipt(store, receipt)
-    assert _tree(tmp_path) == before
-    module = store.head_module(heads["CP-L10"])
-    cp1_module = store.head_module(heads["CP-1"])
-    cp1 = {f.label: f for f in cp1_module.facts if f.table_id == "T4.10"}
-    # inputs hash-equal to the heads
-    attempt = next(a for a in snapshot.attempts if a.result_sha256 == heads["CP-L10"].result_sha256)
-    assert [(i.input_id, i.sha256) for i in attempt.inputs] == [
-        ("prepared-pack", snapshot.pack_sha256),
-        ("CP-0", heads["CP-0"].result_sha256),
-        ("CP-1", heads["CP-1"].result_sha256),
-    ]
-    assert module.inputs[:-1] == attempt.inputs and module.inputs[-1].input_id == (
-        "change-screen-submission"
-    )
     # facts: copied cells (incl. calculation_id), run-bound TL10.1 cells, calculated cells
     got = {f.fact_id: f for f in module.facts}
-    assert set(got) == {f["fact_id"] for f in want["facts"]}
-    for w in want["facts"]:
+    assert set(got) == {f["fact_id"] for f in want_facts}
+    for w in want_facts:
         fact = got[w["fact_id"]]
         calculation_id = w.get("calculation_id")
         copied = w.get("copied_from_cp1")
@@ -241,18 +221,56 @@ def test_closed_run_equals_the_oracle_cell_for_cell(
             Decimal(w.get("scale", "1")),
             citations,
         ), w["fact_id"]
-    # tables, claims and their citations
+
+
+def _check_tables(want_tables: list[dict[str, Any]], module: Module) -> None:
     validate_tables(module.tables, module.facts)
     assert [
         (t.table_id, [c.field for c in t.columns], [list(r.fact_ids) for r in t.rows])
         for t in module.tables
-    ] == [(t["table_id"], t["columns"], [r["fact_ids"] for r in t["rows"]]) for t in want["tables"]]
+    ] == [(t["table_id"], t["columns"], [r["fact_ids"] for r in t["rows"]]) for t in want_tables]
+
+
+def _check_claims(want_claims: list[dict[str, Any]], module: Module, cp1: dict[str, Fact]) -> None:
     assert [(c.claim_id, c.text, c.limitation) for c in module.claims] == [
-        (c["claim_id"], c["text"], c["limitation"]) for c in want["claims"]
+        (c["claim_id"], c["text"], c["limitation"]) for c in want_claims
     ]
-    for claim, w in zip(module.claims, want["claims"], strict=True):
+    for claim, w in zip(module.claims, want_claims, strict=True):
         labels = [m.removeprefix("{{CP1_CITATIONS:").removesuffix("}}") for m in w["citations"]]
         assert claim.citations == _cites(cp1, labels), claim.claim_id
+
+
+@pytest.mark.parametrize("case", [POSITIVE, LIMITED])
+def test_closed_run_equals_the_oracle_cell_for_cell(
+    base: tuple[OwnerWorkflow, PreparedPack], tmp_path: Path, case: str
+) -> None:
+    store, receipt, view_body = _closed(base, tmp_path, case)
+    want = EXPECTED["cases"][case]
+    snapshot = store.read()
+    heads = {h.module_id: h for h in snapshot.heads}
+    assert {m: h.status for m, h in heads.items()} == dict.fromkeys(
+        ("CP-0", "CP-1", "CP-L10"), "restricted"
+    )
+    # the receipt verifies and verification leaves the store bytes unchanged
+    before = _tree(tmp_path)
+    ow.verify_owner_run_receipt(store, receipt)
+    assert _tree(tmp_path) == before
+    module = store.head_module(heads["CP-L10"])
+    cp1_module = store.head_module(heads["CP-1"])
+    cp1 = {f.label: f for f in cp1_module.facts if f.table_id == "T4.10"}
+    # inputs hash-equal to the heads
+    attempt = next(a for a in snapshot.attempts if a.result_sha256 == heads["CP-L10"].result_sha256)
+    assert [(i.input_id, i.sha256) for i in attempt.inputs] == [
+        ("prepared-pack", snapshot.pack_sha256),
+        ("CP-0", heads["CP-0"].result_sha256),
+        ("CP-1", heads["CP-1"].result_sha256),
+    ]
+    assert module.inputs[:-1] == attempt.inputs and module.inputs[-1].input_id == (
+        "change-screen-submission"
+    )
+    _check_facts(want["facts"], module, cp1, heads)
+    _check_tables(want["tables"], module)
+    _check_claims(want["claims"], module, cp1)
     # limitations: settled own list, then what the bound heads pass on
     assert list(module.limitations) == want["settled_limitations"]
     own = tuple(module.limitations)
@@ -414,3 +432,388 @@ def test_navigator_names_the_settled_screen(
     assert (rows["CP-L10"].number, rows["CP-L10"].word) == (3, "With limitations")
     assert ALL_GAPS  # the driver's marker, kept in sync with the literal
     shutil.rmtree(tmp_path / "store")
+
+
+# Phase 2 Task 3: CP-L10 offers the quarters ending at the context's current period ----------
+# Unit level (ruling P2-P11): hand-built CP-1 T4.10 and T4.14 facts, no CP-1 promotion. The
+# answer key is the frozen oracle `cases/context-identity-periods/expected.json#cpl10`.
+
+CTX_KEY: dict[str, Any] = json.loads(
+    (
+        Path(__file__).resolve().parents[1] / "cases/context-identity-periods/expected.json"
+    ).read_text()
+)["cpl10"]
+_QUARTER_END = {1: "03-31", 2: "06-30", 3: "09-30", 4: "12-31"}
+_QUARTER_START = {1: "01-01", 2: "04-01", 3: "07-01", 4: "10-01"}
+
+
+def _t414(year: int, quarter: int) -> list[Fact]:
+    """The CP-1 T4.14 row of quarter `quarter` of `year`, as `earnings._periods` reads it."""
+    pid = f"q{quarter}-{year}"
+    values = {
+        "period_id": pid,
+        "period_type": "QUARTER",
+        "fiscal_year": f"FY{year}",
+        "fiscal_quarter": f"Q{quarter}",
+        "start_date": f"{year}-{_QUARTER_START[quarter]}",
+        "end_date": f"{year}-{_QUARTER_END[quarter]}",
+    }
+    return [
+        Fact(
+            fact_id=f"{pid}:{field}",
+            label=field,
+            table_id="T4.14",
+            row_id=pid,
+            field=field,
+            text=value,
+        )
+        for field, value in values.items()
+    ]
+
+
+def _t414_rows(*quarters: tuple[int, int]) -> list[Fact]:
+    return [f for year, quarter in quarters for f in _t414(year, quarter)]
+
+
+def _operands_for(quarters: tuple[cpl10.Quarter, ...]) -> list[Fact]:
+    """The 28 oracle T4.10 operands relabelled onto `quarters` (oldest first)."""
+    method: Any = importlib.import_module("test_method_cpl10")
+    relabel = {old.column: new.column for old, new in zip(cpl10.QUARTERS, quarters, strict=True)}
+    out = []
+    for fact in method._cp1_facts():
+        column, metric = fact.label.split(" · ")
+        out.append(fact.model_copy(update={"label": f"{relabel[column]} · {metric}"}))
+    return out
+
+
+def _upstream(quarters: tuple[cpl10.Quarter, ...], facts: list[Fact]) -> cpl10.Upstream:
+    run = MANIFEST["run"]
+    return cpl10.Upstream(
+        issuer_name=run["issuer_name"],
+        as_of=datetime.date.fromisoformat(run["as_of"]),
+        cp0_status_word="Validated",
+        cp0_result_sha256="0" * 64,
+        cp1_status_word="With limitations",
+        cp1_result_sha256="1" * 64,
+        cp1_facts=cpl10.bind_operands(facts, quarters),
+        quarters=quarters,
+    )
+
+
+conn: Any = importlib.import_module("test_connect_cpl10")
+runs: Any = importlib.import_module("cpl10_runs")
+
+
+def _t414_register() -> list[Fact]:
+    """Real-form T4.14 rows of the oracle pack: FY2025 quarters 1 to 4."""
+    return _t414_rows(*((2025, q) for q in (1, 2, 3, 4)))
+
+
+def _store_for(
+    root: Path, name: str, pack: PreparedPack, register: list[Fact] | None = None
+) -> tuple[Execution, Any]:
+    """A store with hand-settled CP-0 and CP-1 heads (the oracle's T4.10 operands and `register`)
+    under `pack`, and a CP-L10 attempt bound to them."""
+    store = Execution.create(root / name / "store", pack)
+    conn._settle(store, "CP-0", [conn._t8("CP-1"), conn._t8("CP-L10")], conn.CP0_LIMIT)
+    facts = [*conn._cp1_with_real_citations(pack), *(register or [])]
+    conn._settle(store, "CP-1", facts, conn.CP1_LIMIT)
+    attempt = Attempt(
+        ticket_id="ctx-ticket",
+        module_id="CP-L10",
+        inputs=conn.current_inputs(store.read(), "CP-L10"),
+        number=0,
+    )
+    return store, attempt
+
+
+def test_no_context_quarters_unchanged(tmp_path: Path) -> None:
+    """A run without a context reads the oracle's `cases/cpl10-owner` view, not the code's own."""
+    store, attempt = _store_for(tmp_path, "none", runs.make_pack())
+    want = EXPECTED["cases"][POSITIVE]
+    tree = json.loads(cpl10.view(store, attempt)[1])
+    assert tree["topics"] == want["view_topics"]
+    assert tree["pair_screens"] == want["view_pair_screens"]
+    assert [p["period"] for p in tree["periods"]] == [
+        v["period"] for v in want["view_topics"][0]["values"]
+    ]
+
+
+def test_store_context_ctx_l10_offers_the_oracle_quarters(tmp_path: Path) -> None:
+    store, attempt = _store_for(tmp_path, "l10", runs.make_pack("ctx-l10"), _t414_register())
+    got = cpl10.cpl10_upstream(store, attempt)
+    key = CTX_KEY["ctx-l10"]["quarters"]
+    assert [{"period": q.period, "column": q.column, "words": q.words} for q in got.quarters] == [
+        {k: v for k, v in q.items() if k != "context_period"} for q in key
+    ]
+    tree = json.loads(cpl10.view(store, attempt)[1])
+    assert tree["topics"] == EXPECTED["cases"][POSITIVE]["view_topics"]
+
+
+def test_store_context_ctx_q3_refuses_the_read(tmp_path: Path) -> None:
+    store, attempt = _store_for(tmp_path, "q3", runs.make_pack("ctx-q3"), _t414_register())
+    with pytest.raises(cpl10.UpstreamError) as error:
+        cpl10.cpl10_upstream(store, attempt)
+    assert str(error.value) == CTX_KEY["ctx-q3"]["refusal"]
+    with pytest.raises(WorkflowError) as refused:
+        cpl10.view(store, attempt)
+    assert refused.value.code == "identity_mismatch"
+    got = cpl10._validate_step(store, store.pack(), _pending(store)).issues
+    assert got == (f"CP-L10: {CTX_KEY['ctx-q3']['refusal']}",)
+
+
+def _pending(store: Execution) -> Any:
+    """The attempt with its one `change_screen` step journalled (the positive literal)."""
+    ticket = store.begin("CP-L10")
+    return store.submit_step(
+        ticket.ticket_id,
+        "CP-L10",
+        cpl10.STEP_IDS,
+        "change_screen",
+        conn._positive(),
+        lambda _p, _a: StepValidation(output="{}"),
+    )
+
+
+def test_store_context_ctx_fy_l10_reads_without_quarters_and_refuses_every_submission(
+    tmp_path: Path,
+) -> None:
+    store, attempt = _store_for(tmp_path, "fy", runs.make_pack("ctx-fy-l10"), _t414_register())
+    tree = json.loads(cpl10.view(store, attempt)[1])  # the read succeeds ...
+    assert tree["topics"] == [] and tree["pair_screens"] == []
+    assert bool(tree["periods"]) == CTX_KEY["ctx-fy-l10"]["offers_quarter_list"]
+    issues = cpl10._validate_step(store, store.pack(), _pending(store)).issues
+    assert issues == (CTX_KEY["ctx-fy-l10"]["step_validation_issue"],)  # ... the submit refuses
+
+
+def test_a_context_that_disagrees_with_the_run_is_an_issue_not_an_exception(
+    tmp_path: Path,
+) -> None:
+    pack = runs.make_pack("ctx-l10")
+    other = pack.run.model_copy(update={"issuer_name": "Other Issuer plc"})
+    store, attempt = _store_for(
+        tmp_path, "bad", pack.model_copy(update={"run": other}), _t414_register()
+    )
+    issues = cpl10._validate_step(store, store.pack(), _pending(store)).issues
+    assert len(issues) == 1 and issues[0].startswith("CP-L10: Context refused: ")
+    with pytest.raises(WorkflowError) as refused:
+        cpl10.view(store, attempt)
+    assert refused.value.code == "identity_mismatch"
+
+
+def test_period_register_duplicate_coordinate_refuses() -> None:
+    base = _t414_register()
+    twin = _t414(2025, 4)[2].model_copy(update={"fact_id": "q4-2025:fiscal_year:b"})
+    with pytest.raises(cpl10.UpstreamError, match="ambiguous_coordinate"):
+        cpl10.context_quarters("q4-2025", [*base, twin])
+
+
+def test_period_register_without_period_id_or_with_a_shared_one_refuses() -> None:
+    base = _t414_register()
+    headless = [f for f in base if not (f.row_id == "q4-2025" and f.field == "period_id")]
+    with pytest.raises(cpl10.UpstreamError, match="incomplete_register"):
+        cpl10.context_quarters("q4-2025", headless)
+    shared = [
+        f.model_copy(update={"row_id": "r-q3", "fact_id": f.fact_id + ":r"})
+        for f in _t414(2025, 3)
+        if f.field != "period_id"
+    ] + [_t414(2025, 4)[0].model_copy(update={"row_id": "r-q3", "fact_id": "r-q3:period_id"})]
+    with pytest.raises(cpl10.UpstreamError, match="ambiguous_coordinate"):
+        cpl10.context_quarters("q4-2025", [*base, *shared])
+
+
+def test_context_q4_2025_quarters_equal_the_oracle() -> None:
+    key = CTX_KEY["ctx-l10"]["quarters"]
+    quarters = cpl10.context_quarters("q4-2025", _t414_rows(*((2025, q) for q in (1, 2, 3, 4))))
+    got = [{"period": q.period, "column": q.column, "words": q.words} for q in quarters]
+    assert got == [{k: v for k, v in item.items() if k != "context_period"} for item in key]
+    assert quarters == cpl10.QUARTERS  # the oracle's four are the module's historical four
+
+
+def test_context_other_quarters_flow_through_the_view_and_the_pairs() -> None:
+    rows = _t414_rows((2025, 3), (2025, 4), (2026, 1), (2026, 2))
+    quarters = cpl10.context_quarters("q2-2026", rows)
+    assert [q.column for q in quarters] == [
+        "Q3 25 (2025-07-01 to 2025-09-30)",
+        "Q4 25 (2025-10-01 to 2025-12-31)",
+        "Q1 26 (2026-01-01 to 2026-03-31)",
+        "Q2 26 (2026-04-01 to 2026-06-30)",
+    ]
+    assert quarters[-1].words == "the second quarter of 2026"
+    upstream = _upstream(quarters, _operands_for(quarters))
+    block: Any = cpl10.context_block(upstream=upstream)
+    assert [p["period"] for p in block["periods"]] == [q.period for q in quarters]
+    assert {v["period"] for t in block["topics"] for v in t["values"]} == {
+        q.period for q in quarters
+    }
+    first = block["pair_screens"][0]
+    assert (first["from_period"], first["to_period"]) == (
+        quarters[0].period,
+        quarters[1].period,
+    )
+    assert len(block["pair_screens"]) == 6
+
+
+def test_context_q3_2025_refuses_unbound_operand() -> None:
+    rows = _t414_rows((2025, 1), (2025, 2), (2025, 3), (2025, 4))
+    with pytest.raises(cpl10.UpstreamError) as error:
+        cpl10.context_quarters("q3-2025", rows)
+    assert str(error.value) == CTX_KEY["ctx-q3"]["refusal"]
+
+
+def test_context_fy_current_refuses() -> None:
+    issue = CTX_KEY["ctx-fy-l10"]["step_validation_issue"]
+    with pytest.raises(cpl10.UpstreamError) as error:
+        cpl10.context_quarters("fy-2025", _t414_rows((2025, 4)))
+    assert f"CP-L10: {error.value}" == issue
+
+
+def test_two_t414_rows_for_one_quarter_refuse() -> None:
+    twin = [
+        f.model_copy(
+            update={
+                "row_id": "q4-2025-restated",
+                "fact_id": f.fact_id + ":restated",
+                **({"text": "q4-2025-restated"} if f.field == "period_id" else {}),
+            }
+        )
+        for f in _t414(2025, 4)
+    ]
+    with pytest.raises(cpl10.UpstreamError, match=r"q4-2025 \(no CP-1 T4.14 period\)"):
+        cpl10.context_quarters("q4-2025", [*_t414_rows(*((2025, q) for q in (1, 2, 3, 4))), *twin])
+
+
+def test_an_absent_quarter_operand_keeps_the_unbound_refusal() -> None:
+    quarters = cpl10.context_quarters(
+        "q2-2026", _t414_rows((2025, 3), (2025, 4), (2026, 1), (2026, 2))
+    )
+    facts = _operands_for(quarters)[1:]
+    with pytest.raises(cpl10.UpstreamError, match="unbound CP-1 operand: Q3 25 .* ebitda"):
+        cpl10.bind_operands(facts, quarters)
+
+
+def test_submission_period_outside_context_quarters_refused() -> None:
+    rows = _t414_rows((2025, 3), (2025, 4), (2026, 1), (2026, 2))
+    quarters = cpl10.context_quarters("q2-2026", rows)
+    offered = [q.period for q in quarters]
+    old = cpl10.QUARTERS[0].period  # 2025 Q1 is not among the context's quarters
+    got = cpl10._comparison_issues(
+        cpl10.Comparison(from_period=old, to_period=offered[3]), quarters
+    )
+    assert got == ["comparison.from_period: not an offered period"]
+    ok = cpl10._comparison_issues(
+        cpl10.Comparison(from_period=offered[0], to_period=offered[3]), quarters
+    )
+    assert ok == []
+
+
+# Run level (ruling P2-P11): one real CP-1 promotion under the `ctx-l10` context. Built, not run
+# here (about 15 minutes); the gate is RUN_PROMOTION=1 and CI.
+_PROMOTION = pytest.mark.skipif(
+    os.environ.get("RUN_PROMOTION") != "1", reason="real CP-1 promotion; deferred (B16)"
+)
+
+
+@pytest.fixture(scope="module")
+def ctx_base(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[tuple[OwnerWorkflow, PreparedPack]]:
+    yield promoted(tmp_path_factory.mktemp("cpl10-ctx-promoted"), "ctx-l10")
+
+
+@_PROMOTION
+def test_context_q4_2025_offers_oracle_quarters(
+    ctx_base: tuple[OwnerWorkflow, PreparedPack], tmp_path: Path
+) -> None:
+    key = CTX_KEY["ctx-l10"]["quarters"]
+    view = json.loads(_fork(ctx_base, tmp_path).read_inputs()["body"])
+    assert view["periods"] == [{"period": q["period"], "column": q["column"]} for q in key]
+    assert {v["period"] for t in view["topics"] for v in t["values"]} == {q["period"] for q in key}
+    shutil.rmtree(tmp_path / "store")
+
+
+def _check_topics(want_topics: list[dict[str, Any]], result: cpl10.ScreenResult) -> None:
+    """Python's rating of each topic against every field of the oracle's `topics` (exact decimals
+    and fractions, not floats). `value_class_basis` is the oracle's statement that the value class
+    is CP-1's own, which the facts compared here carry unchanged."""
+
+    def dec(value: str | None) -> Decimal | None:
+        return None if value is None else Decimal(value)
+
+    def end(fact: Fact) -> tuple[Any, ...]:
+        return (
+            fact.label,
+            fact.period,
+            fact.status,
+            fact.amount,
+            fact.value_class,
+            fact.limitation,
+        )
+
+    def want_end(w: dict[str, Any]) -> tuple[Any, ...]:
+        assert w["value_class_basis"] == "observed"
+        return (w["label"], w["period"], w["status"], dec(w["amount_exact"]), w["value_class"])
+
+    got = [
+        (t.topic.topic_id, t.topic.label, t.screen.materiality, t.screen.evidence)
+        + (t.screen.disposition, t.rank, t.screen.change, t.screen.pct, t.screen.pct_fraction)
+        + end(t.start)
+        + end(t.close)
+        for t in result.topics
+    ]
+    assert got == [
+        (w["topic_id"], w["label"], w["materiality"], w["evidence"])
+        + (w["disposition"], w["rank"], dec(w["change_exact"]), dec(w["change_pct_exact"]))
+        + (None if w["change_pct_fraction"] is None else Fraction(w["change_pct_fraction"]),)
+        + want_end(w["from"])
+        + (w["from"]["limitation"],)
+        + want_end(w["to"])
+        + (w["to"]["limitation"],)
+        for w in want_topics
+    ]
+
+
+@_PROMOTION
+def test_context_run_rows_unchanged(
+    ctx_base: tuple[OwnerWorkflow, PreparedPack], tmp_path: Path
+) -> None:
+    """Every key of `#cpl10/ctx-l10/rows_unchanged` equals the cpl10-owner positive case; the
+    `excluded` clause (pack hash and run id dependent fields) is the only thing not compared."""
+    store, _, view_body = _closed(ctx_base, tmp_path, POSITIVE)
+    want = EXPECTED["cases"][POSITIVE]
+    snapshot = store.read()
+    heads = {h.module_id: h for h in snapshot.heads}
+    module = store.head_module(heads["CP-L10"])
+    cp1 = {f.label: f for f in store.head_module(heads["CP-1"]).facts if f.table_id == "T4.10"}
+    attempt = next(a for a in snapshot.attempts if a.result_sha256 == heads["CP-L10"].result_sha256)
+    result = cpl10.change_screen(
+        submission=store.payload(attempt.steps[0].payload_sha256),
+        upstream=cpl10.cpl10_upstream(store, attempt),
+    )
+    tree = json.loads(view_body)
+    assert tree["topics"] == want["view_topics"]
+    assert tree["pair_screens"] == want["view_pair_screens"]
+    _check_topics(want["topics"], result)
+    assert list(result.required_assessments) == want["required_assessments"]
+    assert dict(result.counts) == want["counts"]
+    assert dict(cpl10.cpl10_reader(store, heads["CP-L10"]).counts) == want["counts"]
+    _check_facts(want["facts"], module, cp1, heads)
+    _check_tables(want["tables"], module)
+    _check_claims(want["claims"], module, cp1)
+    assert list(result.limitations) == want["own_limitations"]
+    assert list(module.limitations) == want["settled_limitations"]
+    assert module.status == result.status == want["module_status"]
+    shutil.rmtree(tmp_path / "store")
+
+
+def test_a_long_refused_context_is_clipped_where_it_is_built(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pack = runs.make_pack("ctx-l10")
+    other = pack.run.model_copy(update={"issuer_name": "X" * 5000})
+    store, _ = _store_for(
+        tmp_path, "long", pack.model_copy(update={"run": other}), _t414_register()
+    )
+    issues = cpl10._validate_step(store, store.pack(), _pending(store)).issues
+    assert len(issues) == 1 and issues[0].startswith("CP-L10: Context refused: ")
+    assert len(issues[0]) <= len("CP-L10: ") + 600

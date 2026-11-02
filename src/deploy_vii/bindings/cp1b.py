@@ -6,7 +6,7 @@ so no fact is bound twice in one pathway. Rail bindings provide coverage; actual
 source inventory and module limitations keep their existing rendering behavior.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from deploy_vii.bindings import Binding, BindingMap
 from deploy_vii.display import UnitClass
@@ -22,20 +22,20 @@ class _Layout:
     rows: tuple[tuple[str, str], ...]
 
 
-_CP1B_LAYOUTS = (
+_LAYOUT_TEMPLATES = (
     _Layout(
         "T1B.1",
         "Paired earnings results",
         "Measure",
         ("prior", "current", "delta", "growth"),
         (
-            ("revenue", "Revenue (US$ m)"),
-            ("ebitda", "Reported EBITDA (US$ m)"),
-            ("adjusted_ebitda", "Adjusted EBITDA (US$ m)"),
+            ("revenue", "Revenue ({unit})"),
+            ("ebitda", "Reported EBITDA ({unit})"),
+            ("adjusted_ebitda", "Adjusted EBITDA ({unit})"),
             ("ebitda_margin", "EBITDA margin (%; change pp)"),
-            ("cfo_reported", "Reported CFO (US$ m)"),
-            ("capex", "Signed capex (US$ m)"),
-            ("fcf", "Levered FCF (US$ m)"),
+            ("cfo_reported", "Reported CFO ({unit})"),
+            ("capex", "Signed capex ({unit})"),
+            ("fcf", "Levered FCF ({unit})"),
         ),
     ),
     _Layout(
@@ -44,9 +44,9 @@ _CP1B_LAYOUTS = (
         "Measure",
         ("prior", "current", "delta"),
         (
-            ("cash_closing", "Closing cash (US$ m)"),
-            ("total_debt", "Total debt (US$ m)"),
-            ("net_debt", "Net debt (US$ m)"),
+            ("cash_closing", "Closing cash ({unit})"),
+            ("total_debt", "Total debt ({unit})"),
+            ("net_debt", "Net debt ({unit})"),
         ),
     ),
     _Layout(
@@ -65,6 +65,17 @@ _CP1B_LAYOUTS = (
         ),
     ),
 )
+
+
+def cp1b_layouts(unit: str = "US$ m") -> tuple[_Layout, ...]:
+    """The three layouts with the nine money labels stated in ``unit`` (e.g. ``EUR m``)."""
+    return tuple(
+        replace(layout, rows=tuple((row, label.format(unit=unit)) for row, label in layout.rows))
+        for layout in _LAYOUT_TEMPLATES
+    )
+
+
+_CP1B_LAYOUTS = cp1b_layouts()
 
 
 def _bind(

@@ -2008,6 +2008,24 @@
       "review": "docs/rulings/2026-10-31-s8-vii.md"
     },
     {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "dbf8de0750e9acbe729406c0afd92137ab1c63b8785767f49fb1cc80762e89e2",
+      "project_commit": "70e87b53998505b70e3f2e52f982dacb8a89faa0",
+      "sha256": "abf7398518fa989f2fed3c9a7164bb381af37304b6a3d7bb7d1748a7c5be9694",
+      "reason": "B17-9/B18 (docs/rulings/2026-10-31-context-plan.md), Phase 8 Task 6b: CP-1B layout validation reads the money currency from revenue:current (required non-None), checks every money fact (prior, current, delta) against it instead of USD, and compares row labels with cp1b_layouts(scale_label('MILLIONS', currency)); the currency must be three capital letters (fullmatch); USD output unchanged.",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/ (task-6b-brief.md, wave-1-addendum.md, task-6b-report.md)"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cp1b.py",
+      "imported_sha256": "188e84616a69640500e007c87daa7d84a80d3912e528bb91222a2793a4c32e36",
+      "prior_project_sha256": "188e84616a69640500e007c87daa7d84a80d3912e528bb91222a2793a4c32e36",
+      "project_commit": "425e2d397c3081f93704f3a61af30bc15b10e8d8",
+      "sha256": "906d1df2643623f53db096dad415a8377573b07293b90aaa00203f496d837a28",
+      "reason": "repo-authored (not in files[]): B17-9/B18 (docs/rulings/2026-10-31-context-plan.md), Phase 8 Task 6b: the nine money labels take a {unit} placeholder and cp1b_layouts(unit='US$ m') returns them formatted; _CP1B_LAYOUTS = cp1b_layouts() keeps every USD caller unchanged.",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/ (task-6b-brief.md, wave-1-addendum.md, task-6b-report.md)"
+    },
+    {
       "destination": "src/deploy_vii/source_context.py",
       "imported_sha256": "bef10963d45e2b5e3b25626e3dd2db22ed9156988e7ec79fc43992ada8920a4c",
       "prior_project_sha256": "d0cf155b79767c4ec70c731a87a3aa77e596c05169d966176d276b199898b4be",
@@ -2078,6 +2096,105 @@
       "sha256": "b9b846432b65db8112b7bc0ba078445b5447b658c4beb00cf7994fcfffaf2c6c",
       "reason": "B17 item 3 (docs/rulings, user-approved), Phase 3 Task 4: wording-only reword of CP3_EVIDENCE_RULE in the relative_value contract: a basis refers to Python's context rows by id (basis.context_rows) and never copies their figures; basis.quotes still repeats a market_evidence row's quote, for third_party rows only. No other contract text changes.",
       "review": ".superpowers/sdd/2026-10-31-phase-3-market-evidence/ (task-4-addendum.md P3T4-R1, task-4a-report.md); mx-adversary ac7b8cfa (Phase 3 Task 4 Part A)"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3.md",
+      "imported_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "prior_project_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "project_commit": "e7d2c02baba0054c0e591809fe62d05158ff8e76",
+      "sha256": "36d84f1d9985abbf5b141054dd678434c4e6cbabcbecd0e1d12dd98d1436bc83",
+      "reason": "B29 (docs/rulings/2026-10-31-context-plan.md, user-approved): wording-only sentence in the market-evidence paragraph: a run with a context file also offers Python's context rows, which a basis cites by row id in basis.context_rows and never copies; the third_party/basis.quotes sentences are unchanged. No rule, number or table id added.",
+      "review": "mx-adversary ac70b2b7"
+    },
+    {
+      "destination": "src/deploy_vii/live/prompts.py",
+      "imported_sha256": "fc291aee064f9f54c837094e5365601b1ee795259d0f81250d68960a428d87b5",
+      "prior_project_sha256": "b9b846432b65db8112b7bc0ba078445b5447b658c4beb00cf7994fcfffaf2c6c",
+      "project_commit": "e7d2c02baba0054c0e591809fe62d05158ff8e76",
+      "sha256": "eeb599d9b7de576e803eacb6daa216629e469c5b4dd5437ac07fa5cb030feae7",
+      "reason": "B29 (docs/rulings, user-approved): wording-only edit to CP3_BASIS_RULE (rule d): the market basis is a basis.quotes market quote or a context row named in basis.context_rows, as the validator (_basis_issues, _cites_market) accepts. No other contract text changes.",
+      "review": "mx-adversary ac70b2b7"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3.md",
+      "imported_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "prior_project_sha256": "36d84f1d9985abbf5b141054dd678434c4e6cbabcbecd0e1d12dd98d1436bc83",
+      "project_commit": "68ebc369347121ce505488a8808661e643751d52",
+      "sha256": "2d5f12ad5e3688fbd92317046faf9a3dd76b549ab1a6c2f6abe580482b60da5f",
+      "reason": "B30 (docs/rulings/2026-10-31-context-plan.md, user-approved): wording-only: the market_observation sentence says a statement's basis quotes a market_evidence row (basis.quotes) or, in a run with a context file, names a context row in basis.context_rows. No rule, number or table id added.",
+      "review": "mx-adversary a3f74bdc"
+    },
+    {
+      "destination": "src/deploy_vii/live/prompts.py",
+      "imported_sha256": "fc291aee064f9f54c837094e5365601b1ee795259d0f81250d68960a428d87b5",
+      "prior_project_sha256": "eeb599d9b7de576e803eacb6daa216629e469c5b4dd5437ac07fa5cb030feae7",
+      "project_commit": "68ebc369347121ce505488a8808661e643751d52",
+      "sha256": "11a831ab3ecf62a3a650c3133f0dfe72dd0ff0545327a5f4331a146ab67f1fe9",
+      "reason": "B30 (docs/rulings, user-approved): wording-only edits to CP3_BASIS_RULE (rule d, market_observation clause) and CP3_PREFERENCE_RULE (rule e): a market observation or a preference cites a market quote or a context row named in basis.context_rows, as the validator (_cites_market) accepts. No other contract text changes.",
+      "review": "mx-adversary a3f74bdc"
+    },
+    {
+      "destination": "src/deploy_vii/cp3_relative_value.py",
+      "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
+      "prior_project_sha256": "212950b3291779ba6f716cdf62f960c34502eaeb087c1eaa42c54a3e2e9320c2",
+      "project_commit": "68ebc369347121ce505488a8808661e643751d52",
+      "sha256": "d53035f7368704e750ecaded0985ecdfdb18c86acf8aaa8d60cab371df05e24b",
+      "reason": "B30 (docs/rulings, user-approved): wording-only: the Basis docstring names the context-row basis and Basis.context_rows gets a schema description (Python's context market-evidence row ids, cited by id, figures never copied). Default () and the omit-when-empty dump are unchanged, so content hashes are unchanged. No validator logic or refusal message changes.",
+      "review": "mx-adversary a3f74bdc"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3.md",
+      "imported_sha256": "0b3f94694dfb9cde85932a036c3b9a0aec48e1495fee786876767aaa0cc8f571",
+      "prior_project_sha256": "2d5f12ad5e3688fbd92317046faf9a3dd76b549ab1a6c2f6abe580482b60da5f",
+      "project_commit": "9e8b92dc7fd46b3cf10e1141fc7df9d3a2ab1bf3",
+      "sha256": "6009dcca0feac906bcb8a612a36e16b81552c68aadc280aa25e41af15a1c5bfb",
+      "reason": "B34 (docs/rulings/2026-10-31-context-plan.md, applied recommendation): wording-only: the preference line under 'What to return' says the basis is at least one market evidence quote or a context row named in basis.context_rows, unless the confidence is Insufficient Information, as rule e and the validator (_preference_issues) accept. No rule, number or table id added.",
+      "review": "mx-adversary a491ef81"
+    },
+    {
+      "destination": "src/deploy_vii/readiness.py",
+      "imported_sha256": "1038a37a8227f426e4d6e1e79985e986e23e77f9e7cdee763a884477162ccffa",
+      "prior_project_sha256": "0161665494f7d71c77476e2852f5f8ff766c0e1f707cb462eae0af8f14164913",
+      "project_commit": "eeab0b8fecda6ee1a74b16c66711503e12928583",
+      "sha256": "475d9976caa7d7bcb2aea5e66a840fe027820bb0028c58bb562ace9ef8b34072",
+      "reason": "B7 (draft authority, user-approved) and B17 item 6: SourceAssessment.authority also admits 'draft' (Authority unchanged), validate_review refuses a draft assessment unless the context frozen in the pack declares legal_documents 'draft' (or says 'Draft authority refused, context invalid: <problem>'), and refuses executed, filed or draft authority on the 'context' source.",
+      "review": "mx-adversary a0b90eb1, mx-precise ab4eba86"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "prior_project_sha256": "17c96b6f4c2ccf1eaae18f3bb3b4083ffb6603ae54e59f83b8aa170885b26ec0",
+      "project_commit": "4a5adf9f82c3c7b40e2245c6a6bd71eceb5f5589",
+      "sha256": "025d1f2ee7002ebb95d7c45459e3e20d7b266956409de01198d55195674eadda",
+      "reason": "B7 (draft authority, user-approved): LEGAL_AUTHORITIES also admits 'draft', so a source CP-0 assesses draft is a CP-4 legal source as filed is; DRAFT_LIMITATION (the frozen cases/context-attachments-owner expected.json draft_limitation) is appended once to the module limitations, after the gap and blocked-CP-1 limitations, whenever a legal source is draft. The Q2 refusal wording ('is not an executed or filed source') is unchanged.",
+      "review": "mx-adversary a8ea080a, mx-precise ac10a05d"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp4.md",
+      "imported_sha256": "99ec34c7a8257e15325456eb5466388eeb656fa01cf30db91e8474334bb39ff0",
+      "prior_project_sha256": "99ec34c7a8257e15325456eb5466388eeb656fa01cf30db91e8474334bb39ff0",
+      "project_commit": "a2243308037a6bc6b86536ce5c801b0c73f01271",
+      "sha256": "493f57fd0f4176c757cc310fcaa8809433c7aa6f0c3bee73519edc44effc1118",
+      "reason": "B17 item 4 (user-approved), Phase 5 Task 6: wording-only: the sources paragraph (cp4.md :15-16) and the Sources bullet (:119) say CP-0 classes the cited sources executed, filed or, on a draft-documents run, draft, where they said executed or filed. No other sentence changes.",
+      "review": "mx-adversary ac773829, mx-precise affb28ba"
+    },
+    {
+      "destination": "src/deploy_vii/live/context.py",
+      "imported_sha256": "71be7583fae72d5b719ba7167026d46576f5a4e7da4f4be1410417d50bd1a7aa",
+      "prior_project_sha256": "71be7583fae72d5b719ba7167026d46576f5a4e7da4f4be1410417d50bd1a7aa",
+      "project_commit": "a2243308037a6bc6b86536ce5c801b0c73f01271",
+      "sha256": "346a46375d182cedf003da002379908072e85decc2f4b05d46db197856ea65b5",
+      "reason": "B17 item 4 (user-approved), Phase 5 Task 6: wording-only edit to the module docstring (:33, sent to no model): CP-4 is sent the ready sources CP-0 classes executed, filed or, on a draft-documents run, draft. No code changes.",
+      "review": "mx-adversary ac773829, mx-precise affb28ba"
+    },
+    {
+      "destination": "src/deploy_vii/cp4_legal.py",
+      "imported_sha256": "1b2246ff9b0c0797c25d259c3e408436dfcc874b48be4cf1b2f77566c2bc4128",
+      "prior_project_sha256": "025d1f2ee7002ebb95d7c45459e3e20d7b266956409de01198d55195674eadda",
+      "project_commit": "a2243308037a6bc6b86536ce5c801b0c73f01271",
+      "sha256": "d7c78ba0bdb6cae78053e76dfce08e35f6c545ae53cfdcb1da01861b32c54233",
+      "reason": "P5T6-R2 (applied recommendation, B31a), Phase 5 Task 6: comment and docstring wording only: the Upstream.legal_sources comment, the fail-closed comment in the citation check and the context_block docstring say executed, filed or draft, where they said executed or filed. No code and no frozen text changes; the Q2 refusal wording is byte-identical.",
+      "review": "mx-adversary ac773829, mx-precise affb28ba"
     }
   ],
   "local_patch_lineage": [

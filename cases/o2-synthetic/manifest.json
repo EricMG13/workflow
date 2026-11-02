@@ -82,6 +82,7 @@
     "readiness_review: added source row for `context` (own cited line)",
     "cp1_source_context: added source row for `context` (own cited line), required by validate_source_context (every prepared source assessed once)",
     "business_context: added source row for `context` (own cited line), required by validate_business_context (every prepared source assessed once; business_context.py:665)",
+    "readiness_review: added gap legal-documents-missing (P5T3-R7), copied from cases/context-attachments-owner/submissions.json legal-exec-missing-gap with affected_modules [CP-0] (P5T3-R9; the plan has no legal module and validate_review admits only selected modules or CP-0)",
     "readiness_review: added CP-8 consumer row (BLOCKED) and gap missing-prior-record, copied from cases/cp8-owner/submissions.json readiness_review.no_record with source_ids and citations emptied and the rationale rewritten to what this pack holds: CP-8 is in the portfolio_decision plan so CP-0 must assess it; its sources are not in this pack"
   ],
   "dropped_modules": {
@@ -111,7 +112,7 @@
     "financial.txt": "7f981c9ed026e33cd7553c929ef8c9f40782c5d2b05ce842e4b0a84c1520d405",
     "business.txt": "cb1653b7edacea75371006ad33f97192dcddffb12403b5ca39a03c45313127af",
     "market.txt": "dc66e97a281503e33e1b32601781a1f3a292e8a5ad708fcbb27f2a95b60700b9",
-    "submissions.json": "36156c22cb782dff8cb365739f8dd1bc48e4e1bdeaa2b34288317009d3827384"
+    "submissions.json": "06f8009da2d294ca85706360d838877bbc0dc4abd8e00c1360f951215ad927d2"
   },
   "cp1_tool_loop": {
     "file": "cp1-financials.json",

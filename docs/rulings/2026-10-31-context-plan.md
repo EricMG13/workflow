@@ -231,7 +231,7 @@ These do not cover `src/deploy_vii` changes beyond B1, new dependencies, or conf
   - All lanes share this worktree, because isolated-worktree builders cannot use the venv. A builder that sees an
     import or syntax error in a file it did not touch treats it as another lane's edit in progress: it waits and
     re-runs, and never edits that file.
-  - Caps: at most 6 Opus agents and 10 subagents at once. A phase's builder is never its preparer.
+  - Caps: at most 15 subagents at once, any model, with no separate Opus cap. That is the user's words, relayed by MANAGER on 2026-11-01: "increase to max no opus limits / max 15". It replaces 6 Opus and 10 subagents. AGENTS.md was updated in d8dbbc5d. A phase's builder is never its preparer.
 
   Cost if wrong: one lane's tests flake on another lane's edit in progress, so a rerun.
 - **B6a: B6 covers the deal-talk rows (user, 2026-11-01, relayed by MANAGER quoting the user: "Yes, B6 covers it").**
@@ -316,3 +316,74 @@ The adversary's M2 is a separate matter: two steps ask the model to reproduce Py
   No rule, number, table id or validator changes. Each file gets its D12 record. Review: `mx-adversary`, because both texts reach the model (as B17 item 4).
 - **Why:** the Phase 3 phase review (Low 1) found that both texts reach CP-3's live system message and still describe the market basis as `basis.quotes` only, while the validator accepts `basis.context_rows`.
 - **Controller timing ruling:** the edit lands after the first release cut (B28), as its own small release, so that the cut stays exactly as gated. The edit changes CP-3's frozen digest, its rule-list statement `relative_value.d` and the golden. Cost if wrong: CP-3's prompt keeps the old wording until the follow-up merges; live runs are paused.
+
+## B30. CP-3's market-observation, preference and Basis wording name the context-row basis (user, 2026-11-01)
+
+- **Approved by the user.** The question went to MANAGER, which relayed the user's "Both approved". The user then confirmed "1" (the full version) in this session.
+- **What is approved.** A wording-only edit that names `basis.context_rows` alongside the market quote in four places:
+  - the second clause of rule d (`CP3_BASIS_RULE`, `src/deploy_vii/live/prompts.py` ~:597-603);
+  - rule e (`CP3_PREFERENCE_RULE`, ~:604-610);
+  - the `market_observation` sentence in `src/deploy_vii/methods/cp3.md` (~:31-33);
+  - the `Basis` docstring and a schema description for `context_rows` in `src/deploy_vii/cp3_relative_value.py` (~:190-200).
+- **What does not change.** No rule, number, table id, field, default or validator logic. The refusal messages (~:1103, ~:1153, ~:1202) stay as they are.
+- **Records and review.** Each file gets its D12 record. Review is by `mx-adversary`.
+- **Why:** B29's review found M1, which predates B29. In a context-only run, a model that reads "cites a market quote" literally writes "none" and Insufficient Information. The validator accepts that output, even though it is weaker than `cases/cp3-context-owner/expected.json#cp3/context-only`.
+- **Controller timing ruling:** B30 ships as its own release after B29. B29, O3 Task 6 and B30 share one golden refresh. Cost if wrong: one wording revert and a re-freeze.
+
+## B31. Apply the controller's recommendations (user, 2026-11-01: "Apply your recommendations for decisions from now on")
+
+- **What it covers.** From now on, wherever a rule would send a decision to the user, the controller takes the option it recommends and carries on. Examples are a third fix round, a deferral, a scope edge, a release cut's contents or a finding's severity. Each decision is recorded here as "applied recommendation (B31)", logged in the ledger, and named in the controller's next message, so that the user can overrule it.
+- **What still needs the user's own word in this session:**
+  - any `src/deploy_vii` change outside B1, B6/B6a, B7-B9, B17.3, B22, B29 and B30 (user, 2026-10-30, "direct check");
+  - permanent changes: a new dependency, a permission or config change, or memory that widens authority;
+  - pushes and merges: release requests still go to MANAGER and PR Manager;
+  - live or paid provider calls, which stay paused;
+  - prohibited actions.
+- **B31a (user, 2026-11-01).** I asked: "Should B31 also cover src/deploy_vii changes beyond the approved list? 1 keep the exceptions, 2 cover them." The user replied "Cover them".
+  - A `src/deploy_vii` change that the plan needs is now decided by the controller's recommendation. Each one gets its D12 record and an `mx-adversary` review, is recorded here as "applied recommendation (B31a)", and is named in the controller's next message.
+  - The other B31 exceptions are unchanged: new dependencies, permission and config changes, pushes and merges, live or paid calls, and prohibited actions.
+
+## B32. Speed-ups (applied recommendation, B31; 19:26 UTC 2026-11-01)
+
+- **B29 and B30 ship as one release, not two.** They are the same kind of edit, to the same files, and get one golden refresh. This amends B29's and B30's timing rulings. Cost if wrong: one release carries two wording edits instead of one.
+- **Phases 2 and 5 start now, in parallel with O3 Task 6, O3 Task 7 and O6 Task 6.** This replaces "after O3/O4". Both oracles are frozen: Phase 2 at da9f350b and Phase 5 at f6d3c4b3. A pre-flight against HEAD runs first. Tasks that do not write `owner_workflow.py`, `run_pathway.py` or `docs/reuse/manifest.json` go first. Tasks that do write them queue serially behind the in-flight lane on each file (P21; the manifest and the golden have one writer). Cost if wrong: a merge-order conflict on a shared file, caught by the per-task review.
+
+## B33. Faster without weaker reviews (applied recommendation, B31; 19:29 UTC 2026-11-01)
+
+- **Pipelining.** While a task or phase is under review, the next task or phase that writes different files starts building. A release still waits for every review its cut rule names (B28). Cost if wrong: a review finding forces a rework of the next task's base.
+- **Pre-flight before every lane's first dispatch.** Phases 2 and 5 now; O3 Task 7, O6 Task 6 and O7b-1 before they start. The pre-flight checks the plan text against HEAD.
+- **One reviewer seat where two would duplicate.**
+  - A wording-only `src/deploy_vii` edit gets `mx-adversary` alone.
+  - A batch of docs, config or rename changes gets one `mx-feature` review (global §1).
+  - Code keeps `mx-precise`, plus `mx-adversary` when the code is sensitive.
+- **Reviewers start from verified facts.** Each review prompt names the pre-flight, the earlier reviews' probe paths and the frozen oracle, so the reviewer re-runs those checks rather than re-deriving them. The review depth and the reviewer agents are unchanged.
+- **Not changed:**
+  - reviewer effort;
+  - adversary seats on sensitive code;
+  - RED-first;
+  - only controller-run checks count as evidence;
+  - phase and whole-branch reviews.
+
+## B34. CP-3's preference line in cp3.md names the context-row basis (applied recommendation, B31a; 19:58 UTC 2026-11-01)
+
+- **What changes.** B30's review found M1, which predates B29. `src/deploy_vii/methods/cp3.md` ~:47-48 ("What to return") says a preference's basis is "at least one market evidence quote unless the confidence is Insufficient Information". That disagrees with rule e and with `_preference_issues`. The fix is wording only: add "or a context row named in `basis.context_rows`", in the same form as B30.
+- **Process.** It gets a D12 record, a strip re-freeze and an `mx-adversary` review, and ships in the B29/B30 release (B32).
+- **D12 review ids.** The same dispatch fills in the D12 `review` ids for B29 (mx-adversary ac70b2b7) and B30 (mx-adversary a3f74bdc), which were B30 L1 and B29 I3.
+- **What does not change.** The refusal messages, for the reason in B30.
+- **Cost if wrong:** one wording revert.
+
+## B35. Phases 7 and 8 build before O7b-d, under B33 pipelining (applied recommendation, B31; recorded 23:20 UTC 2026-11-01)
+
+- **What happened.** Phases 7 and 8 started building (Phase 7 Task 2, Phase 8 Tasks 1 and 6b) under B33's pipelining clause, after a pre-flight of each (`work/context-plan/phase-7-8-preflight-brief.md`; `.superpowers/sdd/2026-10-31-phase-{7,8}-*/preflight.md`). No ruling amended B24's line "O7, Phase 7 and Phase 8 stay in order" before they started. This ruling records the reorder and its limits.
+- **Order now.**
+  - Phase 7 lands before O7b-1. O7b-1's brief re-reads the methodology hash and the pin count (P7-P1).
+  - Phase 7 Task 3 (`owners/cp1c.py`) lands before O7c and O7d. Until O7 is built, `cp_dr_public` gives the CP-1C gap (Phase 7 Design 8, D5).
+  - Phase 8 Tasks 2 and 6 wait for Phase 7 Tasks 3 and 4, and Task 8 waits for Phase 7 Task 5b.
+- **Collision controls.**
+  1. Each task's files are listed in its phase pre-flight, and no two running tasks share a file.
+  2. Single-writer files (`docs/reuse/manifest.json`, `cases/PINS.json`, the golden, `owner_workflow.py`) are serialised in the ledgers.
+  3. Phase 8 edits `owner_workflow.py` nowhere.
+  4. Phase 7 Task 1's registry change and 48-file re-pin are built in a scratch tree and committed back to back (P7-R4).
+  5. The controller's `scope.py --role builder` check and the tests run on a clean archive per builder range.
+- **Release.** B28's cut rule is unchanged. A release carries only approved tasks, and names phase-pending lanes.
+- **Cost if wrong.** O7b-d rebase onto Phase 7's `cp1c.py`, registry and pins, at most one fix round each.

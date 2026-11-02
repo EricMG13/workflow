@@ -7,7 +7,12 @@ import re
 import subprocess
 
 import pytest
+from b29_strip import undo_b29
+from b30_strip import undo_b30
+from b34_strip import undo_b34
 from merge_strip import MERGE_REV, MERGE_SPANS, PRE_MERGE_REV, SPAN_TOKENS, undo_merged_contract
+from p5_strip import undo_p5
+from p5t6_strip import undo_p5t6_context, undo_p5t6_wording
 from prompt_support import OLD_EVIDENCE_RULE, request_for
 
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
@@ -128,15 +133,24 @@ def test_the_tokens_and_the_g8_block_are_the_only_change_to_the_frozen_message(
     """T5-D: remove the ``[compose.<id>] `` tokens and, for CP-0, the G8 line, and (Phase 3 Task 4)
     put back CP-3's old evidence rule, and (M-R1) undo the merged restricted-cash change, and the message is the one the old frozen digest pins."""
     messages = compose(request_for(step_id, pack))
-    system = messages[0].text
+    system = undo_p5t6_wording(step_id, messages[0].text)  # Phase 5 Task 6 (P5T6-R1): CP-4 wording
     if step_id == "source_readiness":
+        system = undo_p5(step_id, system)  # Phase 5 Task 1 (P5T1-R6): the draft authority line
         system = system.replace(g8_line(system) + "\n", "")
     system = TOKEN.sub("", system)
     # Phase 3 Task 4 (B17 item 3): CP-3's evidence rule was reworded; put the old text back.
     system = system.replace(CP3_EVIDENCE_RULE, OLD_EVIDENCE_RULE)
     # M-R1: undo the merged restricted-cash ids, for financials and narrative only.
     system = undo_merged_contract(step_id, system)
-    body = json.dumps([[messages[0].role, system], [messages[1].role, messages[1].text]])
+    # B34, then B30, then B29: undo the context-row basis wording in CP-3's method text, rules d
+    # and e and the Basis schema text.
+    system = undo_b29(step_id, undo_b30(step_id, undo_b34(step_id, system)))
+    body = json.dumps(
+        [
+            [messages[0].role, system],
+            [messages[1].role, undo_p5t6_context(step_id, messages[1].text)],
+        ]
+    )
     assert hashlib.sha256(body.encode()).hexdigest() == OLD_FROZEN[step_id]
 
 

@@ -48,11 +48,13 @@ from deploy_workflow.owners.cp3d import (
 )
 from deploy_workflow.prompts.fence import (
     UntrustedItem,
+    cp0_run_context_block,
     data_block,
     run_context_block,
     untrusted_evidence_block,
 )
 from deploy_workflow.prompts.g8 import G8_RULE_ID, module_set_statement
+from deploy_workflow.prompts.p5 import P5_RULE_ID, P5_STATEMENT
 from deploy_workflow.prompts.tools import model_schema, offered_schema, tool_names
 
 __all__ = [
@@ -309,9 +311,12 @@ def _system(request: PromptRequest, contract: str, pins_present: bool) -> str:
         orchestrator.append(_tag("O5", O5_LINE_LOCATORS))
     if pins_present:
         orchestrator.append(_tag("O6", O6_PINS))
-    # G8: only CP-0 judges the run's planned modules.
+    # G8 and P5: only CP-0 judges the run's planned modules and assigns source authority.
     g8 = (
-        [f"[{G8_RULE_ID}] {module_set_statement(request.pack)}"]
+        [
+            f"[{G8_RULE_ID}] {module_set_statement(request.pack)}",
+            f"[{P5_RULE_ID}] {P5_STATEMENT}",
+        ]
         if step_id == "source_readiness"
         else []
     )
@@ -476,7 +481,11 @@ def compose(request: PromptRequest) -> tuple[Message, ...]:
         )
     ]
     if request.context is not None:
-        blocks.append(run_context_block(request.context))
+        # P5T1-R9: only CP-0 also reads the declared mode of the legal documents.
+        make_block = (
+            cp0_run_context_block if request.step_id == "source_readiness" else run_context_block
+        )
+        blocks.append(make_block(request.context))
     if pins is not None:
         blocks.append(pins)
     if (evidence := _evidence_block(request)) is not None:

@@ -126,11 +126,27 @@ def recut_walk(obj):
 
 
 SUBMISSIONS_B = recut_walk(SNAP_S)
+# P5T3-R7: the positive CP-0 review gains one gap, copied from cases/context-attachments-owner/
+# submissions.json (legal-exec-missing-gap): every ctx-b-* context declares executed
+# legal_documents and pack B holds no legal source. The S1A plan (CP-1, CP-1A, CP-2) has no legal
+# module and the gap validator only admits selected modules or CP-0, so affected_modules is ["CP-0"] (P5T3-R9).
+LEGAL_GAP = {
+    "gap_id": "legal-documents-missing",
+    "kind": "source",
+    "severity": "material",
+    "description": "The run context declares executed legal_documents but the pack holds no executed or filed source",
+    "affected_modules": ["CP-0"],
+    "remediation": "Supply the executed legal documents",
+    "citations": [],
+}
+_pos_gaps = SUBMISSIONS_B["positive"]["readiness_review"]["gaps"]
+assert all(g["gap_id"] != LEGAL_GAP["gap_id"] for g in _pos_gaps)
+_pos_gaps.append(LEGAL_GAP)
 SUBMISSIONS_B["note"] = (
     "cases/snapshot/submissions.json with every identity citation re-cut against the pack-B "
     "identity source (new source_sha256; the borrower-denying quote replaced by the guarantor/"
     "restricted-group sentence; two prose strings (each in positive and gap) that said no borrower is established "
-    "edited to match; the business_context identity source whose `use` names the borrower gains the citation of the borrower line (page:1 of identity-b)). Nothing else changed. " + SNAP_S["note"]
+    "edited to match; the business_context identity source whose `use` names the borrower gains the citation of the borrower line (page:1 of identity-b)). Positive readiness_review gains the gap legal-documents-missing (P5T3-R7). Nothing else changed. " + SNAP_S["note"]
 )
 text_old = json.dumps(SNAP_S)
 assert OLD_ID_SHA in text_old

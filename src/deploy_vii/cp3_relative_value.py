@@ -188,15 +188,19 @@ MarketKind = Literal["observed", "indicative_talk", "none"]
 
 
 class Basis(Contract):
-    """A row's basis: CP-2 rows by id and market-evidence quotes (copied from `market_evidence`
-    rows); its CP-1 basis is the figure references in its text."""
+    """A row's basis: CP-2 rows by id, market-evidence quotes (copied from `market_evidence` rows)
+    and, in a run with a context file, Python's context market-evidence rows (`context_rows`);
+    its CP-1 basis is the figure references in its text."""
 
     cp2_refs: tuple[str, ...]
     quotes: tuple[Quote, ...]
     # Python's context market-evidence rows by id (`c01`, B6): a deliberate default, because every
     # submission made before the context file was read lacks it. An empty value is left out of the
     # dump, so a submission and a head without context evidence keep their content hash (N1).
-    context_rows: tuple[str, ...] = ()
+    context_rows: tuple[str, ...] = Field(
+        default=(),
+        description="Python's context market-evidence row ids, cited by id; figures never copied.",
+    )
 
     @model_serializer(mode="wrap")
     def _omit_empty_context_rows(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:

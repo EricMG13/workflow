@@ -29,7 +29,10 @@ it. `observed` is a reported trading level or quote; `indicative_talk` is price 
 or an indicative level, which is never a market level: never describe talk as where an
 instrument trades, is quoted or is priced. A `none` row quotes nothing and states what is
 missing. An instrument's `market_observation` is "none" or a statement whose basis quotes at
-least one `market_evidence` row (copy that row's quote into `basis.quotes`). Pack quotes appear
+least one `market_evidence` row (copy that row's quote into `basis.quotes`) or, in a run
+with a context file, names a context row in `basis.context_rows`. A run with a
+context file also offers Python's context rows: a basis cites one by its row id in
+`basis.context_rows` and never copies its figures. Pack quotes appear
 nowhere else.
 
 Analytical chain, for every instrument: fundamental view (CP-2 rows, CP-1 terms such as
@@ -42,7 +45,8 @@ What to return:
 - `market_evidence`: each quoted span with kind, as_of and limitation.
 - `preference`: the `ordering` of the instruments, most preferred first, each assessed
   facility_id exactly once and nothing else; the rationale; its basis (at least one market
-  evidence quote unless the confidence is Insufficient Information); its confidence (High,
+  evidence quote or a context row named in
+  `basis.context_rows` unless the confidence is Insufficient Information); its confidence (High,
   Medium, Low or Insufficient Information, which states its limitation).
 - `risks`: each risk to the ordering with its mechanic, implication, severity and `cp2_refs`.
 - `gaps`: what the analysis lacks, why it matters, what it affects, its severity and the action.

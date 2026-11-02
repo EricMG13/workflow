@@ -125,8 +125,30 @@ CP-3 reads the context's `quotes` and deal talk as market evidence; CP-3D reads
 `quotes` only, not deal talk. A quote older than 30 days is stale. A quote whose
 facility id is unknown is a gap.
 
-No other module reads the context beyond `Run`: the other settings in the file are
-carried in the pack but are not consumed until the remaining phases of the context-file plan.
+Beyond `Run`, the quotes above and the pinned assumptions of Phase 6, three more
+things in the context are read:
+
+- **List fields are one name per line.** The form writes aliases and guarantors with
+  one name per line, so a name may contain a comma. The assumption lists (shocks) stay
+  comma-separated.
+- **The borrower name is checked, never imposed.** On a delivered credit snapshot the
+  "Run context" page shows the borrower, aliases, sector and sponsor, each marked as
+  user-supplied with the context line it came from. The borrower name is compared with
+  the borrower entities CP-1 located. A mismatch is recorded as the gap
+  `borrower_name_mismatch`; it never overrides what CP-1 located, and the CP-0 issuer
+  gate is not changed by it.
+- **Periods come from the context.** CP-L10 offers the four quarters ending at the
+  context's current quarter, and CP-1B takes the context's current and prior period
+  instead of the fixed test periods. An earnings run takes quarters or fiscal years of
+  one kind (an `h` period or a mixed pair is refused by the reader). Two limits hold:
+  CP-1B takes the context pair only for the two pairs its oracle names, q3-2025 to
+  q4-2025 (flat) and fy-2024 (absent) to fy-2025; any other context pair is refused
+  `unsupported_pair` until Phase 8. For a fiscal-year (non-quarter) context, CP-L10
+  offers no quarter list and its step refuses with the issue
+  `CP-L10: context_period_not_quarter`.
+
+Every other setting in the file is carried in the pack but is not consumed until the
+remaining phases of the context-file plan.
 
 ## Verify and deliver a sealed financial slice
 

@@ -30,11 +30,14 @@ from deploy_vii.execution import (
     ExecutionSnapshot,
     Qualification,
     StepValidation,
+    clipped,
 )
 from deploy_vii.live.schema import exact_json, json_object, normalise
 from deploy_vii.live.submission import Submitted
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
+from deploy_workflow.context import ContextRefused, context_facts
+from deploy_workflow.context_periods import resolve
 from deploy_workflow.earnings import EarningsDeltaReport, _periods, build_earnings_delta
 from deploy_workflow.earnings_workflow import OwnerError, _operands, _own_limits, compose_delta
 from deploy_workflow.owners.cp1a import probe_one_step
@@ -120,10 +123,14 @@ def expected_comparison(report: EarningsDeltaReport) -> str:
 
 
 def supported(view: ModuleView, report: EarningsDeltaReport) -> bool:
-    """Whether the composer's fixed prose (and the Northbridge limitation lines) is true of this
-    report (ruling B19): the flat q3-2025 -> q4-2025 pair or the missing-prior
-    fy-2024 -> fy-2025 pair, with every current value known, no 2024 duration period in the register and, for the gap pair, the opening-2024 balance row
-    and known FY2025 leverage; for the flat pair, Q3 leverage missing for the four-quarter reason."""
+    """Whether this report is one of the two pairs this core accepts, with or without a run
+    context (ruling B19, P2T4a-R2; P2T4b-R1 keeps the pins until Phase 8): the flat q3-2025 ->
+    q4-2025 pair or the missing-prior fy-2024 -> fy-2025 pair. A context pair outside these two
+    resolves and passes the context check, then refuses here as `unsupported_pair`. The composer derives its prose from the register and refuses what it
+    cannot state truthfully; these guards and pins are narrower and stay:
+    every current value known, no 2024 duration period in the register and, for the gap pair, the
+    opening-2024 balance row and known FY2025 leverage; for the flat pair, Q3 leverage missing for
+    the four-quarter reason."""
     pair = (report.prior_period_id, report.current_period_id)
     points = {p.measure_id: p for p in report.points}
     if pair not in (FLAT_PAIR, GAP_PAIR) or any(
@@ -193,6 +200,41 @@ def compute(view: ModuleView, submission: EarningsDeltaOwnerReview) -> Computati
     return found
 
 
+CONTEXT_LIMIT = "Periods taken from the user-supplied run context."
+
+
+@dataclass(frozen=True)
+class ContextPair:
+    """The period pair a run context fixes, or the issues that refuse it. `pair` is `None` when
+    the run has no context or the context names no period pair (behaviour is then O1's)."""
+
+    pair: tuple[str, str] | None
+    issues: tuple[str, ...]
+
+
+def context_pair(module: ModuleView, pack: PreparedPack) -> ContextPair:
+    """The CP-1 T4.14 pair the run context names (P2-P7): the current period must resolve
+    (`context_period_unresolved` otherwise); an unresolved prior is passed on as the context
+    string, so `build_earnings_delta` yields the `comparative_not_supplied` gap. A refused
+    context raises `ContextRefused` for the caller to map; a register `build_earnings_delta`
+    refuses gives no pair here, and `compute` reports its code."""
+    context = context_facts(pack)
+    if context is None or not (context.run.current_period and context.run.prior_period):
+        return ContextPair(None, ())
+    try:
+        rows = _periods(module)
+    except ValueError as error:
+        if str(error) not in _PERIOD_CODES:
+            raise
+        return ContextPair(None, ())
+    current = resolve(context.run.current_period, rows)
+    if current is None:
+        return ContextPair(None, (f"context_period_unresolved: {context.run.current_period}",))
+    return ContextPair(
+        (resolve(context.run.prior_period, rows) or context.run.prior_period, current), ()
+    )
+
+
 def cp1_view(producer: Module) -> ModuleView:
     """The bound CP-1 head as the `ModuleView` the delta core reads (as the receipt path)."""
     return ModuleView(
@@ -237,11 +279,18 @@ def _point_rows(report: EarningsDeltaReport) -> list[dict[str, str | None]]:
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
     """(sha256, body) of the one `read_inputs` view as compact JSON: the periods the settled CP-1
-    head offers, and exactly the pairs the validator accepts (ruling B19: the flat q3-2025 ->
-    q4-2025 pair and the missing-prior fy-2024 -> fy-2025 pair), each with the assessment Python
-    derives and the point list it builds."""
+    head offers, and exactly the pairs the validator accepts, each with the assessment Python
+    derives and the point list it builds. Without a run context those are the two pinned pairs
+    (ruling B19: the flat q3-2025 -> q4-2025 pair and the missing-prior fy-2024 -> fy-2025 pair).
+    With a context naming both periods it is the one pair the context resolves to (when that pair
+    is accepted), and a refused context or an unresolved current period offers none and carries
+    `context_issue`."""
     module = cp1_view(_cp1(historical, attempt))
     body: dict[str, object]
+    try:
+        fixed = context_pair(module, historical.pack())
+    except ContextRefused as error:
+        fixed = ContextPair(None, (clipped(("Context refused: ", str(error))),))
     try:
         rows = _periods(module)
     except ValueError as error:
@@ -250,7 +299,9 @@ def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
         body = {"register_issue": str(error), "periods": [], "pairs": []}
     else:
         pairs: list[dict[str, object]] = []
-        for prior, current in (FLAT_PAIR, GAP_PAIR):
+        # A context fixes the one pair offered; a refused or unresolved context offers none.
+        offered = (fixed.pair,) if fixed.pair else () if fixed.issues else (FLAT_PAIR, GAP_PAIR)
+        for prior, current in offered:
             found = _pair(module, prior, current)
             if found.report is not None and supported(module, found.report):
                 pairs.append(
@@ -272,6 +323,7 @@ def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
                 for pid, row in rows.items()
             ],
             "pairs": pairs,
+            **({"context_issue": fixed.issues[0]} if fixed.issues else {}),
         }
     text = json.dumps(body, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
     return hashlib.sha256(text.encode()).hexdigest(), text
@@ -297,6 +349,19 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     if submission is None:
         return StepValidation(issues=shape)
     producer = _cp1(store, attempt)
+    try:
+        fixed = context_pair(cp1_view(producer), pack)
+    except ContextRefused as error:
+        return StepValidation(issues=(clipped(("Context refused: ", str(error))),))
+    submitted = (submission.prior_period_id, submission.current_period_id)
+    if fixed.issues:
+        return StepValidation(issues=fixed.issues)
+    if fixed.pair is not None and fixed.pair != submitted:
+        mismatch = (
+            f"context_period_mismatch: submitted {submitted[0]} -> {submitted[1]}, "
+            f"context {fixed.pair[0]} -> {fixed.pair[1]}"
+        )
+        return StepValidation(issues=(mismatch,))
     found = compute(cp1_view(producer), submission)
     if found.report is None:
         return StepValidation(issues=found.issues)
@@ -306,12 +371,16 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
             found.report,
             _operands(producer, found.report),
             (Input(input_id=SUBMISSION_INPUT, sha256=submission.content_hash()),),
-            _own_limits(found.report.prior_basis_id is None, owner=True),
+            (*_own_limits(found.report, owner=True), *((CONTEXT_LIMIT,) if fixed.pair else ())),
             attempt,
             pack.run,
         )
     except OwnerError as error:
         return StepValidation(issues=(error.code,))
+    except ValueError as error:
+        if str(error) != UNSUPPORTED:  # only the composer's one named refusal is an issue
+            raise
+        return StepValidation(issues=(UNSUPPORTED,))
     return StepValidation(output=candidate.model_dump_json())
 
 

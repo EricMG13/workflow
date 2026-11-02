@@ -30,6 +30,7 @@ from _pack import (
 )
 
 from deploy_vii.execution import Execution
+from deploy_workflow import owner_workflow as owner_module
 from deploy_workflow.model import adapter as adapter_module
 from deploy_workflow.model import loop as loop_module
 from deploy_workflow.model.adapter import AdapterReply, recorded_adapter
@@ -55,6 +56,7 @@ from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.transport import Response
 from deploy_workflow.model.turn import ModelSpec, Usage, dump_json
 from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.workflow import WorkflowError
 
 CONFIG = SPEC.config_id
 
@@ -1205,3 +1207,32 @@ def test_run_step_drives_one_step_and_run_is_the_same_steps_to_the_walks_end(
         {k: o[k] for k in keys} for o in stepwise
     ]
     assert _shape(whole) == _shape(by_step)
+
+
+@pytest.mark.parametrize("code", ["identity_mismatch", "bad_arguments"])
+def test_another_workflow_error_is_not_inputs_too_large(
+    code: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`_stop_class` names only the `inputs_too_large` refusal: a `WorkflowError` of any other code
+    out of `read_inputs` stops the run as `WorkflowError`."""
+    monkeypatch.setattr(fw, "start", owner_start)
+    workflow, pack = fw.before_financials(tmp_path)
+    fw.financial_reads(workflow)
+    assert workflow.submit_review(json.dumps(fw.financials(pack)))["status"] == "valid"
+
+    def broken(store: Any, binding: Any, spec: Any) -> Any:
+        raise WorkflowError(code)
+
+    monkeypatch.setattr(owner_module, "_inputs", broken)
+    rig = make_rig(
+        tmp_path,
+        [ok(tool_call("read_inputs"))],
+        workflow=workflow,
+        pack=pack,
+        bytes_per_token=Decimal(3),
+    )
+    stop = _stop(rig)
+    assert stop.reason == "WorkflowError", stop.reason
+    record = [r for r in rig.records() if r["step_id"] == "narrative"][-1]
+    assert record["error_class"] == "WorkflowError"
+    assert record["tool_calls"][0]["refusal_code"] == "WorkflowError"

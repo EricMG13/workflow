@@ -295,6 +295,96 @@ for _c in ("USD", "EUR"):
     _b = page_text("bridge", _c, "page:1")
     assert _b.split("\n")[4].startswith(BASIS[_c]["bridge_basis_line"] + f"; {_c}; amounts in millions"), _b.split("\n")[4]
 
+# --- 3b. the CP-1 T4.14 rows of the shifted pack (pin-only, ruling P8-R1) ----------------------------------------------
+
+
+T414_COLUMNS = "period_id fiscal_year fiscal_quarter period_type start_date end_date day_count audit_status currency unit accounting_basis entity_perimeter source_id source_locator component_period_ids".split()  # model_interface.py:33-42
+
+
+def _cell(text, status="known"):
+    return {"text": text, "status": status}
+
+
+def t414_rows(ccy):
+    """T4.14 rows of the shifted pack, every cell {"text","status"} as _Tables.row (model_interface.py:254-277) writes it:
+    a value None is text None with status `missing`, or `not_applicable` when the column is in the row's references
+    (component_period_ids, and fiscal_quarter on a non-QUARTER row, :339-344); dates are ISO text, numbers decimal text."""
+    t = TX[ccy]
+    rows = []
+    for per in FIN["periods"]:
+        quarter = per["period_type"] == "QUARTER"
+        refs = {"component_period_ids"} | (set() if quarter else {"fiscal_quarter"})
+        raw = {
+            "period_id": t.text(per["period_id"]),
+            "fiscal_year": t.text(per["fiscal_year"]),
+            "fiscal_quarter": None if per["fiscal_quarter"] is None else str(per["fiscal_quarter"]),
+            "period_type": per["period_type"],
+            "start_date": t.text(per["start_date"]) if per["start_date"] else None,
+            "end_date": t.text(per["end_date"]),
+            "day_count": None if per.get("day_count") is None else str(per["day_count"]),
+            "audit_status": "unaudited",  # tests/test_financial_workflow.py:443, the CP-1 promotion literal
+            "currency": ccy,
+            "unit": "MILLIONS",
+            "accounting_basis": "IFRS",
+            "entity_perimeter": "consolidated group",
+            "source_id": "financial",  # first citation of the period: FINANCIAL = page:1 (same file :69)
+            "source_locator": "page:1",
+            "component_period_ids": ";".join(per.get("component_period_ids") or []) or None,
+        }
+        assert list(raw) == T414_COLUMNS
+        row = {}
+        for name in T414_COLUMNS:
+            v = raw[name]
+            row[name] = _cell(v) if v is not None else _cell(None, "not_applicable" if name in refs else "missing")
+        # the row agrees with the shifted statements: dates give the day count, the balance-sheet header names the end date
+        if raw["start_date"]:
+            d0, d1 = dt.date.fromisoformat(raw["start_date"]), dt.date.fromisoformat(raw["end_date"])
+            assert str((d1 - d0).days + 1) == raw["day_count"]
+        assert raw["end_date"] in FIN_P[ccy]["page:4"], raw["period_id"]
+        assert f"Currency: {ccy}; amounts in millions" in FIN_P[ccy]["page:1"]
+        rows.append(row)
+    return rows
+
+
+def _txt(row, name):
+    return row[name]["text"]
+
+
+T414 = {
+    "schema_version": "periods-currency-owner-t414/2",
+    "derivation": (
+        "Pin-only fixture (rulings P8-R1, P8-R1c): the CP-1 T4.14 period register of the shifted pack, for the contexts behind "
+        "expected.json#period_basis/USD (submissions.json#contexts/R1, fy-2026, USD) and #period_basis/EUR (#contexts/R2, q4-2026, EUR). "
+        "No CP-1 promotion was run. Rows come from the frozen `periods` list of cases/financial/manifest.json (the period scopes the CP-1 "
+        "source context is built from) under the four mapping rules: ids opening-2025, q1-2026..q4-2026, fy-2026. Every row has the 15 "
+        "T4.14 columns in schema order (model_interface.py:33-42) and every cell is {text, status} as _Tables.row emits it "
+        "(model_interface.py:254-277): a known value is its text (dates ISO, fiscal_year/fiscal_quarter/day_count decimal text); a None value "
+        "is text null with status `missing` (:254-255, :259-263), except a column named in the row's references, which is `not_applicable` "
+        "(:256-258; references = component_period_ids always and fiscal_quarter when period_type is not QUARTER, :339-344). So fiscal_quarter is "
+        "'1'..'4' on QUARTER rows and null/not_applicable on opening-2025 and fy-2026; the opening row's start_date and day_count are "
+        "null/missing (a point in time, frozen start null); component_period_ids is null/not_applicable on every row (the frozen register "
+        "lists none). audit_status 'unaudited' is the CP-1 promotion literal (tests/test_financial_workflow.py:443); source_id 'financial' and "
+        "source_locator 'page:1' come from the period's first citation (same file :69, 444; model_interface.py:214-223). currency is the run "
+        "currency read from the pack's 'Currency: <ccy>; amounts in millions' clause (page:1); unit MILLIONS, accounting_basis IFRS, "
+        "entity_perimeter consolidated group (page:2-4 headers). Day counts 90/91/92/92/365 and end dates are checked against the shifted "
+        "statements (page:1, page:4)."
+    ),
+    "columns": T414_COLUMNS,
+    "contexts": {
+        "R1": {"context": "submissions.json#contexts/R1", "period_basis": "expected.json#period_basis/USD", "rows": t414_rows("USD")},
+        "R2": {"context": "submissions.json#contexts/R2", "period_basis": "expected.json#period_basis/EUR", "rows": t414_rows("EUR")},
+    },
+}
+for _k, _c in (("R1", "USD"), ("R2", "EUR")):
+    _rows = T414["contexts"][_k]["rows"]
+    _fy = [r for r in _rows if _txt(r, "period_type") == "FY"]
+    _q4 = [r for r in _rows if _txt(r, "period_type") == "QUARTER" and _txt(r, "fiscal_quarter") == "4"]
+    assert len(_fy) == 1 and len(_q4) == 1 and _txt(_q4[0], "end_date") == _txt(_fy[0], "end_date")
+    assert _txt(_fy[0], "start_date") == BASIS[_c]["ltm_start"] and _txt(_fy[0], "end_date") == BASIS[_c]["ltm_end"] and _txt(_q4[0], "start_date") == BASIS[_c]["q4_start"]
+    assert _txt(_q4[0], "period_id") == BASIS[_c]["schedule_period"] and _txt(_fy[0], "fiscal_year") == str(BASIS[_c]["base_year"])
+    assert {_txt(r, "currency") for r in _rows} == {_c}
+    assert _fy[0]["fiscal_quarter"] == _cell(None, "not_applicable") and _rows[0]["start_date"] == _cell(None, "missing")
+
 # --- 4. day counts and the 29 February 2028 check ----------------------------------------------------------
 
 
@@ -862,6 +952,7 @@ def main():
         "old_to_new_source_sha256": OLD2NEW,
         "runs": runs_manifest,
         "default_period_literals_mapped": FROZEN_DEFAULT,
+        "t414_file": {"path": "t414.json", "sha256": sha(dumps(T414).encode("utf-8")), "rule": "P8-R1: pin-only; the shifted pack's CP-1 T4.14 rows behind period_basis/USD and period_basis/EUR; no expected.json value depends on it"},
         "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",
         "dependencies": "R3's CP-1B settling on q3-2026 -> q4-2026 depends on Phase 2 Task 4 generalising the CP-1B prose (ruling B19); until then the owner path refuses unsupported_pair.",
     }
@@ -887,6 +978,7 @@ def main():
     (OUT / "manifest.json").write_text(dumps(manifest), encoding="utf-8")
     (OUT / "submissions.json").write_text(dumps(submissions), encoding="utf-8")
     (OUT / "expected.json").write_text(dumps(expected), encoding="utf-8")
+    (OUT / "t414.json").write_text(dumps(T414), encoding="utf-8")
     bad = {k: v for k, v in cite_report.items() if v["quotes_not_in_shifted_page"]}
     print("wrote", OUT, "quotes with no shifted page match:", sum(v["quotes_not_in_shifted_page"] for v in cite_report.values()), "unmapped digests:", len(unmapped))
     if bad:

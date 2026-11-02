@@ -1,6 +1,6 @@
 {
   "schema_version": "snapshot-s1-submissions/1",
-  "note": "cases/snapshot/submissions.json with every identity citation re-cut against the pack-B identity source (new source_sha256; the borrower-denying quote replaced by the guarantor/restricted-group sentence; two prose strings (each in positive and gap) that said no borrower is established edited to match; the business_context identity source whose `use` names the borrower gains the citation of the borrower line (page:1 of identity-b)). Nothing else changed. Literal analyst submissions for the business_context and credit_synthesis steps. {{FIG:name}} marks a CP-1 figure reference to be replaced mechanically by {<actual CP-1 fact_id>|<unit_token>} after the CP-1 head is inspected; unreplaced it is malformed run text and fails closed. figures lists each name's CP-1 coordinate, oracle ratio and unit token.",
+  "note": "cases/snapshot/submissions.json with every identity citation re-cut against the pack-B identity source (new source_sha256; the borrower-denying quote replaced by the guarantor/restricted-group sentence; two prose strings (each in positive and gap) that said no borrower is established edited to match; the business_context identity source whose `use` names the borrower gains the citation of the borrower line (page:1 of identity-b)). Positive readiness_review gains the gap legal-documents-missing (P5T3-R7). Nothing else changed. Literal analyst submissions for the business_context and credit_synthesis steps. {{FIG:name}} marks a CP-1 figure reference to be replaced mechanically by {<actual CP-1 fact_id>|<unit_token>} after the CP-1 head is inspected; unreplaced it is malformed run text and fails closed. figures lists each name's CP-1 coordinate, oracle ratio and unit token.",
   "figures": {
     "total_leverage_reported": {
       "cp1_coordinate": "T4.10 total_leverage_reported, twelve-month (LTM) basis ending Q4 2025, 2025-01-01 to 2025-12-31",
@@ -191,7 +191,19 @@
           ]
         }
       ],
-      "gaps": [],
+      "gaps": [
+        {
+          "gap_id": "legal-documents-missing",
+          "kind": "source",
+          "severity": "material",
+          "description": "The run context declares executed legal_documents but the pack holds no executed or filed source",
+          "affected_modules": [
+            "CP-0"
+          ],
+          "remediation": "Supply the executed legal documents",
+          "citations": []
+        }
+      ],
       "analysis": [
         {
           "claim_id": "source-assessment",

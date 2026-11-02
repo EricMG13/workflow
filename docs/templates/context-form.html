@@ -126,8 +126,9 @@ fieldset{border:0;margin:var(--rb-s-5) 0 0;padding:0;min-width:0}
 legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
 .f{margin:var(--rb-s-4) 0;min-width:0}
 .f label{display:block;font-weight:500;margin-bottom:var(--rb-s-1)}
-.f input[type=text],.f input[type=date],.f select{width:100%;min-height:30px;padding:3px var(--rb-s-3);border:1px solid var(--rb-ink-3);border-radius:var(--rb-r-tile);background:var(--rb-panel)}
-.f input[aria-invalid=true],.f select[aria-invalid=true]{border-color:var(--rb-neg);background:var(--rb-neg-tint)}
+.f input[type=text],.f input[type=date],.f select,.f textarea{width:100%;min-height:30px;padding:3px var(--rb-s-3);border:1px solid var(--rb-ink-3);border-radius:var(--rb-r-tile);background:var(--rb-panel)}
+.f textarea{resize:vertical}
+.f input[aria-invalid=true],.f select[aria-invalid=true],.f textarea[aria-invalid=true]{border-color:var(--rb-neg);background:var(--rb-neg-tint)}
 .help{margin:var(--rb-s-1) 0 0;font-size:var(--rb-fs-table);color:var(--rb-ink-2)}
 .err{margin:var(--rb-s-1) 0 0;font-size:var(--rb-fs-table);font-weight:600;color:var(--rb-neg)}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 var(--rb-s-5)}
@@ -255,8 +256,8 @@ legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
     <div class="f"><label for="s2-issuer_id">Issuer ID</label><input type="text" id="s2-issuer_id" placeholder="e.g. northbridge-group" data-k="issuer_id" aria-describedby="s2-issuer_id-h"><p class="help" id="s2-issuer_id-h">Filled from the name; lowercase letters, digits, hyphens. Edit if you want.</p></div>
     <div class="f"><label for="s2-borrower_name">Borrower (legal entity)</label><input type="text" id="s2-borrower_name" placeholder="e.g. Northbridge Holdings LLC" data-k="borrower_name" aria-describedby="s2-borrower_name-h"><p class="help" id="s2-borrower_name-h">The entity that signs the credit agreement. Left blank, CP-1 looks for it in the filings and records a gap if not found.</p></div>
     <div class="f"><label for="s2-parent_name">Parent</label><input type="text" id="s2-parent_name" placeholder="e.g. Northbridge Topco Ltd" data-k="parent_name" aria-describedby="s2-parent_name-h"><p class="help" id="s2-parent_name-h">Plain text; the ultimate parent, if different.</p></div>
-    <div class="f"><label for="s2-guarantors">Guarantors</label><input type="text" id="s2-guarantors" placeholder="e.g. Northbridge Opco LLC, Northbridge IP LLC" data-k="guarantors" aria-describedby="s2-guarantors-h"><p class="help" id="s2-guarantors-h">Comma-separated names.</p></div>
-    <div class="f"><label for="s2-aliases">Aliases</label><input type="text" id="s2-aliases" placeholder="e.g. Northbridge, NBG" data-k="aliases" aria-describedby="s2-aliases-h"><p class="help" id="s2-aliases-h">Other names and tickers, so peer tables and filings match the issuer. Comma-separated.</p></div>
+    <div class="f"><label for="s2-guarantors">Guarantors</label><textarea id="s2-guarantors" rows="3" placeholder="e.g. Northbridge Opco LLC&#10;Northbridge IP LLC" data-k="guarantors" aria-describedby="s2-guarantors-h"></textarea><p class="help" id="s2-guarantors-h">One name per line, so a name may contain a comma.</p></div>
+    <div class="f"><label for="s2-aliases">Aliases</label><textarea id="s2-aliases" rows="3" placeholder="e.g. Northbridge&#10;NBG" data-k="aliases" aria-describedby="s2-aliases-h"></textarea><p class="help" id="s2-aliases-h">Other names and tickers, so peer tables and filings match the issuer. One name per line, so a name may contain a comma.</p></div>
   </div>
   <fieldset><legend>Listed equity</legend><div data-cards="listed_equity"></div></fieldset>
   <div class="grid">
@@ -274,8 +275,8 @@ legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
   <p class="intro">Set the as-of date, reporting periods and currency the run is anchored to.</p>
   <div class="grid">
     <div class="f"><label for="s3-as_of">As-of date</label><input type="date" id="s3-as_of" data-k="as_of" aria-describedby="s3-as_of-h"><p class="help" id="s3-as_of-h">Sources and quotes dated after this are refused. Format YYYY-MM-DD, for example 2026-10-31.</p></div>
-    <div class="f"><label for="s3-current_period">Current period</label><input type="text" id="s3-current_period" placeholder="e.g. q3-2026" data-k="current_period" aria-describedby="s3-current_period-h"><p class="help" id="s3-current_period-h">For example q3-2026 or fy-2025. Required for Earnings update. Format q3-2026, h1-2026 or fy-2025.</p></div>
-    <div class="f"><label for="s3-prior_period">Prior period</label><input type="text" id="s3-prior_period" placeholder="e.g. q2-2026" data-k="prior_period" aria-describedby="s3-prior_period-h"><p class="help" id="s3-prior_period-h">Must be earlier than the current period (same kind: quarter, half or year).</p></div>
+    <div class="f"><label for="s3-current_period">Current period</label><input type="text" id="s3-current_period" placeholder="e.g. q3-2026" data-k="current_period" aria-describedby="s3-current_period-h"><p class="help" id="s3-current_period-h">For example q3-2026 or fy-2025. Required for Earnings update. Format q3-2026, h1-2026 or fy-2025. On an Earnings update: quarters or fiscal years, same kind.</p></div>
+    <div class="f"><label for="s3-prior_period">Prior period</label><input type="text" id="s3-prior_period" placeholder="e.g. q2-2026" data-k="prior_period" aria-describedby="s3-prior_period-h"><p class="help" id="s3-prior_period-h">Must be earlier than the current period (same kind: quarter, half or year). On an Earnings update: quarters or fiscal years, same kind.</p></div>
     <div class="f"><label for="s3-reporting_currency">Reporting currency</label><input type="text" id="s3-reporting_currency" placeholder="e.g. USD" data-k="reporting_currency" value="USD" maxlength="3" aria-describedby="s3-reporting_currency-h"><p class="help" id="s3-reporting_currency-h">Three uppercase letters. <span id="ccynote"></span></p></div>
   </div>
 </section>
@@ -477,7 +478,7 @@ const OPTIONS = {
     {v:'primary', label:'Primary (new issue)', text:'Deal terms and price talk expected. Talk alone caps relative-value confidence below High. Legal documents are usually drafts; CP-4 accepts only executed or filed documents today (draft mode Planned). Default pathway: Credit Snapshot. Shows section 4.'},
     {v:'secondary', label:'Secondary (trading)', text:'Observed quotes expected. Without them CP-3 relative value states Insufficient Information. Default pathway: Relative Value. Shows section 5.'},
     {v:'research', label:'Research', def:true, text:'No market inputs needed. Relative-value and portfolio sections show gaps where quotes or holdings are absent. Default pathway: Credit Snapshot.'},
-    {v:'earnings', label:'Earnings update', text:'Current and prior periods required; CP-1B compares them (period pair from this form is Planned; today only fixed test periods run). Default pathway: Earnings Update.'}
+    {v:'earnings', label:'Earnings update', text:'Current and prior periods required; CP-1B compares them. Default pathway: Earnings Update.'}
   ],
   case_kind: [
     {v:'public', label:'Public', def:true, text:'Filings are public (10-K/10-Q).'},
@@ -683,6 +684,7 @@ function fld(scope, k, r) {
   const el = els(scope, k)[0];
   let v = getV(scope, k);
   if (typeof v !== 'string') return v;
+  if (r.t === 'lines') return v.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   if (r.t === 'list') {
     const items = v.split(',').map(s => s.trim()).filter(Boolean);
     if (r.req && !items.length) bad(el, 'required.');
@@ -733,6 +735,11 @@ function build() {
   const current_period = fld(s3, 'current_period', {t:'period', req:earn});
   const prior_period = fld(s3, 'prior_period', {t:'period', req:earn});
   const a = pkey(current_period), b = pkey(prior_period);
+  if (earn) {
+    let halves = false;
+    for (const [k, x] of [['current_period', a], ['prior_period', b]]) if (x && x.kind === 'h') { halves = true; bad(els(s3, k)[0], 'earnings runs compare quarters or fiscal years only.'); }
+    if (a && b && !halves && a.kind !== b.kind) bad(els(s3, 'prior_period')[0], 'must be the same kind as the current period.');
+  }
   if (a && b && a.kind === b.kind && (b.y > a.y || (b.y === a.y && b.n >= a.n))) bad(els(s3, 'prior_period')[0], 'must be earlier than the current period.');
   const reporting_currency = fld(s3, 'reporting_currency', {t:'cur', req:true});
   const run = {run_type, pathway, case_kind, as_of, current_period, prior_period, reporting_currency};
@@ -740,7 +747,7 @@ function build() {
   const listed = getV(s2, 'listed_equity') === 'yes';
   const identity = {
     issuer_name: fld(s2, 'issuer_name', {req:true}), issuer_id: fld(s2, 'issuer_id', {t:'slug', req:true}), borrower_name: fld(s2, 'borrower_name'),
-    parent_name: fld(s2, 'parent_name'), guarantors: fld(s2, 'guarantors', {t:'list'}), aliases: fld(s2, 'aliases', {t:'list'}),
+    parent_name: fld(s2, 'parent_name'), guarantors: fld(s2, 'guarantors', {t:'lines'}), aliases: fld(s2, 'aliases', {t:'lines'}),
     listed_equity: listed, ticker: listed ? fld(s2, 'ticker') : '', sector: fld(s2, 'sector'), country: fld(s2, 'country'), sponsor: fld(s2, 'sponsor')
   };
 
@@ -1081,7 +1088,6 @@ function panel(o) {
 
   const pinnedN = Object.keys(ASM_MODULE).filter(k => o.assumptions[k] && has(ASM_MODULE[k])).length;
   const planned = [];
-  if (has('CP-1B') && o.run.run_type === 'earnings') planned.push('CP-1B period pair from this form');
   if (has('CP-2D') && o.run.reporting_currency && o.run.reporting_currency !== 'USD') planned.push('non-USD currency');
   if (has('CP-1C') && v.peer_source === 'cp_dr_public') planned.push('CP-DR public peer sourcing and CP-1C EV/EBITDA');
   if (has('CP-1C') && v.basis === 'auto') planned.push('valuation basis selection');
@@ -1177,7 +1183,7 @@ $('f').addEventListener('click', e => {
 });
 $('f').addEventListener('focusout', e => {
   const t = e.target;
-  if (t.matches && t.matches('input, select')) { t.dataset.touched = '1'; update(); }
+  if (t.matches && t.matches('input, select, textarea')) { t.dataset.touched = '1'; update(); }
 });
 $('steperr').addEventListener('click', e => {
   const t = e.target;
@@ -1266,8 +1272,8 @@ function fill(o) {
   setV(s1, 'case_kind', txt(run.case_kind), 'run.case_kind', warn);
   for (const k of ['as_of','current_period','prior_period','reporting_currency']) if (k === 'as_of' || txt(run[k]) !== '') setV(s3, k, txt(run[k]), 'run.' + k, warn);
   for (const k of ['issuer_name','issuer_id','borrower_name','parent_name','ticker','sector','country','sponsor']) setV(s2, k, txt(id[k]), 'identity.' + k, warn);
-  setV(s2, 'guarantors', id.guarantors.map(txt).join(', '), 'identity.guarantors', warn);
-  setV(s2, 'aliases', id.aliases.map(txt).join(', '), 'identity.aliases', warn);
+  setV(s2, 'guarantors', id.guarantors.map(txt).join('\n'), 'identity.guarantors', warn);
+  setV(s2, 'aliases', id.aliases.map(txt).join('\n'), 'identity.aliases', warn);
   setV(s2, 'listed_equity', id.listed_equity === true ? 'yes' : 'no', 'identity.listed_equity', warn);
   if (typeof id.listed_equity !== 'boolean') warn.push('identity.listed_equity: expected true or false, treated as No');
   idTouched = txt(id.issuer_id) !== '' && txt(id.issuer_id) !== slug(txt(id.issuer_name));

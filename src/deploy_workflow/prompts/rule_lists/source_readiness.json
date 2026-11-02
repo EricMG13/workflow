@@ -60,6 +60,13 @@
    ]
   },
   {
+   "id": "source_readiness.p5",
+   "statement": "Assess a source as draft only when the run's context declares draft legal documents (`legal_documents: draft`). The `context` source is never assessed as executed, filed or draft.",
+   "checks": [
+    "fn:deploy_vii.readiness:context_authority_issues"
+   ]
+  },
+  {
    "id": "source_readiness.g8",
    "statement": "Write one consumer judgment for each. Python writes \"Run <id>\" for READY or READY_WITH_LIMITATIONS; any lower readiness refuses that module in this run, and every planned module that depends on it.",
    "checks": [

@@ -425,3 +425,124 @@ def s1a_closed(case: str, root: Path) -> tuple[Path, Path, Path]:
     workflow, pack = promoted(case, root)
     close(workflow, pack, case, root / "owner-receipt.json")
     return root / "store", root / "owner-receipt.json", root / "model"
+
+
+# --- pack B: the snapshot run with a context source (Phase 2, P2-P13) ----------------------------
+# Built from the context-identity-periods oracle files only (`PINS` above are untouched): the
+# preparer-written `sources/identity-b.json`, `submissions-b.json` and `overlays.json`. The
+# oracle's pack-B citations are re-cut against identity-b, so the snapshot pack cannot be reused.
+
+IDP = ROOT / "cases/context-identity-periods"
+
+
+def _idp(name: str) -> Any:
+    return json.loads((IDP / name).read_text(encoding="utf-8"))
+
+
+def make_pack_b(context_name: str | None) -> PreparedPack:
+    """Pack B: identity-b, the snapshot's financial and business sources, then (when named) the
+    `context` source prepared from the oracle context's literal bytes. The run is the oracle's
+    for that context; with no context it is the snapshot positive run."""
+    from deploy_vii.preparation import SourceRequest, prepare_source
+
+    base = make_pack("positive")
+    identity = _idp("sources/identity-b.json")
+    if (
+        hashlib.sha256("\f".join(p["text"] for p in identity["pages"]).encode()).hexdigest()
+        != (identity["sha256"])
+    ):
+        raise RuntimeError("identity-b page hash drift")
+    swapped = [
+        s.model_copy(
+            update={
+                "name": identity["name"],
+                "sha256": identity["sha256"],
+                "spans": tuple(Span(**p) for p in identity["pages"]),
+            }
+        )
+        if s.source_id == "identity"
+        else s
+        for s in base.sources
+    ]
+    if context_name is None:
+        return PreparedPack(run=base.run, sources=tuple(swapped))
+    entry = _idp("manifest.json")["contexts"][context_name]
+    raw = (IDP / entry["file"]).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+        raise RuntimeError(f"{context_name} context bytes drift")
+    context = prepare_source(
+        SourceRequest(source_id="context", path=entry["file"], media_type="text/plain"), raw
+    )
+    run = Run.model_validate_json(json.dumps({k: v for k, v in entry["run"].items() if k != "set"}))
+    return PreparedPack(run=run, sources=(*swapped, context))
+
+
+def _bind(document: Mapping[str, Any], pack: PreparedPack) -> dict[str, Any]:
+    text = json.dumps(document, ensure_ascii=False).replace(PACK_PLACEHOLDER, pack.content_hash())
+    bound: dict[str, Any] = json.loads(text)
+    return bound
+
+
+def pack_b_submissions(
+    pack: PreparedPack, context_name: str | None
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], str]:
+    """(CP-0 readiness, CP-1 source_context, CP-1A business_context, CP-2 credit_synthesis) as
+    the oracle literals with the pack hash bound. With a context the overlay adds the `context`
+    assessment to CP-0 and CP-1, and the borrower entity and its identity scope to CP-1."""
+    literals = _idp("submissions-b.json")["positive"]
+    readiness = _bind(literals["readiness_review"], pack)
+    source_context = _bind(literals["cp1_source_context"], pack)
+    business = _bind(literals["business_context"], pack)
+    if context_name is not None:
+        overlays = _idp("overlays.json")
+        readiness["sources"].append(overlays["per_context"][context_name]["cp0_readiness_source"])
+        source_context["sources"].append(
+            overlays["per_context"][context_name]["cp1_source_context_source"]
+        )
+        source_context["entities"].append(overlays["borrower_entity"])
+        identity = next(s for s in source_context["sources"] if s["source_id"] == "identity")
+        identity["scopes"] = [overlays["borrower_scope_on_identity_assessment"]]
+    return readiness, source_context, business, json.dumps(literals["credit_synthesis"])
+
+
+def start_with_context(
+    root: Path, context_name: str | None
+) -> tuple[OwnerWorkflow, PreparedPack, dict[str, Any]]:
+    """Pack B in a fresh owner workflow, with the oracle literals bound to it."""
+    pack = make_pack_b(context_name)
+    workflow = OwnerWorkflow.create(root / "store", pack, publication_directory=root / "model")
+    readiness, source_context, business, synthesis = pack_b_submissions(pack, context_name)
+    return (
+        workflow,
+        pack,
+        {
+            "readiness": readiness,
+            "source_context": source_context,
+            "business": business,
+            "synthesis": synthesis,
+        },
+    )
+
+
+def s1a_closed_with_context(
+    case: str, root: Path, context_name: str | None
+) -> tuple[Path, Path, Path]:
+    """One closed S1a run of pack B under `root`: (store, sealed receipt, publication). The slow
+    part is the real CP-1 promotion (11-26 minutes); nothing is faked. Only the `positive` case
+    has pack-B literals. With no context the snapshot's own closed run is the comparison page."""
+    if case != "positive":
+        raise ValueError(f"pack B has no {case!r} case")
+    if context_name is None:
+        return s1a_closed(case, root)
+    workflow, pack, lit = start_with_context(root, context_name)
+    drive_cp0(workflow, pack, case, text=json.dumps(lit["readiness"], ensure_ascii=False))
+    drive_cp1(workflow, pack, case, context=json.dumps(lit["source_context"], ensure_ascii=False))
+    receipt = root / "owner-receipt.json"
+    cp1a = drive_cp1a(workflow, pack, case, text=json.dumps(lit["business"], ensure_ascii=False))
+    if cp1a["status"] != "valid":
+        raise RuntimeError(f"CP-1A not valid: {cp1a['issues']}")
+    outcome = drive_cp2(workflow, case, read_cp2(workflow), text=lit["synthesis"])
+    if outcome["status"] != "valid":
+        raise RuntimeError(f"CP-2 not valid: {outcome['issues']}")
+    finish(workflow, receipt)
+    return root / "store", receipt, root / "model"

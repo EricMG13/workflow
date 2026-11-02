@@ -24,6 +24,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_workflow.prompts import NoPrompt, compose, inventory, rules
 from deploy_workflow.prompts.compose import PromptRequest
 from deploy_workflow.prompts.g8 import G8_RULE_ID
+from deploy_workflow.prompts.p5 import P5_RULE_ID
 
 compose_module = importlib.import_module("deploy_workflow.prompts.compose")
 GOLDEN = Path(__file__).with_name("rule_lists.golden.json")
@@ -224,8 +225,10 @@ def test_there_is_one_list_per_inventory_step_and_one_for_the_composer() -> None
 @pytest.mark.parametrize("step_id", CONTRACT_STEPS)
 def test_an_existing_step_carries_its_contract_rules_whole(step_id: str) -> None:
     expected = rules.contract_rules(STEP_CONTRACTS[step_id], step_id)
-    # source_readiness.g8 is the composer's G8 block, not a contract line (tests/prompts/test_g8.py)
-    got = [(r.id, r.statement) for r in rules.load_rules(step_id) if r.id != G8_RULE_ID]
+    # source_readiness.g8 and .p5 are the composer's CP-0 blocks, not contract lines
+    # (tests/prompts/test_g8.py, p5_strip.py)
+    composer_owned = {G8_RULE_ID, P5_RULE_ID}
+    got = [(r.id, r.statement) for r in rules.load_rules(step_id) if r.id not in composer_owned]
     assert got == list(expected)
     letters = re.findall(r"^([a-z])\. ", STEP_CONTRACTS[step_id], re.MULTILINE)
     assert [i for i, _ in expected] == [f"{step_id}.{c}" for c in letters]

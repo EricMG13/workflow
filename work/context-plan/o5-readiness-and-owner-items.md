@@ -133,3 +133,62 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 - **The CP-3 method text and rules d and e predate `basis.context_rows`.** `src/deploy_vii/methods/cp3.md:31-32`, `CP3_BASIS_RULE` (rule d) and rule e still describe a market basis only as a `basis.quotes` quote, but the validator also accepts `basis.context_rows`. Recommendation: a wording-only `src/deploy_vii` edit naming `basis.context_rows`. It needs a user approval, as B17 item 3 did.
 - **Test modules import other test modules** in `tests/prompts/test_factory.py` and `tests/prompts/test_pinned_block.py` (predates; found by the merge-fix check). Recommendation: move the shared helpers into non-test modules, as `merge_strip.py` did.
 - **`tests/prompts/test_g8.py` ~:143-160 shells out to `git grep`** at cfe37c23 and 0fc6eb35, so it fails on a tree with no git history (an archive, or a shallow clone). PR CI checks out with `fetch-depth: 0`, so CI is fine. Recommendation: keep it, or skip it with a logged reason when there is no history. (Found by the Phase 3 phase review.)
+
+- **CP-3 market-observation wording (B29 review M1, 2026-11-01).** Rule d's second clause (`live/prompts.py:601-602`), rule e (`:607`) and `methods/cp3.md:31-32` say a market observation or preference "cites a market quote". The validator also accepts a context row (`_cites_market`, `cp3_relative_value.py:1115-1117`, :1150-1153, :1201). A literal reading in a context-only run gives "none" and Insufficient Information, which is weaker than `cases/cp3-context-owner/expected.json#cp3/context-only`. The `Basis` docstring (:191-192) and the refusal messages at :1103, :1153 and :1202 name quotes only. Sent to the user via MANAGER as a proposed B30.
+- **cp4_legal.py:411 TRY004 (Phase 5 Task 2 review, I5).** It predates the context plan and makes `ruff check` on that file exit 1.
+- **Context form JS has no committed test (Phase 2 Task 1 review, L1).** The `lines` parsers are checked only by the scratch probe `p2t1-review/probe_form_js.js` (node), which the controller runs at the Phase 2 gate. A `cases/prove/` node verifier would need a CI node dependency.
+- **CP-4C names its CP-4 input "executed" (Phase 5 Task 2 review, I4).** owners/cp4c.py:1527-1531 ("Executed term loan terms"), pinned by cases/cp4c-owner. A draft or filed CP-4 head passes `_check_cp4_head`. The wording would need an oracle re-key.
+
+## Phase 2 owner items (controller, 2026-11-01)
+
+- **CP-L10 unbound operand shows only `identity_mismatch` (pre-existing).** cpl10.py `view` maps every UpstreamError to `identity_mismatch`. Under ctx-q3, an operator sees that code and never sees the text "unbound CP-1 operand: q4-2024 (no CP-1 T4.14 period)" (Phase 2 Task 3, adversary M1). The same holds for a refused context file: the read refuses `identity_mismatch` before the `CP-L10: Context refused: ...` issue can show (Task 3 re-review, Info).
+- **CP-1B leverage-reason substring check (pre-existing).** At owners/cp1b.py:160, a reason that contains "Four complete contiguous quarters" settles as "unavailable" even when it says they are available. It needs a crafted CP-1 limitation to trigger. Probe: `p2t4a-adversary/probes/probe_reason_substring_base_vs_tip.py` (Phase 2 Task 4a, adversary L2).
+- **Orphan FY2024 basis (pre-existing).** A gap pair whose fy-2024 values sit in T4.10 with no T4.14 row settles with "Requested FY2024 comparison basis is absent" (Phase 2 Task 4a, adversary I2).
+- **Rule compose.O3 does not name `cp0_run_context_block`.** At rule_lists/compose.json:24, the rule's checks name `fence:run_context_block` only. Since Phase 5 Task 6, `cp0_run_context_block` builds CP-0's run-context block. Coverage still passes. This belongs to the O6 rule-list process (Phase 5 Task 6, adversary I3).
+- **Pre-existing CP-4 mutants survive.** probe_mutants M4, M6 and M9 survive at both base and tip (Phase 5 Task 6, precise I4). Probe: `p5t2-adversary/probes/probe_mutants.py`.
+- **The CP-1B receipt path leaves the step pending on `unsupported_pair` (pre-existing in shape).** `_stage_validation` (earnings_workflow.py ~:2310) lets the composer's `unsupported_pair` ValueError propagate, so the step stays pending instead of returning an issue. The frozen E-* registers compose, so no current case reaches it (Phase 2 Task 4a re-review, I2).
+- **The CP-1B literal pair pins stay until Phase 8 (P2T4b-R1).** Phase 8 removes them with keys for other pairs. It must first generalise `supported()`'s opening-row guard to the derived year, and decide `_no_earlier_series`, which refuses any earlier duration row and so would refuse real registers with older history.
+- **CP-1B with one context period set (Phase 2 Task 4b, adversary I3).** A research `run_type` on `earnings_update` with only `current_period` set gives O1 behaviour. CP-1B can then settle fy-2024 → fy-2025 while the context names q4-2025. This matches the plan's "both non-empty" rule. Should it refuse instead?
+- **CP-1B view offers a pair the validator refuses (pre-existing).** When the register's labels disagree with the pinned ids, the view still offers a pair the validator then refuses. Probe: `p2t4b-adversary/probes/probe_view_offers_refused_pair.py`, exit 1 at base and at tip (Phase 2 Task 4b, adversary I4).
+- **Context keys with ESC or newline reach issue text raw (pre-existing).** `context.py` `_path` quotes the key unescaped, and cpl10 is affected too. It is reachable only with a pack whose context never went through the context CLI (Phase 2 Task 4b, adversary L1).
+- **Owner transport drain loses the lines after a bad chunk (pre-existing).** When an over-length line with a non-UTF-8 tail is answered, the text decoder drops the rest of that chunk: with no gap both following requests are lost, with a 20 KB gap one is (O3 Task 6, re-review I1). Probe: `o3t6-adversary/probes/test_f5_drain_next_line.py`, exit 1 at the parent and at the tip.
+- **No redactor removes a payload quoted inside an exception message.** The loop keeps all of it, in `calls.jsonl` `error` and the stop reason. The owner fault record keeps its first 500 characters. T6-R2's "never a payload" is therefore met nowhere (O3 Task 6, re-review I2).
+- **Session-less `invoke` called directly in Python raises on bad shapes (pre-existing).** It raises on a non-str tool, non-object arguments, surrogates and deep arguments. The transport refuses these before they reach it (T6-R12), but the loop path does not (O3 Task 6, re-review f2).
+- **For Phase 8, which owns CP-1B periods (Phase 2 phase review I2 and I4).**
+  - CP-L10's `_period_register` and `earnings._periods` differ in strictness on non-canonical T4.14 heads, though both fail closed and agree on the real-form register.
+  - The CP-1B view offers `pairs: []`, with no reason text, for a resolved context pair outside the two pins.
+- **The cpos-owner report_view.py pin is stale (pre-existing, Phase 8 pre-flight P8-P3).** `cases/cpos-owner/manifest.json:10` and `builder/build.py:28` still name `5dc981…`, two records behind `dbf8de07…`. No test calls `read_pinned`, so only a cpos-owner rebuild would fail. The oracle preparer re-pins it.
+- **The CP-4C prompt and CP-1C's selected multiple (Phase 7 pre-flight P7-P12).** A CP-4C `STEP_CONTRACTS` sentence saying "use `selected_multiple` when present" is a `src/deploy_vii/live/prompts.py` edit. It goes through the O6 rule-list process (D12, mx-adversary, golden refresh). Until then, a live CP-4C run may ignore the offered multiple and take one repair round, which fails closed.
+
+## Phase 8 Task 1 owner items (2026-11-01)
+- `context_periods.resolve` reads a two-year spelling (`FY2025/26`, `2025-26`) as its first year, while vii's `fiscal_year_number` reads the second. PeriodBasis now refuses the mismatch (P8T1-R2), so such a register is falsely refused at `fy-2026`. `resolve` is shared with cpl10 `context_quarters` and `earnings_workflow._column_periods`; aligning it with vii is an owner decision.
+- PeriodBasis refuses stub fiscal years, anything outside 364-371 days (P8T1-R3). A transition-year pack needs an owner rule for its LTM label.
+
+## Phase 7 Task 2 owner item (2026-11-01)
+- Duplicate peer rows each count toward CP-1C's minimum of 3 admitted (adversary I-3). No dedup rule exists; one is an owner decision.
+
+## Phase 8 Task 4 owner item (2026-11-01)
+- A context with a blank run.current_period takes the default FY2025 basis when its currency is USD (P8-R3, which keeps the frozen Phase 6 pins-context cases). A 2026 run with a blank base therefore refuses at selection instead of inferring its year. Whether a blank base should derive its year from CP-1 is an owner decision.
+
+## Phase 8 Task 3 owner items (2026-11-01)
+- CP-1D's `parse_bridge` never reads the currency or scale on the bridge's basis line ("; EUR; amounts in millions"). A USD or thousands bridge under an EUR run, or an EUR bridge under the USD default, composes, and every T1D.1 amount is stamped in the run's currency, in millions. This predates Phase 8, which widens the exposure (adversary P1; probes `probe_bridge_currency.py` and `probe_bridge_currency_default.py`, both exit 1). The reviewer rates it Medium.
+- CP-1D's view raises `ValueError` when CP-1 holds no T4.10 facts for the run's LTM column. Under `read_inputs` that is an `InternalError` fault, not a refusal. This also predates Phase 8; P8-R5 fixes only the context, period and currency refusals.
+
+## Phase 5 Task 3 owner items (2026-11-01)
+- Four CP-0 paths call `submit_cp0_review` without the owner workflow's `_PRECHECKS`, so a context pack sent through them gets no attachments or legal gate: `financial_workflow.py:899` (the CLI), `earnings_workflow.py:2680` and `:2835`, `workflow.py:531`, and `deploy_vii/live/submission.py:1102`. The plan scoped Task 3 to the owner workflow (adversary I4).
+- The model is never told the attachments rule. No `source_readiness` rule states it, `fence.cp0_run_context_block` shows only `legal_documents`, and the rule-coverage check cannot see a precheck. This is an O6 rule-list item (adversary I5).
+- Gaps in the legal rule's matching (adversary I1, I2 and I3):
+  - the legal gap is matched by plain substring, so `illegal_documents_x` passes;
+  - any ready source assessed `filed` or `executed` satisfies the executed rule, non-legal sources included;
+  - the frozen regex is ASCII-only, ruling Q5.
+- No test kills the replay-recompute skip mutant in `OwnerWorkflow.open` for any module (`probe_site_mutant_replay_all.py`). This predates Phase 5.
+
+## Phase 8 Task 5 owner items (2026-11-02)
+- A non-calendar fiscal year (July-June, April-March, 52/53-week) is refused by CP-2G and CP-2H (P8T5-R1). Deriving forecast windows from `ltm_start`/`ltm_end` + k years needs an owner rule for 52/53-week years and a pinned key.
+- CP-2A money break levels are copied into CP-2G in the run's currency with no check (`cp2g.py:2059` `_cp2a_copy`). An EUR run copies a USD 50 level as EUR 50. The parent did the same under USD. This predates Phase 8.
+
+## Phase 8 Task 4 owner item, added (2026-11-02)
+- With a blank USD base, CP-2D and CP-3C bind the 2025 figures from a CP-1 whose latest year is 2026 but which also carries 2025 rows. The labels are honest, and the parent behaved the same. Whether vii ever emits such a two-year T4.14 register is unverified (adversary L3, `probe_blank_usd_two_year.py`).
+
+## Phase 8 Task 7 owner item (2026-11-02)
+- A plain USD CP-L10 `Upstream` accepts a known operand in another currency (EUR). A frozen `test_method_cpl10` assertion pins this, so the Phase 8 currency check covers non-USD runs only (`RunUpstream`, P8T7-R8). Whether a USD run should refuse a non-USD operand is the owner's call.

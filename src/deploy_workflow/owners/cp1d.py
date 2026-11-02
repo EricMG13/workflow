@@ -73,7 +73,14 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.quotes import hyphen_wrapped, normalise, reading
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit, scale_label
+from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank, one_per_page
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_BASIS,
+    PeriodBasis,
+    PeriodRefused,
+    run_basis,
+)
 
 MODULE_ID = "CP-1D"
 BRIDGE_SOURCE_ID = "bridge"
@@ -184,7 +191,7 @@ _CP1_FIGURES = (
 
 @dataclass(frozen=True)
 class Cp1Operands:
-    """The seven CP-1 operands, LTM Q4 25 column (lease: Operands)."""
+    """The seven CP-1 operands, the base column (lease: Operands)."""
 
     adjusted_ebitda: Cp1Figure
     ebitda: Cp1Figure
@@ -216,13 +223,15 @@ class EarningsQualityInputs:
     """Everything the Method reads.
 
     `sources` are the pack sources in the host scope (the bridge, when present, has source id
-    `bridge`); `cp1b` is CP-1B's binding state, which only selects the own limitation line.
+    `bridge`); `cp1b` is CP-1B's binding state, which only selects the own limitation line; `basis` is the
+    run's period and currency reading (the 2025 USD literals without a context).
     """
 
     sources: tuple[Source, ...]
     cp1: Cp1Operands
     submission: EarningsQualitySubmission
     cp1b: Cp1bState = "unbound"
+    basis: PeriodBasis = DEFAULT_BASIS
 
 
 # --- outputs --------------------------------------------------------------------------------
@@ -377,7 +386,6 @@ class EarningsQualityResult:
 
 # --- bridge table (lease: Bridge parsing) ---------------------------------------------------
 
-_BASIS_LINE = "Basis: FY2025 (January 1-December 31, 2025)"
 _HEADER = "Item  Type  Status  Amount"
 _PROPOSED_TOTAL = "Total proposed adjustments"
 _MANAGEMENT_EBITDA = "Management financing-case EBITDA"
@@ -478,17 +486,19 @@ def _bridge_amount(token: str) -> Decimal | None:
     return amount
 
 
-def parse_bridge(pages: Sequence[str]) -> Bridge | None:
+def parse_bridge(
+    pages: Sequence[str], basis_line: str = DEFAULT_BASIS.bridge_basis_line
+) -> Bridge | None:
     """The bridge table on page:1, or None when it cannot be read (`Bridge table not found`).
 
-    Page:1 must have a line starting with the FY2025 basis and the exact header line; every
+    Page:1 must have a line starting with the run's basis line (`basis_line`) and the exact header line; every
     later line splits on two or more spaces into an item (4 fields, type Saving or Cost) or one
     of the two stated totals (2 fields). An amount is a decimal of at most 38 digits or
     `Not stated` (missing, never 0). Rulings 1D4, 1D5, 1D9: anything else, a duplicate label or
     total, or no item row at all, is not a bridge table.
     """
     lines = pages[0].split("\n") if pages else []
-    if not any(line.startswith(_BASIS_LINE) for line in lines) or _HEADER not in lines:
+    if not any(line.startswith(basis_line) for line in lines) or _HEADER not in lines:
         return None
     items: list[BridgeItem] = []
     totals: dict[str, Decimal | None] = {}
@@ -1574,7 +1584,7 @@ def _limitations(
 
 
 def _claims(
-    facts: Sequence[CellFact], outcomes: Sequence[_Outcome], overall: Overall
+    facts: Sequence[CellFact], outcomes: Sequence[_Outcome], overall: Overall, unit: str
 ) -> tuple[ClaimDraft, ...]:
     """Analyst rationales per item, the three Python templates, then the overall assessment."""
     known = {f.fact_id for f in facts if f.status == "known"}
@@ -1594,9 +1604,9 @@ def _claims(
     claims += [
         ClaimDraft(
             "T1D.3.restated",
-            f"Supported adjusted EBITDA is {ref('T1D.3.supported.value', 'US$ m')} against "
-            f"{ref('T1D.3.mgmt.value', 'US$ m')} in the management financing case and "
-            f"{ref('T1D.3.start.value', 'US$ m')} in the statements, so total leverage restates to "
+            f"Supported adjusted EBITDA is {ref('T1D.3.supported.value', unit)} against "
+            f"{ref('T1D.3.mgmt.value', unit)} in the management financing case and "
+            f"{ref('T1D.3.start.value', unit)} in the statements, so total leverage restates to "
             f"{ref('T1D.6.supported.total_leverage', 'x')} from "
             f"{ref('T1D.6.statements.total_leverage', 'x')} on the statements.",
             None,
@@ -1860,7 +1870,11 @@ def validation_issues(inputs: EarningsQualityInputs) -> tuple[str, ...]:
                 "Evidence required when no bridge is supplied: the statements' add-back disclosure"
             )
     else:
-        bridge = parse_bridge(_pages(source)) if source.status == "ready" else None
+        bridge = (
+            parse_bridge(_pages(source), inputs.basis.bridge_basis_line)
+            if source.status == "ready"
+            else None
+        )
         if bridge is None:
             return ("Bridge table not found",)
         found = _bridge_issues(inputs, source, bridge)
@@ -1899,7 +1913,9 @@ def compute(inputs: EarningsQualityInputs) -> EarningsQualityResult:
         raise ValueError("; ".join(issues))
     cp1, submission = inputs.cp1, inputs.submission
     source = _bridge_source(inputs.sources)
-    bridge = parse_bridge(_pages(source)) if source is not None else None
+    bridge = (
+        parse_bridge(_pages(source), inputs.basis.bridge_basis_line) if source is not None else None
+    )
     by_label = {a.addback: a for a in submission.assessments}
     outcomes = (
         [_outcome(item, by_label[item.label], inputs.sources) for item in bridge.items]
@@ -1927,7 +1943,7 @@ def compute(inputs: EarningsQualityInputs) -> EarningsQualityResult:
         facts=tuple(out.facts),
         tables=out.tables(),
         cp1_references=_cp1_references(cp1),
-        claims=_claims(out.facts, outcomes, submission.overall),
+        claims=_claims(out.facts, outcomes, submission.overall, inputs.basis.money_unit),
         limitations=_limitations(bridge, outcomes, submission.gaps, inputs.cp1b),
     )
 
@@ -1947,8 +1963,8 @@ SCOPE = frozenset({"identity", "financial", BRIDGE_SOURCE_ID})
 CP0, CP1, CP1B = "CP-0", "CP-1", "CP-1B"
 SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
 _CP1_TABLE = "T4.10"
-_CP1_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
-_CP1_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+# The no-context period; a run with a context reads it from its `PeriodBasis`.
+_CP1_PERIOD = DEFAULT_BASIS.ltm_period
 # Operand name -> CP-1 T4.10 metric (manifest `cp1_fact_selection_rule.metrics`), in
 # `_CP1_FIGURES` order.
 _CP1_METRICS = {
@@ -2070,16 +2086,16 @@ def _provenance_issues(upstream: Upstream) -> list[str]:
     return found
 
 
-def _cp1_facts(cp1: Module) -> dict[str, Fact]:
-    """The seven T4.10 facts of the LTM Q4 25 column by operand name (manifest
+def _cp1_facts(cp1: Module, basis: PeriodBasis = DEFAULT_BASIS) -> dict[str, Fact]:
+    """The seven T4.10 facts of the base column (`basis.ltm_column`) by operand name (manifest
     `cp1_fact_selection_rule`): exactly one match each, zero or several fail."""
     picked: dict[str, Fact] = {}
     for name, metric in _CP1_METRICS.items():
-        label = f"{_CP1_COLUMN} · {metric}"
+        label = f"{basis.ltm_column} · {metric}"
         hits = [
             f
             for f in cp1.facts
-            if f.table_id == _CP1_TABLE and f.period == _CP1_PERIOD and f.label == label
+            if f.table_id == _CP1_TABLE and f.period == basis.ltm_period and f.label == label
         ]
         if len(hits) != 1:
             raise ValueError(f"CP-1 {_CP1_TABLE} {metric}: {len(hits)} facts, expected exactly one")
@@ -2087,9 +2103,11 @@ def _cp1_facts(cp1: Module) -> dict[str, Fact]:
     return picked
 
 
-def _cp1_operands(cp1: Module) -> tuple[Cp1Operands, dict[str, Fact]]:
+def _cp1_operands(
+    cp1: Module, basis: PeriodBasis = DEFAULT_BASIS
+) -> tuple[Cp1Operands, dict[str, Fact]]:
     """The Stage 1 `Cp1Operands` read from the CP-1 head, and the facts they came from."""
-    facts = _cp1_facts(cp1)
+    facts = _cp1_facts(cp1, basis)
     figures: dict[str, Cp1Figure] = {}
     for name, fact in facts.items():
         if fact.status not in ("known", "missing", "not_applicable"):
@@ -2120,19 +2138,36 @@ def _cp1_operands(cp1: Module) -> tuple[Cp1Operands, dict[str, Fact]]:
     return operands, facts
 
 
+def _check_amount_currency(operands: Cp1Operands, basis: PeriodBasis) -> None:
+    """The CP-1 money operands are in the run's currency (cp3c's rule, P8-P11); refuse at entry."""
+    stated = {f.currency for f in operands.ordered() if f.unit == "MILLIONS"}
+    if stated != {basis.currency}:
+        found = ", ".join(sorted(str(c) for c in stated))
+        raise PeriodRefused(f"run.reporting_currency {basis.currency}, but CP-1 reports {found}")
+
+
+def _basis_issue(error: ContextRefused | PeriodRefused) -> str:
+    """The one issue line a refused context, period or currency becomes (wording as cp2d, cp3c)."""
+    prefix = "Context refused: " if isinstance(error, ContextRefused) else "Period basis refused: "
+    return _line(prefix, str(error))
+
+
 def _inputs(
     pack: PreparedPack, submission: EarningsQualitySubmission, upstream: Upstream
 ) -> tuple[EarningsQualityInputs, dict[str, Fact]]:
     """The one store adapter: the settled heads and the pack as the Stage 1 input object. Used by
     `submit` (through the validator), `probe` and `view`. Raises ValueError when the CP-1 head
     does not hold the seven operands."""
-    operands, facts = _cp1_operands(upstream.cp1)
+    basis = run_basis(context_facts(pack), upstream.cp1.facts)
+    operands, facts = _cp1_operands(upstream.cp1, basis)
+    _check_amount_currency(operands, basis)
     return (
         EarningsQualityInputs(
             sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
             cp1=operands,
             submission=submission,
             cp1b=upstream.cp1b_state,
+            basis=basis,
         ),
         facts,
     )
@@ -2179,6 +2214,8 @@ def _checked(
         return _bounded(found), None
     try:
         inputs, cp1_facts = _inputs(pack, submission, upstream)
+    except (ContextRefused, PeriodRefused) as error:
+        return (_basis_issue(error),), None
     except ValueError as error:
         return (_line("CP-1 operands unavailable: ", str(error)),), None
     issues = validation_issues(inputs)
@@ -2315,6 +2352,61 @@ def cp1d_module(report: EarningsQualityReport, *, inputs: Sequence[Input], attem
     )
 
 
+def _bridge_item_row(item: BridgeItem) -> dict[str, object]:
+    return {
+        "row": item.row_id,
+        "label": item.label,
+        "type": item.type,
+        "status": item.status,
+        "claimed_ref": None if item.amount is None else f"T1D.1.{item.row_id}.claimed",
+        "claimed_shown": None if item.amount is None else _spell(item.amount, "MILLIONS", None),
+    }
+
+
+def _bridge_totals(bridge: Bridge) -> dict[str, object]:
+    proposed, management = bridge.proposed_total, bridge.management_ebitda
+    return {
+        "proposed_total": None if proposed is None else _spell(proposed, "MILLIONS", None),
+        "management_ebitda": None if management is None else _spell(management, "MILLIONS", None),
+    }
+
+
+def _bridge_block(source: Source | None, bridge: Bridge | None) -> dict[str, object]:
+    """The view's bridge entry: the source, and the rows as the table rule reads them."""
+    return {
+        "state": "present" if source is not None else "absent",
+        "source_id": None if source is None else source.source_id,
+        "pages": [] if source is None else [span.locator for span in source.spans],
+        "items": [] if bridge is None else [_bridge_item_row(item) for item in bridge.items],
+        "totals": None if bridge is None else _bridge_totals(bridge),
+    }
+
+
+def _cp1_fact_rows(facts: Mapping[str, Fact]) -> list[dict[str, object]]:
+    """The seven CP-1 facts a `{ref|unit}` may name, the known ones."""
+    return [
+        {
+            "ref": fact.fact_id,
+            "label": fact.label,
+            "period": fact.period,
+            "unit": figure_unit(fact) or fact.unit,
+            # The cell spelling: the lease key tree keeps `unit` apart, so no unit is appended.
+            "shown": fact_spelling(fact, None)[2],
+        }
+        for fact in facts.values()
+        if fact.status == "known"
+    ]
+
+
+def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
+    """The run's basis for the view, or the issue line `_checked` returns for the same refusal
+    (P8-R5: `read_inputs` never raises on a context, period or currency refusal)."""
+    try:
+        return run_basis(context_facts(pack), upstream.cp1.facts), None
+    except (ContextRefused, PeriodRefused) as error:
+        return None, _basis_issue(error)
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The exact `read_inputs` view (lease key tree): the upstream statuses, the bridge rows as
     the table rule reads them, the seven CP-1 facts a `{ref|unit}` may name, the CP-1 T4.17 row
@@ -2322,59 +2414,22 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     own limitations (`inherited_limitations(..., (), ...)`), so settlement's list can be shorter by
     any line that repeats one of CP-1D's own limitations. No quote or citation text is in it."""
     source = next((s for s in pack.sources if s.source_id == BRIDGE_SOURCE_ID), None)
+    basis, issue = _view_basis(pack, upstream)
     bridge = (
-        parse_bridge(_pages(source)) if source is not None and source.status == "ready" else None
+        parse_bridge(_pages(source), basis.bridge_basis_line)
+        if basis is not None and source is not None and source.status == "ready"
+        else None
     )
-    facts = _cp1_facts(upstream.cp1)
+    facts = {} if basis is None else _cp1_facts(upstream.cp1, basis)
     rows = {f.row_id for f in upstream.cp1.facts if f.table_id == "T4.17"}
-    return {
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
             if item.input_id.startswith("CP-")
         ],
-        "bridge": {
-            "state": "present" if source is not None else "absent",
-            "source_id": None if source is None else source.source_id,
-            "pages": [] if source is None else [span.locator for span in source.spans],
-            "items": []
-            if bridge is None
-            else [
-                {
-                    "row": item.row_id,
-                    "label": item.label,
-                    "type": item.type,
-                    "status": item.status,
-                    "claimed_ref": None if item.amount is None else f"T1D.1.{item.row_id}.claimed",
-                    "claimed_shown": None
-                    if item.amount is None
-                    else _spell(item.amount, "MILLIONS", None),
-                }
-                for item in bridge.items
-            ],
-            "totals": None
-            if bridge is None
-            else {
-                "proposed_total": None
-                if bridge.proposed_total is None
-                else _spell(bridge.proposed_total, "MILLIONS", None),
-                "management_ebitda": None
-                if bridge.management_ebitda is None
-                else _spell(bridge.management_ebitda, "MILLIONS", None),
-            },
-        },
-        "cp1_facts": [
-            {
-                "ref": fact.fact_id,
-                "label": fact.label,
-                "period": fact.period,
-                "unit": figure_unit(fact) or fact.unit,
-                # The cell spelling: the lease key tree keeps `unit` apart, so no unit is appended.
-                "shown": fact_spelling(fact, None)[2],
-            }
-            for fact in facts.values()
-            if fact.status == "known"
-        ],
+        "bridge": _bridge_block(source, bridge),
+        "cp1_facts": _cp1_fact_rows(facts),
         "cp1_t417_rows": len(rows),
         "cp1_facts_note": (
             "Reference a CP-1 figure only in the overall rationale, as {ref|unit} with a ref and "
@@ -2383,6 +2438,9 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         ),
         "inherited_limitations": list(upstream.inherited),
     }
+    if issue is not None:
+        block["context_issue"] = issue
+    return block
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:

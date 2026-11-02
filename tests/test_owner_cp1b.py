@@ -10,20 +10,22 @@ import datetime as dt
 import hashlib
 import json
 import os
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import test_earnings as a1
 from pydantic import ValidationError
 
 from deploy_vii.contracts import Fact, Input, Module, Run
-from deploy_vii.execution import Attempt, StepSubmission
-from deploy_vii.preparation import PreparedPack
+from deploy_vii.execution import MAX_ISSUE_CHARS, Attempt, Execution, StepSubmission
+from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow import earnings_workflow as ew
 from deploy_workflow import host
 from deploy_workflow import owner_workflow as owner
+from deploy_workflow.context import context_facts
 from deploy_workflow.earnings import build_earnings_delta
 from deploy_workflow.owners import cp1b
 from deploy_workflow.workflow import WorkflowError
@@ -497,8 +499,12 @@ def test_split_composer_keeps_the_pre_split_bytes(pair: tuple[str, str]) -> None
 class _Store:
     """A read-only stand-in for the store: the two reads the core makes (`result`, `payload`)."""
 
-    def __init__(self, producer: Module, payload: str) -> None:
+    def __init__(self, producer: Module, payload: str, pack: PreparedPack | None = None) -> None:
         self.producer, self._payload = producer, payload
+        self._pack = pack if pack is not None else PreparedPack(run=_run(), sources=())
+
+    def pack(self) -> PreparedPack:
+        return self._pack
 
     def result(self, sha256: str) -> Module:
         assert sha256 == self.producer.content_hash()
@@ -566,11 +572,11 @@ def test_cp1b_view_offers_periods_and_the_accepted_pairs() -> None:
     assert sha == hashlib.sha256(text.encode()).hexdigest()
 
 
-def _validate(payload: str) -> Any:
+def _validate(payload: str, pack: PreparedPack | None = None) -> Any:
     producer = _producer(opening=True)
     step = StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
     attempt = _attempt(producer, step)
-    pack = PreparedPack(run=_run(), sources=())
+    pack = pack if pack is not None else PreparedPack(run=_run(), sources=())
     return cp1b._validate_step(_Store(producer, payload), pack, attempt), attempt, producer  # type: ignore[arg-type]
 
 
@@ -772,3 +778,643 @@ def test_cp1b_probe_rejects_tampered_head(tmp_path: Path) -> None:
     )
     with pytest.raises(WorkflowError, match="identity_mismatch"):
         cp1b.probe(store, forged, forged_attempt)
+
+
+# --- B19: the composer's prose is derived from the report's own periods (ruling P2-P8) -----------
+
+_FOREIGN_WORDS = ("FY2024", "FY2025", "q3-2025", "q4-2025", "Q3", "Q4", "Opening-2024")
+
+
+def _flat_producer_at(prior: str, current: str, *, keep_fy: bool = False) -> Module:
+    """The literal flat register moved to `prior` (q1-<year>) -> `current` (q2-<year>) (ids, dates, fiscal year and
+    quarter, basis identities of q3-2025 and q4-2025 renamed): a flat pair at periods the old prose
+    never names. It holds the two quarters only, unless `keep_fy`, which keeps the fy-2025 row and
+    values, so the absence claims the prose derives are true of it only for years after 2025."""
+    year = int(prior[-4:])
+    renames = {
+        "q3-2025": prior,
+        "q4-2025": current,
+        "Q3 25": f"Q1 {year % 100}",
+        "Q4 25": f"Q2 {year % 100}",
+        "2025-07-01": f"{year}-01-01",
+        "2025-09-30": f"{year}-03-31",
+        "2025-10-01": f"{year}-04-01",
+        "2025-12-31": f"{year}-06-29",
+        a1.BASES["q3-2025"]: _basis_of(prior, "QUARTER"),
+        a1.BASES["q4-2025"]: _basis_of(current, "QUARTER"),
+    }
+    base = _producer()
+    kept = tuple(
+        f
+        for f in base.facts
+        if keep_fy or ("fy-2025" not in f.fact_id and f.field != a1.BASES["fy-2025"])
+    )
+    text = base.model_copy(update={"facts": kept}).model_dump_json()
+    for old, new in renames.items():
+        text = text.replace(old, new)
+    moved = Module.model_validate_json(text)
+    fixed = {
+        "fiscal_quarter": {prior: "1", current: "2"},
+        "fiscal_year": {prior: str(year), current: str(year)},
+    }
+    facts = tuple(
+        f.model_copy(update={"text": fixed[f.field][f.period or ""]})
+        if f.field in fixed and f.period in fixed[f.field]
+        else f
+        for f in moved.facts
+    )
+    return moved.model_copy(update={"facts": facts})
+
+
+def _prose(module: Module) -> list[str]:
+    texts = [*module.limitations]
+    for claim in module.claims:
+        texts += [claim.text, claim.limitation or ""]
+    texts += [
+        f.text or ""
+        for f in module.facts
+        if f.table_id == "T1B.3" and f.row_id != "evidence.inputs"
+    ]
+    texts += [f.limitation or "" for f in module.facts if f.table_id == "T1B.3"]
+    texts += [t.limitation or "" for t in module.tables]
+    return texts
+
+
+def test_derived_prose_names_the_reports_own_periods() -> None:
+    """A flat pair at q1-2027 -> q2-2027 (hand-built register): the head, claim and limits name
+    its own periods and none of the pair the prose used to be fixed to."""
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    report = build_earnings_delta(cp1b.cp1_view(producer), "q1-2027", "q2-2027")
+    assert cp1b.expected_comparison(report) == "flat_sequential"
+    composed = ew.compose_delta(
+        producer,
+        report,
+        ew._operands(producer, report),
+        (),
+        ew._own_limits(report, owner=True),
+        _attempt(producer),
+        _run(),
+    )
+    prose = "\n".join(_prose(composed))
+    for own in ("q1-2027 to q2-2027", "Q1 trailing leverage", "current Q2", "FY2026"):
+        assert own in prose, own
+    for foreign in _FOREIGN_WORDS:
+        assert foreign not in prose, foreign
+
+
+def test_nonzero_delta_pair_not_flat() -> None:
+    """A pair whose deltas are non-zero is `unsupported_pair` on the owner path (no report, so no
+    module text), and the composer itself refuses to write "is flat" over it."""
+    module = _register()
+    moved = module.model_copy(update={"facts": _moved(module.facts, "value.revenue.q4-2025", "45")})
+    found = cp1b.compute(moved, review("q3-2025", "q4-2025"))
+    assert found.report is None and found.issues == ("unsupported_pair",)
+    producer = _producer().model_copy(update={"facts": moved.facts})
+    report = build_earnings_delta(cp1b.cp1_view(producer), "q3-2025", "q4-2025")
+    with pytest.raises(ValueError, match="unsupported_pair"):
+        ew.compose_delta(
+            producer,
+            report,
+            ew._operands(producer, report),
+            (),
+            ew._own_limits(report, owner=True),
+            _attempt(producer),
+            _run(),
+        )
+
+
+# --- B19 fix 1: every claim is read from the register, or the composer refuses ----------------------
+
+
+def _compose_pair(producer: Module, prior: str, current: str) -> Module:
+    report = build_earnings_delta(cp1b.cp1_view(producer), prior, current)
+    return ew.compose_delta(
+        producer,
+        report,
+        ew._operands(producer, report),
+        (),
+        ew._own_limits(report, owner=True),
+        _attempt(producer),
+        _run(),
+    )
+
+
+def _refused(producer: Module, prior: str, current: str) -> None:
+    with pytest.raises(ValueError, match="^unsupported_pair$"):
+        _compose_pair(producer, prior, current)
+
+
+def _rewrite(module: Module, field: str, period: str, **update: Any) -> Module:
+    facts = tuple(
+        f.model_copy(update=update) if f.field == field and f.period == period else f
+        for f in module.facts
+    )
+    return module.model_copy(update={"facts": facts})
+
+
+def test_false_absence_claim_is_refused() -> None:
+    """q1-2026 -> q2-2026 with an fy-2025 row in the register: "No FY2025 annual income statement
+    ... is supplied" would be false, so the composer refuses instead of writing it."""
+    _refused(_flat_producer_at("q1-2026", "q2-2026", keep_fy=True), "q1-2026", "q2-2026")
+    _compose_pair(_flat_producer_at("q1-2026", "q2-2026"), "q1-2026", "q2-2026")  # none: writes
+
+
+def test_false_opening_claim_is_refused() -> None:
+    """The gap pair whose register holds an opening row for another year only."""
+    module = _with_opening(_producer())
+    facts = tuple(
+        f.model_copy(
+            update={
+                "fact_id": f.fact_id.replace("2024", "2023"),
+                "row_id": "opening-2023",
+                "period": "opening-2023",
+                "text": f.text.replace("2024", "2023") if f.text else f.text,
+            }
+        )
+        if f.row_id == "opening-2024"
+        else f
+        for f in module.facts
+    )
+    _refused(module.model_copy(update={"facts": facts}), "fy-2024", "fy-2025")
+    _compose_pair(module, "fy-2024", "fy-2025")  # the opening-2024 row is there: writes
+
+
+def test_year_on_year_quarter_pair_is_not_sequential() -> None:
+    module = _with_period(_producer(), "q4-2024", "QUARTER", "4", "2024-10-01", "2024-12-31")
+    _refused(module, "q4-2024", "q4-2025")
+
+
+def test_non_adjacent_pair_is_not_sequential() -> None:
+    """q2 starts two days after a gap, same length: the delta core accepts it, "sequential" is not
+    true of it."""
+    text = _flat_producer_at("q1-2027", "q2-2027").model_dump_json()
+    text = text.replace("2027-04-01", "2027-04-03").replace("2027-06-29", "2027-07-01")
+    _refused(Module.model_validate_json(text), "q1-2027", "q2-2027")
+
+
+def test_period_words_must_match_the_register_rows() -> None:
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    for field, wrong in (("fiscal_quarter", "3"), ("fiscal_year", "2026")):
+        facts = tuple(
+            f.model_copy(update={"text": wrong})
+            if f.field == field and f.period == "q2-2027"
+            else f
+            for f in producer.facts
+        )
+        with pytest.raises(ValueError, match="^unsupported_pair$"):
+            _compose_pair(producer.model_copy(update={"facts": facts}), "q1-2027", "q2-2027")
+    _compose_pair(producer, "q1-2027", "q2-2027")
+
+
+def _retyped(module: Module, period: str, kind: str, quarter: str | None) -> Module:
+    """`module` with the T4.14 row of `period` of another `kind` (the quarter and the T4.10 basis
+    column that kind needs), so the delta core accepts the row and only the composer's register
+    check can refuse it."""
+    was = "FY" if kind == "QUARTER" else "QUARTER"
+    facts = []
+    for f in module.facts:
+        if f.field == _basis_of(period, was):
+            f = f.model_copy(update={"field": _basis_of(period, kind)})
+        if f.period == period and f.field == "period_type":
+            f = f.model_copy(update={"text": kind})
+        elif f.period == period and f.field == "fiscal_quarter":
+            f = (
+                f.model_copy(update={"text": quarter, "status": "known", "limitation": None})
+                if quarter
+                else f.model_copy(
+                    update={"text": None, "status": "not_applicable", "limitation": "FY"}
+                )
+            )
+        facts.append(f)
+    return module.model_copy(update={"facts": tuple(facts)})
+
+
+def test_period_type_must_match_the_register_rows() -> None:
+    """The period words are read from the row's type as well (4a adversary L1): a quarter id on an
+    FY-typed row and an FY id on a QUARTER-typed row are `unsupported_pair`, not the core's
+    `invalid_fact`."""
+    quarters = _flat_producer_at("q1-2027", "q2-2027")
+    both = _retyped(_retyped(quarters, "q1-2027", "FY", None), "q2-2027", "FY", None)
+    _refused(both, "q1-2027", "q2-2027")
+    gap = _with_opening(_producer())
+    _compose_pair(gap, "fy-2024", "fy-2025")
+    _refused(_retyped(gap, "fy-2025", "QUARTER", "4"), "fy-2024", "fy-2025")
+
+
+def test_a_flat_fy_pair_cannot_deny_its_own_prior_year() -> None:
+    """fy-2026 -> fy-2027: the prior is the FY the prose would call absent, so it is refused."""
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    text = producer.model_dump_json()
+    for old, new in (
+        ("q1-2027", "fy-2026"),
+        ("q2-2027", "fy-2027"),
+        ("2027-01-01", "2026-01-01"),
+        ("2027-03-31", "2026-12-31"),
+        ("2027-04-01", "2027-01-01"),
+        ("2027-06-29", "2027-12-31"),
+        (_basis_of("q1-2027", "QUARTER"), _basis_of("fy-2026", "FY")),
+        (_basis_of("q2-2027", "QUARTER"), _basis_of("fy-2027", "FY")),
+        ('"QUARTER"', '"FY"'),
+    ):
+        text = text.replace(old, new)
+    moved = Module.model_validate_json(text)
+    facts = tuple(
+        f.model_copy(
+            update={"text": None, "status": "not_applicable", "limitation": "FY has no quarter"}
+        )
+        if f.field == "fiscal_quarter"
+        else f.model_copy(update={"text": "2026" if f.period == "fy-2026" else "2027"})
+        if f.field == "fiscal_year"
+        else f
+        for f in moved.facts
+    )
+    _refused(moved.model_copy(update={"facts": facts}), "fy-2026", "fy-2027")
+
+
+def test_gap_pair_at_another_year_names_its_own_opening() -> None:
+    """fy-2025 absent -> fy-2026: kills a hard-coded "Opening-2024"."""
+    base = _with_opening(_producer())
+    kept = tuple(
+        f
+        for f in base.facts
+        if "q3-2025" not in f.fact_id
+        and "q4-2025" not in f.fact_id
+        and f.field not in (a1.BASES["q3-2025"], a1.BASES["q4-2025"])
+    )
+    text = base.model_copy(update={"facts": kept}).model_dump_json()
+    for old, new in (
+        ("2025-12-31", "2026-12-31"),
+        ("2025-01-01", "2026-01-01"),
+        ("fy-2025", "fy-2026"),
+        (a1.BASES["fy-2025"], _basis_of("fy-2026", "FY")),
+        ('"text":"2025"', '"text":"2026"'),
+        ("2024-12-31", "2025-12-31"),
+        ("opening-2024", "opening-2025"),
+        ('"text":"2024"', '"text":"2025"'),
+    ):
+        text = text.replace(old, new)
+    prose = "\n".join(_prose(_compose_pair(Module.model_validate_json(text), "fy-2025", "fy-2026")))
+    assert "Opening-2025" in prose and "FY2025" in prose and "FY2026" in prose
+    assert "2024" not in prose
+
+
+def test_composer_guards_prior_leverage_known_and_other_reasons() -> None:
+    from dataclasses import replace
+
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    report = build_earnings_delta(cp1b.cp1_view(producer), "q1-2027", "q2-2027")
+
+    def compose(changed: Any) -> Module:
+        return ew.compose_delta(
+            producer,
+            changed,
+            ew._operands(producer, changed),
+            (),
+            ew._own_limits(changed, owner=True),
+            _attempt(producer),
+            _run(),
+        )
+
+    def levered(**update: Any) -> Any:
+        points = tuple(
+            replace(p, **update) if p.measure_id in ew._LEVERAGE_MEASURES else p
+            for p in report.points
+        )
+        return replace(report, points=points)
+
+    with pytest.raises(ValueError, match="^unsupported_pair$"):
+        compose(levered(prior_status="known"))  # G2
+    other = "\n".join(_prose(compose(levered(reason="Trailing basis not selected"))))  # G4
+    assert "Q1 trailing leverage comparison is unavailable (Trailing basis not selected)" in other
+    assert "standalone" not in other
+    said = "\n".join(
+        _prose(compose(levered(reason="Four complete contiguous quarters are available")))
+    )
+    assert "Four complete contiguous quarters are unavailable" not in said
+
+
+def test_period_ids_of_another_shape_have_no_word() -> None:  # G3
+    for pid in ("ltm-2025", "h1-2025", "fy-٢٠٢٤"):
+        with pytest.raises(ew.OwnerError) as caught:
+            ew._period_word(pid)
+        assert caught.value.code == "identity_mismatch"
+    with pytest.raises(ew.OwnerError):
+        ew._period_year("h1-2025")
+
+
+def test_validator_maps_the_composer_refusal_to_the_issue(monkeypatch: pytest.MonkeyPatch) -> None:
+    def refuse(*args: Any, **kwargs: Any) -> Any:
+        raise ValueError("unsupported_pair")
+
+    def other(*args: Any, **kwargs: Any) -> Any:
+        raise ValueError("something else")
+
+    monkeypatch.setattr(cp1b, "compose_delta", refuse)
+    outcome = _validate(_payload("q3-2025", "q4-2025", "flat_sequential"))[0]
+    assert outcome.issues == ("unsupported_pair",) and outcome.output is None
+    monkeypatch.setattr(cp1b, "compose_delta", other)
+    with pytest.raises(ValueError, match="something else"):
+        _validate(_payload("q3-2025", "q4-2025", "flat_sequential"))
+
+
+# --- Task 4b: the period pair comes from the run context (P2-P7; oracle `#cp1b/*`) ------------------
+
+CONTEXT_CASE = ROOT / "cases/context-identity-periods"
+CTX = json.loads((CONTEXT_CASE / "expected.json").read_text())["cp1b"]
+CTX_MANIFEST = json.loads((CONTEXT_CASE / "manifest.json").read_text())["contexts"]
+
+
+def _ctx_pack(name: str, edit: Callable[[dict[str, Any]], None] | None = None) -> PreparedPack:
+    """A pack holding only the oracle's context `name` as its `context` source, under the oracle's
+    run for it (the CP-1 producer is hand-built, so no promotion is needed). `edit` changes the
+    context document before it is frozen into the pack."""
+    spec = CTX_MANIFEST[name]
+    run = Run.model_validate_json(json.dumps({k: v for k, v in spec["run"].items() if k != "set"}))
+    raw = (CONTEXT_CASE / spec["file"]).read_bytes()
+    if edit is not None:
+        document = json.loads(raw)
+        edit(document)
+        raw = json.dumps(document, indent=2).encode()
+    held = prepare_source(
+        SourceRequest(
+            source_id="context",
+            path=f"cases/context-identity-periods/{spec['file']}",
+            media_type="text/plain",
+        ),
+        raw,
+    )
+    return PreparedPack(run=run, sources=(held,))
+
+
+def _ctx_view_text(pack: PreparedPack, producer: Module | None = None) -> str:
+    producer = producer if producer is not None else _producer(opening=True)
+    return cp1b.view(cast(Execution, _Store(producer, "", pack)), _attempt(producer))[1]
+
+
+def _ctx_view(pack: PreparedPack | None) -> dict[str, Any]:
+    body: dict[str, Any] = json.loads(
+        _ctx_view_text(pack if pack is not None else PreparedPack(run=_run(), sources=()))
+    )
+    return body
+
+
+def _same(point: dict[str, Any], key: dict[str, Any]) -> None:
+    for name, shown in (("prior", "prior_value"), ("current", "current_value"), ("delta", "delta")):
+        got, want = point[name], key[shown]
+        assert (got is None) == (want is None), (key["measure_id"], name)
+        assert got is None or Decimal(got) == Decimal(want), (key["measure_id"], name)
+    assert point["delta_status"] == key["delta_status"]
+
+
+def test_context_pair_offered() -> None:
+    """ctx-match: the view offers exactly the resolved pair, with the oracle's points."""
+    body = _ctx_view(_ctx_pack("ctx-match"))
+    assert [(p["prior_period_id"], p["current_period_id"]) for p in body["pairs"]] == [
+        (
+            CTX["ctx-match"]["offered_pair"]["prior_period_id"],
+            CTX["ctx-match"]["offered_pair"]["current_period_id"],
+        )
+    ]
+    for point, key in zip(body["pairs"][0]["points"], CTX["ctx-match"]["points"], strict=True):
+        assert point["measure"] == key["measure_id"]
+        _same(point, key)
+
+
+def test_context_pair_composes_flat_sequential() -> None:
+    """ctx-match: the validator accepts the context pair and composes the oracle's flat head."""
+    pair = CTX["ctx-match"]["offered_pair"]
+    outcome, _, _ = _validate(
+        _payload(pair["prior_period_id"], pair["current_period_id"], "flat_sequential"),
+        _ctx_pack("ctx-match"),
+    )
+    assert not outcome.issues and outcome.output is not None
+    head = Module.model_validate_json(outcome.output)
+    assert cp1b.CONTEXT_LIMIT in head.limitations
+    # No figure comes from the context: the head is the no-context head plus the one limitation.
+    plain = Module.model_validate_json(
+        _validate(_payload("q3-2025", "q4-2025", "flat_sequential"))[0].output
+    )
+    assert [f for f in head.facts if f.table_id != "T1B.3"] == [
+        f for f in plain.facts if f.table_id != "T1B.3"
+    ]
+    # T1B.3: six facts equal the no-context head's; the scope-limitations fact differs by exactly
+    # the context limitation line.
+    pairs = list(
+        zip(
+            [f for f in head.facts if f.table_id == "T1B.3"],
+            [f for f in plain.facts if f.table_id == "T1B.3"],
+            strict=True,
+        )
+    )
+    assert len(pairs) == 7
+    changed = [(mine, base) for mine, base in pairs if mine != base]
+    assert len(changed) == 1
+    mine, base = changed[0]
+    assert mine.row_id == base.row_id == "scope.limitations"
+    assert mine.text == (base.text or "") + "\n" + cp1b.CONTEXT_LIMIT
+    assert head.tables == plain.tables and head.claims == plain.claims
+    assert tuple(x for x in head.limitations if x != cp1b.CONTEXT_LIMIT) == plain.limitations
+
+
+def test_context_fy_pair_gap() -> None:
+    """ctx-fy: fy-2025 resolves, fy-2024 does not and is passed as the context string: the gap."""
+    gap = CTX["ctx-fy"]["gap"]
+    assert CTX["ctx-fy"]["is_refusal"] is False
+    body = _ctx_view(_ctx_pack("ctx-fy"))
+    assert [(p["prior_period_id"], p["current_period_id"]) for p in body["pairs"]] == [
+        (CTX["ctx-fy"]["prior_passed_as_context_string"], CTX["ctx-fy"]["resolved_current"])
+    ]
+    assert body["pairs"][0]["comparison_assessment"] == "comparative_not_supplied"
+    outcome, _, _ = _validate(
+        _payload(gap["prior_period_id"], gap["current_period_id"], "comparative_not_supplied"),
+        _ctx_pack("ctx-fy"),
+    )
+    assert not outcome.issues and outcome.output is not None
+    revenue = body["pairs"][0]["points"][0]
+    assert revenue["current"] == gap["current_revenue"] and revenue["prior"] is None
+    assert revenue["delta"] is None
+
+
+def test_other_pair_refused() -> None:
+    """ctx-match with a submitted q2-2025 -> q3-2025: `context_period_mismatch`, before compute."""
+    key = CTX["mismatch"]
+    assert key["context"] == "ctx-match"
+    sub = key["submitted"]
+    outcome = _validate(
+        _payload(sub["prior_period_id"], sub["current_period_id"], "flat_sequential"),
+        _ctx_pack(key["context"]),
+    )[0]
+    assert outcome.issues == (key["issue_text"],) and outcome.output is None
+
+
+def test_unresolvable_current_period() -> None:
+    key = CTX["unresolved_current"]
+    outcome = _validate(
+        _payload("q3-2025", "q4-2025", "flat_sequential"), _ctx_pack(key["context"])
+    )[0]
+    assert outcome.issues == (key["issue_text"],) and outcome.output is None
+    assert _ctx_view(_ctx_pack(key["context"]))["pairs"] == []
+
+
+def test_context_pair_other_than_the_pins_stays_fail_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P2T4b-R1: a context pair outside the two pins resolves, passes the context check, and then
+    refuses `unsupported_pair` (the pins stay until Phase 8)."""
+    context = context_facts(_ctx_pack("ctx-match"))
+    assert context is not None
+    moved = context.model_copy(
+        update={
+            "run": context.run.model_copy(
+                update={"prior_period": "q1-2027", "current_period": "q2-2027"}
+            )
+        }
+    )
+    monkeypatch.setattr(cp1b, "context_facts", lambda pack: moved)
+    producer = _flat_producer_at("q1-2027", "q2-2027")
+    pack = _ctx_pack("ctx-match")
+    assert cp1b.context_pair(cp1b.cp1_view(producer), pack) == cp1b.ContextPair(
+        ("q1-2027", "q2-2027"), ()
+    )
+    outcome = cp1b._validate_step(
+        cast(Execution, _Store(producer, _payload("q1-2027", "q2-2027", "flat_sequential"), pack)),
+        pack,
+        _attempt(
+            producer, StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
+        ),
+    )
+    assert outcome.issues == (cp1b.UNSUPPORTED,)
+
+
+# SHA-256 of the view body and of the composed head (flat, gap) with no context, computed by the
+# code before Task 4b (f8b76afb^) on the same hand-built producer; never computed from the new code.
+PRE_P2T4B_NO_CONTEXT = {
+    "view": "220a7130fa8ec47c523cf97b546b364fceab893276b27033223288155ea735e6",
+    "q3-2025": "bb5726e70884e49fbda193ce57187f85408222b4d2a5941a8bea9d3ede8cb4b8",
+    "fy-2024": "02fb5700967687b3ef9a17534a636df1b58ef64801eeca24a8f780be0b8c286e",
+}
+
+
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def test_no_context_unchanged() -> None:
+    """No context: the view and both heads equal the bytes the code made before Task 4b."""
+    body = _ctx_view(None)
+    assert "context_issue" not in body
+    assert (
+        _digest(_ctx_view_text(PreparedPack(run=_run(), sources=())))
+        == (PRE_P2T4B_NO_CONTEXT["view"])
+    )
+    for pair, comparison in (
+        (("q3-2025", "q4-2025"), "flat_sequential"),
+        (("fy-2024", "fy-2025"), "comparative_not_supplied"),
+    ):
+        outcome = _validate(_payload(*pair, comparison))[0]
+        assert outcome.output is not None and not outcome.issues
+        assert _digest(outcome.output) == PRE_P2T4B_NO_CONTEXT[pair[0]]
+        assert cp1b.CONTEXT_LIMIT not in Module.model_validate_json(outcome.output).limitations
+
+
+def _periods_of(document: dict[str, Any], prior: str, current: str) -> None:
+    """Set the run periods; the reader takes an unset period only on a non-earnings run type."""
+    document["run"]["run_type"] = "research"
+    document["run"]["prior_period"], document["run"]["current_period"] = prior, current
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        lambda d: _periods_of(d, "", ""),
+        lambda d: _periods_of(d, "", "q4-2025"),
+        lambda d: _periods_of(d, "q3-2025", ""),
+    ],
+    ids=["both-empty", "prior-empty", "current-empty"],
+)
+def test_empty_or_partial_periods_leave_everything_as_without_a_context(
+    edit: Callable[[dict[str, Any]], None],
+) -> None:
+    """`#cp1b/no_context_or_empty_periods`: a context that does not name both periods changes
+    nothing: the view, the validator's issues and the head are byte-identical to a pack of the
+    same run with no context source."""
+    for name in ("ctx-research", "ctx-match"):
+        with_context = _ctx_pack(name, edit)
+        assert context_facts(with_context) is not None
+        without = PreparedPack(run=with_context.run, sources=())
+        assert _ctx_view_text(with_context) == _ctx_view_text(without)
+        for pair, comparison in (
+            (("q3-2025", "q4-2025"), "flat_sequential"),
+            (("q2-2025", "q3-2025"), "flat_sequential"),
+        ):
+            got = _validate(_payload(*pair, comparison), with_context)[0]
+            base = _validate(_payload(*pair, comparison), without)[0]
+            assert (got.issues, got.output) == (base.issues, base.output)
+
+
+def _refusing(document: dict[str, Any]) -> None:
+    document["identity"]["issuer_name"] = "Another Issuer " + "X" * 5000
+
+
+def test_a_refused_context_refuses_the_step_and_offers_no_pair() -> None:
+    """The context file disagrees with the run: no output, one bounded `Context refused: ` issue at
+    the validator, and a view with no pair that names the issue."""
+    pack = _ctx_pack("ctx-match", _refusing)
+    outcome = _validate(_payload("q3-2025", "q4-2025", "flat_sequential"), pack)[0]
+    assert outcome.output is None and len(outcome.issues) == 1
+    assert outcome.issues[0].startswith("Context refused: ")
+    assert len(outcome.issues[0]) <= MAX_ISSUE_CHARS
+    body = _ctx_view(pack)
+    assert body["pairs"] == [] and body["context_issue"].startswith("Context refused: ")
+    assert len(body["context_issue"]) <= MAX_ISSUE_CHARS
+
+
+def test_a_context_with_a_broken_register_reports_the_register_code() -> None:
+    """A context plus a register `build_earnings_delta` refuses: the register's code is the issue
+    (and the view's `register_issue`); the context check neither raises nor hides it."""
+    producer = _producer(opening=True)
+    broken = producer.model_copy(
+        update={
+            "facts": tuple(
+                f
+                for f in producer.facts
+                if not (f.table_id == "T4.14" and f.period == "q4-2025" and f.field == "end_date")
+            )
+        }
+    )
+    pack = _ctx_pack("ctx-match")
+    assert json.loads(_ctx_view_text(pack, broken))["register_issue"] == "incomplete_register"
+    step = StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
+    payload = _payload("q3-2025", "q4-2025", "flat_sequential")
+    outcome = cp1b._validate_step(
+        cast(Execution, _Store(broken, payload, pack)), pack, _attempt(broken, step)
+    )
+    assert outcome.issues == ("incomplete_register",) and outcome.output is None
+
+
+def test_a_broken_register_gives_the_same_issues_with_or_without_a_context() -> None:
+    """A blocked CP-1 head with a broken register: the register's own refusal
+    (`invalid_source_view`) is what the validator and the view report, context or not. The
+    context check must not replace it with the register code of the unaccepted head."""
+    producer = _producer(opening=True)
+    broken = producer.model_copy(
+        update={
+            "status": "blocked",
+            "facts": tuple(
+                f
+                for f in producer.facts
+                if not (f.table_id == "T4.14" and f.period == "q4-2025" and f.field == "end_date")
+            ),
+        }
+    )
+    with_context = _ctx_pack("ctx-match")
+    without = PreparedPack(run=with_context.run, sources=())
+    step = StepSubmission(step_id="earnings_delta", inputs=(), payload_sha256="b" * 64)
+    payload = _payload("q3-2025", "q4-2025", "flat_sequential")
+    results = [
+        cp1b._validate_step(cast(Execution, _Store(broken, payload, p)), p, _attempt(broken, step))
+        for p in (with_context, without)
+    ]
+    assert (results[0].issues, results[0].output) == (results[1].issues, results[1].output)
+    assert results[0].issues == ("invalid_source_view",)
+    assert _ctx_view_text(with_context, broken) == _ctx_view_text(without, broken)

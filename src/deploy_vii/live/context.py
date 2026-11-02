@@ -30,7 +30,8 @@ is Python's view of the attempt's bound upstream (`module_context`), each module
 `cp3_upstream` and (task 8.7) CP-6 over `cp6_upstream`, merged into the prepared-pack block as
 CP-1A's `cp1_facts` are. CP-5's review scope is its own block (`integrity_scope`), projected to
 the facts the review can name (`integrity_projection`). `declared_sources` narrows the SOURCE
-blocks: CP-4 is sent the ready sources CP-0 classes executed or filed, CP-3 the ready sources it
+blocks: CP-4 is sent the ready sources CP-0 classes executed, filed or,
+on a draft-documents run, draft, CP-3 the ready sources it
 classes `third_party`; every other step gets `step_sources`.
 """
 

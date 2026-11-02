@@ -851,6 +851,24 @@ def test_a_non_ascii_digit_content_length_is_treated_as_absent(value: str) -> No
     assert body == b"hello"
 
 
+def test_an_over_long_content_length_is_treated_as_absent() -> None:
+    world = World()
+    head = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {'9' * 5000}\r\n\r\n"
+    url = KEY["request"]["verbatim_url"]
+    record, body, _media = webfetch.fetch(
+        url,
+        manifest_hosts=MANIFEST_HOSTS,
+        resolver=world.resolver,
+        connect=lambda _t: _RealResponseConnection(head.encode("latin-1") + b"hello"),
+        cap=CAP,
+        connect_timeout=CONNECT_S,
+        total_timeout=TOTAL_S,
+        clock=world.clock,
+    )
+    assert record.reason is None
+    assert body == b"hello"
+
+
 def _through_production_connector(
     monkeypatch: pytest.MonkeyPatch, world: World, sim: SimSock, cap: int = CAP
 ) -> tuple[webfetch.FetchRecord, bytes | None, str | None]:

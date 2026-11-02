@@ -7,7 +7,6 @@ needs. A step with no prompt stops the run with a named ``NoPrompt`` and is neve
 placeholder.
 """
 
-from deploy_workflow.owner_workflow import OWNER_SPECS
 from deploy_workflow.prompts.compose import (
     NoPrompt,
     PromptRequest,
@@ -28,4 +27,8 @@ __all__ = [
 
 def inventory() -> tuple[str, ...]:
     """The sorted step ids of ``OWNER_SPECS``: every step that needs a prompt."""
+    # Imported here, not at package import: owner_workflow reaches host, and host reaches
+    # tools.source, which imports prompts.fence. A module-level import would close that cycle.
+    from deploy_workflow.owner_workflow import OWNER_SPECS
+
     return tuple(sorted({s.step_id for spec in OWNER_SPECS.values() for s in spec.steps}))

@@ -1,0 +1,10 @@
+{
+ "schema": "compose-rule-key/1",
+ "id": "compose.O7",
+ "token": "[compose.O7] ",
+ "statement": "O7. Read the pack in a bounded way: call search_pack first, then call read_pages only for pages a search result names, and do not read a page again once it has been returned. Submit as soon as every item the step requires cites a page you have read; the Limits line caps the pack tool calls in one step.",
+ "applies_when": "the step offers both search_pack and read_pages (compose.tool_names(spec))",
+ "absent_when": "the step offers neither pack tool, or only one of them",
+ "why": "Model-testing live pilot 2026-11-02: opus-medium and deepseek-max hit the per-step pack-tool cap in source_readiness before submitting (MANAGER relay; PF-R1).",
+ "ruled_by": "controller, PF-R4, 2026-11-02"
+}

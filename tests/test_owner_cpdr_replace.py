@@ -107,7 +107,7 @@ def test_a_cp1c_repair_replays_cp_dr_over_the_closed_run(
     step's retained `read_pages` calls (whose bodies hold that instant) included, and no call
     diverges. CP-1C and what follows run live in a real rerun; this node stops after the replays.
     The pack is the helper's `v2` pack, not the staged one."""
-    monkeypatch.setattr(runs.record, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
+    monkeypatch.setattr(evidence, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
     expected = runs.oracle()["expected"]["replacement"]["plan_with_consumers"]
     root = tmp_path / "v2"
     args = tmp_path / "args"

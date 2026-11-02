@@ -104,8 +104,9 @@ _UNKNOWN = Priced(None, "unknown")
 _SOL = ModelPrice(
     input=Decimal("2.00"),
     cached_read=Decimal("0.10"),
-    # the 30-minute write rate, the tier OpenAI applies when ``prompt_cache_options`` is omitted
-    # (the request never sets it); source: cases/pricing/openai-sol-cache-write.json
+    # the 30-minute write rate: the OpenAI request pins ``prompt_cache_options`` to ttl "30m"
+    # (``providers.OPENAI_PROMPT_CACHE_OPTIONS``, PF-R6); source:
+    # cases/pricing/openai-sol-cache-write.json
     cache_write=Decimal("2.50"),
     output=Decimal("10.00"),
     max_input_tokens=272_000,  # standard tier; long-context rates not supplied

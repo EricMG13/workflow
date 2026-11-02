@@ -23,7 +23,6 @@ from collections.abc import Iterator
 from datetime import date
 from decimal import Decimal
 from functools import cache
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -33,6 +32,7 @@ import test_period_basis as pb
 import view_tree
 
 from deploy_vii.contracts import Fact, Module, Source, Span
+from deploy_vii.execution import Attempt, Execution
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.context import ContextRefused, RunContext
@@ -655,8 +655,10 @@ def test_the_upstream_carries_the_bound_cp1_register(monkeypatch: pytest.MonkeyP
     for name, stub in stubs.items():
         monkeypatch.setattr(cp4c, name, stub)
     monkeypatch.setattr(cp2g, "cp2g_reader", lambda store, head: None)
-    store = SimpleNamespace(read=lambda: None, head_module=None)
-    upstream = cp4c.cp4c_upstream(store=store, attempt=SimpleNamespace(inputs=()))  # type: ignore[arg-type]
+    store = Execution.__new__(Execution)  # the stubbed readers never touch it
+    monkeypatch.setattr(store, "read", lambda: None)
+    attempt = Attempt(ticket_id="t1", module_id="CP-4C", inputs=(), number=0)
+    upstream = cp4c.cp4c_upstream(store=store, attempt=attempt)
     assert set(upstream.register) == set(register)
     _with_context(monkeypatch, _eur_pack_context())
     basis = cp4c._basis_of(eur.pack, upstream)

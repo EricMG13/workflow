@@ -132,68 +132,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.weighted_average_rate_long_term_portion.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Term loan facilities (aggregate)",
-      "field": "weighted_average_rate_long_term_portion",
-      "period_end": "2025-09-30",
-      "status": "known",
-      "value": "6.86",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > table > Term loan facilities > Weighted Average Interest Rate",
-          "quote": "Term loan facilities $ 1,256 6.86 %",
-          "printed": "6.86 %"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.debt_stack.current_portion_of_senior_secured_credit_facility.weighted_average_rate.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Current portion of Senior Secured Credit Facility",
-      "field": "weighted_average_rate",
-      "period_end": "2025-09-30",
-      "status": "known",
-      "value": "6.81",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > table > Current portion > Weighted Average Interest Rate",
-          "quote": "Current portion of Senior Secured Credit Facility $ 78 6.81 %",
-          "printed": "6.81 %"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.carrying_amount.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Term loan facilities (aggregate)",
-      "field": "carrying_amount",
-      "period_end": "2025-09-30",
-      "status": "missing",
-      "value": null,
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "millions",
-      "evidence": [],
-      "derivation": null,
-      "gap_reason": "The 10-Q table shows term loan principal; discount and deferred financing fees of (43) are one aggregate line, not allocated to instruments."
-    },
-    {
       "fact_id": "CP-2.debt_stack.term_loan_facilities_aggregate.principal_outstanding_from_table_lines.2025-09-30",
       "module": "CP-2",
       "topic": "debt_stack",
@@ -310,8 +248,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.term_a_1.principal_outstanding.2025-09-30",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.term_a_1.principal_outstanding.2025-09-30",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "Term A-1",
       "field": "principal_outstanding",
@@ -326,8 +264,8 @@
       "gap_reason": "The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million), not a per-tranche split; no filing in the corpus states one."
     },
     {
-      "fact_id": "CP-2.debt_stack.term_a_2.principal_outstanding.2025-09-30",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.term_a_2.principal_outstanding.2025-09-30",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "Term A-2",
       "field": "principal_outstanding",
@@ -342,8 +280,8 @@
       "gap_reason": "The Q3 10-Q gives only the aggregate term loan outstanding ($1,334 million), not a per-tranche split; no filing in the corpus states one."
     },
     {
-      "fact_id": "CP-2.debt_stack.term_b.principal_outstanding.2025-09-30",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.term_b.principal_outstanding.2025-09-30",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "Term B",
       "field": "principal_outstanding",
@@ -427,29 +365,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_stated.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Revolving Credit Facility",
-      "field": "availability_stated",
-      "period_end": "2025-09-30",
-      "status": "known",
-      "value": "348",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "millions",
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
-          "quote": "Our borrowing capacity under the Revolving Credit Facility as of September 30, 2025 was $348 million",
-          "printed": "$348 million"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_commitment_less_drawn_less_letters_of_credit.2025-09-30",
       "module": "CP-2",
       "topic": "debt_stack",
@@ -497,31 +412,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.revolving_credit_facility.weighted_average_rate.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Revolving Credit Facility",
-      "field": "weighted_average_rate",
-      "period_end": "2025-09-30",
-      "status": "known",
-      "value": "7.07",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > table > Revolving credit facility > Weighted Average Interest Rate",
-          "quote": "Revolving credit facility 225 7.07 %",
-          "printed": "7.07 %"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.debt_stack.revolving_credit_facility.maturity",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.revolving_credit_facility.maturity",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "Revolving Credit Facility",
       "field": "maturity",
@@ -566,8 +458,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.coupon",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.9_500_senior_secured_notes_due_2029.coupon",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "9.500% Senior Secured Notes due 2029",
       "field": "coupon",
@@ -589,8 +481,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.maturity",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.9_500_senior_secured_notes_due_2029.maturity",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "9.500% Senior Secured Notes due 2029",
       "field": "maturity",
@@ -612,60 +504,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.ranking_and_security",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "9.500% Senior Secured Notes due 2029",
-      "field": "ranking_and_security",
-      "period_end": null,
-      "status": "known",
-      "value": "Senior secured; guaranteed by the Subsidiary Guarantors that guarantee the Amended Credit Agreement; secured by first-priority liens on the Collateral (subject to permitted liens and exceptions)",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
-          "quote": "are unconditionally guaranteed on a senior secured basis, subject to certain limitations, by the Subsidiary Guarantors",
-          "printed": "unconditionally guaranteed on a senior secured basis"
-        },
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
-          "quote": "by first-priority liens on the Collateral",
-          "printed": "first-priority liens on the Collateral"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.interest_payment_dates",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "9.500% Senior Secured Notes due 2029",
-      "field": "interest_payment_dates",
-      "period_end": null,
-      "status": "known",
-      "value": "Semi-annually in arrears on April 1 and October 1",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Senior Secured Notes paragraph",
-          "quote": "Interest is payable on the Notes semi-annually in arrears on April 1 and October 1.",
-          "printed": "April 1 and October 1"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.carrying_amount.2025-09-30",
-      "module": "CP-2",
+      "fact_id": "CP-1.debt_stack.9_500_senior_secured_notes_due_2029.carrying_amount.2025-09-30",
+      "module": "CP-1",
       "topic": "debt_stack",
       "subject": "9.500% Senior Secured Notes due 2029",
       "field": "carrying_amount",
@@ -697,29 +537,6 @@
           "locator": "Note 4 Debt Obligations > Other Debt paragraph",
           "quote": "total debt outstanding under the financing program was $3 million with a weighted average interest rate of 7.17%",
           "printed": "$3 million"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.debt_stack.other_debt_atmaas_financing_program.weighted_average_rate.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Other debt (ATMaaS financing program)",
-      "field": "weighted_average_rate",
-      "period_end": "2025-09-30",
-      "status": "known",
-      "value": "7.17",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Other Debt paragraph",
-          "quote": "total debt outstanding under the financing program was $3 million with a weighted average interest rate of 7.17%",
-          "printed": "7.17%"
         }
       ],
       "derivation": null,
@@ -935,29 +752,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-2.debt_stack.long_term_debt.fair_value_level_2.2025-09-30",
-      "module": "CP-2",
-      "topic": "debt_stack",
-      "subject": "Long-term debt",
-      "field": "fair_value_level_2",
-      "period_end": "2025-09-30",
-      "status": "known",
-      "value": "3072",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "millions",
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Fair Value of Debt",
-          "quote": "long-term debt, which, as of September 30, 2025 and December 31, 2024 was $3,072 million and $3,126 million",
-          "printed": "$3,072 million"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-2.liquidity.cash_and_cash_equivalents.balance.2025-09-30",
       "module": "CP-2",
       "topic": "liquidity",
@@ -1113,140 +907,6 @@
           "locator": "Note 5 Trade Receivables Facility",
           "quote": "approximately $200 million and $166 million as of September 30, 2025 and December 31, 2024",
           "printed": "$200 million"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.obligor_structure.borrower.legal_name",
-      "module": "CP-2",
-      "topic": "obligor_structure",
-      "subject": "Borrower",
-      "field": "legal_name",
-      "period_end": null,
-      "status": "known",
-      "value": "NCR Atleos Corporation (Maryland corporation), the Company under the Credit Agreement; Foreign Borrowers may also be party",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Refinancing Facility Agreement > preamble",
-          "quote": "among NCR ATLEOS CORPORATION, a Maryland corporation (the “Company”), the Foreign Borrowers from time to time party thereto",
-          "printed": "NCR ATLEOS CORPORATION, a Maryland corporation"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.obligor_structure.listed_issuer.ticker_and_exchange",
-      "module": "CP-2",
-      "topic": "obligor_structure",
-      "subject": "Listed issuer",
-      "field": "ticker_and_exchange",
-      "period_end": null,
-      "status": "known",
-      "value": "NATL, New York Stock Exchange; the borrower and the listed registrant are the same entity (NCR Atleos Corporation)",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page",
-          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
-          "printed": "NATL New York Stock Exchange"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.obligor_structure.credit_facility_collateral_and_guarantors.collateral_and_guarantors",
-      "module": "CP-2",
-      "topic": "obligor_structure",
-      "subject": "Credit facility collateral and guarantors",
-      "field": "collateral_and_guarantors",
-      "period_end": null,
-      "status": "known",
-      "value": "Secured by substantially all assets of the Company and its wholly-owned domestic subsidiaries (the Subsidiary Guarantors), subject to customary exceptions",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 4 Debt Obligations > Senior Secured Credit Facility paragraph",
-          "quote": "are secured by substantially all of the Company’s assets and the assets of the Company’s wholly-owned domestic subsidiaries (the “Subsidiary Guarantors”)",
-          "printed": "the “Subsidiary Guarantors”"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-2.obligor_structure.subsidiary_guarantors.names",
-      "module": "CP-2",
-      "topic": "obligor_structure",
-      "subject": "Subsidiary Guarantors (Loan Parties other than the Company signing the 2025-09-18 Refinancing Facility Agreement; Loan Party status inferred, see limitations)",
-      "field": "names",
-      "period_end": null,
-      "status": "known",
-      "value": "ATM NATIONAL, LLC; CARDTRONICS HOLDINGS, LLC; CARDTRONICS, INC.; CARDTRONICS USA, INC.; CATM HOLDINGS LLC; ATM DEPLOYER SERVICES, L.L.C.; NCR FOREIGN INVESTCO 1, LLC",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > Section 9 Reaffirmation",
-          "quote": "The Company and each other Loan Party party hereto (collectively, the “Reaffirming Loan Parties”) hereby acknowledges",
-          "printed": "Reaffirming Loan Parties"
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "ATM NATIONAL, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "ATM NATIONAL, LLC"
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "CARDTRONICS HOLDINGS, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "CARDTRONICS HOLDINGS, LLC"
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "CARDTRONICS, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "CARDTRONICS, INC."
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "CARDTRONICS USA, INC. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "CARDTRONICS USA, INC."
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "CATM HOLDINGS LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "CATM HOLDINGS LLC"
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "ATM DEPLOYER SERVICES, L.L.C. by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "ATM DEPLOYER SERVICES, L.L.C."
-        },
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > Refinancing Facility Agreement > signature pages",
-          "quote": "NCR FOREIGN INVESTCO 1, LLC by /s/ Vladimir Samoylenko Name: Vladimir Samoylenko Title: President",
-          "printed": "NCR FOREIGN INVESTCO 1, LLC"
         }
       ],
       "derivation": null,
@@ -2887,213 +2547,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.ticker",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "ticker",
-      "period_end": null,
-      "status": "known",
-      "value": "NATL",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page > Section 12(b) securities",
-          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
-          "printed": "NATL"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.exchange",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "exchange",
-      "period_end": null,
-      "status": "known",
-      "value": "New York Stock Exchange",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page > Section 12(b) securities",
-          "quote": "Common Stock, par value $0.01 per share NATL New York Stock Exchange",
-          "printed": "New York Stock Exchange"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.state_of_incorporation",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "state_of_incorporation",
-      "period_end": null,
-      "status": "known",
-      "value": "Maryland",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page",
-          "quote": "Maryland 92-3588560 (State or other jurisdiction of incorporation or organization)",
-          "printed": "Maryland"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.principal_executive_offices",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "principal_executive_offices",
-      "period_end": null,
-      "status": "known",
-      "value": "864 Spring Street NW Atlanta, GA 30308",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page",
-          "quote": "864 Spring Street NW Atlanta, GA 30308 (Address of principal executive offices)",
-          "printed": "864 Spring Street NW Atlanta, GA 30308"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.commission_file_number",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "commission_file_number",
-      "period_end": null,
-      "status": "known",
-      "value": "001-41728",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page",
-          "quote": "Commission File Number: 001-41728",
-          "printed": "001-41728"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.filer_status",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "filer_status",
-      "period_end": null,
-      "status": "known",
-      "value": "Large accelerated filer",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Cover page > filer check boxes",
-          "quote": "Large accelerated filer ☑ Accelerated filer ☐",
-          "printed": "Large accelerated filer ☑"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.fiscal_year_end",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "fiscal_year_end",
-      "period_end": null,
-      "status": "known",
-      "value": "December 31",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10ka-2024-12-31",
-          "locator": "Cover page",
-          "quote": "For the fiscal year ended December 31, 2024",
-          "printed": "December 31, 2024"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.NCR_Atleos_Corporation.business_description",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "NCR Atleos Corporation",
-      "field": "business_description",
-      "period_end": null,
-      "status": "known",
-      "value": "Industry-leading financial technology company providing self-directed banking solutions",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-10q-2025-09-30",
-          "locator": "Note 1 Basis of Presentation",
-          "quote": "is an industry-leading financial technology company providing self-directed banking solutions to a global customer base",
-          "printed": "financial technology company providing self-directed banking solutions"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Credit_Agreement.borrower_entity",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Credit Agreement",
-      "field": "borrower_entity",
-      "period_end": null,
-      "status": "known",
-      "value": "NCR Atleos Corporation (the Company), a Borrower alongside Foreign Borrowers",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > conformed Credit Agreement > cover",
-          "quote": "among NCR ATLEOS CORPORATION, as the Company and as a Borrower, The FOREIGN BORROWERS from time to time Party Hereto",
-          "printed": "NCR ATLEOS CORPORATION, as the Company and as a Borrower"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-0.documents.Form_10_Q_2025_09_30.period_covered.2025-09-30",
       "module": "CP-0",
       "topic": "documents",
@@ -3134,29 +2587,6 @@
           "locator": "Cover page",
           "quote": "For the fiscal year ended December 31, 2024",
           "printed": "December 31, 2024"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.documents.Refinancing_Facility_Agreement_and_conformed_Credit_Agreement.agreement_date",
-      "module": "CP-0",
-      "topic": "documents",
-      "subject": "Refinancing Facility Agreement and conformed Credit Agreement",
-      "field": "agreement_date",
-      "period_end": null,
-      "status": "known",
-      "value": "2025-09-18",
-      "value_type": "date",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "natl-refinancing-facility-agreement-2025-09-18",
-          "locator": "Exhibit 10.1 > conformed Credit Agreement > cover",
-          "quote": "as amended as of September 18, 2025, among NCR ATLEOS CORPORATION",
-          "printed": "September 18, 2025"
         }
       ],
       "derivation": null,
@@ -3210,6 +2640,98 @@
     {
       "module": "CP-8",
       "why": "User input: needs a prior decision record (attachments.prior_case); none exists for this issuer."
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.term_loan_facilities_aggregate.weighted_average_rate_long_term_portion.2025-09-30: debt_stack / Term loan facilities (aggregate) / weighted_average_rate_long_term_portion @ 2025-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average-rate cell"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.current_portion_of_senior_secured_credit_facility.weighted_average_rate.2025-09-30: debt_stack / Current portion of Senior Secured Credit Facility / weighted_average_rate @ 2025-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average-rate cell"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.term_loan_facilities_aggregate.carrying_amount.2025-09-30: debt_stack / Term loan facilities (aggregate) / carrying_amount @ 2025-09-30: no module field; aggregate: CP-1 writes per-facility carrying_value rows, no aggregate term-loan cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.revolving_credit_facility.availability_stated.2025-09-30: debt_stack / Revolving Credit Facility / availability_stated @ 2025-09-30: no module field; CP-1 writes enums secured_status/seniority and commitment/drawn_amount only, no prose ranking, payment-date, LC or availability cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.revolving_credit_facility.weighted_average_rate.2025-09-30: debt_stack / Revolving Credit Facility / weighted_average_rate @ 2025-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average-rate cell"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.ranking_and_security: debt_stack / 9.500% Senior Secured Notes due 2029 / ranking_and_security: no module field; CP-1 writes enums secured_status/seniority and commitment/drawn_amount only, no prose ranking, payment-date, LC or availability cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.9_500_senior_secured_notes_due_2029.interest_payment_dates: debt_stack / 9.500% Senior Secured Notes due 2029 / interest_payment_dates: no module field; CP-1 writes enums secured_status/seniority and commitment/drawn_amount only, no prose ranking, payment-date, LC or availability cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.other_debt_atmaas_financing_program.weighted_average_rate.2025-09-30: debt_stack / Other debt (ATMaaS financing program) / weighted_average_rate @ 2025-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average-rate cell"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.debt_stack.long_term_debt.fair_value_level_2.2025-09-30: debt_stack / Long-term debt / fair_value_level_2 @ 2025-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no fair-value column"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.obligor_structure.borrower.legal_name: obligor_structure / Borrower / legal_name: no module field; no module in the portfolio_decision plan writes obligor, guarantor, ticker or collateral fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.obligor_structure.listed_issuer.ticker_and_exchange: obligor_structure / Listed issuer / ticker_and_exchange: no module field; no module in the portfolio_decision plan writes obligor, guarantor, ticker or collateral fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.obligor_structure.credit_facility_collateral_and_guarantors.collateral_and_guarantors: obligor_structure / Credit facility collateral and guarantors / collateral_and_guarantors: no module field; no module in the portfolio_decision plan writes obligor, guarantor, ticker or collateral fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+    },
+    {
+      "module": "CP-2",
+      "why": "CP-2.obligor_structure.subsidiary_guarantors.names: obligor_structure / Subsidiary Guarantors (Loan Parties other than the Company signing the 2025-09-18 Refinancing Facility Agreement; Loan Party status inferred, see limitations) / names: no module field; no module in the portfolio_decision plan writes obligor, guarantor, ticker or collateral fields; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.ticker: CP-0 identity/document fact (identity / NCR Atleos Corporation / ticker) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.exchange: CP-0 identity/document fact (identity / NCR Atleos Corporation / exchange) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.state_of_incorporation: CP-0 identity/document fact (identity / NCR Atleos Corporation / state_of_incorporation) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.principal_executive_offices: CP-0 identity/document fact (identity / NCR Atleos Corporation / principal_executive_offices) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.commission_file_number: CP-0 identity/document fact (identity / NCR Atleos Corporation / commission_file_number) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.filer_status: CP-0 identity/document fact (identity / NCR Atleos Corporation / filer_status) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.fiscal_year_end: CP-0 identity/document fact (identity / NCR Atleos Corporation / fiscal_year_end) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.NCR_Atleos_Corporation.business_description: CP-0 identity/document fact (identity / NCR Atleos Corporation / business_description) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Credit_Agreement.borrower_entity: CP-0 identity/document fact (identity / Credit Agreement / borrower_entity) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.documents.Refinancing_Facility_Agreement_and_conformed_Credit_Agreement.agreement_date: CP-0 identity/document fact (documents / Refinancing Facility Agreement and conformed Credit Agreement / agreement_date) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
     }
   ],
   "needs_user_input": [

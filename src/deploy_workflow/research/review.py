@@ -158,6 +158,23 @@ def _independent_list_issues(qid: str, claim: Claim) -> list[ReviewIssue]:
     return issues
 
 
+def _family_issues(
+    qid: str, items: Sequence[str], family_of: Mapping[str, str]
+) -> list[ReviewIssue]:
+    issues: list[ReviewIssue] = []
+    for i, first in enumerate(items):
+        for second in items[i + 1 :]:
+            family = family_of.get(first)
+            if family is not None and family == family_of.get(second):
+                issues.append(
+                    ReviewIssue(
+                        qid,
+                        f"families not independent: {first} and {second} share family {family}",
+                    )
+                )
+    return issues
+
+
 def _independence_issues(answer: Answer, family_of: Mapping[str, str]) -> list[ReviewIssue]:
     issues: list[ReviewIssue] = []
     for claim in answer.claims:
@@ -174,30 +191,26 @@ def _independence_issues(answer: Answer, family_of: Mapping[str, str]) -> list[R
         issues += _independent_list_issues(answer.question_id, claim)
         if len(set(items)) != len(items):
             continue
-        for i, first in enumerate(items):
-            for second in items[i + 1 :]:
-                family = family_of.get(first)
-                if family is not None and family == family_of.get(second):
-                    issues.append(
-                        ReviewIssue(
-                            answer.question_id,
-                            f"families not independent: {first} and {second} share family {family}",
-                        )
-                    )
+        issues += _family_issues(answer.question_id, items, family_of)
+    return issues
+
+
+def _not_found_issues(answer: Answer) -> list[ReviewIssue]:
+    qid = answer.question_id
+    issues = []
+    if answer.claims:
+        issues.append(ReviewIssue(qid, "a not_found question carries no claim"))
+    if not (answer.limitation and answer.limitation.strip()):
+        issues.append(ReviewIssue(qid, "a not_found question states its limitation"))
+    if not answer.searched:
+        issues.append(ReviewIssue(qid, "a not_found question names the items searched"))
     return issues
 
 
 def _completeness_issues(answer: Answer) -> list[ReviewIssue]:
     qid = answer.question_id
     if answer.answer_state == "not_found":
-        issues = []
-        if answer.claims:
-            issues.append(ReviewIssue(qid, "a not_found question carries no claim"))
-        if not (answer.limitation and answer.limitation.strip()):
-            issues.append(ReviewIssue(qid, "a not_found question states its limitation"))
-        if not answer.searched:
-            issues.append(ReviewIssue(qid, "a not_found question names the items searched"))
-        return issues
+        return _not_found_issues(answer)
     issues = []
     if not answer.claims:
         issues.append(ReviewIssue(qid, f"a {answer.answer_state} question needs a claim"))
@@ -215,13 +228,8 @@ def _completeness_issues(answer: Answer) -> list[ReviewIssue]:
     return issues
 
 
-def _citation_issues(answer: Answer, sources: tuple[Source, ...]) -> list[ReviewIssue]:
-    cited = [c for claim in answer.claims for c in claim.citations]
-    cited += [c.citation for c in answer.contrary if isinstance(c, CitedContrary)]
-    held = {source.source_id for source in sources}
-    issues = [
-        ReviewIssue(answer.question_id, text) for text in citation_issues(tuple(cited), sources)
-    ]
+def _contrary_issues(answer: Answer, held: set[str]) -> list[ReviewIssue]:
+    issues: list[ReviewIssue] = []
     for entry in answer.contrary:
         if isinstance(entry, CitedContrary) and entry.item != entry.citation.source_id:
             issues.append(
@@ -237,6 +245,17 @@ def _citation_issues(answer: Answer, sources: tuple[Source, ...]) -> list[Review
                 for item in entry.searched
                 if item not in held
             ]
+    return issues
+
+
+def _citation_issues(answer: Answer, sources: tuple[Source, ...]) -> list[ReviewIssue]:
+    cited = [c for claim in answer.claims for c in claim.citations]
+    cited += [c.citation for c in answer.contrary if isinstance(c, CitedContrary)]
+    held = {source.source_id for source in sources}
+    issues = [
+        ReviewIssue(answer.question_id, text) for text in citation_issues(tuple(cited), sources)
+    ]
+    issues += _contrary_issues(answer, held)
     issues += [
         ReviewIssue(answer.question_id, f"searched item {item} is not a held source")
         for item in answer.searched

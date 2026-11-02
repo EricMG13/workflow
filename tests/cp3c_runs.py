@@ -31,11 +31,15 @@ from deploy_workflow.owner_workflow import OwnerWorkflow
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases/cp3c-owner"
+_PINNED = json.loads((ROOT / "cases/PINS.json").read_text(encoding="utf-8"))
 PINS = {
-    CASE / "builder/build.py": "e6047564c44f2d70e911d1934be8704b23e1e7359b200d1b40c0e7ef7a0cc314",
-    CASE / "expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
-    CASE / "manifest.json": "23f519682ca8caf7cf32a8357316f11ac945e7f717862293d553e7e3ed95c74b",
-    CASE / "submissions.json": "eff5c4fb64452a8aa40a646f58772e6eb55767ea18db9ff54f2f47183d6e2b11",
+    path: _PINNED[f"cases/cp3c-owner/{path.relative_to(CASE).as_posix()}"]
+    for path in (
+        CASE / "builder/build.py",
+        CASE / "expected.json",
+        CASE / "manifest.json",
+        CASE / "submissions.json",
+    )
 }
 CASES = ("positive", "gap_minimum_cash", "gap_no_repricing")
 TOKEN = re.compile(r"\{\{FACT:([^}]+)\}\}")

@@ -31,8 +31,8 @@ import test_method_cp4c as m
 import test_period_basis as pb
 import view_tree
 
-from deploy_vii.contracts import Fact, Module, Source, Span
-from deploy_vii.execution import Attempt, Execution
+from deploy_vii.contracts import Fact, InputStatus, Module, Source, Span
+from deploy_vii.execution import Attempt, Execution, Head
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.context import ContextRefused, RunContext
@@ -641,8 +641,13 @@ def test_the_upstream_carries_the_bound_cp1_register(monkeypatch: pytest.MonkeyP
     eur = eur_context()
     register = tuple(pb._oracle_facts(T414["contexts"]["R2"]["rows"]))
     module = Module.model_construct(module_id="CP-1", facts=(*eur.cp1.t410, *register))
+
+    def required_module(store: Execution, head: Head, module_id: str) -> tuple[Module, InputStatus]:
+        assert module_id == "CP-1", f"the register is read from the CP-1 head only, not {module_id}"
+        return module, "restricted"
+
     stubs: dict[str, Any] = {
-        "_required_module": lambda store, head, mid: (module, "restricted"),
+        "_required_module": required_module,
         "cp1_of": lambda mod, status: eur.cp1,
         "cp2a_reader": lambda store, head: eur.cp2a,
         "cp4_reader": lambda store, head: eur.cp4,

@@ -36,7 +36,7 @@ def pinned(path, sha):
 
 FIN_SHA = "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
 SNAP_SUB_SHA = "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
-METH_SHA = "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
+METH_SHA = "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb"
 FIN = pinned("cases/financial/manifest.json", FIN_SHA)
 SNAP = pinned("cases/snapshot/submissions.json", SNAP_SUB_SHA)
 METH = pinned("src/deploy_vii/methodology.json", METH_SHA)
@@ -82,7 +82,9 @@ CP1C_REPLACED = [
     "T4.8",
     "T4.9",
 ]
-assert ENTRY["CP-1C"]["table_ids"] == list(TABLES), "landed state: CP-1C owns exactly T1C.1-T1C.8"
+assert ENTRY["CP-1C"]["table_ids"] == [*TABLES, "T1C.9", "T1C.10", "T1C.11"], (
+    "landed state: CP-1C owns T1C.1-T1C.8 and, from Phase 7, the EV tables T1C.9-T1C.11"
+)
 OWNERS_LANDED = {}
 OWNERS = {}
 for _m in METH:

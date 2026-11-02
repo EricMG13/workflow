@@ -121,7 +121,10 @@
       "T1C.5",
       "T1C.6",
       "T1C.7",
-      "T1C.8"
+      "T1C.8",
+      "T1C.9",
+      "T1C.10",
+      "T1C.11"
     ]
   },
   {
@@ -401,7 +404,8 @@
       "CP-2A"
     ],
     "optional": [
-      "CP-3C"
+      "CP-3C",
+      "CP-1C"
     ],
     "purpose": "Models the restructuring scenario, fulcrum security and plan recovery.",
     "table_ids": [

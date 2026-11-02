@@ -33,7 +33,7 @@ OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "cases" / "cp
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/context/research-minimal.json": "c09646df4743d845f6b972558bb92c288f0335c1d4959ddd0fb2a1bf39bfbcca",
-    "cases/cp2h-owner/manifest.json": "c90a653ded83087ad092f4830229c091bfa798d093f36d328a3d9b929504e591",
+    "cases/cp2h-owner/manifest.json": "4bf41946148205a6038a348e29a2d060fcec2f0055649245cd47eb613fa98b83",
     "cases/cp2h-owner/submissions.json": "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e",
     "cases/cp2h-owner/expected.json": "851abf7dc71237cb9e300b4cd20c962d17b27186df28ee12543f395f19261d4c",
     "cases/cp2h-owner/cp2h-view-tree.json": "3fb8cf29e73431ac2be72f168d26f72d830c475d42590032a49d5a466b5e0728",

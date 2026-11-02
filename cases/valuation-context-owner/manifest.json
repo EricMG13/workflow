@@ -6,14 +6,14 @@
   "inputs_pinned": {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
-    "cases/cp1c-owner/manifest.json": "6cd998d0e48b47951c5277dd06445ef9864eb1d41b55edb3b98261b492aad872",
+    "cases/cp1c-owner/manifest.json": "8df535f8117ce9ca89e203b5fc7e6f818504a5b7b75e9d993b5a8eb0eebb6dd8",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
     "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
-    "cases/cp4c-owner/manifest.json": "7728f09e538a70c9021051a2c508a0f87011fbf34c1eb1d782c61e890a4555a9",
+    "cases/cp4c-owner/manifest.json": "1c133a62f34f8fd5e28f451168820fea3a28f1bf49ce0ef2c835a8dc89110fc5",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
     "cases/pins-context-owner/expected.json": "d25fbf661bae908e7d61ea261f94c5437a0692782750b597278574d8320b67f1",
-    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8"
+    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb"
   },
   "packs": {
     "closed-chain": {
@@ -374,7 +374,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "1f62e7707945ae6d12bb90cc803c211483ea817114641d8cf6a7266da30b6432",
+    "sha256": "60cc6c5a912715163eb40a5b78e310155bf8821d954116c4b1f9aabb03cd176d",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {

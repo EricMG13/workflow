@@ -29,14 +29,14 @@ OUT = ROOT / "cases" / "valuation-context-owner"
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
-    "cases/cp1c-owner/manifest.json": "6cd998d0e48b47951c5277dd06445ef9864eb1d41b55edb3b98261b492aad872",
+    "cases/cp1c-owner/manifest.json": "8df535f8117ce9ca89e203b5fc7e6f818504a5b7b75e9d993b5a8eb0eebb6dd8",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
     "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
-    "cases/cp4c-owner/manifest.json": "7728f09e538a70c9021051a2c508a0f87011fbf34c1eb1d782c61e890a4555a9",
+    "cases/cp4c-owner/manifest.json": "1c133a62f34f8fd5e28f451168820fea3a28f1bf49ce0ef2c835a8dc89110fc5",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
     "cases/pins-context-owner/expected.json": "d25fbf661bae908e7d61ea261f94c5437a0692782750b597278574d8320b67f1",
-    "src/deploy_vii/methodology.json": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
+    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
 }
 RAW = {}
 for rel, digest in PINS.items():

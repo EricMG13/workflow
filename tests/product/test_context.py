@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from deploy_vii.contracts import PATHWAY_MODULES
 from deploy_workflow.context import (
     ASSUMPTION_LIMITS,
     NUM,
@@ -757,6 +758,17 @@ def test_form_regexes_match_reader() -> None:
     assert f"const NUM = /{NUM}/, SNUM = /{SNUM}/;" in html
     assert f"/{PERIOD}/.exec(p)" in html
     assert f"/{SLUG}/.test(v)" in html
+
+
+def test_form_pathways_equal_presets() -> None:
+    html = FORM.read_text()
+    block = re.search(r"const PATHWAYS = \{(.*?)\n\};", html, re.DOTALL)
+    assert block is not None
+    form = {
+        name: tuple(re.findall(r"'([^']+)'", modules))
+        for name, modules in re.findall(r"(\w+): \[([^\]]*)\]", block.group(1))
+    }
+    assert form == {name: tuple(modules) for name, modules in PATHWAY_MODULES.items()}
 
 
 def test_golden_contexts_exist() -> None:

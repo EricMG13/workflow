@@ -465,7 +465,7 @@ const PATHWAYS = {
   earnings_update: ['CP-0','CP-1','CP-MODEL','CP-1B','CP-1D','CP-5'],
   relative_value: ['CP-0','CP-1','CP-MODEL','CP-1C','CP-2','CP-2D','CP-3','CP-3C','CP-3D','CP-5'],
   covenant_refinancing: ['CP-0','CP-1','CP-MODEL','CP-1A','CP-2','CP-2D','CP-4','CP-3C','CP-5'],
-  distressed_restructuring: ['CP-0','CP-1','CP-1A','CP-2','CP-2A','CP-2G','CP-2H','CP-4','CP-4C','CP-5'],
+  distressed_restructuring: ['CP-0','CP-1','CP-1A','CP-1C','CP-2','CP-2A','CP-2G','CP-2H','CP-4','CP-4C','CP-5'],
   portfolio_decision: ['CP-0','CP-1','CP-MODEL','CP-2','CP-3','CP-5','CP-6','CP-8']
 };
 const MODULE_IDS = ['CP-0','CP-1','CP-MODEL','CP-1A','CP-1B','CP-1C','CP-1D','CP-2','CP-2A','CP-2D','CP-2G','CP-2H','CP-3','CP-3C','CP-3D','CP-4','CP-4C','CP-5','CP-6','CP-8','CP-DR'];
@@ -496,7 +496,7 @@ const OPTIONS = {
     {v:'none', label:'No peers', text:'CP-1C has no peer universe and no peer multiple is formed.'}
   ],
   basis: [
-    {v:'auto', label:'Automatic', planned:true, text:'Uses public multiples, private-deal multiples or both, by evidence quality and availability; states Insufficient Information if neither qualifies (Planned).'},
+    {v:'auto', label:'Automatic', text:'Uses the public-peer median when at least 3 peers qualify, else the precedent median when at least 3 qualify; states Insufficient Information if neither does. Python reads these; public peers need the CP-DR peer pack.'},
     {v:'public_comps', label:'Public comps', text:'Listed peer EV/EBITDA only.'},
     {v:'precedents', label:'Precedents', text:'Private-transaction multiples only (web-sourced by CP-DR, Planned, or rows you add).'},
     {v:'blend', label:'Blend', text:'Both, combined.'},
@@ -1090,7 +1090,6 @@ function panel(o) {
   const planned = [];
   if (has('CP-2D') && o.run.reporting_currency && o.run.reporting_currency !== 'USD') planned.push('non-USD currency');
   if (has('CP-1C') && v.peer_source === 'cp_dr_public') planned.push('CP-DR public peer sourcing and CP-1C EV/EBITDA');
-  if (has('CP-1C') && v.basis === 'auto') planned.push('valuation basis selection');
   if (has('CP-4') && att.legal_documents === 'draft') planned.push('CP-4 draft-document mode');
   if (has('CP-2A') && o.assumptions.cp2a || has('CP-2D') && o.assumptions.cp2d || has('CP-2E') && o.assumptions.cp2e || has('CP-3C') && o.assumptions.cp3c || has('CP-3D') && o.assumptions.cp3d || has('CP-4C') && o.assumptions.cp4c) planned.push('pinned assumptions');
   if (has('CP-2H') && o.ratings.length) planned.push('real agency names in CP-2H');

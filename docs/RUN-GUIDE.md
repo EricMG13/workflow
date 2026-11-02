@@ -150,6 +150,39 @@ things in the context are read:
 Every other setting in the file is carried in the pack but is not consumed until the
 remaining phases of the context-file plan.
 
+## Valuation from the context
+
+CP-1C reads the context's valuation basis (section 7 of the form) and Python selects
+one EV/EBITDA multiple; no model chooses it. Each basis reads these inputs:
+
+- **Automatic** reads the public-peer comps first and takes their median when at least
+  3 peers qualify; otherwise the precedent rows, again needing 3 qualifying; otherwise
+  the result is Insufficient Information and no multiple is selected. It never blends.
+- **Public comps** reads the peer rows (EV, EBITDA, date, source) and takes their median.
+- **Precedents** reads the private-transaction rows and takes their median.
+- **Blend** takes the plain average of the public-comps median and the precedents
+  median; each set needs 3 qualifying rows or the basis states a gap (no fallback).
+- **Issuer's own trading multiple** reads the issuer's market cap and net debt (or a
+  stated EV) over CP-1 LTM adjusted EBITDA. An NTM EBITDA basis is a gap.
+- **My own multiple** takes your value and labels it user-supplied.
+
+A requested basis that cannot be formed is stated as a gap; it never falls back to
+another basis. A peer row needs EV and EBITDA above zero to qualify.
+
+Currency and period: user-supplied peer figures carry no currency or period of their
+own. The tables show those cells as `Not stated by the user` and do not restate or
+convert the figures; the other CP-1C tables are unchanged.
+
+Windows: a row qualifies only if its date falls within 12 months of the as-of date for
+public comps and 36 months for precedents. The windows also apply to `blend`. A row
+with no date is excluded.
+
+CP-4C uses the selected multiple. A valuation case whose multiple differs from the
+selected one is refused (fail closed), the stress case included. A multiple you pin in
+the context assumptions for CP-4C wins over the selection; the selection is then
+recorded in CP-4C's limitation. A run with no valuation basis in the context produces
+the same pack as before.
+
 ## Verify and deliver a sealed financial slice
 
 The public read-only verifier is

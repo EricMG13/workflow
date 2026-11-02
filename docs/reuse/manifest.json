@@ -2237,6 +2237,69 @@
       "sha256": "e8dd8a3d86b15f86286929dd5e570885fe03f070709441a2d37334227f82744b",
       "reason": "Phase 7 Task 1 fix 1 (L1): the T1C.9-T1C.11 binding labels become the Phase 7 oracle titles (EV/EBITDA records, EV/EBITDA statistics, Valuation basis selection); no binding, block, slot or unit changes.",
       "review": ".superpowers/sdd/2026-10-31-phase-7-valuation/task-1-review.md L1"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "imported_sha256": "8c797c12c236c2e58efa5a4f6fea098866d9811c08798e561c19903a833511e3",
+      "prior_project_sha256": "8c797c12c236c2e58efa5a4f6fea098866d9811c08798e561c19903a833511e3",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "331137e787f48576e2aaceddb1cfc977864b89660a8b8fdacadef1c1467084d4",
+      "reason": "repo-authored (not in files[]): B9: wording only; adds the EV tables T1C.9-T1C.11, user-supplied records, the 12- and 36-month windows, the selection rules, the not-stated currency and period and the O7d gap; the LTM Q4 and mixed-period words follow the run base (Phase 7 Task 5b, B17 item 7; Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp4c.md",
+      "imported_sha256": "1cd1ff108960fb8c5869b87692bf0047f6edb75fd2c3e0eeac3716c0b1cba10b",
+      "prior_project_sha256": "1cd1ff108960fb8c5869b87692bf0047f6edb75fd2c3e0eeac3716c0b1cba10b",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "aa95d40eaf162614370c8bcc394d7eecd39ef8edf267d2f24b29c2ebdc00d28d",
+      "reason": "repo-authored (not in files[]): B9: wording only; adds the optional CP-1C edge, the multiple binding and the pin precedence; the forecast-year, balance-column and currency words follow the run base (Phase 7 Task 5b, B17 item 7; Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2a.md",
+      "imported_sha256": "eb4c5494beb710baccb979b44cb1af1ffdfcc5bfc89ca66abd35389a6ecac132",
+      "prior_project_sha256": "eb4c5494beb710baccb979b44cb1af1ffdfcc5bfc89ca66abd35389a6ecac132",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "28be81bfb97a83e739e4a514612a2db3bf12b72480128f54c66c33fc2ab06236",
+      "reason": "repo-authored (not in files[]): B9: wording only; the units rule names the run's reporting currency (Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2d.md",
+      "imported_sha256": "b09c8ac53023bb88b50b9249b70386225b64bc26dec50a055767598f0dc4446f",
+      "prior_project_sha256": "b09c8ac53023bb88b50b9249b70386225b64bc26dec50a055767598f0dc4446f",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "b206dca9f5b17dd29ef161b01858c3ca7b412f4b6d0b6eedd2cf2d67935e7385",
+      "reason": "repo-authored (not in files[]): B9: wording only; the non-summed facility rule names the run's reporting currency (Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2g.md",
+      "imported_sha256": "464f3df8b2c05616fc579d9d735c090957398c408a65e33917fbedbeb6095e24",
+      "prior_project_sha256": "464f3df8b2c05616fc579d9d735c090957398c408a65e33917fbedbeb6095e24",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "684374859fd13fe2cfd262dcbbf041f78370367215bc0a0a371752bc78beb63a",
+      "reason": "repo-authored (not in files[]): B9: wording only; the base column, forecast years, \"Not reached by\" year and base-year labels follow the run base (Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2h.md",
+      "imported_sha256": "9e8099872e669f71a1f3ee28dde9d4d24713d2fe26ee0fc88dc054003115d618",
+      "prior_project_sha256": "689c7af104f61460539f0d2d7812dd4295b07c0ffe26ead8b1d390ddeaba7d92",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "f221e63327c3a72e5c8e8fbcd937b39124e6d12df8f709673eb0e7112d26d8de",
+      "reason": "B9: wording only, Phase 8 period/currency; the first-year range, \"Not reached by\" year and base-year actual label follow the run base (Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp3c.md",
+      "imported_sha256": "3dc940c2e3aaba94d120aaf2ff2067a639cb204be7721c43dc543b25f78947f5",
+      "prior_project_sha256": "3dc940c2e3aaba94d120aaf2ff2067a639cb204be7721c43dc543b25f78947f5",
+      "project_commit": "12e64f312b30518b5f26ff69939433436ba6d13c",
+      "sha256": "b66438b5b6e17d8e8e21814c488e7a75f73c87544ee79bce5d338626f488de72",
+      "reason": "repo-authored (not in files[]): B9: wording only; the money-cell currency and unit label follow the run's reporting currency (Phase 8 Task 8, B9)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
     }
   ],
   "local_patch_lineage": [

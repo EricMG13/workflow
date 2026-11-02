@@ -20,13 +20,11 @@ import pytest
 from prompt_support import CONTRACT_STEPS, EXISTING, request_for
 
 from deploy_vii.live.prompts import STEP_CONTRACTS
-from deploy_vii.live.tools import READ, SEARCH
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.prompts import inventory, rules
 from deploy_workflow.prompts.compose import NoPrompt, PromptRequest, compose
 from deploy_workflow.prompts.g8 import G8_RULE_ID
 from deploy_workflow.prompts.p5 import P5_RULE_ID
-from deploy_workflow.prompts.tools import tool_names
 
 compose_module = importlib.import_module("deploy_workflow.prompts.compose")
 GOLDEN = Path(__file__).with_name("rule_lists.golden.json")
@@ -286,10 +284,6 @@ def applicable(request: PromptRequest) -> list[rules.Rule]:
             continue
         if rule.when == "pins" and compose_module.request_pin_form(request) is None:
             continue
-        if rule.when == "pack_tools":
-            names = tool_names(request.spec)
-            if not (SEARCH in names and READ in names):
-                continue
         out.append(rule)
     return out
 

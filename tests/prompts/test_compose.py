@@ -34,7 +34,7 @@ from deploy_vii.live.prompts import (
 from deploy_vii.live.tools import submit_name
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import PACK_TOOLS
-from deploy_workflow.financial_workflow import MAX_CALLS
+from deploy_workflow.financial_workflow import MAX_CALLS, MAX_INVOKES
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import OwnerBinding
 from deploy_workflow.prompts import inventory
@@ -220,11 +220,13 @@ def test_rule_5_tells_the_model_what_a_verdict_means(pack: PreparedPack) -> None
 
 def test_rule_5_states_the_budgets_as_the_code_keys_them(pack: PreparedPack) -> None:
     """The workflow keys the pack tools on one ("invoke") counter and counts submits and
-    read_inputs separately, each bounded by MAX_CALLS (owner_workflow ``_limits``, loop ``_kind``)."""
+    read_inputs separately: the pack tools are bounded by MAX_INVOKES, submits and read_inputs by
+    MAX_CALLS (owner_workflow ``_limits``, loop ``_kind``)."""
     financials = rule5(system_of(compose(request_for("financials", pack))))
     assert "calls of any one tool" not in financials
     assert MAX_CALLS == 16
-    assert "search_pack, read_pages and extract_statements share 16 calls in one step" in financials
+    assert MAX_INVOKES == 32
+    assert "search_pack, read_pages and extract_statements share 32 calls in one step" in financials
     assert "submit_financials at most 16 calls" in financials
     narrative = rule5(system_of(compose(request_for("narrative", pack))))
     assert "share" not in narrative and "read_inputs" in narrative
@@ -644,3 +646,17 @@ def test_all_prompts_have_no_orchestrator_rule_outside_the_ruled_set(pack: Prepa
             if ORCHESTRATOR.match(line)
         }
         assert found <= {"O1", "O2", "O3", "O4", "O5"}, (step_id, found)
+
+
+def test_the_pack_tools_budget_is_thirty_two_and_the_others_stay_sixteen(
+    pack: PreparedPack,
+) -> None:
+    from deploy_workflow.financial_workflow import MAX_INVOKES
+
+    assert MAX_INVOKES == 32
+    ready = system_of(compose(request_for("source_readiness", pack)))
+    limits = ready[ready.index("Limits:") :]
+    assert "share 32 calls" in limits
+    assert "submit_source_readiness at most 16 calls" in limits
+    narrative = rule5(system_of(compose(request_for("narrative", pack))))
+    assert "read_inputs at most 16 calls" in narrative

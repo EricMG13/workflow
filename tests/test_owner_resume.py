@@ -272,11 +272,11 @@ def test_submit_before_read_inputs_is_uncharged_and_writes_nothing(
 def test_per_step_caps_still_bind_after_open(tmp_path: Path) -> None:
     workflow, _ = runs.start("positive", tmp_path)
     page = {"source_id": "identity", "first_page": 1, "last_page": 1}
-    for _ in range(owner.MAX_CALLS):
+    for _ in range(owner.MAX_INVOKES):
         workflow.invoke("read_pages", page)
     del workflow
     resumed = owner.OwnerWorkflow.open(tmp_path / "store", publication_directory=tmp_path / "model")
-    assert resumed.state().invokes_used == owner.MAX_CALLS
+    assert resumed.state().invokes_used == owner.MAX_INVOKES
     with pytest.raises(WorkflowError) as caught:
         resumed.invoke("read_pages", page)
     assert caught.value.code == "not_permitted"

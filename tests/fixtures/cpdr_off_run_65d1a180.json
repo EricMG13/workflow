@@ -1,5 +1,5 @@
 {
- "run_json": "{\n  \"case_id\": \"case-1\",\n  \"pathway\": \"credit_snapshot\",\n  \"config_id\": \"sol-medium\",\n  \"run_id\": \"run-1\",\n  \"mode\": \"offline\",\n  \"cap_usd\": \"1\",\n  \"sources\": [\n    {\n      \"source_id\": \"s1\",\n      \"path\": \"{IN}/a.html\",\n      \"sha256\": \"a79fb7db70c6f8d0cb4918fcc94d92ee641f68221de41fc62826e727eb0437e6\",\n      \"media_type\": \"text/html\",\n      \"converted_sha256\": \"368460d7c4c0cc31f080e60e239379d06a8251479527bd11792c8e4749810445\"\n    },\n    {\n      \"source_id\": \"s2\",\n      \"path\": \"{IN}/b.txt\",\n      \"sha256\": \"c30a92f9ef889c07c781a7cf99f5b71415d4d1289e84473d1b9e6f01feffc62d\",\n      \"media_type\": \"text/plain\",\n      \"converted_sha256\": null\n    },\n    {\n      \"source_id\": \"context\",\n      \"path\": \"{ROOT}/cases/context/research-minimal.json\",\n      \"sha256\": \"c09646df4743d845f6b972558bb92c288f0335c1d4959ddd0fb2a1bf39bfbcca\",\n      \"media_type\": \"text/plain\",\n      \"converted_sha256\": null\n    }\n  ],\n  \"cp_dr_invoked\": false,\n  \"replayed_from_run\": null,\n  \"outcome\": \"stopped\",\n  \"stopped_reason\": \"RecordingMissing: no recording for digest f20a4dc0e01c3db189291a302c22e0631949450b9e0c050647ef41dae121a7f6 call_index 0\"\n}\n",
+ "run_json": "{\n  \"case_id\": \"case-1\",\n  \"pathway\": \"credit_snapshot\",\n  \"config_id\": \"sol-medium\",\n  \"run_id\": \"run-1\",\n  \"mode\": \"offline\",\n  \"cap_usd\": \"5\",\n  \"sources\": [\n    {\n      \"source_id\": \"s1\",\n      \"path\": \"{IN}/a.html\",\n      \"sha256\": \"a79fb7db70c6f8d0cb4918fcc94d92ee641f68221de41fc62826e727eb0437e6\",\n      \"media_type\": \"text/html\",\n      \"converted_sha256\": \"368460d7c4c0cc31f080e60e239379d06a8251479527bd11792c8e4749810445\"\n    },\n    {\n      \"source_id\": \"s2\",\n      \"path\": \"{IN}/b.txt\",\n      \"sha256\": \"c30a92f9ef889c07c781a7cf99f5b71415d4d1289e84473d1b9e6f01feffc62d\",\n      \"media_type\": \"text/plain\",\n      \"converted_sha256\": null\n    },\n    {\n      \"source_id\": \"context\",\n      \"path\": \"{ROOT}/cases/context/research-minimal.json\",\n      \"sha256\": \"c09646df4743d845f6b972558bb92c288f0335c1d4959ddd0fb2a1bf39bfbcca\",\n      \"media_type\": \"text/plain\",\n      \"converted_sha256\": null\n    }\n  ],\n  \"cp_dr_invoked\": false,\n  \"replayed_from_run\": null,\n  \"outcome\": \"stopped\",\n  \"stopped_reason\": \"RecordingMissing: no recording for digest b6926e6134176d5d69cd23cddabfeb4efe6d8d29e1f2f4c2c37005daa8750cce call_index 0\"\n}\n",
  "tree": [
   [
    "calls.jsonl",
@@ -7,7 +7,7 @@
   ],
   [
    "cap.json",
-   "e8557cc5641c321305078e67309073051568fd95d22d34175319d40aa988e2a5"
+   "5953c84600ab1432b69e702b5477bbf6a9c2a7b812cdd1de8506c6345abcd88b"
   ],
   [
    "execution/.lock",
@@ -26,8 +26,8 @@
    null
   ],
   [
-   "execution/owner-run-audit/invocations/f20a4dc0e01c3db189291a302c22e0631949450b9e0c050647ef41dae121a7f6",
-   "f20a4dc0e01c3db189291a302c22e0631949450b9e0c050647ef41dae121a7f6"
+   "execution/owner-run-audit/invocations/b6926e6134176d5d69cd23cddabfeb4efe6d8d29e1f2f4c2c37005daa8750cce",
+   "b6926e6134176d5d69cd23cddabfeb4efe6d8d29e1f2f4c2c37005daa8750cce"
   ],
   [
    "execution/owner-run-audit/reservations/call-*",

@@ -250,7 +250,7 @@ _PAGE: Final = re.compile(r"page:[0-9]+")
 _LINE: Final = re.compile(r"line:[0-9]+")
 
 
-def _unread_issues(text: str, seen: Seen) -> tuple[str, ...]:
+def unread_issues(text: str, seen: Seen) -> tuple[str, ...]:
     """O7-R29: every cited ``page:N`` locator, and every cited ``line:N`` locator of an ``ev-*``
     item, that ``read_pages`` never returned in this step, sorted. ``unread_citation_issues`` of
     deploy_vii judges ``page:N`` only (I4); an ``ev-*`` item is a line source."""
@@ -288,7 +288,7 @@ def research_rules(text: str, seen: Seen) -> tuple[str, ...]:
             ),
             lambda count: f"{UNBACKED_ABSENCE}: {count} further absence claims not listed",
         ),
-        *_unread_issues(text, seen),
+        *unread_issues(text, seen),
     )
 
 

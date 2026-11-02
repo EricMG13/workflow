@@ -726,12 +726,63 @@ def _submission_producer_inputs_memoised(
     return True
 
 
+def _cpdr_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
+    """O7-R54 H-1: a settled CP-DR head is a two-step module, so the one-step `*-submission` rule
+    cannot authenticate it. Its core's registered probe (`owner_workflow._PROBES["CP-DR"]`, the
+    verifier's own re-settle check) rebuilds the head's attempt over `snapshot`; a
+    `WorkflowError` (`identity_mismatch`) is a head the journal would not write, so False."""
+    from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
+    from deploy_workflow.workflow import WorkflowError
+
+    selected = [
+        a
+        for a in snapshot.attempts
+        if a.module_id == producer.module_id and a.result_sha256 == producer.content_hash()
+    ]
+    if len(selected) != 1:
+        return False
+    try:
+        owner_workflow._PROBES[producer.module_id](store, snapshot, selected[0])
+    except WorkflowError:
+        return False
+    return True
+
+
+# In-process only, never persisted, as `_SUBMISSION_VERIFIED`: a passing probe's key and the blob
+# digests it read; a hit re-reads and hash-checks each digest.
+_CPDR_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
+_CPDR_VERIFIED_LIMIT = 16
+_CPDR_VERIFIED_LOCK = Lock()
+
+
+def _cpdr_producer_inputs_memoised(
+    store: Execution, snapshot: ExecutionSnapshot, producer: Module
+) -> bool:
+    key = (sha256(snapshot.model_dump_json().encode()).hexdigest(), producer.content_hash())
+    with _CPDR_VERIFIED_LOCK:
+        touched = _CPDR_VERIFIED.get(key)
+    if touched is not None:
+        for digest in sorted(touched):
+            store._load(digest)  # raises ValueError for missing or tampered bytes
+        return True
+    recorder = _RecordingExecution(store.directory)
+    if not _cpdr_producer_inputs(recorder, snapshot, producer):
+        return False
+    with _CPDR_VERIFIED_LOCK:
+        while len(_CPDR_VERIFIED) >= _CPDR_VERIFIED_LIMIT:
+            del _CPDR_VERIFIED[next(iter(_CPDR_VERIFIED))]
+        _CPDR_VERIFIED[key] = frozenset(recorder.touched)
+    return True
+
+
 def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
     """Authenticate CP0 canonical readiness, CP1's actual promotion/failure history and any
     other module's one-step settlement (the `*-submission` rule)."""
     expected = current_inputs(snapshot, producer.module_id)
     if producer.module_id == "CP-1":
         return _cp1_producer_inputs(store, snapshot, producer)
+    if producer.module_id == "CP-DR":
+        return _cpdr_producer_inputs_memoised(store, snapshot, producer)
     if producer.module_id != "CP-0":
         return _submission_producer_inputs_memoised(store, snapshot, producer, expected)
     selected = [

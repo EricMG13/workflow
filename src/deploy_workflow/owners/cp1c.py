@@ -59,7 +59,7 @@ from deploy_vii.execution import (
 )
 from deploy_vii.live.schema import exact_json, json_object, normalise
 from deploy_vii.live.submission import Submitted
-from deploy_vii.live.tools import Seen, unread_citation_issues
+from deploy_vii.live.tools import Seen
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import citation_issues, shape_issues
 from deploy_vii.report_view import fact_spelling
@@ -76,6 +76,7 @@ from deploy_workflow.owners.period_basis import (
     run_basis,
 )
 from deploy_workflow.research.contracts import RESERVED_PREFIX
+from deploy_workflow.research.steps import unread_issues
 
 if TYPE_CHECKING:
     from deploy_workflow.owners.valuation_basis import (
@@ -3017,9 +3018,10 @@ def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:
 def RULES(text: str, seen: Seen) -> tuple[str, ...]:
     """The tool-use evidence rule (protocol section 2): every cited page was returned by
     `read_pages` in the step. The schema holds no `ABSENCE_MARKERS` value (lease open question 13),
-    so the product's cited-page rule (`live.tools.unread_citation_issues`, bounded and sorted) is
-    the only one."""
-    return unread_citation_issues(text, seen)
+    so the cited-page rule is the only one. O7-R54 M-1: `research.steps.unread_issues` is
+    `live.tools.unread_citation_issues` for `page:N` (same text, bounded and sorted) and also
+    judges a cited `line:N` of an `ev-*` item, which CP-1C may cite since O7c C1."""
+    return unread_issues(text, seen)
 
 
 def _parsed(payload: str) -> tuple[PeerBenchmarkSubmission | None, tuple[str, ...]]:

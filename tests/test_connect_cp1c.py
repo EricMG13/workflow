@@ -1403,7 +1403,7 @@ def test_d3_stays_open_and_no_consumer_reads_cp1c() -> None:
     assert MODULE not in cp6_committee.READ_OPTIONAL
     owners_dir = ROOT / "src" / "deploy_workflow" / "owners"
     readers = [p.name for p in owners_dir.glob("*.py") if "cp1c_reader" in p.read_text()]
-    assert "cp1c.py" in readers and set(readers) <= {"cp1c.py", "cp4c.py"}  # D3 (Phase 7)
+    assert set(readers) == {"cp1c.py", "cp4c.py"}  # D3 (Phase 7): exactly these two call it
     assert stage1.expected()["execution"]["consumption"]["status"].startswith("open")
 
 

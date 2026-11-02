@@ -80,11 +80,12 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.context import ContextRefused
+from deploy_workflow.context import ContextRefused, RunContext, context_facts
 from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
-from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
+from deploy_workflow.owners.cp1c import EV_READER_FACTS, Cp1cHead, cp1c_reader
+from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, _normalised, pin_label_forged
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-4C"
@@ -528,6 +529,46 @@ class Cp4Head:
 
 
 @dataclass(frozen=True)
+class SelectedMultiple:
+    """The CP-1C selected multiple of a bound head that selected one (T1C.11, Design 10): the
+    value, the basis it came from, the EBITDA basis it is on and the head it was read from."""
+
+    amount: Decimal
+    basis: str
+    ebitda_basis: str
+    shown: str
+    head_sha256: str
+
+    @property
+    def two_dp(self) -> str:
+        return format(self.amount.quantize(Decimal("0.01")), "f")
+
+
+def selected_multiple(head: Cp1cHead | None) -> SelectedMultiple | None:
+    """The selection of a bound CP-1C head, or None when there is none to apply: no head, a head
+    without T1C.11 (a frozen head, or a blocked one that exposes no facts) or a selection that is
+    not known (a gap, never zero). The EV facts are tested for presence; `Cp1cHead.fact`'s
+    ValueError is never the signal. A known multiple whose basis or EBITDA basis is not text is
+    a contract break and raises."""
+    if head is None:
+        return None
+    held = {f.fact_id: f for f in head.facts}
+    fact = held.get(EV_READER_FACTS[0])
+    if fact is None or fact.status != "known":
+        return None
+    basis, ebitda_basis = head.fact(EV_READER_FACTS[1]), head.fact(EV_READER_FACTS[2])
+    if fact.amount is None or basis.text is None or ebitda_basis.text is None:
+        raise ValueError(f"CP-4C: the CP-1C selected multiple {fact.fact_id} is incomplete")
+    return SelectedMultiple(
+        amount=fact.amount,
+        basis=basis.text,
+        ebitda_basis=ebitda_basis.text,
+        shown=spelled(fact),
+        head_sha256=head.head_sha256,
+    )
+
+
+@dataclass(frozen=True)
 class Cp4cContext:
     """Everything the step reads besides the submission (lease Public API, D3)."""
 
@@ -537,6 +578,10 @@ class Cp4cContext:
     cp2g: Cp2gHead
     cp4: Cp4Head
     cp3c_status: InputStatus | None = None  # a declared optional edge this version never reads
+    # The bound CP-1C head and the pack's frozen context (Phase 7): both stay None for a run that
+    # binds no CP-1C or carries no context, which is every frozen CP-4C case.
+    cp1c: Cp1cHead | None = None
+    context: RunContext | None = None
 
 
 @dataclass(frozen=True)
@@ -1019,20 +1064,69 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
                 issues += _run_text_issues(path, text)
         issues += guard_issues(path, text)
     issues += _gap_label_issues(sub)
+    issues += _multiple_issues(ctx, sub)
     return tuple(issues)
+
+
+NO_ALIGNMENT = "No alignment is made between an LTM or NTM multiple and a forecast year."
 
 
 def _gap_label_issues(sub: RestructuringSubmission) -> list[str]:
     """A gap line, a claim name and a valuation label join the own limitations beside Python's
-    pinned line, so a model-written copy of that line in any of them is refused (P6-P13, shared
-    with CP-3D). The valuation label is lowercased there; the normaliser folds case."""
+    pinned line and its CP-1C selection line, so a model-written copy of either in any of them is
+    refused (P6-P13, shared with CP-3D; P7-P5). The valuation label is lowercased there; the
+    normaliser folds case."""
     fields = (
         *((f"gaps[{i}].gap", g.gap) for i, g in enumerate(sub.gaps)),
         *((f"claims[{i}].name", c.name) for i, c in enumerate(sub.claims)),
         *((f"valuation[{i}].label", v.label) for i, v in enumerate(sub.valuation)),
     )
     return [
-        f"{path}: {PIN_LABEL_FORGED}" for path, text in fields if pin_label_forged(MODULE_ID, text)
+        f"{path}: {PIN_LABEL_FORGED if pin_label_forged(MODULE_ID, text) else CP1C_LINE_FORGED}"
+        for path, text in fields
+        if pin_label_forged(MODULE_ID, text) or cp1c_line_forged(text)
+    ]
+
+
+CP1C_LINE_FORGED = "the CP-1C selected multiple line is Python's; do not write it"
+# The fixed words of the two lines `_selection_line` writes, as `cp3d._normalised` folds them.
+_CP1C_LINE_MARKS = (
+    "the ev multiple is the cp-1c selected multiple",
+    "which governs, so the selection is not applied",
+    NO_ALIGNMENT.lower().removesuffix("."),
+)
+
+
+def cp1c_line_forged(text: str | None) -> bool:
+    """True when `text` holds a fixed part of the CP-1C selection limitation, or a near copy that
+    differs only as the shared normaliser folds (the `pin_label_forged` rule)."""
+    folded = _normalised(text or "")
+    return any(mark in folded for mark in _CP1C_LINE_MARKS)
+
+
+def _selection(ctx: Cp4cContext) -> SelectedMultiple | None:
+    """The CP-1C selection this run reads: only over a pack that carries a context."""
+    return selected_multiple(ctx.cp1c) if ctx.context is not None else None
+
+
+def _pinned_multiple(ctx: Cp4cContext) -> str | None:
+    """The context's pinned CP-4C multiple as typed, None when nothing is pinned."""
+    piece = None if ctx.context is None else ctx.context.assumptions.cp4c
+    return None if piece is None else piece.ev_multiple
+
+
+def _multiple_issues(ctx: Cp4cContext, sub: RestructuringSubmission) -> list[str]:
+    """Design 11: when a bound CP-1C head selected a multiple M, every valuation's multiple equals
+    M numerically (`7` equals `7.00`), and `not assessed` does not. One issue per valuation in case
+    order. No rule when nothing is selected; the context pin governs when it is set (Q4)."""
+    selected = _selection(ctx)
+    if selected is None or _pinned_multiple(ctx) is not None:
+        return []
+    return [
+        f"valuation {v.case_id}: multiple {v.multiple} differs from the CP-1C selected multiple "
+        f"{selected.two_dp}"
+        for v in sub.valuation
+        if v.multiple == NOT_ASSESSED or Decimal(v.multiple) != selected.amount
     ]
 
 
@@ -1409,6 +1503,8 @@ class _Run:
     scenario_row: str
     upstream: Mapping[str, Fact]
     pinned: bool = False
+    selection: SelectedMultiple | None = None  # the CP-1C selection this run reads (Phase 7)
+    pin: str | None = None  # the context's pinned multiple as typed; it governs the selection
 
 
 _PINNED_COLUMN = "Q4 2025-12-31"  # the column BS_PERIOD and the balance-date limitation state
@@ -1483,6 +1579,8 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
         scenario_row=_scenario_row(ctx.cp2g),
         upstream=_upstream_map(ctx, cp1),
         pinned=inputs.pinned,
+        selection=_selection(ctx),
+        pin=_pinned_multiple(ctx),
     )
 
 
@@ -1684,6 +1782,16 @@ def _cp1_ebitda(f: Fact) -> Val:
     return _known(f.amount)
 
 
+def _multiple_formula(run: _Run) -> str:
+    """`analyst input`, plus the CP-1C selection the submission was held to (Design 11); a context
+    pin governs instead, so the selection is not a part of the formula then."""
+    if run.selection is None or run.pin is not None:
+        return "analyst input"
+    return (
+        f"analyst input, equal to the CP-1C selected multiple (T1C.11, basis {run.selection.basis})"
+    )
+
+
 def _t4e3(b: _Book, run: _Run) -> None:
     row = run.scenario_row
     name = run.ctx.cp2a.fact(f"T2B.1.{row}.name")
@@ -1727,7 +1835,7 @@ def _t4e3(b: _Book, run: _Run) -> None:
                 "EV multiple",
                 val.multiple,
                 "multiple",
-                "analyst input",
+                _multiple_formula(run),
                 period=period,
                 value_class="analyst_judgment",
             )
@@ -2409,6 +2517,33 @@ _FIXED_LIMITATIONS = (
 _NC = "Not calculable: "
 
 
+def _selection_line(run: _Run) -> list[str]:
+    """The one limitation of the CP-1C selection (Design 11): the multiple, its basis and EBITDA
+    basis, the CP-2G case and year it is applied to, and that no LTM/NTM alignment is made; or,
+    when the context pin governs, that the selection is not applied. Nothing when no multiple was
+    selected."""
+    sel = run.selection
+    if sel is None:
+        return []
+    held = f"{sel.two_dp}x (basis {sel.basis}, EBITDA basis {sel.ebitda_basis})"
+    if run.pin is not None:
+        return [
+            (
+                f"CP-1C selected {held}; the context pins the EV multiple at {run.pin}, which "
+                f"governs, so the selection is not applied. {NO_ALIGNMENT}"
+            )
+        ]
+    first = run.sub.valuation[0]
+    word = CASE_WORD[first.ebitda_case]
+    return [
+        (
+            f"The EV multiple is the CP-1C selected multiple {held}, applied to the CP-2G forecast "
+            f"EBITDA of each valuation case ({word} case {first.ebitda_year} for the {word} "
+            f"valuation); {NO_ALIGNMENT[0].lower()}{NO_ALIGNMENT[1:]}"
+        )
+    ]
+
+
 def _own_limitations(run: _Run) -> tuple[str, ...]:
     out = list(_FIXED_LIMITATIONS)
     for k in run.classes:
@@ -2433,6 +2568,7 @@ def _own_limitations(run: _Run) -> tuple[str, ...]:
                 "analyst names none."
             )
     out += [f"Gap ({g.severity}): {g.gap}" for g in run.sub.gaps]
+    out += _selection_line(run)
     if run.pinned:
         out.append(pinned_line(MODULE_ID))
     return tuple(out)
@@ -2484,7 +2620,7 @@ STEP_IDS = (STEP_ID,)
 QUALIFICATION = Qualification(implementation="implemented")
 SCHEMAS: Mapping[str, type[Contract]] = {STEP_ID: RestructuringSubmission}
 SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
-CP1, CP2A, CP2G, CP4, CP3C = "CP-1", "CP-2A", "CP-2G", "CP-4", "CP-3C"
+CP1, CP1C, CP2A, CP2G, CP4, CP3C = "CP-1", "CP-1C", "CP-2A", "CP-2G", "CP-4", "CP-3C"
 _SETTLED: Mapping[str, InputStatus] = {
     "accepted": "accepted",
     "restricted": "restricted",
@@ -2658,7 +2794,8 @@ class Upstream:
 
     `bound` is the attempt's input set; `current` is `execution.current_inputs` now, or its
     refusal text; `cp1`, `cp2a`, `cp2g` and `cp4` are the bound heads as the core reads them;
-    `inherited` is what settlement will carry from the bound heads."""
+    `inherited` is what settlement will carry from the bound heads; `cp1c` is the bound CP-1C head
+    through `cp1c_reader` (Phase 7), None when the attempt binds none."""
 
     bound: tuple[Input, ...]
     current: tuple[Input, ...] | str
@@ -2667,6 +2804,7 @@ class Upstream:
     cp2g: Cp2gHead
     cp4: Cp4Head
     inherited: tuple[str, ...] = ()
+    cp1c: Cp1cHead | None = None  # read only when the attempt binds a CP-1C input
 
     def status(self, input_id: str) -> InputStatus | None:
         return next((item.status for item in self.bound if item.input_id == input_id), None)
@@ -2689,6 +2827,14 @@ def _bound_head(store: Execution, attempt: Attempt, module_id: str) -> Head:
     )
 
 
+def _bound_cp1c(store: Execution, attempt: Attempt) -> Cp1cHead | None:
+    """The bound CP-1C head through its reader, None when the attempt binds no CP-1C input (the
+    optional edge binds only when CP-1C is requested)."""
+    if not any(item.input_id == CP1C for item in attempt.inputs):
+        return None
+    return cp1c_reader(store, _bound_head(store, attempt, CP1C))
+
+
 def cp4c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
     """The bound CP-1, CP-2A, CP-4 and CP-2G heads through their readers (CP-2G's is
     `owners.cp2g.cp2g_reader`), the current input set and the inherited limitations. A refusal
@@ -2705,6 +2851,7 @@ def cp4c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
         return _bound_head(store, attempt, module_id)
 
     cp1_module, cp1_status = _required_module(store, head(CP1), CP1)
+    bound_cp1c = _bound_cp1c(store, attempt)
     return Upstream(
         bound=attempt.inputs,
         current=current,
@@ -2713,7 +2860,18 @@ def cp4c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
         cp2g=cp2g_of(cp2g.cp2g_reader(store, head(CP2G))),
         cp4=cp4_reader(store, head(CP4)),
         inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+        cp1c=bound_cp1c,
     )
+
+
+def _frozen_context(pack: PreparedPack) -> RunContext | None:
+    """The pack's frozen context, None when it has none. A context the run refuses is read as
+    None here and is not hidden: `_pin_lines` reports it as the single `Context refused:` line in
+    the same `_lines` call, and `restructuring` raises on that line before it composes."""
+    try:
+        return context_facts(pack)
+    except ContextRefused:
+        return None
 
 
 def _inputs(
@@ -2729,6 +2887,8 @@ def _inputs(
         cp2g=upstream.cp2g,
         cp4=upstream.cp4,
         cp3c_status=upstream.status(CP3C),
+        cp1c=upstream.cp1c,
+        context=_frozen_context(pack),
     )
     return Cp4cInputs(context=context, submission=submission)
 
@@ -2926,7 +3086,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     allowed = frozenset(f.fact_id for f in referencable(cp1.values()))
     ebitda = tuple(e.fact for e in cp2g_head.ebitda)
     figures = frozenset(f.fact_id for f in referencable(ebitda))
-    return {
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
@@ -2975,6 +3135,15 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         "cp2g_facts": [_figure(f) for f in ebitda if f.fact_id in figures],
         "inherited_limitations": list(upstream.inherited),
     }
+    selected = selected_multiple(upstream.cp1c)
+    if selected is not None:  # offered only when a bound CP-1C head selected one (Phase 7)
+        block["selected_multiple"] = {
+            "shown": selected.shown,
+            "basis": selected.basis,
+            "ebitda_basis": selected.ebitda_basis,
+            "head_sha256": selected.head_sha256,
+        }
+    return block
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:

@@ -624,3 +624,41 @@ def test_driver_cases_are_the_manifest_runs() -> None:
     runs_of = {c for c, v in MANIFEST["cases"].items() if v.get("run") is not None}
     assert runs_of == set(runs.CASES)
     assert set(runs.LITERAL) | {"refused"} == runs_of
+
+
+def test_gap_label_refuses_a_model_copy_of_the_cp1c_selection_line() -> None:
+    """P7-P5: the CP-1C selection limitation is Python's. A gap line, a claim name or a valuation
+    label that holds it, or a near copy (case, spacing, the full stop), is refused; the oracle's
+    own lines (bound and pinned) are the text copied. Fast: no store."""
+    oracle = json.loads(
+        (
+            Path(__file__).resolve().parents[1] / "cases/valuation-context-owner/expected.json"
+        ).read_text()
+    )["cases"]
+    lines = [
+        oracle["auto-public"]["cp4c"]["added_limitation"],
+        oracle["pin-vs-selection"]["cp4c"]["added_limitation"],
+    ]
+    benign = "The EV multiple is an analyst assumption."
+    payload = stage1._bind_all(stage1._payload("positive"))
+    for line in lines:
+        for copy in (line, line.upper(), "  ".join(line.split()), line.removesuffix(".")):
+            for field in ("gap", "claim", "label"):
+                forged = json.loads(json.dumps(payload))
+                forged["gaps"] = [{**forged["gaps"][0], "gap": benign}]
+                if field == "gap":
+                    forged["gaps"][0]["gap"] = copy
+                elif field == "claim":
+                    forged["claims"][0]["name"] = copy
+                else:
+                    forged["valuation"][0]["label"] = copy
+                got = cp4c._gap_label_issues(stage1._submission(forged))
+                path = {
+                    "gap": "gaps[0].gap",
+                    "claim": "claims[0].name",
+                    "label": "valuation[0].label",
+                }[field]
+                assert got == [f"{path}: {cp4c.CP1C_LINE_FORGED}"], (field, copy)
+    clean = json.loads(json.dumps(payload))
+    clean["gaps"] = [{**clean["gaps"][0], "gap": benign}]
+    assert cp4c._gap_label_issues(stage1._submission(clean)) == []

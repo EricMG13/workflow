@@ -39,6 +39,8 @@ PATTERNS = (
     "cases/o2-synthetic/builder/cp1_financials.py",
     "cases/o2-synthetic/builder/context_rows.py",
     "cases/valuation-context-owner/contexts/*.json",
+    "cases/cpdr-context-cutoff/*.json",
+    "cases/cpdr-context-cutoff/builder/build.py",
     "cases/goldens/*/module_golden.json",
     "cases/goldens/*/mapping.json",
     "src/deploy_vii/methodology.json",

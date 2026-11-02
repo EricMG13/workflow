@@ -1,0 +1,63 @@
+{
+  "schema_version": "cpdr-context-cutoff-cases/1",
+  "scope": "Key for the run.cutoff context field (O7b-2 D9): intake, brief and brief view use min(as_of, run.cutoff). SYNTHETIC data; the five evidence items are those of cases/cpdr-research-owner.",
+  "status": "frozen",
+  "research_manifest": {
+    "file": "research-manifest.json",
+    "rows": [
+      {
+        "path": "evidence/a-sector-desk-note.txt",
+        "family": "sector-desk-notes",
+        "published": "2025-12-18",
+        "locator": "https://sector-desk.example/2025/notes/industrial-products-supply-costs-demand",
+        "tag": "research"
+      },
+      {
+        "path": "evidence/b-sector-desk-note.txt",
+        "family": "sector-desk-notes",
+        "published": "2026-01-10",
+        "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
+        "tag": "research"
+      },
+      {
+        "path": "evidence/c-registry-filing.txt",
+        "family": "registry-filings",
+        "published": "2025-12-30",
+        "locator": "https://harbour-registry.example/filings/brookmere-industries/annual-extract",
+        "tag": "research"
+      },
+      {
+        "path": "evidence/d-trade-press-feature.txt",
+        "family": "trade-press-archive",
+        "published": "2026-02-01",
+        "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
+        "tag": "research"
+      },
+      {
+        "path": "evidence/e-trade-press-feature.txt",
+        "family": "trade-press-archive",
+        "locator": "https://trade-press.example/archive/regional-producers-feature",
+        "tag": "research"
+      }
+    ],
+    "file_bytes": "[\n {\n  \"path\": \"evidence/a-sector-desk-note.txt\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2025-12-18\",\n  \"locator\": \"https://sector-desk.example/2025/notes/industrial-products-supply-costs-demand\",\n  \"tag\": \"research\"\n },\n {\n  \"path\": \"evidence/b-sector-desk-note.txt\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2026-01-10\",\n  \"locator\": \"https://sector-desk.example/2026/notes/industrial-products-reporting-definitions\",\n  \"tag\": \"research\"\n },\n {\n  \"path\": \"evidence/c-registry-filing.txt\",\n  \"family\": \"registry-filings\",\n  \"published\": \"2025-12-30\",\n  \"locator\": \"https://harbour-registry.example/filings/brookmere-industries/annual-extract\",\n  \"tag\": \"research\"\n },\n {\n  \"path\": \"evidence/d-trade-press-feature.txt\",\n  \"family\": \"trade-press-archive\",\n  \"published\": \"2026-02-01\",\n  \"locator\": \"https://trade-press.example/2026/archive/industrial-products-outlook\",\n  \"tag\": \"research\"\n },\n {\n  \"path\": \"evidence/e-trade-press-feature.txt\",\n  \"family\": \"trade-press-archive\",\n  \"locator\": \"https://trade-press.example/archive/regional-producers-feature\",\n  \"tag\": \"research\"\n }\n]\n"
+  },
+  "evidence_source": "cases/cpdr-research-owner/manifest.json#evidence",
+  "evidence_sha256": {
+    "A": "8177c2012973f925eee5638de1d2e7a45e862607dc97a732003dea97f6757bcc",
+    "B": "94ced7c943ae49d7238b1be770c52742fc62d5e5f2c60ccf8d58215c61e087e2",
+    "C": "50806b5985fbc7b099115f09de85490f8e22ba1694550889f7d63d6812a150b0",
+    "D": "c8c04cac2ddbcf0c21e91bfea902ae0aad5e6c7fca62bc359971ece56e1bcc0c",
+    "E": "0969392b895a180d7e0c2d8ffa75d8b45084afc7b8a96f1da45785ca549ebb21"
+  },
+  "context_file": "context.json",
+  "context_file_sha256": "d1d5ce43d23d77e5523a9f40cab7158d4ec01f191eadbf69a1cf7c7fe12b95c5",
+  "run": {
+    "as_of": "2026-01-10",
+    "cutoff": "2025-12-31"
+  },
+  "bad_contexts": {
+    "cutoff_after_as_of": "2026-01-11",
+    "cutoff_malformed": "31/12/2025"
+  }
+}

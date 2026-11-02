@@ -548,6 +548,32 @@ def test_report_counts_settlements(world: World) -> None:
     assert "| openrouter | $1.00 |" in report  # the reservation of 3.25 no longer counts
 
 
+def test_report_command_accounts_row_applies_settlements(world: World) -> None:
+    # openrouter: credit 20, reserve 10% -> usable 18.00. One unknown call reserved 3.25 is
+    # settled by the user at 1.00, so Spend = $1.00 and Remaining = 18.00 - 1.00 = $17.00
+    # (unapplied, the reservation would give $3.25 and $14.75).
+    unknown = budget_tests.call("deepseek-max", None, reserved="3.25", status="unknown")
+    _prior_live(world.out, "deepseek-max", [unknown], pathway="credit_snapshot")
+    entry = {
+        "run_id": "prior-live",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "1.00",
+        "by": "eric",
+        "date": "2026-11-02",
+        "source": "provider invoice",
+    }
+    body = {"schema_version": "charge-settlement/1", "entries": [entry]}
+    (world.out / "settlements.json").write_text(json.dumps(body), encoding="utf-8")
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    (world.out / "report.md").unlink()
+    assert main(world.argv("report")) == 0
+    report = (world.out / "report.md").read_text()
+    assert "| openrouter | $1.00 | $18.00 | $17.00 |" in report.splitlines()
+
+
 def _live_runs(
     config_id: str, costs: Sequence[str], pathways: Sequence[PathwayId] | None = None
 ) -> list[tuple[RunMeta, tuple[CallRecord, ...]]]:

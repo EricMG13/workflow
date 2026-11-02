@@ -177,6 +177,12 @@ def _settled_amounts(
     return found
 
 
+def settled_amounts(runs: Runs, settlements: Sequence[Settlement]) -> dict[Key, Decimal]:
+    """The user-settled amount per call (keyed as ``_key``), with every refusal of
+    ``_settled_amounts``; the report reuses this matching rather than writing its own."""
+    return _settled_amounts(list(_checked(runs)), settlements)
+
+
 def account_spend(
     runs: Runs, account_id: Provider, settlements: Sequence[Settlement] = ()
 ) -> Decimal:

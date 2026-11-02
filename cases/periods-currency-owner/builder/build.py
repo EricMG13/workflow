@@ -723,13 +723,27 @@ MISMATCH_REFUSAL = "run.reporting_currency EUR, but CP-1 reports USD"
 RESIDUAL = {"CP-1C": "Period basis: " + MISMATCH_REFUSAL}
 
 
+def _carries_money(x, ccy, token):
+    """True when a fact or cell of the oracle body is in the money unit: a field `currency` equal to the run currency, or the money-unit token in a string."""
+    if isinstance(x, dict):
+        return x.get("currency") == ccy or any(_carries_money(v, ccy, token) for v in x.values())
+    if isinstance(x, list):
+        return any(_carries_money(v, ccy, token) for v in x)
+    return isinstance(x, str) and token in x
+
+
 def module_entry(module, ccy, extra=None):
     key = f"{module}@{ccy}"
     token = BASIS[ccy]["money_unit"]
-    blob = json.dumps(cp1b_oracle(ccy) if module == "CP-1B" else module_oracle(module, ccy), ensure_ascii=False)
+    oracle = cp1b_oracle(ccy) if module == "CP-1B" else module_oracle(module, ccy)
+    blob = json.dumps(oracle, ensure_ascii=False)
     other = ("US$", "USD") if ccy == "EUR" else ("EUR",)
-    assert token in blob and not any(o in blob for o in other), (module, ccy)
-    entry = {"outcome": "settled", "oracle": key, "money_unit": token, "required_tokens": [token], "forbidden_tokens": list(other)}
+    assert not any(o in blob for o in other), (module, ccy)
+    # P8-R9: the money unit and its required token come from what the module's own oracle carries (the oracle's own `currency` and `money_unit` stamps do not count)
+    # `submission` is an input the owner is given, not a result it must emit, so it does not count
+    body = {k: v for k, v in oracle.items() if k not in ("currency", "money_unit", "submission")}
+    money = _carries_money(body, ccy, token)
+    entry = {"outcome": "settled", "oracle": key, "money_unit": token if money else None, "required_tokens": [token] if money else [], "forbidden_tokens": list(other)}
     entry.update(extra or {})
     return entry
 

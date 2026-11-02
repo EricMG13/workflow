@@ -360,10 +360,8 @@
         "CP-2H": {
           "outcome": "settled",
           "oracle": "CP-2H@EUR",
-          "money_unit": "EUR m",
-          "required_tokens": [
-            "EUR m"
-          ],
+          "money_unit": null,
+          "required_tokens": [],
           "forbidden_tokens": [
             "US$",
             "USD"

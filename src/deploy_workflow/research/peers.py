@@ -12,16 +12,19 @@ functions that need ``review``, ``tables`` or ``owners.cp1c`` import them when c
 """
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from functools import partial
 from typing import TYPE_CHECKING, Final, Literal, get_args
 
-from deploy_vii.contracts import Citation, Contract, Fact, Identifier, Source, Text
+from deploy_vii.contracts import Citation, Contract, Fact, Identifier, Module, Source, Text
 from deploy_vii.readiness import citation_issues
 from deploy_workflow.research.contracts import RESERVED_PREFIX, EvidenceItem, ResearchBrief
 
 if TYPE_CHECKING:
+    from deploy_workflow.owners.cp1c import PeerRow, PeerSheet
+    from deploy_workflow.owners.period_basis import PeriodBasis
     from deploy_workflow.research.review import ReviewIssue
     from deploy_workflow.research.tables import Composed, _Table
 
@@ -347,3 +350,206 @@ def compose_peer_tables(
         claims=(),
         limitations=(),
     )
+
+
+# --- the pack as CP-1C's peer sheet (O7d D2) --------------------------------------------------------
+#
+# CP-1C builds its peer sheet from the bound CP-DR head's TDR.4 names and TDR.6 figures when no user
+# `peers` source is held. The amounts are the head's own facts (Python read them from the quotes); the
+# model-written texts the sheet shows (a peer's name, a figure's unit and currency) are checked here
+# with the fence's and the table cell's own rules before they reach a CP-1C prompt, issue or view.
+
+
+@dataclass(frozen=True)
+class NotAdmitted:
+    """A candidate peer kept off the sheet, with the reason CP-1C's view shows. ``currency`` and
+    ``unit`` are the cells that decided it (``None`` when no figure was located)."""
+
+    peer_id: str
+    name: str
+    currency: str | None
+    unit: str | None
+    reason: str
+
+
+@dataclass(frozen=True)
+class PackUnusable:
+    """The head's TDR.4-6 facts cannot be read as a sheet; ``reason`` names no model text."""
+
+    reason: str
+
+
+class _Unusable(Exception):
+    """A TDR cell the sheet cannot read (internal: ``peer_sheet`` returns it as ``PackUnusable``)."""
+
+
+@dataclass(frozen=True)
+class _Figure:
+    operand: str
+    amount: Decimal | None
+    unit: str
+    currency: str
+    period_end: str
+    citation: Citation | None
+
+
+def carries_tdr6(module: Module) -> bool:
+    """The head holds TDR.6 facts, so CP-1C's peers are the pack's."""
+    return any(fact.table_id == "TDR.6" for fact in module.facts)
+
+
+def _table(module: Module, table_id: str) -> dict[str, dict[str, Fact]]:
+    rows: dict[str, dict[str, Fact]] = {}
+    for fact in module.facts:
+        if fact.table_id == table_id:
+            rows.setdefault(fact.row_id or "", {})[fact.field or ""] = fact
+    return rows
+
+
+def _unsafe(where: str, text: str) -> str | None:
+    """Why ``text`` may not be shown (the dossier fence's own check and the table cell rule), else
+    None. The text itself is never named."""
+    from deploy_workflow.prompts.fence import FenceError, data_block
+    from deploy_workflow.research.dossier import breaks_a_table_cell
+
+    try:
+        data_block("CONTEXT", "dossier", text)
+    except FenceError:
+        return f"{where}: holds a block delimiter or a lookalike of one"
+    if breaks_a_table_cell(text):
+        return f"{where}: holds a line break or a |"
+    return None
+
+
+def _cell_text(where: str, cells: Mapping[str, Fact], field: str) -> str:
+    fact = cells.get(field)
+    if fact is None or fact.status != "known" or not fact.text:
+        raise _Unusable(f"{where}: the {field} cell is not a stated text")
+    if (why := _unsafe(f"{where} {field}", fact.text)) is not None:
+        raise _Unusable(why)
+    return fact.text
+
+
+def _located_amount(where: str, cell: Fact | None) -> tuple[Decimal | None, Citation | None]:
+    """The amount cell as (amount, its one ``ev-*`` citation); (None, None) for a ``missing`` cell."""
+    if cell is None or cell.status not in ("known", "missing"):
+        raise _Unusable(f"{where}: the amount cell is neither located nor missing")
+    if cell.status == "missing":
+        return None, None
+    cites = cell.citations
+    if cell.amount is None or len(cites) != 1 or not cites[0].source_id.startswith(RESERVED_PREFIX):
+        raise _Unusable(f"{where}: the amount cell is not one number quoted from an ev-* item")
+    return cell.amount, cites[0]
+
+
+def _figures(module: Module, candidates: set[str]) -> dict[str, list[_Figure]]:
+    from deploy_workflow.owners.cp1c import OPERANDS
+
+    operands = {key for key, _ in OPERANDS}
+    found: dict[str, list[_Figure]] = {}
+    for row, cells in _table(module, "TDR.6").items():
+        peer_id, _, operand = row.rpartition(".")
+        where = f"TDR.6 {row}"
+        if peer_id not in candidates or operand not in operands:
+            raise _Unusable(f"{where}: not a TDR.4 peer's CP-1C operand")
+        amount, citation = _located_amount(where, cells.get("amount"))
+        period_end = _cell_text(where, cells, "period_end")
+        if period_end_date(period_end) is None:
+            raise _Unusable(f"{where}: period_end is not a calendar date")
+        found.setdefault(peer_id, []).append(
+            _Figure(
+                operand,
+                amount,
+                _cell_text(where, cells, "unit"),
+                _cell_text(where, cells, "currency"),
+                period_end,
+                citation,
+            )
+        )
+    return found
+
+
+def _candidates(module: Module) -> list[tuple[str, str]]:
+    """(peer_id, name) in TDR.4 order; two peers with one name are unusable (CP-1C assesses a peer
+    by its name)."""
+    names: list[tuple[str, str]] = []
+    for peer_id, cells in _table(module, "TDR.4").items():
+        names.append((peer_id, _cell_text(f"TDR.4 {peer_id}", cells, "name")))
+    if len({name for _, name in names}) != len(names):
+        raise _Unusable("TDR.4: two peers share one name")
+    return names
+
+
+def _refusal(peer_id: str, name: str, fig: _Figure, why: str) -> NotAdmitted:
+    return NotAdmitted(peer_id, name, fig.currency, fig.unit, why)
+
+
+def _basis_refusal(
+    peer_id: str, name: str, figures: Sequence[_Figure], currency: str
+) -> NotAdmitted | None:
+    """The first figure not in the run's currency, or not in millions, as the reason."""
+    for fig in figures:
+        if fig.currency != currency:
+            return _refusal(
+                peer_id, name, fig, f"currency {fig.currency} is not the run's {currency}"
+            )
+        if fig.unit != "millions":
+            return _refusal(peer_id, name, fig, f"unit {fig.unit} is not millions")
+    return None
+
+
+def _admit(
+    peer_id: str, name: str, figures: Sequence[_Figure], currency: str
+) -> "PeerRow | NotAdmitted":
+    """One sheet row, or why the peer is kept off: no figure located, a figure in another currency
+    or unit, or located figures that end on different dates."""
+    from deploy_workflow.owners.cp1c import OPERANDS, PeerRow
+
+    if not figures:
+        return NotAdmitted(peer_id, name, None, None, "no figure is located")
+    if (refused := _basis_refusal(peer_id, name, figures, currency)) is not None:
+        return refused
+    known = [fig for fig in figures if fig.amount is not None and fig.citation is not None]
+    ends = {fig.period_end for fig in known}
+    if len(ends) != 1:
+        why = (
+            "no figure amount is located"
+            if not known
+            else "the located figures end on different dates"
+        )
+        return NotAdmitted(peer_id, name, figures[0].currency, figures[0].unit, why)
+    amounts: dict[str, Decimal | None] = {key: None for key, _ in OPERANDS}
+    cites: dict[str, Citation] = {}
+    for fig in known:
+        amounts[fig.operand] = fig.amount
+        if fig.citation is not None:
+            cites[fig.operand] = fig.citation
+    first = next(iter(cites.values()))
+    return PeerRow(name, ends.pop(), amounts, first.quote, None, cites)
+
+
+def _sheet(module: Module, basis: "PeriodBasis") -> "PeerSheet":
+    from deploy_workflow.owners.cp1c import PeerRow, PeerSheet
+
+    named = _candidates(module)
+    figures = _figures(module, {peer_id for peer_id, _ in named})
+    admitted = [_admit(i, name, figures.get(i, ()), basis.currency) for i, name in named]
+    rows = tuple(a for a in admitted if isinstance(a, PeerRow))
+    refused = tuple(a for a in admitted if isinstance(a, NotAdmitted))
+    unit, scale = UNIT_FACT["millions"]
+    return PeerSheet(
+        module.content_hash(), basis.currency, unit, Decimal(scale), None, rows, refused
+    )
+
+
+def peer_sheet(module: Module, basis: "PeriodBasis") -> "PeerSheet | PackUnusable":
+    """The peer sheet of a CP-DR head's TDR.4 names and TDR.6 located figures, or why the pack is
+    unusable. A row is a TDR.4 peer whose figures are all in the run's currency (``basis.currency``)
+    and in millions, whose located amounts end on one date; its amounts are the head's own facts
+    (``None`` where a cell is ``missing``). The sheet has no issuer row. Another peer is listed in
+    ``not_admitted`` with its reason. Every model-written text it carries (a name, a unit, a currency)
+    passed the dossier fence and the table cell rule first."""
+    try:
+        return _sheet(module, basis)
+    except _Unusable as error:
+        return PackUnusable(str(error))

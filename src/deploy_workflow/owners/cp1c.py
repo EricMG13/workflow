@@ -16,7 +16,7 @@ import re
 from bisect import bisect_left
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from datetime import date
 from decimal import ROUND_HALF_EVEN, Context, Decimal
 from itertools import pairwise
@@ -76,6 +76,7 @@ from deploy_workflow.owners.period_basis import (
     run_basis,
 )
 from deploy_workflow.research.contracts import RESERVED_PREFIX
+from deploy_workflow.research.peers import NotAdmitted, PackUnusable, carries_tdr6, peer_sheet
 from deploy_workflow.research.steps import unread_issues
 
 if TYPE_CHECKING:
@@ -125,6 +126,8 @@ NO_MEDIAN = "Not calculable: no peer median (fewer than three included peers hav
 OWN_NOT_MEANINGFUL = "Not meaningful: the peer's own ratio is not meaningful"  # ruling 1C1
 ZERO_MEDIAN = "Not meaningful: the peer median is zero"
 NOT_COMPARED = "Not compared: one side is not available"  # ruling 1C2
+# O7-R47 Q6: the limitation of T1C.6's sheet and difference cells over a CP-DR pack sheet.
+NO_ISSUER_LINE = "the CP-DR peer pack carries no issuer line"
 # Round 6 B1: the issuer's own outlier cells when its CP-1 ratio is not known.
 ISSUER_NOT_STATED = "Not calculable: the issuer's CP-1 value is missing"
 ISSUER_NOT_MEANINGFUL = "Not meaningful: the issuer's CP-1 ratio is not meaningful"
@@ -291,6 +294,9 @@ class PeerRow:
     amounts: Mapping[str, Decimal | None]  # operand -> amount; None is "Not stated" (missing)
     line: str  # the verbatim page:1 line, quoted by every fact read from it
     basis: BasisLine | None  # the page:2 line, None when the row is absent there
+    # A pack row (O7d D2): operand -> the ev-* citation of the figure the amount was read from. A row
+    # read from a peers source holds none and every fact cites its `line` on page:1.
+    figures: Mapping[str, Citation] = field(default_factory=dict)
 
     @property
     def period(self) -> str:
@@ -303,8 +309,9 @@ class PeerSheet:
     currency: str  # read from the page:1 Basis line clause
     unit: str
     scale: Decimal
-    issuer: PeerRow
+    issuer: PeerRow | None  # None: a sheet from the CP-DR peer pack, which carries no issuer line
     peers: tuple[PeerRow, ...]
+    not_admitted: tuple[NotAdmitted, ...] = ()  # pack candidates kept off the sheet (O7d D2)
 
 
 def _split(line: str) -> list[str]:
@@ -503,6 +510,8 @@ class PeerBenchmarkInputs:
     # Phase 8: the run's period and currency (the default is the pre-Phase 8 run); the issuer
     # column, the mixed period and the peers page's Basis clause follow it.
     basis: PeriodBasis = DEFAULT_BASIS
+    # O7d D2: the sheet of the bound CP-DR head's TDR.6 when no `peers` source is held (`_inputs`).
+    pack_sheet: PeerSheet | None = None
 
 
 @dataclass(frozen=True)
@@ -559,6 +568,14 @@ class _Composer:
     def cite(self, locator: str, quote: str) -> Citation:
         sha = self._peer_sheet().source_sha256
         return Citation(source_id=PEERS_SOURCE_ID, source_sha256=sha, locator=locator, quote=quote)
+
+    def figure_cite(self, data: PeerRow, key: str) -> Citation:
+        """The citation of one source amount: the pack figure's own `ev-*` quote, else the page:1 line."""
+        return data.figures[key] if key in data.figures else self.cite("page:1", data.line)
+
+    def period_cite(self, data: PeerRow) -> Citation:
+        """The citation of a row's period end: the first located pack figure, else the page:1 line."""
+        return next(iter(data.figures.values()), None) or self.cite("page:1", data.line)
 
     def _add(self, fact: Fact, derives: Sequence[str] = (), copied: str | None = None) -> None:
         self.items.append(PeerFact(fact, tuple(derives), copied))
@@ -726,7 +743,7 @@ def _universe(c: _Composer, peers: Sequence[_Peer], present: bool) -> None:
             "Period end",
             p.data.period_end,
             value_class="source",
-            citations=(c.cite("page:1", p.data.line),),
+            citations=(c.period_cite(p.data),),
         )
         for (name, label), attr in zip(
             UNIVERSE_FIELDS[1:4], ("basis", "segments", "fiscal_year_end")
@@ -787,7 +804,8 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
             )
         c.row("T1C.2", "none", "No peer source", [key for key, _ in OPERANDS])
         return
-    for row_id, data in [("issuer", sheet.issuer), *((p.row_id, p.data) for p in peers)]:
+    issuer = [] if sheet.issuer is None else [("issuer", sheet.issuer)]
+    for row_id, data in [*issuer, *((p.row_id, p.data) for p in peers)]:
         for key, label in OPERANDS:
             value = data.amounts[key]
             if value is None:
@@ -806,7 +824,7 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
                     unit=sheet.unit,
                     period=data.period,
                     formula="Peer source amount",
-                    source=(c.cite("page:1", data.line),),
+                    source=(c.figure_cite(data, key),),
                 )
         c.row("T1C.2", row_id, data.label, [key for key, _ in OPERANDS])
 
@@ -1142,17 +1160,52 @@ def _issuer_line(
     """The issuer line's own ratio and period, or why it cannot be recomputed (1C2)."""
     if sheet is None:
         return Unsettled("missing", absent)
+    if sheet.issuer is None:  # `_tie_out` never asks a pack sheet for its issuer line
+        raise ValueError("A pack sheet has no issuer line")
     got = ratio(m, sheet.issuer.amounts, where="on the issuer line of the peer source")
     return got if isinstance(got, Unsettled) else (got.value, sheet.issuer.period)
 
 
+def _issuer_period(sheet: PeerSheet | None) -> str | None:
+    return None if sheet is None or sheet.issuer is None else sheet.issuer.period
+
+
+def _tie_out_no_issuer(c: _Composer, cp1: Mapping[str, _Cp1Cell]) -> None:
+    """O7-R47 Q6: a pack sheet has no issuer line, so nothing is recomputed or compared; the sheet
+    and difference cells are `not_applicable` with the limitation and the CP-1 cell stays copied."""
+    for m in METRICS:
+        k = m.key
+        c.unsettled(
+            ("T1C.6", k, "sheet"),
+            "Issuer line on the peer source",
+            NO_ISSUER_LINE,
+            unit=m.unit,
+            period=None,
+            status="not_applicable",
+        )
+        c.copy(("T1C.6", k, "cp1"), "CP-1", cp1[k].fact)
+        c.unsettled(
+            ("T1C.6", k, "difference"),
+            "Difference",
+            NO_ISSUER_LINE,
+            unit=m.difference_unit,
+            period=None,
+            status="not_applicable",
+        )
+        c.text(("T1C.6", k, "result"), "Result", "Not compared")
+        c.row("T1C.6", k, m.label, ("sheet", "cp1", "difference", "result"))
+
+
 def _tie_out(c: _Composer, sheet: PeerSheet | None, cp1: Mapping[str, _Cp1Cell]) -> None:
     """The issuer line on the peer source recomputed and set against the copied CP-1 value."""
+    if sheet is not None and sheet.issuer is None:
+        _tie_out_no_issuer(c, cp1)
+        return
     for m in METRICS:
         k, cell, label = m.key, cp1[m.key], "Issuer line on the peer source"
         line = _issuer_line(m, sheet, c.absent)
         if isinstance(line, Unsettled):
-            period = None if sheet is None else sheet.issuer.period
+            period = _issuer_period(sheet)
             sheet_ref = ("T1C.6", k, "sheet")
             c.unsettled(
                 sheet_ref, label, line.reason, unit=m.unit, period=period, status=line.status
@@ -1210,6 +1263,18 @@ def _tie_out_settled(
     )
 
 
+PACK_LIMITATIONS = (
+    (
+        "Peer figures come from the CP-DR peer pack: each amount is read by Python from the "
+        "figure quoted in a supplied evidence item and is unaudited; no peer is restated to "
+        "the issuer's basis."
+    ),
+    (
+        "Peer ratios are computed from the located operands; the CP-DR peer pack carries no "
+        "issuer line, so the issuer is not tied out to a peer summary and its ratios are CP-1's."
+    ),
+)
+
 GAP_FIELDS = (
     ("gap", "Gap"),
     ("why_it_matters", "Why it matters"),
@@ -1233,28 +1298,34 @@ def _gaps(c: _Composer, gaps: Sequence[Gap]) -> None:
         c.row("T1C.7", r, f"Gap {n}", ["id", *(name for name, _ in GAP_FIELDS)])
 
 
+def _source_limitations(present: bool, pack: bool, absent: str) -> tuple[str, ...]:
+    if present and pack:
+        return PACK_LIMITATIONS
+    if present:
+        return (
+            (
+                "Peer figures come from the peer summary source, which is supplied by a data "
+                "desk and unaudited; no peer is restated to the issuer's basis."
+            ),
+            (
+                "Peer ratios use the definitions stated in the peer summary; the issuer line on "
+                "the same summary is tied to CP-1 in the definition alignment table."
+            ),
+        )
+    # round 5 P1: the reason names a missing or a not-ready source
+    return (f"{absent}: no peer universe, median, position or outlier flag can be formed.",)
+
+
 def _limitations(
     present: bool,
+    pack: bool,
     absent: str,
     cp1: Mapping[str, _Cp1Cell],
     peers: Sequence[_Peer],
     stats: Mapping[str, _Stat | None],
     gaps: Sequence[Gap],
 ) -> tuple[str, ...]:
-    out: list[str] = []
-    if present:
-        out.append(
-            "Peer figures come from the peer summary source, which is supplied by a data "
-            "desk and unaudited; no peer is restated to the issuer's basis."
-        )
-        out.append(
-            "Peer ratios use the definitions stated in the peer summary; the issuer line on "
-            "the same summary is tied to CP-1 in the definition alignment table."
-        )
-    else:
-        out.append(  # round 5 P1: the reason names a missing or a not-ready source
-            f"{absent}: no peer universe, median, position or outlier flag can be formed."
-        )
+    out = list(_source_limitations(present, pack, absent))
     out += [  # round 6 B1
         f"The issuer's {m.label[0].lower()}{m.label[1:]} is not available in CP-1 "
         f"({own.reason}), so its difference from the peer median, its position and its "
@@ -1412,9 +1483,10 @@ ISSUER_EBITDA_FORMULA = "CP-1 LTM adjusted EBITDA (T4.10)"
 CP1_REF = (
     "cp1:ebitda"  # derives_from entry naming the CP-1 fact, which is not a fact of this module
 )
-# Design 8: until O7d's TDR.6 pack exists, these peer sources give no figures and no fallback.
+# Design 8 (O7d D2): these peer sources give no EV figure and no fallback. CP-DR's peer pack carries
+# the five CP-1C operands only (O7-R47 Q5), so `cp_dr_public` still has no enterprise value figure.
 PUBLIC_GAPS: Mapping[str, str] = {
-    "cp_dr_public": "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)",
+    "cp_dr_public": "No peer figures: the CP-DR peer pack carries no enterprise value figure",
     "user_list": "No peer figures: user_list peers need the peer lookup (O7d)",
 }
 USER_FIGURES_LINE = (
@@ -2308,7 +2380,8 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     _gaps(c, inputs.submission.gaps)
     tables = tuple(PeerTable(t, title, tuple(c.rows[t])) for t, title in TABLES.items())
     ev = _ev_compose(inputs)  # Phase 7: T1C.9-T1C.11 after the eight, only over a context
-    limitations = _limitations(present, c.absent, cp1, peers, stats, inputs.submission.gaps)
+    pack = sheet is not None and sheet.issuer is None
+    limitations = _limitations(present, pack, c.absent, cp1, peers, stats, inputs.submission.gaps)
     if ev:  # Phase 7: the context's lines follow the frozen list, none repeated
         limitations += tuple(line for line in ev.limitations if line not in limitations)
     facts = _with_lineage(c.items) + (ev.facts if ev else ())
@@ -2381,6 +2454,16 @@ def _claims(composed: _Composed, submission: PeerBenchmarkSubmission) -> tuple[C
 
 def _peer_source(sources: Sequence[Source]) -> Source | None:
     return next((s for s in sources if s.source_id == PEERS_SOURCE_ID), None)
+
+
+def _sheet_of(inputs: PeerBenchmarkInputs) -> PeerSheet | None:
+    """The peer sheet of the run: the CP-DR pack's when `_inputs` read one, else the peers source's
+    (PeerTableError when that table cannot be read)."""
+    if inputs.pack_sheet is not None:
+        return inputs.pack_sheet
+    return parse_peer_source(
+        _peer_source(inputs.sources), issuer_name=inputs.issuer_name, currency=inputs.basis.currency
+    )
 
 
 def _assessment_set_issues(
@@ -2471,11 +2554,7 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     (`_bounded`), so the issue text cannot outgrow the payload (protocol section 6)."""
     submission = inputs.submission
     try:
-        sheet = parse_peer_source(
-            _peer_source(inputs.sources),
-            issuer_name=inputs.issuer_name,
-            currency=inputs.basis.currency,
-        )
+        sheet = _sheet_of(inputs)
     except PeerTableError as error:
         return (str(error),)
     set_issues = _assessment_set_issues(submission, sheet)
@@ -2498,11 +2577,7 @@ def compute(inputs: PeerBenchmarkInputs) -> PeerBenchmarkResult:
     """The module's facts, tables, claims and own limitations; ValueError on any issue."""
     if issues := calculation_issues(inputs):
         raise ValueError("; ".join(issues))
-    sheet = parse_peer_source(
-        _peer_source(inputs.sources),
-        issuer_name=inputs.issuer_name,
-        currency=inputs.basis.currency,
-    )
+    sheet = _sheet_of(inputs)
     composed = _compose(inputs, sheet)
     claims = _claims(composed, inputs.submission)
     return PeerBenchmarkResult(composed.facts, composed.tables, claims, composed.limitations)
@@ -2529,7 +2604,13 @@ def in_scope(source_id: str) -> bool:
     return source_id in SCOPE or source_id.startswith(RESERVED_PREFIX)
 
 
-CP0, CP1 = "CP-0", "CP-1"
+CP0, CP1, CPDR = "CP-0", "CP-1", "CP-DR"
+PACK_SOURCE = "cp-dr-dossier"  # the `source` of the peers view when the sheet is the CP-DR pack's
+# O7d D2: the pack holds a `peers` source and the bound CP-DR head carries TDR.6. Neither is
+# dropped for the other; the run is refused (the model cannot repair it).
+PEER_CONFLICT = (
+    "Peer source conflict: the pack holds a peers source and the CP-DR head carries TDR.6"
+)
 SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
 # Rulings stage 2 round 5 item 9: the admitted shape issue of text `json_object` refuses.
 BAD_PAYLOAD = "(root): not a JSON object within the payload bounds"
@@ -2556,6 +2637,9 @@ class Upstream:
     cp0: Module
     cp1: Module
     inherited: tuple[str, ...] = ()
+    # The bound CP-DR head (O7d D2), whose TDR.6 facts are the peer sheet when no `peers` source is
+    # held. None when the attempt binds no CP-DR input or a blocked one (a blocked head is not read).
+    cpdr: Module | None = None
 
     def status(self, module_id: str) -> InputStatus | None:
         return next((item.status for item in self.bound if item.input_id == module_id), None)
@@ -2569,6 +2653,11 @@ def _bound_module(store: Execution, attempt: Attempt, module_id: str) -> Module:
     if module.module_id != module_id:
         raise ValueError(f"The CP-1C attempt's {module_id} input is a {module.module_id} module")
     return module
+
+
+def _bound_cpdr(store: Execution, attempt: Attempt) -> Module | None:
+    item = next((i for i in attempt.inputs if i.input_id == CPDR), None)
+    return None if item is None or item.status == "blocked" else _bound_module(store, attempt, CPDR)
 
 
 def cp1c_upstream(store: Execution, attempt: Attempt) -> Upstream:
@@ -2589,6 +2678,7 @@ def cp1c_upstream(store: Execution, attempt: Attempt) -> Upstream:
         cp0=_bound_module(store, attempt, CP0),
         cp1=_bound_module(store, attempt, CP1),
         inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+        cpdr=_bound_cpdr(store, attempt),
     )
 
 
@@ -2611,6 +2701,26 @@ def _cp1_metrics(cp1: Module, basis: PeriodBasis) -> dict[str, Fact]:
     return picked
 
 
+class PeerPackRefused(ValueError):
+    """The CP-DR head carries TDR.6 and the sheet cannot be taken from it: a held `peers` source
+    beside it (`PEER_CONFLICT`) or facts the sheet cannot read. The text is the issue line."""
+
+
+def _pack_sheet(upstream: Upstream, held: Source | None, basis: PeriodBasis) -> PeerSheet | None:
+    """The sheet of the bound CP-DR head's TDR.6 facts, None when the head carries none. A held
+    `peers` source beside them is `PEER_CONFLICT`; facts the sheet cannot read are refused with the
+    reason (`research.peers.peer_sheet`), never dropped for the user path."""
+    head = upstream.cpdr
+    if head is None or not carries_tdr6(head):
+        return None
+    if held is not None:
+        raise PeerPackRefused(PEER_CONFLICT)
+    sheet = peer_sheet(head, basis)
+    if isinstance(sheet, PackUnusable):
+        raise PeerPackRefused(clipped(("Peer pack unusable: ", sheet.reason)))
+    return sheet
+
+
 def _inputs(
     pack: PreparedPack, submission: PeerBenchmarkSubmission, upstream: Upstream
 ) -> PeerBenchmarkInputs:
@@ -2626,6 +2736,7 @@ def _inputs(
         cp1_metrics=_cp1_metrics(upstream.cp1, basis),
         submission=submission,
         basis=basis,
+        pack_sheet=_pack_sheet(upstream, _peer_source(pack.sources), basis),
     )
     return _with_context(base, pack, upstream.cp1.facts)
 
@@ -2680,9 +2791,12 @@ def _stale_issues(upstream: Upstream) -> list[str]:
 def _provenance_issues(upstream: Upstream) -> list[str]:
     """The supplied modules are the bound heads (same module, same canonical hash)."""
     bound = {item.input_id: item for item in upstream.bound}
+    supplied = [(CP0, upstream.cp0), (CP1, upstream.cp1)]
+    if upstream.cpdr is not None:
+        supplied.append((CPDR, upstream.cpdr))
     found = [
         f"Upstream {module_id}: the supplied module is not the bound input"
-        for module_id, module in ((CP0, upstream.cp0), (CP1, upstream.cp1))
+        for module_id, module in supplied
         if (item := bound.get(module_id)) is None
         or module.module_id != module_id
         or module.content_hash() != item.sha256
@@ -2811,6 +2925,8 @@ def _checked(
         _cp1_facts(inputs)  # the Stage 1 rules on the selected facts (unit, amount, period)
     except (ContextRefused, PeriodRefused) as error:  # a named issue, never "none" (P8-R5)
         return (_basis_issue(error),), None
+    except PeerPackRefused as error:
+        return (str(error),), None
     except ValueError as error:
         return (clipped(("CP-1 facts unavailable: ", str(error))),), None
     issues = calculation_issues(inputs)
@@ -2962,8 +3078,38 @@ def _peers_view(source: Source | None, sheet: PeerSheet | None) -> dict[str, obj
         "rows": []
         if sheet is None
         else [_view_row(f"p{n:02d}", row) for n, row in enumerate(sheet.peers, 1)],
-        "issuer_line": None if sheet is None else _view_row("issuer", sheet.issuer),
+        "issuer_line": None
+        if sheet is None or sheet.issuer is None
+        else _view_row("issuer", sheet.issuer),
     }
+
+
+def _pack_view(sheet: PeerSheet) -> dict[str, object]:
+    """The peers view of a CP-DR pack sheet: its rows as the table rule reads them and the candidates
+    kept off it with their reasons. Its figures are cited as `ev-*` lines, not as a peers page."""
+    return {
+        "state": "present",
+        "source": PACK_SOURCE,
+        "source_id": None,
+        "pages": [],
+        "rows": [_view_row(f"p{n:02d}", row) for n, row in enumerate(sheet.peers, 1)],
+        "issuer_line": None,
+        "not_admitted": [asdict(refused) for refused in sheet.not_admitted],
+    }
+
+
+def _pack_peers(
+    upstream: Upstream, held: Source | None, basis: PeriodBasis | None
+) -> tuple[dict[str, object] | None, str | None]:
+    """(the pack's peers view, None), or (None, the issue line) when the head's TDR.6 cannot be the
+    sheet, or (None, None) when no pack applies (the user path's view stands)."""
+    if basis is None:
+        return None, None
+    try:
+        sheet = _pack_sheet(upstream, held, basis)
+    except PeerPackRefused as error:
+        return None, str(error)
+    return (None, None) if sheet is None else (_pack_view(sheet), None)
 
 
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
@@ -2975,13 +3121,15 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     source = _peer_source(pack.sources)
     basis, facts, issue = _view_selection(pack, upstream)
     sheet = _view_sheet(pack, source, basis)
+    pack_peers, pack_issue = _pack_peers(upstream, source, basis)
+    issue = issue if issue is not None else pack_issue
     block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
             if item.input_id.startswith("CP-")
         ],
-        "peers": _peers_view(source, sheet),
+        "peers": pack_peers if pack_peers is not None else _peers_view(source, sheet),
         "cp1_facts": [
             {
                 "ref": f"T1C.3.issuer.{m.key}",

@@ -74,6 +74,7 @@ from deploy_workflow import host
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.owners import cp1c
+from deploy_workflow.research.steps import research_rules
 from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -1554,6 +1555,15 @@ def test_cp1c_cites_ev_sources() -> None:
     key = _cpdr_key()["cp1c_cite"]
     assert (key["item"], key["locator"]) == ("ev-1", "line:9")
     assert _ev_issues(_ev_citation_payload(key["quote"], key["item"], key["locator"])) == ((), ())
+    # The tool-use rule (O7-R54 M-1, restored leg): the same cite, never read, is refused with
+    # CP-DR's own rule's issue (`research.steps.research_rules`); the page:N control is unchanged.
+    payload = _ev_citation_payload(key["quote"], key["item"], key["locator"])
+    cited = cited_locators(payload)
+    unread = Seen(read=frozenset(cited - {(key["item"], key["locator"])}))
+    ours = cp1c.RULES(payload, unread)
+    assert ours and ours == tuple(i for i in research_rules(payload, unread) if key["item"] in i)
+    page = min(c for c in cited if c[1].startswith("page:"))
+    assert cp1c.RULES(payload, Seen(read=frozenset(cited - {page})))
     issues, _ = _ev_issues(_ev_citation_payload(key["not_in_item"], key["item"], key["locator"]))
     assert any(i.startswith("Quote/locator mismatch") for i in issues), issues
     issues, _ = _ev_issues(_ev_citation_payload(key["quote"], key["absent_item"], key["locator"]))

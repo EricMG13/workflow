@@ -8,14 +8,14 @@ runs are the CP-DR owner tests.
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import cpdr_runs
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from deploy_vii import cp2_synthesis, registry
-from deploy_vii.contracts import Fact, Input, Module
+from deploy_vii.contracts import Citation, Fact, Input, Module
 from deploy_vii.execution import (
     Execution,
     ExecutionSnapshot,
@@ -24,7 +24,10 @@ from deploy_vii.execution import (
     invalidate,
 )
 from deploy_vii.preparation import PreparedPack
+from deploy_workflow import host
 from deploy_workflow import owner_workflow as owner
+from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.owners import cpdr
 
 CPDR = "CP-DR"
 
@@ -234,11 +237,26 @@ def _cp2_submission() -> Any:
     )
 
 
+def _citation_fields(model: type[BaseModel], prefix: str = "") -> list[str]:
+    """Dotted paths of every field typed `Citation`, through nested models and containers."""
+    found: list[str] = []
+    for name, field in model.model_fields.items():
+        pending = [field.annotation]
+        while pending:
+            node = pending.pop()
+            pending.extend(get_args(node))
+            if node is Citation:
+                found.append(f"{prefix}{name}")
+            elif isinstance(node, type) and issubclass(node, BaseModel):
+                found.extend(_citation_fields(node, f"{prefix}{name}."))
+    return found
+
+
 def test_cp2_does_not_get_sources(expected: dict[str, Any]) -> None:
     assert _key(expected, "consumers", "cp2", "sources") is False
     assert owner.OWNER_SPECS["CP-2"].steps[0].sources is False
     submission_type = cp2_synthesis.CreditSynthesisSubmission
-    held = [n for n, f in submission_type.model_fields.items() if "Citation" in repr(f.annotation)]
+    held = _citation_fields(submission_type)
     assert held == _key(expected, "consumers", "cp2", "citation_fields")
     payload = json.loads(_cp2_submission().model_dump_json())
     submission_type.model_validate_json(json.dumps(payload))
@@ -263,3 +281,75 @@ def test_cp2_does_not_get_sources(expected: dict[str, Any]) -> None:
     report = cp2_synthesis.credit_synthesis(pack, _cp2_submission(), upstream)
     claims = cp2_synthesis.cp2_module(report, (), 0).claims
     assert claims and all(claim.citations == () for claim in claims)
+
+
+# --- O7-R54 H-1: the host authenticates a CP-DR head through its core's probe ----------------------
+
+
+def _core_settled_store(root: Path) -> Execution:
+    """CP-0 and CP-1 hand-built (as `cpdr_runs.settled_pair`), CP-DR settled through its core's
+    `submit` (brief, then research): a two-step head."""
+    store, ticket = cpdr_runs.locked("positive", root)
+    cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, cpdr_runs.research_payload("positive"), None)
+    return store
+
+
+def test_producer_inputs_authenticates_a_core_settled_cpdr_head(tmp_path: Path) -> None:
+    store = _core_settled_store(tmp_path / "real")
+    head = next(h for h in store.read().heads if h.module_id == CPDR)
+    snapshot = store.read()
+    module = store.head_module(head)
+    assert host._producer_inputs(store, snapshot, module) is True
+    # A head the journal would not write is refused: a forged module made the head's result.
+    forged = module.model_copy(update={"limitations": (*module.limitations, "forged")})
+    cpdr_runs.edit_head(store, CPDR, forged=forged)
+    tampered = store.read()
+    bad = store.head_module(next(h for h in tampered.heads if h.module_id == CPDR))
+    assert host._producer_inputs(store, tampered, bad) is False
+
+
+def test_producer_inputs_refuses_a_hand_built_cpdr_head(
+    expected: dict[str, Any], tmp_path: Path
+) -> None:
+    settled = Settled(tmp_path / "hand", ("CP-1", CPDR), expected)
+    settled.through(CPDR)
+    snapshot = settled.store.read()
+    module = settled.store.head_module(settled.head(CPDR))
+    assert host._producer_inputs(settled.store, snapshot, module) is False
+
+
+@pytest.fixture(scope="module")
+def bound_cpdr_store(tmp_path_factory: pytest.TempPathFactory) -> Execution:
+    """Genuine CP-0 and CP-1 (the CP-1 promotion, about two minutes) and a core-settled CP-DR over
+    a run that also requests CP-1C; the store is left at the CP-1C step."""
+    root = tmp_path_factory.mktemp("bound")
+    pack = cpdr_runs.make_pack("positive")
+    pack = PreparedPack(
+        run=pack.run.model_copy(update={"requested_modules": ("CP-1", CPDR, "CP-1C")}),
+        sources=pack.sources,
+    )
+    cpdr_runs.stage(root)
+    workflow = OwnerWorkflow.create(root / "store", pack, publication_directory=None)
+    review = json.loads(cpdr_runs.cp0_text(pack, "positive"))
+    first = next(row for row in review["consumers"] if row["module_id"] == "CP-1")
+    review["consumers"].append({**first, "module_id": "CP-1C"})
+    text = json.dumps(review, ensure_ascii=False)
+    cpdr_runs.read_cited(workflow, text)
+    cpdr_runs._driver("s1a_runs").submit_valid(workflow, text)
+    cpdr_runs.drive_cp1(workflow, pack)
+    assert cpdr_runs.drive_brief(workflow, "positive")["status"] == "valid"
+    assert cpdr_runs.drive_research(workflow, "positive")["status"] == "valid"
+    return Execution(root / "store")
+
+
+def test_cp1c_session_opens_over_a_bound_cpdr_head(
+    bound_cpdr_store: Execution, expected: dict[str, Any]
+) -> None:
+    """Plan row 6's surface: the source session of CP-1C, which binds the CP-DR head, lists the
+    key's scope (`#consumers/cp1c_scope/positive_pack`) instead of refusing `identity_mismatch`."""
+    snapshot = bound_cpdr_store.read()
+    pending = [a for a in snapshot.attempts if a.module_id == "CP-1C" and a.status == "pending"]
+    ticket = pending[0] if pending else bound_cpdr_store.begin("CP-1C")
+    assert CPDR in {i.input_id for i in ticket.inputs}
+    sources = host.session_sources(bound_cpdr_store, ticket.ticket_id, "peer_benchmark")
+    assert list(sources) == _key(expected, "consumers", "cp1c_scope", "positive_pack")

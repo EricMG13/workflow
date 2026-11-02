@@ -35,6 +35,7 @@ from deploy_vii.registry import plan
 from deploy_workflow.model.adapter import LiveAdapter, ModelAdapter, RecordingMissing
 from deploy_workflow.model.budget import Budget, BudgetError
 from deploy_workflow.model.loop import (
+    OWN_FORM,
     PromptFor,
     StepStopped,
     ToolLoop,
@@ -283,7 +284,7 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         raise ResumeMismatch("config_id is not the run's")
 
 
-_OWN_FORM = (CpDrNotAnchored, BriefInvalid)  # faults that keep their form through a loop stop
+_OWN_FORM = OWN_FORM
 _FAULTS = (
     StepStopped,
     BudgetError,

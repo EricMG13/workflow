@@ -64,6 +64,7 @@ from deploy_workflow.model.turn import (
     dump_json,
 )
 from deploy_workflow.owner_workflow import OwnerBinding, OwnerWorkflow, StepSpec
+from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.workflow import WorkflowError
 
 READ_INPUTS = "read_inputs"
@@ -88,12 +89,25 @@ class StepStopped(Exception):
         )
 
 
+OWN_FORM = (CpDrNotAnchored, BriefInvalid)  # faults that keep their form through a loop stop
+
+
+def _own_form(text: str) -> str:
+    """The key's ``<Type>: <reason>`` of an own-form fault the loop wrapped as ``WorkflowError``
+    (O7-R32), as a fresh run records it; any other stop text is returned as it is."""
+    inner = text.removeprefix("WorkflowError: ")
+    if inner != text and any(inner.startswith(f"{kind.__name__}: ") for kind in OWN_FORM):
+        return inner
+    return text
+
+
 def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
     """The stop a killed run had already decided, from its last durable record (R16): the record
     form of the loop's stops (``_after_reply``, ``_outcome_of``, ``_validate``), which all write
     their class and detail into the call's own record before the loop raises. Not a stop: no error,
     a first 402 (the loop waits it out and resends), and a retryable unknown charge, whose stop is
-    the budget's (``Budget.stop_reason``). The text is the one ``StepStopped`` carries."""
+    the budget's (``Budget.stop_reason``). The text is the one ``StepStopped`` carries, except that an
+    own-form fault keeps its own form, as on a fresh run (O7-R32)."""
     if not records:
         return None
     last = records[-1]
@@ -108,7 +122,7 @@ def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
     if last["http_status"] == 402 and not twice_402:
         return None
     detail = last["error"] or ""
-    return f"{error_class}: {detail}" if detail else str(error_class)
+    return _own_form(f"{error_class}: {detail}" if detail else str(error_class))
 
 
 # ---------------------------------------------------------------- repair scoping (runner port)

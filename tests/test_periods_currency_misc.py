@@ -328,23 +328,45 @@ def test_the_2025_pair_is_unsupported_over_the_2026_register() -> None:
     }
 
 
+def _q2_q3_register(currency: str) -> Module:
+    """`shifted` with its q3-2026 and q4-2026 rows relabelled as the oracle's R5b pair: prior
+    q2-2026 (91 days, 1 April to 30 June) and current q3-2026 (92 days, 1 July to 30 September)."""
+    own: Any = importlib.import_module("test_owner_cp1b")
+    text = shifted(currency).model_dump_json()
+    for old, new in (("q3-2026", "q2-2026"), ("q4-2026", "q3-2026")):
+        text = text.replace(own._basis_of(old, "QUARTER"), own._basis_of(new, "QUARTER"))
+        text = text.replace(old, new)
+    for old, new in (
+        ("Q3 26: 2026-07-01 to 2026-09-30", "Q2 26: 2026-04-01 to 2026-06-30"),
+        ("Q4 26: 2026-10-01 to 2026-12-31", "Q3 26: 2026-07-01 to 2026-09-30"),
+    ):
+        text = text.replace(old, new)
+    window = {
+        "q2-2026": ("2", "2026-04-01", "2026-06-30"),
+        "q3-2026": ("3", "2026-07-01", "2026-09-30"),
+    }
+    facts = []
+    for fact in Module.model_validate_json(text).facts:
+        quarter, start, end = window.get(fact.row_id.removeprefix("period."), ("", "", ""))
+        value = {"fiscal_quarter": quarter, "start_date": start, "end_date": end}.get(fact.field)
+        facts.append(fact.model_copy(update={"text": value}) if value else fact)
+    return Module.model_validate_json(text).model_copy(update={"facts": tuple(facts)})
+
+
 def test_r5b_q3_base_cp1b_keeps_its_raw_day_refusal() -> None:
     """R5b: a q3 base is not a currency refusal; CP-1B refuses `incompatible_periods` as today
-    (the 91-day against the 92-day quarter, `earnings.py` raw-day check)."""
-    want = KEY["runs"]["R5b"]["modules"]["CP-1B"]
+    (the 91-day prior q2-2026 against the 92-day current q3-2026, `earnings.py` raw-day check).
+    The pair is the oracle's, `runs/R5b` `prior_period` and `current_period`."""
+    run = KEY["runs"]["R5b"]
+    want = run["modules"]["CP-1B"]
     assert want["outcome"] == "refused" and want["error"] == "incompatible_periods"
-    module = shifted("USD")
-    short = module.model_copy(
-        update={
-            "facts": tuple(
-                f.model_copy(update={"text": "2026-09-29"})
-                if f.row_id == "period.q3-2026" and f.field == "end_date"
-                else f
-                for f in module.facts
-            )
-        }
+    found = _compute(
+        _q2_q3_register(run["pack_currency"]),
+        run["prior_period"],
+        run["current_period"],
+        "flat_sequential",
+        run["reporting_currency"],
     )
-    found = _compute(short, "q3-2026", "q4-2026", "flat_sequential", "USD")
     assert found.issues == (want["issue_contains"],) and found.report is None
 
 

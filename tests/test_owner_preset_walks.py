@@ -279,15 +279,28 @@ def test_walk_earnings_update(earnings_at_stop: Any) -> None:
         workflow._begins[3].snapshot_before_sha256
         == workflow._publications[0].snapshot_after_sha256
     )
+    # publish takes the snapshot CP-1B's settled submission left, not the one its begin left
+    assert workflow._submissions[-1].binding.binding.module_id == "CP-1B"
+    assert (
+        workflow._submissions[-1].snapshot_after_sha256
+        == workflow._publications[0].snapshot_before_sha256
+    )
+    # CP-1B is a single-step module bound at its begin's snapshot
     assert (
         workflow._begins[2].snapshot_after_sha256
-        == workflow._publications[0].snapshot_before_sha256
+        == workflow._submissions[-1].binding.binding.snapshot_sha256
     )
     # CP-5's bound set is the registry's and holds no CP-MODEL input (ruling B1)
     assert "CP-MODEL" not in dependencies(plan(pw.pathway_modules("earnings_update")))["CP-5"]
     assert workflow._phase == "analytical"
     assert workflow._binding.module_id == "CP-1D"
-    assert {h.module_id for h in workflow._store.read().heads} == {"CP-0", "CP-1", "CP-1B"}
+    # the published CP-MODEL holds a head: publish() reads it back (_record) before "published"
+    assert {h.module_id for h in workflow._store.read().heads} == {
+        "CP-0",
+        "CP-1",
+        "CP-1B",
+        "CP-MODEL",
+    }
     # The Step 1 stop at CP-1D is a prediction (bound inputs differ). Observe it: submit the
     # frozen CP-1D payload. The first promotion run must pin the status here; until
     # then only a refusal of the call itself fails.

@@ -620,7 +620,7 @@ def test_a8_other_hash_seed_gives_identical_page_and_proof(run_positive: Closed)
         "print(hashlib.sha256(page).hexdigest())\n"
         "print(hashlib.sha256(proof.model_dump_json().encode()).hexdigest())\n"
     )
-    env = {**os.environ, "PYTHONHASHSEED": "4242"}
+    env = {**os.environ, "PYTHONHASHSEED": "4242", "PYTHONPATH": os.pathsep.join(sys.path)}
     result = subprocess.run(
         [sys.executable, "-c", code, str(run_positive.root)],
         env=env,

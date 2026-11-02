@@ -1208,10 +1208,12 @@ def test_rerun_replays_upstream_and_runs_the_repaired_module_live(tmp_path: Path
     assert {r["module_id"] for r in records}.isdisjoint({"CP-0", "CP-1", "CP-1A", "CP-2"})
     assert {r["module_id"] for r in records} >= {"CP-3", "CP-5", "CP-6"}
     assert {r.module_id for r in replay_records(run_dir)} == {"CP-0", "CP-1", "CP-1A", "CP-2"}
-    cp1 = next(r for r in replay_records(run_dir) if r.module_id == "CP-1")
-    assert [(b.path, b.old, b.new) for b in cp1.rebound] == [
+    cp1_records = {r.step_id: r for r in replay_records(run_dir) if r.module_id == "CP-1"}
+    assert set(cp1_records) == {s.step_id for s in OWNER_SPECS["CP-1"].steps}
+    assert [(b.path, b.old, b.new) for b in cp1_records["financials"].rebound] == [
         ("financial.run_id", o2_case.RUN_ID, RERUN_ID)
     ]
+    assert all(r.rebound == () for s, r in cp1_records.items() if s != "financials")
     receipt = OwnerRunReceipt.model_validate_json((run_dir / "owner-run.json").read_text())
     verify_owner_run_receipt(
         Execution(run_dir / "execution"), receipt, publication_directory=run_dir / "publication"

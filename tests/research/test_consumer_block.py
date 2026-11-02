@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import socket
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -398,10 +399,26 @@ def _edit_rejected(store: Execution) -> None:
     path.write_text(json.dumps(rows), encoding="utf-8")
 
 
-def test_the_cp2_block_and_write_dossier_refuse_an_edited_record(tmp_path: Path) -> None:
-    """O7 end batch 2 (L1): every dossier reader compares the two records with the head's inputs."""
+def _edit_retrieved(store: Execution) -> None:
+    path = cpdr.research_dir(store) / "evidence.json"
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    rows[0]["retrieved"] = "2000-01-01T00:00:00Z"
+    path.write_text(json.dumps(rows), encoding="utf-8")
+
+
+_EDITS = pytest.mark.parametrize(
+    "edit", [_edit_rejected, _edit_retrieved], ids=["rejected_row_appended", "retrieved_edited"]
+)
+
+
+@_EDITS
+def test_the_cp2_block_and_write_dossier_refuse_an_edited_record(
+    tmp_path: Path, edit: Callable[[Execution], None]
+) -> None:
+    """O7 end batch 2 (L1): every dossier reader compares the two records with the head's inputs,
+    over an edit of either record."""
     store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-2"])
-    _edit_rejected(store)
+    edit(store)
     research = cpdr.research_dir(store)
     attempt = store.begin("CP-2")
     attempt = next(a for a in store.read().attempts if a.ticket_id == attempt.ticket_id)
@@ -414,15 +431,29 @@ def test_the_cp2_block_and_write_dossier_refuse_an_edited_record(tmp_path: Path)
     assert not (research / cpdr.DOSSIER_FILE).exists()
 
 
-def test_a_warm_memo_does_not_hide_a_record_edit(tmp_path: Path) -> None:
-    """O7 end batch 2 (L2): a passing check is memoised, then `rejected.json` is edited; the next
+@_EDITS
+def test_a_warm_memo_does_not_hide_a_record_edit(
+    tmp_path: Path, edit: Callable[[Execution], None]
+) -> None:
+    """O7 end batch 2 (L2): a passing check is memoised, then a record is edited; the next
     `_producer_inputs` still returns False."""
     store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
     module = store.head_module(cc.head(store, CPDR))
     assert host._producer_inputs(store, store.read(), module) is True
     assert host._SUBMISSION_VERIFIED
-    _edit_rejected(store)
+    edit(store)
     assert host._producer_inputs(store, store.read(), module) is False
+
+
+def test_check_records_refuses_a_head_that_binds_no_record_inputs(tmp_path: Path) -> None:
+    """O7 end batch 2 (L1): a head without the two record inputs is `identity_mismatch`, never
+    taken as 'nothing to compare'."""
+    store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
+    module = store.head_module(cc.head(store, CPDR))
+    cpdr.check_records(store, module)
+    with pytest.raises(WorkflowError) as refused:
+        cpdr.check_records(store, module.model_copy(update={"inputs": ()}))
+    assert refused.value.code == "identity_mismatch"
 
 
 def test_untouched_research_files_still_authenticate_the_head(tmp_path: Path) -> None:

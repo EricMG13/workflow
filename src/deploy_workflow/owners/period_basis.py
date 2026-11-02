@@ -209,8 +209,7 @@ def currency_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Cur
         return DEFAULT_CURRENCY
     register = _period_register(cp1_facts)
     for period_id, row in register.items():
-        if "unit" in row:
-            _check_unit(period_id, row)
+        _check_unit(period_id, row)
     return _check_currency(context, register)
 
 

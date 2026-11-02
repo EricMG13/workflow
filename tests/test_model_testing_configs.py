@@ -23,10 +23,8 @@ def test_configs_match_ruling() -> None:
     assert CONFIGS["opus-medium"].model == "claude-opus-5-5"
     assert CONFIGS["opus-medium"].effort == "medium"
     assert CONFIGS["deepseek-max"].model == "deepseek/deepseek-v4.1-flash-1017"
-    assert {c for c, m in CONFIGS.items() if "repair" in m.roles} == {
-        "sol-medium",
-        "deepseek-max",
-    }
+    assert {c for c, m in CONFIGS.items() if "repair" in m.roles} == {"sol-medium"}
+    assert CONFIGS["deepseek-max"].roles == frozenset()  # user, 2026-11-02
 
 
 def test_configs_agree_with_orchestrator() -> None:

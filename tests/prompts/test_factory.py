@@ -22,6 +22,7 @@ from deploy_workflow.owner_workflow import OwnerBinding, OwnerWorkflow, StepSpec
 from deploy_workflow.prompts import inventory
 from deploy_workflow.prompts.compose import NoPrompt, RunContextRefused
 from deploy_workflow.prompts.factory import prompt_factory
+from deploy_workflow.prompts.fence import UntrustedItem
 from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.tools.source import SourceError
 
@@ -77,6 +78,30 @@ def test_session_sources_refuses_a_step_with_no_source_session(
 ) -> None:
     with pytest.raises(SourceError):
         host.session_sources(store, walk.binding.ticket_id, "narrative")
+
+
+def stub_item() -> UntrustedItem:
+    return UntrustedItem("ev-1", "a" * 64, "https://x.example/a", "2026-11-02T05:40:00Z", "body")
+
+
+def test_the_untrusted_hook_fills_one_fenced_block(
+    pack: PreparedPack, store: Execution, walk: OwnerWorkflow
+) -> None:
+    """O7b-1c S1: the hook's items are the request's ``untrusted``; none without a hook."""
+    asked: list[tuple[str, str]] = []
+
+    def hook(binding: OwnerBinding, spec: StepSpec) -> tuple[UntrustedItem, ...]:
+        asked.append((binding.module_id, binding.step_id))
+        return (stub_item(),)
+
+    with_hook = prompt_factory(pack, store, untrusted_for=hook)(walk.binding, walk.spec, ())
+    assert asked == [("CP-0", "source_readiness")]
+    assert with_hook[1].text.count("<<<UNTRUSTED_EVIDENCE") == 1
+    assert "id=ev-1 " in with_hook[1].text
+    without = prompt_factory(pack, store)(walk.binding, walk.spec, ())
+    assert "<<<UNTRUSTED_EVIDENCE" not in without[1].text
+    empty = prompt_factory(pack, store, untrusted_for=lambda b, s: ())(walk.binding, walk.spec, ())
+    assert empty == without
 
 
 def test_the_repair_issues_reach_the_prompt(

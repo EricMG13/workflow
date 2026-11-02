@@ -297,6 +297,8 @@ class PeerRow:
     # A pack row (O7d D2): operand -> the ev-* citation of the figure the amount was read from. A row
     # read from a peers source holds none and every fact cites its `line` on page:1.
     figures: Mapping[str, Citation] = field(default_factory=dict)
+    # A pack row (O7d D2): operand -> why the TDR.6 cell is missing, shown on its T1C.2 cell.
+    reasons: Mapping[str, str] = field(default_factory=dict)
 
     @property
     def period(self) -> str:
@@ -812,7 +814,7 @@ def _source_figures(c: _Composer, sheet: PeerSheet | None, peers: Sequence[_Peer
                 c.unsettled(
                     ("T1C.2", row_id, key),
                     label,
-                    NOT_STATED_IN_SOURCE,
+                    data.reasons.get(key, NOT_STATED_IN_SOURCE),
                     unit=sheet.unit,
                     period=data.period,
                 )
@@ -1310,6 +1312,30 @@ def _gaps(c: _Composer, gaps: Sequence[Gap]) -> None:
                 value_class=None if name == "severity" else "analyst_judgment",
             )
         c.row("T1C.7", r, f"Gap {n}", ["id", *(name for name, _ in GAP_FIELDS)])
+
+
+NOT_ADMITTED_PREFIX = "Not admitted: "
+NOT_ADMITTED_FIELDS = (
+    "Peer universe",  # affected_analysis
+    "Not rated",  # severity: Python's row carries no analyst judgment
+    "CP-1C lists the peer; the CP-DR peer pack decides admission.",  # action
+)
+
+
+def _not_admitted_rows(c: _Composer, sheet: PeerSheet | None) -> None:
+    """O7-R64: one T1C.7 row per pack candidate kept off the sheet, written by Python: the peer's
+    name and the reason `research.peers` gave. Row ids `n01`... are apart from the analyst's `g01`."""
+    for n, refused in enumerate(() if sheet is None else sheet.not_admitted, 1):
+        r = f"n{n:02d}"
+        cells = (
+            f"{NOT_ADMITTED_PREFIX}{refused.name}",
+            refused.reason,
+            *NOT_ADMITTED_FIELDS,
+        )
+        c.text(("T1C.7", r, "id"), "Gap id", f"CP-1C-NA-{n:03d}")
+        for (name, label), value in zip(GAP_FIELDS, cells, strict=True):
+            c.text(("T1C.7", r, name), label, value)
+        c.row("T1C.7", r, f"Not admitted {n}", ["id", *(name for name, _ in GAP_FIELDS)])
 
 
 def _limitations(
@@ -2378,6 +2404,7 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     _outliers(c, inputs.issuer_name, peers, values, stats, present)
     _tie_out(c, sheet, cp1)
     _gaps(c, inputs.submission.gaps)
+    _not_admitted_rows(c, sheet)
     tables = tuple(PeerTable(t, title, tuple(c.rows[t])) for t, title in TABLES.items())
     ev = _ev_compose(inputs)  # Phase 7: T1C.9-T1C.11 after the eight, only over a context
     pack = sheet is not None and sheet.issuer is None
@@ -2706,7 +2733,9 @@ class PeerPackRefused(ValueError):
     beside it (`PEER_CONFLICT`) or facts the sheet cannot read. The text is the issue line."""
 
 
-def _pack_sheet(upstream: Upstream, held: Source | None, basis: PeriodBasis) -> PeerSheet | None:
+def _pack_sheet(
+    upstream: Upstream, held: Source | None, basis: PeriodBasis, issuer: str
+) -> PeerSheet | None:
     """The sheet of the bound CP-DR head's TDR.6 facts, None when the head carries none. A held
     `peers` source beside them is `PEER_CONFLICT`; facts the sheet cannot read are refused with the
     reason (`research.peers.peer_sheet`), never dropped for the user path."""
@@ -2715,7 +2744,7 @@ def _pack_sheet(upstream: Upstream, held: Source | None, basis: PeriodBasis) -> 
         return None
     if held is not None:
         raise PeerPackRefused(PEER_CONFLICT)
-    sheet = peer_sheet(head, basis)
+    sheet = peer_sheet(head, basis, issuer_name=issuer)
     if isinstance(sheet, PackUnusable):
         raise PeerPackRefused(clipped(("Peer pack unusable: ", sheet.reason)))
     return sheet
@@ -2736,7 +2765,7 @@ def _inputs(
         cp1_metrics=_cp1_metrics(upstream.cp1, basis),
         submission=submission,
         basis=basis,
-        pack_sheet=_pack_sheet(upstream, _peer_source(pack.sources), basis),
+        pack_sheet=_pack_sheet(upstream, _peer_source(pack.sources), basis, pack.run.issuer_name),
     )
     return _with_context(base, pack, upstream.cp1.facts)
 
@@ -3099,14 +3128,14 @@ def _pack_view(sheet: PeerSheet) -> dict[str, object]:
 
 
 def _pack_peers(
-    upstream: Upstream, held: Source | None, basis: PeriodBasis | None
+    upstream: Upstream, held: Source | None, basis: PeriodBasis | None, issuer: str
 ) -> tuple[dict[str, object] | None, str | None]:
     """(the pack's peers view, None), or (None, the issue line) when the head's TDR.6 cannot be the
     sheet, or (None, None) when no pack applies (the user path's view stands)."""
     if basis is None:
         return None, None
     try:
-        sheet = _pack_sheet(upstream, held, basis)
+        sheet = _pack_sheet(upstream, held, basis, issuer)
     except PeerPackRefused as error:
         return None, str(error)
     return (None, None) if sheet is None else (_pack_view(sheet), None)
@@ -3121,7 +3150,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     source = _peer_source(pack.sources)
     basis, facts, issue = _view_selection(pack, upstream)
     sheet = _view_sheet(pack, source, basis)
-    pack_peers, pack_issue = _pack_peers(upstream, source, basis)
+    pack_peers, pack_issue = _pack_peers(upstream, source, basis, pack.run.issuer_name)
     issue = issue if issue is not None else pack_issue
     block: dict[str, object] = {
         "upstream": [

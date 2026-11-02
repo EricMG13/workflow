@@ -403,7 +403,8 @@ def _without(name: str) -> list[str]:
 def test_the_head_lists_a_not_admitted_peer_the_analyst_did_not_report() -> None:
     """O7-R64: Python writes one T1C.7 row per not-admitted peer (`#cp1c/not_admitted` name and
     reason), whether or not the submission carries a gap for it."""
-    for gaps in (SUBS["cp1c_peers"]["gaps"], []):
+    options: list[list[Any]] = [SUBS["cp1c_peers"]["gaps"], []]
+    for gaps in options:
         body = {**SUBS["cp1c_peers"], "gaps": gaps}
         report = _report(_peers_pack(), _upstream(_head_with_pack()), body)
         by_id = {f.fact_id: f for f in report.facts}

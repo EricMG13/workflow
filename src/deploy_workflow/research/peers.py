@@ -391,6 +391,7 @@ class _Figure:
     currency: str
     period_end: str
     citation: Citation | None
+    limitation: str | None = None  # why the amount cell is missing (the head's own text)
 
 
 def carries_tdr6(module: Module) -> bool:
@@ -401,8 +402,12 @@ def carries_tdr6(module: Module) -> bool:
 def _table(module: Module, table_id: str) -> dict[str, dict[str, Fact]]:
     rows: dict[str, dict[str, Fact]] = {}
     for fact in module.facts:
-        if fact.table_id == table_id:
-            rows.setdefault(fact.row_id or "", {})[fact.field or ""] = fact
+        if fact.table_id != table_id:
+            continue
+        cells = rows.setdefault(fact.row_id or "", {})
+        if (fact.field or "") in cells:
+            raise _Unusable(f"{table_id} {fact.row_id}: the {fact.field} cell appears twice")
+        cells[fact.field or ""] = fact
     return rows
 
 
@@ -430,16 +435,22 @@ def _cell_text(where: str, cells: Mapping[str, Fact], field: str) -> str:
     return fact.text
 
 
-def _located_amount(where: str, cell: Fact | None) -> tuple[Decimal | None, Citation | None]:
-    """The amount cell as (amount, its one ``ev-*`` citation); (None, None) for a ``missing`` cell."""
+def _located_amount(
+    where: str, cell: Fact | None
+) -> tuple[Decimal | None, Citation | None, str | None]:
+    """The amount cell as (amount, its one ``ev-*`` citation, None); (None, None, why) for a
+    ``missing`` cell, whose limitation passed the fence and the cell rule."""
     if cell is None or cell.status not in ("known", "missing"):
         raise _Unusable(f"{where}: the amount cell is neither located nor missing")
     if cell.status == "missing":
-        return None, None
+        why = cell.limitation
+        if why is not None and (unsafe := _unsafe(f"{where} amount", why)) is not None:
+            raise _Unusable(unsafe)
+        return None, None, why
     cites = cell.citations
     if cell.amount is None or len(cites) != 1 or not cites[0].source_id.startswith(RESERVED_PREFIX):
         raise _Unusable(f"{where}: the amount cell is not one number quoted from an ev-* item")
-    return cell.amount, cites[0]
+    return cell.amount, cites[0], None
 
 
 def _figures(module: Module, candidates: set[str]) -> dict[str, list[_Figure]]:
@@ -452,7 +463,7 @@ def _figures(module: Module, candidates: set[str]) -> dict[str, list[_Figure]]:
         where = f"TDR.6 {row}"
         if peer_id not in candidates or operand not in operands:
             raise _Unusable(f"{where}: not a TDR.4 peer's CP-1C operand")
-        amount, citation = _located_amount(where, cells.get("amount"))
+        amount, citation, why = _located_amount(where, cells.get("amount"))
         period_end = _cell_text(where, cells, "period_end")
         if period_end_date(period_end) is None:
             raise _Unusable(f"{where}: period_end is not a calendar date")
@@ -464,6 +475,7 @@ def _figures(module: Module, candidates: set[str]) -> dict[str, list[_Figure]]:
                 _cell_text(where, cells, "currency"),
                 period_end,
                 citation,
+                why,
             )
         )
     return found
@@ -520,20 +532,26 @@ def _admit(
         return NotAdmitted(peer_id, name, figures[0].currency, figures[0].unit, why)
     amounts: dict[str, Decimal | None] = {key: None for key, _ in OPERANDS}
     cites: dict[str, Citation] = {}
+    reasons = {fig.operand: fig.limitation for fig in figures if fig.limitation}
     for fig in known:
         amounts[fig.operand] = fig.amount
         if fig.citation is not None:
             cites[fig.operand] = fig.citation
     first = next(iter(cites.values()))
-    return PeerRow(name, ends.pop(), amounts, first.quote, None, cites)
+    return PeerRow(name, ends.pop(), amounts, first.quote, None, cites, reasons)
 
 
-def _sheet(module: Module, basis: "PeriodBasis") -> "PeerSheet":
+def _sheet(module: Module, basis: "PeriodBasis", issuer_name: str | None) -> "PeerSheet":
     from deploy_workflow.owners.cp1c import PeerRow, PeerSheet
 
     named = _candidates(module)
     figures = _figures(module, {peer_id for peer_id, _ in named})
-    admitted = [_admit(i, name, figures.get(i, ()), basis.currency) for i, name in named]
+    admitted = [
+        NotAdmitted(i, name, None, None, "named as the issuer")
+        if name == issuer_name
+        else _admit(i, name, figures.get(i, ()), basis.currency)
+        for i, name in named
+    ]
     rows = tuple(a for a in admitted if isinstance(a, PeerRow))
     refused = tuple(a for a in admitted if isinstance(a, NotAdmitted))
     unit, scale = UNIT_FACT["millions"]
@@ -542,14 +560,17 @@ def _sheet(module: Module, basis: "PeriodBasis") -> "PeerSheet":
     )
 
 
-def peer_sheet(module: Module, basis: "PeriodBasis") -> "PeerSheet | PackUnusable":
+def peer_sheet(
+    module: Module, basis: "PeriodBasis", *, issuer_name: str | None = None
+) -> "PeerSheet | PackUnusable":
     """The peer sheet of a CP-DR head's TDR.4 names and TDR.6 located figures, or why the pack is
     unusable. A row is a TDR.4 peer whose figures are all in the run's currency (``basis.currency``)
     and in millions, whose located amounts end on one date; its amounts are the head's own facts
     (``None`` where a cell is ``missing``). The sheet has no issuer row. Another peer is listed in
     ``not_admitted`` with its reason. Every model-written text it carries (a name, a unit, a currency)
-    passed the dossier fence and the table cell rule first."""
+    passed the dossier fence and the table cell rule first. A candidate named exactly as
+    ``issuer_name`` is not admitted (it is the issuer, not a peer)."""
     try:
-        return _sheet(module, basis)
+        return _sheet(module, basis, issuer_name)
     except _Unusable as error:
         return PackUnusable(str(error))

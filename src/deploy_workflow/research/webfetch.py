@@ -10,15 +10,18 @@ lookup cannot change where the request goes. A refused fetch is recorded on the 
 
 import hashlib
 import http.client
+import io
 import ipaddress
+import math
 import re
 import socket
 import ssl
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from email.utils import parsedate_to_datetime
-from typing import Protocol
+from typing import Any, Protocol, cast
 from urllib.parse import SplitResult, urljoin, urlsplit
 
 from deploy_workflow.research.contracts import ResearchError
@@ -35,7 +38,9 @@ SOURCE_BODY = "body:published-line"
 
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 _PUBLISHED_LINE = re.compile(r"^Published:[ \t]*(\d{4}-\d{2}-\d{2})", re.MULTILINE)
-_UNSAFE = re.compile(r"[\x00-\x20\x7f]")
+# RFC 3986's URL characters; anything else (spaces, controls, `|`, `<`, non-ASCII) is not a URL here.
+_URL_CHARS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*")
+_NOT_VALID = "the url is not valid"
 
 
 class UrlRefused(ResearchError):
@@ -64,6 +69,8 @@ class ConnectionTarget:
     ip: str
     port: int
     timeout: float
+    deadline: float = math.inf
+    clock: Callable[[], float] = time.monotonic
 
 
 @dataclass(frozen=True)
@@ -103,40 +110,41 @@ Resolver = Callable[[str], Sequence[str]]
 Connector = Callable[[ConnectionTarget], ConnectionLike]
 
 
-def _problem(parts: SplitResult) -> str | None:
+def _problem(parts: SplitResult, host: str | None) -> str | None:
     """Why a split URL is not an acceptable https target, or None."""
     if parts.scheme.lower() != "https":
         return "the scheme must be https"
     if parts.username is not None or parts.password is not None or "@" in parts.netloc:
         return "a user name or password is not allowed"
-    try:
-        host, _port = parts.hostname, parts.port
-    except ValueError:
-        return "the port is not valid"
     if not host:
         return "the host is missing"
     return None
 
 
-def _split(url: str, refuse: Callable[[str], UrlRefused]) -> SplitUrl:
-    if _UNSAFE.search(url):
-        raise refuse("control characters and spaces are not allowed")
-    parts = urlsplit(url)
-    problem = _problem(parts)
+def _shape(url: str) -> SplitUrl | str:
+    """The split of an acceptable https URL, or the problem text."""
+    if not _URL_CHARS.fullmatch(url):
+        return _NOT_VALID
+    try:
+        parts = urlsplit(url)
+        host, port = parts.hostname, parts.port
+    except ValueError:
+        return _NOT_VALID
+    problem = _problem(parts, host)
     if problem is not None:
-        raise refuse(problem)
+        return problem
     path = parts.path or "/"
     return SplitUrl(
-        "https",
-        parts.hostname or "",
-        parts.port or 443,
-        f"{path}?{parts.query}" if parts.query else path,
+        "https", host or "", port or 443, f"{path}?{parts.query}" if parts.query else path
     )
 
 
 def check_url(url: str) -> SplitUrl:
     """The static shape of a manifest URL, or ``UrlRefused`` naming why not."""
-    return _split(url, lambda problem: UrlRefused(f"url {url}: {problem}"))
+    shape = _shape(url)
+    if isinstance(shape, str):
+        raise UrlRefused(f"url {url}: {shape}")
+    return shape
 
 
 def is_public(addr: str) -> bool:
@@ -177,28 +185,123 @@ def tls_context() -> ssl.SSLContext:
     return ssl.create_default_context()
 
 
-class PinnedHTTPSConnection(http.client.HTTPSConnection):
-    """An https connection to a given address that verifies the certificate for the host name."""
+class _BudgetedSocket:
+    """A socket whose every receive and send is bounded by what is left of the fetch's total time."""
 
     def __init__(
-        self, host: str, ip: str, *, port: int, timeout: float, context: ssl.SSLContext
+        self, raw: socket.socket, timeout: float, deadline: float, clock: Callable[[], float]
+    ) -> None:
+        self._raw = raw
+        self._timeout = timeout
+        self._deadline = deadline
+        self._clock = clock
+
+    def _arm(self) -> None:
+        remaining = self._deadline - self._clock()
+        if remaining <= 0:
+            raise TimeoutError("the total time for the fetch is spent")
+        self._raw.settimeout(min(self._timeout, remaining))
+
+    def recv_into(self, buffer: Any, nbytes: int = 0) -> int:
+        self._arm()
+        return self._raw.recv_into(buffer, nbytes)
+
+    def recv(self, bufsize: int) -> bytes:
+        self._arm()
+        return self._raw.recv(bufsize)
+
+    def send(self, data: Any) -> int:
+        self._arm()
+        return self._raw.send(data)
+
+    def sendall(self, data: Any) -> None:
+        self._arm()
+        self._raw.sendall(data)
+
+    def makefile(self, mode: str = "rb", buffering: int | None = None) -> io.BufferedReader:
+        if mode != "rb":
+            raise ValueError("only binary reads are supported")
+        return io.BufferedReader(socket.SocketIO(cast(socket.socket, self), "rb"))
+
+    def _decref_socketios(self) -> None:
+        return None
+
+    def close(self) -> None:
+        self._raw.close()
+
+
+class PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """An https connection to a given address that verifies the certificate for the host name.
+
+    ``deadline`` (on ``clock``) bounds every socket operation; the default is no deadline.
+    """
+
+    def __init__(
+        self,
+        host: str,
+        ip: str,
+        *,
+        port: int,
+        timeout: float,
+        context: ssl.SSLContext,
+        deadline: float = math.inf,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         super().__init__(host, port=port, timeout=timeout, context=context)
         self._pinned_ip = ip
         self._tls = context
+        self._op_timeout = timeout
+        self._deadline = deadline
+        self._clock = clock
 
     def connect(self) -> None:
-        sock = socket.create_connection((self._pinned_ip, self.port), self.timeout)
+        remaining = self._deadline - self._clock()
+        if remaining <= 0:
+            raise TimeoutError("the total time for the fetch is spent")
+        sock = socket.create_connection(
+            (self._pinned_ip, self.port), min(self._op_timeout, remaining)
+        )
         try:
-            self.sock = self._tls.wrap_socket(sock, server_hostname=self.host)
+            wrapped = self._tls.wrap_socket(sock, server_hostname=self.host)
         except OSError:
             sock.close()
             raise
+        budgeted = _BudgetedSocket(wrapped, self._op_timeout, self._deadline, self._clock)
+        self.sock = cast(socket.socket, budgeted)
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        body: Any = None,
+        headers: Mapping[str, Any] | None = None,
+        *,
+        encode_chunked: bool = False,
+    ) -> None:
+        """Send exactly the given headers: no Accept-Encoding is added (D8). Never a body."""
+        if body is not None or encode_chunked:
+            raise ValueError("a fetch never sends a body")
+        given = headers or {}
+        self.putrequest(
+            method,
+            url,
+            skip_host=any(name.lower() == "host" for name in given),
+            skip_accept_encoding=True,
+        )
+        for name, value in given.items():
+            self.putheader(name, value)
+        self.endheaders()
 
 
 def pinned_connection(target: ConnectionTarget) -> ConnectionLike:
     return PinnedHTTPSConnection(
-        target.host, target.ip, port=target.port, timeout=target.timeout, context=tls_context()
+        target.host,
+        target.ip,
+        port=target.port,
+        timeout=target.timeout,
+        context=tls_context(),
+        deadline=target.deadline,
+        clock=target.clock,
     )
 
 
@@ -212,7 +315,7 @@ def locate_published(headers: Mapping[str, str], body: bytes) -> tuple[date | No
         if name.lower() == "last-modified":
             try:
                 return parsedate_to_datetime(value).date(), SOURCE_HEADER
-            except (TypeError, ValueError, IndexError):
+            except (TypeError, ValueError, IndexError, OverflowError):
                 break
     match = _PUBLISHED_LINE.search(body.decode("utf-8", errors="replace"))
     if match:
@@ -241,10 +344,31 @@ class _Limits:
     clock: Callable[[], float]
     started: float
 
+    @property
+    def deadline(self) -> float:
+        return self.started + self.total_timeout
+
 
 def _host_header(split: SplitUrl) -> str:
     host = f"[{split.host}]" if ":" in split.host else split.host
     return host if split.port == 443 else f"{host}:{split.port}"
+
+
+def _redirect_target(base: str, location: str) -> SplitUrl:
+    """The checked target of a redirect; the reason never repeats an invalid ``Location``."""
+    invalid = UrlRefused(f"redirect from {base} refused: the location is not a valid url")
+    if not _URL_CHARS.fullmatch(location):
+        raise invalid
+    try:
+        target = urljoin(base, location)
+    except ValueError:
+        raise invalid from None
+    shape = _shape(target)
+    if shape == _NOT_VALID:
+        raise invalid
+    if isinstance(shape, str):
+        raise UrlRefused(f"redirect to {target} refused: {shape}")
+    return shape
 
 
 def _next_hop(
@@ -253,8 +377,7 @@ def _next_hop(
     """The checked target of a redirect; counts the hop once it has passed the checks."""
     if not location:
         raise FetchRefusal(f"{url} redirected without a location")
-    target = urljoin(f"https://{_host_header(current)}{current.path_query}", location)
-    nxt = _split(target, lambda problem: UrlRefused(f"redirect to {target} refused: {problem}"))
+    nxt = _redirect_target(f"https://{_host_header(current)}{current.path_query}", location)
     if nxt.host.lower() not in limits.manifest_hosts:
         raise FetchRefusal(f"redirect to host {nxt.host} refused: not a host named in the manifest")
     if trace.hops >= MAX_REDIRECTS:
@@ -284,13 +407,41 @@ def _read_bounded(url: str, response: ResponseLike, limits: _Limits) -> bytes:
     return b"".join(chunks)
 
 
+def _answer(
+    url: str, split: SplitUrl, response: ResponseLike, trace: _Trace, limits: _Limits
+) -> tuple[SplitUrl | None, bytes, str | None, dict[str, str]]:
+    """The next hop (redirect) or the body, Content-Type and headers worth keeping (200)."""
+    if response.status in _REDIRECT_STATUSES:
+        nxt = _next_hop(url, split, response.getheader("Location"), trace, limits)
+        return nxt, b"", None, {}
+    if response.status != 200:
+        raise FetchRefusal(f"{url} answered status {response.status}")
+    body = _read_bounded(url, response, limits)
+    declared = (response.getheader("Content-Length") or "").strip()
+    if declared.isdigit() and int(declared) != len(body):
+        raise FetchRefusal(f"{url} body ended after {len(body)} of {declared} bytes")
+    modified = response.getheader("Last-Modified")
+    return (
+        None,
+        body,
+        response.getheader("Content-Type"),
+        ({"Last-Modified": modified} if modified else {}),
+    )
+
+
 def _exchange(
     url: str, split: SplitUrl, trace: _Trace, limits: _Limits
 ) -> tuple[SplitUrl | None, bytes, str | None, dict[str, str]]:
-    """One hop: resolve, check, connect to the checked address, request. Returns the next hop
-    (when redirected) or the body, the Content-Type and the headers worth keeping."""
+    """One hop: resolve, check, connect to the checked address, request, read the answer."""
     trace.resolved_ip = resolve_public(split.host, limits.resolver)
-    target = ConnectionTarget(split.host, trace.resolved_ip, split.port, limits.connect_timeout)
+    target = ConnectionTarget(
+        split.host,
+        trace.resolved_ip,
+        split.port,
+        limits.connect_timeout,
+        limits.deadline,
+        limits.clock,
+    )
     connection = limits.connect(target)
     try:
         _check_time(url, limits)
@@ -299,19 +450,8 @@ def _exchange(
         )
         response = connection.getresponse()
         trace.status = response.status
-        if response.status in _REDIRECT_STATUSES:
-            return (
-                _next_hop(url, split, response.getheader("Location"), trace, limits),
-                b"",
-                None,
-                {},
-            )
-        if response.status != 200:
-            raise FetchRefusal(f"{url} answered status {response.status}")
-        body = _read_bounded(url, response, limits)
-        media = response.getheader("Content-Type")
-        modified = response.getheader("Last-Modified")
-        return None, body, media, ({"Last-Modified": modified} if modified else {})
+        _check_time(url, limits)
+        return _answer(url, split, response, trace, limits)
     finally:
         connection.close()
 
@@ -331,6 +471,13 @@ def _refused(url: str, trace: _Trace, reason: str) -> tuple[FetchRecord, None, N
         None,
         None,
     )
+
+
+def _failure_reason(url: str, error: Exception, limits: _Limits) -> str:
+    """A timeout is called the total only when the clock shows the total was spent."""
+    if isinstance(error, TimeoutError) and limits.clock() - limits.started > limits.total_timeout:
+        return f"{url} took longer than {limits.total_timeout:g} seconds"
+    return f"{url} could not be fetched: {type(error).__name__}"
 
 
 def fetch(
@@ -357,10 +504,8 @@ def fetch(
         body, media, headers = _follow(url, trace, limits)
     except (UrlRefused, FetchRefusal) as refusal:
         return _refused(url, trace, refusal.reason)
-    except TimeoutError:
-        return _refused(url, trace, f"{url} took longer than {total_timeout:g} seconds")
     except (OSError, http.client.HTTPException) as error:
-        return _refused(url, trace, f"{url} could not be fetched: {type(error).__name__}")
+        return _refused(url, trace, _failure_reason(url, error, limits))
     located, source = locate_published(headers, body)
     record = FetchRecord(
         url,

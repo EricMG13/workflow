@@ -240,7 +240,7 @@ def test_two_not_found_questions_are_counted_and_named(
     assert given.states[0] == "missing"
 
 
-def test_a_pack_citation_composes_with_a_not_applicable_date_and_family(
+def test_a_mixed_citation_keeps_each_items_date_and_family(
     expected: dict[str, Any], submissions: dict[str, Any]
 ) -> None:
     body = copy.deepcopy(submissions["research_v1"])
@@ -256,9 +256,10 @@ def test_a_pack_citation_composes_with_a_not_applicable_date_and_family(
     want = dict(key["tables"]["TDR.2"]["rows"])[claim["claim_id"]]
     assert row["locator"]["shown"] == want["locator"]["shown"] + "; page:1"
     assert row["evidence_id"]["shown"] == want["evidence_id"]["shown"] + "; financial"
-    assert [row[f]["shown"] for f in ("published", "family")] == [na, na]
     ours = {f.fact_id: f for f in composed.facts}
-    assert [ours[row[f]["fact"]].status for f in ("published", "family")] == ["not_applicable"] * 2
+    for f in ("published", "family"):
+        assert row[f]["shown"] == f"{want[f]['shown']}; {na}"
+        assert ours[row[f]["fact"]].status == "known"
     qid = claim["claim_id"].split(".")[0]
     touched = (f"TDR.2.{claim['claim_id']}.", f"TDR.3.{qid}.answer")
     assert set(ours) == {f["fact_id"] for f in key["facts"]}
@@ -274,6 +275,26 @@ def test_a_pack_citation_composes_with_a_not_applicable_date_and_family(
     assert [r for r in mine if r[0] != claim["claim_id"]] == [
         r for r in theirs if r[0] != claim["claim_id"]
     ]
+
+
+def test_a_pack_only_claim_has_not_applicable_date_and_family(
+    expected: dict[str, Any], submissions: dict[str, Any]
+) -> None:
+    body = copy.deepcopy(submissions["research_v1"])
+    claim = body["answers"][0]["claims"][0]
+    cite = {"source_id": "financial", "source_sha256": "a" * 64, "locator": "page:1", "quote": "q"}
+    claim["citations"] = [cite]
+    given = Run(expected, submissions, "positive", body)
+    composed = given.compose()
+    validate_tables(composed.tables, composed.facts)
+    key = expected["cases"]["positive"]
+    na = dict(key["tables"]["TDR.1"]["rows"])["competition"]["focus_module"]["shown"]
+    row = dict(given.dossier().tables["TDR.2"]["rows"])[claim["claim_id"]]
+    ours = {f.fact_id: f for f in composed.facts}
+    for f in ("published", "family"):
+        assert (row[f]["shown"], row[f]["state"]) == (na, "not_applicable")
+        assert ours[row[f]["fact"]].status == "not_applicable"
+    assert row["locator"]["shown"] == "page:1"
 
 
 def test_a_claim_with_no_uncertainty_is_refused(

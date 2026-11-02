@@ -216,31 +216,28 @@ def _check_cited(
 
 
 def _evidence_cells(row: str, claim: Claim, items: Mapping[str, EvidenceItem]) -> list[Fact]:
-    """evidence_id, locator, published, family. A claim citing a pack source has no publication
-    date or family: those two cells are not applicable (O7-R24)."""
-    cited = [items.get(c.source_id) for c in claim.citations]
+    """evidence_id, locator, published, family, "; "-joined in citation order. A pack position holds
+    the not-applicable string; a claim citing only pack sources has no date or family at all, and
+    those two cells are ``not_applicable`` facts (O7-R24, O7-R24a)."""
+    cited = [(items.get(c.source_id), c) for c in claim.citations]
     put = partial(_text, "TDR.2", row)
-    pack = None in cited
-    return [
-        put("evidence_id", "; ".join(c.source_id for c in claim.citations), "source"),
+    joined = "; ".join
+    cells = [
+        put("evidence_id", joined(c.source_id for _, c in cited), "source"),
+        put("locator", joined(i.locator if i else c.locator for i, c in cited), "source"),
+    ]
+    if all(i is None for i, _ in cited):
+        return cells + [
+            _unsettled("TDR.2", row, f, "not_applicable", PACK_LIMITATION)
+            for f in ("published", "family")
+        ]
+    return cells + [
         put(
-            "locator",
-            "; ".join(
-                i.locator if i else c.locator for i, c in zip(cited, claim.citations, strict=True)
-            ),
+            "published",
+            joined(_published(i) if i else NOT_APPLICABLE_SHOWN for i, _ in cited),
             "source",
         ),
-        *(
-            [
-                _unsettled("TDR.2", row, f, "not_applicable", PACK_LIMITATION)
-                for f in ("published", "family")
-            ]
-            if pack
-            else [
-                put("published", "; ".join(_published(i) for i in cited if i), "source"),
-                put("family", "; ".join(i.family for i in cited if i), "source"),
-            ]
-        ),
+        put("family", joined(i.family if i else NOT_APPLICABLE_SHOWN for i, _ in cited), "source"),
     ]
 
 

@@ -642,19 +642,26 @@ def test_a_rerun_keeps_the_earlier_retrieved_for_unchanged_evidence(
     `retrieved` for each item whose sha256 is a row of its `research/evidence.json`; an item whose
     bytes changed takes the clock."""
     earlier = cc.settled_through_cpdr(tmp_path / "earlier", ("CP-1", "CP-DR"), name="execution")
-    kept_text = runs.RETRIEVED
     monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
     base = tmp_path / "second"
     case = ResearchCase(base)
-    first = json.loads(case.manifest_path.read_text("utf-8"))[0]["path"]
-    changed = case.inputs / first
+    rows = json.loads(case.manifest_path.read_text("utf-8"))
+    changed = case.inputs / rows[0]["path"]
     changed.write_text(changed.read_text("utf-8") + "\nA new sentence.\n", encoding="utf-8")
+    (case.inputs / "extra.txt").write_text("A fresh note on input costs.\n", encoding="utf-8")
+    extra = {**rows[0], "path": "extra.txt", "locator": "line:1"}
+    case.manifest_path.write_text(json.dumps([*rows, extra]), encoding="utf-8")
     arguments = case.arguments(base, run_id="rerun-1", replay_from=earlier.directory.parent)
     stage_sources(check_arguments(**arguments), base / "run")
     staged = evidence.read_evidence(base / "run" / "research" / "evidence.json")
-    instants = [row["retrieved"] for row in staged]
-    assert sorted(instants) == sorted([LATER_TEXT, kept_text, kept_text])
-    assert instants.count(LATER_TEXT) == 1
+    by_item = {row["item_id"]: row["retrieved"] for row in staged}
+    changed_id = next(r["item_id"] for r in staged if r["path"] == rows[0]["path"])
+    new_id = next(r["item_id"] for r in staged if r["path"] == "extra.txt")
+    unchanged = set(by_item) - {changed_id, new_id}
+    assert len(unchanged) == 2 and changed_id != new_id
+    assert by_item[changed_id] == LATER_TEXT  # changed bytes: the clock
+    assert by_item[new_id] == LATER_TEXT  # a new item: the clock
+    assert {by_item[i] for i in unchanged} == {runs.RETRIEVED}  # unchanged bytes: kept
 
 
 def test_a_rerun_of_a_run_without_a_settled_cp_dr_head_keeps_nothing(
@@ -689,3 +696,36 @@ def test_an_edited_earlier_evidence_record_is_refused_before_anything_is_written
         check_arguments(**rerun_arguments(second, earlier.directory.parent))
     assert refused.value.code == "identity_mismatch"
     assert not (second / "run").exists()
+
+
+def _unsettled_earlier(root: Path, block: bool) -> Path:
+    """An earlier run directory whose execution/ has no settled CP-DR head: CP-0 and CP-1 settled
+    and no CP-DR head, or (``block``) CP-DR settled and then written `blocked`; its
+    `evidence.json` `retrieved` is then edited."""
+    requested = ("CP-1", "CP-DR", "CP-1C")
+    if block:
+        store = cc.settled_through_cpdr(root, requested, name="execution")
+        runs.edit_head(store, "CP-DR", status="blocked")
+        assert cc.head(store, "CP-DR").status == "blocked"
+    else:
+        store = cc.store_with(root, requested, name="execution")
+        for module_id in ("CP-0", "CP-1"):
+            cc.hand_settle(store, module_id)
+        assert all(h.module_id != "CP-DR" for h in store.read().heads)
+    record = root / "research" / "evidence.json"
+    rows = json.loads(record.read_text(encoding="utf-8"))
+    rows[0]["retrieved"] = "2000-01-01T00:00:00Z"
+    record.write_text(json.dumps(rows), encoding="utf-8")
+    return root
+
+
+@pytest.mark.parametrize("block", [False, True], ids=["no_cp_dr_head", "blocked_cp_dr_head"])
+def test_an_earlier_run_without_a_settled_cp_dr_head_keeps_nothing_even_if_edited(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, block: bool
+) -> None:
+    """L2 head gate: with no settled CP-DR head there is nothing to authenticate the earlier
+    record against, so an edited `retrieved` is not kept and every item takes the clock."""
+    earlier = _unsettled_earlier(tmp_path / "earlier", block)
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    checked = check_arguments(**rerun_arguments(tmp_path / "second", earlier))
+    assert checked.research is not None and checked.research.kept == {}

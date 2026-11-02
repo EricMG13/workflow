@@ -71,8 +71,15 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
+from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_BASIS,
+    PeriodBasis,
+    PeriodRefused,
+    run_basis,
+)
 
 MODULE_ID = "CP-2G"
 SCHEMA_VERSION = "forward-credit-model/1"
@@ -83,15 +90,46 @@ _EXACT = CONTEXT.copy()  # the same context with the Inexact trap: a rounded sum
 _EXACT.traps[Inexact] = True
 
 # --- periods (fixed by the lease: the CP-1 LTM column and the three fiscal years after it) ----
-LTM_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
-LTM_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
-BASE_YEAR = 2025
-YEARS = (BASE_YEAR + 1, BASE_YEAR + 2, BASE_YEAR + 3)
-FY = tuple(f"FY{y}" for y in YEARS)
-FY_PERIOD = tuple(f"FY{y}: {y}-01-01 to {y}-12-31" for y in YEARS)
-FY_SPAN_PERIOD = f"{FY[0]}-{FY[-1]}: {YEARS[0]}-01-01 to {YEARS[-1]}-12-31"
-NOT_REACHED = f"Not reached by {FY[-1]}"
+# The no-context basis (Phase 8): a run with a context reads the `PeriodBasis` of its own CP-1
+# period register through `ForwardContext.basis`; these names stay for readers of the default.
+LTM_COLUMN = DEFAULT_BASIS.ltm_column
+LTM_PERIOD = DEFAULT_BASIS.ltm_period
+BASE_YEAR = DEFAULT_BASIS.base_year
+YEARS = DEFAULT_BASIS.years
+FY = DEFAULT_BASIS.year_labels
+NOT_REACHED = DEFAULT_BASIS.not_reached_text
 NOT_CALCULABLE = "Not calculable"
+
+
+def fy_periods(basis: PeriodBasis) -> tuple[str, str, str]:
+    """The three forecast fiscal years as calendar-year periods, `FY2027: 2027-01-01 to ...`."""
+    a, b, c = basis.years
+    return (
+        f"FY{a}: {a}-01-01 to {a}-12-31",
+        f"FY{b}: {b}-01-01 to {b}-12-31",
+        f"FY{c}: {c}-01-01 to {c}-12-31",
+    )
+
+
+def require_calendar(basis: PeriodBasis) -> None:
+    """Ruling P8T5-R1: the forecast windows are calendar years, so a base year that does not run
+    1 January to 31 December (July-June, April-March, 52/53 weeks) is refused until an owner rule
+    and a pinned key give its forecast windows."""
+    if (basis.ltm_start.month, basis.ltm_start.day) != (1, 1) or (
+        basis.ltm_end.month,
+        basis.ltm_end.day,
+    ) != (12, 31):
+        raise PeriodRefused(
+            "forecast years need a calendar fiscal year (1 January to 31 December), but CP-1 "
+            f"T4.14 dates the base year {basis.ltm_start} to {basis.ltm_end}"
+        )
+
+
+def fy_span_period(basis: PeriodBasis) -> str:
+    """The span of the three forecast years, `FY2027-FY2029: 2027-01-01 to 2029-12-31`."""
+    labels, years = basis.year_labels, basis.years
+    return f"{labels[0]}-{labels[-1]}: {years[0]}-01-01 to {years[-1]}-12-31"
+
 
 # --- the submission schema (lease "Submission schema"; every field required) -----------------
 GROWTH_PATTERN = r"^-?(0|1|0\.\d{1,4}|1\.0{1,4})$"
@@ -109,7 +147,7 @@ Metric = Literal["total_leverage", "net_leverage", "interest_coverage"]
 
 
 class GrowthDriver(Contract):
-    values: tuple[Growth, Growth, Growth]  # FY2026, FY2027, FY2028
+    values: tuple[Growth, Growth, Growth]  # the three forecast years
     category: Category
     rationale: str
     limitation: str | None
@@ -339,12 +377,12 @@ _OPERAND_WORDS = {
 }
 
 
-def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
+def select_cp1(facts: Iterable[Fact], basis: PeriodBasis = DEFAULT_BASIS) -> dict[str, Fact]:
     """metric -> the unique T4.10 fact labelled `<LTM column> · <metric>`; zero or several fail."""
     facts = tuple(facts)
     out: dict[str, Fact] = {}
     for metric in CP1_METRICS:
-        label = f"{LTM_COLUMN} · {metric}"
+        label = f"{basis.ltm_column} · {metric}"
         found = [f for f in facts if f.table_id == "T4.10" and f.label == label]
         if len(found) != 1:
             raise ValueError(
@@ -354,19 +392,19 @@ def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
     return out
 
 
-def _usd_millions(name: str, fact: Fact) -> None:
-    """Lease "All amounts USD, unit MILLIONS": another upstream book fails closed (an invariant;
-    carrying the book's unit through would be a lease change). `name` is `CP-1 <metric>` (M2) or
-    `CP-1D <label>` (round 11 Q12)."""
-    if (fact.currency, fact.unit, fact.scale) != ("USD", "MILLIONS", Decimal(1000000)):
+def _book_millions(name: str, fact: Fact, basis: PeriodBasis) -> None:
+    """Lease "All amounts in the run's currency, unit MILLIONS": another upstream book fails
+    closed (an invariant; carrying the book's unit through would be a lease change). `name` is
+    `CP-1 <metric>` (M2) or `CP-1D <label>` (round 11 Q12)."""
+    if (fact.currency, fact.unit, fact.scale) != (basis.currency, "MILLIONS", Decimal(1000000)):
         raise ValueError(  # round 9 wording
-            f"CP-2G: {name} must be USD MILLIONS at scale 1000000, not "
+            f"CP-2G: {name} must be {basis.currency} MILLIONS at scale 1000000, not "
             f"{fact.currency} {fact.unit} at scale {fact.scale}"
         )
 
 
-def _operand_reason(key: str) -> str:
-    return f"Not calculable: base {_OPERAND_WORDS[key]} is missing in CP-1 ({LTM_PERIOD})"
+def _operand_reason(key: str, basis: PeriodBasis) -> str:
+    return f"Not calculable: base {_OPERAND_WORDS[key]} is missing in CP-1 ({basis.ltm_period})"
 
 
 @dataclass(frozen=True)
@@ -385,15 +423,15 @@ class Operands:
     undrawn: Val
 
     @classmethod
-    def from_cp1(cls, cp1_facts: Iterable[Fact]) -> "Operands":
-        cp1 = select_cp1(cp1_facts)
+    def from_cp1(cls, cp1_facts: Iterable[Fact], basis: PeriodBasis = DEFAULT_BASIS) -> "Operands":
+        cp1 = select_cp1(cp1_facts, basis)
         vals: dict[str, Val] = {}
         for key, metric in OPERAND_METRIC.items():
             fact = cp1[metric]
             if fact.status != "known" or fact.amount is None:
-                vals[key] = Val(None, _operand_reason(key))
+                vals[key] = Val(None, _operand_reason(key, basis))
             else:
-                _usd_millions(f"CP-1 {metric}", fact)
+                _book_millions(f"CP-1 {metric}", fact, basis)
                 vals[key] = _known(-fact.amount if key in _OUTFLOWS else fact.amount)
         return cls(**vals)
 
@@ -407,7 +445,7 @@ Triple = tuple[Decimal, Decimal, Decimal]
 
 @dataclass(frozen=True)
 class Drivers:
-    """The analyst's base-case driver values per forecast year (FY2026, FY2027, FY2028)."""
+    """The analyst's base-case driver values per forecast year (the three fiscal years after the base)."""
 
     revenue_growth: Triple
     ebitda_margin: Triple
@@ -561,11 +599,11 @@ class BreakResult:
     row: str
     values: tuple[Decimal | None, ...]
     hits: tuple[bool | None, ...]  # None: not calculable that year
-    first: str  # FY20xx, "Not reached by FY2028" or "Not calculable"
+    first: str  # FY20xx, "Not reached by FY<last>" or "Not calculable"
     reason: str | None  # the root reason when first is "Not calculable"
 
 
-def first_result(hits: Sequence[bool | None]) -> str:
+def first_result(hits: Sequence[bool | None], basis: PeriodBasis = DEFAULT_BASIS) -> str:
     """The first year met; a year not calculable before it, or no year met while one is not
     calculable, makes the answer Not calculable; none met and all calculable is Not reached."""
     unknown = False
@@ -573,8 +611,8 @@ def first_result(hits: Sequence[bool | None]) -> str:
         if hit is None:
             unknown = True
         elif hit:
-            return NOT_CALCULABLE if unknown else FY[t]
-    return NOT_CALCULABLE if unknown else NOT_REACHED
+            return NOT_CALCULABLE if unknown else basis.year_labels[t]
+    return NOT_CALCULABLE if unknown else basis.not_reached_text
 
 
 def _hit(kind: BreakKind, value: Decimal, level: Decimal) -> bool:
@@ -585,7 +623,9 @@ def _hit(kind: BreakKind, value: Decimal, level: Decimal) -> bool:
     return value >= level
 
 
-def test_breaks(*, tests: Sequence[BreakTest], forecast: CaseForecast) -> tuple[BreakResult, ...]:
+def test_breaks(
+    *, tests: Sequence[BreakTest], forecast: CaseForecast, basis: PeriodBasis = DEFAULT_BASIS
+) -> tuple[BreakResult, ...]:
     out: list[BreakResult] = []
     for test in tests:
         kind = test.kind
@@ -599,7 +639,7 @@ def test_breaks(*, tests: Sequence[BreakTest], forecast: CaseForecast) -> tuple[
                 hits.append(None)
             else:
                 hits.append(_hit(kind, v.amount, test.level))
-        first = first_result(hits)
+        first = first_result(hits, basis)
         reason = None
         if first == NOT_CALCULABLE:
             t0 = hits.index(None)
@@ -701,12 +741,13 @@ class ForwardContext:
     cp2a_status: InputStatus
     names: tuple[str, ...] = ()  # supplied names whose digits are not figures (issuer name)
     cp2d_status: InputStatus | None = None  # a declared optional edge this version never reads
+    basis: PeriodBasis = DEFAULT_BASIS  # the run's periods and currency (Phase 8)
 
     def prose_facts(self) -> tuple[Fact, ...]:
         """The upstream facts prose may reference: CP-1 and, when bound, CP-1D facts that carry
         a citation or a calculation."""
         cp1d = self.cp1d.facts() or ()
-        return referencable((*select_cp1(self.cp1_facts).values(), *cp1d))
+        return referencable((*select_cp1(self.cp1_facts, self.basis).values(), *cp1d))
 
 
 @dataclass(frozen=True)
@@ -732,9 +773,12 @@ UNVERIFIED_PERIOD = (
     "so its required decline is not comparable"
 )
 UNVERIFIED_CP2A = "CP-2A has no known level or required decline for it (missing or not applicable)"
-UNVERIFIED_EBITDA = (  # ruling G-8
-    f"base EBITDA is zero or negative in CP-1 for {LTM_PERIOD} (ZERO_OR_NEGATIVE_DENOMINATOR)"
-)
+
+
+def _unverified_ebitda(basis: PeriodBasis) -> str:  # ruling G-8
+    return f"base EBITDA is zero or negative in CP-1 for {basis.ltm_period} (ZERO_OR_NEGATIVE_DENOMINATOR)"
+
+
 _OPERAND_ORDER: Mapping[BreakKind, tuple[str, ...]] = {
     "total_leverage": ("ebitda", "debt"),
     "net_leverage": ("ebitda", "debt", "cash"),
@@ -790,12 +834,12 @@ def _is_definition(b: Cp2aBreak) -> bool:
 
 
 def _metric_check(
-    b: Cp2aBreak, kind: BreakKind, operands: Operands, base_period: str
+    b: Cp2aBreak, kind: BreakKind, operands: Operands, base_period: str, basis: PeriodBasis
 ) -> tuple[bool, str | None]:
     """(reproduces, unverified cause): the analyst's metric against CP-2A's required decline.
     Causes in order: base period, CP-2A unknown, first missing operand, then (ruling G-8) the
     non-positive denominator, base EBITDA before the CP-2A level."""
-    if base_period != LTM_PERIOD:
+    if base_period != basis.ltm_period:
         return True, UNVERIFIED_PERIOD
     lvl, rd = b.level, b.required_decline
     if lvl.status != "known" or rd.status != "known" or lvl.amount is None or rd.amount is None:
@@ -804,10 +848,13 @@ def _metric_check(
     if s_star is None:
         missing = [k for k in _OPERAND_ORDER[kind] if getattr(operands, k).amount is None]
         if missing:  # the first operand in formula order names the cause
-            return True, f"base {_OPERAND_WORDS[missing[0]]} is missing in CP-1 for {LTM_PERIOD}"
+            return (
+                True,
+                f"base {_OPERAND_WORDS[missing[0]]} is missing in CP-1 for {basis.ltm_period}",
+            )
         e = operands.ebitda.amount
         if e is not None and e <= 0:
-            return True, UNVERIFIED_EBITDA
+            return True, _unverified_ebitda(basis)
         return (
             True,
             f"the CP-2A level of {b.row} is zero or negative (ZERO_OR_NEGATIVE_DENOMINATOR)",
@@ -815,7 +862,9 @@ def _metric_check(
     return _round38(s_star) == rd.amount, None
 
 
-def _break_issues(metrics: Sequence[BreakMetric], cp2a: Cp2aHead, operands: Operands) -> list[str]:
+def _break_issues(
+    metrics: Sequence[BreakMetric], cp2a: Cp2aHead, operands: Operands, basis: PeriodBasis
+) -> list[str]:
     rows = {b.row: b for b in cp2a.breaks}
     issues: list[str] = []
     seen: set[str] = set()
@@ -835,7 +884,9 @@ def _break_issues(metrics: Sequence[BreakMetric], cp2a: Cp2aHead, operands: Oper
             issues.append(f"{where}.break_id: duplicate break {bm.break_id}")
         else:
             seen.add(bm.break_id)
-            ok, _cause = _metric_check(b, _METRIC_KIND[bm.metric], operands, cp2a.base_period)
+            ok, _cause = _metric_check(
+                b, _METRIC_KIND[bm.metric], operands, cp2a.base_period, basis
+            )
             if not ok:
                 issues.append(
                     f"{where}: metric {bm.metric} does not reproduce the CP-2A required decline "
@@ -853,7 +904,7 @@ def content_issues(inputs: ForwardInputs) -> tuple[str, ...]:
     """Content issues of a parsed submission, in the pinned order: base_drivers (canonical
     driver order), downside, break_metrics, minimum_liquidity, assessment, gaps."""
     sub, ctx = inputs.submission, inputs.context
-    operands = Operands.from_cp1(ctx.cp1_facts)
+    operands = Operands.from_cp1(ctx.cp1_facts, ctx.basis)
     bound = prose.bind(ctx.prose_facts())
     names = ctx.names
     issues: list[str] = []
@@ -876,7 +927,7 @@ def content_issues(inputs: ForwardInputs) -> tuple[str, ...]:
         issues.append(f"downside.scenario: not a CP-2A scenario: {sub.downside.scenario}")
     issues += _text_issues("downside.rationale", sub.downside.rationale, bound, names, claim=True)
     issues += _limitation_issues("downside.limitation", sub.downside.limitation)
-    issues += _break_issues(sub.break_metrics, ctx.cp2a, operands)
+    issues += _break_issues(sub.break_metrics, ctx.cp2a, operands, ctx.basis)
     issues += _text_issues(
         "minimum_liquidity.rationale", sub.minimum_liquidity.rationale, bound, names, claim=True
     )
@@ -1034,9 +1085,15 @@ CASE_LABEL = {"base": "Base", "down": "Downside"}
 ROW_PREFIX = {"base": "b", "down": "d"}
 A25 = "a25"
 FORECAST_LIMITATION = "Forecast on analyst-assumed drivers"
-LIQ_HEADROOM_FY25 = (
-    "Minimum liquidity is a forecast-year assumption and is not applied to the FY2025 actual"
-)
+
+
+def _liq_headroom(basis: PeriodBasis) -> str:
+    return (
+        "Minimum liquidity is a forecast-year assumption and is not applied to the "
+        f"FY{basis.base_year} actual"
+    )
+
+
 CP1D_WHY = {
     "unbound": "CP-1D (earnings quality) is not part of this run",
     "blocked": "CP-1D is blocked, so no supported earnings were settled",
@@ -1046,7 +1103,8 @@ CP1D_WHY = {
 class _Book:
     """The module's cells in table, row and field order, and each table's rows."""
 
-    def __init__(self) -> None:
+    def __init__(self, basis: PeriodBasis = DEFAULT_BASIS) -> None:
+        self.basis = basis
         self.cells: list[Cell] = []
         self.by_id: dict[str, Cell] = {}
         self.rows: dict[str, list[Row]] = {t: [] for t in TABLES}
@@ -1072,7 +1130,7 @@ class _Book:
         formula: str,
         *,
         value_class: ValueClass | None = "calculated",
-        period: str = LTM_PERIOD,
+        period: str | None = None,
         derives: Sequence[str] = (),
         keep_lineage: bool = False,
     ) -> None:
@@ -1088,10 +1146,10 @@ class _Book:
             field=field,
             amount=_exact(value),
             unit=_UNIT[unit],
-            currency="USD" if amount_unit else None,
+            currency=self.basis.currency if amount_unit else None,
             scale=_MILLIONS if amount_unit else Decimal(1),
             decimals=2 if amount_unit else None,
-            period=period,
+            period=period or self.basis.ltm_period,
             calculation_id=f"calc:{fid}" if calculated else None,
             value_class=value_class,
             formula=formula,
@@ -1106,7 +1164,7 @@ class _Book:
         reason: str,
         *,
         status: CellStatus = "missing",
-        period: str = LTM_PERIOD,
+        period: str | None = None,
     ) -> None:
         table, row, field = at
         fact = Fact(
@@ -1117,7 +1175,7 @@ class _Book:
             field=field,
             status=status,
             unit=_UNIT[unit],
-            period=period,
+            period=period or self.basis.ltm_period,
             limitation=reason,
         )
         self._add(fact, ())
@@ -1131,7 +1189,7 @@ class _Book:
         formula: str,
         derives: Sequence[str],
         *,
-        period: str = LTM_PERIOD,
+        period: str | None = None,
     ) -> None:
         if v.amount is None:
             assert v.reason is not None
@@ -1205,10 +1263,14 @@ class _Run:
     a25_fcf: Val
     bound: Mapping[str, Fact]  # the validator's reference map (prose.bind of the prose facts)
 
+    @property
+    def basis(self) -> PeriodBasis:
+        return self.ctx.basis
 
-def _a25(ops: Operands) -> tuple[Val, Val]:
-    """FY2025 cash flow after interest, taxes and working capital, and free cash flow."""
-    with _exact_digits("the FY2025 cash flow"):
+
+def _a25(ops: Operands, basis: PeriodBasis) -> tuple[Val, Val]:
+    """The base year's cash flow after interest, taxes and working capital, and free cash flow."""
+    with _exact_digits(f"the FY{basis.base_year} cash flow"):
         cfo = _apply(lambda e, i, x, w: e - i - x - w, ops.ebitda, ops.interest, ops.taxes, ops.wc)
         return cfo, _apply(lambda a, k: a - k, cfo, ops.capex)
 
@@ -1240,25 +1302,28 @@ def _t1d_label(f: Fact) -> str:
     return f.label[:1].lower() + f.label[1:]
 
 
-def _supported(cp1d: tuple[Fact, Fact, Fact] | None, why: str | None) -> Val:
-    """CP-1D supported EBITDA for the adjustment and the FY2026 comparison (ruling G-9)."""
+def _supported(cp1d: tuple[Fact, Fact, Fact] | None, why: str | None, basis: PeriodBasis) -> Val:
+    """CP-1D supported EBITDA for the adjustment and the first forecast year comparison (G-9)."""
     if cp1d is None:
         return Val(None, why)
     f = cp1d[0]
     if not _known_fact(f):
         return Val(None, f"Not calculable: CP-1D {_t1d_label(f)} is not available")
-    _usd_millions(f"CP-1D {_t1d_label(f)}", f)  # round 11 Q12: an explicit raise, not an assert
-    if f.period != LTM_PERIOD:
-        return Val(None, f"Not compared: CP-1D {_t1d_label(f)} is for {f.period}, not {LTM_PERIOD}")
+    _book_millions(f"CP-1D {_t1d_label(f)}", f, basis)  # round 11 Q12: an explicit raise
+    if f.period != basis.ltm_period:
+        return Val(
+            None, f"Not compared: CP-1D {_t1d_label(f)} is for {f.period}, not {basis.ltm_period}"
+        )
     return _known(_amount(f))
 
 
 def _resolve(inputs: ForwardInputs) -> _Run:
     sub, ctx = inputs.submission, inputs.context
+    require_calendar(ctx.basis)
     found = content_issues(inputs)
     if found:
         raise ValueError("CP-2G submission has issues: " + "; ".join(bounded_issues(found)))
-    ops = Operands.from_cp1(ctx.cp1_facts)
+    ops = Operands.from_cp1(ctx.cp1_facts, ctx.basis)
     drivers = Drivers.from_submission(sub.base_drivers)
     scenario = next(s for s in ctx.cp2a.scenarios if s.row == sub.downside.scenario)
     shock_reason = _shock_reason(scenario)
@@ -1279,7 +1344,7 @@ def _resolve(inputs: ForwardInputs) -> _Run:
     return _Run(
         sub=sub,
         ctx=ctx,
-        cp1=select_cp1(ctx.cp1_facts),
+        cp1=select_cp1(ctx.cp1_facts, ctx.basis),
         ops=ops,
         drivers=drivers,
         scenario=scenario,
@@ -1288,9 +1353,9 @@ def _resolve(inputs: ForwardInputs) -> _Run:
         min_liq=None if amount == NOT_ASSESSED else Decimal(amount),
         cp1d=cp1d,
         cp1d_why=why,
-        supported=_supported(cp1d, why),
+        supported=_supported(cp1d, why, ctx.basis),
         tl0=_ratio(ops.debt, ops.ebitda, NC_EBITDA),
-        a25_fcf=_a25(ops)[1],
+        a25_fcf=_a25(ops, ctx.basis)[1],
         bound=prose.bind(ctx.prose_facts()),
     )
 
@@ -1319,7 +1384,7 @@ def _t2h1(b: _Book, run: _Run) -> None:
             "u_cp1",
             "CP-1",
             run.ctx.cp1_status,
-            f"Base period {LTM_PERIOD}",
+            f"Base period {run.basis.ltm_period}",
             "T4.10 twelve-month operands and reported ratios",
             "Inherits CP-1's own limitations.",
         ),
@@ -1393,7 +1458,7 @@ def _t2h2(b: _Book, run: _Run) -> None:
             "amount",
             formula,
             [f"cp1:{metric}"],
-            f"CP-1 T4.10 {metric} · {LTM_PERIOD}",
+            f"CP-1 T4.10 {metric} · {run.basis.ltm_period}",
             "Copied from CP-1",
         )
 
@@ -1508,12 +1573,12 @@ def _t2h3(b: _Book, run: _Run) -> None:
         for t, value in enumerate(getattr(run.drivers, name)):
             b.num(
                 ("T2H.3", row, f"fy{t + 1}"),
-                FY[t],
+                run.basis.year_labels[t],
                 value,
                 DRIVER_UNIT[name],
                 "analyst input",
                 value_class="analyst_judgment",
-                period=FY_PERIOD[t],
+                period=fy_periods(run.basis)[t],
             )
         b.text(("T2H.3", row, "class"), "Class", "analyst_judgment")
         b.text(("T2H.3", row, "source"), "Source", "Analyst assumption")
@@ -1525,7 +1590,14 @@ def _t2h3(b: _Book, run: _Run) -> None:
         b.text(("T2H.3", row, "case"), "Case", "Downside")
         b.text(("T2H.3", row, "driver"), "Driver", label)
         for t in range(3):  # a copy keeps CP-2A's class; only a calculated copy has lineage
-            _cp2a_copy(b, ("T2H.3", row, f"fy{t + 1}"), FY[t], fact, "percent", period=FY_PERIOD[t])
+            _cp2a_copy(
+                b,
+                ("T2H.3", row, f"fy{t + 1}"),
+                run.basis.year_labels[t],
+                fact,
+                "percent",
+                period=fy_periods(run.basis)[t],
+            )
         b.text(("T2H.3", row, "class"), "Class", fact.value_class or "analyst_judgment")
         b.text(("T2H.3", row, "source"), "Source", f"CP-2A {fact.fact_id}")
         b.row("T2H.3", row, label, _T2H3_FIELDS)
@@ -1534,16 +1606,22 @@ def _t2h3(b: _Book, run: _Run) -> None:
     for t in range(3):
         at = ("T2H.3", "m01", f"fy{t + 1}")
         if run.min_liq is None:
-            b.gap(at, FY[t], "amount", "Minimum liquidity was not assessed", period=FY_PERIOD[t])
+            b.gap(
+                at,
+                run.basis.year_labels[t],
+                "amount",
+                "Minimum liquidity was not assessed",
+                period=fy_periods(run.basis)[t],
+            )
         else:
             b.num(
                 at,
-                FY[t],
+                run.basis.year_labels[t],
                 run.min_liq,
                 "amount",
                 "analyst input",
                 value_class="analyst_judgment",
-                period=FY_PERIOD[t],
+                period=fy_periods(run.basis)[t],
             )
     b.text(("T2H.3", "m01", "class"), "Class", "analyst_judgment")
     b.text(
@@ -1561,7 +1639,7 @@ def _cp2a_copy(
     f: Fact,
     unit: UnitKind,
     *,
-    period: str = LTM_PERIOD,
+    period: str | None = None,
     keep_lineage: bool = False,
 ) -> None:
     """A copy of a CP-2A cell: its value and class, or its status and limitation (G-decisions)."""
@@ -1600,7 +1678,7 @@ _FCF_FORMULA = "Cash flow after interest, taxes and working capital - capital ex
 
 def _t2h4(b: _Book, run: _Run) -> None:
     ops = run.ops
-    cfo0, fcf0 = _a25(ops)
+    cfo0, fcf0 = _a25(ops, run.basis)
 
     def put(
         row: str,
@@ -1613,8 +1691,10 @@ def _t2h4(b: _Book, run: _Run) -> None:
     ) -> None:
         b.value(("T2H.4", row, field), _T2H4_LABEL[field], v, unit, formula, derives, period=period)
 
-    put(A25, "revenue", ops.revenue, "amount", "CP-1 revenue", ["cp1:revenue"], LTM_PERIOD)
-    put(A25, "ebitda", ops.ebitda, "amount", "CP-1 EBITDA", ["cp1:ebitda"], LTM_PERIOD)
+    put(
+        A25, "revenue", ops.revenue, "amount", "CP-1 revenue", ["cp1:revenue"], run.basis.ltm_period
+    )
+    put(A25, "ebitda", ops.ebitda, "amount", "CP-1 EBITDA", ["cp1:ebitda"], run.basis.ltm_period)
     put(
         A25,
         "margin",
@@ -1622,7 +1702,7 @@ def _t2h4(b: _Book, run: _Run) -> None:
         "percent",
         "EBITDA / revenue",
         ["cp1:ebitda", "cp1:revenue"],
-        LTM_PERIOD,
+        run.basis.ltm_period,
     )
     put(
         A25,
@@ -1631,7 +1711,7 @@ def _t2h4(b: _Book, run: _Run) -> None:
         "amount",
         "EBITDA - cash interest - cash taxes - working capital outflow",
         ["cp1:ebitda", "cp1:cash_interest", "cp1:cash_taxes", "cp1:working_capital_change"],
-        LTM_PERIOD,
+        run.basis.ltm_period,
     )
     put(
         A25,
@@ -1640,7 +1720,7 @@ def _t2h4(b: _Book, run: _Run) -> None:
         "amount",
         "CP-1 capital expenditure, sign reversed",
         ["cp1:capex"],
-        LTM_PERIOD,
+        run.basis.ltm_period,
     )
     put(
         A25,
@@ -1649,14 +1729,14 @@ def _t2h4(b: _Book, run: _Run) -> None:
         "amount",
         _FCF_FORMULA,
         [f"T2H.4.{A25}.cfo", f"T2H.4.{A25}.capex"],
-        LTM_PERIOD,
+        run.basis.ltm_period,
     )
-    b.row("T2H.4", A25, f"FY{BASE_YEAR} actual", _T2H4_FIELDS)
+    b.row("T2H.4", A25, f"FY{run.basis.base_year} actual", _T2H4_FIELDS)
     decline_id = f"cp2a:{run.scenario.decline.fact_id}"
     for case in CASES:
         rows = _rows(case)
         for t, y in enumerate(run.path[case].years):
-            r, fy, pr = rows[t], f"fy{t + 1}", FY_PERIOD[t]
+            r, fy, pr = rows[t], f"fy{t + 1}", fy_periods(run.basis)[t]
             prev = A25 if t == 0 else rows[t - 1]
             put(
                 r,
@@ -1720,7 +1800,7 @@ def _t2h4(b: _Book, run: _Run) -> None:
                 pr,
             )
             put(r, "fcf", y.fcf, "amount", _FCF_FORMULA, [f"T2H.4.{r}.cfo", f"T2H.4.{r}.capex"], pr)
-            b.row("T2H.4", r, f"{CASE_LABEL[case]} case {FY[t]}", _T2H4_FIELDS)
+            b.row("T2H.4", r, f"{CASE_LABEL[case]} case {run.basis.year_labels[t]}", _T2H4_FIELDS)
 
 
 _T2H5_FIELDS = (
@@ -1751,7 +1831,7 @@ _T2H5_LABEL = {
 
 def _t2h5_row(b: _Book, run: _Run, case: str, t: int, y: Year) -> None:
     rows = _rows(case)
-    r, fy, pr = rows[t], f"fy{t + 1}", FY_PERIOD[t]
+    r, fy, pr = rows[t], f"fy{t + 1}", fy_periods(run.basis)[t]
 
     def put(field: str, v: Val, formula: str, derives: Sequence[str]) -> None:
         at = ("T2H.5", r, field)
@@ -1815,7 +1895,7 @@ def _t2h5_row(b: _Book, run: _Run, case: str, t: int, y: Year) -> None:
         "Closing cash + undrawn revolver",
         [f"T2H.5.{r}.closing_cash", f"T2H.5.{r}.undrawn_revolver"],
     )
-    b.row("T2H.5", r, f"{CASE_LABEL[case]} case {FY[t]}", _T2H5_FIELDS)
+    b.row("T2H.5", r, f"{CASE_LABEL[case]} case {run.basis.year_labels[t]}", _T2H5_FIELDS)
 
 
 def _t2h5(b: _Book, run: _Run) -> None:
@@ -1875,21 +1955,21 @@ def _t2h6(b: _Book, run: _Run) -> None:
             "interest_coverage": ["cp1:ebitda", "cp1:cash_interest"],
             "fcf_to_debt": [f"T2H.4.{A25}.fcf", "cp1:total_debt"],
         },
-        LTM_PERIOD,
+        run.basis.ltm_period,
     )
-    # ruling L2: the minimum liquidity is a forecast-year assumption, not applied to FY2025
+    # ruling L2: the minimum liquidity is a forecast-year assumption, not applied to the base year
     b.gap(
         ("T2H.6", A25, "liquidity_headroom"),
         _HEADROOM[0],
         "amount",
-        LIQ_HEADROOM_FY25,
+        _liq_headroom(run.basis),
         status="not_applicable",
     )
-    b.row("T2H.6", A25, f"FY{BASE_YEAR} actual", _T2H6_FIELDS)
+    b.row("T2H.6", A25, f"FY{run.basis.base_year} actual", _T2H6_FIELDS)
     for case in CASES:
         rows = _rows(case)
         for t, y in enumerate(run.path[case].years):
-            r, pr = rows[t], FY_PERIOD[t]
+            r, pr = rows[t], fy_periods(run.basis)[t]
             ratios(
                 r,
                 {
@@ -1923,7 +2003,7 @@ def _t2h6(b: _Book, run: _Run) -> None:
                 [f"T2H.5.{r}.accessible_liquidity", f"T2H.3.m01.fy{t + 1}"],
                 period=pr,
             )
-            b.row("T2H.6", r, f"{CASE_LABEL[case]} case {FY[t]}", _T2H6_FIELDS)
+            b.row("T2H.6", r, f"{CASE_LABEL[case]} case {run.basis.year_labels[t]}", _T2H6_FIELDS)
 
 
 def _unmapped_reason(b: Cp2aBreak) -> str:
@@ -1948,7 +2028,7 @@ def _tests(run: _Run) -> tuple[list[BreakTest], list[tuple[str, str]]]:
                 level, reason = None, _unmapped_reason(b)
         else:
             kind = _METRIC_KIND[metric_of[b.row]]
-            _ok, cause = _metric_check(b, kind, run.ops, run.ctx.cp2a.base_period)
+            _ok, cause = _metric_check(b, kind, run.ops, run.ctx.cp2a.base_period, run.basis)
             if cause is not None:
                 unverified.append((b.row, cause))
         tests.append(BreakTest(b.row, kind, b.test, level, reason))
@@ -2056,7 +2136,7 @@ _T2H8_FIELDS = (
 
 
 def _trajectory(run: _Run, case: str) -> tuple[Trajectory, Val, Val, Val, str | None]:
-    """(trajectory, FY2028 leverage, change, peak, peak reason)."""
+    """(trajectory, last-year leverage, change, peak, peak reason)."""
     years = run.path[case].years
     tls = [y.total_leverage for y in years]
     last = tls[-1]
@@ -2072,7 +2152,7 @@ def _trajectory(run: _Run, case: str) -> tuple[Trajectory, Val, Val, Val, str | 
     if peak_reason is None:
         known = [a for a in amounts if a is not None]
         top = max(known)
-        peak, year = _known(top), FY[known.index(top)]
+        peak, year = _known(top), run.basis.year_labels[known.index(top)]
     else:
         peak, year = Val(None, peak_reason), None
     return Trajectory(change.amount, peak.amount, year), last, change, peak, peak_reason
@@ -2096,10 +2176,11 @@ def _t2h8(b: _Book, run: _Run) -> dict[str, Trajectory]:
                 else "Flat"
             )
             b.text(("T2H.8", r, "trajectory"), "Trajectory", word)
-        p28 = FY_PERIOD[-1]
+        labels, periods = run.basis.year_labels, fy_periods(run.basis)
+        p28 = periods[-1]
         b.value(
             ("T2H.8", r, "total_leverage_fy28"),
-            f"Total leverage {FY[-1]}",
+            f"Total leverage {labels[-1]}",
             last,
             "multiple",
             "From T2H.6",
@@ -2108,15 +2189,17 @@ def _t2h8(b: _Book, run: _Run) -> dict[str, Trajectory]:
         )
         b.value(
             ("T2H.8", r, "change_vs_fy25"),
-            f"Change from FY{BASE_YEAR}",
+            f"Change from FY{run.basis.base_year}",
             change,
             "multiple",
-            f"Total leverage {FY[-1]} - total leverage FY{BASE_YEAR}",
+            f"Total leverage {labels[-1]} - total leverage FY{run.basis.base_year}",
             [f"T2H.8.{r}.total_leverage_fy28", "T2H.2.total_leverage.value"],
             period=p28,
         )
         peak_period = (
-            FY_SPAN_PERIOD if traj.peak_year is None else FY_PERIOD[FY.index(traj.peak_year)]
+            fy_span_period(run.basis)
+            if traj.peak_year is None
+            else periods[labels.index(traj.peak_year)]
         )
         b.value(
             ("T2H.8", r, "peak_total_leverage"),
@@ -2134,12 +2217,12 @@ def _t2h8(b: _Book, run: _Run) -> dict[str, Trajectory]:
             b.text(("T2H.8", r, "peak_period"), "Peak year", traj.peak_year)
         b.value(
             ("T2H.8", r, "ebitda_fy26_vs_supported"),
-            f"{FY[0]} EBITDA less CP-1D supported EBITDA",
+            f"{labels[0]} EBITDA less CP-1D supported EBITDA",
             _apply(lambda e, s: e - s, run.path[case].years[0].ebitda, run.supported),
             "amount",
             "Forecast EBITDA - CP-1D supported EBITDA",
             [f"T2H.4.{rows[0]}.ebitda", "cp1d:T1D.3.supported.value"],
-            period=FY_PERIOD[0],
+            period=periods[0],
         )
         b.text(("T2H.8", r, "downstream"), "Downstream modules", "CP-2H, CP-4C")
         b.row("T2H.8", r, f"{CASE_LABEL[case]} case", _T2H8_FIELDS)
@@ -2245,43 +2328,53 @@ def _joined(names: Sequence[str]) -> str:
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
-def _first_claim(case: str, tests: Sequence[BreakTest], results: Sequence[BreakResult]) -> str:
-    lab = CASE_LABEL[case].lower()
-    reached = [(t, r.first) for t, r in zip(tests, results, strict=True) if r.first in FY]
+def _first_claim(
+    case: str, tests: Sequence[BreakTest], results: Sequence[BreakResult], basis: PeriodBasis
+) -> str:
+    lab, labels = CASE_LABEL[case].lower(), basis.year_labels
+    reached = [(t, r.first) for t, r in zip(tests, results, strict=True) if r.first in labels]
     if reached:
-        first = min(FY.index(y) for _t, y in reached)
-        names = [t.test for t, y in reached if FY.index(y) == first]
+        first = min(labels.index(y) for _t, y in reached)
+        names = [t.test for t, y in reached if labels.index(y) == first]
         if len(names) == 1:  # ruling G-2
-            return f"The first test reached in the {lab} case is {names[0]} in {FY[first]}."
-        return f"The first tests reached in the {lab} case are {_joined(names)} in {FY[first]}."
-    if all(r.first == NOT_REACHED for r in results):
-        return f"No tested break point is reached in the {lab} case through {FY[-1]}."
+            return f"The first test reached in the {lab} case is {names[0]} in {labels[first]}."
+        return f"The first tests reached in the {lab} case are {_joined(names)} in {labels[first]}."
+    if all(r.first == basis.not_reached_text for r in results):
+        return f"No tested break point is reached in the {lab} case through {labels[-1]}."
     if all(r.first == NOT_CALCULABLE for r in results):  # round 9 L3: the first test's chip
         return (
-            f"In the {lab} case no tested break point is calculable through {FY[-1]}: "
+            f"In the {lab} case no tested break point is calculable through {labels[-1]}: "
             f"[T2H.7.{tests[0].row}.{case}_first]."
         )
     return f"In the {lab} case no tested break point is reached, but not every test is calculable."
 
 
 def _leverage_claim(
-    lab: str, peak: str, fy28: str, settled: tuple[bool, bool], year: str | None
+    lab: str,
+    peak: str,
+    fy28: str,
+    settled: tuple[bool, bool],
+    year: str | None,
+    basis: PeriodBasis = DEFAULT_BASIS,
 ) -> str:
     """The T2H.8 claim; `peak` and `fy28` are rendered references (a figure, else a chip) and
     `settled` says which is known (ruling G-3 for the mixed pairs)."""
+    last = basis.year_labels[2]
     if settled == (True, True):
-        return f"In the {lab} case, total leverage peaks at {peak} in {year} and ends {FY[2]} at {fy28}."
+        return f"In the {lab} case, total leverage peaks at {peak} in {year} and ends {last} at {fy28}."
     if settled == (True, False):
         return (
-            f"In the {lab} case, total leverage peaks at {peak} in {year}; {FY[2]} leverage is not "
+            f"In the {lab} case, total leverage peaks at {peak} in {year}; {last} leverage is not "
             f"calculated: {fy28}."
         )
     if settled == (False, True):
         return (
-            f"In the {lab} case, total leverage ends {FY[2]} at {fy28}; the peak is not "
+            f"In the {lab} case, total leverage ends {last} at {fy28}; the peak is not "
             f"calculated: {peak}."
         )
-    return f"In the {lab} case, the leverage path is not fully calculable: peak {peak}, {FY[2]} {fy28}."
+    return (
+        f"In the {lab} case, the leverage path is not fully calculable: peak {peak}, {last} {fy28}."
+    )
 
 
 def _claims(
@@ -2301,6 +2394,7 @@ def _claims(
         return Claim(cid, text, FORECAST_LIMITATION, ())
 
     sub = run.sub
+    unit, labels, base = run.basis.money_unit, run.basis.year_labels, run.basis.base_year
     out = [
         analyst(
             f"T2H.3.{name}",
@@ -2322,9 +2416,9 @@ def _claims(
         out.append(
             forecast_claim(
                 f"T2H.4.{case}",
-                f"In the {lab} case, EBITDA reaches {ref(f'T2H.4.{r28}.ebitda', 'US$ m')} in {FY[2]} "
-                f"against {ref(f'T2H.4.{A25}.ebitda', 'US$ m')} in FY{BASE_YEAR} and free cash flow "
-                f"reaches {ref(f'T2H.4.{r28}.fcf', 'US$ m')}.",
+                f"In the {lab} case, EBITDA reaches {ref(f'T2H.4.{r28}.ebitda', unit)} in {labels[2]} "
+                f"against {ref(f'T2H.4.{A25}.ebitda', unit)} in FY{base} and free cash flow "
+                f"reaches {ref(f'T2H.4.{r28}.fcf', unit)}.",
             )
         )
     b28 = _rows("base")[2]
@@ -2333,7 +2427,7 @@ def _claims(
         forecast_claim(
             "T2H.6.base",
             f"In the base case, total leverage moves from {ref(f'T2H.6.{A25}.total_leverage', 'x')} in "
-            f"FY{BASE_YEAR} to {ref(f'T2H.6.{b28}.total_leverage', 'x')} in {FY[2]} and interest "
+            f"FY{base} to {ref(f'T2H.6.{b28}.total_leverage', 'x')} in {labels[2]} and interest "
             f"coverage from {ref(f'T2H.6.{A25}.interest_coverage', 'x')} to "
             f"{ref(f'T2H.6.{b28}.interest_coverage', 'x')}.",
         )
@@ -2342,19 +2436,21 @@ def _claims(
         forecast_claim(
             "T2H.6.down",
             f"In the downside case, total leverage is {ref(f'T2H.6.{d26}.total_leverage', 'x')} in "
-            f"{FY[0]} and {ref(f'T2H.6.{d28}.total_leverage', 'x')} in {FY[2]}, and interest coverage "
-            f"in {FY[0]} is {ref(f'T2H.6.{d26}.interest_coverage', 'x')}.",
+            f"{labels[0]} and {ref(f'T2H.6.{d28}.total_leverage', 'x')} in {labels[2]}, and interest "
+            f"coverage in {labels[0]} is {ref(f'T2H.6.{d26}.interest_coverage', 'x')}.",
         )
     )
     out.append(
         forecast_claim(
             "T2H.5.down",
-            f"In the downside case, closing cash is {ref(f'T2H.5.{d26}.closing_cash', 'US$ m')} in "
-            f"{FY[0]} and {ref(f'T2H.5.{d27}.closing_cash', 'US$ m')} in {FY[1]}.",
+            f"In the downside case, closing cash is {ref(f'T2H.5.{d26}.closing_cash', unit)} in "
+            f"{labels[0]} and {ref(f'T2H.5.{d27}.closing_cash', unit)} in {labels[1]}.",
         )
     )
     for case in CASES:
-        out.append(forecast_claim(f"T2H.7.{case}", _first_claim(case, tests, results[case])))
+        out.append(
+            forecast_claim(f"T2H.7.{case}", _first_claim(case, tests, results[case], run.basis))
+        )
     for case in CASES:
         peak, fy28 = f"T2H.8.{case}.peak_total_leverage", f"T2H.8.{case}.total_leverage_fy28"
         settled = (b.status(peak) == "known", b.status(fy28) == "known")
@@ -2364,11 +2460,12 @@ def _claims(
             ref(fy28, "x"),
             settled,
             traj[case].peak_year,
+            run.basis,
         )
         out.append(forecast_claim(f"T2H.8.{case}", text))
     if run.ctx.cp1d.state == "bound":
         supported = b.by_id["T2H.2.total_leverage_supported.value"].fact
-        if supported.status == "known" and supported.period != LTM_PERIOD:  # round 9 L2
+        if supported.status == "known" and supported.period != run.basis.ltm_period:  # round 9 L2
             text = (
                 "CP-1D's total leverage on the earnings it supports, "
                 f"{ref('T2H.2.total_leverage_supported.value', 'x')}, is for another period than "
@@ -2446,10 +2543,10 @@ def _own_limitations(
     out = list(_FIXED_LIMITATIONS)
     out.append(_CP1D_LIMITATION[run.ctx.cp1d.state])
     out.extend(  # ruling G-9, wording round 6d
-        f"CP-1D is bound but its {_t1d_label(f)} is not a known {LTM_PERIOD} figure, so starting "
+        f"CP-1D is bound but its {_t1d_label(f)} is not a known {run.basis.ltm_period} figure, so starting "
         "leverage is not restated on it."
         for f in run.cp1d or ()
-        if not _known_fact(f) or f.period != LTM_PERIOD
+        if not _known_fact(f) or f.period != run.basis.ltm_period
     )
     if run.ctx.cp2d_status is not None:  # ruling G-6
         out.append(
@@ -2465,11 +2562,11 @@ def _own_limitations(
     for key, v in run.ops.items():
         if v.amount is None:
             out.append(
-                f"Base {_OPERAND_WORDS[key]} is not available in CP-1 for {LTM_PERIOD}: every "
+                f"Base {_OPERAND_WORDS[key]} is not available in CP-1 for {run.basis.ltm_period}: every "
                 "figure that needs it is Not calculable."
             )
     base_period = run.ctx.cp2a.base_period
-    if base_period != LTM_PERIOD:
+    if base_period != run.basis.ltm_period:
         out.append(
             f"CP-2A stressed the base period {base_period}; its required declines are shown for "
             "reference and are not comparable with the twelve-month forward path."
@@ -2492,7 +2589,7 @@ def _own_limitations(
     )
     for case in CASES:
         negative = [
-            FY[t]
+            run.basis.year_labels[t]
             for t, y in enumerate(run.path[case].years)
             if y.closing_cash.amount is not None and y.closing_cash.amount < 0
         ]
@@ -2559,8 +2656,10 @@ def compute(inputs: ForwardInputs) -> ForwardResult:
     """The forward model of one valid submission; raises ValueError on any issue."""
     run = _resolve(inputs)
     tests, unverified = _tests(run)
-    results = {case: test_breaks(tests=tests, forecast=run.path[case]) for case in CASES}
-    b = _Book()
+    results = {
+        case: test_breaks(tests=tests, forecast=run.path[case], basis=run.basis) for case in CASES
+    }
+    b = _Book(run.basis)
     _t2h1(b, run)
     with _exact_digits("the historical-to-base bridge"):
         _t2h2(b, run)
@@ -2765,12 +2864,30 @@ def _required_status(upstream: Upstream, input_id: str) -> InputStatus:
     return status
 
 
+def _basis_of(pack: PreparedPack, upstream: Upstream) -> PeriodBasis:
+    """The run's period and currency basis: the pack's context read against the bound CP-1 head's
+    T4.14 register (`run_basis`); a pack without a context gives the default basis. A context
+    or register the basis refuses, or a base year that is not a calendar year, raises
+    `ContextRefused` or `PeriodRefused`."""
+    basis = run_basis(context_facts(pack), upstream.cp1)
+    require_calendar(basis)
+    return basis
+
+
+def _basis_issue(error: ContextRefused | PeriodRefused) -> str:
+    """The one issue line a refused context, period or currency becomes."""
+    if isinstance(error, ContextRefused):
+        return clipped(("Context refused: ", "; ".join(error.problems)))
+    return str(error)
+
+
 def _inputs(pack: PreparedPack, submission: ForwardSubmission, upstream: Upstream) -> ForwardInputs:
     """The store adapter: the CP-1 head's selected T4.10 LTM facts (`select_cp1`, in the head's
-    order), the bound CP-2A and CP-1D heads, the bound statuses and the issuer name, as the
-    Stage 1 `ForwardInputs` the core reads. Submit, probe and view reach the core only
-    through this."""
-    chosen = {f.fact_id for f in select_cp1(upstream.cp1).values()}
+    order), the bound CP-2A and CP-1D heads, the bound statuses, the issuer name and the run's
+    period basis, as the Stage 1 `ForwardInputs` the core reads. Submit, probe and view reach the
+    core only through this."""
+    basis = _basis_of(pack, upstream)
+    chosen = {f.fact_id for f in select_cp1(upstream.cp1, basis).values()}
     context = ForwardContext(
         cp1_facts=tuple(f for f in upstream.cp1 if f.fact_id in chosen),
         cp2a=upstream.cp2a,
@@ -2779,6 +2896,7 @@ def _inputs(pack: PreparedPack, submission: ForwardSubmission, upstream: Upstrea
         cp2a_status=_required_status(upstream, CP2A),
         names=(pack.run.issuer_name,),
         cp2d_status=upstream.status(CP2D),
+        basis=basis,
     )
     return ForwardInputs(context=context, submission=submission)
 
@@ -2792,7 +2910,11 @@ def validate_forward(
     stale = stale_issues(bound=upstream.bound, current=upstream.current)
     if stale:
         return stale
-    return content_issues(_inputs(pack, submission, upstream))
+    try:
+        inputs = _inputs(pack, submission, upstream)
+    except (PeriodRefused, ContextRefused) as refused:
+        return (_basis_issue(refused),)
+    return content_issues(inputs)
 
 
 class ForwardReport(Contract):
@@ -3016,15 +3138,44 @@ def _figure(fact: Fact) -> dict[str, object]:
     }
 
 
+def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
+    """The run's basis for the view, or the issue line `validate_forward` returns for the same
+    refusal (P8-R5: `read_inputs` never raises on a context, period or currency refusal)."""
+    try:
+        return _basis_of(pack, upstream), None
+    except (PeriodRefused, ContextRefused) as refused:
+        return None, _basis_issue(refused)
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
+    """What `read_inputs` returns: `_offered_block` on the run's basis; a refused context, period
+    or currency offers nothing and carries the entry validator's issue as `context_issue`."""
+    basis, issue = _view_basis(pack, upstream)
+    if basis is None:
+        return {
+            "upstream": _upstream_rows(upstream),
+            "context_issue": issue,
+            "inherited_limitations": list(upstream.inherited),
+        }
+    return _offered_block(upstream, basis)
+
+
+def _upstream_rows(upstream: Upstream) -> list[dict[str, object]]:
+    return [
+        {"module_id": item.input_id, "status": item.status}
+        for item in upstream.bound
+        if item.input_id.startswith("CP-")
+    ]
+
+
+def _offered_block(upstream: Upstream, basis: PeriodBasis) -> dict[str, object]:
     """What `read_inputs` returns, all Python's (lease Tool use): the upstream statuses, the
     CP-1 twelve-month base with each operand and reported ratio, the driver bounds, the CP-2A
     scenarios and breaks, the CP-1D supported figures when bound, the break metrics offered, the
     figures a reference may name and the limitations settlement will inherit. Missing facts are
-    offered with their status. No quote, citation or record. `pack` is part of the lease
-    signature; the view reads none of it."""
-    del pack
-    base = select_cp1(upstream.cp1)
+    offered with their status. No quote, citation or record. The base period and the forecast
+    periods are the run's `PeriodBasis`."""
+    base = select_cp1(upstream.cp1, basis)
     cp1d = upstream.cp1d.facts()
     allowed = frozenset(f.fact_id for f in referencable(base.values()))
     operands = CP1_METRICS[: len(OPERAND_METRIC)]
@@ -3032,14 +3183,10 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         zip(("supported_ebitda", "supported_total_leverage", "supported_net_leverage"), cp1d or ())
     )
     return {
-        "upstream": [
-            {"module_id": item.input_id, "status": item.status}
-            for item in upstream.bound
-            if item.input_id.startswith("CP-")
-        ],
+        "upstream": _upstream_rows(upstream),
         "base": {
-            "period": LTM_PERIOD,
-            "forecast_periods": list(FY),
+            "period": basis.ltm_period,
+            "forecast_periods": list(basis.year_labels),
             "operands": {m: _cell(base[m], allowed) for m in operands},
             "ratios": {m: _cell(base[m], allowed) for m in CP1_METRICS[len(operands) :]},
         },
@@ -3139,7 +3286,7 @@ class Cp2gHead:
 
 
 def _reader_ids(break_rows: Sequence[str]) -> tuple[str, ...]:
-    """Per case and year revenue, EBITDA and free cash flow (T2H.4, with the FY2025 actual),
+    """Per case and year revenue, EBITDA and free cash flow (T2H.4, with the base-year actual),
     cash interest, closing debt and cash and accessible liquidity (T2H.5), the four ratios
     (T2H.6, with the actual), each T2H.7 first year, the T2H.8 trajectory, and the two T2H.3
     source texts that name the CP-2A row (lease amendment, round 13 item 2)."""

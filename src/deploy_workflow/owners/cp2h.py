@@ -2,8 +2,8 @@
 
 `docs/CP2H-OWNER-LEASE.md` (frozen, preparation revision 2) fixes the Method. Python parses one
 agency rating source (register, combined scale, published trigger terms; `parse_ratings`) and
-tests every trigger term against CP-2G's settled T2H.6 credit metrics: the FY2025 headroom, the
-forward headroom in FY2026-FY2028 in the base and downside cases, the tightest year, the first
+tests every trigger term against CP-2G's settled T2H.6 credit metrics: the base-year headroom, the
+forward headroom in the three forecast years in the base and downside cases, the tightest year, the first
 year a trigger is reached, the trigger counts, and the notch difference and outlook match
 between the agencies. The analyst gives a migration view per agency, an overall assessment and
 gaps (judgment and references only). The oracle is `cases/cp2h-owner/expected.json`.
@@ -89,7 +89,13 @@ from deploy_workflow.context import (
 from deploy_workflow.context_cites import ContextTextError, cite_all, context_text
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
-from deploy_workflow.owners.cp2g import cp2g_reader
+from deploy_workflow.owners.cp2g import cp2g_reader, fy_periods, fy_span_period, require_calendar
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_BASIS,
+    PeriodBasis,
+    PeriodRefused,
+    run_basis,
+)
 
 MODULE_ID = "CP-2H"
 STEP_ID = "rating_triggers"
@@ -97,22 +103,28 @@ SCHEMA_VERSION = "rating-triggers/1"
 RATINGS_SOURCE_ID = "ratings"
 
 # --- periods (fixed by the lease: CP-2G's twelve-month base and its three forecast years) -----
-LTM_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
-LTM_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
-BASE_YEAR = 2025
-YEARS = (BASE_YEAR + 1, BASE_YEAR + 2, BASE_YEAR + 3)
-FY = tuple(f"FY{y}" for y in YEARS)
-FY_PERIOD = tuple(f"FY{y}: {y}-01-01 to {y}-12-31" for y in YEARS)
-FY_SPAN = f"{FY[0]}-{FY[-1]}: {YEARS[0]}-01-01 to {YEARS[-1]}-12-31"
-NOT_REACHED = f"Not reached by {FY[-1]}"
+# The no-context basis (Phase 8): a run with a context reads the `PeriodBasis` of its own CP-1
+# period register through `TriggerUpstream.basis`; these names stay for readers of the default.
+LTM_COLUMN = DEFAULT_BASIS.ltm_column
+LTM_PERIOD = DEFAULT_BASIS.ltm_period
+BASE_YEAR = DEFAULT_BASIS.base_year
+YEARS = DEFAULT_BASIS.years
+FY = DEFAULT_BASIS.year_labels
+NOT_REACHED = DEFAULT_BASIS.not_reached_text
 NOT_CALCULABLE = "Not calculable"
 CASES = ("base", "down")
 CASE_LABEL = {"base": "Base", "down": "Downside"}
 CASE_ROWS = {"base": ("b26", "b27", "b28"), "down": ("d26", "d27", "d28")}
 CP2G_ROWS = ("a25", *CASE_ROWS["base"], *CASE_ROWS["down"])
-_ROW_PERIOD = {"a25": LTM_PERIOD} | {
-    row: FY_PERIOD[k] for rows in CASE_ROWS.values() for k, row in enumerate(rows)
-}
+
+
+def _row_period(basis: PeriodBasis) -> dict[str, str]:
+    """The period each CP-2G T2H.6 row states: the LTM base for `a25`, a forecast year otherwise."""
+    periods = fy_periods(basis)
+    return {"a25": basis.ltm_period} | {
+        row: periods[k] for rows in CASE_ROWS.values() for k, row in enumerate(rows)
+    }
+
 
 # --- the submission schema (lease "Submission schema"; reference and judgment only) -----------
 
@@ -573,28 +585,28 @@ def is_reached(*, comparison: Comparison, metric: Decimal, threshold: Decimal) -
     return metric > threshold if comparison == "Above" else metric < threshold
 
 
-def first_year(*, hits: Sequence[bool | None]) -> str:
+def first_year(*, hits: Sequence[bool | None], basis: PeriodBasis = DEFAULT_BASIS) -> str:
     """The first forecast year a trigger is reached; a year not calculable (None) before it makes
-    the answer unknowable; none reached and all calculable is `Not reached by FY2028`."""
+    the answer unknowable; none reached and all calculable is `Not reached by FY<last>`."""
     unknown = False
-    for year, hit in zip(FY, hits, strict=True):
+    for year, hit in zip(basis.year_labels, hits, strict=True):
         if hit is None:
             unknown = True
         elif hit:
             return NOT_CALCULABLE if unknown else year
-    return NOT_CALCULABLE if unknown else NOT_REACHED
+    return NOT_CALCULABLE if unknown else basis.not_reached_text
 
 
 # --- inputs ----------------------------------------------------------------------------------
 
 
-def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
+def select_cp1(facts: Iterable[Fact], basis: PeriodBasis = DEFAULT_BASIS) -> dict[str, Fact]:
     """The four CP-1 reported ratios (manifest `cp1_fact_selection_rule`): the unique T4.10 fact
-    labelled `LTM Q4 25 (...) · <metric>`; zero or several fail."""
+    labelled `<LTM column> · <metric>`; zero or several fail."""
     facts = tuple(facts)
     out: dict[str, Fact] = {}
     for metric in CP1_METRICS:
-        label = f"{LTM_COLUMN} · {metric}"
+        label = f"{basis.ltm_column} · {metric}"
         found = [f for f in facts if f.table_id == "T4.10" and f.label == label]
         if len(found) != 1:
             raise ValueError(f"CP-1 T4.10 needs exactly one fact labelled {label}")
@@ -608,19 +620,29 @@ class Cp2gMetrics:
     facts, canonical order)."""
 
     facts: tuple[Fact, ...]
+    # The periods the facts must state. None only under a refused basis (`Upstream.basis_refusal`):
+    # there is no period to check against, and `validate` reports that refusal alone.
+    basis: PeriodBasis | None = DEFAULT_BASIS
 
     def __post_init__(self) -> None:
         ids = [f"T2H.6.{row}.{field}" for row in CP2G_ROWS for field in CP2G_FIELDS]
         if [f.fact_id for f in self.facts] != ids:
             raise ValueError("CP-2G metrics must be the 28 T2H.6 facts in row and field order")
+        if self.basis is not None:
+            require_calendar(self.basis)
+        row_period = None if self.basis is None else _row_period(self.basis)
         for fact in self.facts:
-            if fact.unit != _FIELD_UNIT[fact.field] or fact.period != _ROW_PERIOD[fact.row_id]:
+            if fact.unit != _FIELD_UNIT[fact.field] or (
+                row_period is not None and fact.period != row_period[fact.row_id]
+            ):
                 raise ValueError(f"CP-2G fact {fact.fact_id} has an unexpected unit or period")
             if fact.status not in ("known", "missing", "not_applicable"):
                 raise ValueError(f"CP-2G fact {fact.fact_id} is {fact.status}")
 
     @classmethod
-    def select(cls, facts: Iterable[Fact]) -> "Cp2gMetrics":
+    def select(
+        cls, facts: Iterable[Fact], basis: PeriodBasis | None = DEFAULT_BASIS
+    ) -> "Cp2gMetrics":
         """The 28 facts by literal id from a CP-2G head's facts; exactly one each."""
         facts = tuple(facts)
         chosen: list[Fact] = []
@@ -631,7 +653,7 @@ class Cp2gMetrics:
                 if len(found) != 1:
                     raise ValueError(f"CP-2G head needs exactly one fact {fact_id}")
                 chosen.append(found[0])
-        return cls(facts=tuple(chosen))
+        return cls(facts=tuple(chosen), basis=basis)
 
     def fact(self, row: str, field: str) -> Fact:
         return self.facts[CP2G_ROWS.index(row) * len(CP2G_FIELDS) + CP2G_FIELDS.index(field)]
@@ -647,9 +669,15 @@ class TriggerUpstream:
     current: tuple[Input, ...] | str
     cp1_facts: tuple[Fact, ...]
     cp2g: Cp2gMetrics
+    basis: PeriodBasis = DEFAULT_BASIS  # the run's periods (Phase 8)
+    basis_refusal: str | None = None  # why the basis is refused; `validate` reports it alone
 
     def __post_init__(self) -> None:
-        select_cp1(self.cp1_facts)
+        if self.cp2g.basis not in (None, self.basis):
+            raise ValueError("CP-2G metrics were period-checked under another basis than the run's")
+        if self.basis_refusal is None:  # under a refusal `basis` is a placeholder; validate stops
+            require_calendar(self.basis)
+            select_cp1(self.cp1_facts, self.basis)
 
     def status(self, input_id: str) -> InputStatus | None:
         """The bound Input's status; None when it is not bound."""
@@ -757,7 +785,7 @@ class ClaimDraft:
 
 @dataclass(frozen=True)
 class CaseOutcome:
-    headroom: tuple[Decimal | None, ...]  # FY2026-FY2028
+    headroom: tuple[Decimal | None, ...]  # the three forecast years
     hits: tuple[bool | None, ...]
     first: str
 
@@ -1012,12 +1040,15 @@ class _Book:
 
 
 def _upstream_register(b: _Book, up: TriggerUpstream) -> None:
+    basis = up.basis
+    first, last = basis.year_labels[0], basis.year_labels[-1]
+    forecast = f"Forecast {first}-{last} on the base period {basis.ltm_period}"
     rows = (
         (
             "u_cp1",
             "CP-1",
             up.required_status("CP-1"),
-            f"Base period {LTM_PERIOD}",
+            f"Base period {up.basis.ltm_period}",
             "T4.10 reported leverage, coverage and free cash flow to debt",
             "Inherits CP-1's own limitations.",
         ),
@@ -1025,8 +1056,8 @@ def _upstream_register(b: _Book, up: TriggerUpstream) -> None:
             "u_cp2g",
             "CP-2G",
             up.required_status("CP-2G"),
-            f"Forecast {FY[0]}-{FY[-1]} on the base period {LTM_PERIOD}",
-            "T2H.6 credit metrics for the FY2025 actual, base case and downside case",
+            forecast,
+            f"T2H.6 credit metrics for the FY{basis.base_year} actual, base case and downside case",
             "Forecast on analyst-assumed drivers.",
         ),
         (
@@ -1248,7 +1279,7 @@ class _Test:
 
 
 def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None, bool | None]:
-    """T2R.4: the FY2025 actual (an own copy of CP-2G a25), headroom, status and CP-1 check."""
+    """T2R.4: the base-year actual (an own copy of CP-2G a25), headroom, status and CP-1 check."""
     row, field = test.row, test.metric.field
     at = ("T2R.4", row)
     actual_id = f"T2R.4.{row}.actual"
@@ -1257,20 +1288,20 @@ def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None
     if a25.status == "known" and a25.amount is not None:
         b.number(
             (*at, "actual"),
-            "FY2025 actual",
+            f"FY{up.basis.base_year} actual",
             a25.amount,
             test.metric.unit_class,
             f"Copy of CP-2G {a25.fact_id}",
-            period=LTM_PERIOD,
+            period=up.basis.ltm_period,
             derives=(f"cp2g:{a25.fact_id}",),
         )
     else:
         b.unsettled(
             (*at, "actual"),
-            "FY2025 actual",
+            f"FY{up.basis.base_year} actual",
             test.metric.unit_class,
             _reason(a25),
-            period=LTM_PERIOD,
+            period=up.basis.ltm_period,
             status=_copy_status(a25),
         )
     unsettled = test.reason(a25)
@@ -1285,7 +1316,7 @@ def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None
             value,
             test.unit,
             test.formula,
-            period=LTM_PERIOD,
+            period=up.basis.ltm_period,
             derives=derives,
         )
         b.text((*at, "status"), "Status", "Reached" if reached else "Not reached", derives=derives)
@@ -1296,11 +1327,11 @@ def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None
             "Headroom to the trigger",
             test.unit,
             reason,
-            period=LTM_PERIOD,
+            period=up.basis.ltm_period,
             status=status,
         )
         b.missing_text((*at, "status"), "Status", reason, status=status)
-    cp1 = select_cp1(up.cp1_facts)[test.metric.cp1_metric]
+    cp1 = select_cp1(up.cp1_facts, up.basis)[test.metric.cp1_metric]
     if a25.status == "known" and cp1.status == "known" and cp1.amount is not None:
         check = "Reconciled to CP-1" if a25.amount == cp1.amount else "Differs from CP-1"
         b.text((*at, "check"), "Check", check, derives=(actual_id, f"cp1:{test.metric.cp1_metric}"))
@@ -1315,6 +1346,7 @@ def _current(b: _Book, up: TriggerUpstream, test: _Test) -> tuple[Decimal | None
 def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutcome:
     """T2R.5: one case's three yearly headrooms, the tightest and its year."""
     rid = f"{test.row}_{case}"
+    labels, periods = up.basis.year_labels, fy_periods(up.basis)
     values: list[Decimal | None] = []
     hits: list[bool | None] = []
     whys: list[tuple[str, Literal["missing", "not_applicable"]]] = []
@@ -1328,10 +1360,10 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
             value, hit = test.headroom(fact)
             derives = (f"cp2g:{fact.fact_id}", test.threshold_id)
             b.number(
-                at, FY[k], value, test.unit, test.formula, period=FY_PERIOD[k], derives=derives
+                at, labels[k], value, test.unit, test.formula, period=periods[k], derives=derives
             )
         else:
-            b.unsettled(at, FY[k], test.unit, why[0], period=FY_PERIOD[k], status=why[1])
+            b.unsettled(at, labels[k], test.unit, why[0], period=periods[k], status=why[1])
             whys.append(why)
         values.append(value)
         hits.append(hit)
@@ -1345,11 +1377,14 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
             tight,
             test.unit,
             "lowest of the three forecast years",
-            period=FY_SPAN,
+            period=fy_span_period(up.basis),
             derives=years,
         )
         b.text(
-            ("T2R.5", rid, "tightest_year"), "Tightest year", FY[known.index(tight)], derives=years
+            ("T2R.5", rid, "tightest_year"),
+            "Tightest year",
+            labels[known.index(tight)],
+            derives=years,
         )
     else:  # the first unsettled year's reason and status (round 7 (f))
         why_t, status = whys[0]
@@ -1358,7 +1393,7 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
             "Tightest headroom",
             test.unit,
             why_t,
-            period=FY_SPAN,
+            period=fy_span_period(up.basis),
             status=status,
         )
         b.missing_text(("T2R.5", rid, "tightest_year"), "Tightest year", why_t, status=status)
@@ -1368,7 +1403,9 @@ def _forward(b: _Book, up: TriggerUpstream, test: _Test, case: str) -> CaseOutco
         f"{test.term.agency} {test.term.metric}, {CASE_LABEL[case].lower()} case",
         ("y1", "y2", "y3", "tightest", "tightest_year"),
     )
-    return CaseOutcome(headroom=tuple(values), hits=tuple(hits), first=first_year(hits=hits))
+    return CaseOutcome(
+        headroom=tuple(values), hits=tuple(hits), first=first_year(hits=hits, basis=up.basis)
+    )
 
 
 def _timing(
@@ -1501,9 +1538,10 @@ _COUNTS = (
 
 
 def _summary(
-    b: _Book, tests: Sequence[_Test], outcomes: Mapping[str, TriggerOutcome]
+    b: _Book, tests: Sequence[_Test], outcomes: Mapping[str, TriggerOutcome], basis: PeriodBasis
 ) -> dict[str, tuple[str, ...]]:
     """T2R.9, one totals row: triggers tested, reached counts and not-calculable counts."""
+    span = fy_span_period(basis)
 
     def case_of(o: TriggerOutcome, case: str) -> CaseOutcome:
         return o.base if case == "base" else o.down
@@ -1516,14 +1554,15 @@ def _summary(
         Decimal(len(tests)),
         COUNT_UNIT,
         "count of published trigger terms",
-        period=FY_SPAN,
+        period=span,
         derives=tuple(f"T2R.3.{t.row}.direction" for t in tests),
     )
     for key, direction, case, label in _COUNTS:
         rows = tuple(
             t.row
             for t in tests
-            if t.term.direction == direction and case_of(outcomes[t.row], case).first in FY
+            if t.term.direction == direction
+            and case_of(outcomes[t.row], case).first in basis.year_labels
         )
         totals[key] = rows
         b.number(
@@ -1532,7 +1571,7 @@ def _summary(
             Decimal(len(rows)),
             COUNT_UNIT,
             "count of triggers with a first year reached",
-            period=FY_SPAN,
+            period=span,
             derives=tuple(f"T2R.6.{r}.{case}_first" for r in rows),
         )
     for case in CASES:
@@ -1545,7 +1584,7 @@ def _summary(
             Decimal(len(rows)),
             COUNT_UNIT,
             f"count of triggers whose {lab}-case first-year result is missing",
-            period=FY_SPAN,
+            period=span,
             derives=tuple(f"T2R.3.{r}.direction" for r in rows),
         )
     b.row(
@@ -1639,7 +1678,7 @@ def _compose(
     if submission is not None:
         _migration(b, _register_order(submission.views, source), agency_rows)
     pairs = tuple(_divergence(b, source, agency_rows))
-    totals = _summary(b, tests, outcomes)
+    totals = _summary(b, tests, outcomes, up.basis)
     if submission is not None:
         _gaps(b, submission.gaps)
     mechanics = _Mechanics(tests, tuple(outcomes.values()), agency_rows, pairs, totals)
@@ -1923,7 +1962,7 @@ def register_source(pack: PackScope) -> tuple[Source, RatingsSource, tuple[RowCi
 def _bound(book: _Book, up: TriggerUpstream) -> dict[str, Fact]:
     """What prose may reference: the module's own non-analyst facts and CP-1's reported ratios
     (analyst cells are not bound, ruling P2)."""
-    cp1 = referencable(select_cp1(up.cp1_facts).values())
+    cp1 = referencable(select_cp1(up.cp1_facts, up.basis).values())
     return prose.bind((*(c.fact for c in book.cells), *cp1))
 
 
@@ -1932,13 +1971,17 @@ def validate(inputs: TriggerInputs) -> tuple[str, ...]:
 
     Stale upstream issues are returned alone (ruling G-decisions), then an agency source that
     is not ready or does not parse alone (s01, s02; round 7 items 2-8), then the content issues
-    in the order views, overall, gaps (round 7 (a)). Shape issues come from `payload_issues`.
+    in the order views, overall, gaps (round 7 (a)). A period basis the run context or the CP-1
+    register refuses (`PeriodRefused`, or a refused context) is that refusal text alone, after
+    staleness. Shape issues come from `payload_issues`.
     Tool-use rules (cited page read) are Stage 2.
     """
     up, sub = inputs.upstream, inputs.submission
     stale = stale_issues(bound=up.bound, current=up.current)
     if stale:
         return stale
+    if up.basis_refusal is not None:
+        return (up.basis_refusal,)
     try:
         ratings, source, citations = register_source(inputs.pack)
     except SourceIssue as issue:
@@ -1992,6 +2035,7 @@ def _claims(
     views: Sequence[AgencyView],
     overall: Overall,
     cp1_ids: Iterable[str],
+    basis: PeriodBasis,
 ) -> tuple[ClaimDraft, ...]:
     cp1_ids = tuple(cp1_ids)
     out = [
@@ -2013,14 +2057,14 @@ def _claims(
         t = test.term
         token = "pp" if test.metric.unit_class == "percent" else "x"
         text = (
-            f"{t.agency} {t.direction.lower()} trigger on {t.metric}: FY{BASE_YEAR} headroom is "
+            f"{t.agency} {t.direction.lower()} trigger on {t.metric}: FY{basis.base_year} headroom is "
             f"{b.ref(f'T2R.4.{test.row}.headroom', token)}."
         )
         out.append(ClaimDraft(f"T2R.4.{test.row}", text, None, (), ()))
     for case in CASES:
         lab, total = CASE_LABEL[case].lower(), "T2R.9.total"
         text = (
-            f"In the {lab} case, downgrade triggers reached by {FY[-1]}: "
+            f"In the {lab} case, downgrade triggers reached by {basis.year_labels[-1]}: "
             f"{b.ref(f'{total}.downgrade_{case}', COUNT_UNIT)}; upgrade triggers reached: "
             f"{b.ref(f'{total}.upgrade_{case}', COUNT_UNIT)}; triggers not calculable: "
             f"{b.ref(f'{total}.not_calculable_{case}', COUNT_UNIT)}."
@@ -2040,7 +2084,7 @@ def _cp1_references(
     up: TriggerUpstream, tests: Sequence[_Test], texts: Sequence[str]
 ) -> tuple[Cp1Reference, ...]:
     """CP-1 ratios named as figures in prose (reading order), then those T2R.4 compares."""
-    cp1 = select_cp1(up.cp1_facts)
+    cp1 = select_cp1(up.cp1_facts, up.basis)
     metric_of = {f.fact_id: m for m, f in cp1.items()}
     named = [metric_of[fid] for text in texts for fid in _figures(text, metric_of)]
     metrics = dict.fromkeys([*named, *(t.metric.cp1_metric for t in tests)])
@@ -2194,7 +2238,7 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
     ratings, source, citations = register_source(inputs.pack)
     book, mechanics = _compose(ratings, source, up, sub, citations)
     views = _register_order(sub.views, source)
-    cp1_ids = tuple(f.fact_id for f in select_cp1(up.cp1_facts).values())
+    cp1_ids = tuple(f.fact_id for f in select_cp1(up.cp1_facts, up.basis).values())
     texts = [
         *(v.rationale for v in views),
         sub.overall.rationale,
@@ -2210,7 +2254,7 @@ def compute(inputs: TriggerInputs) -> TriggerReport:
         tables=book.tables(),
         cp1_references=_cp1_references(up, mechanics.tests, texts),
         cp2g_references=_cp2g_references(up, mechanics.tests),
-        claims=_claims(book, mechanics, views, sub.overall, cp1_ids),
+        claims=_claims(book, mechanics, views, sub.overall, cp1_ids, up.basis),
         own_limitations=_own_limitations(source, up, mechanics, sub.gaps, _bound(book, up)),
         outcomes=mechanics.outcomes,
         totals=mechanics.totals,
@@ -2241,13 +2285,18 @@ class Upstream:
     refusal text; `cp1` the facts of the bound CP-1 head; `cp2g` the 28 T2H.6 facts selected by
     literal id (`Cp2gMetrics.select`) from `owners.cp2g.cp2g_reader` over the bound CP-2G head
     (rulings stage2 Q6: the consumer selects into its own Stage 1 type); `inherited` what
-    settlement will carry from the bound heads (`execution.inherited_limitations`)."""
+    settlement will carry from the bound heads (`execution.inherited_limitations`); `basis` the
+    run's period and currency basis (`run_basis` over the pack's context and the CP-1 head's
+    T4.14 register), or `basis_refusal` the refusal text, in which case `basis` is the default and
+    `cp2g` is selected without a period check, because `validate` then reports the refusal alone."""
 
     bound: tuple[Input, ...]
     current: tuple[Input, ...] | str
     cp1: tuple[Fact, ...]
     cp2g: Cp2gMetrics
     inherited: tuple[str, ...] = ()
+    basis: PeriodBasis = DEFAULT_BASIS
+    basis_refusal: str | None = None
 
     def status(self, input_id: str) -> InputStatus | None:
         return next((item.status for item in self.bound if item.input_id == input_id), None)
@@ -2261,6 +2310,20 @@ def _bound_module(store: Execution, attempt: Attempt, module_id: str) -> Module:
     if module.module_id != module_id:
         raise ValueError(f"The CP-2H attempt's {module_id} input is a {module.module_id} module")
     return module
+
+
+def _basis_of(pack: PreparedPack, cp1_facts: Iterable[Fact]) -> tuple[PeriodBasis, str | None]:
+    """(basis, refusal): the run's `PeriodBasis` from the pack's context and the CP-1 register, or
+    the default basis and the refusal text (`PeriodRefused`, or `Context refused: ...`) that
+    `validate` reports as its only issue. Never swallowed: a refusal is returned, not dropped."""
+    try:
+        basis = run_basis(context_facts(pack), cp1_facts)
+        require_calendar(basis)
+        return basis, None
+    except PeriodRefused as refused:
+        return DEFAULT_BASIS, str(refused)
+    except ContextRefused as refused:
+        return DEFAULT_BASIS, clipped(("Context refused: ", "; ".join(refused.problems)))
 
 
 def cp2h_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
@@ -2278,12 +2341,15 @@ def cp2h_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
         current = str(error)
     cp1 = _bound_module(store, attempt, CP1)
     head = cp2g_reader(store, head_of(_bound_module(store, attempt, CP2G)))
+    basis, refusal = _basis_of(store.pack(), cp1.facts)
     return Upstream(
         bound=attempt.inputs,
         current=current,
         cp1=cp1.facts,
-        cp2g=Cp2gMetrics.select(head.facts),
+        cp2g=Cp2gMetrics.select(head.facts, basis if refusal is None else None),
         inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
+        basis=basis,
+        basis_refusal=refusal,
     )
 
 
@@ -2306,7 +2372,11 @@ def _adapted(pack: PreparedPack, upstream: Upstream) -> tuple[PackScope, Trigger
     bound inputs, the CP-1 head's four selected reported ratios (`select_cp1`, in the head's
     order) and the CP-2G metrics, as the Stage 1 types the core reads. Submit, probe and view
     reach the core only through this."""
-    chosen = {f.fact_id for f in select_cp1(upstream.cp1).values()}
+    chosen = (
+        set()
+        if upstream.basis_refusal is not None
+        else {f.fact_id for f in select_cp1(upstream.cp1, upstream.basis).values()}
+    )
     context, refusal = _context_of(pack)
     scope = PackScope(
         sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
@@ -2319,6 +2389,8 @@ def _adapted(pack: PreparedPack, upstream: Upstream) -> tuple[PackScope, Trigger
         current=upstream.current,
         cp1_facts=tuple(f for f in upstream.cp1 if f.fact_id in chosen),
         cp2g=upstream.cp2g,
+        basis=upstream.basis,
+        basis_refusal=upstream.basis_refusal,
     )
     return scope, trigger
 
@@ -2333,7 +2405,13 @@ def validate_triggers(
 ) -> tuple[str, ...]:
     """Every issue of `submission` over the bound `upstream` (`validate`): staleness alone when a
     bound upstream changed, then an agency source that does not parse alone, else the content
-    issues in their pinned order; empty when it composes."""
+    issues in their pinned order; empty when it composes. A refused period basis, currency or
+    context follows staleness and is the single issue, before CP-1 is read on any basis."""
+    stale = stale_issues(bound=upstream.bound, current=upstream.current)
+    if stale:
+        return stale
+    if upstream.basis_refusal is not None:
+        return (upstream.basis_refusal,)
     return validate(_inputs(pack, submission, upstream))
 
 
@@ -2423,7 +2501,7 @@ def rating_triggers(
     inputs = _inputs(pack, submission, upstream)
     result = compute(inputs)
     up = inputs.upstream
-    lineage = {f"cp1:{m}": f for m, f in select_cp1(up.cp1_facts).items()}
+    lineage = {f"cp1:{m}": f for m, f in select_cp1(up.cp1_facts, up.basis).items()}
     lineage |= {f"cp2g:{f.fact_id}": f for f in up.cp2g.facts}
     cp1_rows = [(r.row_id, r.label, r.fact.fact_id) for r in result.cp1_references]
     cp2g_rows = [(r.row_id, r.fact.label, r.fact.fact_id) for r in result.cp2g_references]
@@ -2522,12 +2600,27 @@ def _metric_cell(fact: Fact) -> dict[str, object]:
     }
 
 
+def _upstream_rows(upstream: Upstream) -> list[dict[str, object]]:
+    return [
+        {"module_id": item.input_id, "status": item.status}
+        for item in upstream.bound
+        if item.input_id.startswith("CP-")
+    ]
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """What `read_inputs` returns, all Python's (lease Tool use, the draft key tree): the
     upstream statuses, the agency register and the published trigger terms as the parse rule
     reads them (terms, never a quote), each threshold as the fact a reference may name, the 28
     CP-2G metrics, the CP-1 reported ratios a reference may name and the limitations settlement
-    will inherit. No quote, citation or record key at any depth."""
+    will inherit. No quote, citation or record key at any depth. A refused context, period or
+    currency offers nothing and carries the entry validator's issue as `context_issue` (P8-R5)."""
+    if upstream.basis_refusal is not None:
+        return {
+            "upstream": _upstream_rows(upstream),
+            "context_issue": upstream.basis_refusal,
+            "inherited_limitations": list(upstream.inherited),
+        }
     scope, trigger = _adapted(pack, upstream)
     shown = _parsed_source(scope)
     ratings, source = shown.ratings, shown.source
@@ -2551,13 +2644,9 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
             "status": fact.status,
         }
 
-    cp1 = referencable(select_cp1(trigger.cp1_facts).values())
+    cp1 = referencable(select_cp1(trigger.cp1_facts, trigger.basis).values())
     return {
-        "upstream": [
-            {"module_id": item.input_id, "status": item.status}
-            for item in upstream.bound
-            if item.input_id.startswith("CP-")
-        ],
+        "upstream": _upstream_rows(upstream),
         "register": {
             "state": "absent" if shown.source_id is None else "present",
             "source_id": shown.source_id,

@@ -8,7 +8,7 @@ figure is rendered). A fact the module does not carry fails closed. Nothing here
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Literal
@@ -25,7 +25,7 @@ GAP_UNBOUND = "∅ G#"
 
 _CP2D = "CP-2D"
 _CP3C = "CP-3C"
-# The axis of a chart whose charted facts state no currency (an n/a frame): the parent's label.
+# The axis of a chart when no amount of its module states a currency: the parent's label.
 _AXIS = "US$ m"
 _CR2_SERIES = "Cash bridge"
 _CR2_NOTE = (
@@ -105,14 +105,20 @@ def _shown(fact: Fact, value: Decimal | None) -> str:
     return format_value(value, "amount", "known", decimals=fact.decimals)
 
 
+def _money_currencies(items: Iterable[Fact]) -> set[str]:
+    return {
+        fact.currency for fact in items if fact.unit == "MILLIONS" and fact.currency is not None
+    }
+
+
 def _axis(points: tuple[LiquidityPoint, ...], facts: Mapping[str, Fact]) -> str:
     """The axis label from the one currency the charted amounts state (Phase 8, ruling P8T7-R7),
-    spelled by the report view's `scale_label`; more than one currency fails closed."""
-    found = {
-        facts[point.fact_id].currency
-        for point in points
-        if facts[point.fact_id].unit == "MILLIONS" and facts[point.fact_id].currency is not None
-    }
+    spelled by the report view's `scale_label`; more than one currency fails closed. When no
+    charted amount states a currency (an n/a frame), the module's other amounts give the run's
+    currency; only a module that states none keeps the parent's label."""
+    found = _money_currencies(facts[point.fact_id] for point in points)
+    if not found:
+        found = _money_currencies(facts.values())
     if len(found) > 1:
         raise ValueError("The liquidity chart amounts state more than one currency")
     return (scale_label("MILLIONS", found.pop()) if found else None) or _AXIS

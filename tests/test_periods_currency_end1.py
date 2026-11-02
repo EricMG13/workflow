@@ -2,18 +2,27 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
+from pathlib import Path
 
+import chart_wiring_c as w
 import pytest
 import test_connect_cp1d as conn
+import test_connect_cp3c as tc3
 import test_method_cp1d as stage1
+import test_method_cp3c as tm3
+import test_owner_cp3c_pins as p3
 import test_periods_currency_cp1d as t
+import test_periods_currency_e2e_cp3c as a2
 from test_period_basis import _calendar, _context
 
 from deploy_vii.contracts import Fact, Input, Module
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
-from deploy_workflow.owners import cp1d
+from deploy_workflow import context as ctx
+from deploy_workflow.liquidity_series import cp2d_chart_series
+from deploy_workflow.owners import cp1d, cp2d, cp3c
 from deploy_workflow.owners.period_basis import PeriodRefused, currency_basis, period_basis
 
 # --- A: Task 1 r4a -------------------------------------------------------------------------------
@@ -149,3 +158,67 @@ def test_view_carries_the_cp1_amount_currency_refusal_as_context_issue() -> None
     assert report is None and len(issues) == 1
     assert block["context_issue"] == issues[0]
     assert block["cp1_facts"] == []
+
+
+# --- E: Task 4 (cp3c `_lines` on a refused context over a 2026 CP-1) ------------------------------
+
+CONTEXT_LINE = "Context refused: run.pathway"
+
+
+def _refused_2026(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[PreparedPack, cp3c.RefinancingRiskSubmission, cp3c.Upstream]:
+    """A CP-3C attempt settled under a USD fy-2026 run, read under a context that refuses."""
+    usd = _context("fy-2026", "USD")
+    monkeypatch.setattr(cp2d, "context_facts", lambda pack: usd)
+    store, _ = tc3.make_store(
+        tmp_path / "s", "positive", cp1=a2.cp1_for(tc3.make_pack().run, "USD")
+    )
+    upstream = tc3.upstream_of(store, store.begin("CP-3C"))
+    names = dict(cp3c.select(upstream, cp2d.run_basis(store.pack(), upstream.cp1)).refs)
+    payload = tc3.bound_payload(tm3.SUBMISSIONS["cp3c"]["positive"], names)
+    submission = cp3c.RefinancingRiskSubmission.model_validate_json(json.dumps(payload))
+    monkeypatch.setattr(cp2d, "context_facts", ctx.context_facts)
+    other = p3._pack(tmp_path / "other", "context-credit_snapshot.json")
+    return other, submission, upstream
+
+
+def test_cp3c_validator_on_a_refused_context_over_a_2026_cp1_is_one_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pack, submission, upstream = _refused_2026(tmp_path, monkeypatch)
+    lines = cp3c._lines(pack, submission, upstream)
+    assert len(lines) == 1 and lines[0].startswith(CONTEXT_LINE), lines
+
+
+def test_cp3c_refused_context_over_a_2026_cp1_keeps_the_stale_or_provenance_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pack, submission, upstream = _refused_2026(tmp_path, monkeypatch)
+    stale = dataclasses.replace(upstream, current=())
+    lines = cp3c._lines(pack, submission, stale)
+    kept = cp3c._upstream_issues(stale)
+    assert kept and len(lines) == len(kept) + 1, lines
+    assert lines[: len(kept)] == kept and lines[-1].startswith(CONTEXT_LINE), lines
+    assert len(cp3c._lines(pack, submission, upstream)) == 1
+
+
+# --- F: Task 7 L5 (an all-unsettled CR.2 frame takes the run's currency) --------------------------
+
+_BRIDGE = {"T2E.2.r01", "T2E.3.r05", "T2E.3.r06", "T2E.3.r07", "T2E.3.r08"}
+
+
+@pytest.mark.parametrize(("currency", "axis"), [("EUR", "EUR m"), ("USD", "US$ m")])
+def test_an_all_unsettled_cr2_frame_takes_the_run_currency(currency: str, axis: str) -> None:
+    module = w.module_of(w.cp2d_view("positive"), "CP-2D")
+    facts = []
+    for fact in module.facts:
+        if fact.currency == "USD":
+            fact = fact.model_copy(update={"currency": currency})
+        if fact.fact_id in _BRIDGE:
+            fact = fact.model_copy(
+                update={"status": "missing", "amount": None, "currency": None, "limitation": "w"}
+            )
+        facts.append(fact)
+    (record,) = cp2d_chart_series(module.model_copy(update={"facts": tuple(facts)}))
+    assert record.kind == "na" and record.axis_label == axis

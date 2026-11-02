@@ -9,12 +9,18 @@ normalised to ``*`` and carry no hash; every other file is pinned by sha256.
 import hashlib
 import json
 import re
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import pytest
+
+from deploy_workflow import run_inputs
+from deploy_workflow.model import adapter
 from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.research import evidence, webfetch
 from deploy_workflow.run_inputs import CaseSource
 from deploy_workflow.run_pathway import run_pathway
 
@@ -144,3 +150,100 @@ class ResearchCase:
             "research_manifest": self.manifest_path,
         }
         return {**args, **over}
+
+
+WEB_KEY = ROOT / "cases" / "cpdr-web-retrieval"
+
+
+def web_file(name: str) -> dict[str, Any]:
+    """A frozen file of ``cases/cpdr-web-retrieval`` (read at test time, never edited)."""
+    loaded: dict[str, Any] = json.loads((WEB_KEY / name).read_text(encoding="utf-8"))
+    return loaded
+
+
+class _WebResponse:
+    def __init__(self, spec: dict[str, Any]) -> None:
+        self.status: int = spec["status"]
+        self._headers: dict[str, str] = spec["headers"]
+        self._body: bytes = spec["body"].encode("utf-8")
+        self._pos = 0
+
+    def getheader(self, name: str, default: str | None = None) -> str | None:
+        for key, value in self._headers.items():
+            if key.lower() == name.lower():
+                return value
+        return default
+
+    def read(self, amt: int) -> bytes:
+        chunk = self._body[self._pos : self._pos + amt]
+        self._pos += len(chunk)
+        return chunk
+
+
+class _WebConnection:
+    def __init__(self, case: "WebCase", host: str) -> None:
+        self.case = case
+        self.host = host
+        self.path = ""
+
+    def request(self, method: str, url: str, *, headers: Any) -> None:
+        self.path = url
+        self.case.requests.append((self.host, url))
+
+    def getresponse(self) -> _WebResponse:
+        return _WebResponse(self.case.responses[f"https://{self.host}{self.path}"])
+
+    def close(self) -> None:
+        return None
+
+
+class WebCase(ResearchCase):
+    """The web-retrieval key's case on disk: its manifest rows and the local note they name, a good
+    ruling under a tmp rulings root, and (``install``) the key's resolver and connector standing in
+    for ``webfetch.system_resolver`` and ``webfetch.pinned_connection`` so nothing dials. The
+    resolver and connector calls are kept on ``resolved`` and ``requests``."""
+
+    def __init__(self, base: Path, *, with_urls: bool = True) -> None:
+        cases = web_file("manifest.json")
+        rows = cases["research_manifest"]["rows"]
+        super().__init__(base, rows if with_urls else [r for r in rows if "url" not in r])
+        for name, text in cases["research_manifest"]["files"].items():
+            target = self.inputs / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text, encoding="utf-8", newline="")
+        self.cases = cases
+        self.responses: dict[str, Any] = cases["responses"]
+        self.resolved: list[str] = []
+        self.requests: list[tuple[str, str]] = []
+        self.rulings_root = base / "rulings"
+        self.rulings_root.mkdir()
+        self.ruling = self.write_ruling("good")
+
+    def write_ruling(self, name: str, text: str | None = None) -> Path:
+        """A ruling under the tmp rulings root: the key's ``ruling_texts[name]`` unless ``text``."""
+        path = self.rulings_root / f"{name}.md"
+        path.write_text(self.cases["ruling_texts"][name] if text is None else text, "utf-8")
+        return path
+
+    def install(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def resolve(host: str) -> list[str]:
+            self.resolved.append(host)
+            return list(self.cases["hosts"][host])
+
+        def connect(target: webfetch.ConnectionTarget) -> _WebConnection:
+            return _WebConnection(self, target.host)
+
+        moment = datetime.fromisoformat(self.cases["clock"])
+        monkeypatch.setattr(webfetch, "system_resolver", resolve)
+        monkeypatch.setattr(webfetch, "pinned_connection", connect)
+        monkeypatch.setattr(run_inputs, "MAX_ITEM_BYTES", self.cases["cap"])
+        monkeypatch.setattr(adapter, "LIVE_RULINGS_ROOT", self.rulings_root)
+        monkeypatch.setattr(evidence, "research_clock", lambda: moment)
+
+    def arguments(self, base: Path, **over: Any) -> dict[str, Any]:
+        return super().arguments(
+            base,
+            case_id="cpdr-web-retrieval",
+            research_ruling=self.ruling,
+            **over,
+        )

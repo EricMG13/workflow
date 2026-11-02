@@ -22,8 +22,10 @@ from cpdr_s1_support import (
     FIXTURE,
     ROOT,
     ResearchCase,
+    WebCase,
     key_file,
     off_run_record,
+    web_file,
 )
 
 from deploy_vii.execution import Execution
@@ -39,6 +41,7 @@ from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts import factory
 from deploy_workflow.prompts.fence import UntrustedItem
 from deploy_workflow.research import evidence
+from deploy_workflow.research import contracts as c
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.research.intake import IntakeError
 from deploy_workflow.run_inputs import ResearchManifestInvalid, check_arguments, stage_sources
@@ -531,3 +534,139 @@ def test_context_cutoff_refuses_before_prepare(
     reasons = {e["locator"]: e["reason"] for e in json.loads(rejected)}
     assert reasons[key["refused"][0]["locator"]] == key["refusal_texts"]["cutoff_b"]["text"]
     assert pack_ids(run_dir) == key["pack_sources"]
+
+
+# ---- the research_ruling argument: web items staged, recorded and checked on resume (O7b-2 S4) ----
+
+
+def web_run(base: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[WebCase, dict[str, Any]]:
+    """A web run (the key's rows, fetched through the key's fakes) that stopped at its first model
+    call, after staging."""
+    case = WebCase(base)
+    case.install(monkeypatch)
+    args = case.arguments(base)
+    run_pathway(**args)
+    return case, args
+
+
+def test_web_items_are_staged_and_recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`#records/{fetches_json/file_bytes,evidence_json/rows,rejected_json/file_bytes,pack_sources}`;
+    each staged `sources/ev-<n>.txt` hashes to its row's sha256."""
+    _, args = web_run(tmp_path, monkeypatch)
+    run_dir = args["run_dir"]
+    records = web_file("expected.json")["records"]
+    research = run_dir / "research"
+    assert (research / "fetches.json").read_bytes().decode("utf-8") == (
+        records["fetches_json"]["file_bytes"]
+    )
+    assert (
+        json.loads((research / "evidence.json").read_text("utf-8"))
+        == (records["evidence_json"]["rows"])
+    )
+    assert (research / "rejected.json").read_bytes().decode("utf-8") == (
+        records["rejected_json"]["file_bytes"]
+    )
+    assert pack_ids(run_dir) == records["pack_sources"]
+    for row in records["evidence_json"]["rows"]:
+        staged = (run_dir / "sources" / f"{row['item_id']}.txt").read_bytes()
+        assert hashlib.sha256(staged).hexdigest() == row["sha256"]
+
+
+def test_web_entries_carry_origin_and_url(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """S3 review L-6: `_research_entries` carries `origin` and `url` for supplied and web items
+    (`#records/evidence_json/rows`); `cpdr._items` carries `origin`."""
+    case = WebCase(tmp_path)
+    case.install(monkeypatch)
+    checked = check_arguments(**case.arguments(tmp_path))
+    rows = web_file("expected.json")["records"]["evidence_json"]["rows"]
+    entries = rp._research_entries(checked)
+    assert [(e["source_id"], e["origin"], e["url"], e["path"]) for e in entries] == [
+        (r["item_id"], r["origin"], r["url"], r["path"]) for r in rows
+    ]
+    items = cpdr._items(rows[:2])  # one supplied and one url item (EvidenceItem has no url)
+    assert [(i.item_id, i.origin) for i in items] == [("ev-1", "supplied"), ("ev-2", "web")]
+
+
+def test_run_json_records_the_research_ruling(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`#run_json/{keys,ruling_sha256,ruling_date}`; `#run_json/absent_without_ruling` for the
+    supplied-only run."""
+    key = web_file("expected.json")["run_json"]
+    _, args = web_run(tmp_path / "web", monkeypatch)
+    body = run_json(args["run_dir"])
+    assert all(name in body for name in key["keys"])
+    assert body["research_ruling_sha256"] == key["ruling_sha256"]
+    assert body["research_ruling_date"] == key["ruling_date"]
+    assert body["research_ruling_path"] == str(args["research_ruling"].resolve())
+    clock(monkeypatch, AFTER_AS_OF)
+    supplied = ResearchCase(tmp_path / "supplied")
+    run_pathway(**supplied.arguments(tmp_path / "supplied"))
+    plain = run_json(tmp_path / "supplied" / "run")
+    assert key["absent_without_ruling"] is True
+    assert not any(name in plain for name in key["keys"])
+    assert not (tmp_path / "supplied" / "run" / "research" / "fetches.json").exists()
+
+
+def test_resume_with_an_edited_fetch_record_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, args = web_run(tmp_path, monkeypatch)
+    (args["run_dir"] / "run.json").unlink()
+    fetches = args["run_dir"] / "research" / "fetches.json"
+    records = json.loads(fetches.read_text("utf-8"))
+    records[0]["resolved_ip"] = "93.184.216.99"
+    fetches.write_text(json.dumps(records, indent=1) + "\n", encoding="utf-8")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+    assert not (args["run_dir"] / "run.json").exists()
+
+
+def test_resume_with_a_removed_fetch_record_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, args = web_run(tmp_path, monkeypatch)
+    (args["run_dir"] / "run.json").unlink()
+    (args["run_dir"] / "research" / "fetches.json").unlink()
+    with pytest.raises(rp.ResumeRefused):
+        run_pathway(**args, resume=True)
+
+
+def test_resume_with_another_ruling_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case, args = web_run(tmp_path, monkeypatch)
+    (args["run_dir"] / "run.json").unlink()
+    other = case.write_ruling("other", case.cases["ruling_texts"]["good"] + "# a later copy\n")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**{**args, "research_ruling": other}, resume=True)
+    assert not (args["run_dir"] / "run.json").exists()
+
+
+def test_resume_of_a_web_run_proceeds_untouched(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`#records/fetches_json/file_sha256`: the untouched staged record is the key's, and the
+    resume goes on to the same stop."""
+    _, args = web_run(tmp_path, monkeypatch)
+    (args["run_dir"] / "run.json").unlink()
+    staged = (args["run_dir"] / "research" / "fetches.json").read_bytes()
+    assert (
+        hashlib.sha256(staged).hexdigest()
+        == web_file("expected.json")["records"]["fetches_json"]["file_sha256"]
+    )
+    again = run_pathway(**args, resume=True)
+    assert again.outcome == "stopped"
+    assert (
+        run_json(args["run_dir"])["research_ruling_sha256"]
+        == (web_file("expected.json")["run_json"]["ruling_sha256"])
+    )
+
+
+def test_resume_without_the_ruling_of_a_web_run_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, args = web_run(tmp_path, monkeypatch)
+    (args["run_dir"] / "run.json").unlink()
+    with pytest.raises(c.EvidenceFetchRefused):
+        run_pathway(**{**args, "research_ruling": None}, resume=True)

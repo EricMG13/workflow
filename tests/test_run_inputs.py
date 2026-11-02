@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Self
 
 import pytest
-from cpdr_s1_support import ResearchCase, key_file
+from cpdr_s1_support import ResearchCase, WebCase, key_file, web_file
 
 from deploy_vii.preparation import MAX_BYTES, load_pack, prepare
 from deploy_workflow.context import ContextRefused
@@ -22,6 +22,7 @@ from deploy_workflow.model.adapter import (
 )
 from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.research import evidence
+from deploy_workflow.research.contracts import EvidenceFetchRefused
 from deploy_workflow.run_inputs import (
     AdapterRefused,
     BadCap,
@@ -33,6 +34,7 @@ from deploy_workflow.run_inputs import (
     PathwayMismatch,
     ResearchManifestRequired,
     ResearchManifestUnused,
+    ResearchRulingUnused,
     RunDirExists,
     RunDirInvalid,
     SourceTooLarge,
@@ -511,3 +513,67 @@ def test_the_run_dir_is_private(args: dict[str, Any]) -> None:
 def test_a_staged_file_carries_the_callers_media_type(args: dict[str, Any]) -> None:
     checked = check_arguments(**args)
     assert [f.media_type for f in checked.files] == ["text/html", "text/plain", "text/plain"]
+
+
+# ---- the research_ruling argument (O7b-2 S4) against cases/cpdr-web-retrieval ----
+
+
+def web_arguments(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, with_urls: bool = True
+) -> tuple[WebCase, dict[str, Any]]:
+    case = WebCase(tmp_path, with_urls=with_urls)
+    case.install(monkeypatch)
+    return case, {**case.arguments(tmp_path), "adapter": RecordedAdapter(MODEL, {})}
+
+
+def test_url_rows_without_ruling_are_refused_before_resolution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`#gate/no_ruling/{exception,text}`, `#gate/resolver_calls_before_gate`: nothing resolved,
+    nothing written."""
+    case, arguments = web_arguments(tmp_path, monkeypatch)
+    key = web_file("expected.json")["gate"]
+    with pytest.raises(EvidenceFetchRefused) as raised:
+        check_arguments(**{**arguments, "research_ruling": None})
+    assert type(raised.value).__name__ == key["no_ruling"]["exception"]
+    assert str(raised.value) == key["no_ruling"]["text"]
+    assert len(case.resolved) == key["resolver_calls_before_gate"] and case.requests == []
+    assert not os.path.lexists(arguments["run_dir"])
+
+
+def test_ruling_without_url_rows_is_unused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`#gate/unused_ruling/{exception,text}`: a ruling is read only when a row has a url."""
+    case, arguments = web_arguments(tmp_path, monkeypatch, with_urls=False)
+    key = web_file("expected.json")["gate"]["unused_ruling"]
+    with pytest.raises(ResearchRulingUnused) as raised:
+        check_arguments(**arguments)
+    assert type(raised.value).__name__ == key["exception"]
+    assert str(raised.value) == key["text"]
+    assert case.resolved == [] and not os.path.lexists(arguments["run_dir"])
+
+
+@pytest.mark.parametrize("name", ["configs_missing", "lifts_missing"])
+def test_bad_ruling_is_refused_before_resolution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    """`#gate/{configs_missing,lifts_missing}/{exception,text}` and
+    `#gate/resolver_calls_before_gate`: the gate runs before the first resolver call."""
+    case, arguments = web_arguments(tmp_path, monkeypatch)
+    key = web_file("expected.json")["gate"][name]
+    arguments["research_ruling"] = case.write_ruling(name)
+    with pytest.raises(LivePauseInForce) as raised:
+        check_arguments(**arguments)
+    assert type(raised.value).__name__ == key["exception"]
+    assert str(raised.value) == key["text"]
+    assert len(case.resolved) == web_file("expected.json")["gate"]["resolver_calls_before_gate"]
+    assert case.requests == [] and not os.path.lexists(arguments["run_dir"])
+
+
+def test_a_ruling_without_a_manifest_is_unused(tmp_path: Path) -> None:
+    ruling = tmp_path / "r.md"
+    ruling.write_text("x", encoding="utf-8")
+    case = ResearchCase(tmp_path)
+    arguments = {**case.arguments(tmp_path), "adapter": RecordedAdapter(MODEL, {})}
+    arguments.update(cp_dr=False, research_manifest=None, research_ruling=ruling)
+    with pytest.raises(ResearchRulingUnused):
+        check_arguments(**arguments)

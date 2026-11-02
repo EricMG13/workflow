@@ -93,10 +93,17 @@ from deploy_workflow.workflow import WorkflowError
 MAX_OUTPUT_TOKENS = 98_304
 
 # PF-R12 (cases/pilot-fixes/limits.json#bytes_per_token_basis): a lower bound on bytes per token,
-# by provider, for the loop's input-token bound. OpenAI's 3.0 sits below every measurement (pilot
-# sol 4.314 and 4.317; Deploy VII sol min 4.885 over 36 calls); the others stay at 1, which is
-# sound by definition (a token is at least a byte) and over-reserves (pilot opus 2.394-2.545,
-# pilot deepseek 3.329-3.572).
+# by provider, for the loop's input-token bound. OpenAI's 3.0 sat below the pilot and Deploy VII
+# measurements (pilot sol 4.314 and 4.317; Deploy VII sol min 4.885 over 36 calls) but it is not
+# below every measurement. The figures are per request and cumulative (the whole request is
+# resent each call). Run 2's non-ciphertext text measured 3.02 bytes per token cumulative and
+# 2.51-2.64 per financials call, so 3.0 has little slack there. T11 counts encrypted reasoning at
+# half its bytes, which shrinks that slack further: at call-19 size it falls from 30,808 to
+# 11,920 tokens (pinned table `cases/pilot-fixes/encrypted-reasoning-table.md`, on Modules'
+# branch `claude/cp1h-estimator-oracle`; it is not on this branch). A request over 272K true
+# tokens stops as UnknownCharge, so an under-estimate is never silent (MANAGER ruling (A): the
+# value stays at 3.0). The others stay at 1, which is sound by definition (a token is at least a
+# byte) and over-reserves (pilot opus 2.394-2.545, pilot deepseek 3.329-3.572).
 BYTES_PER_TOKEN_LOWER_BOUND: Mapping[str, Decimal] = MappingProxyType(
     {"openai": Decimal("3.0"), "anthropic": Decimal(1), "openrouter": Decimal(1)}
 )
@@ -343,9 +350,8 @@ class _Meta:
     live: bool
     redactor: Redactor
     replayed_from: str | None = None  # the earlier run's run_id, for a rerun after repair
-    untrusted_for: UntrustedFor | None = (
-        None  # CP-DR's hook: evidence items (research step), dossier block (CP-1C, CP-2)
-    )
+    # CP-DR's hook: evidence items (research step), dossier block (CP-1C, CP-2); none off-CP-DR.
+    untrusted_for: UntrustedFor | None = None
 
 
 def _source_entries(
@@ -491,7 +497,8 @@ def write_attachments(
 ) -> None:
     """After ``write_dossier`` (post-seal): ``research/attachments.json`` for a settled head, the
     consumers' ids in plan order (the modules whose settled head binds this CP-DR head), sorted
-    keys, two-space indent, one trailing LF. ``supersedes`` is the earlier run's id on a rerun. A run with no settled head writes none."""
+    keys, two-space indent, one trailing LF. ``supersedes`` is the earlier run's id on a rerun. A
+    run with no settled head writes none."""
     if record.dossier_sha256 is None or record.head_sha256 is None:
         return
     snapshot = store.read()
@@ -604,7 +611,7 @@ def _stop(run_dir: Path, meta: _Meta, reason: str, spent: Decimal) -> RunOutcome
     if meta.checked.cp_dr and _stopped_cp_dr_state(clean) is None:
         try:
             state = _head_state(run_dir)
-        except (OSError, ValueError) as error:  # named, never a crash: the stop keeps its reason
+        except (OSError, ValueError, RecursionError) as error:  # named, never a crash
             clean = f"{clean}; cp_dr_state unreadable: {type(error).__name__}"
     _write_run_json(run_dir, meta, "stopped", clean, head_state=state)
     return RunOutcome(meta.checked.run_id, run_dir, "stopped", clean, spent)

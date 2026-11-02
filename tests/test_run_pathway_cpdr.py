@@ -500,6 +500,33 @@ def test_a_resumed_run_records_the_bare_anchor_fault(tmp_path: Path) -> None:
     assert run_json(tmp_path)["stopped_reason"] == want["fault_record"]
 
 
+def test_a_stop_whose_head_state_recurses_deeply_is_named_not_a_crash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7b-1c stage re-review I-5: a `RecursionError` reading the CP-DR head is named in the
+    reason, as an `OSError` is, and the stop is still written."""
+
+    def too_deep(_run_dir: Path) -> str | None:
+        raise RecursionError("maximum recursion depth exceeded")
+
+    monkeypatch.setattr(rp, "_head_state", too_deep)
+    checked: Any = SimpleNamespace(
+        cp_dr=True,
+        research=SimpleNamespace(manifest_sha256="0" * 64, ruling=None),
+        model=o2_case.MODEL,
+        case_id="cpdr-research-owner",
+        pathway="relative_value",
+        run_id="r1",
+        cap_usd=Decimal(100),
+        gate=None,
+    )
+    meta = rp._Meta(checked, (), False, Redactor())
+    outcome = rp._stop(tmp_path, meta, "NoSubmit: x", Decimal(0))
+    assert outcome.outcome == "stopped"
+    assert outcome.stopped_reason == "NoSubmit: x; cp_dr_state unreadable: RecursionError"
+    assert run_json(tmp_path)["stopped_reason"] == outcome.stopped_reason
+
+
 def test_terminator_body_refused_at_intake(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Row 13: the manifest row whose text holds `<<<END>>>` is refused at intake with the key's
     reason suffix and listed in `rejected.json`; it is not in the pack, not in the staged sources

@@ -27,8 +27,8 @@ def command(module_id: str) -> Fact:
 
 
 def store_with(root: Path, requested: tuple[str, ...], name: str = "store") -> Execution:
-    """The store `root/<name>` (`execution` is the run layout) and the staging `root/research` over the positive pack, whose
-    requested modules are `requested`."""
+    """The store `root/<name>` (`execution` is the run layout) and the staging `root/research`
+    over the positive pack, whose requested modules are `requested`."""
     pack = without_peer_pack(runs.make_pack("positive"))
     pack = PreparedPack(
         run=pack.run.model_copy(update={"requested_modules": requested}), sources=pack.sources

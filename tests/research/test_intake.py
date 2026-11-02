@@ -723,3 +723,13 @@ def test_a_url_that_is_not_text_is_a_missing_field(url: Any) -> None:
     with pytest.raises(it.IntakeError) as raised:
         it.parse_rows([one_url_row(url, locator="x")])
     assert str(raised.value) == "manifest row needs a non-empty url"
+
+
+@pytest.mark.parametrize("name", ["pipe", "line_feed", "carriage_return", "block_opener"])
+def test_a_locator_a_dossier_cell_cannot_hold_stops_intake_before_any_fetch(name: str) -> None:
+    """O7 phase fix S3 I-3: `cpdr-web-retrieval#locator_checks/*`: the manifest is refused with the
+    key's reason at argument time, so no row is fetched."""
+    case = WEB_KEY["locator_checks"][name]
+    with pytest.raises(it.IntakeError) as raised:
+        it.parse_rows([one_url_row(locator=case["locator"])])
+    assert str(raised.value) == case["reason"]

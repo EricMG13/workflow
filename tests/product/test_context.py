@@ -951,3 +951,23 @@ def test_form_has_run_cutoff_field() -> None:
     assert f"fld({section}, '{key}', {want['rule']})" in html
     run_object = re.search(r"const run = \{([^}]*)\};", html)
     assert run_object and key in [n.strip() for n in run_object[1].split(",")]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "question_text_pipe",
+        "question_text_line_feed",
+        "question_text_carriage_return",
+        "question_text_block_opener",
+    ],
+)
+def test_a_question_text_a_dossier_cell_cannot_hold_is_refused_here(name: str) -> None:
+    """O7 phase fix L-1: `#context/refusals/question_text_*`, refused at the context, before any
+    seal, so a pipe, a line break or `<<<` in a question never reaches the dossier."""
+    want = _cutoff_key()["context"]["refusals"][name]
+    obj = json.loads((CUTOFF_CASE / "context.json").read_text("utf-8"))
+    obj["research_questions"][0]["text"] = want["research_questions[0].text"]
+    with pytest.raises(ContextRefused) as caught:
+        load_context(json.dumps(obj).encode())
+    assert list(caught.value.problems) == want["problems"]

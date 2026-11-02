@@ -484,8 +484,10 @@ EXPECTED = {
         "sentences": [
             "An item dated after the cutoff is refused. The cutoff is the earlier of the as-of date and the context's `run.cutoff`; with no `run.cutoff` it is the as-of date.",
             "A URL row is fetched only when the run names a user ruling that lifts the live-provider pause for `web-retrieval` (`research_ruling`); without one every URL row is refused before anything is written, and the refusal names the ruling the run needs. A fetched item is `https` only, from the user's manifest, with every address public, at most three redirects, the same byte cap, and a recorded url, address, status, size and hash in `research/fetches.json`; a publication date found in the response can refuse an item, never admit one.",
+            "No provider or credential is used; the web is used only to fetch the user's URL rows under the ruling Intake names, and the readiness ceiling is `RESEARCH_READY`.",
+            "Each research item names a file or an `https` url, a family, a publication date, a locator and the tag `research`.",
         ],
-        "_source": "docs/superpowers/plans (O7b-2 plan) section S5 Text, verbatim",
+        "_source": "entries 1-2: docs/superpowers/plans (O7b-2 plan) section S5 Text, verbatim; entries 3-4: O7-R56 (cpdr.md lines 3 and 26), verbatim",
     },
 }
 OUT.mkdir(parents=True, exist_ok=True)

@@ -1992,7 +1992,7 @@
    "src/deploy_workflow/owner_workflow.py": "69993f630b040b54b8670bdb660e7c501edff16f6c0a08b5a28b61287c5a2275",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "db6d9307bb2f39abab7809a1a1660db0a9b2ec01a3523936d912500dd78b982d",
-   "src/deploy_workflow/owners/cp1c.py": "bada01672f17f5396e2af1ec5058dad5d6d6a7f65fa3743768f1a8c47b769c77",
+   "src/deploy_workflow/owners/cp1c.py": "04f915df8163f0e5b7520e188b9090383e735236437284a0027426e0d37eb6de",
    "src/deploy_workflow/owners/cp1d.py": "f9544b356fd0b7b54fe2d4230958b349092e462c0a3c581b32968b081ab783fb",
    "src/deploy_workflow/owners/cp2.py": "902dea0e690a9054b06e064d1b3636367a6a8c02ff75d5ae9c746bf4fdf085e2",
    "src/deploy_workflow/owners/cp2a.py": "b246e5bdcb4622511ac557d4bb3a5afd7aa2f22960f69e00ac4fba235a76b5fe",
@@ -2013,7 +2013,7 @@
    "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
    "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b",
    "src/deploy_workflow/research/review.py": "ab6d7e9b0964540eb64eefbe60a27791a5f82dff4ba33cb3a47f706c3add9bb7",
-   "src/deploy_workflow/research/steps.py": "a0ccb98bd90335883bd44030edaac978077cafaab40130aeeed3e7a85ccd2dc1"
+   "src/deploy_workflow/research/steps.py": "a9ce0aff7317dbf23d1f07bc4d21b6e55dfdf86e70c366bd09b20b8b070e4335"
   },
   "oracles": {
    "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",

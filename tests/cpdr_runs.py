@@ -18,19 +18,30 @@ import hashlib
 import importlib
 import json
 import re
-from collections.abc import Iterable, Mapping
-from datetime import date
+import socket
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import pytest
+from cpdr_s1_support import ResearchCase
+
 from deploy_vii.contracts import Fact, Module, Run, Source, Span
-from deploy_vii.execution import Execution
+from deploy_vii.execution import Execution, head_of
 from deploy_vii.live.tools import cited_locators
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
-from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow import run_pathway as rp
+from deploy_workflow.model.budget import Budget
+from deploy_workflow.model.redact import Redactor
+from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
 from deploy_workflow.owners import cpdr
+from deploy_workflow.prompts.factory import prompt_factory
 from deploy_workflow.research import evidence as record
 from deploy_workflow.research.intake import AcceptedItem, RefusedItem, write_rejected
+from deploy_workflow.run_inputs import check_arguments
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases" / "cpdr-research-owner"
@@ -233,11 +244,11 @@ def cp1_context_text(pack: PreparedPack) -> str:
     return json.dumps(stage_one, ensure_ascii=False).replace(PACK_PLACEHOLDER, pack.content_hash())
 
 
-def start(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
-    """The workflow over `root/store`, the staging under `root`, nothing settled."""
+def start(case: str, root: Path, store: str = "store") -> tuple[OwnerWorkflow, PreparedPack]:
+    """The workflow over `root/<store>`, the staging under `root`, nothing settled."""
     pack = make_pack(case)
     stage(root)
-    return OwnerWorkflow.create(root / "store", pack, publication_directory=None), pack
+    return OwnerWorkflow.create(root / store, pack, publication_directory=None), pack
 
 
 def read_cited(workflow: OwnerWorkflow, payload: str) -> None:
@@ -308,9 +319,9 @@ def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack) -> None:
     s1a.submit_valid(workflow, _driver("cp2g_runs")._quality_review(fw, read, inputs))
 
 
-def promoted(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+def promoted(case: str, root: Path, store: str = "store") -> tuple[OwnerWorkflow, PreparedPack]:
     """CP-0 and CP-1 settled and CP-DR begun at its `brief` step."""
-    workflow, pack = start(case, root)
+    workflow, pack = start(case, root, store)
     drive_cp0(workflow, pack, case)
     drive_cp1(workflow, pack)
     return workflow, pack
@@ -331,15 +342,13 @@ def _command(module_id: str) -> Fact:
     )
 
 
-def seeded(case: str, root: Path) -> tuple[Execution, str]:
-    """CP-0 and CP-1 settled in a real store as hand-built modules (`begin` and `finish`), the
-    staging under `root`, then CP-DR begun after its anchor check. Returns the store and the CP-DR
-    ticket, at the brief step. No workflow journal: the connect tests and the defect classes run
-    the core's own `submit` over it."""
+def settled_pair(case: str, root: Path, modules: tuple[str, ...] = ("CP-0", "CP-1")) -> Execution:
+    """A real store with `modules` settled as hand-built modules (`begin` and `finish`) and the
+    staging under `root`; CP-DR is not begun."""
     pack = make_pack(case)
     stage(root)
     store = Execution.create(root / "store", pack)
-    for module_id in ("CP-0", "CP-1"):
+    for module_id in modules:
         ticket = store.begin(module_id)
         module = Module(
             run_id=pack.run.run_id,
@@ -354,6 +363,15 @@ def seeded(case: str, root: Path) -> tuple[Execution, str]:
             limitations=(f"{module_id} note",),
         )
         store.finish(ticket.ticket_id, module.model_dump_json(), lambda _module: ())
+    return store
+
+
+def seeded(case: str, root: Path) -> tuple[Execution, str]:
+    """CP-0 and CP-1 settled in a real store as hand-built modules, the staging under `root`, then
+    CP-DR begun after its anchor check. Returns the store and the CP-DR ticket, at the brief step.
+    No workflow journal: the connect tests and the defect classes run the core's own `submit`
+    over it."""
+    store = settled_pair(case, root)
     cpdr.check_begin(store, store.read())
     return store, store.begin(cpdr.MODULE_ID).ticket_id
 
@@ -427,15 +445,147 @@ def drive_research(
     return outcome
 
 
-def cpdr_closed(case: str, root: Path) -> tuple[Path, Path, None]:
-    """One closed CP-DR run of `case` under `root`: (store, sealed receipt, no publication)."""
-    workflow, _ = promoted(case, root)
+def closed_walk(
+    case: str,
+    root: Path,
+    store: str = "store",
+    between: Callable[[OwnerWorkflow, PreparedPack], None] | None = None,
+) -> OwnerWorkflow:
+    """CP-0, CP-1 and CP-DR driven to the end over `root/<store>`. `between` runs with the
+    workflow at the `research` step, after the brief is locked and before research is driven."""
+    workflow, pack = promoted(case, root, store)
     brief = drive_brief(workflow, case)
     if brief["status"] != "valid":
         raise RuntimeError(f"CP-DR brief not valid: {brief['issues']}")
+    if between is not None:
+        between(workflow, pack)
     research = drive_research(workflow, case)
     if research["status"] != "valid":
         raise RuntimeError(f"CP-DR research not valid: {research['issues']}")
+    return workflow
+
+
+def cpdr_closed(case: str, root: Path) -> tuple[Path, Path, None]:
+    """One closed CP-DR run of `case` under `root`: (store, sealed receipt, no publication)."""
+    workflow = closed_walk(case, root)
     receipt = root / "owner-receipt.json"
     workflow.write_receipt(receipt)
     return root / "store", receipt, None
+
+
+# --- a closed run finished the way `run_pathway` finishes one ---------------------------------------
+
+
+@dataclass(frozen=True)
+class ClosedRun:
+    """`root` is a run directory: `execution/`, `research/`, `sources/`, and what `_finish_run`
+    wrote (`owner-run.json`, `delivery/`, `run.json`). `fence` holds what the research step showed
+    the model about `ev-3` (the composed prompt, a `read_pages` body) and the sockets opened."""
+
+    root: Path
+    prompt: str
+    read_body: str
+    sockets: int
+
+
+_CLOSED: dict[str, ClosedRun] = {}
+
+
+class _Sockets:
+    def __init__(self) -> None:
+        self.opened = 0
+
+    def __call__(self, *args: object, **kwargs: object) -> None:
+        self.opened += 1
+        raise AssertionError("a test opened a socket")
+
+
+def _research_view(
+    root: Path, workflow: OwnerWorkflow, pack: PreparedPack, item: str, locator: str
+) -> tuple[str, str]:
+    """The composed research prompt, and the `read_pages` body of `item` at `locator`."""
+    spec = next(
+        step for step in OWNER_SPECS[cpdr.MODULE_ID].steps if step.step_id == cpdr.RESEARCH_STEP
+    )
+    compose = prompt_factory(
+        pack, Execution(root / "execution"), untrusted_for=cpdr.untrusted_items(root / "research")
+    )
+    prompt = "\n".join(message.text for message in compose(workflow.binding, spec, ()))
+    number = int(locator.split(":")[1])
+    call = workflow.invoke(
+        "read_pages", {"source_id": item, "first_page": number, "last_page": number}
+    )
+    return prompt, str(call["body"])
+
+
+def closed_run(case: str, factory: pytest.TempPathFactory) -> ClosedRun:
+    """One closed run of `case`, built once per process (the two test files share it), finished by
+    `run_pathway._finish_run` so `run.json` is the file a run writes. Sockets are patched to
+    raise while it runs."""
+    if case in _CLOSED:
+        return _CLOSED[case]
+    root = factory.mktemp(f"cpdr-{case}") / "run"
+    root.mkdir()
+    fixture = oracle()["submissions"]["fence_fixture"]
+    seen: dict[str, str] = {}
+
+    def between(workflow: OwnerWorkflow, pack: PreparedPack) -> None:
+        seen["prompt"], seen["body"] = _research_view(
+            root, workflow, pack, fixture["in_item"], fixture["locator"]
+        )
+
+    sockets = _Sockets()
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(socket, "socket", sockets)
+        # The owner-slice render needs CP-DR's registry row (`owner_render_scope`), which S3 adds and
+        # S4 tests; every other stage of `_finish_run` (receipt, its verify, dossier, run.json) runs.
+        patch.setattr(rp, "_render", lambda *_: None)
+        patch.setattr(record, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
+        workflow = closed_walk(case, root, "execution", between)
+        base = factory.mktemp(f"cpdr-{case}-args")
+        checked = check_arguments(**ResearchCase(base).arguments(base))
+        meta = rp._Meta(checked, (), False, Redactor())
+        outcome = rp._finish_run(workflow, root, meta, Budget(Decimal(1), root / "execution"))
+    if outcome.outcome != "settled":
+        raise RuntimeError(f"the closed run did not settle: {outcome.stopped_reason}")
+    made = ClosedRun(root, seen["prompt"], seen["body"], sockets.opened)
+    _CLOSED[case] = made
+    return made
+
+
+# --- shared checks of the key's rules ---------------------------------------------------------------
+
+
+def sha(data: bytes | str) -> str:
+    return hashlib.sha256(data if isinstance(data, bytes) else data.encode("utf-8")).hexdigest()
+
+
+def brief_file(template: str, cp0: str, cp1: str) -> tuple[str, str]:
+    """The key's brief file with the run-time markers substituted, and its brief_sha256, by the
+    key's own rule (`brief/brief_sha256_rule`): the body without `brief_sha256`, sorted keys,
+    compact separators, UTF-8, after the two result hashes are substituted."""
+    text = template.replace("{{CP0_RESULT_SHA256}}", cp0).replace("{{CP1_RESULT_SHA256}}", cp1)
+    body = json.loads(text)
+    body.pop("brief_sha256")
+    digest = sha(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
+    return text.replace("{{BRIEF_SHA256}}", digest), digest
+
+
+def edit_head(
+    store: Execution, module_id: str, forged: Module | None = None, **update: Any
+) -> None:
+    """Write a head the journal would not: `update` changes the head's fields; `forged` is a module
+    stored as a blob and made the head's result (a consistent blob and head). The store has no
+    public way to do either; the anchors and the probe exist for exactly this tampering."""
+    snapshot = store.read()
+    heads = []
+    for head in snapshot.heads:
+        if head.module_id == module_id:
+            if forged is not None:
+                store._store(forged.model_dump_json())
+                head = head_of(forged, head.qualification)
+            head = head.model_copy(update=update)
+        heads.append(head)
+    store._write(
+        snapshot.model_copy(update={"parent": snapshot.content_hash(), "heads": tuple(heads)})
+    )

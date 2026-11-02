@@ -10,9 +10,13 @@ import hashlib
 import json
 import socket
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
+import cpdr_runs as runs
+import o2_case
 import pytest
 from cpdr_s1_support import (
     FIXTURE,
@@ -21,8 +25,16 @@ from cpdr_s1_support import (
     off_run_record,
 )
 
+from deploy_vii.execution import Execution
+from deploy_vii.live.tools import cited_locators
 from deploy_vii.preparation import load_pack
 from deploy_workflow import run_pathway as rp
+from deploy_workflow.model.adapter import AdapterReply
+from deploy_workflow.model.budget import Budget
+from deploy_workflow.model.redact import Redactor
+from deploy_workflow.model.turn import ToolCall, Turn
+from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts import factory
 from deploy_workflow.prompts.fence import UntrustedItem
 from deploy_workflow.research import evidence
@@ -317,3 +329,161 @@ def test_a_deeply_nested_manifest_is_a_named_refusal(
     with pytest.raises(ResearchManifestInvalid):
         run_pathway(**case.arguments(tmp_path))
     assert not (tmp_path / "run").exists()
+
+
+# --- the closed run's run.json, the anchor stop and the terminator body (S2c; plan 4 rows 4, 5, 13) --
+
+
+@pytest.fixture(scope="module")
+def closed(tmp_path_factory: pytest.TempPathFactory) -> runs.ClosedRun:
+    """The positive case closed and finished by `_finish_run` (shared with `test_owner_cpdr.py`)."""
+    return runs.closed_run("positive", tmp_path_factory)
+
+
+def test_closed_run_json_records_cp_dr(closed: runs.ClosedRun) -> None:
+    """Row 4: the `run.json` a closed cp_dr run wrote (not `_cp_dr_keys`) holds the brief hash, the
+    dossier hash by `dossier_sha256_rule` and the head hash by `head_hash_rule`."""
+    expected = key_file("expected.json")
+    positive = expected["cases"]["positive"]
+    heads = {h.module_id: h for h in Execution(closed.root / "execution").read().heads}
+    _, brief = runs.brief_file(
+        positive["brief"]["template_file"],
+        heads["CP-0"].result_sha256,
+        heads["CP-1"].result_sha256,
+    )
+    dossier = positive["dossier"]["template_text"].replace("{{BRIEF_SHA256}}", brief)
+    body = run_json(closed.root)
+    assert (body["outcome"], body["stopped_reason"]) == ("settled", None)
+    assert body["cp_dr_invoked"] is True
+    assert body["cp_dr_lineage"] == expected["cp_dr_lineage"]
+    assert (
+        body["research_manifest_sha256"]
+        == key_file("manifest.json")["research_manifest"]["file_sha256"]
+    )
+    assert body["cp_dr_brief_sha256"] == brief
+    assert body["cp_dr_dossier_sha256"] == runs.sha(dossier)
+    assert body["cp_dr_dossier_sha256"] == runs.sha(
+        (closed.root / "research/dossier.md").read_bytes()
+    )
+    assert body["cp_dr_head_sha256"] == heads["CP-DR"].result_sha256
+    assert body["cp_dr_head_sha256"] != body["cp_dr_dossier_sha256"]
+
+
+class BadCp0:
+    """Answers every CP-0 request with a review that does not bind the pack: invalid twice, so the
+    CP-0 head is blocked and the walk's next begin is CP-DR's."""
+
+    config_id = o2_case.MODEL.config_id
+    ruling = None
+
+    def __init__(self, payload: str) -> None:
+        self.payload = payload
+        self.calls = 0
+
+    def complete(self, request: Any, *, invocation_digest: str, call_index: int, **_: Any) -> Any:
+        self.calls += 1
+        submit = [t.name for t in request.tools if t.name.startswith("submit_")][-1]
+        reads = [
+            ToolCall(
+                f"r-{call_index}-{n}",
+                "read_pages",
+                {
+                    "source_id": source,
+                    "first_page": int(loc.split(":")[1]),
+                    "last_page": int(loc.split(":")[1]),
+                },
+            )
+            for n, (source, loc) in enumerate(sorted(cited_locators(self.payload)))
+        ]
+        calls = (*reads, ToolCall(f"s-{call_index}", submit, json.loads(self.payload)))
+        turn = Turn(
+            "", calls, o2_case.USAGE, "tool_use", o2_case.MODEL.model, f"x-{call_index}", 200
+        )
+        return AdapterReply(
+            "ok",
+            turn,
+            None,
+            200,
+            None,
+            None,
+            o2_case.STARTED,
+            o2_case.FINISHED,
+            o2_case.USAGE,
+            None,
+        )
+
+
+def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
+    """Row 5, `refusals/anchors/blocked_cp0`: the blocked CP-0 head stops the run at CP-DR's begin;
+    `run.json.stopped_reason` is the key's `fault_record`, no `brief.json`, and the refusal adds no
+    line to `calls.jsonl` (one line per model call, none for CP-DR)."""
+    want = key_file("expected.json")["refusals"]["anchors"]["blocked_cp0"]
+    pack = runs.make_pack("positive")
+    runs.stage(tmp_path)
+    review = json.loads(runs.cp0_text(pack, "positive"))
+    review["pack_sha256"] = "0" * 64
+    adapter = BadCp0(json.dumps(review))
+    execution = tmp_path / "execution"
+    workflow = OwnerWorkflow.create(execution, pack, publication_directory=None)
+    checked: Any = SimpleNamespace(
+        cp_dr=True,
+        research=None,
+        model=o2_case.MODEL,
+        case_id="cpdr-research-owner",
+        pathway=pack.run.pathway,
+        run_id=pack.run.run_id,
+        cap_usd=Decimal(100),
+        gate=None,
+    )
+    meta = rp._Meta(checked, (), False, Redactor())
+    result = rp._drive_and_finish(
+        checked,
+        tmp_path,
+        adapter,
+        None,
+        meta,
+        pack,
+        workflow,
+        Budget(Decimal(100), execution),
+        False,
+    )
+    assert isinstance(result, rp._Fault)
+    outcome = rp._stop(tmp_path, meta, result.reason, result.spent)
+    assert outcome.outcome == "stopped"
+    assert run_json(tmp_path)["stopped_reason"] == want["fault_record"]
+    assert want["research_brief_json_written"] is False
+    assert not (tmp_path / "research" / "brief.json").exists()
+    lines = (tmp_path / "calls.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(lines) - adapter.calls == want["calls_jsonl_lines_added"]
+    assert all("CP-DR" not in line for line in lines)
+
+
+def test_terminator_body_refused_at_intake(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Row 13: the manifest row whose text holds `<<<END>>>` is refused at intake with the key's
+    reason suffix and listed in `rejected.json`; it is not in the pack, not in the staged sources
+    and not in the research prompt's evidence."""
+    clock(monkeypatch, AFTER_AS_OF)
+    manifest = key_file("manifest.json")
+    item = manifest["fence_terminator_item"]
+    terminator = key_file("expected.json")["fence"]["terminator"]
+    rows = [
+        *json.loads(manifest["research_manifest"]["file_bytes"]),
+        {k: item[k] for k in ("path", "tag", "family", "published", "locator")},
+    ]
+    case = ResearchCase(tmp_path, rows)
+    run_pathway(**case.arguments(tmp_path))
+    run_dir = tmp_path / "run"
+    refused = {
+        e["locator"]: e["reason"]
+        for e in json.loads((run_dir / "research" / "rejected.json").read_text("utf-8"))
+    }
+    assert refused[item["locator"]].endswith(terminator["reason_suffix"])
+    body = item["pages"][0]["text"]
+    staged = [p for sub in ("pack", "sources") for p in (run_dir / sub).rglob("*") if p.is_file()]
+    assert staged and not any(
+        body in p.read_text(encoding="utf-8", errors="replace") for p in staged
+    )
+    binding: Any = SimpleNamespace(module_id=cpdr.MODULE_ID, step_id=cpdr.RESEARCH_STEP)
+    spec: Any = None
+    shown = cpdr.untrusted_items(run_dir / "research")(binding, spec)
+    assert shown and all(body not in each.text for each in shown)

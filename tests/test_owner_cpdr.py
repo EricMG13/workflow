@@ -16,41 +16,39 @@ that follow it reuse its store.
 """
 
 import ast
-import hashlib
 import json
+import re
 import shutil
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import cpdr_runs as runs
 import pytest
 from cpdr_s1_support import ResearchCase
-from o2_case import FINISHED, MODEL, STARTED, USAGE
 
 from deploy_vii.contracts import validate_tables
 from deploy_vii.execution import Execution, Head
-from deploy_vii.live.tools import cited_locators
+from deploy_workflow import owner_workflow
 from deploy_workflow import run_pathway as rp
-from deploy_workflow.model.adapter import AdapterReply
-from deploy_workflow.model.budget import Budget
 from deploy_workflow.model.loop import StepStopped
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import ToolCall, Turn
-from deploy_workflow.owner_workflow import OwnerRunReceipt, OwnerWorkflow, verify_owner_run_receipt
+from deploy_workflow.owner_workflow import OwnerRunReceipt, verify_owner_run_receipt
 from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts import rules
 from deploy_workflow.research import evidence
+from deploy_workflow.research.anchors import check_anchors
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
+from deploy_workflow.research.dossier import render_dossier
 from deploy_workflow.research.intake import RefusedItem, write_rejected
 from deploy_workflow.run_inputs import check_arguments
 from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
 BRIEF_MARKER = "{{BRIEF_SHA256}}"
+FORGED = "TDR.3.total.answered"  # the fact the forgery test changes
 FACT_FIELDS = (
     "fact_id",
     "table_id",
@@ -70,6 +68,7 @@ class Closed:
     root: Path
     store: Path
     receipt: Path
+    run: runs.ClosedRun
 
     def execution(self) -> Execution:
         return Execution(self.store)
@@ -86,25 +85,13 @@ def key() -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def closed(tmp_path_factory: pytest.TempPathFactory) -> Closed:
-    """The positive case, closed: CP-0, CP-1 and CP-DR settled, the receipt sealed."""
-    root = tmp_path_factory.mktemp("cpdr-positive")
-    store, receipt, _ = runs.cpdr_closed("positive", root)
-    return Closed(root, store, receipt)
+    """The positive case, closed and finished as `run_pathway` finishes a run: CP-0, CP-1 and
+    CP-DR settled, `owner-run.json` sealed, `run.json` written. Shared with the run-level tests."""
+    made = runs.closed_run("positive", tmp_path_factory)
+    return Closed(made.root, made.root / "execution", made.root / "owner-run.json", made)
 
 
-def sha(data: bytes | str) -> str:
-    return hashlib.sha256(data if isinstance(data, bytes) else data.encode("utf-8")).hexdigest()
-
-
-def brief_file(template: str, cp0: str, cp1: str) -> tuple[str, str]:
-    """The key's brief file with the run-time markers substituted, and its brief_sha256, by the
-    key's own rule (`brief/brief_sha256_rule`): the body without `brief_sha256`, sorted keys,
-    compact separators, UTF-8, after the two result hashes are substituted."""
-    text = template.replace("{{CP0_RESULT_SHA256}}", cp0).replace("{{CP1_RESULT_SHA256}}", cp1)
-    body = json.loads(text)
-    body.pop("brief_sha256")
-    digest = sha(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
-    return text.replace(BRIEF_MARKER, digest), digest
+sha, brief_file = runs.sha, runs.brief_file
 
 
 # --- the positive closed run --------------------------------------------------------------------
@@ -222,9 +209,9 @@ def test_the_receipt_needs_the_evidence_record_and_names_it_when_it_is_gone(
     moved = tmp_path / "run"
     shutil.copytree(closed.root, moved)
     shutil.rmtree(moved / "research")
-    receipt = OwnerRunReceipt.model_validate_json((moved / "owner-receipt.json").read_bytes())
+    receipt = OwnerRunReceipt.model_validate_json((moved / "owner-run.json").read_bytes())
     with pytest.raises(WorkflowError, match="identity_mismatch"):
-        verify_owner_run_receipt(Execution(moved / "store"), receipt)
+        verify_owner_run_receipt(Execution(moved / "execution"), receipt)
 
 
 # --- anchors at begin (O7-R20) -------------------------------------------------------------------
@@ -270,71 +257,6 @@ def test_each_steps_rule_entry_is_the_validator_the_entry_validator_dispatches_t
 
 
 # --- the fault form on the run path (O7-R32) -----------------------------------------------------
-
-
-class _BadCp0:
-    """Answers every CP-0 request with a review that does not bind the pack: invalid twice, so the
-    CP-0 head is blocked and the walk's next begin is CP-DR's."""
-
-    config_id = MODEL.config_id
-    ruling = None
-
-    def __init__(self, payload: str) -> None:
-        self.payload = payload
-
-    def complete(self, request: Any, *, invocation_digest: str, call_index: int, **_: Any) -> Any:
-        submit = [t.name for t in request.tools if t.name.startswith("submit_")][-1]
-        reads = [
-            ToolCall(
-                f"r-{call_index}-{n}",
-                "read_pages",
-                {
-                    "source_id": source,
-                    "first_page": int(loc.split(":")[1]),
-                    "last_page": int(loc.split(":")[1]),
-                },
-            )
-            for n, (source, loc) in enumerate(sorted(cited_locators(self.payload)))
-        ]
-        calls = (*reads, ToolCall(f"s-{call_index}", submit, json.loads(self.payload)))
-        turn = Turn("", calls, USAGE, "tool_use", MODEL.model, f"x-{call_index}", 200)
-        return AdapterReply("ok", turn, None, 200, None, None, STARTED, FINISHED, USAGE, None)
-
-
-def test_an_anchor_refusal_on_the_run_path_reaches_run_json_in_the_keys_form(
-    tmp_path: Path, key: dict[str, Any]
-) -> None:
-    """O7-R32, `refusals/anchors/blocked_cp0/fault_record`: the refusal is raised inside the model
-    loop's catch-all, yet the run's stop reason is `<Type>: <reason>`, not `WorkflowError: ...`."""
-    pack = runs.make_pack("positive")
-    runs.stage(tmp_path)
-    review = json.loads(runs.cp0_text(pack, "positive"))
-    review["pack_sha256"] = "0" * 64
-    execution = tmp_path / "execution"
-    workflow = OwnerWorkflow.create(execution, pack, publication_directory=None)
-    checked: Any = SimpleNamespace(
-        cp_dr=True,
-        model=MODEL,
-        case_id="cpdr-research-owner",
-        pathway=pack.run.pathway,
-        run_id=pack.run.run_id,
-        cap_usd=Decimal(100),
-    )
-    meta = rp._Meta(checked, (), False, Redactor())
-    result = rp._drive_and_finish(
-        checked,
-        tmp_path,
-        _BadCp0(json.dumps(review)),
-        None,
-        meta,
-        pack,
-        workflow,
-        Budget(Decimal(100), execution),
-        False,
-    )
-    assert isinstance(result, rp._Fault)
-    assert result.reason == key["refusals"]["anchors"]["blocked_cp0"]["fault_record"]
-    assert not (tmp_path / "research" / "brief.json").exists()
 
 
 def test_a_stop_caused_by_a_brief_fault_keeps_the_faults_own_form() -> None:
@@ -402,3 +324,320 @@ def test_a_missing_brief_file_at_dossier_time_is_a_named_brief_fault(tmp_path: P
     (tmp_path / "research" / "brief.json").unlink()
     with pytest.raises(BriefInvalid, match=cpdr.NOT_LOCKED):
         cpdr.dossier_input(store, head, tmp_path / "research")
+
+
+# --- anchors through the walk's begin hook (O7-R20; plan 4 row 6) ----------------------------------
+
+
+def blocked_cp1(store: Execution) -> None:
+    runs.edit_head(store, "CP-1", status="blocked")
+
+
+def stale_cp0(store: Execution) -> None:
+    runs.edit_head(store, "CP-0", status="stale", notes=("Input changed; rerun required",))
+
+
+def other_cp0_input(store: Execution) -> None:
+    """CP-1 re-settled over a CP-0 input with one hex digit altered: a consistent blob and head."""
+    head = next(h for h in store.read().heads if h.module_id == "CP-1")
+    module = store.result(head.result_sha256)
+    inputs = tuple(
+        i.model_copy(update={"sha256": ("0" if i.sha256[0] != "0" else "1") + i.sha256[1:]})
+        if i.input_id == "CP-0"
+        else i
+        for i in module.inputs
+    )
+    runs.edit_head(store, "CP-1", forged=module.model_copy(update={"inputs": inputs}))
+
+
+@pytest.mark.parametrize(
+    ("name", "edit"),
+    [("blocked_cp1", blocked_cp1), ("stale_head", stale_cp0), ("input_cp0_hash", other_cp0_input)],
+)
+def test_anchor_refusals(tmp_path: Path, key: dict[str, Any], name: str, edit: Any) -> None:
+    """`refusals/anchors/<name>`: the begin hook raises `CpDrNotAnchored` with the key's reason;
+    nothing is written (no `brief.json`) and no CP-DR attempt is begun."""
+    want = key["refusals"]["anchors"][name]
+    store = runs.settled_pair("positive", tmp_path)
+    edit(store)
+    with pytest.raises(CpDrNotAnchored) as raised:
+        owner_workflow._PRE_BEGIN["CP-DR"](store, store.read())
+    assert str(raised.value) == want["reason"]
+    assert want["research_brief_json_written"] is False
+    assert not (tmp_path / "research" / "brief.json").exists()
+    assert all(a.module_id != "CP-DR" for a in store.read().attempts)
+
+
+def test_anchors_with_cp1_unrun_name_cp1_not_the_edge(tmp_path: Path) -> None:
+    """The hook runs before `current_inputs`: an unrun CP-1 is named, not `BLOCKED_EDGE`'s generic
+    'Required upstream is unrun, stale or blocked'."""
+    store = runs.settled_pair("positive", tmp_path, ("CP-0",))
+    with pytest.raises(CpDrNotAnchored) as raised:
+        owner_workflow._PRE_BEGIN["CP-DR"](store, store.read())
+    message = str(raised.value)
+    assert "CP-1" in message
+    assert "BLOCKED_EDGE" not in message and "unrun, stale or blocked" not in message
+
+
+def test_the_begin_hook_calls_check_anchors_with_the_snapshots_heads_and_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = runs.settled_pair("positive", tmp_path)
+    snapshot = store.read()
+    seen: list[tuple[Any, ...]] = []
+
+    def spy(cp0: Any, cp1: Any, run: Any) -> Any:
+        seen.append((cp0, cp1, run))
+        return check_anchors(cp0, cp1, run)
+
+    monkeypatch.setattr(cpdr, "check_anchors", spy)
+    owner_workflow._PRE_BEGIN["CP-DR"](store, snapshot)
+    [(cp0, cp1, run)] = seen
+    heads = {h.module_id: h for h in snapshot.heads}
+    assert (cp0.head, cp1.head) == (heads["CP-0"], heads["CP-1"])
+    assert cp0.module == store.result(heads["CP-0"].result_sha256)
+    assert cp1.module == store.result(heads["CP-1"].result_sha256)
+    assert run == snapshot.run
+
+
+# --- the brief lock (plan 4 row 7) ------------------------------------------------------------------
+
+
+def locked_brief(store: Execution) -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads(
+        (cpdr.research_dir(store) / cpdr.BRIEF_FILE).read_text(encoding="utf-8")
+    )
+    return loaded
+
+
+def test_brief_locks_forty_to_thirty_two(tmp_path: Path, key: dict[str, Any]) -> None:
+    """`brief/lock`: 40 tailored questions lock as 32, the context questions first, the tail
+    dropped, through `submit("brief")`."""
+    want = key["brief"]["lock"]
+    tailored = json.loads(runs.brief_payload("positive"))["questions"]
+    assert want["tailored_in"] == len(tailored) + len(want["context_kept"])  # plus the context's
+    store, ticket = runs.seeded("positive", tmp_path)
+    step = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, runs.brief_payload("positive"), None)
+    assert step.journal.steps[-1].status == "valid"
+    ids = [q["question_id"] for q in locked_brief(store)["questions"]]
+    assert ids == want["locked_ids"] and len(ids) == want["locked_out"]
+    assert ids[: len(want["context_kept"])] == want["context_kept"]
+    assert not set(want["dropped_from_tail"]) & set(ids)
+
+
+def test_missing_default_is_an_invalid_step(tmp_path: Path) -> None:
+    """A brief without one of the six defaults is a journaled invalid step naming it; nothing is
+    locked."""
+    store, ticket = runs.seeded("positive", tmp_path)
+    questions = [
+        q
+        for q in runs.oracle()["submissions"]["brief"]["model_tailored_defaults_only"]
+        if q["question_id"] != "competition"
+    ]
+    step = cpdr.submit(
+        store, ticket, cpdr.BRIEF_STEP, runs.brief_payload("positive", questions), None
+    ).journal.steps[-1]
+    assert step.status == "invalid"
+    assert any("competition" in issue and "missing" in issue for issue in step.issues)
+    assert not (cpdr.research_dir(store) / cpdr.BRIEF_FILE).exists()
+
+
+def test_lock_exists_before_research_begins(tmp_path: Path) -> None:
+    store, ticket = runs.seeded("positive", tmp_path)
+    path = cpdr.research_dir(store) / cpdr.BRIEF_FILE
+    assert not path.exists()
+    journal = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, runs.defaults_only("positive"), None)
+    assert [s.step_id for s in journal.journal.steps] == [cpdr.BRIEF_STEP]
+    assert path.exists()
+
+
+def test_deleted_brief_is_the_named_refusal(tmp_path: Path) -> None:
+    """Research after the lock file is gone is `BriefInvalid(NOT_LOCKED)`; no research step is
+    journaled."""
+    store, ticket = runs.locked("positive", tmp_path)
+    (cpdr.research_dir(store) / cpdr.BRIEF_FILE).unlink()
+    with pytest.raises(BriefInvalid, match=cpdr.NOT_LOCKED):
+        cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, runs.research_payload("positive"), None)
+    attempt = next(a for a in store.read().attempts if a.ticket_id == ticket)
+    assert [s.step_id for s in attempt.steps] == [cpdr.BRIEF_STEP]
+
+
+def test_edit_after_lock_is_hash_mismatch(tmp_path: Path, key: dict[str, Any]) -> None:
+    """`refusals/research/edit_after_lock`: a hashed field of `brief.json` changed after the lock,
+    then research submitted, is `BriefInvalid` with the key's message; the step is not journaled."""
+    want = key["refusals"]["research"]["edit_after_lock"]
+    store, ticket = runs.locked("positive", tmp_path)
+    path = cpdr.research_dir(store) / cpdr.BRIEF_FILE
+    body = json.loads(path.read_text(encoding="utf-8"))
+    body["questions"][0]["text"] = key["brief"]["edit_after_lock"]["edit_vector"][
+        "edited_question_text"
+    ]
+    path.write_text(json.dumps(body), encoding="utf-8")
+    with pytest.raises(BriefInvalid) as raised:
+        cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, runs.research_payload("positive"), None)
+    assert type(raised.value).__name__ == want["exception"]
+    assert str(raised.value) == want["message"]
+    attempt = next(a for a in store.read().attempts if a.ticket_id == ticket)
+    assert [s.step_id for s in attempt.steps] == [cpdr.BRIEF_STEP]
+
+
+# --- the research step (plan 4 rows 10, 11) ---------------------------------------------------------
+
+
+def test_research_v1_states_counts_readiness(tmp_path: Path, key: dict[str, Any]) -> None:
+    """`cases/positive/{claim_state_list,counts,readiness}` from the settled head; the
+    `valuation-context` not_found answer gives `missing` TDR.3 facts with the limitation and no
+    amount; `ev-3` supports the competition claim and is market-demand's cited contrary."""
+    want = key["cases"]["positive"]
+    store, ticket = runs.locked("positive", tmp_path)
+    cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, runs.research_payload("positive"), None)
+    head = next(h for h in store.read().heads if h.module_id == "CP-DR")
+    given = cpdr.dossier_input(store, head, cpdr.research_dir(store))
+    assert list(given.claim_states) == want["claim_state_list"]
+    assert render_dossier(given).readiness == want["readiness"]
+    facts = {f.fact_id: f for f in store.head_module(head).facts}
+    for name, value in want["counts"].items():
+        assert str(facts[f"TDR.3.total.{name}"].amount) == value
+    limitation = next(
+        f["limitation"] for f in want["facts"] if f["fact_id"] == "TDR.3.valuation-context.answer"
+    )
+    for field in ("answer", "contrary", "uncertainty"):
+        fact = facts[f"TDR.3.valuation-context.{field}"]
+        assert (fact.status, fact.amount, fact.limitation) == ("missing", None, limitation)
+    answers = {a["question_id"]: a for a in runs.oracle()["submissions"]["research_v1"]["answers"]}
+    supporting = [i for c in answers["competition"]["claims"] for i in c["independent_items"]]
+    assert "ev-3" in supporting  # ev-3 supports the competition claim ...
+    assert any(c.get("item") == "ev-3" for c in answers["market-demand"]["contrary"])  # ... and is
+    # the cited contrary of market-demand
+
+
+def research_with(text_for: str, text: str) -> str:
+    """`research_v1` with `text` as the `uncertainty` of the question `text_for`."""
+    body = json.loads(runs.research_payload("positive"))
+    next(a for a in body["answers"] if a["question_id"] == text_for)["uncertainty"] = text
+    return json.dumps(body)
+
+
+def test_research_refusals_families_not_independent(tmp_path: Path, key: dict[str, Any]) -> None:
+    want = key["refusals"]["research"]["families_not_independent"]
+    submission = runs.oracle()["submissions"]["refusal_inputs"]["independence"]
+    store, ticket = runs.locked("positive", tmp_path)
+    step = cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, json.dumps(submission), None)
+    journal = step.journal.steps[-1]
+    assert journal.status == "invalid"
+    assert any(issue.endswith(want["text"]) for issue in journal.issues)
+
+
+def test_research_refusals_banned_word(tmp_path: Path, key: dict[str, Any]) -> None:
+    """`recommend` is refused with the key's text; `covenant`, `recovery` and `refinancing` are
+    accepted in the same place."""
+    want = key["refusals"]["research"]["banned_word"]
+    question = runs.oracle()["submissions"]["refusal_inputs"]["banned_word"]["question_id"]
+    store, ticket = runs.locked("positive", tmp_path / "refused")
+    refused = cpdr.submit(
+        store, ticket, cpdr.RESEARCH_STEP, research_with(question, want["refused"]), None
+    ).journal.steps[-1]
+    assert refused.status == "invalid"
+    assert any(issue.endswith(want["refused_text"]) for issue in refused.issues)
+    store, ticket = runs.locked("positive", tmp_path / "accepted")
+    accepted = cpdr.submit(
+        store, ticket, cpdr.RESEARCH_STEP, research_with(question, want["accepted"]), None
+    ).journal.steps[-1]
+    assert (accepted.status, accepted.issues) == ("valid", ())
+
+
+# --- the fence (plan 4 row 12) ----------------------------------------------------------------------
+
+
+def test_fence_in_prompt_and_tool_result(closed: Closed, key: dict[str, Any]) -> None:
+    """`fence/{injection_phrase,prompt,read_pages,connector_calls}`: the phrase is in `ev-3`'s
+    text; it appears in the composed research prompt and in the `read_pages` result only inside
+    `ev-3`'s UNTRUSTED_EVIDENCE block, and no socket was opened."""
+    fence = key["fence"]
+    block = re.compile(rf"<<<UNTRUSTED_EVIDENCE id={fence['item']} .*?<<<END>>>", re.DOTALL)
+    for shown in (closed.run.prompt, closed.run.read_body):
+        inside = block.findall(shown)
+        assert inside and all(fence["injection_phrase"] in text for text in inside)
+        assert fence["injection_phrase"] not in block.sub("", shown)
+    assert closed.run.sockets == fence["connector_calls"]
+
+
+# --- ceiling and lineage (plan 4 row 14) ------------------------------------------------------------
+
+
+def test_ceiling_and_lineage(closed: Closed, key: dict[str, Any]) -> None:
+    """The readiness is never `COMMITTEE_READY`; the lineage is in the dossier and in `run.json`."""
+    dossier = (closed.root / "research" / "dossier.md").read_text(encoding="utf-8")
+    readiness = re.search(r"^readiness: (\S+)$", dossier, re.MULTILINE)
+    assert readiness is not None
+    assert readiness.group(1) == key["cases"]["positive"]["readiness"] != "COMMITTEE_READY"
+    assert f"cp_dr_lineage: {key['cp_dr_lineage']}" in dossier
+    written = json.loads((closed.root / "run.json").read_text(encoding="utf-8"))
+    assert written["cp_dr_lineage"] == key["cp_dr_lineage"]
+
+
+# --- the second run (plan 4 row 15) -----------------------------------------------------------------
+
+
+def test_closed_run_v2(closed: Closed, key: dict[str, Any], tmp_path: Path) -> None:
+    """`cases/v2`: a fresh run id and `research_v2`; the facts and the dossier are v2's; the brief
+    questions are v1's and `brief_sha256` differs (it hashes the run id and the anchors)."""
+    want = key["cases"]["v2"]
+    store_path, receipt_path, _ = runs.cpdr_closed("v2", tmp_path)
+    store = Execution(store_path)
+    verify_owner_run_receipt(store, OwnerRunReceipt.model_validate_json(receipt_path.read_bytes()))
+    head = next(h for h in store.read().heads if h.module_id == "CP-DR")
+    assert head.status == want["cp_dr_head_status_expected"]
+    assert store.read().run.run_id == want["run_id"]
+    module = store.head_module(head)
+    by_id = {fact.fact_id: fact for fact in module.facts}
+    assert sorted(by_id) == sorted(f["fact_id"] for f in want["facts"])
+    for wanted in want["facts"]:
+        fact = by_id[wanted["fact_id"]]
+        got = {n: None if (v := getattr(fact, n)) is None else str(v) for n in FACT_FIELDS}
+        assert got == {n: wanted.get(n) for n in FACT_FIELDS}, fact.fact_id
+    research = tmp_path / "research"
+    rp.write_dossier(store, research)
+    template = want["brief"]["template_file"]
+    _, digest = brief_file(
+        template, closed_head(store, "CP-0").result_sha256, closed_head(store, "CP-1").result_sha256
+    )
+    text = want["dossier"]["template_text"].replace(BRIEF_MARKER, digest)
+    assert (research / "dossier.md").read_bytes() == text.encode("utf-8")
+    first = json.loads((closed.root / "research" / "brief.json").read_text(encoding="utf-8"))
+    second = json.loads((research / "brief.json").read_text(encoding="utf-8"))
+    assert second["questions"] == first["questions"]
+    assert second["brief_sha256"] != first["brief_sha256"]
+    for field in ("as_of", "cutoff", "version", "peer_pack"):
+        assert second[field] == first[field], field
+    assert want["differs_from_positive"]["brief_questions_identical"] is True
+
+
+def closed_head(store: Execution, module_id: str) -> Head:
+    return next(h for h in store.read().heads if h.module_id == module_id)
+
+
+# --- a forged fact (plan 4 row 16) ------------------------------------------------------------------
+
+
+def test_forged_fact_is_refused_by_the_probe(closed: Closed, tmp_path: Path) -> None:
+    """A TDR fact changed in the store, with a consistent blob and head, is refused at `probe`
+    (`identity_mismatch`), and the sealed receipt no longer verifies."""
+    moved = tmp_path / "run"
+    shutil.copytree(closed.root, moved)
+    store = Execution(moved / "execution")
+    head = closed_head(store, "CP-DR")
+    module = store.head_module(head)
+    facts = tuple(
+        f.model_copy(update={"amount": (f.amount or Decimal(0)) + 1}) if f.fact_id == FORGED else f
+        for f in module.facts
+    )
+    forged = module.model_copy(update={"facts": facts})
+    runs.edit_head(store, "CP-DR", forged=forged)
+    snapshot = store.read()
+    attempt = next(a for a in snapshot.attempts if a.result_sha256 == head.result_sha256)
+    with pytest.raises(WorkflowError, match="identity_mismatch"):
+        cpdr.probe(store, snapshot, attempt)  # the honest attempt, over the forged head
+    receipt = OwnerRunReceipt.model_validate_json((moved / "owner-run.json").read_bytes())
+    with pytest.raises(WorkflowError):  # the sealed head hash no longer binds: `stale_binding`
+        verify_owner_run_receipt(Execution(moved / "execution"), receipt)

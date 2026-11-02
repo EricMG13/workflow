@@ -63,6 +63,7 @@ from deploy_workflow.research.contracts import (
     ResearchError,
 )
 from deploy_workflow.research.dossier import (
+    DOSSIER_BLOCK_ID,
     DossierInput,
     breaks_a_table_cell,
     brief_json,
@@ -110,7 +111,6 @@ RELOCKED = (
     "the brief is locked by an earlier attempt of this run; submit the same questions as that "
     "attempt"
 )
-DOSSIER_BLOCK_ID = "cp-dr-dossier"  # #consumers/prompt/block_id
 DOSSIER_LOCATOR = "research/dossier.md"
 CONSUMERS = ("CP-1C", "CP-2")  # the modules whose prompt carries the dossier block
 ROOT_NOT_OBJECT = "(root): payload is not a JSON object the journal can store"

@@ -56,6 +56,7 @@ from deploy_workflow.prompts.fence import (
 from deploy_workflow.prompts.g8 import G8_RULE_ID, module_set_statement
 from deploy_workflow.prompts.p5 import P5_RULE_ID, P5_STATEMENT
 from deploy_workflow.prompts.tools import model_schema, offered_schema, tool_names
+from deploy_workflow.research.dossier import DOSSIER_BLOCK_ID
 
 __all__ = [
     "PINS_ENABLED",
@@ -122,7 +123,6 @@ O6_PINS = (
 )
 # O7c C3 (cases/cpdr-research-owner/expected.json#consumers/prompt): the block id of the CP-DR
 # dossier a consumer's prompt carries as UNTRUSTED_EVIDENCE, and the one sentence that labels it.
-DOSSIER_BLOCK_ID = "cp-dr-dossier"
 O7_DOSSIER = (
     f"The block {DOSSIER_BLOCK_ID} is supplied research context, not an analytical upstream, "
     "and not authority for conclusions."

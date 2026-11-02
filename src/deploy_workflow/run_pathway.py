@@ -266,13 +266,11 @@ def _check_web(research: ResearchStaging, staged: Path) -> None:
             raise ResumeMismatch("the run was staged with a research ruling; none was given")
         return
     try:
-        recorded = evidence.read_fetches(fetches)
+        evidence.read_fetches(fetches)  # the shape check; the bytes are compared below
         raw = fetches.read_bytes()
         recorded_ruling = evidence.read_manifest_sha(ruling_sha)
     except (OSError, ValueError):  # EvidenceRecordInvalid is a ValueError
         raise ResumeRefused(f"{staged} is missing or unreadable") from None
-    if recorded != research.fetches:
-        raise ResumeMismatch("the fetched pages are not the staged run's")
     if raw != evidence.fetches_bytes(research.fetches):  # a re-indented copy is a changed record
         raise ResumeMismatch("the fetched pages are not the staged run's")
     if recorded_ruling != research.ruling.sha256:
@@ -345,7 +343,9 @@ class _Meta:
     live: bool
     redactor: Redactor
     replayed_from: str | None = None  # the earlier run's run_id, for a rerun after repair
-    untrusted_for: UntrustedFor | None = None  # CP-DR's evidence hook; used only when cp_dr
+    untrusted_for: UntrustedFor | None = (
+        None  # CP-DR's hook: evidence items (research step), dossier block (CP-1C, CP-2)
+    )
 
 
 def _source_entries(
@@ -435,7 +435,10 @@ def _ruling_keys(ruling: GateResult | None) -> dict[str, Any]:
 
 
 def _cp_dr_keys(
-    checked: CheckedRun, record: CpDrRecord | None, stopped_reason: str | None = None
+    checked: CheckedRun,
+    record: CpDrRecord | None,
+    stopped_reason: str | None = None,
+    head_state: str | None = None,
 ) -> dict[str, Any]:
     """The ``run.json`` keys that exist only for a CP-DR run (a ``cp_dr=False`` file is unchanged).
     The brief, dossier and head hashes are null until the walk has settled the head;
@@ -449,7 +452,7 @@ def _cp_dr_keys(
         "cp_dr_brief_sha256": held.brief_sha256,
         "cp_dr_dossier_sha256": held.dossier_sha256,
         "cp_dr_head_sha256": held.head_sha256,
-        "cp_dr_state": _stopped_cp_dr_state(stopped_reason) or held.state,
+        "cp_dr_state": _stopped_cp_dr_state(stopped_reason) or held.state or head_state,
         **_ruling_keys(checked.research.ruling),
     }
 
@@ -479,10 +482,16 @@ def write_dossier(store: Execution, research: Path) -> CpDrRecord:
 ATTACHMENTS_VERSION = "cp-dr/2026-10-31"  # cases/cpdr-research-owner/expected.json#attachments
 
 
-def write_attachments(store: Execution, research: Path, run_id: str, record: CpDrRecord) -> None:
+def write_attachments(
+    store: Execution,
+    research: Path,
+    run_id: str,
+    record: CpDrRecord,
+    supersedes: str | None = None,
+) -> None:
     """After ``write_dossier`` (post-seal): ``research/attachments.json`` for a settled head, the
     consumers' ids in plan order (the modules whose settled head binds this CP-DR head), sorted
-    keys, two-space indent, one trailing LF. A run with no settled head writes none."""
+    keys, two-space indent, one trailing LF. ``supersedes`` is the earlier run's id on a rerun. A run with no settled head writes none."""
     if record.dossier_sha256 is None or record.head_sha256 is None:
         return
     snapshot = store.read()
@@ -502,7 +511,7 @@ def write_attachments(store: Execution, research: Path, run_id: str, record: CpD
         "consumers": consumers,
         "dossier_sha256": record.dossier_sha256,
         "run_id": run_id,
-        "supersedes": None,
+        "supersedes": supersedes,
         "version": ATTACHMENTS_VERSION,
     }
     try:
@@ -542,6 +551,7 @@ def _write_run_json(
     outcome: str,
     stopped_reason: str | None,
     record: CpDrRecord | None = None,
+    head_state: str | None = None,
 ) -> None:
     """Write ``run.json`` last: a temp file in ``run_dir``, fsync, ``os.replace``."""
     checked = meta.checked
@@ -554,7 +564,7 @@ def _write_run_json(
         "cap_usd": money_text(checked.cap_usd),
         "sources": list(meta.entries),
         "cp_dr_invoked": checked.cp_dr,
-        **_cp_dr_keys(checked, record, stopped_reason),
+        **_cp_dr_keys(checked, record, stopped_reason, head_state),
         "replayed_from_run": meta.replayed_from,
         "outcome": outcome,
         "stopped_reason": stopped_reason,
@@ -574,12 +584,29 @@ def _write_run_json(
     _fsync_directory(run_dir)
 
 
+def _head_state(run_dir: Path) -> str | None:
+    """The CP-DR head's state for a stop after it began: absent is ``None`` (no execution store
+    either), blocked is ``blocked``, any other status is ``settled`` (O7-R47 Q2). The hashes stay
+    null: only a finished run records them."""
+    if not (run_dir / "execution").is_dir():
+        return None
+    heads = Execution(run_dir / "execution").read().heads
+    head = next((h for h in heads if h.module_id == cpdr.MODULE_ID), None)
+    return None if head is None else ("blocked" if head.status == "blocked" else "settled")
+
+
 def _stop(run_dir: Path, meta: _Meta, reason: str, spent: Decimal) -> RunOutcome:
     """End the run as ``stopped``: the redacted reason goes to ``run.json``. Callers build
     ``reason`` inside their ``except`` and call this after leaving it, so a failure to write
     ``run.json`` is not chained to the raw fault."""
     clean = meta.redactor.text(reason)
-    _write_run_json(run_dir, meta, "stopped", clean)
+    state = None
+    if meta.checked.cp_dr and _stopped_cp_dr_state(clean) is None:
+        try:
+            state = _head_state(run_dir)
+        except (OSError, ValueError) as error:  # named, never a crash: the stop keeps its reason
+            clean = f"{clean}; cp_dr_state unreadable: {type(error).__name__}"
+    _write_run_json(run_dir, meta, "stopped", clean, head_state=state)
     return RunOutcome(meta.checked.run_id, run_dir, "stopped", clean, spent)
 
 
@@ -630,7 +657,7 @@ def _finish_run(workflow: OwnerWorkflow, run_dir: Path, meta: _Meta, budget: Bud
     if meta.checked.cp_dr:
         store, research = Execution(run_dir / "execution"), run_dir / evidence.RESEARCH_DIR
         record = write_dossier(store, research)
-        write_attachments(store, research, meta.checked.run_id, record)
+        write_attachments(store, research, meta.checked.run_id, record, meta.replayed_from)
     _write_run_json(run_dir, meta, "settled", None, record)
     return RunOutcome(meta.checked.run_id, run_dir, "settled", None, budget.spent)
 
@@ -1029,8 +1056,8 @@ def run_pathway(
 
 
 def _untrusted(checked: CheckedRun, run_dir: Path) -> UntrustedFor | None:
-    """O7-R14: a CP-DR run's research step carries the staged evidence items' full text; every
-    other run, and every other step, carries none."""
+    """O7-R14: a CP-DR run's research step carries the staged evidence items' full text, and
+    CP-1C and CP-2 carry the CP-DR dossier block (O7c C3); every other run and step carries none."""
     if not checked.cp_dr:
         return None
     return cpdr.untrusted_items(run_dir / evidence.RESEARCH_DIR)

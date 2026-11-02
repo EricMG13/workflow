@@ -48,9 +48,9 @@ def unwrap(addr):
 
 
 def public(addr):
-    """The key's rule: is_global after unwrapping ::ffff:a.b.c.d, and not multicast (ipaddress says 224.0.0.1 and ff02::1 are global)."""
+    """The key's rule (O7-R48 M1): is_global after unwrapping ::ffff:a.b.c.d, and not multicast, reserved or site-local."""
     ip = unwrap(addr)
-    return ip.is_global and not ip.is_multicast
+    return ip.is_global and not (ip.is_multicast or ip.is_reserved or getattr(ip, "is_site_local", False))
 
 
 def klass(addr):
@@ -165,12 +165,13 @@ SPEC = [
     ("anchor_d", RD + "anchor", "redirect-notes", "2025-12-17"),
     ("mixed", "https://trade-press.example/anchor", "trade-press-archive", "2025-12-17"),
 ]
+LOCATOR = {W1: "https://sector-desk.example/notes/supply-costs"}  # O7-R48 H2: fence-safe, distinct from the url
 ROWS = []
 for _key, _src, _fam, _pub in SPEC:
     _row = {("path" if _key == "local" else "url"): _src, "family": _fam}
     if _pub:
         _row["published"] = _pub
-    _row["locator"] = _src
+    _row["locator"] = LOCATOR.get(_src, _src)
     _row["tag"] = "research"
     ROWS.append(_row)
 
@@ -279,7 +280,7 @@ def convert_paragraphs(html):
     return "\n".join(re.findall(r"<p>(.*?)</p>", body))
 
 
-# ---- intake over the rows (fetch first, then media, then the located date, then the row's own date) ------
+# ---- intake over the rows (the row's own date first, before any fetch; then fetch, media, located date) ------
 accepted, refused, fetches, evidence, texts = [], [], [], [], {}
 for (key, *_), row in zip(SPEC, M["research_manifest"]["rows"]):
     pub = row.get("published")
@@ -287,6 +288,10 @@ for (key, *_), row in zip(SPEC, M["research_manifest"]["rows"]):
     if "path" in row:
         rec, text = None, M["research_manifest"]["files"][row["path"]]
     else:
+        why = UNDATED if pub is None else (f"evidence item {loc} is after the cutoff" if pub > as_of else None)
+        if why:  # O7-R48 L3: the row's own date refuses before any fetch; no record, no resolver or connector call
+            refused.append({"key": key, "family": row["family"], "published": pub, "locator": loc, "reason": why})
+            continue
         rec, body, media = fetch(row["url"], mhosts)
         text, why = None, rec["reason"]
         if why is None:
@@ -299,10 +304,6 @@ for (key, *_), row in zip(SPEC, M["research_manifest"]["rows"]):
                 why = f"{row['url']} returned unsupported media type {base}"
         if why is None and rec["published_located"] and rec["published_located"] > as_of:
             why = (f"evidence item {loc} has a located publication date {rec['published_located']} after the cutoff {as_of}")
-        if why is None and pub is None:
-            why = UNDATED
-        if why is None and pub > as_of:
-            why = f"evidence item {loc} is after the cutoff"
         if why:
             rec["reason"], text = why, None
     if rec is not None and rec["reason"]:
@@ -358,7 +359,7 @@ VECTORS = [("127.0.0.1", False), ("10.0.0.5", False), ("169.254.169.254", False)
            ("224.0.0.1", False), ("0.0.0.0", False), ("240.0.0.1", False), ("203.0.113.10", False),
            ("8.8.8.8", True), (f"{PUB}.34", True), ("::1", False), ("::", False), ("fe80::1", False),
            ("ff02::1", False), ("::ffff:10.0.0.1", False), ("::ffff:8.8.8.8", True), ("2001:db8::1", False),
-           ("2606:4700::1111", True)]
+           ("2606:4700::1111", True), ("4000::1", False), ("fec0::1", False)]
 for a, label in VECTORS:
     assert public(a) == label, (a, label)
 
@@ -404,14 +405,14 @@ EXPECTED = {
     "url_checks": {n: {"url": u, "reason": f"url {u}: {url_reasons[n]}"} for n, u in M["url_checks"].items()},
     "is_public": {
         "vectors": [{"addr": a, "public": p} for a, p in VECTORS],
-        "rule": "ipaddress is_global after unwrapping ::ffff:a.b.c.d, and not multicast",
-        "_note": "ipaddress reports is_global True for the multicast vectors 224.0.0.1 and ff02::1 (Python 3.14.6); they are not public. For every other vector, and for every non-multicast address, public == ipaddress is_global of the unwrapped address, so a property test must exclude multicast from the is_global comparison.",
+        "rule": "ipaddress is_global after unwrapping ::ffff:a.b.c.d, and not multicast, reserved or site-local",
+        "_note": "ipaddress reports is_global True for the multicast vectors 224.0.0.1 and ff02::1 and for the unallocated 4000::1 and the site-local fec0::1 (Python 3.14.6); none is public. For every other address public == ipaddress is_global of the unwrapped address, so a property test compares with this rule (is_global and not multicast, reserved or site-local), not with is_global alone (O7-R48 M1).",
         "ipaddress_is_global": {a: unwrap(a).is_global for a, _ in VECTORS},
     },
     "hosts": {"_note": HOSTS_NOTE, **HOST_CASES},
     "redirects": {
         **REDIRECTS,
-        "_note": "hops = redirects followed; the limit is 3, a fourth redirect is refused. status is the last response read; resolved_hosts are the hosts the resolver was asked about, in order.",
+        "_note": "hops = redirects that passed the scheme, manifest-host and hop-limit checks, counted before the new host is resolved; the limit is 3, a fourth redirect is refused. status is the last response read; resolved_hosts are the hosts the resolver was asked about, in order.",
     },
     "request": {
         "method": "GET",
@@ -448,8 +449,12 @@ EXPECTED = {
         "header_case": {"url": SD + "header-dated", **{k: by_url[SD + "header-dated"][k] for k in ("published_located", "published_source")}, "disposition": "accepted", "reason": None},
         "body_case": {"url": SD + "body-dated", **{k: by_url[SD + "body-dated"][k] for k in ("published_located", "published_source")}, "disposition": "accepted", "reason": None},
         "located_after_cutoff": {"url": SD + "body-late", **{k: by_url[SD + "body-late"][k] for k in ("published_located", "published_source")}, "disposition": "refused", "reason": by_url[SD + "body-late"]["reason"]},
-        "neither": {"url": SD + "no-date", **{k: by_url[SD + "no-date"][k] for k in ("published_located", "published_source")}, "disposition": "refused", "reason": UNDATED},
-        "located_cannot_admit": {"url": SD + "located-only", **{k: by_url[SD + "located-only"][k] for k in ("published_located", "published_source")}, "disposition": "refused", "reason": UNDATED},
+        "neither": {"url": SD + "no-date", "disposition": "refused_before_fetch", "fetched": False, "resolver_calls": 0, "connector_calls": 0, "reason": UNDATED,
+                **dict(zip(("published_located", "published_source"), locate(resp[SD + "no-date"][1], resp[SD + "no-date"][2]))),
+                "_note": "the row's own date refuses it (O7-R48 L3): no fetch, no record; the located fields describe the response if it were fetched directly"},
+        "located_cannot_admit": {"url": SD + "located-only", "disposition": "refused_before_fetch", "fetched": False, "resolver_calls": 0, "connector_calls": 0, "reason": UNDATED,
+                **dict(zip(("published_located", "published_source"), locate(resp[SD + "located-only"][1], resp[SD + "located-only"][2]))),
+                "_note": "the row's own date refuses it (O7-R48 L3): no fetch, no record; the located fields describe the response if it were fetched directly"},
         "_source": "the undated reason is src/deploy_workflow/research/intake.py:130 (holds for any run date after as_of); located_after_cutoff is written here",
     },
     "text": {
@@ -459,7 +464,8 @@ EXPECTED = {
         "unsupported_media_reason": by_url[SD + "report.pdf"]["reason"],
     },
     "records": {
-        "fetches_json": {
+        "_note": "locator rule (O7-R48 H2): a url row's locator must pass the fence header rule (prompts/fence.py:36, [A-Za-z0-9][A-Za-z0-9._:+/-]*), so it cannot hold ?, =, & or %; the row's locator, not its url, goes in the header. Row 2 carries a distinct locator for that reason; every other url row's locator is its url. Attempted fetches only: a row refused by its own date is never fetched and has no record (O7-R48 L3).",
+                "fetches_json": {
             "file_bytes": FETCHES_BYTES,
             "file_sha256": sha(FETCHES_BYTES),
             "shape": "one record per url row in manifest order: url, resolved_ip (last connection made), status (last response read), bytes and sha256 (raw body, set exactly when a 200 body was read within the cap), published_located, published_source, hops (redirects followed), item_id (set iff accepted), reason (set iff the item was refused, at any stage); json.dumps indent 1 plus a newline",

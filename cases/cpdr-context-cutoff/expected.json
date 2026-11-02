@@ -13,18 +13,18 @@
    {
     "item_id": "ev-1",
     "key": "A",
+    "locator": "https://sector-desk.example/2025/notes/industrial-products-supply-costs-demand",
     "family": "sector-desk-notes",
     "published": "2025-12-18",
-    "locator": "https://sector-desk.example/2025/notes/industrial-products-supply-costs-demand",
     "path": "evidence/a-sector-desk-note.txt",
     "sha256": "8177c2012973f925eee5638de1d2e7a45e862607dc97a732003dea97f6757bcc"
    },
    {
     "item_id": "ev-2",
     "key": "C",
+    "locator": "https://harbour-registry.example/filings/brookmere-industries/annual-extract",
     "family": "registry-filings",
     "published": "2025-12-30",
-    "locator": "https://harbour-registry.example/filings/brookmere-industries/annual-extract",
     "path": "evidence/c-registry-filing.txt",
     "sha256": "50806b5985fbc7b099115f09de85490f8e22ba1694550889f7d63d6812a150b0"
    }
@@ -36,25 +36,25 @@
   "refused": [
    {
     "key": "B",
+    "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
     "family": "sector-desk-notes",
     "published": "2026-01-10",
-    "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
     "path": "evidence/b-sector-desk-note.txt",
     "reason": "evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff"
    },
    {
     "key": "D",
+    "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
     "family": "trade-press-archive",
     "published": "2026-02-01",
-    "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
     "path": "evidence/d-trade-press-feature.txt",
     "reason": "evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff"
    },
    {
     "key": "E",
+    "locator": "https://trade-press.example/archive/regional-producers-feature",
     "family": "trade-press-archive",
     "published": null,
-    "locator": "https://trade-press.example/archive/regional-producers-feature",
     "path": "evidence/e-trade-press-feature.txt",
     "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
    }
@@ -72,26 +72,26 @@
   "rejected_json": {
    "entries": [
     {
+     "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
      "family": "sector-desk-notes",
      "published": "2026-01-10",
-     "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
      "reason": "evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff"
     },
     {
+     "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
      "family": "trade-press-archive",
      "published": "2026-02-01",
-     "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
      "reason": "evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff"
     },
     {
+     "locator": "https://trade-press.example/archive/regional-producers-feature",
      "family": "trade-press-archive",
      "published": null,
-     "locator": "https://trade-press.example/archive/regional-producers-feature",
      "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
     }
    ],
-   "file_bytes": "[\n {\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2026-01-10\",\n  \"locator\": \"https://sector-desk.example/2026/notes/industrial-products-reporting-definitions\",\n  \"reason\": \"evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff\"\n },\n {\n  \"family\": \"trade-press-archive\",\n  \"published\": \"2026-02-01\",\n  \"locator\": \"https://trade-press.example/2026/archive/industrial-products-outlook\",\n  \"reason\": \"evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff\"\n },\n {\n  \"family\": \"trade-press-archive\",\n  \"published\": null,\n  \"locator\": \"https://trade-press.example/archive/regional-producers-feature\",\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n }\n]\n",
-   "file_sha256": "f6cad47ab79db6fb5e07cceeb7c5e8ea2fe5dc0e3652fe7db08915924ab2bb63",
+   "file_bytes": "[\n {\n  \"locator\": \"https://sector-desk.example/2026/notes/industrial-products-reporting-definitions\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2026-01-10\",\n  \"reason\": \"evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff\"\n },\n {\n  \"locator\": \"https://trade-press.example/2026/archive/industrial-products-outlook\",\n  \"family\": \"trade-press-archive\",\n  \"published\": \"2026-02-01\",\n  \"reason\": \"evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff\"\n },\n {\n  \"locator\": \"https://trade-press.example/archive/regional-producers-feature\",\n  \"family\": \"trade-press-archive\",\n  \"published\": null,\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n }\n]\n",
+   "file_sha256": "502b0974c8c64e2971b638ab1c837b645d2484793db615b4d6895d641cdb4202",
    "shape": "[{locator, family, published, reason}] sorted by locator"
   },
   "pack_sources": [
@@ -136,6 +136,7 @@
    "type": "date",
    "rule": "{t:'date', after:true}",
    "label": "Research cutoff"
-  }
+  },
+  "_note": "\"s3\" is the `fld` section variable and the id prefix (the field id is s3-cutoff), not the element id sec3 (O7-R48 L1)"
  }
 }

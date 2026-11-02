@@ -135,7 +135,7 @@ accepted, refused, entries = [], [], []
 for row in M["research_manifest"]["rows"]:
     key = KEY_OF[row["locator"]]
     pub = row.get("published")
-    base = {"family": row["family"], "published": pub, "locator": row["locator"]}
+    base = {"locator": row["locator"], "family": row["family"], "published": pub}  # product order (O7-R48 H1)
     if pub is None:
         reason = f"undated evidence item refused: as_of {AS_OF} is before today"
     elif pub > effective:
@@ -217,7 +217,8 @@ EXPECTED = {
             "type": "date",
             "rule": "{t:'date', after:true}",
             "label": "Research cutoff",
-        }
+        },
+        "_note": "\"s3\" is the `fld` section variable and the id prefix (the field id is s3-cutoff), not the element id sec3 (O7-R48 L1)",
     },
 }
 OUT.mkdir(parents=True, exist_ok=True)

@@ -68,6 +68,13 @@ from deploy_workflow.context_cites import context_text
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp2g import select_cp1
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_BASIS,
+    DEFAULT_CURRENCY,
+    PeriodBasis,
+    PeriodRefused,
+    run_basis,
+)
 
 if TYPE_CHECKING:
     from deploy_workflow.owners.valuation_basis import (
@@ -102,7 +109,14 @@ NO_PEER_SOURCE = "No peer source is in the pack"
 # Round 4 (b): a peers source that is not ready composes the no-peers design with this reason.
 NO_READY_PEER_SOURCE = "No ready peer source is in the pack"
 NOT_STATED_IN_SOURCE = "Not stated in the peer source"
-MIXED_PERIOD = "Mixed: issuer LTM Q4 25, each peer's own twelve months"
+
+
+def mixed_period(basis: PeriodBasis) -> str:
+    """The period of a fact derived from the issuer's CP-1 column and the peers' own twelve months."""
+    return f"Mixed: issuer {basis.ltm_tag}, each peer's own twelve months"
+
+
+MIXED_PERIOD = mixed_period(DEFAULT_BASIS)  # the default basis; a run's basis builds its own
 PROHIBITED_KINDS = ("instrument recommendation", "recovery conclusion")
 EXCLUDED = "Not meaningful: the peer is excluded from the universe"
 NO_MEDIAN = "Not calculable: no peer median (fewer than three included peers have a value)"
@@ -116,9 +130,9 @@ ISSUER_CONFLICTING = "Not calculable: the issuer's CP-1 value is conflicting"  #
 # Round 2 C3: page:1 must carry this clause in its Basis line; the clause is what gives a source
 # amount its currency, unit and scale. Any other basis is outside the table rule.
 BASIS_PREFIX = "Basis:"
-SUPPORTED_BASIS: Mapping[tuple[str, str], tuple[str, str, Decimal]] = {
-    ("USD", "amounts in millions"): ("USD", "MILLIONS", Decimal(1_000_000)),
-}
+# The one supported clause pair is the run's currency and this unit (Phase 8: the currency is the
+# run's, so a peers page stating another currency is outside the table rule).
+BASIS_UNIT_CLAUSE = "amounts in millions"
 # The unit a settled source amount carries under the supported clause; the no-source gap twins
 # carry it too (a missing fact carries its settled twin's unit).
 NO_SOURCE_AMOUNT_UNIT = "MILLIONS"
@@ -321,15 +335,16 @@ def _span(source: Source, locator: str) -> str | None:
     return next((span.text for span in source.spans if span.locator == locator), None)
 
 
-def _basis(lines: Sequence[str]) -> tuple[str, str, Decimal]:
-    """Currency, unit and scale from the supported clause of a page:1 Basis line (C3)."""
+def _basis(lines: Sequence[str], currency: str) -> tuple[str, str, Decimal]:
+    """Currency, unit and scale from the supported clause of a page:1 Basis line (C3): the run's
+    `currency` and the millions clause."""
     for line in lines:
         if not line.startswith(BASIS_PREFIX):
             continue
         parts = [part.strip().rstrip(".") for part in line[len(BASIS_PREFIX) :].split(";")]
         for pair in pairwise(parts):
-            if pair in SUPPORTED_BASIS:
-                return SUPPORTED_BASIS[pair]
+            if pair == (currency, BASIS_UNIT_CLAUSE):
+                return currency, "MILLIONS", Decimal(1_000_000)
     raise PeerTableError(TABLE_NOT_FOUND)
 
 
@@ -359,7 +374,9 @@ def _row(line: str, basis: Mapping[str, BasisLine]) -> PeerRow:
     return PeerRow(parts[0], _period_end(parts[1]), amounts, line, basis.get(parts[0]))
 
 
-def parse_peer_source(source: Source | None, *, issuer_name: str) -> PeerSheet | None:
+def parse_peer_source(
+    source: Source | None, *, issuer_name: str, currency: str = DEFAULT_CURRENCY.currency
+) -> PeerSheet | None:
     """The peer table rule: None when the pack holds no peers source or one that is not ready
     (round 4 (b): the no-peers design). Every breach (no page:1, no header, no supported Basis clause, a line that is not 7 fields, a bad
     date, a non-decimal amount, an amount with more than one decimal place, a repeated label,
@@ -372,7 +389,7 @@ def parse_peer_source(source: Source | None, *, issuer_name: str) -> PeerSheet |
     if source.sha256 is None or P1_HEADER not in lines:
         raise PeerTableError(TABLE_NOT_FOUND)
     start = lines.index(P1_HEADER)
-    currency, unit, scale = _basis(lines[:start])
+    currency, unit, scale = _basis(lines[:start], currency)
     basis = _basis_lines(source)
     rows = [_row(line, basis) for line in lines[start + 1 :]]
     labels = Counter(row.label for row in rows)
@@ -481,6 +498,9 @@ class PeerBenchmarkInputs:
     context: RunContext | None = None
     context_source: Source | None = None
     cp1_ebitda: Fact | None = None
+    # Phase 8: the run's period and currency (the default is the 2025 USD run); the issuer
+    # column, the mixed period and the peers page's Basis clause follow it.
+    basis: PeriodBasis = DEFAULT_BASIS
 
 
 @dataclass(frozen=True)
@@ -522,7 +542,8 @@ def _fid(ref: Ref) -> str:
 
 
 class _Composer:
-    def __init__(self, sheet: PeerSheet | None, absent: str) -> None:
+    def __init__(self, sheet: PeerSheet | None, absent: str, basis: PeriodBasis) -> None:
+        self.mixed = mixed_period(basis)
         self.items: list[PeerFact] = []
         self.rows: dict[str, list[TableRow]] = {table: [] for table in TABLES}
         self.sheet = sheet
@@ -584,7 +605,7 @@ class _Composer:
             label,
             Decimal(value),
             unit=unit,
-            period=MIXED_PERIOD,
+            period=self.mixed,
             formula=formula,
             derives=derives,
         )
@@ -893,7 +914,7 @@ def _settled_stats(
         STAT_LABELS["median"],
         med,
         unit=m.unit,
-        period=MIXED_PERIOD,
+        period=c.mixed,
         formula="median of included peers' values; even count: (a + b) / 2",
         derives=ders,
     )
@@ -905,7 +926,7 @@ def _settled_stats(
                 STAT_LABELS[name],
                 NOT_COMPARED,
                 unit=units[name],
-                period=MIXED_PERIOD,
+                period=c.mixed,
             )
         return
     formula = (
@@ -918,7 +939,7 @@ def _settled_stats(
         STAT_LABELS["difference"],
         difference(issuer.value, med, percent=m.percent),
         unit=m.difference_unit,
-        period=MIXED_PERIOD,
+        period=c.mixed,
         formula=formula,
         derives=(own, f"T1C.4.{k}.median"),
     )
@@ -987,7 +1008,7 @@ def _statistics(
                     STAT_LABELS[name],
                     why,
                     unit=units[name],
-                    period=MIXED_PERIOD,
+                    period=c.mixed,
                 )
             continue
         _settled_stats(c, m, values[("issuer", k)], known, med)
@@ -1034,10 +1055,8 @@ def _flag_cells(
     operands = _flag_operands(peer, value, stat)
     if isinstance(operands, Unsettled):
         gap = operands
-        c.unsettled(
-            dev, dev_label, gap.reason, unit=PERCENT, period=MIXED_PERIOD, status=gap.status
-        )
-        c.unsettled(flag, flag_label, gap.reason, unit=None, period=MIXED_PERIOD, status=gap.status)
+        c.unsettled(dev, dev_label, gap.reason, unit=PERCENT, period=c.mixed, status=gap.status)
+        c.unsettled(flag, flag_label, gap.reason, unit=None, period=c.mixed, status=gap.status)
         return
     deviation, verdict = _deviation(*operands)
     c.amount(
@@ -1045,7 +1064,7 @@ def _flag_cells(
         dev_label,
         deviation,
         unit=PERCENT,
-        period=MIXED_PERIOD,
+        period=c.mixed,
         formula="(value - peer median) / peer median",
         derives=(f"T1C.3.{row_id}.{m.key}", f"T1C.4.{m.key}.median"),
     )
@@ -1054,7 +1073,7 @@ def _flag_cells(
         flag_label,
         verdict,
         value_class="calculated",
-        period=MIXED_PERIOD,
+        period=c.mixed,
         formula="Outlier iff |deviation| is strictly above one half",
         derives=(_fid(dev),),
     )
@@ -1095,7 +1114,7 @@ def _outliers(
                 STAT_LABELS["outlier_count"],
                 ZERO_MEDIAN,
                 unit="peers",
-                period=MIXED_PERIOD,
+                period=c.mixed,
                 status="not_applicable",
             )
             continue
@@ -1396,11 +1415,17 @@ USER_FIGURES_LINE = (
     "The EV and EBITDA figures of the peers and precedents are the user's own entries in the "
     "context file; CP-1C does not verify them against a source."
 )
-CURRENCY_PERIOD_LINE = (
-    "The peers' and precedents' currency and EBITDA period are not stated by the user; each "
-    "multiple assumes its EV and EBITDA share both, and the selected multiple is applied to the "
-    "issuer's LTM Q4 25 EBITDA."
-)
+
+
+def currency_period_line(basis: PeriodBasis) -> str:
+    return (
+        "The peers' and precedents' currency and EBITDA period are not stated by the user; each "
+        "multiple assumes its EV and EBITDA share both, and the selected multiple is applied to the "
+        f"issuer's {basis.ltm_tag} EBITDA."
+    )
+
+
+CURRENCY_PERIOD_LINE = currency_period_line(DEFAULT_BASIS)
 # The formula of a selected multiple, by the basis that was selected.
 SELECTED_FORMULAS: Mapping[str, str] = {
     "public_comps": "median of the admitted public comps' multiples, rounded half-even to 2 dp",
@@ -2220,12 +2245,12 @@ class _EvComposed:
     limitations: tuple[str, ...]
 
 
-def _ev_limitations(plan: _EvPlan) -> tuple[str, ...]:
+def _ev_limitations(plan: _EvPlan, basis: PeriodBasis) -> tuple[str, ...]:
     """The limitations of the context's valuation, in the oracle's order."""
     valuation, sel = plan.valuation, plan.selection
     lines: list[str] = []
     if any(row.record is not None for s in plan.sets for row in s.rows):
-        lines += [USER_FIGURES_LINE, CURRENCY_PERIOD_LINE]
+        lines += [USER_FIGURES_LINE, currency_period_line(basis)]
     if any(MIN_INCLUDED_PEERS <= s.stats.n_admitted < THIN_UNIVERSE for s in plan.sets):
         lines.append(THIN_LINE)
     market, user = valuation.issuer_market, valuation.user_multiple
@@ -2257,7 +2282,7 @@ def _ev_compose(inputs: PeerBenchmarkInputs) -> _EvComposed | None:
     _emit_stats(e, plan)
     _emit_selection(e, plan)
     tables = tuple(PeerTable(t, title, tuple(e.rows[t])) for t, title in EV_TABLES.items())
-    return _EvComposed(tuple(e.items), tables, _ev_limitations(plan))
+    return _EvComposed(tuple(e.items), tables, _ev_limitations(plan, inputs.basis))
 
 
 def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
@@ -2267,7 +2292,7 @@ def _compose(inputs: PeerBenchmarkInputs, sheet: PeerSheet | None) -> _Composed:
     rows = sheet.peers if sheet is not None else ()
     peers = tuple(_Peer(f"p{n:02d}", row, by_label[row.label]) for n, row in enumerate(rows, 1))
     present = sheet is not None
-    c = _Composer(sheet, _absence(inputs.sources))
+    c = _Composer(sheet, _absence(inputs.sources), inputs.basis)
     _universe(c, peers, present)
     _source_figures(c, sheet, peers)
     values = _normalised(c, cp1, inputs.issuer_name, peers, present)
@@ -2440,7 +2465,11 @@ def calculation_issues(inputs: PeerBenchmarkInputs) -> tuple[str, ...]:
     (`_bounded`), so the issue text cannot outgrow the payload (protocol section 6)."""
     submission = inputs.submission
     try:
-        sheet = parse_peer_source(_peer_source(inputs.sources), issuer_name=inputs.issuer_name)
+        sheet = parse_peer_source(
+            _peer_source(inputs.sources),
+            issuer_name=inputs.issuer_name,
+            currency=inputs.basis.currency,
+        )
     except PeerTableError as error:
         return (str(error),)
     set_issues = _assessment_set_issues(submission, sheet)
@@ -2463,7 +2492,11 @@ def compute(inputs: PeerBenchmarkInputs) -> PeerBenchmarkResult:
     """The module's facts, tables, claims and own limitations; ValueError on any issue."""
     if issues := calculation_issues(inputs):
         raise ValueError("; ".join(issues))
-    sheet = parse_peer_source(_peer_source(inputs.sources), issuer_name=inputs.issuer_name)
+    sheet = parse_peer_source(
+        _peer_source(inputs.sources),
+        issuer_name=inputs.issuer_name,
+        currency=inputs.basis.currency,
+    )
     composed = _compose(inputs, sheet)
     claims = _claims(composed, inputs.submission)
     return PeerBenchmarkResult(composed.facts, composed.tables, claims, composed.limitations)
@@ -2485,10 +2518,9 @@ CP0, CP1 = "CP-0", "CP-1"
 SUBMISSION_INPUT = STEP_ID.replace("_", "-") + "-submission"
 # Rulings stage 2 round 5 item 9: the admitted shape issue of text `json_object` refuses.
 BAD_PAYLOAD = "(root): not a JSON object within the payload bounds"
-# manifest.json `cp1_fact_selection_rule`: table, column and period of the four T4.10 facts.
+# manifest.json `cp1_fact_selection_rule`: the table of the four T4.10 facts; the column and the
+# period are the run basis's `ltm_column` and `ltm_period`.
 _CP1_TABLE = "T4.10"
-_CP1_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
-_CP1_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
 _SETTLED: Mapping[str, InputStatus] = {
     "accepted": "accepted",
     "restricted": "restricted",
@@ -2545,16 +2577,16 @@ def cp1c_upstream(store: Execution, attempt: Attempt) -> Upstream:
     )
 
 
-def _cp1_metrics(cp1: Module) -> dict[str, Fact]:
-    """The four T4.10 facts of the LTM Q4 25 column by metric key (manifest
+def _cp1_metrics(cp1: Module, basis: PeriodBasis) -> dict[str, Fact]:
+    """The four T4.10 facts of the basis's LTM column by metric key (manifest
     `cp1_fact_selection_rule`): exactly one match each, zero or several raise."""
     picked: dict[str, Fact] = {}
     for metric in METRICS:
-        label = f"{_CP1_COLUMN} · {metric.key}"
+        label = f"{basis.ltm_column} · {metric.key}"
         hits = [
             f
             for f in cp1.facts
-            if f.table_id == _CP1_TABLE and f.period == _CP1_PERIOD and f.label == label
+            if f.table_id == _CP1_TABLE and f.period == basis.ltm_period and f.label == label
         ]
         if len(hits) != 1:
             raise ValueError(
@@ -2569,13 +2601,16 @@ def _inputs(
 ) -> PeerBenchmarkInputs:
     """The one store adapter: the run's issuer name, the pack sources in the fixed H1 scope, the
     four selected CP-1 facts and the submission, as the Stage 1 input object. Used by `submit`
-    (through the validator), `probe` and `view`. Raises ValueError when the CP-1 head does not
-    hold exactly one fact per metric, and ContextRefused when the pack's context is refused."""
+    (through the validator), `probe` and `view`. The run's basis is `run_basis` (P8-R3). Raises
+    ValueError when the CP-1 head does not hold exactly one fact per metric, ContextRefused when
+    the pack's context is refused and PeriodRefused when its period or currency is."""
+    basis = run_basis(context_facts(pack), upstream.cp1.facts)
     base = PeerBenchmarkInputs(
         issuer_name=pack.run.issuer_name,
         sources=tuple(s for s in pack.sources if s.source_id in SCOPE),
-        cp1_metrics=_cp1_metrics(upstream.cp1),
+        cp1_metrics=_cp1_metrics(upstream.cp1, basis),
         submission=submission,
+        basis=basis,
     )
     return _with_context(base, pack, upstream.cp1.facts)
 
@@ -2595,8 +2630,14 @@ def _with_context(
         context_cites(source)
     except ValueError as error:
         raise ContextRefused([f"sources.context: {error}"]) from error
-    ebitda = select_cp1(cp1_facts)["ebitda"]
+    ebitda = select_cp1(cp1_facts, inputs.basis)["ebitda"]
     return replace(inputs, context=context, context_source=source, cp1_ebitda=ebitda)
+
+
+def _basis_issue(error: ContextRefused | PeriodRefused) -> str:
+    """The one issue line a refused context, period or currency becomes."""
+    prefix = "Context refused: " if isinstance(error, ContextRefused) else "Period basis: "
+    return clipped((prefix, str(error)))
 
 
 def _stale_issues(upstream: Upstream) -> list[str]:
@@ -2747,8 +2788,8 @@ def _checked(
     try:
         inputs = _inputs(pack, submission, upstream)
         _cp1_facts(inputs)  # the Stage 1 rules on the selected facts (unit, amount, period)
-    except ContextRefused as error:  # a context that cannot be read is a named issue, not "none"
-        return (clipped(("Context refused: ", str(error))),), None
+    except (ContextRefused, PeriodRefused) as error:  # a named issue, never "none" (P8-R5)
+        return (_basis_issue(error),), None
     except ValueError as error:
         return (clipped(("CP-1 facts unavailable: ", str(error))),), None
     issues = calculation_issues(inputs)
@@ -2836,6 +2877,15 @@ def _view_row(row_id: str, row: PeerRow) -> dict[str, object]:
     }
 
 
+def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
+    """The run's basis for the view, or the issue line `_checked` returns for the same refusal
+    (P8-R5: `read_inputs` never raises on a context, period or currency refusal)."""
+    try:
+        return run_basis(context_facts(pack), upstream.cp1.facts), None
+    except (ContextRefused, PeriodRefused) as error:
+        return None, _basis_issue(error)
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The exact `read_inputs` view (lease key tree): the upstream statuses, the peer sheet's rows
     as the table rule reads them, the four CP-1 facts a `{ref|unit}` names through the module's
@@ -2844,12 +2894,18 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     (the validator refuses every payload over it with `Peer table not found`)."""
     source = _peer_source(pack.sources)
     present = source is not None and source.status == "ready"
-    try:
-        sheet = parse_peer_source(source, issuer_name=pack.run.issuer_name)
-    except PeerTableError:
-        sheet = None
-    facts = _cp1_metrics(upstream.cp1)
-    return {
+    basis, issue = _view_basis(pack, upstream)
+    sheet = None
+    facts: dict[str, Fact] = {}
+    if basis is not None:
+        facts = _cp1_metrics(upstream.cp1, basis)
+        try:
+            sheet = parse_peer_source(
+                source, issuer_name=pack.run.issuer_name, currency=basis.currency
+            )
+        except PeerTableError:
+            sheet = None
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
@@ -2874,6 +2930,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
                 "value_class": facts[m.key].value_class,
             }
             for m in METRICS
+            if m.key in facts
         ],
         "rules": {
             "minimum_included_peers": MIN_INCLUDED_PEERS,
@@ -2883,6 +2940,9 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         },
         "inherited_limitations": list(upstream.inherited),
     }
+    if issue is not None:
+        block["context_issue"] = issue
+    return block
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:

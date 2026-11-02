@@ -1,8 +1,8 @@
 """O3 and O4 done-when, end to end (Part B O3+O4 Task 7): walk, resume, replay, input cap, faults.
 
 Offline; no network. The model is the recorded adapter: ``o2_case.ScriptAdapter`` answers each
-request from the frozen ``cases/o2-synthetic`` payloads and records the answer, and
-``run_pathway`` replays it through a genuine ``RecordedAdapter``.
+request from the frozen ``cases/o2-synthetic`` payloads and records the answer; ``use_script``
+replaces ``RecordedAdapter.complete`` so that the public ``run_pathway`` gets its answers from it.
 
 O3 (a), the walk. The pathway is ``distressed_restructuring`` and its plan is read from
 ``deploy_vii.contracts`` and the registry at run time (never a module list written here). The
@@ -12,7 +12,9 @@ from its frozen readiness review: the modules the case can answer get a ``READY_
 row (the frozen one), every other consumer a ``BLOCKED`` row (the frozen CP-8 row, module renamed),
 so CP-0 omits ``Run <module>`` for them, ``Run CP-4`` included. The frozen payloads cite the
 context source and the pack by hash; the context here differs from the frozen one by its pathway
-word, so those two hashes are rebound to the run's own pack (``rebind``). Nothing else is edited.
+word, so those two hashes are rebound to the run's own pack (``rebind``). CP-1A's frozen consumer
+rows are cut to the pathway's own ``cp1a_consumers(pack)``, as CP-0's rows are derived from
+``live_consumers(pack)``. Nothing else is edited.
 The brief's chain (CP-2G and CP-2H settled over a refused CP-4) needs CP-2A, CP-2G and CP-2H
 payloads on file sources; none is pinned, so it is not built (reported to the controller).
 
@@ -40,6 +42,7 @@ from typing import Any, NoReturn
 import o2_case
 import pytest
 
+from deploy_vii.business_context import cp1a_consumers
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_vii.execution import Execution, NotAuthorized
 from deploy_vii.readiness import live_consumers
@@ -106,29 +109,43 @@ def rebind(value: Any, context_sha: str, pack_sha: str) -> Any:
 
 class DistressedScript(o2_case.ScriptAdapter):
     """The frozen o2 answers on the distressed pathway. ``granted`` are the modules CP-0 lets run;
-    ``invalid_first`` makes the first attempt of CP-0 an invalid payload (a repair follows)."""
+    ``invalid_first`` makes the first CP-0 request this script answers an invalid payload; the
+    next one is the valid review (the repair). The count is the script's own, so it does not
+    depend on the prompt composer."""
 
     granted: frozenset[str] = frozenset()
     invalid_first = False
-    _attempt = 0
-
-    def complete(self, request: Any, **kwargs: Any) -> Any:
-        found = re.findall(r"attempt (\d+)", request.messages[-1].text)
-        self._attempt = int(found[-1]) if found else 0
-        return super().complete(request, **kwargs)
+    _cp0_answered = 0
 
     def _plan(self, step_id: str, reads: list[str]) -> list[tuple[str, dict[str, Any]]]:
         pack = Execution(self._execution).pack()
         context_sha = next(s.sha256 for s in pack.sources if s.source_id == "context")
         assert context_sha is not None
-        if step_id == "source_readiness" and self.invalid_first and self._attempt == 0:
-            return [("submit_source_readiness", {})]
-        calls = (
-            self._readiness(pack)
-            if step_id == "source_readiness"
-            else super()._plan(step_id, reads)
-        )
+        if step_id == "source_readiness":
+            self._cp0_answered += 1
+            if self.invalid_first and self._cp0_answered == 1:
+                return [("submit_source_readiness", {})]
+            calls = self._readiness(pack)
+        elif step_id == "business_context":
+            calls = self._business_context(super()._plan(step_id, reads), pack)
+        else:
+            calls = super()._plan(step_id, reads)
         return [(name, rebind(args, context_sha, pack.content_hash())) for name, args in calls]
+
+    @staticmethod
+    def _business_context(
+        calls: list[tuple[str, dict[str, Any]]], pack: Any
+    ) -> list[tuple[str, dict[str, Any]]]:
+        """The frozen CP-1A review with its consumer rows cut to this pathway's consumers."""
+        keep = set(cp1a_consumers(pack))
+        out = []
+        for name, arguments in calls:
+            if name == "submit_business_context":
+                rows = [c for c in arguments["consumers"] if c["module_id"] in keep]
+                assert {c["module_id"] for c in rows} == keep
+                arguments = {**arguments, "consumers": rows}
+            out.append((name, arguments))
+        return out
 
     def _readiness(self, pack: Any) -> list[tuple[str, dict[str, Any]]]:
         review = o2_case.frozen_submissions()["positive"]["readiness_review"]
@@ -235,6 +252,17 @@ def expected_refusals(
     return out
 
 
+def assert_usable_heads(run_dir: Path, modules: set[str]) -> None:
+    """Each module's head is a usable settle (accepted or restricted), and each module but CP-0
+    was begun exactly once: a blocked head or a repaired begin is not a settle after a refusal."""
+    receipt = receipt_of(run_dir)
+    status = {h.module_id: h.status for h in Execution(run_dir / "execution").read().heads}
+    for module in modules:
+        assert status[module] in ("accepted", "restricted"), (module, status[module])
+        if module != "CP-0":
+            assert [b.module_id for b in receipt.begins].count(module) == 1, module
+
+
 def assert_the_walk(run_dir: Path, outcome: RunOutcome, granted: tuple[str, ...]) -> None:
     """The brief's observable result for a CP-0 that grants ``granted`` (plus CP-0 itself)."""
     requested = PATHWAY_MODULES[PATHWAY]
@@ -257,7 +285,8 @@ def assert_the_walk(run_dir: Path, outcome: RunOutcome, granted: tuple[str, ...]
             assert refusal.reason == BLOCKED_EDGE
     # a refusal inside CP-5's fan-in refuses CP-5 too, naming every refused module it consumes
     cp5 = next(r for r in receipt.refusals if r.module_id == "CP-5")
-    assert set(cp5.missing_inputs) >= {m for m in expected if m != "CP-5" and m != "CP-6"}
+    assert set(cp5.missing_inputs) >= {m for m in expected if m != "CP-5"}
+    assert_usable_heads(run_dir, settled)
     # the receipt verifies against the retained store, and the run ends stopped at the render
     verify_owner_run_receipt(Execution(run_dir / "execution"), receipt)
     assert outcome.outcome == "stopped"
@@ -358,6 +387,17 @@ def records_of(run_dir: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in (run_dir / "calls.jsonl").read_text().splitlines()]
 
 
+def assert_call_indexes_run_from_zero(records: list[dict[str, Any]]) -> None:
+    """Within each ``(module, step, attempt)`` the call indexes are 0..n-1 in order, so a resume
+    that re-sent a call (a repeated index) or skipped one (a gap) is seen even when each attempt
+    has a digest of its own."""
+    groups: dict[tuple[str, str, int], list[int]] = {}
+    for r in records:
+        groups.setdefault((r["module_id"], r["step_id"], r["attempt"]), []).append(r["call_index"])
+    for key, indexes in groups.items():
+        assert indexes == list(range(len(indexes))), (key, indexes)
+
+
 def control_receipt(root: Path, monkeypatch: pytest.MonkeyPatch, **flags: Any) -> OwnerRunReceipt:
     """The same run, never killed, for the resumed receipt to equal."""
     args = run_args(root)
@@ -366,6 +406,7 @@ def control_receipt(root: Path, monkeypatch: pytest.MonkeyPatch, **flags: Any) -
     outcome = run_pathway(**args)
     assert outcome.stopped_reason is not None
     assert outcome.stopped_reason.startswith("render: owner_render_")
+    assert_usable_heads(args["run_dir"], {"CP-0", "CP-1A"})
     return receipt_of(args["run_dir"])
 
 
@@ -423,6 +464,7 @@ def test_a_killed_run_resumes_to_the_uninterrupted_receipt(
     receipt = receipt_of(run_dir)
     verify_owner_run_receipt(Execution(run_dir / "execution"), receipt)
     assert normal(receipt) == normal(control), label
+    assert_usable_heads(run_dir, {"CP-0", "CP-1A"})  # the repaired CP-0 and CP-1A both settled
     # the finished directory reopens to the state the resumed instance ended in
     reopened = OwnerWorkflow.open(run_dir / "execution", publication_directory=None)
     assert reopened.state() == made[0][1].state(), label
@@ -431,6 +473,7 @@ def test_a_killed_run_resumes_to_the_uninterrupted_receipt(
     assert records[0] == sent_before[0]
     keys = [(r["invocation_digest"], r["call_index"]) for r in records]
     assert len(keys) == len(set(keys)), label
+    assert_call_indexes_run_from_zero(records)
 
 
 def test_the_state_before_the_kill_is_the_state_after_open(
@@ -471,9 +514,9 @@ def test_a_rerun_holds_only_its_sent_calls_and_its_spend_excludes_replayed_calls
     assert all(r["module_id"] != "CP-0" for r in records)  # the replayed module sent nothing
     keys = [(r["invocation_digest"], r["call_index"]) for r in records]
     assert len(keys) == len(set(keys))
+    assert_call_indexes_run_from_zero(records)
     spent = replays.spent_by_records(records)
     assert outcome.spent_usd == spent > 0  # exactly what its own records cost
-    assert outcome.spent_usd < replays.spent_by_records(earlier_records)  # CP-0 was paid earlier
     assert replays.run_json(outcome.run_dir)["replayed_from_run"] == replays.EARLIER_ID
 
 

@@ -2437,6 +2437,14 @@
       "sha256": "e899818c038516068deece464c3f4252621272becc014b5cb89bf9b8906ee493",
       "reason": "repo-authored (not in files[]): B31a: O7d D1b adds the TDR.4-6 table rows and a The peer pack section (located figures only, no amount typed by the model, no CP-1C ownership field, period end on or before the cutoff, the Q4 opt-in clause: peer_source cp_dr_public with CP-1C requested); every earlier sentence stays. Chained after the O7b-2 S5 fix record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "e899818c038516068deece464c3f4252621272becc014b5cb89bf9b8906ee493",
+      "project_commit": "d287ef16b2d804b8ac21b5b759a9f53c59daaa09",
+      "sha256": "a7fa3c90ad650a0f708706d3c0f34c0bb65eac5ec088242f2399ede69fc8d09a",
+      "reason": "repo-authored (not in files[]): B31a: O7d D1b fix round 1 (review M-1, L-1): the peer_id bullet now states that TDR.4 rows are unique on peer_id and TDR.5/TDR.6 rows on peer_id.dimension / peer_id.operand, and the peer pack section says TDR.4-6 are not in the dossier. Chained after the first O7d D1b record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
     }
   ],
   "local_patch_lineage": [

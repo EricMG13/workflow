@@ -31,7 +31,7 @@ Guard limits (accepted costs, recorded with the Stage 2 connection):
   the dependent maturity-wall cells and the funding gap a gap with a limitation. It is never
   read as zero, and it is not an FX conversion: a facility not in the run's reporting currency (USD by default) is not summed.
 - The adapter refuses (the step stays pending; nothing is settled) when a binding selects zero
-  or several CP-1 facts, a money fact is not US dollars in millions, or the FY alias of a
+  or several CP-1 facts, a money fact is not in the run's reporting currency (USD by default) in millions, or the FY alias of a
   facility disagrees with its quarter row. These are CP-1 integrity failures, not analyst issues.
 - A recomputed cell (undrawn revolver, available liquidity, liquidity to debt, commitment less
   drawn) takes the balance date as its period; a copied cell keeps CP-1's period verbatim.

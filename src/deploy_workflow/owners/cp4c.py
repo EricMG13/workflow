@@ -2962,21 +2962,12 @@ def _basis_of(pack: PreparedPack, upstream: Upstream) -> PeriodBasis:
     return basis
 
 
-def _period_refusal(pack: PreparedPack, upstream: Upstream) -> str | None:
-    """The one issue line a refused period or currency becomes, None when the basis is usable."""
-    try:
-        _basis_of(pack, upstream)
-    except PeriodRefused as refused:
-        return str(refused)
-    return None
-
-
 def _inputs(
     pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
 ) -> Cp4cInputs:
     """The store adapter: the bound heads as the Stage 1 `Cp4cInputs` the core reads, with the
     status of a bound optional CP-3C (never read) and the run's basis. Submit, probe and view
-    reach the core only through this; callers have checked `_period_refusal` first."""
+    reach the core only through this; callers have checked `_view_basis` first."""
     context = Cp4cContext(
         pack=pack,
         cp1=upstream.cp1,
@@ -3001,9 +2992,9 @@ def validate_restructuring(
     stale = stale_issues(bound=upstream.bound, current=upstream.current)
     if stale:
         return stale
-    refusal = _period_refusal(pack, upstream)
-    if refusal is not None:
-        return (refusal,)
+    basis, issue = _view_basis(pack, upstream)
+    if basis is None:
+        return (str(issue),)
     return content_issues(_inputs(pack, submission, upstream))
 
 
@@ -3036,8 +3027,8 @@ def _lines(
     """The content issues, then the pin lines (also after the stale-only return): the one issue
     set of the step validator and the composer gate."""
     content = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
-    if _period_refusal(pack, upstream) is not None:
-        return content  # a refused period or currency is the one line, with no pin line beside it
+    if _view_basis(pack, upstream)[0] is None:
+        return content  # a refusal is the one line, with no pin line beside it
     return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
 
 
@@ -3182,24 +3173,33 @@ def _statement_rows(pack: PreparedPack) -> list[dict[str, object]]:
     return out
 
 
+def _selection_error(upstream: Upstream, basis: PeriodBasis) -> str | None:
+    """`select_cp1`'s own text when CP-1 holds no single fact in the basis's column, else None."""
+    try:
+        select_cp1(upstream.cp1.t410, basis)
+    except ValueError as error:
+        return str(error)
+    return None
+
+
 def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
-    """The basis the view reads and the issue line the entry validator returns for the same
-    refusal (P8-R5: `read_inputs` never raises on a context, period or currency refusal). A
-    refused context offers what the default basis selects when that selection succeeds (the
-    frozen rendering) and nothing when it fails (ruling P8T4-R2); a refused period or currency
-    offers nothing."""
+    """The run's basis and the issue line, shared by the entry validator and the view (P8-R5: the
+    view never raises on a context, period, currency or CP-1 selection refusal, and its
+    `context_issue` is the validator's text). A refused context keeps the default basis when that
+    selection succeeds (the frozen rendering) and offers nothing when it fails (ruling P8T4-R2);
+    a refused period or currency offers nothing; a failed selection under the run's basis is
+    `select_cp1`'s own text (ruling P8T6-R2, as CP-1C P8T2-I11) and offers nothing."""
     try:
         context_facts(pack)
     except ContextRefused as error:
-        try:
-            select_cp1(upstream.cp1.t410, DEFAULT_BASIS)
-        except ValueError:  # the CP-1 is not the default year: offer nothing, carry the issue
-            return None, _context_line(error)
-        return DEFAULT_BASIS, _context_line(error)
+        failed = _selection_error(upstream, DEFAULT_BASIS)
+        return (DEFAULT_BASIS if failed is None else None), _context_line(error)
     try:
-        return _basis_of(pack, upstream), None
+        basis = _basis_of(pack, upstream)
     except PeriodRefused as error:
         return None, str(error)
+    failed = _selection_error(upstream, basis)
+    return (basis, None) if failed is None else (None, failed)
 
 
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:

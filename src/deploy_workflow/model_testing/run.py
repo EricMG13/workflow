@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from collections.abc import Mapping as MappingABC
 from collections.abc import Sequence
@@ -20,11 +21,16 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Literal
 
+from pydantic import ValidationError
+
 from deploy_vii.contracts import Contract, PathwayId
+from deploy_workflow.context import ContextRefused
+from deploy_workflow.html_text import UndecodableHtml
 from deploy_workflow.model import adapter as adapter_module
 from deploy_workflow.model.adapter import (
     LivePauseInForce,
     ModelAdapter,
+    RecordingError,
     live_adapter,
     recorded_adapter,
 )
@@ -33,12 +39,13 @@ from deploy_workflow.model.redact import KEY_PATTERN
 from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.model_testing.budget import (
     AccountExhausted,
+    BudgetError,
     Settlement,
     account_spend,
     load_settlements,
     require_budget,
 )
-from deploy_workflow.model_testing.cases import GoldenCase, load_case
+from deploy_workflow.model_testing.cases import CaseError, GoldenCase, load_case
 from deploy_workflow.model_testing.configs import (
     ACCOUNTS,
     CASES,
@@ -47,11 +54,11 @@ from deploy_workflow.model_testing.configs import (
     PILOT_PATHWAY,
 )
 from deploy_workflow.model_testing.faults import read_faults
-from deploy_workflow.model_testing.mapping import Mapping, load_mapping
+from deploy_workflow.model_testing.mapping import Mapping, MappingError, load_mapping
 from deploy_workflow.model_testing.pathway import PathwayScore, receipt_refusals, score_run
-from deploy_workflow.model_testing.records import RunMeta, read_run
+from deploy_workflow.model_testing.records import JournalError, RunMeta, read_run
 from deploy_workflow.model_testing.report import render_report
-from deploy_workflow.run_inputs import HTML_MEDIA, CaseSource, RunOutcome
+from deploy_workflow.run_inputs import HTML_MEDIA, CaseSource, RunInputError, RunOutcome
 from deploy_workflow.run_pathway import run_pathway
 
 Stage = Literal["pilot", "repair", "comparison"]
@@ -62,6 +69,7 @@ SCORES_FILE = "scores.json"
 REPORT_FILE = "report.md"
 FAULTS_FILE = "faults.jsonl"
 EXHAUSTED_FILE = "exhausted.json"
+DEFAULT_RUNS_ROOT = Path("artifacts/model-testing")
 
 # Per-run amount a live run must be able to cover before any run has been measured. Basis: spec
 # 7.2 (docs/superpowers/specs/2026-10-31-model-testing-design.md, section 7.2 "Budget"), each
@@ -104,11 +112,9 @@ def plan_runs(stage: Stage) -> tuple[PlannedRun, ...]:
         return tuple(
             (case, pathway, config) for config in repair for pathway, case in CASES.items()
         )
-    if stage == "comparison":
-        high = tuple((case, pathway, "sol-high") for pathway, case in CASES.items())
-        opus = tuple((CASES[pathway], pathway, OPUS_CONFIG) for pathway in OPUS_PATHWAYS)
-        return high + opus
-    raise DriverError(f"unknown stage {stage!r}")
+    high = tuple((case, pathway, "sol-high") for pathway, case in CASES.items())
+    opus = tuple((CASES[pathway], pathway, OPUS_CONFIG) for pathway in OPUS_PATHWAYS)
+    return high + opus  # comparison
 
 
 @dataclass(frozen=True)
@@ -119,6 +125,7 @@ class Settings:
     recordings: Path | None = None
     live: bool = False
     ruling: Path | None = None
+    runs_root: Path = DEFAULT_RUNS_ROOT
 
 
 @dataclass(frozen=True)
@@ -150,6 +157,11 @@ def _precheck_ruling(ruling: Path) -> None:
 
 
 def check_settings(settings: Settings) -> None:
+    if not settings.out.resolve().is_relative_to(settings.runs_root.resolve()):
+        raise DriverError(
+            f"--out {settings.out} is outside --runs-root {settings.runs_root}: spend stored "
+            "outside the runs root is not counted against the account caps"
+        )
     if settings.live:
         if settings.ruling is None:
             raise DriverError("--live needs --ruling docs/rulings/<file>.md")
@@ -169,8 +181,6 @@ def _media_type(source_id: str, path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix in (".htm", ".html"):
         return HTML_MEDIA
-    if suffix == ".pdf":
-        return "application/pdf"
     raise DriverError(f"source {source_id}: unsupported file type {suffix!r}")
 
 
@@ -202,7 +212,11 @@ def load_inputs(case_id: str, cases: Path, corpus: Path) -> CaseInputs:
     golden_path = case_dir / "module_golden.json"
     if not golden_path.is_file():
         raise DriverError(f"{case_id}: no module_golden.json under {cases}")
-    sources = _golden_sources(case_id, json.loads(golden_path.read_text(encoding="utf-8")), corpus)
+    try:
+        golden = json.loads(golden_path.read_text(encoding="utf-8"))
+    except ValueError:
+        raise DriverError(f"{case_id}: module_golden.json is not valid JSON") from None
+    sources = _golden_sources(case_id, golden, corpus)
     case = load_case(case_dir, corpus)
     return CaseInputs(case, load_mapping(case_dir / "mapping.json", case), sources)
 
@@ -210,13 +224,26 @@ def load_inputs(case_id: str, cases: Path, corpus: Path) -> CaseInputs:
 # ------------------------------------------------------------------ run folders and budget
 
 
-def _read_all(out: Path) -> list[tuple[Path, RunMeta, tuple[CallRecord, ...]]]:
-    """Every run folder under ``out``. A folder without ``run.json`` is a crashed run whose
-    spend cannot be counted (ledger ruling 2026-11-01): the command stops."""
-    if not out.is_dir():
-        return []
+def _run_dirs(root: Path) -> list[Path]:
+    """Every run directory under ``root``: one that holds ``sources/`` (``run_pathway`` stages
+    it first) or ``run.json``. A run directory is not searched further."""
+    found: list[Path] = []
+    pending = [root] if root.is_dir() else []
+    while pending:
+        children = sorted(p for p in pending.pop().iterdir() if p.is_dir() and not p.is_symlink())
+        for child in children:
+            if (child / "run.json").is_file() or (child / "sources").is_dir():
+                found.append(child)
+            else:
+                pending.append(child)
+    return sorted(found)
+
+
+def _read_all(root: Path) -> list[tuple[Path, RunMeta, tuple[CallRecord, ...]]]:
+    """Every run directory under ``root``. One with ``sources/`` but no ``run.json`` is a crashed
+    run whose spend cannot be counted (ledger ruling 2026-11-01): the command stops."""
     found: list[tuple[Path, RunMeta, tuple[CallRecord, ...]]] = []
-    for folder in sorted(p for p in out.iterdir() if p.is_dir()):
+    for folder in _run_dirs(root):
         if not (folder / "run.json").is_file():
             raise DriverError(
                 f"run folder {folder.name} has no run.json: a crashed run, its spend cannot be "
@@ -227,8 +254,27 @@ def _read_all(out: Path) -> list[tuple[Path, RunMeta, tuple[CallRecord, ...]]]:
     return found
 
 
-def load_runs(out: Path) -> list[tuple[RunMeta, tuple[CallRecord, ...]]]:
-    return [(meta, records) for _, meta, records in _read_all(out)]
+def load_runs(root: Path) -> list[tuple[RunMeta, tuple[CallRecord, ...]]]:
+    return [(meta, records) for _, meta, records in _read_all(root)]
+
+
+def load_all_settlements(root: Path, out: Path) -> tuple[Settlement, ...]:
+    """The settlements file of ``out`` and of every folder holding a run under ``root``."""
+    folders = {out.resolve()} | {d.parent.resolve() for d in _run_dirs(root)}
+    found: list[Settlement] = []
+    for folder in sorted(folders):
+        found += load_settlements(folder / SETTLEMENTS_FILE)
+    return tuple(found)
+
+
+def _next_number(root: Path, prefix: str) -> int:
+    """The next free integer for run ids ``<prefix>-<n>`` across every run directory."""
+    used = [
+        int(m.group(1))
+        for folder in _run_dirs(root)
+        if (m := re.fullmatch(re.escape(prefix) + r"-(\d+)", folder.name))
+    ]
+    return max(used, default=0) + 1
 
 
 def _run_spend(
@@ -289,11 +335,49 @@ class _Exhausted(Contract):
     stopped: dict[str, str]
 
 
+def _invalid(name: str, error: ValidationError) -> DriverError:
+    shown = "; ".join(
+        f"{'.'.join(str(p) for p in e['loc']) or '<root>'}: {e['msg']}"
+        for e in error.errors(include_input=False, include_url=False, include_context=False)[:5]
+    )
+    return DriverError(f"{name}: invalid: {shown}")
+
+
 def _read_exhausted(out: Path) -> dict[str, str]:
     path = out / EXHAUSTED_FILE
     if not path.is_file():
         return {}
-    return dict(_Exhausted.model_validate_json(path.read_bytes()).stopped)
+    try:
+        return dict(_Exhausted.model_validate_json(path.read_bytes()).stopped)
+    except ValidationError as error:
+        raise _invalid(EXHAUSTED_FILE, error) from None
+
+
+def check_budget(
+    config_id: str,
+    runs: Sequence[tuple[RunMeta, tuple[CallRecord, ...]]],
+    needed: Decimal,
+    settlements: Sequence[Settlement],
+) -> Decimal:
+    """The cap for one more run, or ``AccountExhausted`` (an unknown charge, too little credit,
+    none left)."""
+    cap = require_budget(config_id, runs, needed, settlements)
+    if cap <= 0:
+        raise AccountExhausted(f"{config_id}: no usable credit left")
+    return cap
+
+
+def current_stops(
+    runs: Sequence[tuple[RunMeta, tuple[CallRecord, ...]]], settlements: Sequence[Settlement]
+) -> dict[str, str]:
+    """The configurations that cannot run now, derived from the runs and settlements as they are."""
+    stops: dict[str, str] = {}
+    for config_id in CONFIGS:
+        try:
+            check_budget(config_id, runs, Decimal(0), settlements)
+        except AccountExhausted as error:
+            stops[config_id] = str(error)
+    return stops
 
 
 def _spec(config_id: str) -> ModelSpec:
@@ -336,13 +420,13 @@ class _Driver:
             live = self.settings.live
             needed = needed_usd(config_id, self.runs, self.settlements) if live else Decimal(0)
         try:
-            cap = require_budget(config_id, self.runs, needed, self.settlements)
-            if cap <= 0:
-                raise AccountExhausted(f"{config_id}: no usable credit left")
+            cap = check_budget(config_id, self.runs, needed, self.settlements)
         except AccountExhausted as error:
             self.stopped[key] = str(error)
             return
-        run_id = f"{self.stage}-{config_id}-{pathway}"
+        root = self.settings.runs_root
+        prefix = f"{self.stage}-{config_id}-{pathway}"
+        run_id = f"{prefix}-{_next_number(root, prefix)}"
         found = self.inputs[case_id]
         self.settings.out.mkdir(parents=True, exist_ok=True)
         self.outcomes.append(
@@ -358,29 +442,36 @@ class _Driver:
                 run_id=run_id,
             )
         )
-        self.runs = load_runs(self.settings.out)
+        self.runs = load_runs(root)
 
     def distressed_on_opus(self) -> None:
         """After the five Opus pathways: distressed_restructuring only if the account's cap
         covers its measured estimate."""
+        key = f"{OPUS_CONFIG} ({DISTRESSED_PATHWAY})"
         estimate = distressed_opus_estimate(self.runs, self.settlements)
-        if estimate is None or OPUS_CONFIG in self.stopped:
-            return
-        self.run(
-            CASES[DISTRESSED_PATHWAY],
-            DISTRESSED_PATHWAY,
-            OPUS_CONFIG,
-            needed=estimate,
-            stop_key=f"{OPUS_CONFIG} ({DISTRESSED_PATHWAY})",
-        )
+        if estimate is None:
+            self.stopped[key] = "skipped: the five Opus pathways have not all settled"
+        elif OPUS_CONFIG in self.stopped:
+            self.stopped[key] = f"skipped: {OPUS_CONFIG} is stopped"
+        else:
+            self.run(
+                CASES[DISTRESSED_PATHWAY],
+                DISTRESSED_PATHWAY,
+                OPUS_CONFIG,
+                needed=estimate,
+                stop_key=key,
+            )
 
 
 def _record_stopped(out: Path, stopped: MappingABC[str, str]) -> None:
+    """Rewrite ``exhausted.json`` from this command's stops; none removes it."""
+    path = out / EXHAUSTED_FILE
     if not stopped:
+        path.unlink(missing_ok=True)
         return
-    merged = {**_read_exhausted(out), **stopped}
-    body = _Exhausted(schema_version="driver-exhausted/1", stopped=merged)
-    (out / EXHAUSTED_FILE).write_text(body.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    body = _Exhausted(schema_version="driver-exhausted/1", stopped=dict(stopped))
+    out.mkdir(parents=True, exist_ok=True)
+    path.write_text(body.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
 
 def run_stage(stage: Stage, settings: Settings) -> StageResult:
@@ -389,8 +480,8 @@ def run_stage(stage: Stage, settings: Settings) -> StageResult:
     and each configuration's adapter (the live gate included)."""
     check_settings(settings)
     planned = plan_runs(stage)
-    runs = load_runs(settings.out)
-    settlements = load_settlements(settings.out / SETTLEMENTS_FILE)
+    runs = load_runs(settings.runs_root)
+    settlements = load_all_settlements(settings.runs_root, settings.out)
     case_ids = {case for case, _, _ in planned}
     if stage == "comparison":
         case_ids.add(CASES[DISTRESSED_PATHWAY])
@@ -429,9 +520,12 @@ def score_out(settings: Settings) -> Path:
         if meta.case_id not in inputs:
             inputs[meta.case_id] = load_inputs(meta.case_id, settings.cases, settings.corpus)
         scored = inputs[meta.case_id]
-        scores.append(
-            score_run(folder, scored.case, scored.mapping, refusals=receipt_refusals(folder))
-        )
+        try:
+            scores.append(
+                score_run(folder, scored.case, scored.mapping, refusals=receipt_refusals(folder))
+            )
+        except ValueError as error:  # score_run's documented refusals (case, receipt, names)
+            raise DriverError(f"run {meta.run_id}: {error}") from None
     path = settings.out / SCORES_FILE
     body = _Scores(schema_version="model-testing-scores/1", scores=tuple(scores))
     path.write_text(body.model_dump_json(indent=2) + "\n", encoding="utf-8")
@@ -460,13 +554,17 @@ def _notes(
         lines += [
             "## Settled charges",
             "",
-            "| Run | Call | Settled | By | Date | Source |",
-            "| --- | --- | --- | --- | --- | --- |",
+            "| Run | Module | Step | Attempt | Call | Settled | By | Date | Source |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
-        for s in sorted(settlements, key=lambda x: (x.run_id, x.call_index)):
+        ordered = sorted(
+            settlements, key=lambda x: (x.run_id, x.module_id, x.step_id, x.attempt, x.call_index)
+        )
+        for s in ordered:
             lines.append(
-                f"| {_cell(s.run_id)} | {s.call_index} | {_money(s.settled_usd)} | "
-                f"{_cell(s.by)} | {s.date} | {_cell(s.source)} |"
+                f"| {_cell(s.run_id)} | {_cell(s.module_id)} | {_cell(s.step_id)} | {s.attempt} | "
+                f"{s.call_index} | {_money(s.settled_usd)} | {_cell(s.by)} | {s.date} | "
+                f"{_cell(s.source)} |"
             )
         lines += ["", "| Account | Spend after settlements |", "| --- | --- |"]
         lines += [
@@ -477,17 +575,52 @@ def _notes(
     return lines
 
 
+_STAGE_RANK = {"pilot": 0, "repair": 1, "comparison": 2}
+
+
+def _recency(run_id: str) -> tuple[int, int, str]:
+    """Later stage, then higher run number, is more recent (run ids are ``<stage>-...-<n>``)."""
+    number = re.search(r"-(\d+)$", run_id)
+    return (
+        _STAGE_RANK.get(run_id.split("-", 1)[0], -1),
+        int(number.group(1)) if number else 0,
+        run_id,
+    )
+
+
+def _latest(scores: Sequence[PathwayScore]) -> tuple[PathwayScore, ...]:
+    """One score per (pathway, configuration): the most recent run, a rerun superseding."""
+    best: dict[tuple[str, str], PathwayScore] = {}
+    for score in scores:
+        key = (score.pathway, score.config_id)
+        if key not in best or _recency(score.run_id) > _recency(best[key].run_id):
+            best[key] = score
+    return tuple(sorted(best.values(), key=lambda x: x.run_id))
+
+
 def report_out(settings: Settings) -> Path:
-    """Write ``report.md`` from ``scores.json``, the run folders and ``faults.jsonl``, with the
-    stopped configurations and settled charges the driver recorded."""
+    """Write ``report.md`` from ``scores.json`` (the latest run per pathway and configuration),
+    the run folders and ``faults.jsonl``. The stopped configurations are derived from the runs
+    and settlements as they are now; only a skipped distressed run, which cannot be derived, is
+    taken from the last stage command."""
     scores_path = settings.out / SCORES_FILE
     if not scores_path.is_file():
         raise DriverError(f"no {SCORES_FILE} under {settings.out}: run the score command first")
-    scores = _Scores.model_validate_json(scores_path.read_bytes()).scores
+    try:
+        scores = _Scores.model_validate_json(scores_path.read_bytes()).scores
+    except ValidationError as error:
+        raise _invalid(SCORES_FILE, error) from None
     runs = load_runs(settings.out)
-    settlements = load_settlements(settings.out / SETTLEMENTS_FILE)
-    text = render_report(scores, runs, read_faults(settings.out / FAULTS_FILE))
-    notes = _notes(_read_exhausted(settings.out), settlements, runs)
+    everywhere = load_runs(settings.runs_root)
+    settlements = load_all_settlements(settings.runs_root, settings.out)
+    try:
+        faults = read_faults(settings.out / FAULTS_FILE)
+        text = render_report(_latest(scores), runs, faults)
+    except ValueError as error:  # the report's and the fault journal's documented refusals
+        raise DriverError(f"report: {error}") from None
+    skipped = {k: v for k, v in _read_exhausted(settings.out).items() if k not in CONFIGS}
+    stopped = {**skipped, **current_stops(everywhere, settlements)}
+    notes = _notes(stopped, settlements, everywhere)
     if notes:
         text += "\n" + "\n".join(notes)
     path = settings.out / REPORT_FILE
@@ -505,6 +638,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("command", choices=("pilot", "repair", "comparison", "score", "report"))
     parser.add_argument("--out", type=Path, required=True, help="artifacts/model-testing/<run_id>/")
+    parser.add_argument(
+        "--runs-root",
+        type=Path,
+        default=DEFAULT_RUNS_ROOT,
+        help="every run directory under it counts toward the account caps; --out lies inside it",
+    )
     parser.add_argument("--cases", type=Path, default=Path("cases/goldens"))
     parser.add_argument("--corpus", type=Path, default=Path("artifacts/public-corpus/v1"))
     parser.add_argument("--recordings", type=Path, help="offline: DIR/<config_id>/ per config")
@@ -526,6 +665,7 @@ def _dispatch(args: argparse.Namespace) -> int:
         recordings=args.recordings,
         live=args.live,
         ruling=args.ruling,
+        runs_root=args.runs_root,
     )
     command: str = args.command
     if command in ("score", "report"):
@@ -546,8 +686,23 @@ def _dispatch(args: argparse.Namespace) -> int:
     return 0
 
 
+_REFUSALS = (
+    DriverError,
+    BudgetError,
+    RunInputError,
+    CaseError,
+    MappingError,
+    JournalError,
+    ContextRefused,
+    UndecodableHtml,
+    RecordingError,
+    LivePauseInForce,
+)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    """Exit 0 on success, 2 on a refused argument or input (message on stderr, no traceback)."""
+    """Exit 0 on success, 2 on a refusal of the framework (message on stderr, no traceback).
+    Any other exception is a defect and propagates."""
     try:
         args = _parser().parse_args(argv)
     except SystemExit as exit_:  # argparse: 0 for --help, 2 for a bad command line
@@ -555,6 +710,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return code if isinstance(code, int) else (0 if code is None else 2)
     try:
         return _dispatch(args)
-    except (ValueError, LivePauseInForce) as error:
+    except _REFUSALS as error:
         print(f"error: {KEY_PATTERN.sub('[redacted]', str(error))}", file=sys.stderr)
         return 2

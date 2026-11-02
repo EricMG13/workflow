@@ -6,12 +6,13 @@ import datetime
 from collections.abc import Iterator, Sequence
 from decimal import Context, Decimal, Inexact, InvalidOperation, localcontext
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, ValidationError, field_validator
 
 from deploy_vii.contracts import Contract
 from deploy_workflow.model.record import CallRecord
+from deploy_workflow.model.redact import KEY_PATTERN
 from deploy_workflow.model_testing.configs import ACCOUNTS, CONFIGS, Provider
 from deploy_workflow.model_testing.records import RunMeta
 
@@ -19,6 +20,12 @@ Runs = Sequence[tuple[RunMeta, Sequence[CallRecord]]]
 
 # Money sums are exact (as in model/budget.py): a sum wider than the context raises.
 _EXACT = Context(prec=120, traps=[InvalidOperation, Inexact])
+# A user-written amount: at most 60 decimal places and below 1e30, so sums stay within 120 digits.
+_PLACES, _MAGNITUDE = 60, 30
+
+
+class BudgetError(ValueError):
+    """A budget input is refused: bad money, or a settlement that cannot be applied."""
 
 
 class AccountExhausted(RuntimeError):
@@ -33,12 +40,36 @@ class Settlement(Contract):
     """The user's statement of what an unknown live charge really cost (MANAGER ruling
     2026-11-01). The framework reads it and never writes it."""
 
+    # O5 restarts call_index for every (module, step, attempt), so a call is named by all five.
     run_id: str = Field(min_length=1)
+    module_id: str = Field(min_length=1)
+    step_id: str = Field(min_length=1)
+    attempt: int
     call_index: int
     settled_usd: Decimal
     by: str = Field(min_length=1)
     date: str
     source: str = Field(min_length=1)
+
+    @field_validator("settled_usd", mode="before")
+    @classmethod
+    def _not_a_json_number(cls, value: Any) -> Any:
+        # A JSON number is parsed through float and loses digits: money is a string.
+        if isinstance(value, str):
+            try:
+                return Decimal(value)
+            except InvalidOperation:
+                raise ValueError("settled_usd is not a number") from None
+        if isinstance(value, Decimal):
+            return value
+        raise ValueError("settled_usd must be a string")
+
+    @field_validator("run_id", "module_id", "step_id", "by", "source")
+    @classmethod
+    def _no_key_material(cls, value: str) -> str:
+        if KEY_PATTERN.search(value):
+            raise ValueError("text holds key material")  # never the text
+        return value
 
     @field_validator("date")
     @classmethod
@@ -66,7 +97,7 @@ def load_settlements(path: Path) -> tuple[Settlement, ...]:
             f"{'.'.join(str(p) for p in e['loc']) or '<root>'}: {e['msg']}"
             for e in error.errors(include_input=False, include_url=False, include_context=False)[:5]
         )
-        raise ValueError(f"{path.name}: invalid: {shown}") from None
+        raise BudgetError(f"{path.name}: invalid: {shown}") from None
 
 
 def _provider(config_id: str) -> Provider:
@@ -88,42 +119,60 @@ def _checked(runs: Runs) -> Iterator[tuple[RunMeta, CallRecord]]:
     for meta, records in runs:
         for record in records:
             if record.config_id != meta.config_id:
-                raise ValueError(f"{_where(record)}: config_id differs from its run")
+                raise BudgetError(f"{_where(record)}: config_id differs from its run")
             if record.provider != _provider(record.config_id):
-                raise ValueError(f"{_where(record)}: provider does not match its config_id")
+                raise BudgetError(f"{_where(record)}: provider does not match its config_id")
             for amount in (record.reserved_usd, record.settled_usd):
                 if amount is not None and (not amount.is_finite() or amount < 0):
-                    raise ValueError(f"{_where(record)}: money must be finite and not negative")
+                    raise BudgetError(f"{_where(record)}: money must be finite and not negative")
             yield meta, record
 
 
-Key = tuple[str, int]
+Key = tuple[str, str, str, int, int]
+
+
+def _key(record: CallRecord) -> Key:
+    return (record.run_id, record.module_id, record.step_id, record.attempt, record.call_index)
+
+
+def _exact(amount: Decimal) -> bool:
+    """Whether sums with the amount stay exact in ``_EXACT``: at most ``_PLACES`` decimal places
+    and below ``10 ** _MAGNITUDE`` (so an exponent such as 1E-1000000 is refused, not summed)."""
+    exponent = amount.as_tuple().exponent
+    return isinstance(exponent, int) and exponent >= -_PLACES and amount.adjusted() <= _MAGNITUDE
 
 
 def _settled_amounts(
     rows: Sequence[tuple[RunMeta, CallRecord]], settlements: Sequence[Settlement]
 ) -> dict[Key, Decimal]:
-    """The settled amount per (run_id, call_index), after refusing a settlement that is a
-    duplicate, matches no record or more than one, targets a record whose charge is known, or
-    carries a negative or non-finite amount."""
+    """The settled amount per call, after refusing a settlement that is a duplicate, matches no
+    record or more than one, targets a record whose charge is known, or carries a negative,
+    non-finite or inexactly held amount."""
     records: dict[Key, list[CallRecord]] = {}
     for _, record in rows:
-        records.setdefault((record.run_id, record.call_index), []).append(record)
+        records.setdefault(_key(record), []).append(record)
     found: dict[Key, Decimal] = {}
     for item in settlements:
-        key = (item.run_id, item.call_index)
-        where = f"settlement for run {item.run_id} call {item.call_index}"
+        key = (item.run_id, item.module_id, item.step_id, item.attempt, item.call_index)
+        where = (
+            f"settlement for run {item.run_id} module {item.module_id} step {item.step_id} "
+            f"attempt {item.attempt} call {item.call_index}"
+        )
         if key in found:
-            raise ValueError(f"{where}: duplicate settlement")
+            raise BudgetError(f"{where}: duplicate settlement")
         if not item.settled_usd.is_finite() or item.settled_usd < 0:
-            raise ValueError(f"{where}: settled_usd must be finite and not negative")
+            raise BudgetError(f"{where}: settled_usd must be finite and not negative")
+        if not _exact(item.settled_usd):
+            raise BudgetError(
+                f"{where}: settled_usd cannot be held exactly (limits: 60 places, 1e30)"
+            )
         matched = records.get(key, [])
         if not matched:
-            raise ValueError(f"{where}: matches no record")
+            raise BudgetError(f"{where}: matches no record")
         if len(matched) > 1:
-            raise ValueError(f"{where}: matches {len(matched)} records")
+            raise BudgetError(f"{where}: matches {len(matched)} records")
         if matched[0].cost_status != "unknown":
-            raise ValueError(f"{where}: the record's charge is not unknown")
+            raise BudgetError(f"{where}: the record's charge is not unknown")
         found[key] = item.settled_usd
     return found
 
@@ -140,7 +189,7 @@ def account_spend(
         for meta, record in rows:
             if meta.mode != "live" or _provider(record.config_id) != account_id:
                 continue
-            key = (record.run_id, record.call_index)
+            key = _key(record)
             if record.cost_status == "unknown" and key in settled:
                 total += settled[key]
             elif record.cost_status == "unknown" or record.settled_usd is None:
@@ -161,7 +210,7 @@ def require_budget(
     config_id: str, runs: Runs, needed: Decimal, settlements: Sequence[Settlement] = ()
 ) -> Decimal:
     if needed < 0:
-        raise ValueError("needed must not be negative")
+        raise BudgetError("needed must not be negative")
     rows = list(_checked(runs))
     settled = _settled_amounts(rows, settlements)
     holders = sorted(
@@ -171,7 +220,7 @@ def require_budget(
             if meta.mode == "live"
             and record.config_id == config_id
             and record.cost_status == "unknown"
-            and (record.run_id, record.call_index) not in settled
+            and _key(record) not in settled
         }
     )
     if holders:

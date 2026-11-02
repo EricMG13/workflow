@@ -157,8 +157,15 @@ class World:
     recordings: Path
     out: Path
 
+    @property
+    def root(self) -> Path:
+        """The runs root: the folder holding ``out`` and any sibling out folders."""
+        return self.out.parent
+
     def settings(self, **changes: Any) -> Settings:
-        base = Settings(self.out, self.cases, self.corpus, recordings=self.recordings)
+        base = Settings(
+            self.out, self.cases, self.corpus, recordings=self.recordings, runs_root=self.root
+        )
         return dataclasses.replace(base, **changes)
 
     def argv(self, command: str, *extra: str) -> list[str]:
@@ -170,6 +177,8 @@ class World:
             str(self.cases),
             "--corpus",
             str(self.corpus),
+            "--runs-root",
+            str(self.root),
             *extra,
         ]
 
@@ -253,7 +262,7 @@ def test_a_missing_source_is_refused(world: World) -> None:
 
 def test_live_refused_without_ruling(world: World, capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(DriverError, match="--ruling"):
-        run_stage("pilot", Settings(world.out, world.cases, world.corpus, live=True))
+        run_stage("pilot", dataclasses.replace(world.settings(recordings=None), live=True))
     assert main(world.argv("pilot", "--live")) == 2
     err = capsys.readouterr().err
     assert "--ruling" in err and "Traceback" not in err
@@ -302,7 +311,7 @@ def test_live_ruling_reaches_live_adapter(
     monkeypatch.setattr(adapter_module, "LIVE_RULINGS_ROOT", rulings)
     ruling = rulings / "2026-11-02-not-a-lift.md"
     ruling.write_text("A note that lifts nothing.\n", encoding="utf-8")
-    live = Settings(world.out, world.cases, world.corpus, live=True, ruling=ruling)
+    live = dataclasses.replace(world.settings(recordings=None), live=True, ruling=ruling)
     with pytest.raises(LivePauseInForce):
         run_stage("pilot", live)
     assert not world.out.exists()
@@ -329,7 +338,7 @@ def test_score_and_report_take_no_run_arguments(world: World) -> None:
 
 def test_offline_pilot_scores(world: World, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
-    names = [f"pilot-{config}-{PILOT_PATHWAY}" for config in CONFIGS]
+    names = [f"pilot-{config}-{PILOT_PATHWAY}-1" for config in CONFIGS]
     assert _run_dirs(world.out) == sorted(names)
     for name in names:
         body = json.loads((world.out / name / "run.json").read_text())
@@ -369,6 +378,7 @@ def test_driver_never_writes_run_json(world: World, monkeypatch: pytest.MonkeyPa
     def hollow(**kwargs: Any) -> RunOutcome:
         run_dir: Path = kwargs["run_dir"]
         run_dir.mkdir()
+        (run_dir / "sources").mkdir()  # what run_pathway stages first
         made.append(run_dir)
         return RunOutcome(kwargs["run_id"], run_dir, "stopped", "x", Decimal(0))
 
@@ -390,7 +400,7 @@ def test_the_real_run_pathway_writes_run_json_and_scoring_leaves_it_alone(world:
 def test_a_crashed_run_folder_stops_the_command(
     world: World, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    (world.out / "crashed-run").mkdir(parents=True)
+    (world.out / "crashed-run" / "sources").mkdir(parents=True)  # staged, never finished
     assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
     err = capsys.readouterr().err
     assert "crashed-run" in err and "run.json" in err
@@ -437,12 +447,12 @@ def test_budget_exhausted_skips_config(world: World, capsys: pytest.CaptureFixtu
     _prior_live(world.out, "sol-medium", [unknown])
     result = run_stage("pilot", world.settings())
     assert [o.run_id for o in result.outcomes] == [
-        f"pilot-{config}-{PILOT_PATHWAY}" for config in CONFIGS if config != "sol-medium"
+        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in CONFIGS if config != "sol-medium"
     ]
     assert list(result.stopped) == ["sol-medium"]
     why = result.stopped["sol-medium"]
     assert "unknown charge" in why and "prior-live" in why
-    assert f"pilot-sol-medium-{PILOT_PATHWAY}" not in _run_dirs(world.out)
+    assert f"pilot-sol-medium-{PILOT_PATHWAY}-1" not in _run_dirs(world.out)
     assert json.loads((world.out / "exhausted.json").read_text())["stopped"] == dict(result.stopped)
     assert main(world.argv("score")) == 0 and main(world.argv("report")) == 0
     report = (world.out / "report.md").read_text()
@@ -456,7 +466,7 @@ def test_a_spent_account_stops_every_config_on_it(world: World) -> None:
     result = run_stage("pilot", world.settings())
     assert set(result.stopped) == {"sol-medium", "sol-high"}  # both on the openai account
     assert [o.run_id for o in result.outcomes] == [
-        f"pilot-{config}-{PILOT_PATHWAY}" for config in ("opus-medium", "deepseek-max")
+        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in ("opus-medium", "deepseek-max")
     ]
 
 
@@ -470,6 +480,9 @@ def test_a_settlement_releases_the_stopped_config(world: World) -> None:
                 "entries": [
                     {
                         "run_id": "prior-live",
+                        "module_id": "CP-1",
+                        "step_id": "step-1",
+                        "attempt": 0,
                         "call_index": 0,
                         "settled_usd": "1.00",
                         "by": "eric",
@@ -492,6 +505,9 @@ def test_a_settlement_matching_nothing_stops_the_command(
     _prior_live(world.out, "sol-medium", [unknown])
     entry = {
         "run_id": "elsewhere",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
         "call_index": 0,
         "settled_usd": "1.00",
         "by": "eric",
@@ -511,6 +527,9 @@ def test_report_counts_settlements(world: World) -> None:
     _prior_live(world.out, "deepseek-max", [unknown], pathway="credit_snapshot")
     entry = {
         "run_id": "prior-live",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
         "call_index": 0,
         "settled_usd": "1.00",
         "by": "eric",
@@ -522,7 +541,8 @@ def test_report_counts_settlements(world: World) -> None:
     assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
     report = (world.out / "report.md").read_text()
     assert "## Settled charges" in report
-    assert "| prior-live | 0 | $1.00 | eric | 2026-11-02 | provider \\| invoice |" in report
+    row = "| prior-live | CP-1 | step-1 | 0 | 0 | $1.00 | eric | 2026-11-02 | "
+    assert row + "provider \\| invoice |" in report
     assert "| openrouter | $1.00 |" in report  # the reservation of 3.25 no longer counts
 
 
@@ -653,7 +673,7 @@ def _scores(out: Path) -> list[dict[str, Any]]:
 
 
 def _score(gap_out: Path) -> None:
-    settings = Settings(gap_out, Path("unused"), Path("unused"))
+    settings = Settings(gap_out, Path("unused"), Path("unused"), runs_root=gap_out)
     assert run_module.score_out(settings) == gap_out / "scores.json"
 
 
@@ -733,3 +753,186 @@ def test_module_entry_point_exits_with_the_return_code_of_main(
         runpy.run_module("deploy_workflow.model_testing", run_name="__main__")
     assert refused.value.code == 2  # no run folders under --out: refused
     assert "no run folders" in capsys.readouterr().err
+
+
+# ------------------------------------------------------------------ runs root (review round 1)
+
+
+def _sibling(world: World) -> Path:
+    return world.root / "earlier-out"
+
+
+def test_spend_in_a_sibling_out_counts(world: World) -> None:
+    """The account caps are global: an unknown charge or spent credit in another out folder under
+    the same runs root stops the configuration here too."""
+    unknown = budget_tests.call("sol-medium", None, reserved="3.25", status="unknown")
+    _prior_live(_sibling(world), "sol-medium", [unknown])
+    spent = budget_tests.call("sol-high", "117.00", run_id="spent")
+    _prior_live(_sibling(world), "sol-high", [spent], run_id="spent")
+    result = run_stage("pilot", world.settings())
+    assert set(result.stopped) == {"sol-medium", "sol-high"}
+    assert [o.run_id for o in result.outcomes] == [
+        f"pilot-{config}-{PILOT_PATHWAY}-1" for config in ("opus-medium", "deepseek-max")
+    ]
+
+
+def test_a_crashed_run_in_a_sibling_out_stops_the_command(world: World) -> None:
+    (_sibling(world) / "crashed" / "sources").mkdir(parents=True)
+    with pytest.raises(DriverError, match="crashed.*no run.json"):
+        run_stage("pilot", world.settings())
+    assert not world.out.exists()
+
+
+def test_a_folder_without_sources_or_run_json_is_not_a_run(world: World) -> None:
+    (_sibling(world) / "notes").mkdir(parents=True)
+    assert len(run_stage("pilot", world.settings()).outcomes) == 4
+
+
+def test_out_outside_the_runs_root_is_refused(
+    world: World, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "elsewhere-root"
+    root.mkdir()
+    argv = world.argv("pilot", "--recordings", str(world.recordings))
+    argv[argv.index("--runs-root") + 1] = str(root)
+    assert main(argv) == 2
+    err = capsys.readouterr().err
+    assert "--runs-root" in err and "not counted" in err
+    assert not world.out.exists()
+    with pytest.raises(DriverError, match="--runs-root"):
+        run_stage("pilot", world.settings(runs_root=root))
+
+
+def test_a_stage_rerun_into_the_same_out_gets_new_run_ids(world: World) -> None:
+    pilot = ["pilot", *("--recordings", str(world.recordings))]
+    assert main(world.argv(*pilot)) == 0
+    assert main(world.argv(*pilot)) == 0
+    first = [f"pilot-{config}-{PILOT_PATHWAY}-1" for config in CONFIGS]
+    second = [f"pilot-{config}-{PILOT_PATHWAY}-2" for config in CONFIGS]
+    assert _run_dirs(world.out) == sorted(first + second)
+    scores = json.loads((world.out / "scores.json").read_text())["scores"]
+    assert len(scores) == 8
+    report = (world.out / "report.md").read_text()  # one column per config: the latest run
+    assert "# Model comparison report" in report
+
+
+def test_run_numbers_are_free_across_every_run_directory(world: World) -> None:
+    other = _sibling(world) / f"pilot-sol-medium-{PILOT_PATHWAY}-7"
+    other.mkdir(parents=True)
+    (other / "sources").mkdir()  # a run elsewhere under the root, number 7
+    with pytest.raises(DriverError, match="pilot-sol-medium-earnings_update-7"):
+        run_stage("pilot", world.settings())  # that folder is a crashed run
+    shutil.rmtree(other)
+    _prior_live(
+        _sibling(world),
+        "sol-medium",
+        [budget_tests.call("sol-medium", "1.00")],
+        run_id=f"pilot-sol-medium-{PILOT_PATHWAY}-7",
+    )
+    result = run_stage("pilot", world.settings())
+    assert f"pilot-sol-medium-{PILOT_PATHWAY}-8" in [o.run_id for o in result.outcomes]
+
+
+def test_stops_are_not_kept_after_a_settlement(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    unknown = budget_tests.call("sol-medium", None, reserved="3.25", status="unknown")
+    _prior_live(world.out, "sol-medium", [unknown])
+    assert set(run_stage("pilot", world.settings()).stopped) == {"sol-medium"}
+    assert (world.out / "exhausted.json").is_file()
+    entry = {
+        "run_id": "prior-live",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "1.00",
+        "by": "eric",
+        "date": "2026-11-02",
+        "source": "provider invoice",
+    }
+    body = {"schema_version": "charge-settlement/1", "entries": [entry]}
+    (world.out / "settlements.json").write_text(json.dumps(body), encoding="utf-8")
+    assert main(world.argv("score")) == 0 and main(world.argv("report")) == 0
+    assert "Stopped configurations" not in (world.out / "report.md").read_text()
+    # a later stage that stops nothing rewrites the record
+    _settled_double(monkeypatch)
+    assert run_stage("repair", world.settings()).stopped == {}
+    assert not (world.out / "exhausted.json").exists()
+
+
+def test_a_skipped_distressed_run_is_recorded_for_any_cause(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    unknown = budget_tests.call("opus-medium", None, reserved="3.25", status="unknown")
+    _prior_live(world.out, "opus-medium", [unknown], pathway="credit_snapshot")
+    calls = _settled_double(monkeypatch)
+    result = run_stage("comparison", world.settings())
+    key = "opus-medium (distressed_restructuring)"
+    assert "unknown charge" in result.stopped["opus-medium"]
+    assert key in result.stopped and result.stopped[key].startswith("skipped")
+    assert ("distressed_restructuring", "opus-medium") not in calls
+
+
+def test_main_lets_a_defect_propagate(world: World, monkeypatch: pytest.MonkeyPatch) -> None:
+    def broken(stage: str, settings: Settings) -> None:
+        raise RuntimeError("a defect")
+
+    monkeypatch.setattr(run_module, "run_stage", broken)
+    with pytest.raises(RuntimeError, match="a defect"):
+        main(world.argv("pilot", "--recordings", str(world.recordings)))
+
+    def bare(stage: str, settings: Settings) -> None:
+        raise ValueError("not a named refusal")
+
+    monkeypatch.setattr(run_module, "run_stage", bare)
+    with pytest.raises(ValueError, match="not a named refusal"):
+        main(world.argv("pilot", "--recordings", str(world.recordings)))
+
+
+def test_a_settlement_amount_beyond_the_exact_context_exits_2(
+    world: World, capsys: pytest.CaptureFixture[str]
+) -> None:
+    unknown = budget_tests.call("sol-medium", None, reserved="3.25", status="unknown")
+    _prior_live(world.out, "sol-medium", [unknown])
+    entry = {
+        "run_id": "prior-live",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "1E-1000000",
+        "by": "eric",
+        "date": "2026-11-02",
+        "source": "provider invoice",
+    }
+    body = {"schema_version": "charge-settlement/1", "entries": [entry]}
+    (world.out / "settlements.json").write_text(json.dumps(body), encoding="utf-8")
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
+    assert "held exactly" in capsys.readouterr().err
+
+
+def test_key_shaped_settlement_text_never_reaches_the_report(
+    world: World, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fake = "sk-proj-" + "Q" * 24  # fabricated, not a key
+    unknown = budget_tests.call("sol-medium", None, reserved="3.25", status="unknown")
+    _prior_live(world.out, "sol-medium", [unknown])
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 0
+    entry = {
+        "run_id": "prior-live",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "2.00",
+        "by": "eric",
+        "date": "2026-11-02",
+        "source": f"billing page, key {fake}",
+    }
+    body = {"schema_version": "charge-settlement/1", "entries": [entry]}
+    (world.out / "settlements.json").write_text(json.dumps(body), encoding="utf-8")
+    capsys.readouterr()
+    assert main(world.argv("report")) == 2
+    assert fake not in capsys.readouterr().err
+    assert fake not in (world.out / "report.md").read_text()

@@ -1444,7 +1444,7 @@
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt:FY2024Q3",
-      "reason": "gold total_debt is recorded missing; CP-1 total_debt is model-composed, so no definition is comparable (the SHC carrying-debt gold maps to total_debt instead)"
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2024Q3; two entries cannot share it"
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2024Q3",
@@ -1532,7 +1532,7 @@
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt:FY2024Q4",
-      "reason": "gold total_debt is recorded missing; CP-1 total_debt is model-composed, so no definition is comparable (the SHC carrying-debt gold maps to total_debt instead)"
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2024Q4; two entries cannot share it"
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2024Q4",
@@ -1616,7 +1616,7 @@
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt:FY2025Q1",
-      "reason": "gold total_debt is recorded missing; CP-1 total_debt is model-composed, so no definition is comparable (the SHC carrying-debt gold maps to total_debt instead)"
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2025Q1; two entries cannot share it"
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2025Q1",
@@ -1700,7 +1700,7 @@
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt:FY2025Q2",
-      "reason": "gold total_debt is recorded missing; CP-1 total_debt is model-composed, so no definition is comparable (the SHC carrying-debt gold maps to total_debt instead)"
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2025Q2; two entries cannot share it"
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2025Q2",
@@ -1784,7 +1784,7 @@
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt:FY2024",
-      "reason": "gold total_debt is recorded missing; CP-1 total_debt is model-composed, so no definition is comparable (the SHC carrying-debt gold maps to total_debt instead)"
+      "reason": "their CP-1 locator (T4.15 total_debt, PERIOD_END) is taken by the total_debt_carrying entry for the same period, CP-1.fin.SHC:total_debt_carrying:FY2024Q4; two entries cannot share it"
     },
     {
       "fact_id": "CP-1.fin.SHC:total_debt_principal:FY2024",

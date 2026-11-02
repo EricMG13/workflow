@@ -24,7 +24,7 @@ Preparer: mx-feature (Task 6 preparer, re-run). Output: `cases/goldens/shc-earni
 - Other modules unchanged.
 
 ## Unmapped reasons, grouped
-- CP-1 (119): no T4.15 metric id for debt, lease or liquidity components and totals (66); net income and balance-sheet totals are statement lines (35); DA sign (5); capex_payment_amount sign (5); total_debt gold recorded missing (5); FY2024 twins of cash and carrying debt (2); the T4.18 rate floor, basis points vs a percent golden (1).
+- CP-1 (119): no T4.15 metric id for debt, lease or liquidity components and totals (66); net income and balance-sheet totals are statement lines (35); DA sign (5); capex_payment_amount sign (5); gold total_debt (5; its locator, T4.15 total_debt PERIOD_END, is taken by the total_debt_carrying entries for the same periods, FY2024 via CP-1.fin.SHC:total_debt_carrying:FY2024Q4); FY2024 twins of cash and carrying debt (2); the T4.18 rate floor, basis points vs a percent golden (1).
 - CP-1B segment revenue and income (12): T1B.1 has consolidated rows only. CP-1B debt terms and revolver (6): no debt-terms table.
 - CP-1D (30): management-bridge rows (none in this case), 10-Q lines, one LTM period.
 

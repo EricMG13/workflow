@@ -19,10 +19,11 @@ import json
 import os
 import sys
 import time
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Context, Decimal, Inexact, InvalidOperation
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from deploy_vii.contracts import PathwayId
@@ -41,7 +42,7 @@ from deploy_workflow.model.loop import (
 from deploy_workflow.model.pricing import money_text
 from deploy_workflow.model.record import CallLog
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.model.turn import CONFIG_PROVIDERS, ModelSpec
 from deploy_workflow.owner_rendering import render_owner_slice, verify_owner_rendered_slice
 from deploy_workflow.owner_workflow import (
     AUDIT,
@@ -82,6 +83,15 @@ from deploy_workflow.workflow import WorkflowError
 # Opus 5.5 128K; deepseek's lowest endpoint 131,072) and at most `providers.MAX_OUTPUT_TOKENS`
 # (PF-R11; cases/pilot-fixes/limits.json).
 MAX_OUTPUT_TOKENS = 98_304
+
+# PF-R12 (cases/pilot-fixes/limits.json#bytes_per_token_basis): a lower bound on bytes per token,
+# by provider, for the loop's input-token bound. OpenAI's 3.0 sits below every measurement (pilot
+# sol 4.314 and 4.317; Deploy VII sol min 4.885 over 36 calls); the others stay at 1, which is
+# sound by definition (a token is at least a byte) and over-reserves (pilot opus 2.394-2.545,
+# pilot deepseek 3.329-3.572).
+BYTES_PER_TOKEN_LOWER_BOUND: Mapping[str, Decimal] = MappingProxyType(
+    {"openai": Decimal("3.0"), "anthropic": Decimal(1), "openrouter": Decimal(1)}
+)
 
 PromptFactory = Callable[[PreparedPack], PromptFor]
 
@@ -590,6 +600,7 @@ def _drive_and_finish(
             case_id=checked.case_id,
             pathway=checked.pathway,
             max_output_tokens=MAX_OUTPUT_TOKENS,
+            bytes_per_token=BYTES_PER_TOKEN_LOWER_BOUND[CONFIG_PROVIDERS[checked.model.config_id]],
             resumed=resume,
         )
         walk: _Walk = loop if replay is None else _ReplayingLoop(workflow, loop, replay, execution)

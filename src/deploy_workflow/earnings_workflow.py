@@ -26,6 +26,7 @@ from uuid import uuid4
 
 from pydantic import Field, JsonValue, StrictInt, ValidationError, field_validator, model_validator
 
+from deploy_vii.bindings.cp1b import cp1b_layouts
 from deploy_vii.contracts import (
     Citation,
     Claim,
@@ -82,8 +83,10 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.prose import tokenize
 from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, citation_issues
+from deploy_vii.report_view import scale_label
 from deploy_vii.source_context import SourceContextReview
-from deploy_workflow.earnings import EarningsDeltaReport, build_earnings_delta
+from deploy_workflow.context import ContextRefused, context_facts
+from deploy_workflow.earnings import EarningsDeltaReport, build_earnings_delta_in
 from deploy_workflow.financial_workflow import (
     STATEMENT_HEADING,
     FinancialBinding,
@@ -92,6 +95,7 @@ from deploy_workflow.financial_workflow import (
     _quality_read,
 )
 from deploy_workflow.host import SourceSession
+from deploy_workflow.owners.period_basis import PeriodRefused, currency_basis
 from deploy_workflow.tools.upstream import UpstreamTools
 from deploy_workflow.workflow import SourceEvidence
 
@@ -1271,11 +1275,23 @@ def _full_cp1(store: Execution, binding: OwnerBinding) -> tuple[Module, ModuleVi
     return producer, view
 
 
+def _run_currency(pack: PreparedPack, view: ModuleView) -> str:
+    """The run's reporting currency for `build_earnings_delta_in`: `USD` for a pack with no run
+    context, else the context's, checked against the CP-1 T4.14 register (`currency_basis`). A
+    refused context or register is the delta core's `incompatible_dimensions`."""
+    try:
+        return currency_basis(context_facts(pack), view.facts).currency
+    except (PeriodRefused, ContextRefused) as error:
+        raise ValueError("incompatible_dimensions") from error
+
+
 def _grant(
     store: Execution, binding: OwnerBinding, prior: str, current: str
 ) -> tuple[dict[str, Any], EarningsDeltaReport, Module]:
     producer, view = _full_cp1(store, binding)
-    report = build_earnings_delta(view, prior, current)
+    report = build_earnings_delta_in(
+        view, prior, current, currency=_run_currency(store.pack(), view)
+    )
     chosen = {f.fact_id: f for f in producer.facts if f.table_id == "T4.14"}
     metrics: dict[str, dict[str, Fact]] = {}
     for fact in producer.facts:
@@ -1610,32 +1626,45 @@ def _participation(
     )
 
 
-_NUMERIC_ROWS = (
-    (
-        "T1B.1",
-        "Paired earnings results",
-        ("prior", "current", "delta", "growth"),
-        (
-            ("revenue", "Revenue (US$ m)"),
-            ("ebitda", "Reported EBITDA (US$ m)"),
-            ("adjusted_ebitda", "Adjusted EBITDA (US$ m)"),
-            ("ebitda_margin", "EBITDA margin (%; change pp)"),
-            ("cfo_reported", "Reported CFO (US$ m)"),
-            ("capex", "Signed capex (US$ m)"),
-            ("fcf", "Levered FCF (US$ m)"),
-        ),
-    ),
-    (
-        "T1B.2",
-        "Balance changes",
-        ("prior", "current", "delta"),
-        (
-            ("cash_closing", "Closing cash (US$ m)"),
-            ("total_debt", "Total debt (US$ m)"),
-            ("net_debt", "Net debt (US$ m)"),
-        ),
-    ),
-)
+_DEFAULT_UNIT = "US$ m"
+
+
+def _report_currency(report: EarningsDeltaReport) -> str:
+    """The one currency of the report's money points (`build_earnings_delta_in` checked every money
+    fact carries the run's); a report that names none or several fails closed."""
+    codes = {p.currency for p in report.points if p.currency is not None}
+    if len(codes) != 1 or not re.fullmatch(r"[A-Z]{3}", next(iter(codes))):
+        raise OwnerError("identity_mismatch")
+    return next(iter(codes))
+
+
+def _money_unit(currency: str) -> str:
+    """The money unit the report view states for `currency` (`US$ m`, `EUR m`), from the view's
+    own `scale_label`, which the CP-1B layout check compares the row labels with."""
+    unit = scale_label("MILLIONS", currency)
+    if unit is None:
+        raise OwnerError("identity_mismatch")
+    return unit
+
+
+def _currency_evidence(currency: str) -> dict[str, str]:
+    """The currency of the figures the evidence operands select. A USD report keeps its pinned
+    bytes (the operands' `fact_sha256` already covers it); any other currency is stated."""
+    return {} if currency == "USD" else {"currency": currency}
+
+
+def _numeric_rows(
+    unit: str,
+) -> tuple[tuple[str, str, tuple[str, ...], tuple[tuple[str, str], ...]], ...]:
+    """The two numeric tables, their money labels stated in `unit` (`US$ m`, `EUR m`): the table
+    ids, titles, columns and labelled rows of the CP-1B layout the report view checks
+    (`deploy_vii.bindings.cp1b.cp1b_layouts`), so the two cannot drift."""
+    return tuple(
+        (layout.table_id, layout.title, layout.fields, layout.rows)
+        for layout in cp1b_layouts(unit)[:2]
+    )
+
+
 _ASSESSMENT_ROWS = (
     ("variance.summary", "Numerical comparison"),
     ("drivers", "Driver evidence"),
@@ -1645,11 +1674,17 @@ _ASSESSMENT_ROWS = (
     ("evidence.inputs", "Selected input evidence"),
     ("scope.limitations", "Scope limitations"),
 )
-_COMMON_LIMITS = (
-    "Unaudited consolidated IFRS financials in USD millions; borrower, guarantor and restricted-group perimeters are not established.",
-    "No causal-driver evidence is supplied by the selected authorized CP1 inputs.",
-    "No management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.",
-)
+
+
+def _common_limits(currency: str) -> tuple[str, str, str]:
+    return (
+        f"Unaudited consolidated IFRS financials in {currency} millions; borrower, guarantor and restricted-group perimeters are not established.",
+        "No causal-driver evidence is supplied by the selected authorized CP1 inputs.",
+        "No management-guidance or operational-KPI evidence is supplied by the selected authorized CP1 inputs.",
+    )
+
+
+_COMMON_LIMITS = _common_limits("USD")
 _QUARTER_ID = re.compile(r"q([1-4])-([0-9]{4})")
 _FY_ID = re.compile(r"fy-([0-9]{4})")
 _UNSUPPORTED = "unsupported_pair"
@@ -1674,10 +1709,14 @@ def _case_parameters(run: Run) -> tuple[OwnerCaseId, str, str]:
     return selected[run.run_id]
 
 
-_OWNER_PERIMETER_LIMIT = (
-    "Consolidated IFRS financials in USD millions; audit status, borrower, guarantor and "
-    "restricted-group perimeters are not established."
-)
+def _owner_perimeter_limit(currency: str) -> str:
+    return (
+        f"Consolidated IFRS financials in {currency} millions; audit status, borrower, guarantor "
+        "and restricted-group perimeters are not established."
+    )
+
+
+_OWNER_PERIMETER_LIMIT = _owner_perimeter_limit("USD")
 
 
 def _period_word(pid: str) -> str:
@@ -1760,8 +1799,10 @@ def _own_limits(report: EarningsDeltaReport, *, owner: bool = False) -> tuple[st
     only what the delta core checks (the dimensions), not that the statements are unaudited, which
     no owner-path check establishes."""
     gap = report.prior_basis_id is None
+    currency = _report_currency(report)
+    common = _common_limits(currency)
     return (
-        *((_OWNER_PERIMETER_LIMIT, *_COMMON_LIMITS[1:]) if owner else _COMMON_LIMITS),
+        *((_owner_perimeter_limit(currency), *common[1:]) if owner else common),
         f"No {_prior_year_series(report)}",
         "No year-on-year earnings comparison or broader nonzero earnings qualification."
         if gap
@@ -1921,7 +1962,7 @@ def _require_flat_or_gap(report: EarningsDeltaReport) -> None:
         raise ValueError(_UNSUPPORTED)
     if report.prior_basis_id is None:
         return
-    earnings = {m for _, _, _, rows in _NUMERIC_ROWS[:1] for m, _ in rows}
+    earnings = {m for _, _, _, rows in _numeric_rows(_DEFAULT_UNIT)[:1] for m, _ in rows}
     if any(
         p.delta_status != "known" or p.delta != 0 for p in report.points if p.measure_id in earnings
     ):
@@ -1998,7 +2039,8 @@ def compose_delta(
     )
     facts: list[Fact] = []
     tables = []
-    for table_id, title, columns, measures in _NUMERIC_ROWS:
+    currency = _report_currency(report)
+    for table_id, title, columns, measures in _numeric_rows(_money_unit(currency)):
         rows = []
         for measure, label in measures:
             point = points[measure]
@@ -2097,6 +2139,7 @@ def compose_delta(
         "prior_basis_id": report.prior_basis_id,
         "current_basis_id": report.current_basis_id,
         "operands": [o.model_dump(mode="json") for o in operands],
+        **_currency_evidence(currency),
     }
     all_selected = tuple(
         facts_by_id[fid]
@@ -2227,7 +2270,12 @@ def _owner_stage(store: Execution, envelope: OwnerSubmissionEnvelope) -> Earning
         # The one place the actor's own review text is parsed: charged to the actor.
         raise OwnerError("validation_failed") from None
     _, view = _full_cp1(store, envelope.binding)
-    build_earnings_delta(view, review.prior_period_id, review.current_period_id)
+    build_earnings_delta_in(
+        view,
+        review.prior_period_id,
+        review.current_period_id,
+        currency=_run_currency(store.pack(), view),
+    )
     if raw_review != review or (review.prior_period_id, review.current_period_id) != (
         prior,
         current,
@@ -2720,7 +2768,7 @@ def _complete_intent(store: Execution, intent: SubmissionIntent) -> SubmissionOu
     return outcome
 
 
-def _preflight(producer: Module, prior: str, current: str) -> None:
+def _preflight(producer: Module, prior: str, current: str, pack: PreparedPack) -> None:
     view = ModuleView(
         module_id="CP-1",
         title="Financials",
@@ -2732,7 +2780,7 @@ def _preflight(producer: Module, prior: str, current: str) -> None:
         claims=producer.claims,
         limitations=producer.limitations,
     )
-    report = build_earnings_delta(view, prior, current)
+    report = build_earnings_delta_in(view, prior, current, currency=_run_currency(pack, view))
     bases = {report.current_basis_id}
     if report.prior_basis_id is not None:
         bases.add(report.prior_basis_id)
@@ -4255,6 +4303,7 @@ class EarningsWorkflow:
                     _FrozenExecution(self._store, snapshot).head_module(head),
                     self._case["prior_period_id"],
                     self._case["current_period_id"],
+                    self._store.pack(snapshot),
                 )
             next_attempt = self._begin(module_id)
             if next_attempt is not None:

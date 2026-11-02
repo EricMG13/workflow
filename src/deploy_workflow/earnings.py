@@ -7,6 +7,7 @@ preserves CP1's reported values and existing ratio results without recalculation
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_EVEN, Context, Decimal, DecimalException, localcontext
@@ -59,12 +60,29 @@ class _Period:
 
 
 _PERIOD_FIELDS = (
-    "period_id", "period_type", "fiscal_year", "fiscal_quarter", "start_date", "end_date",
-    "currency", "unit", "accounting_basis", "entity_perimeter",
+    "period_id",
+    "period_type",
+    "fiscal_year",
+    "fiscal_quarter",
+    "start_date",
+    "end_date",
+    "currency",
+    "unit",
+    "accounting_basis",
+    "entity_perimeter",
 )
 _MEASURES = (
-    "revenue", "ebitda", "adjusted_ebitda", "ebitda_margin", "cfo_reported", "capex",
-    "fcf", "cash_closing", "total_debt", "net_debt", "total_leverage_reported",
+    "revenue",
+    "ebitda",
+    "adjusted_ebitda",
+    "ebitda_margin",
+    "cfo_reported",
+    "capex",
+    "fcf",
+    "cash_closing",
+    "total_debt",
+    "net_debt",
+    "total_leverage_reported",
     "net_leverage_reported",
 )
 _GROWTH = frozenset(_MEASURES[:3])
@@ -140,13 +158,13 @@ def _duration_period(row: dict[str, Fact]) -> _Period:
     return _Period(_text(row["period_id"]), kind, start, end, row)
 
 
-def _check_period(period: _Period) -> None:
+def _check_period(period: _Period, currency: str = "USD") -> None:
     row = period.row
     if any(f.period != period.identity or f.basis != _SCOPE for f in row.values()):
         raise ValueError("incompatible_dimensions")
-    if tuple(_text(row[k]) for k in (
-        "currency", "unit", "accounting_basis", "entity_perimeter"
-    )) != ("USD", "MILLIONS", "IFRS", "consolidated group"):
+    if tuple(
+        _text(row[k]) for k in ("currency", "unit", "accounting_basis", "entity_perimeter")
+    ) != (currency, "MILLIONS", "IFRS", "consolidated group"):
         raise ValueError("incompatible_dimensions")
     if period.kind not in {"QUARTER", "FY"} or period.start > period.end:
         raise ValueError("incompatible_periods")
@@ -179,22 +197,22 @@ def _metrics(module: ModuleView) -> dict[str, dict[str, Fact]]:
     return metrics
 
 
-def _dimensions(measure: str) -> tuple[str, str | None, Decimal]:
+def _dimensions(measure: str, currency: str = "USD") -> tuple[str, str | None, Decimal]:
     if measure == "ebitda_margin":
         return "PERCENT", None, Decimal(1)
     if measure in {"total_leverage_reported", "net_leverage_reported"}:
         return "MULTIPLE", None, Decimal(1)
-    return "MILLIONS", "USD", Decimal(1000000)
+    return "MILLIONS", currency, Decimal(1000000)
 
 
-def _selected(row: dict[str, Fact], period: _Period, measure: str) -> Fact:
+def _selected(row: dict[str, Fact], period: _Period, measure: str, currency: str) -> Fact:
     fact = row.get(_basis(period))
     if fact is None:
         raise ValueError("incomplete_register")
     # A known textual value cannot be a selected numeric coordinate.
     if fact.text is not None:
         raise ValueError("invalid_fact")
-    expected = (*_dimensions(measure), _SCOPE)
+    expected = (*_dimensions(measure, currency), _SCOPE)
     dates = f"{period.start.isoformat()} to {period.end.isoformat()}"
     if (fact.unit, fact.currency, fact.scale, fact.basis) != expected or (
         not isinstance(fact.period, str) or fact.period.rsplit(": ", 1)[-1] != dates
@@ -204,11 +222,11 @@ def _selected(row: dict[str, Fact], period: _Period, measure: str) -> Fact:
 
 
 def _point(
-    measure: str, row: dict[str, Fact], prior: _Period | None, current: _Period
+    measure: str, row: dict[str, Fact], prior: _Period | None, current: _Period, run_currency: str
 ) -> EarningsDeltaPoint:
-    current_fact = _selected(row, current, measure)
-    prior_fact = _selected(row, prior, measure) if prior is not None else None
-    unit, currency, scale = _dimensions(measure)
+    current_fact = _selected(row, current, measure, run_currency)
+    prior_fact = _selected(row, prior, measure, run_currency) if prior is not None else None
+    unit, currency, scale = _dimensions(measure, run_currency)
     delta_unit = "PERCENTAGE_POINTS" if unit == "PERCENT" else unit
     delta = growth = None
     growth_status: FactStatus = "not_applicable"
@@ -277,10 +295,26 @@ def _point(
     )
 
 
+def _check_currency_code(currency: str) -> None:
+    """The run currency is an ISO-shaped code, as the report view requires of a money fact."""
+    if not re.fullmatch(r"[A-Z]{3}", currency):
+        raise ValueError("incompatible_dimensions")
+
+
 def build_earnings_delta(
     module: ModuleView, prior_period_id: str, current_period_id: str
 ) -> EarningsDeltaReport:
-    """Compare exact reported periods using pinned Decimal arithmetic.
+    """The frozen A1 entry point: `build_earnings_delta_in` for a USD run. Its signature is
+    pinned by `tests/test_earnings.py`, so the run's currency enters through the function below."""
+    return build_earnings_delta_in(module, prior_period_id, current_period_id, "USD")
+
+
+def build_earnings_delta_in(
+    module: ModuleView, prior_period_id: str, current_period_id: str, currency: str
+) -> EarningsDeltaReport:
+    """Compare exact reported periods using pinned Decimal arithmetic. `currency` is the run's
+    reporting currency (an ISO-shaped code): every period row and selected money fact must carry
+    it, or the pair is `incompatible_dimensions`.
 
     ModuleView checks are structural only. Authentication, settlement and actual
     downstream consumption belong to the separately leased owner workflow.
@@ -294,6 +328,7 @@ def build_earnings_delta(
                 or not module.artifact_sha256
             ):
                 raise ValueError("invalid_source_view")
+            _check_currency_code(currency)
 
             facts_by_id = {fact.fact_id: fact for fact in module.facts}
             if len(facts_by_id) != len(module.facts):
@@ -307,9 +342,9 @@ def build_earnings_delta(
             prior_row = periods.get(prior_period_id)
             prior = _duration_period(prior_row) if prior_row is not None else None
 
-            _check_period(current)
+            _check_period(current, currency)
             if prior is not None:
-                _check_period(prior)
+                _check_period(prior, currency)
                 if (
                     prior.kind != current.kind
                     or prior.end - prior.start != current.end - current.start
@@ -319,8 +354,7 @@ def build_earnings_delta(
 
             metrics = _metrics(module)
             points = tuple(
-                _point(measure, metrics[measure], prior, current)
-                for measure in _MEASURES
+                _point(measure, metrics[measure], prior, current, currency) for measure in _MEASURES
             )
             source_limitations = tuple(
                 limitation
@@ -331,9 +365,7 @@ def build_earnings_delta(
                 if limitation
             )
             limitations = tuple(
-                dict.fromkeys(
-                    (*module.limitations, *source_limitations, *_LIMITATIONS)
-                )
+                dict.fromkeys((*module.limitations, *source_limitations, *_LIMITATIONS))
             )
             return EarningsDeltaReport(
                 producer_sha256=module.artifact_sha256,

@@ -1813,7 +1813,8 @@ def _chart_fact_cell(
     elif unit_class == "amount":
         supported = (
             fact.unit in {"MILLIONS", "currency"}
-            and fact.currency == "USD"
+            and fact.currency is not None
+            and re.fullmatch(r"[A-Z]{3}", fact.currency) is not None
             and fact.scale == 1000000
         )
     else:

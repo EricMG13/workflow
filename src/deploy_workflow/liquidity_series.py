@@ -15,6 +15,7 @@ from typing import Literal
 
 from deploy_vii.contracts import Fact, ModuleView
 from deploy_vii.display import format_value
+from deploy_vii.report_view import scale_label
 
 PointRole = Literal["value", "total"]
 
@@ -24,6 +25,7 @@ GAP_UNBOUND = "∅ G#"
 
 _CP2D = "CP-2D"
 _CP3C = "CP-3C"
+# The axis of a chart whose charted facts state no currency (an n/a frame): the parent's label.
 _AXIS = "US$ m"
 _CR2_SERIES = "Cash bridge"
 _CR2_NOTE = (
@@ -103,6 +105,19 @@ def _shown(fact: Fact, value: Decimal | None) -> str:
     return format_value(value, "amount", "known", decimals=fact.decimals)
 
 
+def _axis(points: tuple[LiquidityPoint, ...], facts: Mapping[str, Fact]) -> str:
+    """The axis label from the one currency the charted amounts state (Phase 8, ruling P8T7-R7),
+    spelled by the report view's `scale_label`; more than one currency fails closed."""
+    found = {
+        facts[point.fact_id].currency
+        for point in points
+        if facts[point.fact_id].unit == "MILLIONS" and facts[point.fact_id].currency is not None
+    }
+    if len(found) > 1:
+        raise ValueError("The liquidity chart amounts state more than one currency")
+    return (scale_label("MILLIONS", found.pop()) if found else None) or _AXIS
+
+
 def _kind_and_reason(
     points: tuple[LiquidityPoint, ...],
     facts: Mapping[str, Fact],
@@ -144,7 +159,7 @@ def cp2d_chart_series(module: ModuleView) -> tuple[LiquidityFigureSeries, ...]:
             kind=kind,
             unit_class="amount",
             unit="MILLIONS",
-            axis_label=_AXIS,
+            axis_label=_axis(drawn, facts),
             series=(_CR2_SERIES,),
             points=drawn,
             reason=reason,
@@ -189,7 +204,7 @@ def cp3c_chart_series(module: ModuleView) -> tuple[LiquidityFigureSeries, ...]:
             kind=kind,
             unit_class="amount",
             unit="MILLIONS",
-            axis_label=_AXIS,
+            axis_label=_axis(drawn, facts),
             series=_CR3_SERIES,
             points=drawn,
             reason=reason,

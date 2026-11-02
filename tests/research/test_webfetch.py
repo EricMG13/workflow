@@ -73,7 +73,7 @@ class FakeConnection:
         self.target = target
         self.sent: tuple[str, str, dict[str, str]] | None = None
 
-    def request(self, method: str, url: str, headers: Mapping[str, str]) -> None:
+    def request(self, method: str, url: str, *, headers: Mapping[str, str]) -> None:
         self.sent = (method, url, dict(headers))
         self.world.requests.append(self.sent)
 
@@ -410,12 +410,12 @@ def test_fetch_record_matches_the_fetches_key(url: str) -> None:
     else:
         assert record.reason is None
         assert body is not None and hashlib.sha256(body).hexdigest() == entry["sha256"]
-        assert media == RESPONSES[url]["headers"]["Content-Type"].split(";")[0]
+        assert media == world.responses[-1].getheader("Content-Type")
 
 
-def test_html_media_type_is_returned_without_parameters() -> None:
+def test_content_type_is_returned_as_sent() -> None:
     _record, _body, media = World().fetch(KEY["text"]["html_case"]["url"])
-    assert media == "text/html"
+    assert media == RESPONSES[KEY["text"]["html_case"]["url"]]["headers"]["Content-Type"]
 
 
 def test_redirect_with_userinfo_or_control_characters_is_refused(

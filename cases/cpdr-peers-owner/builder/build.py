@@ -149,7 +149,7 @@ BODY = {
     "ev-2": [f"{PEERS['p06']['name']} {PEERS['p06']['basis']}"]
     + [stated("p06", op, " in EUR millions") for op in OPS],
     "ev-3": [
-        f"Calder Vale Group indicates revenue of {PEERS['p03']['toks'][0]} for the twelve months to 2026-03-31, a period that has not closed."
+        f"Calder Vale Group indicates revenue of {PEERS['p03']['toks'][0]} (USD millions) for the twelve months to 2026-03-31, a period that has not closed."
     ],
 }
 

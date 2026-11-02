@@ -158,7 +158,7 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
   - CP-L10's `_period_register` and `earnings._periods` differ in strictness on non-canonical T4.14 heads, though both fail closed and agree on the real-form register.
   - The CP-1B view offers `pairs: []`, with no reason text, for a resolved context pair outside the two pins.
 - **The cpos-owner report_view.py pin is stale (pre-existing, Phase 8 pre-flight P8-P3).** `cases/cpos-owner/manifest.json:10` and `builder/build.py:28` still name `5dc981…`, two records behind `dbf8de07…`. No test calls `read_pinned`, so only a cpos-owner rebuild would fail. The oracle preparer re-pins it.
-- **The CP-4C prompt and CP-1C's selected multiple (Phase 7 pre-flight P7-P12).** A CP-4C `STEP_CONTRACTS` sentence saying "use `selected_multiple` when present" is a `src/deploy_vii/live/prompts.py` edit. It goes through the O6 rule-list process (D12, mx-adversary, golden refresh). Until then, a live CP-4C run may ignore the offered multiple and take one repair round, which fails closed.
+- **The CP-4C prompt and CP-1C's selected multiple (Phase 7 pre-flight P7-P12). Closed by ruling P7-R13 (2026-11-02).** The Phase 7 Task 4 review (p07) found that CP-4C's prompt is `src/deploy_workflow/prompts/texts/restructuring_fulcrum.md`, not a `STEP_CONTRACTS` entry, so the sentence needs no `src/deploy_vii` edit. It lands as rule `restructuring_fulcrum.11` in Task 4's fix round, and the golden is refreshed at the Release 3 cut.
 
 ## Phase 8 Task 1 owner items (2026-11-01)
 - `context_periods.resolve` reads a two-year spelling (`FY2025/26`, `2025-26`) as its first year, while vii's `fiscal_year_number` reads the second. PeriodBasis now refuses the mismatch (P8T1-R2), so such a register is falsely refused at `fy-2026`. `resolve` is shared with cpl10 `context_quarters` and `earnings_workflow._column_periods`; aligning it with vii is an owner decision.
@@ -192,3 +192,83 @@ These come from the O5 phase review (mx-autonomous a692128f) and the O5 SDD ledg
 
 ## Phase 8 Task 7 owner item (2026-11-02)
 - A plain USD CP-L10 `Upstream` accepts a known operand in another currency (EUR). A frozen `test_method_cpl10` assertion pins this, so the Phase 8 currency check covers non-USD runs only (`RunUpstream`, P8T7-R8). Whether a USD run should refuse a non-USD operand is the owner's call.
+
+## Phase 5 phase review owner items (2026-11-02)
+- Under `legal_documents: draft`, a CP-0 review can class the draft source `executed` or `filed` and add a `source` gap naming `legal_documents`. That review passes both gates, and CP-4 then cites the source with no draft limitation. The plan allows the gap route, so this is design latitude (phase review I1, `probe_seam_matrix.py`).
+- B17.6 refuses `executed`, `filed` and `draft` authority on the `context` source, but not `third_party`. `live/context.py:35` sends CP-3 the sources CP-0 classes `third_party`, so a context file classed `third_party` would reach CP-3. Not probed (phase review I5).
+
+## P8-R4 rules batch owner items (2026-11-02)
+- The rule-coverage scanner (`rules._sites`) cannot see a refusal returned through a helper as a plain string. The batch covered the CP-2A, CP-2E, CP-2G and CP-2H sites. Released helpers at cp1d.py:2151, cp2d.py:2321/2325 and cp3c.py:2588/2592 have the same blind spot. Whether their steps' rules state those refusals was not checked (review I1).
+- Under the blank-USD fail-open (P8-R3), the cp2g and cp2h entry validators raise `ValueError` (`select_cp1`, "unexpected unit or period") instead of returning an issue, when the CP-1 register is EUR or incomplete. This fails closed, under the documented guard (review I2).
+
+## Phase 7 Task 1 review owner items (2026-11-02)
+- `MYPYPATH=src mypy` fails on `tests/cp3c_runs.py:151` with `[no-untyped-call]`. It fails the same way at the parent, so it predates Task 1 (review I1).
+- The frozen prose at `cases/cp1c-owner/expected.json:140` (`execution.consumption.edges`) says "optional for CP-2, CP-3 and CP-5 only". Since Phase 7 Task 1, CP-4C also takes CP-1C as an optional input, so the sentence is false. No test reads it, and it is the oracle preparer's to fix (review I3).
+
+## O3 Task 7 owner item (2026-11-02)
+- O3's done-when (a) asks for a `distressed_restructuring` walk in which CP-2G and CP-2H settle over a refused CP-4. No pinned case supplies the sources and a CP-0 for the current preset. So the built test (O3T7-R3) walks the o2 sources instead: CP-0 is the test input, CP-1A is granted, and CP-4, CP-4C and CP-5 are refused. Showing CP-2G and CP-2H settle after a refusal needs a new oracle with settled distressed file sources. Until one exists, that row is built but not done.
+
+## Phase 7 Task 3 review owner items (2026-11-02)
+- With `cp_dr_public` and `blend` plus precedents, T1C.11 reads "public comps 0 admitted of 3 required" but never names the O7d gap: the public-peer figures await the CP-DR peer pack. The frozen oracle builder models `blend` the same way (`cases/valuation-context-owner/builder/build.py:466,618`). Changing it is an owner decision (review L2).
+- A user multiple with more than 2 dp, for example 8.555, is carried as a `source` fact holding 8.56, with the formula "user-supplied multiple". The frozen key pins `value_class source` and that formula, so a change needs the oracle preparer first (review L4).
+- T1C.10 rounds the exact median half-up for display. T1C.11 selects the 2-dp multiple half-even (Design 6). A median of 5.025 therefore shows as 5.03x in T1C.10 and 5.02x in T1C.11. This predates Task 3 (review I4).
+- The CP-4C prompt does not yet tell the model to use `selected_multiple` when it is present. Closed by ruling P7-R13: rule `restructuring_fulcrum.11`, in `src/deploy_workflow/prompts/`, lands in Phase 7 Task 4's fix round.
+
+## Phase 7 Task 4 review owner items (2026-11-02)
+- **Confusable characters in the forgery checks (review L2; predates Task 4).** `cp3d._normalised` folds with NFKC, which does not fold dash variants or Cyrillic look-alikes. Two copies get no issue at all:
+  - a model-written gap that copies the CP-1C selection line with U+2011 in "CP-1C" and without the "no alignment" tail;
+  - Phase 6's pinned line with U+2011 in "user-supplied", which `pin_label_forged` misses.
+
+  A full copy is still refused. Folding confusables is an owner decision (probe `scratchpad/p7t4-review/probes/p05_forgery.py`).
+
+## O3/O4 phase review owner items (2026-11-02)
+These are documentary, for the testing session's framework plan; there is no code change.
+- Contract amendment 2 and Task 7 row (a) in `docs/superpowers/plans/2026-10-31-part-b-o3-o4.md` predate ruling B23, the renderer's consequence-refusal rule (review L1).
+- Contract amendment 3 under-lists the new `stopped_reason` values (review L2). It omits:
+  - `UnrecordedCall` and `SealedWithoutRunRecord`;
+  - `ReplayRefused` and `ReplayPackChanged` mid-run;
+  - the resumed money-stop forms;
+  - the two publish and resume texts.
+
+## Phase 8 end batch 1 and Task 2 owner items (2026-11-02)
+- **The liquidity axis currency (end batch 1, item F).** An all-unsettled CR.2/CR.3 frame takes its axis currency from the module's other MILLIONS facts, because `ModuleView` carries no run currency. A module that states no currency on any fact still shows `US$ m`. Carrying the run currency into `ModuleView` is an owner decision.
+- **A Basis line with two currency clauses (Phase 8 Task 2 review I5; predates the task).** CP-1C reads a peers page whose Basis line holds two currency clauses as the run's currency under either run. Before Phase 8 it was read as USD (probe `scratchpad/p8t2-review/probes/probe_basis_clause.py`, INFO row).
+- **An explicit valuation basis with no records leaves no trace (Phase 7 Task 3 review L1; ruling P7-R11's fallback).** The cases are `peer_source none` with `public_comps`, `blend` with no precedents, and `precedents` with no precedents. Each composes no EV table and no limitation, although Design 5 calls it a stated gap. No key in `cases/valuation-context-owner/expected.json` gives the row, the cell or the gap text. Showing the gap needs an oracle amendment first (probe `scratchpad/p7t3-review/probes/probe_silent_basis.py`, exit 1).
+
+## Methods batch, O6 Task 6 and Phase 8 done-when owner items (2026-11-02)
+- **The `auto` basis never reaches precedents (methods review Low-1; predates the batch).**
+  - `valuation_basis._auto` falls back to precedents, but `load_context` refuses precedents unless the basis is `precedents` or `blend` (`context.py:601-602`). The context form hides them too (`context-form.html:1132`).
+  - So an `auto` run with `user_list` or `cp_dr_public` always ends at "Insufficient Information" (probe `scratchpad/methods-review/probes/p02_auto_precedents_unreachable.py`, exit 0).
+  - The owner decides between two options: allow precedents under `auto`, or have RUN-GUIDE.md:158-164 and `methods/cp1c.md` say that `auto` reads public comps only.
+- **A stale docstring (methods review Low-2, code half).** `owners/cp1c.py:3144-3146` still says no consumer reads the EV reader. CP-4C has called `cp1c_reader` since Phase 7 Task 4 (`cp4c.py:2910`). The method text is fixed in methods fix 1; the docstring is code and is not in any open task.
+- **The tool loop does not check the step's offer (O6 Task 6 review I1; predates the task).**
+  - `ToolLoop._kind` and `_call` (`model/loop.py:824-843`) dispatch on the tool name alone. A tool the step was not offered is refused one layer down, by the workflow (`not_permitted`).
+  - Six such calls were each refused, recorded, and did not stop the run (probe `scratchpad/o6t6-review/probes/p04_unoffered_tool_calls.py`, exit 0).
+  - Only the `read_inputs` case has a fast test.
+  - Refusing at the loop is an owner decision.
+- **mypy over the test modules.** A plain `mypy tests/test_periods_currency_oracle.py` follows its imports and reports 5 earlier errors:
+  - `tests/test_method_cp2g.py:107` (no-any-return);
+  - `tests/test_periods_currency_misc.py:36` and `tests/test_connect_cp1d.py:605-607` (attr-defined: implicit re-exports).
+
+  PR CI runs mypy only over `src/deploy_workflow/` and `cases/prove/`, with `--follow-imports=silent`, so CI does not see them.
+
+## Phase 8 phase review owner items (2026-11-02)
+- **CP-2G and CP-2H match the CP-1 label alone (review L1; predates the phase).** `select_cp1` in cp2g and cp2h matches a T4.10 fact by its label only. The other five owners also require the run's period. A twin label from another period is therefore picked by CP-2G and CP-2H but refused elsewhere (probe `scratchpad/p8-phase-review/probes/p02*`, exit 1).
+- **CP-1B and the earnings path bypass the blank-base rule (review L2).** `currency_basis` is read directly, so these paths skip P8-R3's blank-base rule. The output stays honest (probe `p06*`, exit 1). Routing them through `run_basis` is an owner decision.
+
+## O7b-1b review owner items (2026-11-02)
+- **The O6 fence lets NFKD-unfolded lookalikes through (review I-3; predates O7).** `‹`, `〈` and `⟨` pass the fence and stay inside it. Probe: `scratchpad/o7b1b-review/probes/p01*`, exit 0, for what the fence does refuse. Widening the fold is an owner decision.
+- **A delimiter in a pack span raises out of `stage()` (review I-4; predates O7).** `PackTools` raises `PromptError` from `stage()` when a span holds a delimiter. Intake makes this unreachable for `ev-*`, but not for pack sources.
+
+## Release 3 owner items (2026-11-02)
+- **The budget test's refusal regex is shared (R3-B1 review Low; predates Release 3).**
+  - `tests/test_model_testing_budget.py:195,197` match only the location prefix that `budget.py`'s three guards share (`:45`, `:47`, `:50`). A rewritten money-guard message passes. Probe: `scratchpad/r3b1-review/probes/mutants.sh`, `m_msg`.
+  - Suggested fix: match `.*not negative`.
+  - The comment at `:218` names `model_construct`, but the code uses `model_copy`.
+- **The budget's negative-money guard is defence in depth.** `budget.py:49` cannot be reached from any `src` path, because every `CallRecord` constructor validates `ge=0`. Keeping or removing it is an owner decision.
+- **Slow owner tests run only in CI (R3-G1).** These time out as whole files at 290 s locally, so the controller's union gate leaves them to PR CI, under the user's "slow tests left to CI":
+  - `test_owner_cp1c`, `cp1d`, `cp2a`, `cp2g`, `cp2h`, `cp3`, `cp4` (also `cp4c`);
+  - `test_earnings_workflow`.
+
+  Each test_owner_cp1c/cp4c node takes about 275 s of module-fixture setup. CI does not run `RUN_PROMOTION` at all, so promotion-gated nodes run nowhere automatically.
+- **The cp4c builder cannot run in place (R3-L3(b); since 9f32bbd3).** Its cp3c-manifest pin is stale. It is restored in O7b-1c S3.

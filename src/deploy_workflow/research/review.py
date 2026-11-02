@@ -228,6 +228,20 @@ def _completeness_issues(answer: Answer) -> list[ReviewIssue]:
     return issues
 
 
+def _none_found_issues(qid: str, entry: NoneFound, held: set[str]) -> list[ReviewIssue]:
+    issues = []
+    if not entry.searched:
+        issues.append(ReviewIssue(qid, "a none_found contrary names the items searched"))
+    if not entry.limitation.strip():
+        issues.append(ReviewIssue(qid, "a none_found contrary states its limitation"))
+    issues += [
+        ReviewIssue(qid, f"searched item {item} is not a held source")
+        for item in entry.searched
+        if item not in held
+    ]
+    return issues
+
+
 def _contrary_issues(answer: Answer, held: set[str]) -> list[ReviewIssue]:
     issues: list[ReviewIssue] = []
     for entry in answer.contrary:
@@ -235,16 +249,8 @@ def _contrary_issues(answer: Answer, held: set[str]) -> list[ReviewIssue]:
             issues.append(
                 ReviewIssue(answer.question_id, f"contrary item {entry.item} is not its citation")
             )
-        if isinstance(entry, NoneFound) and not entry.searched:
-            issues.append(
-                ReviewIssue(answer.question_id, "a none_found contrary names the items searched")
-            )
         if isinstance(entry, NoneFound):
-            issues += [
-                ReviewIssue(answer.question_id, f"searched item {item} is not a held source")
-                for item in entry.searched
-                if item not in held
-            ]
+            issues += _none_found_issues(answer.question_id, entry, held)
     return issues
 
 

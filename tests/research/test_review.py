@@ -298,3 +298,13 @@ def test_every_prose_field_is_held_to_the_language_rules(
             edit(sub, bad)
             want = "banned word: recommend" if bad == word else issue
             assert want in texts(sub, manifest, expected), (edit.__name__, bad)
+
+
+def test_none_found_limitation_is_not_blank(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    # O7-R23 (a): the same frame and refusal as a not_found question's blank limitation.
+    for blank in (" ", "\n\t "):
+        entry = [{"kind": "none_found", "searched": ["ev-1"], "limitation": blank}]
+        sub = edit_answer(submissions["research_v1"], "regulation", contrary=entry)
+        assert texts(sub, manifest, expected) == ["a none_found contrary states its limitation"]

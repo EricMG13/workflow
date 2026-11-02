@@ -276,6 +276,7 @@ def _score_entry(
     golden: Any,
     module: Module,
     upstream: frozenset[str],
+    period_rows: int = 0,
 ) -> FactScore:
     fid = entry.fact_id
     expected = _expected_text(golden)
@@ -291,8 +292,10 @@ def _score_entry(
             observed=observed if seen is None else seen,
         )
 
-    if len(facts) > 1:
-        seen = f"{len(facts)} facts at one locator"
+    # Two or more period rows matching a period_ref are ambiguous even if one holds the fact.
+    found = max(len(facts), period_rows)
+    if found > 1:
+        seen = f"{found} facts at one locator"
         if status in _NO_VALUE_STATUSES and any(_has_value(f) for f in facts):
             return out("invented", seen)
         return out("mismatch", seen)
@@ -397,8 +400,10 @@ def score_module(
                 )
             )
             continue
+        ref = entry.locator.period_ref
+        rows = len(_resolve_periods(live, entry.locator)) if ref is not None else 0
         scored = _score_entry(
-            entry, _locate(live, entry, golden), golden, live, upstream_mismatches
+            entry, _locate(live, entry, golden), golden, live, upstream_mismatches, rows
         )
         if refused_honestly and scored.outcome == "missing_in_output":
             scored = gap(entry.fact_id, golden)

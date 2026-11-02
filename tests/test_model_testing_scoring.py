@@ -980,3 +980,15 @@ def test_row_key_ignores_same_key_text_in_another_table() -> None:
     ]
     score, _ = _rk_score(facts)
     assert score.facts[0].outcome == "missing_in_output"
+
+
+def test_period_ref_two_period_rows_is_mismatch_even_if_one_holds_the_fact() -> None:
+    # an ambiguous period register is surfaced, not hidden (step 2b brief)
+    facts = (
+        _period_row("p1", "P7", "2024-12-28")
+        + _period_row("p2", "P8", "2024-12-28")
+        + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+    )
+    fs = _ref_score(facts).facts[0]
+    assert fs.outcome == "mismatch"
+    assert fs.observed == "2 facts at one locator"

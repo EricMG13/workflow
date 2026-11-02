@@ -238,7 +238,11 @@ def _run_dirs(root: Path) -> list[Path]:
     found: list[Path] = []
     pending = [root] if root.is_dir() else []
     while pending:
-        for child in sorted(p for p in pending.pop().iterdir() if p.is_dir()):
+        for child in sorted(
+            p
+            for p in pending.pop().iterdir()
+            if p.is_dir() or (p.is_symlink() and not p.exists())  # a dangling link is refused
+        ):
             if child.is_symlink():
                 raise DriverError(
                     f"{child} is a symbolic link: its runs would go uncounted; "
@@ -491,8 +495,14 @@ def _root_lock(root: Path) -> Iterator[None]:
     """An exclusive lock on the runs root, held from before the first budget and run_id read until
     the last run returns. A second stage command fails at once rather than waiting."""
     # ponytail: one lock per runs-root; per-config locks if parallel stages are ever needed
-    root.mkdir(parents=True, exist_ok=True)
-    with (root / LOCK_FILE).open("a") as handle:
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        handle = (root / LOCK_FILE).open("a")
+    except OSError as exc:
+        raise DriverError(
+            f"cannot open the lock file {root / LOCK_FILE}: {exc.strerror or exc}"
+        ) from None
+    with handle:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:

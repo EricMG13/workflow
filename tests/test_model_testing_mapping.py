@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 import pytest
 
 from deploy_workflow.model_testing.cases import GoldenCase, load_case
+from deploy_workflow.model_testing.configs import CASES
 from deploy_workflow.model_testing.mapping import MappingError, load_mapping
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -357,3 +359,26 @@ def test_zero_width_alias_and_blank_ref_refused(tmp_path: Path) -> None:
     blank_ref = _ref_entry("a0", match={"end_date": "\u200b"})
     with pytest.raises(MappingError, match="non-blank"):
         load_mapping(_write(tmp_path, _doc(entries=[blank_ref], unmapped=[])), case)
+
+
+@pytest.mark.skipif(not CORPUS.is_dir(), reason="public corpus v1 is not on this machine")
+@pytest.mark.parametrize("case_id", sorted(CASES.values()))
+def test_all_mappings_load(case_id: str) -> None:
+    case_dir = ROOT / "cases" / "goldens" / case_id
+    case = load_case(case_dir, CORPUS)
+    mapping = load_mapping(case_dir / "mapping.json", case)
+    unmapped = {u.fact_id for u in mapping.unmapped} | mapping.pending(case)
+    known: dict[str, list[str]] = {}
+    for fid, fact in case.facts.items():
+        if fact.get("status") == "known":
+            known.setdefault(fact["module"], []).append(fid)
+    report = (
+        ROOT / "work" / "model-testing" / "mapping" / "output" / f"{case_id}-report.md"
+    ).read_text(encoding="utf-8")
+    for module, fids in sorted(known.items()):
+        share = sum(1 for f in fids if f in unmapped) / len(fids)
+        if share > 0.2:
+            pattern = rf"(?<![A-Za-z0-9-]){re.escape(module)}(?![A-Za-z0-9])"
+            assert re.search(pattern, report), (
+                f"{case_id}: {module} is {share:.0%} unmapped but its report does not name it"
+            )

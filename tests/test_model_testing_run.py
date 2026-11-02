@@ -47,6 +47,7 @@ from deploy_workflow.model_testing.run import (
     Settings,
     distressed_opus_estimate,
     load_inputs,
+    load_runs,
     main,
     needed_usd,
     plan_runs,
@@ -1047,3 +1048,20 @@ def test_scores_that_no_longer_match_the_runs_are_a_named_refusal(world: World) 
     shutil.rmtree(world.out / f"pilot-sol-high-{PILOT_PATHWAY}-1")
     with pytest.raises(DriverError, match="pilot-sol-high.*score command"):
         run_module.report_out(world.settings())
+
+
+def test_a_dangling_symlinked_run_directory_is_refused(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "pilot-x").symlink_to(tmp_path / "unmounted" / "pilot", target_is_directory=True)
+    with pytest.raises(DriverError, match="symbolic link"):
+        load_runs(root)
+
+
+def test_an_unopenable_lock_file_is_a_driver_error_exit_2(
+    world: World, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (world.root / ".driver.lock").mkdir(parents=True)  # open("a") on a directory fails
+    assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
+    err = capsys.readouterr().err
+    assert ".driver.lock" in err and "Traceback" not in err

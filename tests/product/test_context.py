@@ -893,3 +893,61 @@ def test_comma_name_round_trips() -> None:
     assert list(ctx.identity.aliases) == form["reader_aliases"]
     assert list(ctx.identity.guarantors) == form["reader_guarantors"]
     assert {"schema": SCHEMA, **ctx.model_dump(mode="json")} == json.loads(raw)
+
+
+# --- O7b-2 S1: run.cutoff (key cases/cpdr-context-cutoff/expected.json) --------------------------
+
+CUTOFF_CASE = REPO / "cases/cpdr-context-cutoff"
+
+
+def _cutoff_key() -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads((CUTOFF_CASE / "expected.json").read_text("utf-8"))
+    return loaded
+
+
+def _cutoff_context(**run: str) -> bytes:
+    obj = json.loads((CUTOFF_CASE / "context.json").read_text("utf-8"))
+    obj["run"].update(run)
+    return json.dumps(obj).encode()
+
+
+def test_run_cutoff_loads() -> None:
+    """`#cutoff/context`: the key's context.json loads with run.cutoff as written."""
+    context = load_context((CUTOFF_CASE / "context.json").read_bytes())
+    assert context.run.cutoff == _cutoff_key()["cutoff"]["context"]
+
+
+def test_run_cutoff_after_as_of_refused() -> None:
+    want = _cutoff_key()["context"]["refusals"]["cutoff_after_as_of"]
+    with pytest.raises(ContextRefused) as caught:
+        load_context(_cutoff_context(cutoff=want["run.cutoff"]))
+    assert list(caught.value.problems) == want["problems"]
+
+
+def test_run_cutoff_malformed_refused() -> None:
+    want = _cutoff_key()["context"]["refusals"]["cutoff_malformed"]
+    with pytest.raises(ContextRefused) as caught:
+        load_context(_cutoff_context(cutoff=want["run.cutoff"]))
+    assert list(caught.value.problems) == want["problems"]
+
+
+def test_absent_cutoff_is_empty() -> None:
+    """`#context/absent/cutoff` over cases/context/research-minimal.json (not re-saved, Q12)."""
+    context = load_context((CASES / "research-minimal.json").read_bytes())
+    assert context.run.cutoff == _cutoff_key()["context"]["absent"]["cutoff"]
+
+
+def test_form_has_run_cutoff_field() -> None:
+    """`#form/field`: the data-k, type, rule and label are in the form's s3 section, and the `run`
+    object carries the field."""
+    want = _cutoff_key()["form"]["field"]
+    html = FORM.read_text("utf-8")
+    key, section = want["data_k"], want["section"]
+    assert re.search(
+        rf'<label for="{section}-{key}">{want["label"]}</label>'
+        rf'<input type="{want["type"]}" id="{section}-{key}" data-k="{key}"',
+        html,
+    )
+    assert f"fld({section}, '{key}', {want['rule']})" in html
+    run_object = re.search(r"const run = \{([^}]*)\};", html)
+    assert run_object and key in [n.strip() for n in run_object[1].split(",")]

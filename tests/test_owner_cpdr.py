@@ -732,3 +732,49 @@ def test_a_line_break_or_pipe_in_a_research_text_is_a_research_step_issue(
     assert step.status == "invalid"
     assert f"{qid}: {CELL_ISSUE}" in step.issues
     assert all(h.module_id != "CP-DR" for h in store.read().heads)
+
+
+# --- O7b-2 S1: the effective cutoff in the brief (key cases/cpdr-context-cutoff) -----------------
+
+
+def _cutoff_key() -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads(
+        (ROOT / "cases" / "cpdr-context-cutoff" / "expected.json").read_text("utf-8")
+    )
+    return loaded
+
+
+@pytest.fixture
+def cutoff_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The driver's pack, whose `context` source carries the key's run.cutoff."""
+    original = runs.context_source
+
+    def with_cutoff(case: str) -> Any:
+        source = original(case)
+        document = json.loads("\n".join(span.text for span in source.spans))
+        document["run"]["cutoff"] = _cutoff_key()["cutoff"]["context"]
+        raw = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+        return runs.prepare_source(
+            runs.SourceRequest(source_id="context", path="context.json", media_type="text/plain"),
+            raw,
+        )
+
+    monkeypatch.setattr(runs, "context_source", with_cutoff)
+
+
+def test_brief_cutoff_is_the_effective_cutoff(tmp_path: Path, cutoff_context: None) -> None:
+    """`#brief/{cutoff,as_of}`: the locked brief.json carries min(as_of, run.cutoff)."""
+    want = _cutoff_key()["brief"]
+    store, ticket = runs.seeded("positive", tmp_path)
+    step = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, runs.defaults_only("positive"), None)
+    assert step.journal.steps[-1].status == "valid"
+    brief = locked_brief(store)
+    assert (brief["cutoff"], brief["as_of"]) == (want["cutoff"], want["as_of"])
+
+
+def test_brief_view_carries_the_effective_cutoff(tmp_path: Path, cutoff_context: None) -> None:
+    """`#brief_view/cutoff`: the brief step's read_inputs view shows the effective cutoff."""
+    want = _cutoff_key()["brief_view"]["cutoff"]
+    store, _ticket = runs.seeded("positive", tmp_path)
+    _digest, body = cpdr.brief_view(store, store.read().attempts[-1])
+    assert re.search(rf"cutoff\D{{0,4}}{want}", body), body

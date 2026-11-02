@@ -338,3 +338,16 @@ def test_symlink_swapped_in_after_resolve_is_not_followed(
     monkeypatch.setattr(it, "_resolve", swap)
     result = call(tmp_path, manifest, [row_of(manifest, path="a.txt")])
     assert result.accepted == () and "cannot be opened" in result.refused[0].reason
+
+
+CUTOFF_CASE = Path(__file__).resolve().parents[2] / "cases" / "cpdr-context-cutoff"
+
+
+def test_effective_cutoff() -> None:
+    """O7b-2 S1 (D9, OD5): `cases/cpdr-context-cutoff/expected.json#cutoff/{effective,
+    absent_effective}`; a later context cutoff never wins."""
+    key = json.loads((CUTOFF_CASE / "expected.json").read_text("utf-8"))["cutoff"]
+    as_of, context = date.fromisoformat(key["as_of"]), key["context"]
+    assert it.effective_cutoff(as_of, context) == date.fromisoformat(key["effective"])
+    assert it.effective_cutoff(as_of, "") == date.fromisoformat(key["absent_effective"])
+    assert it.effective_cutoff(as_of, "2099-01-01") == as_of

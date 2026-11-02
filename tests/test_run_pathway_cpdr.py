@@ -20,6 +20,7 @@ import o2_case
 import pytest
 from cpdr_s1_support import (
     FIXTURE,
+    ROOT,
     ResearchCase,
     key_file,
     off_run_record,
@@ -504,3 +505,27 @@ def test_terminator_body_refused_at_intake(tmp_path: Path, monkeypatch: pytest.M
     spec: Any = None
     shown = cpdr.untrusted_items(run_dir / "research")(binding, spec)
     assert shown and all(body not in each.text for each in shown)
+
+
+def test_context_cutoff_refuses_before_prepare(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7b-2 S1 (`cases/cpdr-context-cutoff/expected.json#intake`): a context cutoff earlier than
+    the as-of date refuses item B (dated the as-of day) as well as D and E; rejected.json is the
+    key's bytes and the pack holds the key's sources."""
+    clock(monkeypatch, AFTER_AS_OF)
+    key_dir = ROOT / "cases" / "cpdr-context-cutoff"
+    case = ResearchCase(tmp_path)  # the evidence files; the manifest and context are the key's
+    manifest = json.loads((key_dir / "manifest.json").read_text("utf-8"))
+    case.manifest_path.write_bytes(manifest["research_manifest"]["file_bytes"].encode("utf-8"))
+    case.context_path.write_bytes((key_dir / "context.json").read_bytes())
+    outcome = run_pathway(**case.arguments(tmp_path))
+    assert (outcome.stopped_reason or "").startswith("RecordingMissing")
+    key = json.loads((key_dir / "expected.json").read_text("utf-8"))["intake"]
+    run_dir = tmp_path / "run"
+    rejected = (run_dir / "research" / "rejected.json").read_bytes()
+    assert rejected.decode("utf-8") == key["rejected_json"]["file_bytes"]
+    assert hashlib.sha256(rejected).hexdigest() == key["rejected_json"]["file_sha256"]
+    reasons = {e["locator"]: e["reason"] for e in json.loads(rejected)}
+    assert reasons[key["refused"][0]["locator"]] == key["refusal_texts"]["cutoff_b"]["text"]
+    assert pack_ids(run_dir) == key["pack_sources"]

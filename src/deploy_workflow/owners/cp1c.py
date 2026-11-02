@@ -433,16 +433,21 @@ Ratio = Known | Unsettled
 
 
 def ratio(
-    metric: Metric, amounts: Mapping[str, Decimal | None], *, where: str = "in the peer source"
+    metric: Metric,
+    amounts: Mapping[str, Decimal | None],
+    *,
+    where: str = "in the peer source",
+    reasons: Mapping[str, str] | None = None,
 ) -> Ratio:
     """One division of exact decimals; a Not stated operand is missing, a denominator not
     positive is not_applicable (lease "peer metric"; `where` names the issuer line, 1C2)."""
     numerator, denominator = amounts[metric.numerator], amounts[metric.denominator]
     if numerator is None or denominator is None:
         absent = metric.numerator if numerator is None else metric.denominator
-        return Unsettled(
-            "missing", f"Not calculable: {OPERAND_LABEL[absent].lower()} is not stated {where}"
-        )
+        label = OPERAND_LABEL[absent].lower()
+        if reasons and absent in reasons:  # a pack row: the TDR.6 cell says why it is missing
+            return Unsettled("missing", f"Not calculable: {label}: {reasons[absent]}")
+        return Unsettled("missing", f"Not calculable: {label} is not stated {where}")
     if denominator <= 0:
         reason = f"Not meaningful: {OPERAND_LABEL[metric.denominator].lower()} is not positive"
         return Unsettled("not_applicable", reason)
@@ -450,7 +455,7 @@ def ratio(
 
 
 def peer_metrics(row: PeerRow) -> dict[str, Ratio]:
-    return {metric.key: ratio(metric, row.amounts) for metric in METRICS}
+    return {metric.key: ratio(metric, row.amounts, reasons=row.reasons) for metric in METRICS}
 
 
 def median(values: Sequence[Decimal]) -> Decimal:
@@ -1318,7 +1323,7 @@ NOT_ADMITTED_PREFIX = "Not admitted: "
 NOT_ADMITTED_FIELDS = (
     "Peer universe",  # affected_analysis
     "Not rated",  # severity: Python's row carries no analyst judgment
-    "CP-1C lists the peer; the CP-DR peer pack decides admission.",  # action
+    "CP-1C's peer sheet decides admission, against the run's basis and the issuer's name.",  # action
 )
 
 
@@ -1336,6 +1341,16 @@ def _not_admitted_rows(c: _Composer, sheet: PeerSheet | None) -> None:
         for (name, label), value in zip(GAP_FIELDS, cells, strict=True):
             c.text(("T1C.7", r, name), label, value)
         c.row("T1C.7", r, f"Not admitted {n}", ["id", *(name for name, _ in GAP_FIELDS)])
+
+
+def _missing_amount_line(row: PeerRow, key: str, label: str) -> str:
+    why = row.reasons.get(key)  # a pack row says why its TDR.6 cell is missing
+    head = (
+        f"Peer amount missing: {row.label} {label.lower()}: {why}"
+        if why
+        else (f"Peer amount not stated: {row.label} {label.lower()}")
+    )
+    return f"{head}: every figure that needs it is Not calculable."
 
 
 def _limitations(
@@ -1367,8 +1382,7 @@ def _limitations(
     if present and sum(1 for p in peers if p.included) < THIN_UNIVERSE:
         out.append("Medians over fewer than five peers move with a single peer.")
     out += [
-        f"Peer amount not stated: {p.data.label} {label.lower()}: every figure that needs it is "
-        "Not calculable."
+        _missing_amount_line(p.data, key, label)
         for p in peers
         for key, label in OPERANDS
         if p.data.amounts[key] is None

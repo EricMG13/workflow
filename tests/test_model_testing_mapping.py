@@ -220,7 +220,8 @@ def test_real_case_two_modules(tmp_path: Path) -> None:
     )
     m = load_mapping(_write(tmp_path, doc), case)
     pending = m.pending(case)
-    assert pending and all(case.facts[f]["module"] == "CP-1B" for f in pending)
+    assert pending and all(case.facts[f]["module"] in {"CP-1", "CP-1B"} for f in pending)
+    assert any(case.facts[f]["module"] == "CP-1" for f in pending)  # financial_gold facts
     assert len(m.entries) + len(m.unmapped) + len(pending) == len(case.facts)
 
 

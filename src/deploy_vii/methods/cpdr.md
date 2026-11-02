@@ -70,7 +70,8 @@ TDR.4-6 exist only when the run asks for the peer pack (see The peer pack). TDR.
 - The peer pack holds located figures only. Every row cites an accepted `ev-*` item under a locator, with a quote that is verbatim under it, and the span was returned by `read_pages` in the step.
 - There is no amount typed by the model in the peer pack. The model submits the peer, the operand, the unit, the currency, the period end and the citation; Python reads the amount from the cited quote by CP-1C's own table rule (ASCII digits, at most one decimal place). A quote that rule cannot read leaves the amount cell `missing` ("figure not readable from the quote").
 - In the peer pack a figure's period end is a calendar date on or before the cutoff of the brief. A later one leaves the amount cell `missing`, never accepted.
-- A `peer_id` of TDR.5 or TDR.6 is a TDR.4 candidate's, has no dot, and is not repeated within its table.
+- A `peer_id` of TDR.5 or TDR.6 is a TDR.4 candidate's; a TDR.4 `peer_id` has no dot and appears once, and a TDR.5 row (`peer_id.dimension`) or a TDR.6 row (`peer_id.operand`) appears once in its table.
+- TDR.4-6 are not in the dossier, which shows TDR.1-3.
 - CP-1C owns inclusion, comparability, normalisation and every statistic. The peer pack carries no field named `included`, `comparability`, `normalised`, `median`, `position`, `flag` or `outlier`, and a submission that holds one is refused as to its shape.
 - The peer pack's texts follow the digit rule (a `basis_note` and an `observation`; a peer `name` may hold a digit) and the fence rule of the research texts.
 

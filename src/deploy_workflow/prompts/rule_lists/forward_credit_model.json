@@ -82,7 +82,7 @@
   },
   {
    "id": "forward_credit_model.8",
-   "statement": "When the run context's fiscal year does not run 1 January to 31 December, its reporting currency is not the single currency the CP-1 period register reports, its current period is blank and its currency is not USD, that register is unusable, or the context file itself is refused, the submission is refused alone, before the rest of it is read; a different submission does not cure it, only a corrected context or pack.",
+   "statement": "When the run context states a current period that is not a fiscal-year or fourth-quarter one, or one whose base year the CP-1 period register does not hold, or one whose register rows do not match the run (row currency, fiscal year, fourth-quarter end, year length or dates), or whose reporting currency is not the single currency the register reports, or whose fiscal year does not run 1 January to 31 December, or when that register is unusable, or when the current period is blank and its currency is not USD, or when the context file itself is refused, the submission is refused alone, before the rest of it is read; a different submission does not cure it, only a corrected context or pack.",
    "checks": [
     "fn:deploy_workflow.owners.cp2g:validate_forward"
    ]

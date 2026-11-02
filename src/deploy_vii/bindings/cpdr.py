@@ -29,5 +29,8 @@ CPDR = BindingMap(
         _bind("TDR.1", "evidence", "Locked questions and recipients"),
         _bind("TDR.2", "evidence", "Claims and located evidence"),
         _bind("TDR.3", "limitations", "Answers, contrary evidence, uncertainty and downstream use"),
+        _bind("TDR.4", "evidence", "Candidate peers"),
+        _bind("TDR.5", "evidence", "Provisional alignment observations"),
+        _bind("TDR.6", "evidence", "Located peer/transaction figures"),
     ),
 )

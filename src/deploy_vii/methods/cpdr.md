@@ -18,8 +18,11 @@ Role: evidence analyst. Reader question: what do the supplied research items say
 | TDR.1 | Locked questions and recipients | `question_id` | `text`, `kind`, `receivers`, `focus_module` | Evidence |
 | TDR.2 | Claims and located evidence | `claim_id` | `question_id`, `claim`, `evidence_id`, `locator`, `published`, `family` | Evidence |
 | TDR.3 | Answers, contrary evidence, uncertainty and downstream use | `question_id` | `answer_state`, `answer`, `contrary`, `uncertainty`, `downstream_use`, `questions_total`, `answered`, `partly`, `not_found`, `contrary_items` | Limitations |
+| TDR.4 | Candidate peers | `peer_id` | `name`, `basis_note`, `evidence_id`, `locator` | Evidence |
+| TDR.5 | Provisional alignment observations | `peer_id.dimension` | `observation`, `evidence_id`, `locator` | Evidence |
+| TDR.6 | Located peer/transaction figures | `peer_id.operand` | `amount`, `unit`, `currency`, `period_end`, `evidence_id`, `locator`, `quote` | Evidence |
 
-TDR.3 has one row per question plus the `total` row, which is the sum of the question rows; `total` is therefore not a usable question id. Fact ids are `<table>.<row>.<field>`, and every cell is backed by a fact. Python composes the tables from the locked brief, the checked submission and the intake record; the analyst writes no cell.
+TDR.4-6 exist only when the run asks for the peer pack (see The peer pack). TDR.3 has one row per question plus the `total` row, which is the sum of the question rows; `total` is therefore not a usable question id. Fact ids are `<table>.<row>.<field>`, and every cell is backed by a fact. Python composes the tables from the locked brief, the checked submission and the intake record; the analyst writes no cell.
 
 ## Intake
 
@@ -59,6 +62,17 @@ TDR.3 has one row per question plus the `total` row, which is the sum of the que
 - Readiness comes from the claim states, one per brief question: empty, or any blocked, gives BLOCKED; any contrary or missing gives `RESEARCH_READY_WITH_LIMITATIONS`; otherwise `RESEARCH_READY`. It is never above `RESEARCH_READY`, because the lineage is `LOCAL`.
 - The module always carries the LOCAL limitation, and a pack source carries no publication date or family, which is also stated as a limitation.
 - Consumers: CP-1C and CP-2 are the named receivers of a question. No module reads CP-DR output until O7d. The dossier (`cp-dr-dossier`) is the rendered form of the settled tables.
+
+## The peer pack
+
+- The peer pack is requested (`peer_pack` is true in the locked brief) only when the run context's `valuation.peer_source` is `cp_dr_public` and `CP-1C` is among the run's requested modules. CP-1C is the only reader of the peer pack, so a run without it, and a run whose peers come from the user (`user_list`, `user_comps`) or from nowhere (`none`), locks `peer_pack` false: the research step then takes no `peers` and composes no TDR.4-6.
+- When it is requested, the research submission carries `peers` beside `answers`: candidate peers (TDR.4), provisional alignment observations (TDR.5, dimension `period`, `definition`, `currency` or `segment`) and figures (TDR.6, one row per peer and CP-1C operand: `revenue`, `ebitda`, `debt`, `interest`, `ffo`).
+- The peer pack holds located figures only. Every row cites an accepted `ev-*` item under a locator, with a quote that is verbatim under it, and the span was returned by `read_pages` in the step.
+- There is no amount typed by the model in the peer pack. The model submits the peer, the operand, the unit, the currency, the period end and the citation; Python reads the amount from the cited quote by CP-1C's own table rule (ASCII digits, at most one decimal place). A quote that rule cannot read leaves the amount cell `missing` ("figure not readable from the quote").
+- In the peer pack a figure's period end is a calendar date on or before the cutoff of the brief. A later one leaves the amount cell `missing`, never accepted.
+- A `peer_id` of TDR.5 or TDR.6 is a TDR.4 candidate's, has no dot, and is not repeated within its table.
+- CP-1C owns inclusion, comparability, normalisation and every statistic. The peer pack carries no field named `included`, `comparability`, `normalised`, `median`, `position`, `flag` or `outlier`, and a submission that holds one is refused as to its shape.
+- The peer pack's texts follow the digit rule (a `basis_note` and an `observation`; a peer `name` may hold a digit) and the fence rule of the research texts.
 
 ## Guard limits (accepted costs)
 

@@ -333,7 +333,7 @@ def test_fixed_rows_name_each_leased_step() -> None:
         "CP-4": ("legal_covenants",),
         "CP-3": ("relative_value",),
         "CP-3D": ("market_implied",),
-        "CP-DR": ("brief", "research"),
+        "CP-DR": ("research",),
         "CP-1D": ("earnings_quality",),
         "CP-1C": ("peer_benchmark",),
         "CP-2E": ("macro_fx",),

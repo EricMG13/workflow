@@ -4,6 +4,6 @@ a. [brief.1] `run_id` is the run's id.
 b. [brief.2] Submit each of the six default questions once, with the ids `competition`, `metric-definitions`, `valuation-context`, `market-demand`, `industry-structure` and `regulation`, and put them first, in that order, before any question of your own.
 c. [brief.3] A default question carries its own kind: `competition` is `default_1`, `metric-definitions` `default_2`, `valuation-context` `default_3`, `market-demand` `default_4`, `industry-structure` `default_5` and `regulation` `default_6`. Every other question is of kind `custom`.
 d. [brief.4] The `question_id` of a question of your own does not start with `ctx-`, is not `total`, is different from every other `question_id` of the list, and is at most 138 characters, since fact ids are composed from it.
-e. [brief.5] A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too.
+e. [brief.5] A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too. A `text` that holds a block delimiter such as `<<<`, or a lookalike of one, is refused too.
 f. [brief.6] When an earlier attempt of this run locked a brief, submit the same questions as that attempt: a lock is written once and is not changed.
 Python fills every identifier, receiver, count and hash; you write no figure.

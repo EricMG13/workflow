@@ -138,9 +138,10 @@
    },
    {
     "id": "brief.5",
-    "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too.",
+    "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too. A `text` that holds a block delimiter such as `<<<`, or a lookalike of one, is refused too.",
     "checks": [
-     "fn:deploy_workflow.research.steps:_language"
+     "fn:deploy_workflow.research.steps:_language",
+     "fn:deploy_workflow.owners.cpdr:_fence_issues"
     ]
    },
    {
@@ -1724,10 +1725,11 @@
    },
    {
     "id": "research.9",
-    "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this.",
+    "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this. Each of those texts also holds no block delimiter such as `<<<` and no lookalike of one.",
     "checks": [
      "fn:deploy_workflow.research.review:research_issues",
-     "oracle:cpdr-research:research"
+     "oracle:cpdr-research:research",
+     "fn:deploy_workflow.owners.cpdr:_fence_issues"
     ]
    },
    {
@@ -2006,7 +2008,7 @@
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
-   "src/deploy_workflow/owners/cpdr.py": "2d6b31fdae26487cb0f379e5c7aa5fc58027b8ec37809943ddc8129ad3fcb952",
+   "src/deploy_workflow/owners/cpdr.py": "304179e659d839f65c8a1fc30e82fe2673c243920964e7528fc2d4a722efc48c",
    "src/deploy_workflow/owners/cpl10.py": "18ccda2b51554188483554e69b07dbbb75f65108beb2ec6613367ba05b16990e",
    "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
    "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b",

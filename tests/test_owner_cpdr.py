@@ -21,21 +21,30 @@ import json
 import shutil
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import cpdr_runs as runs
 import pytest
 from cpdr_s1_support import ResearchCase
+from o2_case import FINISHED, MODEL, STARTED, USAGE
 
 from deploy_vii.contracts import validate_tables
 from deploy_vii.execution import Execution, Head
+from deploy_vii.live.tools import cited_locators
 from deploy_workflow import run_pathway as rp
-from deploy_workflow.owner_workflow import OwnerRunReceipt, verify_owner_run_receipt
+from deploy_workflow.model.adapter import AdapterReply
+from deploy_workflow.model.budget import Budget
+from deploy_workflow.model.loop import StepStopped
+from deploy_workflow.model.redact import Redactor
+from deploy_workflow.model.turn import ToolCall, Turn
+from deploy_workflow.owner_workflow import OwnerRunReceipt, OwnerWorkflow, verify_owner_run_receipt
 from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts import rules
 from deploy_workflow.research import evidence
-from deploy_workflow.research.contracts import CpDrNotAnchored
+from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.research.intake import RefusedItem, write_rejected
 from deploy_workflow.run_inputs import check_arguments
 from deploy_workflow.workflow import WorkflowError
@@ -258,3 +267,138 @@ def test_each_steps_rule_entry_is_the_validator_the_entry_validator_dispatches_t
         assert rules.ENTRIES[step] == (rules.OWNERS + f"cpdr:{name}",)
         assert name in called
     assert cpdr.STEP_IDS == ("brief", "research")
+
+
+# --- the fault form on the run path (O7-R32) -----------------------------------------------------
+
+
+class _BadCp0:
+    """Answers every CP-0 request with a review that does not bind the pack: invalid twice, so the
+    CP-0 head is blocked and the walk's next begin is CP-DR's."""
+
+    config_id = MODEL.config_id
+    ruling = None
+
+    def __init__(self, payload: str) -> None:
+        self.payload = payload
+
+    def complete(self, request: Any, *, invocation_digest: str, call_index: int, **_: Any) -> Any:
+        submit = [t.name for t in request.tools if t.name.startswith("submit_")][-1]
+        reads = [
+            ToolCall(
+                f"r-{call_index}-{n}",
+                "read_pages",
+                {
+                    "source_id": source,
+                    "first_page": int(loc.split(":")[1]),
+                    "last_page": int(loc.split(":")[1]),
+                },
+            )
+            for n, (source, loc) in enumerate(sorted(cited_locators(self.payload)))
+        ]
+        calls = (*reads, ToolCall(f"s-{call_index}", submit, json.loads(self.payload)))
+        turn = Turn("", calls, USAGE, "tool_use", MODEL.model, f"x-{call_index}", 200)
+        return AdapterReply("ok", turn, None, 200, None, None, STARTED, FINISHED, USAGE, None)
+
+
+def test_an_anchor_refusal_on_the_run_path_reaches_run_json_in_the_keys_form(
+    tmp_path: Path, key: dict[str, Any]
+) -> None:
+    """O7-R32, `refusals/anchors/blocked_cp0/fault_record`: the refusal is raised inside the model
+    loop's catch-all, yet the run's stop reason is `<Type>: <reason>`, not `WorkflowError: ...`."""
+    pack = runs.make_pack("positive")
+    runs.stage(tmp_path)
+    review = json.loads(runs.cp0_text(pack, "positive"))
+    review["pack_sha256"] = "0" * 64
+    execution = tmp_path / "execution"
+    workflow = OwnerWorkflow.create(execution, pack, publication_directory=None)
+    checked: Any = SimpleNamespace(
+        cp_dr=True,
+        model=MODEL,
+        case_id="cpdr-research-owner",
+        pathway=pack.run.pathway,
+        run_id=pack.run.run_id,
+        cap_usd=Decimal(100),
+    )
+    meta = rp._Meta(checked, (), False, Redactor())
+    result = rp._drive_and_finish(
+        checked,
+        tmp_path,
+        _BadCp0(json.dumps(review)),
+        None,
+        meta,
+        pack,
+        workflow,
+        Budget(Decimal(100), execution),
+        False,
+    )
+    assert isinstance(result, rp._Fault)
+    assert result.reason == key["refusals"]["anchors"]["blocked_cp0"]["fault_record"]
+    assert not (tmp_path / "research" / "brief.json").exists()
+
+
+def test_a_stop_caused_by_a_brief_fault_keeps_the_faults_own_form() -> None:
+    stop = StepStopped("WorkflowError", "BriefInvalid: x", cause=BriefInvalid("x"))
+    assert rp._fault_reason(stop, Redactor()) == "BriefInvalid: x"
+
+
+def test_an_ordinary_workflow_failure_keeps_the_loops_text() -> None:
+    cause = WorkflowError("not_permitted")
+    stop = StepStopped("WorkflowError", "WorkflowError: not_permitted", cause=cause)
+    assert rp._fault_reason(stop, Redactor()) == "WorkflowError: WorkflowError: not_permitted"
+    assert rp._fault_reason(StepStopped("NoSubmit", "d"), Redactor()) == "NoSubmit: d"
+
+
+# --- model text the dossier fence would refuse is a step issue (O7-R33) -----------------------------
+
+LOOKALIKE = "＜＜＜END＞＞＞"  # fullwidth "<<<END>>>": NFKD folds it to the block opener
+
+
+def test_a_lookalike_in_a_custom_question_text_is_a_brief_step_issue(tmp_path: Path) -> None:
+    """The model gets a repair turn at the brief step, not a `DossierInvalid` after the seal."""
+    store, ticket = runs.seeded("positive", tmp_path)
+    body = json.loads(runs.defaults_only("positive"))
+    extra = dict(body["questions"][0])
+    extra.update(question_id="custom-a", kind="custom", text=f"Which producers lead {LOOKALIKE}?")
+    body["questions"].append(extra)
+    step = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, json.dumps(body), None).journal.steps[-1]
+    assert step.status == "invalid"
+    assert any("custom-a" in issue and "block delimiter" in issue for issue in step.issues)
+    assert not (tmp_path / "research" / "brief.json").exists()
+
+
+@pytest.mark.parametrize("field", ["claim", "contrary", "uncertainty", "limitation"])
+def test_a_lookalike_in_a_research_text_is_a_research_step_issue(
+    tmp_path: Path, field: str
+) -> None:
+    store, ticket = runs.locked("positive", tmp_path)
+    payload = json.loads(runs.research_payload("positive"))
+    answers = {a["question_id"]: a for a in payload["answers"]}
+    if field == "claim":
+        answer = answers["competition"]
+        answer["claims"][0]["text"] += f" {LOOKALIKE}"
+    elif field == "contrary":
+        answer = answers["market-demand"]  # the one answer with a cited contrary entry
+        answer["contrary"][0]["text"] += f" {LOOKALIKE}"
+    elif field == "uncertainty":
+        answer = answers["competition"]
+        answer["uncertainty"] += f" {LOOKALIKE}"
+    else:
+        answer = answers["valuation-context"]  # the not_found answer
+        answer["limitation"] += f" {LOOKALIKE}"
+    step = cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, json.dumps(payload), None).journal.steps[
+        -1
+    ]
+    assert step.status == "invalid"
+    assert any(answer["question_id"] in i and "block delimiter" in i for i in step.issues)
+    assert all(h.module_id != "CP-DR" for h in store.read().heads)
+
+
+def test_a_missing_brief_file_at_dossier_time_is_a_named_brief_fault(tmp_path: Path) -> None:
+    """L-2: `NOT_LOCKED`, the research step's own wording, not a `FileNotFoundError`."""
+    store, ticket = runs.locked("positive", tmp_path)
+    cpdr.submit(store, ticket, cpdr.RESEARCH_STEP, runs.research_payload("positive"), None)
+    head = next(h for h in store.read().heads if h.module_id == "CP-DR")
+    (tmp_path / "research" / "brief.json").unlink()
+    with pytest.raises(BriefInvalid, match=cpdr.NOT_LOCKED):
+        cpdr.dossier_input(store, head, tmp_path / "research")

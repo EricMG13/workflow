@@ -271,6 +271,7 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         raise ResumeMismatch("config_id is not the run's")
 
 
+_OWN_FORM = (CpDrNotAnchored, BriefInvalid)  # faults that keep their form through a loop stop
 _FAULTS = (
     StepStopped,
     BudgetError,
@@ -475,6 +476,8 @@ class _Fault:
 
 def _fault_reason(fault: Exception, redactor: Redactor) -> str:
     if isinstance(fault, StepStopped):
+        if isinstance(fault.cause, _OWN_FORM):  # O7-R32: the key's `<Type>: <reason>` fault record
+            return _fault_reason(fault.cause, redactor)
         return redactor.text(str(fault))
     return f"{type(fault).__name__}: {redactor.text(str(fault))}"
 

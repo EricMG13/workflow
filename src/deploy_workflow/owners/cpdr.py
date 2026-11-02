@@ -19,7 +19,7 @@ the run's hooks.
 
 import hashlib
 import json
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -44,7 +44,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, context_facts
 from deploy_workflow.financial_workflow import _FrozenExecution
-from deploy_workflow.prompts.fence import UntrustedItem
+from deploy_workflow.prompts.fence import FenceError, UntrustedItem, data_block
 from deploy_workflow.research import evidence as record
 from deploy_workflow.research.anchors import SettledAnchor, check_anchors
 from deploy_workflow.research.brief import (
@@ -186,6 +186,33 @@ def _run_issues(submitted: str, run: Run) -> tuple[str, ...]:
     return () if submitted == run.run_id else (f"run_id is not the run's: {run.run_id}",)
 
 
+def _fence_issues(texts: Iterable[tuple[str, str]]) -> tuple[str, ...]:
+    """O7-R33: a model-written text the dossier fence would refuse (a block delimiter or a
+    lookalike of one) is a step issue, so the model repairs it instead of the sealed run failing at
+    the dossier. The fence's own check (``data_block``), never a copy of it."""
+    issues = []
+    for where, text in texts:
+        try:
+            data_block("CONTEXT", "dossier", text)
+        except FenceError:
+            issues.append(f"{where}: holds a block delimiter or a lookalike of one")
+    return tuple(issues)
+
+
+def _research_texts(submission: ResearchSubmission) -> Iterator[tuple[str, str]]:
+    """Every model-written text the dossier shows: claims, contrary entries, uncertainty and
+    limitation."""
+    for answer in submission.answers:
+        qid = answer.question_id
+        yield from ((qid, claim.text) for claim in answer.claims)
+        for entry in answer.contrary:
+            if entry.kind == "cited":
+                yield qid, entry.text
+            if entry.limitation is not None:
+                yield qid, entry.limitation
+        yield from ((qid, text) for text in (answer.uncertainty, answer.limitation) if text)
+
+
 # --- the brief step ---------------------------------------------------------------------------
 
 
@@ -213,7 +240,11 @@ def _validate_brief(store: Execution, pack: PreparedPack, attempt: Attempt) -> S
         return StepValidation(issues=parsed)
     snapshot = store.read()
     run = snapshot.run
-    issues = (*_run_issues(parsed.run_id, run), *brief_issues(parsed))
+    issues = (
+        *_run_issues(parsed.run_id, run),
+        *brief_issues(parsed),
+        *_fence_issues((q.question_id, q.text) for q in parsed.questions),
+    )
     if issues:
         return StepValidation(issues=bounded_issues(issues))
     try:  # O7-R19: the cutoff is the as-of date
@@ -236,10 +267,7 @@ def _validate_brief(store: Execution, pack: PreparedPack, attempt: Attempt) -> S
 def _lock(store: Execution, attempt: Attempt) -> None:
     """Write ``research/brief.json`` from the valid ``brief`` step; a lock an earlier attempt wrote
     must be this brief's (``BriefInvalid("hash mismatch")`` otherwise, a fault)."""
-    step = _valid_step(attempt, BRIEF_STEP)
-    if step is None or step.output_sha256 is None:
-        raise WorkflowError("identity_mismatch")
-    brief = rebuild_brief(json.loads(store.step_output(step.output_sha256)))
+    brief = _brief_of(store, attempt)
     path = research_dir(store) / BRIEF_FILE
     if path.exists():
         load_locked_brief(path, brief.brief_sha256)
@@ -268,7 +296,11 @@ def _validate_research(store: Execution, pack: PreparedPack, attempt: Attempt) -
         evidence=_items(_evidence_rows(store)),
         sources=_citeable(pack),
     )
-    issues = (*_run_issues(parsed.run_id, store.read().run), *(str(issue) for issue in found))
+    issues = (
+        *_run_issues(parsed.run_id, store.read().run),
+        *(str(issue) for issue in found),
+        *_fence_issues(_research_texts(parsed)),
+    )
     if issues:
         return StepValidation(issues=bounded_issues(issues))
     return StepValidation(output=parsed.model_dump_json())
@@ -527,6 +559,8 @@ def dossier_input(store: Execution, head: Head, research: Path) -> DossierInput:
     step = None if attempt is None else _valid_step(attempt, RESEARCH_STEP)
     if bound is None or step is None or step.output_sha256 is None:
         raise WorkflowError("identity_mismatch")
+    if not (research / BRIEF_FILE).exists():
+        raise BriefInvalid(NOT_LOCKED)
     brief = load_locked_brief(research / BRIEF_FILE, bound)
     submission = ResearchSubmission.model_validate_json(store.step_output(step.output_sha256))
     composed = Composed(module.facts, module.tables, module.claims, module.limitations)

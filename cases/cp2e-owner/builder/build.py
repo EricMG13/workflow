@@ -64,7 +64,10 @@ ISSUER_ID = FIN["run"]["issuer_id"]
 AS_OF = FIN["run"]["as_of"]
 SYNTH = "Synthetic case; not real issuer qualification"
 LIMIT_FIN = S1M["financial_pack_limitation"]["text"]
-assert LIMIT_FIN == "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+assert (
+    LIMIT_FIN
+    == "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+)
 
 # --- sources (frozen bytes reused, hash-checked) ---------------------------------------------------------
 fin_src = {s["source_id"]: s for s in FIN["sources"]}
@@ -79,12 +82,17 @@ assert list(FIN_PAGES) == [f"page:{i}" for i in range(1, 6)]
 # its source hash is recomputed by the pack rule, so it is a derived variant, not a frozen source.
 GAP_PAGES = {k: v for k, v in FIN_PAGES.items() if k != "page:5"}
 PAGES_OF = {"positive": FIN_PAGES, "gap_no_facility_schedule": GAP_PAGES}
-FIN_SHA = {"positive": fin_src["financial"]["sha256"],
-           "gap_no_facility_schedule": page_sha([GAP_PAGES[k] for k in GAP_PAGES])}
+FIN_SHA = {
+    "positive": fin_src["financial"]["sha256"],
+    "gap_no_facility_schedule": page_sha([GAP_PAGES[k] for k in GAP_PAGES]),
+}
 assert FIN_SHA["gap_no_facility_schedule"] != FIN_SHA["positive"]
 ID_SHA = fin_src["identity"]["sha256"]
-NAMES = {"identity": fin_src["identity"]["name"], "financial": fin_src["financial"]["name"],
-         "business": BUS["common"]["name"]}
+NAMES = {
+    "identity": fin_src["identity"]["name"],
+    "financial": fin_src["financial"]["name"],
+    "business": BUS["common"]["name"],
+}
 LIMIT = {"identity": None, "financial": LIMIT_FIN, "business": None}
 SRC = "financial"  # the only source the CP-2E step may read (fixed host scope)
 
@@ -112,24 +120,43 @@ def q(locator, quote):
 
 # Quotes used by the literals: each is a verbatim span (sentence or whole row) of one financial page.
 Q_CCY = sentence("page:1", "Currency: USD; amounts in millions.")
-Q_FX_NONE = sentence("page:1", "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026.")
-Q_TRANSLATION = sentence("page:1", "no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred")
+Q_FX_NONE = sentence(
+    "page:1",
+    "There were no pro-forma adjustments, subsequent events, FX cash movements, or noncash debt changes through January 10, 2026.",
+)
+Q_TRANSLATION = sentence(
+    "page:1",
+    "no capital contributions, share issuance, repurchases, revaluations, currency translation, perimeter changes, reserve transfers or other equity adjustments occurred",
+)
 Q_ROW_EBITDA = line_of("page:2", "Reported EBITDA")
 Q_ROW_INTEREST = line_of("page:3", "Cash interest paid")
 Q_ROW_FCF = line_of("page:3", "Levered free cash flow")
 Q_ROW_FX = line_of("page:3", "FX effect on cash")
 Q_ROW_DEBT = line_of("page:4", "Total debt")
-Q_ONE_FACILITY = sentence("page:5", "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan.")
+Q_ONE_FACILITY = sentence(
+    "page:5", "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+)
 Q_DEBT_CCY = sentence("page:5", "USD millions; consolidated group; IFRS carrying values.")
-Q_BALANCE = sentence("page:5", "FY2025 and Q4 share the same December 31, 2025 closing facility balance of 50.")
+Q_BALANCE = sentence(
+    "page:5", "FY2025 and Q4 share the same December 31, 2025 closing facility balance of 50."
+)
 Q_RATE = sentence("page:5", "floating rate type with SOFR reference rate")
 Q_SPREAD = sentence("page:5", "spread 0 basis points")
 Q_FLOOR = sentence("page:5", "floor 0 basis points")
-Q_SOFR_SPREAD = sentence("page:5", "SOFR reference rate, spread 0 basis points")  # names SOFR, states neither floating nor fixed
-Q_TWO_LINES = sentence("page:2", Q_ROW_EBITDA + "\n" + line_of("page:2", "Adjusted EBITDA"))  # two whole lines, one quote
+Q_SOFR_SPREAD = sentence(
+    "page:5", "SOFR reference rate, spread 0 basis points"
+)  # names SOFR, states neither floating nor fixed
+Q_TWO_LINES = sentence(
+    "page:2", Q_ROW_EBITDA + "\n" + line_of("page:2", "Adjusted EBITDA")
+)  # two whole lines, one quote
 Q_ROW_PBT = line_of("page:2", "Profit before tax")
-Q_NO_OTHER_DEBT = sentence("page:5", "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date.")
-GAP_FACILITY = "No facility schedule in the pack, so the CP-2E rate terms and debt currency are absent"
+Q_NO_OTHER_DEBT = sentence(
+    "page:5",
+    "No leases, unsecured debt, revolving commitments or revolving drawings exist at any reporting date.",
+)
+GAP_FACILITY = (
+    "No facility schedule in the pack, so the CP-2E rate terms and debt currency are absent"
+)
 
 # --- Decimal conventions -------------------------------------------------------------------------------
 D = Decimal
@@ -164,12 +191,18 @@ def row_decimal(token):
 
 def token_once(value_text, quote):
     """value_text occurs exactly once in the quote as a whole numeric token."""
-    return len(re.findall(r"(?<![0-9.])" + re.escape(value_text) + r"(?![0-9]|\.[0-9])", quote)) == 1
+    return (
+        len(re.findall(r"(?<![0-9.])" + re.escape(value_text) + r"(?![0-9]|\.[0-9])", quote)) == 1
+    )
 
 
 def show(d, unit_class, decimals=None):
     """Product spelling of a known number (display.format_value, as cases/cpl10-owner): half-up on the exact value."""
-    places, scale, suffix = {"amount": (0, 1, ""), "multiple": (2, 1, "x"), "percent": (1, 100, "%")}[unit_class]
+    places, scale, suffix = {
+        "amount": (0, 1, ""),
+        "multiple": (2, 1, "x"),
+        "percent": (1, 100, "%"),
+    }[unit_class]
     if decimals is not None:
         places = decimals
     rounded = (d * scale).quantize(D(1).scaleb(-places), rounding=ROUND_HALF_UP)
@@ -190,7 +223,11 @@ def figure_unit(unit, currency):
     after its number. MILLIONS -> scale_label (currency label + scale label), so USD gives 'US$ m' and no
     currency gives 'm'; MULTIPLE -> x; PERCENT -> %; basis_points -> bp (the ' bp' suffix stripped)."""
     if unit == "MILLIONS":
-        return " ".join(part for part in (CURRENCY_LABEL.get(currency or "", currency or ""), SCALE_LABEL[unit]) if part)
+        return " ".join(
+            part
+            for part in (CURRENCY_LABEL.get(currency or "", currency or ""), SCALE_LABEL[unit])
+            if part
+        )
     return {"MULTIPLE": "x", "PERCENT": "%", "basis_points": "bp"}[unit]
 
 
@@ -203,10 +240,24 @@ def spell(amount, unit, decimals):
 # --- the validator (independent transcription of the lease's rules) ----------------------------------------
 SECTIONS = ("interest_rate", "fx", "hedging")
 CATEGORIES = ("Documentary Fact", "Analyst Interpretation", "Insufficient Information")
-PROHIBITED = ("recommend", "buy", "sell", "overweight", "underweight", "downgrade", "upgrade", "covenant breach")
-PROHIBITED_RE = re.compile(r"\b(?:" + "|".join(PROHIBITED) + r")\b", re.I)
-ROW_LABELS = {"ebitda": "Reported EBITDA", "interest": "Cash interest paid", "fcf": "Levered free cash flow",
-              "total_debt": "Total debt", "fx_cash_effect": "FX effect on cash"}
+PROHIBITED = (
+    "recommend",
+    "buy",
+    "sell",
+    "overweight",
+    "underweight",
+    "downgrade",
+    "upgrade",
+    "covenant breach",
+)
+PROHIBITED_RE = re.compile(r"\b(?:" + "|".join(PROHIBITED) + r")\b", re.IGNORECASE)
+ROW_LABELS = {
+    "ebitda": "Reported EBITDA",
+    "interest": "Cash interest paid",
+    "fcf": "Levered free cash flow",
+    "total_debt": "Total debt",
+    "fx_cash_effect": "FX effect on cash",
+}
 MAX_RATE_SHOCKS, MAX_FX_SHOCKS = 3, 3
 RATE_BP_RANGE, FX_PCT_RANGE = (1, 1000), (1, 50)
 
@@ -268,7 +319,9 @@ def code_value(op, path, issues, pages):
     if not on_page(op, path, issues, pages):
         return None
     c = op["code_text"]
-    if not re.match(r"^[A-Z]{3}$", c) or not re.search(rf"(?<![A-Za-z]){c}(?![A-Za-z])", op["quote"]):
+    if not re.match(r"^[A-Z]{3}$", c) or not re.search(
+        rf"(?<![A-Za-z]){c}(?![A-Za-z])", op["quote"]
+    ):
         issues.append(f"{path}: code_text {c} does not occur in the quote")
         return None
     return c
@@ -281,52 +334,78 @@ def check_submission(sub, pages):
     re_, ra = sub.get("rate_exposure"), sub.get("rate_absence")
     if bool(re_) == bool(ra):
         issues.append("rate_exposure: exactly one of rate_exposure and rate_absence is required")
-    rate_type = None
     balance = None
     if re_:
-        balance = labelled_value(re_["facility_balance"], "value_text", "balance of", "rate_exposure.facility_balance", issues, pages)
+        balance = labelled_value(
+            re_["facility_balance"],
+            "value_text",
+            "balance of",
+            "rate_exposure.facility_balance",
+            issues,
+            pages,
+        )
         rb = re_["rate_basis"]
         if on_page(rb, "rate_exposure.rate_basis", issues, pages):
             low = rb["quote"].lower()
             # E5 as amended by round 5 E8: `\b(floating|fixed)[\s-]+rate\b`, case-insensitive; both or neither is the "neither" issue
-            _fl = any(m.group(1) == "floating" for m in re.finditer(r"\b(floating|fixed)[\s-]+rate\b", low))
-            _fx = any(m.group(1) == "fixed" for m in re.finditer(r"\b(floating|fixed)[\s-]+rate\b", low))
+            _fl = any(
+                m.group(1) == "floating"
+                for m in re.finditer(r"\b(floating|fixed)[\s-]+rate\b", low)
+            )
+            _fx = any(
+                m.group(1) == "fixed" for m in re.finditer(r"\b(floating|fixed)[\s-]+rate\b", low)
+            )
             said = "FLOATING" if _fl and not _fx else ("FIXED" if _fx and not _fl else None)
             if said is None:
-                issues.append("rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate")
+                issues.append(
+                    "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate"
+                )
             elif rb["rate_type"] != said:
-                issues.append(f"rate_exposure.rate_basis: rate_type {rb['rate_type']} contradicts the quote")
+                issues.append(
+                    f"rate_exposure.rate_basis: rate_type {rb['rate_type']} contradicts the quote"
+                )
             elif said == "FLOATING" and rb["reference_rate"] not in rb["quote"]:
-                issues.append("rate_exposure.rate_basis: reference_rate does not occur in the quote")
-            else:
-                rate_type = said
+                issues.append(
+                    "rate_exposure.rate_basis: reference_rate does not occur in the quote"
+                )
         labelled_value(re_["spread"], "bps_text", "spread", "rate_exposure.spread", issues, pages)
         labelled_value(re_["floor"], "bps_text", "floor", "rate_exposure.floor", issues, pages)
     total_debt = None
-    for key, path in (("ebitda", "earnings.ebitda"), ("interest", "earnings.interest"), ("fcf", "earnings.fcf"),
-                      ("total_debt", "earnings.total_debt")):
+    for key, path in (
+        ("ebitda", "earnings.ebitda"),
+        ("interest", "earnings.interest"),
+        ("fcf", "earnings.fcf"),
+        ("total_debt", "earnings.total_debt"),
+    ):
         value = row_value(sub["earnings"][key], key, path, issues, pages)
         if key == "total_debt":
             total_debt = value
     # Cross-check (LEAD ruling 9): the one facility cannot exceed total debt; only when both values parse.
     if balance is not None and total_debt is not None and balance > total_debt:
-        issues.append(f"rate_exposure.facility_balance: value_text {re_['facility_balance']['value_text']} "
-                      f"exceeds total debt {sub['earnings']['total_debt']['value_text']}")
+        issues.append(
+            f"rate_exposure.facility_balance: value_text {re_['facility_balance']['value_text']} "
+            f"exceeds total debt {sub['earnings']['total_debt']['value_text']}"
+        )
     fx = sub["fx"]
     row_value(fx["fx_cash_effect"], "fx_cash_effect", "fx.fx_cash_effect", issues, pages)
     dc, da = fx.get("debt_currency"), fx.get("debt_currency_absence")
     if bool(dc) == bool(da):
-        issues.append("fx.debt_currency: exactly one of debt_currency and debt_currency_absence is required")
+        issues.append(
+            "fx.debt_currency: exactly one of debt_currency and debt_currency_absence is required"
+        )
     elif dc:
-        code_value(dc, "fx.debt_currency", issues, pages)  # a code other than the reporting currency is valid input
+        code_value(
+            dc, "fx.debt_currency", issues, pages
+        )  # a code other than the reporting currency is valid input
     fe, fa = fx.get("foreign_ebitda_share"), fx.get("operating_fx_absence")
     if bool(fe) == bool(fa):
-        issues.append("fx.foreign_ebitda_share: exactly one of foreign_ebitda_share and operating_fx_absence is required")
-    elif fe:
-        if on_page(fe, "fx.foreign_ebitda_share", issues, pages):
-            pt = fe["percent_text"]
-            if not NUM_RE.match(pt) or not token_once(pt, fe["quote"]) or not (D(0) <= D(pt) <= 100):
-                issues.append(f"fx.foreign_ebitda_share: percent_text {pt} does not occur in the quote")
+        issues.append(
+            "fx.foreign_ebitda_share: exactly one of foreign_ebitda_share and operating_fx_absence is required"
+        )
+    elif fe and on_page(fe, "fx.foreign_ebitda_share", issues, pages):
+        pt = fe["percent_text"]
+        if not NUM_RE.match(pt) or not token_once(pt, fe["quote"]) or not (D(0) <= D(pt) <= 100):
+            issues.append(f"fx.foreign_ebitda_share: percent_text {pt} does not occur in the quote")
     hr, ha = sub.get("hedge_ratio"), sub.get("hedge_absence")
     if bool(hr) == bool(ha):
         issues.append("hedge_ratio: exactly one of hedge_ratio and hedge_absence is required")
@@ -346,7 +425,9 @@ def check_submission(sub, pages):
     rv = []
     for i, t in enumerate(rs):
         if not re.match(r"^[0-9]{1,4}$", t) or not (RATE_BP_RANGE[0] <= int(t) <= RATE_BP_RANGE[1]):
-            issues.append(f"rate_shocks_bp[{i}]: shock must be a whole number of basis points from {RATE_BP_RANGE[0]} to {RATE_BP_RANGE[1]}")
+            issues.append(
+                f"rate_shocks_bp[{i}]: shock must be a whole number of basis points from {RATE_BP_RANGE[0]} to {RATE_BP_RANGE[1]}"
+            )
         else:
             rv.append(int(t))
     if len(rv) == len(rs) and rv != sorted(set(rv)):
@@ -357,7 +438,9 @@ def check_submission(sub, pages):
     fv = []
     for i, t in enumerate(fs):
         if not re.match(r"^[0-9]{1,2}$", t) or not (FX_PCT_RANGE[0] <= int(t) <= FX_PCT_RANGE[1]):
-            issues.append(f"fx_shocks_percent[{i}]: shock must be a whole percent from {FX_PCT_RANGE[0]} to {FX_PCT_RANGE[1]}")
+            issues.append(
+                f"fx_shocks_percent[{i}]: shock must be a whole percent from {FX_PCT_RANGE[0]} to {FX_PCT_RANGE[1]}"
+            )
         else:
             fv.append(int(t))
     if len(fv) == len(fs) and fv != sorted(set(fv)):
@@ -376,7 +459,9 @@ def check_submission(sub, pages):
         if PROHIBITED_RE.search(x["text"]):
             issues.append(f"{p}.text: text carries a prohibited conclusion")
         if (x["category"] == "Insufficient Information") != bool(x.get("limitation")):
-            issues.append(f"{p}: limitation is required for Insufficient Information and only for it")
+            issues.append(
+                f"{p}: limitation is required for Insufficient Information and only for it"
+            )
         if x["category"] == "Documentary Fact" and not x["basis"]:
             issues.append(f"{p}: a Documentary Fact needs at least one basis quote")
         for j, b in enumerate(x["basis"]):
@@ -436,7 +521,9 @@ def tool_rule_issues(sub, read, searched):
     """The core RULES(text, seen) result in ToolRules order: the absence rule, then unread citations in the
     product's sorted (source_id, locator) order (live/tools.py unread_citation_issues)."""
     out = [ABSENCE_ISSUE] if absence_paths(sub) and not searched else []
-    out += [f"{UNREAD_ISSUE}: {s} {loc}" for s, loc in sorted(cited_pages(sub)) if (s, loc) not in read]
+    out += [
+        f"{UNREAD_ISSUE}: {s} {loc}" for s, loc in sorted(cited_pages(sub)) if (s, loc) not in read
+    ]
     return out
 
 
@@ -446,10 +533,12 @@ def row(locator, text, key, value):
 
 
 def earnings():
-    return {"ebitda": row("page:2", Q_ROW_EBITDA, "ebitda", "30.0"),
-            "interest": row("page:3", Q_ROW_INTEREST, "interest", "5.00"),
-            "fcf": row("page:3", Q_ROW_FCF, "fcf", "9.00"),
-            "total_debt": row("page:4", Q_ROW_DEBT, "total_debt", "50.00")}
+    return {
+        "ebitda": row("page:2", Q_ROW_EBITDA, "ebitda", "30.0"),
+        "interest": row("page:3", Q_ROW_INTEREST, "interest", "5.00"),
+        "fcf": row("page:3", Q_ROW_FCF, "fcf", "9.00"),
+        "total_debt": row("page:4", Q_ROW_DEBT, "total_debt", "50.00"),
+    }
 
 
 ASSESS_RATE = (
@@ -475,12 +564,27 @@ SHOCK_RATIONALE = (
 
 def assessments_positive():
     return [
-        {"section": "interest_rate", "category": "Analyst Interpretation", "text": ASSESS_RATE,
-         "basis": [q("page:5", Q_RATE), q("page:5", Q_NO_OTHER_DEBT)], "limitation": None},
-        {"section": "fx", "category": "Analyst Interpretation", "text": ASSESS_FX,
-         "basis": [q("page:1", Q_FX_NONE), q("page:1", Q_TRANSLATION), q("page:5", Q_DEBT_CCY)], "limitation": None},
-        {"section": "hedging", "category": "Insufficient Information", "text": ASSESS_HEDGE, "basis": [],
-         "limitation": "No source in the pack states any hedging instrument or hedge ratio"},
+        {
+            "section": "interest_rate",
+            "category": "Analyst Interpretation",
+            "text": ASSESS_RATE,
+            "basis": [q("page:5", Q_RATE), q("page:5", Q_NO_OTHER_DEBT)],
+            "limitation": None,
+        },
+        {
+            "section": "fx",
+            "category": "Analyst Interpretation",
+            "text": ASSESS_FX,
+            "basis": [q("page:1", Q_FX_NONE), q("page:1", Q_TRANSLATION), q("page:5", Q_DEBT_CCY)],
+            "limitation": None,
+        },
+        {
+            "section": "hedging",
+            "category": "Insufficient Information",
+            "text": ASSESS_HEDGE,
+            "basis": [],
+            "limitation": "No source in the pack states any hedging instrument or hedge ratio",
+        },
     ]
 
 
@@ -489,7 +593,11 @@ def literal_positive():
         "reporting_currency": {**q("page:1", Q_CCY), "code_text": "USD"},
         "rate_exposure": {
             "facility_balance": {**q("page:5", Q_BALANCE), "value_text": "50"},
-            "rate_basis": {**q("page:5", Q_RATE), "rate_type": "FLOATING", "reference_rate": "SOFR"},
+            "rate_basis": {
+                **q("page:5", Q_RATE),
+                "rate_type": "FLOATING",
+                "reference_rate": "SOFR",
+            },
             "spread": {**q("page:5", Q_SPREAD), "bps_text": "0"},
             "floor": {**q("page:5", Q_FLOOR), "bps_text": "0"},
         },
@@ -531,16 +639,31 @@ def literal_gap():
         "follow_up": "Supply the complete facility and classification schedule",
     }
     s["assessments"] = [
-        {"section": "interest_rate", "category": "Insufficient Information",
-         "text": "The rate terms of the debt are not stated, so the rate sensitivity cannot be assessed from this pack.",
-         "basis": [], "limitation": "The pack holds no facility schedule"},
-        {"section": "fx", "category": "Insufficient Information",
-         "text": "The currency of the debt is not stated, so only the reported cash movements can be read.",
-         "basis": [q("page:1", Q_FX_NONE)], "limitation": "The pack holds no facility schedule"},
-        {"section": "hedging", "category": "Insufficient Information", "text": ASSESS_HEDGE, "basis": [],
-         "limitation": "No source in the pack states any hedging instrument or hedge ratio"},
+        {
+            "section": "interest_rate",
+            "category": "Insufficient Information",
+            "text": "The rate terms of the debt are not stated, so the rate sensitivity cannot be assessed from this pack.",
+            "basis": [],
+            "limitation": "The pack holds no facility schedule",
+        },
+        {
+            "section": "fx",
+            "category": "Insufficient Information",
+            "text": "The currency of the debt is not stated, so only the reported cash movements can be read.",
+            "basis": [q("page:1", Q_FX_NONE)],
+            "limitation": "The pack holds no facility schedule",
+        },
+        {
+            "section": "hedging",
+            "category": "Insufficient Information",
+            "text": ASSESS_HEDGE,
+            "basis": [],
+            "limitation": "No source in the pack states any hedging instrument or hedge ratio",
+        },
     ]
-    s["summary"] = {"text": "Without the facility schedule neither the rate sensitivity nor the currency of the debt can be assessed."}
+    s["summary"] = {
+        "text": "Without the facility schedule neither the rate sensitivity nor the currency of the debt can be assessed."
+    }
     return s
 
 
@@ -625,7 +748,9 @@ def derive(inp):
             elif floor is None:
                 gross = MISS("the floor of the facility is not stated")
             elif floor != 0:
-                gross = MISS("the reference rate level is not stated, so a floor above zero may bind")
+                gross = MISS(
+                    "the reference rate level is not stated, so a floor above zero may bind"
+                )
             else:
                 gross = K(floating[1] * k / 10000)
             r["gross"] = gross
@@ -652,11 +777,15 @@ def derive(inp):
             r["debt_change"] = comb(foreign_debt, K(m), lambda f, mm: f * mm)
             r["debt_after"] = comb(r["debt_change"], debt, lambda c, d: d + c)
             if fes is None:
-                r["ebitda_change"] = MISS("the share of EBITDA earned in other currencies is not stated")
+                r["ebitda_change"] = MISS(
+                    "the share of EBITDA earned in other currencies is not stated"
+                )
             else:
                 r["ebitda_change"] = comb(ebitda, K(m), lambda e, mm: e * fes * mm)
             r["ebitda_after"] = comb(r["ebitda_change"], ebitda, lambda c, e: e + c)
-            r["lev_after"] = ratio(r["debt_after"], r["ebitda_after"], "EBITDA after the shock is zero")
+            r["lev_after"] = ratio(
+                r["debt_after"], r["ebitda_after"], "EBITDA after the shock is zero"
+            )
             o["fx"].append(r)
         return o
 
@@ -682,8 +811,12 @@ def stored_all(d):
 
 def inputs_of(sub):
     ex = sub["earnings"]
-    inp = {"total_debt": row_decimal(ex["total_debt"]["value_text"]), "ebitda": row_decimal(ex["ebitda"]["value_text"]),
-           "interest": row_decimal(ex["interest"]["value_text"]), "fcf": row_decimal(ex["fcf"]["value_text"])}
+    inp = {
+        "total_debt": row_decimal(ex["total_debt"]["value_text"]),
+        "ebitda": row_decimal(ex["ebitda"]["value_text"]),
+        "interest": row_decimal(ex["interest"]["value_text"]),
+        "fcf": row_decimal(ex["fcf"]["value_text"]),
+    }
     re_ = sub.get("rate_exposure")
     if re_:
         inp["facility_balance"] = D(re_["facility_balance"]["value_text"])
@@ -693,7 +826,9 @@ def inputs_of(sub):
     inp["rate_shocks"] = [D(t) for t in sub["rate_shocks_bp"]]
     fx = sub["fx"]
     if fx.get("debt_currency"):
-        inp["debt_foreign"] = fx["debt_currency"]["code_text"] != sub["reporting_currency"]["code_text"]
+        inp["debt_foreign"] = (
+            fx["debt_currency"]["code_text"] != sub["reporting_currency"]["code_text"]
+        )
     if fx.get("foreign_ebitda_share"):
         inp["foreign_ebitda_share"] = D(fx["foreign_ebitda_share"]["percent_text"]) / 100
     inp["fx_shocks"] = [D(t) / 100 for t in sub["fx_shocks_percent"]]
@@ -717,8 +852,17 @@ def trace(cites):
 
 
 def N(amount, unit, decimals, cites=(), vc="calculated", calc=None, formula=None, per=PER_SHOCK):
-    return {"kind": "num", "per": per, "amount": dstr(amount), "unit": unit, "decimals": decimals,
-            "cites": trace(cites), "vc": vc, "calc": calc, "formula": formula}
+    return {
+        "kind": "num",
+        "per": per,
+        "amount": dstr(amount),
+        "unit": unit,
+        "decimals": decimals,
+        "cites": trace(cites),
+        "vc": vc,
+        "calc": calc,
+        "formula": formula,
+    }
 
 
 def T(text, cites=(), vc=None):
@@ -730,20 +874,46 @@ def G(reason, unit=None, status="missing", cites=()):
 
 
 def fact(tid, rid, field, label, c, ccy):
-    f = {"fact_id": f"{tid}.{rid}.{field}", "column": label, "period": None, "amount": None, "unit": None,
-         "currency": None, "scale": "1",
-         "decimals": None, "text": None, "shown": None, "status": "known", "cites": c["cites"],
-         "value_class": c.get("vc"), "calculation_id": None, "formula": None, "limitation": None}
+    f = {
+        "fact_id": f"{tid}.{rid}.{field}",
+        "column": label,
+        "period": None,
+        "amount": None,
+        "unit": None,
+        "currency": None,
+        "scale": "1",
+        "decimals": None,
+        "text": None,
+        "shown": None,
+        "status": "known",
+        "cites": c["cites"],
+        "value_class": c.get("vc"),
+        "calculation_id": None,
+        "formula": None,
+        "limitation": None,
+    }
     if c["kind"] == "num":
-        f.update(amount=c["amount"], period=c["per"], unit=c["unit"], decimals=c["decimals"], calculation_id=c["calc"],
-                 formula=c["formula"], shown=spell(D(c["amount"]), c["unit"], c["decimals"]))
+        f.update(
+            amount=c["amount"],
+            period=c["per"],
+            unit=c["unit"],
+            decimals=c["decimals"],
+            calculation_id=c["calc"],
+            formula=c["formula"],
+            shown=spell(D(c["amount"]), c["unit"], c["decimals"]),
+        )
         if c["unit"] == "MILLIONS":
             f.update(currency=ccy, scale=MILLIONS_SCALE)
     elif c["kind"] == "text":
         f.update(text=c["text"], shown=c["text"])
     else:
-        f.update(unit=c["unit"], status=c["status"], limitation=c["reason"], value_class=None,
-                 shown="∅ G#" if c["status"] == "missing" else "∅ G# n.m.")
+        f.update(
+            unit=c["unit"],
+            status=c["status"],
+            limitation=c["reason"],
+            value_class=None,
+            shown="∅ G#" if c["status"] == "missing" else "∅ G# n.m.",
+        )
         if c["unit"] == "MILLIONS":
             f.update(currency=ccy, scale=MILLIONS_SCALE)
     return f
@@ -753,10 +923,20 @@ def table(tid, title, cols, rows, row_header="Item", ccy=None):
     out = []
     for rid, label, cells in rows:
         assert len(cells) == len(cols), (tid, rid)
-        out.append({"row_id": rid, "label": label,
-                    "facts": [fact(tid, rid, fld, lab, c, ccy) for (fld, lab), c in zip(cols, cells)]})
-    return {"table_id": tid, "title": title, "row_header": row_header,
-            "columns": [{"field": f, "label": lab} for f, lab in cols], "rows": out}
+        out.append(
+            {
+                "row_id": rid,
+                "label": label,
+                "facts": [fact(tid, rid, fld, lab, c, ccy) for (fld, lab), c in zip(cols, cells)],
+            }
+        )
+    return {
+        "table_id": tid,
+        "title": title,
+        "row_header": row_header,
+        "columns": [{"field": f, "label": lab} for f, lab in cols],
+        "rows": out,
+    }
 
 
 def cell(v, unit, decimals, cites, calc, formula, per=PER_SHOCK):
@@ -764,8 +944,6 @@ def cell(v, unit, decimals, cites, calc, formula, per=PER_SHOCK):
     if v[0] == "known":
         return N(v[1], unit, decimals, cites, calc=calc, formula=formula, per=per)
     return G(("Not calculable: " if v[0] == "missing" else "Not meaningful: ") + v[1], unit, v[0])
-
-
 
 
 ORD = ("first", "second", "third")
@@ -777,7 +955,12 @@ def compose_case(case, sub, d):
     re_ = sub.get("rate_exposure")
     rate_cites = [re_["facility_balance"], re_["rate_basis"], re_["floor"]] if re_ else []
     ccy_cite = [sub["reporting_currency"]]
-    debt_cite, ebitda_cite, int_cite, fcf_cite = [ex["total_debt"]], [ex["ebitda"]], [ex["interest"]], [ex["fcf"]]
+    debt_cite, ebitda_cite, int_cite, fcf_cite = (
+        [ex["total_debt"]],
+        [ex["ebitda"]],
+        [ex["interest"]],
+        [ex["fcf"]],
+    )
     dc = [fx["debt_currency"]] if fx.get("debt_currency") else []
     fb = [re_["facility_balance"]] if re_ else []
     NO_RATE = "the pack holds no facility rate terms"
@@ -787,152 +970,591 @@ def compose_case(case, sub, d):
         return T(text, cites)
 
     tables = []
-    ccy = sub["reporting_currency"]["code_text"]  # the currency every MILLIONS fact carries (the quoted reporting currency)
+    ccy = sub["reporting_currency"][
+        "code_text"
+    ]  # the currency every MILLIONS fact carries (the quoted reporting currency)
 
     def tbl(*args, **kw):
         return table(*args, ccy=ccy, **kw)
 
     # T2F.1 sourced operands
     t1 = [
-        ("r01", "Reporting currency", [T(sub["reporting_currency"]["code_text"], ccy_cite), src("Financial statements header", ccy_cite)]),
-        ("r02", "Total debt", [N(row_decimal(ex["total_debt"]["value_text"]), "MILLIONS", 2, debt_cite, "source", per=PER_BAL),
-                               src("Balance sheet, FY column", debt_cite)]),
-        ("r03", "Term loan balance",
-         [N(D(re_["facility_balance"]["value_text"]), "MILLIONS", 2, [re_["facility_balance"]], "source", per=PER_BAL),
-          src("Facility schedule, closing balance", [re_["facility_balance"]])] if re_ else
-         [G(f"Not stated: {NO_RATE}", "MILLIONS"), G(f"Not stated: {NO_RATE}")]),
-        ("r04", "Rate basis",
-         [T(f"{'Floating' if re_['rate_basis']['rate_type'] == 'FLOATING' else 'Fixed'} rate, {re_['rate_basis']['reference_rate']} reference rate",
-            [re_["rate_basis"]]), src("Facility schedule", [re_["rate_basis"]])] if re_ else
-         [G(f"Not stated: {NO_RATE}"), G(f"Not stated: {NO_RATE}")]),
-        ("r05", "Spread",
-         [N(D(re_["spread"]["bps_text"]), "basis_points", None, [re_["spread"]], "source", per=PER_BAL),
-          src("Facility schedule", [re_["spread"]])] if re_ else
-         [G(f"Not stated: {NO_RATE}", "basis_points"), G(f"Not stated: {NO_RATE}")]),
-        ("r06", "Floor",
-         [N(D(re_["floor"]["bps_text"]), "basis_points", None, [re_["floor"]], "source", per=PER_BAL),
-          src("Facility schedule", [re_["floor"]])] if re_ else
-         [G(f"Not stated: {NO_RATE}", "basis_points"), G(f"Not stated: {NO_RATE}")]),
-        ("r07", "Reported EBITDA", [N(row_decimal(ex["ebitda"]["value_text"]), "MILLIONS", 2, ebitda_cite, "source", per=PER_FLOW),
-                                    src("Income statement, FY column", ebitda_cite)]),
-        ("r08", "Cash interest paid", [N(row_decimal(ex["interest"]["value_text"]), "MILLIONS", 2, int_cite, "source", per=PER_FLOW),
-                                       src("Cash flow statement, FY column", int_cite)]),
-        ("r09", "Levered free cash flow", [N(row_decimal(ex["fcf"]["value_text"]), "MILLIONS", 2, fcf_cite, "source", per=PER_FLOW),
-                                           src("Cash flow statement, FY column", fcf_cite)]),
-        ("r10", "FX effect on cash", [N(row_decimal(fx["fx_cash_effect"]["value_text"]), "MILLIONS", 2, [fx["fx_cash_effect"]], "source", per=PER_FLOW),
-                                      src("Cash flow statement, FY column", [fx["fx_cash_effect"]])]),
-        ("r11", "Currency of the debt",
-         [T(fx["debt_currency"]["code_text"], dc), src("Facility schedule header", dc)] if dc else
-         [G(f"Not stated: {NO_DEBT_CCY}"), G(f"Not stated: {NO_DEBT_CCY}")]),
-        ("r12", "Share of EBITDA earned in other currencies",
-         [N(D(fx["foreign_ebitda_share"]["percent_text"]) / 100, "PERCENT", 1, [fx["foreign_ebitda_share"]], "source", per=PER_FLOW),
-          src("Source statement", [fx["foreign_ebitda_share"]])] if fx.get("foreign_ebitda_share") else
-         [G("Not stated: no source gives the split of earnings by currency", "PERCENT"),
-          G("Not stated: no source gives the split of earnings by currency")]),
+        (
+            "r01",
+            "Reporting currency",
+            [
+                T(sub["reporting_currency"]["code_text"], ccy_cite),
+                src("Financial statements header", ccy_cite),
+            ],
+        ),
+        (
+            "r02",
+            "Total debt",
+            [
+                N(
+                    row_decimal(ex["total_debt"]["value_text"]),
+                    "MILLIONS",
+                    2,
+                    debt_cite,
+                    "source",
+                    per=PER_BAL,
+                ),
+                src("Balance sheet, FY column", debt_cite),
+            ],
+        ),
+        (
+            "r03",
+            "Term loan balance",
+            [
+                N(
+                    D(re_["facility_balance"]["value_text"]),
+                    "MILLIONS",
+                    2,
+                    [re_["facility_balance"]],
+                    "source",
+                    per=PER_BAL,
+                ),
+                src("Facility schedule, closing balance", [re_["facility_balance"]]),
+            ]
+            if re_
+            else [G(f"Not stated: {NO_RATE}", "MILLIONS"), G(f"Not stated: {NO_RATE}")],
+        ),
+        (
+            "r04",
+            "Rate basis",
+            [
+                T(
+                    f"{'Floating' if re_['rate_basis']['rate_type'] == 'FLOATING' else 'Fixed'} rate, {re_['rate_basis']['reference_rate']} reference rate",
+                    [re_["rate_basis"]],
+                ),
+                src("Facility schedule", [re_["rate_basis"]]),
+            ]
+            if re_
+            else [G(f"Not stated: {NO_RATE}"), G(f"Not stated: {NO_RATE}")],
+        ),
+        (
+            "r05",
+            "Spread",
+            [
+                N(
+                    D(re_["spread"]["bps_text"]),
+                    "basis_points",
+                    None,
+                    [re_["spread"]],
+                    "source",
+                    per=PER_BAL,
+                ),
+                src("Facility schedule", [re_["spread"]]),
+            ]
+            if re_
+            else [G(f"Not stated: {NO_RATE}", "basis_points"), G(f"Not stated: {NO_RATE}")],
+        ),
+        (
+            "r06",
+            "Floor",
+            [
+                N(
+                    D(re_["floor"]["bps_text"]),
+                    "basis_points",
+                    None,
+                    [re_["floor"]],
+                    "source",
+                    per=PER_BAL,
+                ),
+                src("Facility schedule", [re_["floor"]]),
+            ]
+            if re_
+            else [G(f"Not stated: {NO_RATE}", "basis_points"), G(f"Not stated: {NO_RATE}")],
+        ),
+        (
+            "r07",
+            "Reported EBITDA",
+            [
+                N(
+                    row_decimal(ex["ebitda"]["value_text"]),
+                    "MILLIONS",
+                    2,
+                    ebitda_cite,
+                    "source",
+                    per=PER_FLOW,
+                ),
+                src("Income statement, FY column", ebitda_cite),
+            ],
+        ),
+        (
+            "r08",
+            "Cash interest paid",
+            [
+                N(
+                    row_decimal(ex["interest"]["value_text"]),
+                    "MILLIONS",
+                    2,
+                    int_cite,
+                    "source",
+                    per=PER_FLOW,
+                ),
+                src("Cash flow statement, FY column", int_cite),
+            ],
+        ),
+        (
+            "r09",
+            "Levered free cash flow",
+            [
+                N(
+                    row_decimal(ex["fcf"]["value_text"]),
+                    "MILLIONS",
+                    2,
+                    fcf_cite,
+                    "source",
+                    per=PER_FLOW,
+                ),
+                src("Cash flow statement, FY column", fcf_cite),
+            ],
+        ),
+        (
+            "r10",
+            "FX effect on cash",
+            [
+                N(
+                    row_decimal(fx["fx_cash_effect"]["value_text"]),
+                    "MILLIONS",
+                    2,
+                    [fx["fx_cash_effect"]],
+                    "source",
+                    per=PER_FLOW,
+                ),
+                src("Cash flow statement, FY column", [fx["fx_cash_effect"]]),
+            ],
+        ),
+        (
+            "r11",
+            "Currency of the debt",
+            [T(fx["debt_currency"]["code_text"], dc), src("Facility schedule header", dc)]
+            if dc
+            else [G(f"Not stated: {NO_DEBT_CCY}"), G(f"Not stated: {NO_DEBT_CCY}")],
+        ),
+        (
+            "r12",
+            "Share of EBITDA earned in other currencies",
+            [
+                N(
+                    D(fx["foreign_ebitda_share"]["percent_text"]) / 100,
+                    "PERCENT",
+                    1,
+                    [fx["foreign_ebitda_share"]],
+                    "source",
+                    per=PER_FLOW,
+                ),
+                src("Source statement", [fx["foreign_ebitda_share"]]),
+            ]
+            if fx.get("foreign_ebitda_share")
+            else [
+                G("Not stated: no source gives the split of earnings by currency", "PERCENT"),
+                G("Not stated: no source gives the split of earnings by currency"),
+            ],
+        ),
     ]
-    tables.append(tbl("T2F.1", "Sourced operands", [("value", "Value"), ("basis", "Basis")], t1, "Operand"))
+    tables.append(
+        tbl("T2F.1", "Sourced operands", [("value", "Value"), ("basis", "Basis")], t1, "Operand")
+    )
 
     # T2F.2 baseline
     t2 = [
-        ("r01", "Floating-rate debt", [cell(d["floating"], "MILLIONS", 2, rate_cites[:2], "cp2e.floating", "facility balance if the rate is floating, else zero", PER_BAL),
-                                       T("Closing balance of a floating-rate facility")]),
-        ("r02", "Floating-rate debt share of total debt", [cell(d["floating_share"], "PERCENT", 1, rate_cites[:2] + debt_cite, "cp2e.floating_share", "floating-rate debt / total debt", PER_BAL),
-                                                          T("Share of total debt")]),
-        ("r03", "Interest coverage", [cell(d["cov_base"], "MULTIPLE", 2, ebitda_cite + int_cite, "cp2e.cov_base", "EBITDA / cash interest paid", PER_FLOW),
-                                      T("Reported EBITDA over cash interest, FY 2025")]),
-        ("r04", "Total leverage", [cell(d["lev_base"], "MULTIPLE", 2, debt_cite + ebitda_cite, "cp2e.lev_base", "total debt / EBITDA", PER_FLOW),
-                                   T("Total debt over reported EBITDA, FY 2025")]),
-        ("r05", "Foreign-currency debt", [cell(d["foreign_debt"], "MILLIONS", 2, fb + dc + ccy_cite, "cp2e.foreign_debt", "term loan balance if its currency differs from the reporting currency, else zero", PER_BAL),
-                                          T("Debt denominated in a currency other than the reporting currency")]),
-        ("r06", "Foreign-currency debt share of total debt", [cell(d["foreign_debt_share"], "PERCENT", 1, dc + ccy_cite + debt_cite, "cp2e.foreign_debt_share", "foreign-currency debt / total debt", PER_BAL),
-                                                             T("Share of total debt")]),
+        (
+            "r01",
+            "Floating-rate debt",
+            [
+                cell(
+                    d["floating"],
+                    "MILLIONS",
+                    2,
+                    rate_cites[:2],
+                    "cp2e.floating",
+                    "facility balance if the rate is floating, else zero",
+                    PER_BAL,
+                ),
+                T("Closing balance of a floating-rate facility"),
+            ],
+        ),
+        (
+            "r02",
+            "Floating-rate debt share of total debt",
+            [
+                cell(
+                    d["floating_share"],
+                    "PERCENT",
+                    1,
+                    rate_cites[:2] + debt_cite,
+                    "cp2e.floating_share",
+                    "floating-rate debt / total debt",
+                    PER_BAL,
+                ),
+                T("Share of total debt"),
+            ],
+        ),
+        (
+            "r03",
+            "Interest coverage",
+            [
+                cell(
+                    d["cov_base"],
+                    "MULTIPLE",
+                    2,
+                    ebitda_cite + int_cite,
+                    "cp2e.cov_base",
+                    "EBITDA / cash interest paid",
+                    PER_FLOW,
+                ),
+                T("Reported EBITDA over cash interest, FY 2025"),
+            ],
+        ),
+        (
+            "r04",
+            "Total leverage",
+            [
+                cell(
+                    d["lev_base"],
+                    "MULTIPLE",
+                    2,
+                    debt_cite + ebitda_cite,
+                    "cp2e.lev_base",
+                    "total debt / EBITDA",
+                    PER_FLOW,
+                ),
+                T("Total debt over reported EBITDA, FY 2025"),
+            ],
+        ),
+        (
+            "r05",
+            "Foreign-currency debt",
+            [
+                cell(
+                    d["foreign_debt"],
+                    "MILLIONS",
+                    2,
+                    fb + dc + ccy_cite,
+                    "cp2e.foreign_debt",
+                    "term loan balance if its currency differs from the reporting currency, else zero",
+                    PER_BAL,
+                ),
+                T("Debt denominated in a currency other than the reporting currency"),
+            ],
+        ),
+        (
+            "r06",
+            "Foreign-currency debt share of total debt",
+            [
+                cell(
+                    d["foreign_debt_share"],
+                    "PERCENT",
+                    1,
+                    dc + ccy_cite + debt_cite,
+                    "cp2e.foreign_debt_share",
+                    "foreign-currency debt / total debt",
+                    PER_BAL,
+                ),
+                T("Share of total debt"),
+            ],
+        ),
     ]
-    tables.append(tbl("T2F.2", "Baseline exposure", [("value", "Value"), ("convention", "Convention")], t2, "Measure"))
+    tables.append(
+        tbl(
+            "T2F.2",
+            "Baseline exposure",
+            [("value", "Value"), ("convention", "Convention")],
+            t2,
+            "Measure",
+        )
+    )
 
     # T2F.3 interest rate shocks
-    cols3 = [("shock", "Rate shock"), ("gross", "Added annual interest before hedges"), ("net", "Added annual interest after hedges"),
-             ("interest_after", "Cash interest after the shock"), ("cov_after", "Interest coverage after the shock"),
-             ("cov_change", "Change in interest coverage"), ("fcf_after", "Free cash flow after the shock"),
-             ("share", "Added interest as share of EBITDA")]
+    cols3 = [
+        ("shock", "Rate shock"),
+        ("gross", "Added annual interest before hedges"),
+        ("net", "Added annual interest after hedges"),
+        ("interest_after", "Cash interest after the shock"),
+        ("cov_after", "Interest coverage after the shock"),
+        ("cov_change", "Change in interest coverage"),
+        ("fcf_after", "Free cash flow after the shock"),
+        ("share", "Added interest as share of EBITDA"),
+    ]
     t3 = []
     for i, r in enumerate(d["rate"]):
         n = f"r{i + 1:02d}"
         shock = N(r["shock_bp"][1], "basis_points", None, (), "analyst_judgment", per=PER_RUN)
-        t3.append((n, f"Reference rate up, {ORD[i]} shock", [
-            shock,
-            cell(r["gross"], "MILLIONS", 2, rate_cites, f"cp2e.rate{i + 1}.gross", "floating-rate debt x shock / 10000", PER_SHOCK),
-            cell(r["net"], "MILLIONS", 2, rate_cites, f"cp2e.rate{i + 1}.net", "added interest before hedges x (1 - hedge ratio)", PER_SHOCK),
-            cell(r["interest_after"], "MILLIONS", 2, rate_cites + int_cite, f"cp2e.rate{i + 1}.interest_after", "cash interest + added interest before hedges", PER_SHOCK),
-            cell(r["cov_after"], "MULTIPLE", 2, rate_cites + int_cite + ebitda_cite, f"cp2e.rate{i + 1}.cov_after", "EBITDA / cash interest after the shock", PER_SHOCK),
-            cell(r["cov_change"], "MULTIPLE", 2, rate_cites + int_cite + ebitda_cite, f"cp2e.rate{i + 1}.cov_change", "coverage after the shock - coverage before", PER_SHOCK),
-            cell(r["fcf_after"], "MILLIONS", 2, rate_cites + fcf_cite, f"cp2e.rate{i + 1}.fcf_after", "free cash flow - added interest before hedges", PER_SHOCK),
-            cell(r["share_of_ebitda"], "PERCENT", 1, rate_cites + ebitda_cite, f"cp2e.rate{i + 1}.share", "added interest before hedges / EBITDA", PER_SHOCK),
-        ]))
+        t3.append(
+            (
+                n,
+                f"Reference rate up, {ORD[i]} shock",
+                [
+                    shock,
+                    cell(
+                        r["gross"],
+                        "MILLIONS",
+                        2,
+                        rate_cites,
+                        f"cp2e.rate{i + 1}.gross",
+                        "floating-rate debt x shock / 10000",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["net"],
+                        "MILLIONS",
+                        2,
+                        rate_cites,
+                        f"cp2e.rate{i + 1}.net",
+                        "added interest before hedges x (1 - hedge ratio)",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["interest_after"],
+                        "MILLIONS",
+                        2,
+                        rate_cites + int_cite,
+                        f"cp2e.rate{i + 1}.interest_after",
+                        "cash interest + added interest before hedges",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["cov_after"],
+                        "MULTIPLE",
+                        2,
+                        rate_cites + int_cite + ebitda_cite,
+                        f"cp2e.rate{i + 1}.cov_after",
+                        "EBITDA / cash interest after the shock",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["cov_change"],
+                        "MULTIPLE",
+                        2,
+                        rate_cites + int_cite + ebitda_cite,
+                        f"cp2e.rate{i + 1}.cov_change",
+                        "coverage after the shock - coverage before",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["fcf_after"],
+                        "MILLIONS",
+                        2,
+                        rate_cites + fcf_cite,
+                        f"cp2e.rate{i + 1}.fcf_after",
+                        "free cash flow - added interest before hedges",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["share_of_ebitda"],
+                        "PERCENT",
+                        1,
+                        rate_cites + ebitda_cite,
+                        f"cp2e.rate{i + 1}.share",
+                        "added interest before hedges / EBITDA",
+                        PER_SHOCK,
+                    ),
+                ],
+            )
+        )
     tables.append(tbl("T2F.3", "Interest rate shock", cols3, t3, "Shock"))
 
     # T2F.4 currency shocks
-    cols4 = [("shock", "Currency move"), ("debt_change", "Change in debt"), ("debt_after", "Total debt after the move"),
-             ("ebitda_change", "Change in EBITDA"), ("lev_after", "Total leverage after the move")]
+    cols4 = [
+        ("shock", "Currency move"),
+        ("debt_change", "Change in debt"),
+        ("debt_after", "Total debt after the move"),
+        ("ebitda_change", "Change in EBITDA"),
+        ("lev_after", "Total leverage after the move"),
+    ]
     fe = [fx["foreign_ebitda_share"]] if fx.get("foreign_ebitda_share") else []
     fc = fb + dc
     t4 = []
     for i, r in enumerate(d["fx"]):
-        t4.append((f"r{i + 1:02d}", f"Foreign currency strengthens, {ORD[i]} move", [
-            N(r["shock"][1], "PERCENT", 0, (), "analyst_judgment", per=PER_RUN),
-            cell(r["debt_change"], "MILLIONS", 2, fc, f"cp2e.fx{i + 1}.debt_change", "foreign-currency debt x move", PER_SHOCK),
-            cell(r["debt_after"], "MILLIONS", 2, fc + debt_cite, f"cp2e.fx{i + 1}.debt_after", "total debt + change in debt", PER_SHOCK),
-            cell(r["ebitda_change"], "MILLIONS", 2, fe + ebitda_cite, f"cp2e.fx{i + 1}.ebitda_change", "EBITDA x share earned in other currencies x move", PER_SHOCK),
-            cell(r["lev_after"], "MULTIPLE", 2, fc + debt_cite + fe + ebitda_cite, f"cp2e.fx{i + 1}.lev_after", "total debt after the move / EBITDA after the move", PER_SHOCK),
-        ]))
+        t4.append(
+            (
+                f"r{i + 1:02d}",
+                f"Foreign currency strengthens, {ORD[i]} move",
+                [
+                    N(r["shock"][1], "PERCENT", 0, (), "analyst_judgment", per=PER_RUN),
+                    cell(
+                        r["debt_change"],
+                        "MILLIONS",
+                        2,
+                        fc,
+                        f"cp2e.fx{i + 1}.debt_change",
+                        "foreign-currency debt x move",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["debt_after"],
+                        "MILLIONS",
+                        2,
+                        fc + debt_cite,
+                        f"cp2e.fx{i + 1}.debt_after",
+                        "total debt + change in debt",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["ebitda_change"],
+                        "MILLIONS",
+                        2,
+                        fe + ebitda_cite,
+                        f"cp2e.fx{i + 1}.ebitda_change",
+                        "EBITDA x share earned in other currencies x move",
+                        PER_SHOCK,
+                    ),
+                    cell(
+                        r["lev_after"],
+                        "MULTIPLE",
+                        2,
+                        fc + debt_cite + fe + ebitda_cite,
+                        f"cp2e.fx{i + 1}.lev_after",
+                        "total debt after the move / EBITDA after the move",
+                        PER_SHOCK,
+                    ),
+                ],
+            )
+        )
     tables.append(tbl("T2F.4", "Currency shock", cols4, t4, "Shock"))
 
     # T2F.5 hedging
     hr = sub.get("hedge_ratio")
     t5 = [
-        ("r01", "Hedge ratio (analyst assumption)",
-         [N(D(hr["percent_text"]) / 100, "PERCENT", 0, (), "analyst_judgment", per=PER_RUN) if hr else G("Not stated: no hedge ratio is assumed or sourced", "PERCENT"),
-          T("Share of floating-rate debt hedged")]),
-        ("r02", "Floating-rate debt after hedges",
-         [cell(d["floating_after_hedge"], "MILLIONS", 2, rate_cites[:2], "cp2e.floating_after_hedge", "floating-rate debt x (1 - hedge ratio)", PER_BAL),
-          T("Unhedged floating-rate debt")]),
-        ("r03", "Hedging instruments", [G("Not stated: no source states a hedging instrument"), T("Located in the sources")]),
+        (
+            "r01",
+            "Hedge ratio (analyst assumption)",
+            [
+                N(D(hr["percent_text"]) / 100, "PERCENT", 0, (), "analyst_judgment", per=PER_RUN)
+                if hr
+                else G("Not stated: no hedge ratio is assumed or sourced", "PERCENT"),
+                T("Share of floating-rate debt hedged"),
+            ],
+        ),
+        (
+            "r02",
+            "Floating-rate debt after hedges",
+            [
+                cell(
+                    d["floating_after_hedge"],
+                    "MILLIONS",
+                    2,
+                    rate_cites[:2],
+                    "cp2e.floating_after_hedge",
+                    "floating-rate debt x (1 - hedge ratio)",
+                    PER_BAL,
+                ),
+                T("Unhedged floating-rate debt"),
+            ],
+        ),
+        (
+            "r03",
+            "Hedging instruments",
+            [G("Not stated: no source states a hedging instrument"), T("Located in the sources")],
+        ),
     ]
-    tables.append(tbl("T2F.5", "Hedging", [("value", "Value"), ("convention", "Convention")], t5, "Item"))
+    tables.append(
+        tbl("T2F.5", "Hedging", [("value", "Value"), ("convention", "Convention")], t5, "Item")
+    )
 
     # T2F.6 assessments
     t6 = []
     for i, x in enumerate(sub["assessments"], 1):
-        t6.append((f"r{i:02d}", x["section"].replace("_", " ").capitalize(), [
-            T(x["category"], x["basis"], "analyst_judgment"), T(x["text"], x["basis"], "analyst_judgment")]))
-    t6.append((f"r{len(t6) + 1:02d}", "Shock basis", [T("Analyst Interpretation", (), "analyst_judgment"),
-                                                       T(sub["shock_rationale"], (), "analyst_judgment")]))
-    t6.append((f"r{len(t6) + 1:02d}", "Summary", [T("Analyst Interpretation", (), "analyst_judgment"),
-                                                    T(sub["summary"]["text"], (), "analyst_judgment")]))
-    tables.append(tbl("T2F.6", "Assessments", [("category", "Category"), ("assessment", "Assessment")], t6, "Section"))
+        t6.append(
+            (
+                f"r{i:02d}",
+                x["section"].replace("_", " ").capitalize(),
+                [
+                    T(x["category"], x["basis"], "analyst_judgment"),
+                    T(x["text"], x["basis"], "analyst_judgment"),
+                ],
+            )
+        )
+    t6.append(
+        (
+            f"r{len(t6) + 1:02d}",
+            "Shock basis",
+            [
+                T("Analyst Interpretation", (), "analyst_judgment"),
+                T(sub["shock_rationale"], (), "analyst_judgment"),
+            ],
+        )
+    )
+    t6.append(
+        (
+            f"r{len(t6) + 1:02d}",
+            "Summary",
+            [
+                T("Analyst Interpretation", (), "analyst_judgment"),
+                T(sub["summary"]["text"], (), "analyst_judgment"),
+            ],
+        )
+    )
+    tables.append(
+        tbl(
+            "T2F.6",
+            "Assessments",
+            [("category", "Category"), ("assessment", "Assessment")],
+            t6,
+            "Section",
+        )
+    )
 
     # T2F.7 missing inputs, T2F.8 evidence, T2F.9 limitations
     miss = []
     if sub.get("rate_absence"):
-        miss.append(("Floating-rate debt, added interest and coverage after a rate shock", sub["rate_absence"]["reason"]))
+        miss.append(
+            (
+                "Floating-rate debt, added interest and coverage after a rate shock",
+                sub["rate_absence"]["reason"],
+            )
+        )
     if fx.get("debt_currency_absence"):
-        miss.append(("Foreign-currency debt and the debt effect of a currency shock", fx["debt_currency_absence"]["reason"]))
+        miss.append(
+            (
+                "Foreign-currency debt and the debt effect of a currency shock",
+                fx["debt_currency_absence"]["reason"],
+            )
+        )
     if fx.get("operating_fx_absence"):
-        miss.append(("Currency effect on EBITDA and on leverage", fx["operating_fx_absence"]["reason"]))
+        miss.append(
+            ("Currency effect on EBITDA and on leverage", fx["operating_fx_absence"]["reason"])
+        )
     if sub.get("hedge_absence"):
         miss.append(("Added interest after hedges", sub["hedge_absence"]["reason"]))
-    t7 = [(f"r{i:02d}", aff, [T(aff), T(why)]) for i, (aff, why) in enumerate(miss, 1)] or \
-        [("r01", "Missing inputs", [T("None"), T("No input is missing")])]
-    tables.append(tbl("T2F.7", "Missing inputs", [("affected", "Not calculated"), ("reason", "Reason")], t7, "Input"))
-    ev = [(f"r{i:02d}", f"{NAMES[sid]}, {loc}", [T(sid), T(loc)]) for i, (sid, loc) in enumerate(cited_pages(sub), 1)]
-    tables.append(tbl("T2F.8", "Evidence", [("source", "Source"), ("locator", "Locator")], ev, "Page"))
+    t7 = [(f"r{i:02d}", aff, [T(aff), T(why)]) for i, (aff, why) in enumerate(miss, 1)] or [
+        ("r01", "Missing inputs", [T("None"), T("No input is missing")])
+    ]
+    tables.append(
+        tbl(
+            "T2F.7",
+            "Missing inputs",
+            [("affected", "Not calculated"), ("reason", "Reason")],
+            t7,
+            "Input",
+        )
+    )
+    ev = [
+        (f"r{i:02d}", f"{NAMES[sid]}, {loc}", [T(sid), T(loc)])
+        for i, (sid, loc) in enumerate(cited_pages(sub), 1)
+    ]
+    tables.append(
+        tbl("T2F.8", "Evidence", [("source", "Source"), ("locator", "Locator")], ev, "Page")
+    )
     own = own_limitations(sub)
-    tables.append(tbl("T2F.9", "Limitations", [("text", "Limitation")],
-                        [(f"r{i:02d}", f"Limitation {i}", [T(t)]) for i, t in enumerate(own, 1)], "Limitation"))
+    tables.append(
+        tbl(
+            "T2F.9",
+            "Limitations",
+            [("text", "Limitation")],
+            [(f"r{i:02d}", f"Limitation {i}", [T(t)]) for i, t in enumerate(own, 1)],
+            "Limitation",
+        )
+    )
     return tables, compose_claims(case, sub, d, tables), own
 
 
-LIM_REMAINDER = ("The quoted facility is only part of total debt and the rate type of the remainder is not stated, "
-                 "so the shock figures cover the quoted facility alone")
+LIM_REMAINDER = (
+    "The quoted facility is only part of total debt and the rate type of the remainder is not stated, "
+    "so the shock figures cover the quoted facility alone"
+)
 
 
 def remainder_applies(balance, total_debt):
@@ -941,35 +1563,55 @@ def remainder_applies(balance, total_debt):
 
 
 def own_limitations(sub):
-    out = ["Each shock is a static, parallel move applied once to the closing balances and the FY 2025 flows; no "
-           "repricing date, no change in debt and no tax shield are modelled",
-           "Interest income on the cash balance is not shocked, so the added interest is not offset by any higher "
-           "income on cash"]
+    out = [
+        (
+            "Each shock is a static, parallel move applied once to the closing balances and the FY 2025 flows; no "
+            "repricing date, no change in debt and no tax shield are modelled"
+        ),
+        (
+            "Interest income on the cash balance is not shocked, so the added interest is not offset by any higher "
+            "income on cash"
+        ),
+    ]
     if sub.get("rate_exposure"):
         # A4 (rounds 6 and 6i): the floor texts apply to floating-rate debt only; a fixed-rate facility gets neither
         rx = sub["rate_exposure"]
         if rx["rate_basis"]["rate_type"] == "FLOATING":
             if D(rx["floor"]["bps_text"]) == 0:
-                out.append("The reference rate level is not in any source, so a floor of zero is treated as not binding for the "
-                           "upward shocks and downward shocks are not tested")
+                out.append(
+                    "The reference rate level is not in any source, so a floor of zero is treated as not binding for the "
+                    "upward shocks and downward shocks are not tested"
+                )
             else:
-                out.append("The reference rate level is not in any source and the facility floor is above zero, so the rate "
-                           "shocks are not calculated and downward shocks are not tested")
-        if remainder_applies(D(sub["rate_exposure"]["facility_balance"]["value_text"]),
-                             row_decimal(sub["earnings"]["total_debt"]["value_text"])):
+                out.append(
+                    "The reference rate level is not in any source and the facility floor is above zero, so the rate "
+                    "shocks are not calculated and downward shocks are not tested"
+                )
+        if remainder_applies(
+            D(sub["rate_exposure"]["facility_balance"]["value_text"]),
+            row_decimal(sub["earnings"]["total_debt"]["value_text"]),
+        ):
             out.append(LIM_REMAINDER)
     else:
-        out.append("The facility rate terms are not stated, so the rate sensitivity is not calculated")
+        out.append(
+            "The facility rate terms are not stated, so the rate sensitivity is not calculated"
+        )
     if sub.get("hedge_absence"):
         out.append("Hedging is not disclosed, so every shock effect is shown before any hedge")
     else:
         out.append("The hedge ratio is an analyst assumption, not a source figure")
     if sub["fx"].get("operating_fx_absence"):
-        out.append("The split of earnings by currency is not stated, so the currency effect on EBITDA and on leverage is not calculated")
+        out.append(
+            "The split of earnings by currency is not stated, so the currency effect on EBITDA and on leverage is not calculated"
+        )
     if sub["fx"].get("debt_currency"):
-        out.append("The currency of the debt is read from the header of the facility schedule, which states the currency of its amounts; no denomination clause is cited")
-    out.append("Macro drivers other than the reference rate and currency, such as demand, input costs and inflation, are "
-               "not sourced and not assessed; the figures are unaudited FY 2025 statements")
+        out.append(
+            "The currency of the debt is read from the header of the facility schedule, which states the currency of its amounts; no denomination clause is cited"
+        )
+    out.append(
+        "Macro drivers other than the reference rate and currency, such as demand, input costs and inflation, are "
+        "not sourced and not assessed; the figures are unaudited FY 2025 statements"
+    )
     return out
 
 
@@ -998,64 +1640,95 @@ def compose_claims(case, sub, d, tables):
         n = f"r{i + 1:02d}"
         gross, cova = fid("T2F.3", n, "gross"), fid("T2F.3", n, "cov_after")
         if r["gross"][0] == "known":
-            add(f"CP-2E-RATE-{i + 1:02d}",
+            add(
+                f"CP-2E-RATE-{i + 1:02d}",
                 f"For the {ORD[i]} rate shock tested, the floating-rate debt of {fig(float_f)} adds "
                 f"{fig(gross)} of annual cash interest before any hedge, which takes interest coverage from "
-                f"{fig(cov_f)} to {fig(cova)}.", [float_f, gross, cov_f, cova])
+                f"{fig(cov_f)} to {fig(cova)}.",
+                [float_f, gross, cov_f, cova],
+            )
         else:
-            add(f"CP-2E-RATE-{i + 1:02d}",
+            add(
+                f"CP-2E-RATE-{i + 1:02d}",
                 f"The effect of the {ORD[i]} rate shock is not calculated: [{gross}] needs the facility rate terms, "
-                "which the pack does not state.", [gross])
+                "which the pack does not state.",
+                [gross],
+            )
     fdebt = fid("T2F.2", "r05", "value")
     if d["fx"]:
         r0 = d["fx"][0]
         dafter, ech = fid("T2F.4", "r01", "debt_after"), fid("T2F.4", "r01", "ebitda_change")
         lev = fid("T2F.4", "r01", "lev_after")
-        share_known = bool(sub["fx"].get("foreign_ebitda_share"))  # E1: the share of EBITDA earned abroad is stated
+        share_known = bool(
+            sub["fx"].get("foreign_ebitda_share")
+        )  # E1: the share of EBITDA earned abroad is stated
         # E4a: the reason the foreign debt is missing, as the claim names it
-        need = ("the facility balance" if d["foreign_debt"] == ("missing", "the facility balance is not stated")
-                else "the currency of the debt")
+        need = (
+            "the facility balance"
+            if d["foreign_debt"] == ("missing", "the facility balance is not stated")
+            else "the currency of the debt"
+        )
         if r0["debt_after"][0] == "known" and share_known:
             lev_ref = fig(lev) if by_id[lev]["status"] == "known" else f"[{lev}]"
-            add("CP-2E-FX-01",
+            add(
+                "CP-2E-FX-01",
                 f"The debt in a foreign currency is {fig(fdebt)}, so the first currency move leaves total debt "
                 f"at {fig(dafter)}, changes EBITDA by {fig(ech)} and leaves total leverage at {lev_ref}.",
-                [fdebt, dafter, ech, lev])
+                [fdebt, dafter, ech, lev],
+            )
         elif r0["debt_after"][0] == "known":
-            add("CP-2E-FX-01",
+            add(
+                "CP-2E-FX-01",
                 f"The debt in a foreign currency is {fig(fdebt)}, so the first currency move leaves total debt "
                 f"at {fig(dafter)}; the effect on EBITDA is not calculated: [{ech}] needs the share of earnings "
-                "in other currencies, which no source states.", [fdebt, dafter, ech])
+                "in other currencies, which no source states.",
+                [fdebt, dafter, ech],
+            )
         elif share_known:
-            add("CP-2E-FX-01",
+            add(
+                "CP-2E-FX-01",
                 f"The first currency move changes EBITDA by {fig(ech)}; the currency effect on the debt is not "
-                f"calculated: [{fdebt}] needs {need}, which the pack does not state.", [ech, fdebt])
+                f"calculated: [{fdebt}] needs {need}, which the pack does not state.",
+                [ech, fdebt],
+            )
         else:
-            add("CP-2E-FX-01",
+            add(
+                "CP-2E-FX-01",
                 f"The currency effect on the debt is not calculated: [{fdebt}] needs {need}, which the "
-                "pack does not state.", [fdebt])
+                "pack does not state.",
+                [fdebt],
+            )
     if d["rate"]:
         net = fid("T2F.3", "r01", "net")
         if d["rate"][0]["net"][0] == "known":
-            add("CP-2E-HEDGE-01",
+            add(
+                "CP-2E-HEDGE-01",
                 f"After the analyst hedge assumption the first rate shock adds {fig(net)} of annual cash interest.",
-                [net])
+                [net],
+            )
         else:
-            add("CP-2E-HEDGE-01",
+            add(
+                "CP-2E-HEDGE-01",
                 f"The effect of the first rate shock after hedges is not calculated: [{net}] needs a hedge ratio that no "
-                "source states.", [net])
-    claims.append({"claim_id": "CP-2E-VIEW-01", "text": sub["summary"]["text"], "refs": [], "cites": []})
+                "source states.",
+                [net],
+            )
+    claims.append(
+        {"claim_id": "CP-2E-VIEW-01", "text": sub["summary"]["text"], "refs": [], "cites": []}
+    )
     return claims
 
 
 def claim_issues(claim, by_id):
     """Transcription of prose.issues for these claims: tokens resolve, figures need a known numeric fact with a
     citation or calculation id and an allowed unit, chips must name unsettled or non-numeric facts."""
-    tok = re.compile(r"\{(?P<f>[A-Za-z0-9][A-Za-z0-9_.:-]*)(?:\|(?P<u>[^{}\[\]|]+))?\}|\[(?P<c>[A-Za-z0-9][A-Za-z0-9_.:-]*)\]")
+    tok = re.compile(
+        r"\{(?P<f>[A-Za-z0-9][A-Za-z0-9_.:-]*)(?:\|(?P<u>[^{}\[\]|]+))?\}|\[(?P<c>[A-Za-z0-9][A-Za-z0-9_.:-]*)\]"
+    )
     issues, rest, last = [], [], 0
     text = claim["text"]
     for m in tok.finditer(text):
-        rest.append(text[last:m.start()])
+        rest.append(text[last : m.start()])
         last = m.end()
         ref = m.group("f") or m.group("c")
         f = by_id.get(ref)
@@ -1070,13 +1743,13 @@ def claim_issues(claim, by_id):
             elif not f["cites"] and f["calculation_id"] is None:
                 issues.append(f"Figure reference has no citation or calculation: {ref}")
             elif m.group("u") != figure_unit(f["unit"], f["currency"]):
-                issues.append(f"Unit {m.group('u')} differs from the fact's unit {figure_unit(f['unit'], f['currency'])}: {ref}")
+                issues.append(
+                    f"Unit {m.group('u')} differs from the fact's unit {figure_unit(f['unit'], f['currency'])}: {ref}"
+                )
         elif f["status"] == "known" and f["amount"] is not None:
             issues.append(f"A numeric fact needs a figure reference: {ref}")
     rest.append(text[last:])
     return issues, "".join(rest)
-
-
 
 
 def pack_rows(ids):
@@ -1087,8 +1760,13 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers, sha):
     facts = []
 
     def add(table_, row, key, value, cites=()):
-        facts.append({"fact_id": f"{table_}.{row}.{key}", "text": value,
-                      "cites": [[c["source_id"], c["locator"]] for c in cites]})
+        facts.append(
+            {
+                "fact_id": f"{table_}.{row}.{key}",
+                "text": value,
+                "cites": [[c["source_id"], c["locator"]] for c in cites],
+            }
+        )
 
     add("T1", "run", "objective", sub["objective"])
     add("T1", "run", "issuer", ISSUER)
@@ -1098,10 +1776,19 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers, sha):
     assert [p[0] for p in pack] == [a["source_id"] for a in sub["sources"]]
     for sid, name, status, lim in pack:
         a = by[sid]
-        for key, value in (("family", a["document_family"]), ("entity", a["entity"] or "Unconfirmed"),
-                           ("period", a["period"] or "Unconfirmed"), ("version_relationship", a["version_relationship"])):
+        for key, value in (
+            ("family", a["document_family"]),
+            ("entity", a["entity"] or "Unconfirmed"),
+            ("period", a["period"] or "Unconfirmed"),
+            ("version_relationship", a["version_relationship"]),
+        ):
             add("P3", sid, key, value, a["citations"])
-        add("P5", sid, "preparation", f"complete; fidelity {a['fidelity']}; {lim or 'No mechanical limitation'}")
+        add(
+            "P5",
+            sid,
+            "preparation",
+            f"complete; fidelity {a['fidelity']}; {lim or 'No mechanical limitation'}",
+        )
         add("T2", sid, "source", f"{name}; {status}; SHA-256 {sha[sid]}")
         add("T3", sid, "authority", a["authority"], a["citations"])
         for i, c in enumerate(a["citations"]):
@@ -1114,7 +1801,9 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers, sha):
         add("T4", m, "readiness", c["readiness"])
         add("T4", m, "rationale", c["rationale"], c["citations"])
         add("T8", m, "candidate_command", "Run " + m)
-        commands[m] = "Run " + m if c["readiness"] in ("READY", "READY_WITH_LIMITATIONS") else "DO NOT RUN"
+        commands[m] = (
+            "Run " + m if c["readiness"] in ("READY", "READY_WITH_LIMITATIONS") else "DO NOT RUN"
+        )
         add("T8", m, "exact_command", commands[m])
         add("T8", m, "sources", ", ".join(c["source_ids"]) or "None")
         lims = list(c["limitations"])
@@ -1127,14 +1816,23 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers, sha):
         add("T8", m, "limits", "; ".join(dict.fromkeys(lims)) or "None identified")
         add("T8", m, "upstream", f"CP-0 {run_id}; analytical dependencies checked separately")
     for g in sub["gaps"]:
-        add("T5", g["gap_id"], "gap",
+        add(
+            "T5",
+            g["gap_id"],
+            "gap",
             f"{g['kind']}/{g['severity']}: {g['description']}; affects {', '.join(g['affected_modules'])}; {g['remediation']}",
-            g["citations"])
+            g["citations"],
+        )
     if not sub["gaps"]:
         add("T5", "review", "gaps", "No gaps identified by this supplied review")
     add("T7", "run", "preparation", "<<PreparedPack.content_hash(), bound at run time>>")
     add("T7", "run", "method", "deploy-v-r14")
-    add("T7", "run", "assertion_scope", "SOURCE_SUFFICIENCY_ONLY; CP_MODEL_INPUT_CONTRACT_NOT_EVALUATED")
+    add(
+        "T7",
+        "run",
+        "assertion_scope",
+        "SOURCE_SUFFICIENCY_ONLY; CP_MODEL_INPUT_CONTRACT_NOT_EVALUATED",
+    )
     limitations = dedupe(
         [lim for _, _, _, lim in pack if lim]
         + [t for a in sub["sources"] for t in a["limitations"]]
@@ -1142,9 +1840,15 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers, sha):
         + [g["description"] for g in sub["gaps"]]
         + [SYNTH]
     )
-    return {"status": "restricted", "why": "own limitations are non-empty (readiness.py:518-531; execution.py:451-457)",
-            "live_consumers": live_consumers, "plan_order": plan_order, "exact_commands": commands,
-            "limitations": limitations, "facts": facts}
+    return {
+        "status": "restricted",
+        "why": "own limitations are non-empty (readiness.py:518-531; execution.py:451-457)",
+        "live_consumers": live_consumers,
+        "plan_order": plan_order,
+        "exact_commands": commands,
+        "limitations": limitations,
+        "facts": facts,
+    }
 
 
 def meth_plan(requested):
@@ -1157,7 +1861,9 @@ def meth_plan(requested):
             if dep not in selected:
                 selected.add(dep)
                 pending.append(dep)
-    remaining = {m: set(cat[m]["required"]) | (set(cat[m]["optional"]) & selected) for m in selected}
+    remaining = {
+        m: set(cat[m]["required"]) | (set(cat[m]["optional"]) & selected) for m in selected
+    }
     out = []
     while remaining:
         ready = [m for m in order if m in remaining and not remaining[m]]
@@ -1170,14 +1876,26 @@ def meth_plan(requested):
     return out, cat
 
 
-
 # --- CP-0 base literal and expected facts (transcription of readiness.py, checked against the S1 oracle) -------
 S1P = S1E["positive"]
 _s1_pack = pack_rows(("identity", "financial", "business"))
-_s1_pos = cp0_expected(_s1_pack, S1S["positive"]["readiness_review"], "slice-snapshot-positive",
-                       ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"], ["CP-1", "CP-1A", "CP-2"],
-                       {"identity": ID_SHA, "financial": FIN_SHA["positive"], "business": BUS["positive"]["sha256"]})
-for _k in ("status", "why", "live_consumers", "plan_order", "exact_commands", "limitations", "facts"):
+_s1_pos = cp0_expected(
+    _s1_pack,
+    S1S["positive"]["readiness_review"],
+    "slice-snapshot-positive",
+    ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"],
+    ["CP-1", "CP-1A", "CP-2"],
+    {"identity": ID_SHA, "financial": FIN_SHA["positive"], "business": BUS["positive"]["sha256"]},
+)
+for _k in (
+    "status",
+    "why",
+    "live_consumers",
+    "plan_order",
+    "exact_commands",
+    "limitations",
+    "facts",
+):
     assert _s1_pos[_k] == S1P["CP-0"][_k], f"CP-0 transcription differs from the S1 oracle at {_k}"
 
 PLAN, CAT = meth_plan(["CP-2E"])
@@ -1185,12 +1903,20 @@ assert PLAN == ["CP-0", "CP-2E"], PLAN
 assert CAT["CP-2E"]["required"] == ["CP-0"] and CAT["CP-2E"]["optional"] == [], CAT["CP-2E"]
 assert CAT["CP-2E"]["aliases"] == ["CP-2F"]
 CP2E_TABLES = CAT["CP-2E"]["table_ids"]
-assert sorted(CP2E_TABLES) == sorted([f"T2G.{i}" for i in range(1, 9)] + [f"T2F.{i}" for i in range(1, 10)])
+assert sorted(CP2E_TABLES) == sorted(
+    [f"T2G.{i}" for i in range(1, 9)] + [f"T2F.{i}" for i in range(1, 10)]
+)
 _other_ids = {t for m in METH if m["module_id"] != "CP-2E" for t in m["table_ids"]}
 assert not (set(CP2E_TABLES) & _other_ids), "table id collision (D8)"
-assert [m["module_id"] for m in METH if "CP-2E" in m["required"] + m["optional"]] == ["CP-5", "CP-6"]
+assert [m["module_id"] for m in METH if "CP-2E" in m["required"] + m["optional"]] == [
+    "CP-5",
+    "CP-6",
+]
 
-RUNS = {"positive": "slice-cp2e-positive", "gap_no_facility_schedule": "slice-cp2e-gap-no-facility-schedule"}
+RUNS = {
+    "positive": "slice-cp2e-positive",
+    "gap_no_facility_schedule": "slice-cp2e-gap-no-facility-schedule",
+}
 
 
 def cite(case, locator, quote):
@@ -1208,32 +1934,50 @@ def readiness_review(case):
     sub["reporting_period"] = "Reported FY2025 flows and the December 31, 2025 balance sheet"
     if case == "positive":
         fac = cite(case, "page:5", Q_ONE_FACILITY)
-        sub["consumers"] = [{
-            "module_id": "CP-2E", "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located facility rate terms, the currency of the debt and the reported interest and EBITDA",
-            "source_ids": ["financial"],
-            "rationale": "The rate and currency sensitivity can run on the stated facility terms and statements, with source limitations.",
-            "citations": [fac, fin], "missing_source": None, "limitations": [LIMIT_FIN],
-        }]
+        sub["consumers"] = [
+            {
+                "module_id": "CP-2E",
+                "readiness": "READY_WITH_LIMITATIONS",
+                "evidence_demand": "Located facility rate terms, the currency of the debt and the reported interest and EBITDA",
+                "source_ids": ["financial"],
+                "rationale": "The rate and currency sensitivity can run on the stated facility terms and statements, with source limitations.",
+                "citations": [fac, fin],
+                "missing_source": None,
+                "limitations": [LIMIT_FIN],
+            }
+        ]
         sub["gaps"] = []
         cites = [ident, fin, fac]
         text = "The located statements and facility schedule support a rate and currency sensitivity with limitations."
     else:
-        sub["consumers"] = [{
-            "module_id": "CP-2E", "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Reported interest and EBITDA; the facility schedule is not available",
-            "source_ids": ["financial"],
-            "rationale": "The assessment can run on the statements and records the absence of the facility terms.",
-            "citations": [fin], "missing_source": None, "limitations": [GAP_FACILITY],
-        }]
-        sub["gaps"] = [{
-            "gap_id": "missing-facility-schedule", "kind": "source", "severity": "material",
-            "description": GAP_FACILITY, "affected_modules": ["CP-2E"],
-            "remediation": "Supply the complete facility and classification schedule", "citations": [],
-        }]
+        sub["consumers"] = [
+            {
+                "module_id": "CP-2E",
+                "readiness": "READY_WITH_LIMITATIONS",
+                "evidence_demand": "Reported interest and EBITDA; the facility schedule is not available",
+                "source_ids": ["financial"],
+                "rationale": "The assessment can run on the statements and records the absence of the facility terms.",
+                "citations": [fin],
+                "missing_source": None,
+                "limitations": [GAP_FACILITY],
+            }
+        ]
+        sub["gaps"] = [
+            {
+                "gap_id": "missing-facility-schedule",
+                "kind": "source",
+                "severity": "material",
+                "description": GAP_FACILITY,
+                "affected_modules": ["CP-2E"],
+                "remediation": "Supply the complete facility and classification schedule",
+                "citations": [],
+            }
+        ]
         cites = [ident, fin]
         text = "The located statements support only the reported flows; no facility schedule is available."
-    sub["analysis"] = [{"claim_id": "source-assessment", "text": text, "citations": cites, "limitation": LIMIT_FIN}]
+    sub["analysis"] = [
+        {"claim_id": "source-assessment", "text": text, "citations": cites, "limitation": LIMIT_FIN}
+    ]
     return sub
 
 
@@ -1254,69 +1998,183 @@ def mut(base, edits):
 
 P_ = ["rate_exposure"]
 MUTATIONS = [
-    ("reporting_code_not_in_quote", [(["reporting_currency", "code_text"], "EUR")],
-     "reporting_currency: code_text EUR does not occur in the quote"),
-    ("source_outside_scope", [(["reporting_currency", "source_id"], "identity")],
-     "reporting_currency: source identity is outside the CP-2E scope (financial)"),
-    ("rate_exposure_and_absence", [(["rate_absence"], {"reason": "Not stated", "follow_up": "Supply it"})],
-     "rate_exposure: exactly one of rate_exposure and rate_absence is required"),
-    ("balance_not_in_quote", [(P_ + ["facility_balance", "value_text"], "55")],
-     "rate_exposure.facility_balance: value_text 55 does not occur in the quote"),
-    ("balance_not_labelled", [(P_ + ["facility_balance"], {**q("page:5", Q_FLOOR), "value_text": "0"})],
-     "rate_exposure.facility_balance: value_text 0 is not labelled balance of in the quote"),
-    ("rate_type_contradicts_quote", [(P_ + ["rate_basis", "rate_type"], "FIXED")],
-     "rate_exposure.rate_basis: rate_type FIXED contradicts the quote"),
-    ("rate_type_not_stated", [(P_ + ["rate_basis"], {**q("page:5", Q_SOFR_SPREAD), "rate_type": "FLOATING", "reference_rate": "SOFR"})],
-     "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate"),
-    ("reference_rate_not_in_quote", [(P_ + ["rate_basis", "reference_rate"], "EURIBOR")],
-     "rate_exposure.rate_basis: reference_rate does not occur in the quote"),
-    ("floor_not_in_quote", [(P_ + ["floor", "bps_text"], "25")],
-     "rate_exposure.floor: bps_text 25 does not occur in the quote"),
-    ("row_not_whole_line", [(["earnings", "ebitda", "quote"], Q_TWO_LINES)],
-     "earnings.ebitda: quote is not a whole page line"),
-    ("row_wrong_label", [(["earnings", "interest"], {**q("page:3", Q_ROW_FCF), "value_text": "9.00"})],
-     "earnings.interest: the row is not Cash interest paid"),
-    ("row_value_not_last", [(["earnings", "ebitda", "value_text"], "7.5")],
-     "earnings.ebitda: value_text 7.5 is not the last value of the row"),
-    ("quote_off_page", [(["earnings", "fcf", "locator"], "page:2")],
-     "earnings.fcf: quote not found on financial page:2"),
-    ("debt_currency_and_absence", [(["fx", "debt_currency_absence"], {"reason": "Not stated", "follow_up": "Supply it"})],
-     "fx.debt_currency: exactly one of debt_currency and debt_currency_absence is required"),
-    ("foreign_share_and_absence", [(["fx", "foreign_ebitda_share"], {**q("page:2", Q_ROW_PBT), "percent_text": "20"})],
-     "fx.foreign_ebitda_share: exactly one of foreign_ebitda_share and operating_fx_absence is required"),
-    ("hedge_ratio_and_absence", [(["hedge_ratio"], {"percent_text": "40", "rationale": "Assumed share of the floating debt that is hedged"})],
-     "hedge_ratio: exactly one of hedge_ratio and hedge_absence is required"),
-    ("hedge_ratio_out_of_range", [(["hedge_ratio"], {"percent_text": "101", "rationale": "Assumed share of the floating debt that is hedged"}),
-                                  (["hedge_absence"], None)],
-     "hedge_ratio: percent must be at least 0 and at most 100"),
-    ("rate_shock_zero", [(["rate_shocks_bp"], ["0", "200"])],
-     "rate_shocks_bp[0]: shock must be a whole number of basis points from 1 to 1000"),
-    ("rate_shocks_not_increasing", [(["rate_shocks_bp"], ["200", "100"])],
-     "rate_shocks_bp: shocks must be strictly increasing"),
-    ("too_many_rate_shocks", [(["rate_shocks_bp"], ["100", "200", "300", "400"])],
-     "rate_shocks_bp: between 1 and 3 shocks are required"),
-    ("fx_shock_too_large", [(["fx_shocks_percent"], ["60"])],
-     "fx_shocks_percent[0]: shock must be a whole percent from 1 to 50"),
-    ("digit_in_text", [(["assessments", 0, "text"], "The term loan is the only debt and floats on 1 reference rate.")],
-     "assessments[0].text: digits are not allowed"),
-    ("prohibited_conclusion", [(["summary", "text"], "The credit looks weak, so downgrade it.")],
-     "summary.text: text carries a prohibited conclusion"),
-    ("insufficient_without_limitation", [(["assessments", 2, "limitation"], None)],
-     "assessments[2]: limitation is required for Insufficient Information and only for it"),
-    ("documentary_without_basis", [(["assessments", 0, "category"], "Documentary Fact"), (["assessments", 0, "basis"], [])],
-     "assessments[0]: a Documentary Fact needs at least one basis quote"),
-    ("section_missing", [(["assessments"], assessments_positive()[:2])],
-     "assessments: section hedging is missing"),
-    ("section_repeated", [(["assessments"], assessments_positive() + [assessments_positive()[0]])],
-     "assessments[0]: section interest_rate appears more than once"),
+    (
+        "reporting_code_not_in_quote",
+        [(["reporting_currency", "code_text"], "EUR")],
+        "reporting_currency: code_text EUR does not occur in the quote",
+    ),
+    (
+        "source_outside_scope",
+        [(["reporting_currency", "source_id"], "identity")],
+        "reporting_currency: source identity is outside the CP-2E scope (financial)",
+    ),
+    (
+        "rate_exposure_and_absence",
+        [(["rate_absence"], {"reason": "Not stated", "follow_up": "Supply it"})],
+        "rate_exposure: exactly one of rate_exposure and rate_absence is required",
+    ),
+    (
+        "balance_not_in_quote",
+        [(P_ + ["facility_balance", "value_text"], "55")],
+        "rate_exposure.facility_balance: value_text 55 does not occur in the quote",
+    ),
+    (
+        "balance_not_labelled",
+        [(P_ + ["facility_balance"], {**q("page:5", Q_FLOOR), "value_text": "0"})],
+        "rate_exposure.facility_balance: value_text 0 is not labelled balance of in the quote",
+    ),
+    (
+        "rate_type_contradicts_quote",
+        [(P_ + ["rate_basis", "rate_type"], "FIXED")],
+        "rate_exposure.rate_basis: rate_type FIXED contradicts the quote",
+    ),
+    (
+        "rate_type_not_stated",
+        [
+            (
+                P_ + ["rate_basis"],
+                {**q("page:5", Q_SOFR_SPREAD), "rate_type": "FLOATING", "reference_rate": "SOFR"},
+            )
+        ],
+        "rate_exposure.rate_basis: the quote states neither a floating nor a fixed rate",
+    ),
+    (
+        "reference_rate_not_in_quote",
+        [(P_ + ["rate_basis", "reference_rate"], "EURIBOR")],
+        "rate_exposure.rate_basis: reference_rate does not occur in the quote",
+    ),
+    (
+        "floor_not_in_quote",
+        [(P_ + ["floor", "bps_text"], "25")],
+        "rate_exposure.floor: bps_text 25 does not occur in the quote",
+    ),
+    (
+        "row_not_whole_line",
+        [(["earnings", "ebitda", "quote"], Q_TWO_LINES)],
+        "earnings.ebitda: quote is not a whole page line",
+    ),
+    (
+        "row_wrong_label",
+        [(["earnings", "interest"], {**q("page:3", Q_ROW_FCF), "value_text": "9.00"})],
+        "earnings.interest: the row is not Cash interest paid",
+    ),
+    (
+        "row_value_not_last",
+        [(["earnings", "ebitda", "value_text"], "7.5")],
+        "earnings.ebitda: value_text 7.5 is not the last value of the row",
+    ),
+    (
+        "quote_off_page",
+        [(["earnings", "fcf", "locator"], "page:2")],
+        "earnings.fcf: quote not found on financial page:2",
+    ),
+    (
+        "debt_currency_and_absence",
+        [(["fx", "debt_currency_absence"], {"reason": "Not stated", "follow_up": "Supply it"})],
+        "fx.debt_currency: exactly one of debt_currency and debt_currency_absence is required",
+    ),
+    (
+        "foreign_share_and_absence",
+        [(["fx", "foreign_ebitda_share"], {**q("page:2", Q_ROW_PBT), "percent_text": "20"})],
+        "fx.foreign_ebitda_share: exactly one of foreign_ebitda_share and operating_fx_absence is required",
+    ),
+    (
+        "hedge_ratio_and_absence",
+        [
+            (
+                ["hedge_ratio"],
+                {
+                    "percent_text": "40",
+                    "rationale": "Assumed share of the floating debt that is hedged",
+                },
+            )
+        ],
+        "hedge_ratio: exactly one of hedge_ratio and hedge_absence is required",
+    ),
+    (
+        "hedge_ratio_out_of_range",
+        [
+            (
+                ["hedge_ratio"],
+                {
+                    "percent_text": "101",
+                    "rationale": "Assumed share of the floating debt that is hedged",
+                },
+            ),
+            (["hedge_absence"], None),
+        ],
+        "hedge_ratio: percent must be at least 0 and at most 100",
+    ),
+    (
+        "rate_shock_zero",
+        [(["rate_shocks_bp"], ["0", "200"])],
+        "rate_shocks_bp[0]: shock must be a whole number of basis points from 1 to 1000",
+    ),
+    (
+        "rate_shocks_not_increasing",
+        [(["rate_shocks_bp"], ["200", "100"])],
+        "rate_shocks_bp: shocks must be strictly increasing",
+    ),
+    (
+        "too_many_rate_shocks",
+        [(["rate_shocks_bp"], ["100", "200", "300", "400"])],
+        "rate_shocks_bp: between 1 and 3 shocks are required",
+    ),
+    (
+        "fx_shock_too_large",
+        [(["fx_shocks_percent"], ["60"])],
+        "fx_shocks_percent[0]: shock must be a whole percent from 1 to 50",
+    ),
+    (
+        "digit_in_text",
+        [
+            (
+                ["assessments", 0, "text"],
+                "The term loan is the only debt and floats on 1 reference rate.",
+            )
+        ],
+        "assessments[0].text: digits are not allowed",
+    ),
+    (
+        "prohibited_conclusion",
+        [(["summary", "text"], "The credit looks weak, so downgrade it.")],
+        "summary.text: text carries a prohibited conclusion",
+    ),
+    (
+        "insufficient_without_limitation",
+        [(["assessments", 2, "limitation"], None)],
+        "assessments[2]: limitation is required for Insufficient Information and only for it",
+    ),
+    (
+        "documentary_without_basis",
+        [(["assessments", 0, "category"], "Documentary Fact"), (["assessments", 0, "basis"], [])],
+        "assessments[0]: a Documentary Fact needs at least one basis quote",
+    ),
+    (
+        "section_missing",
+        [(["assessments"], assessments_positive()[:2])],
+        "assessments: section hedging is missing",
+    ),
+    (
+        "section_repeated",
+        [(["assessments"], assessments_positive() + [assessments_positive()[0]])],
+        "assessments[0]: section interest_rate appears more than once",
+    ),
 ]
 
 
 def isolated_ok():
     """The share literal of foreign_share_and_absence is valid on its own: without the absence it raises nothing."""
-    s = mut(LITERALS["positive"], [(["fx", "foreign_ebitda_share"], {**q("page:2", Q_ROW_PBT), "percent_text": "20"}),
-                                   (["fx", "operating_fx_absence"], None)])
-    assert not check_submission(s, PAGES_OF["positive"]), "foreign share literal is not valid in isolation"
+    s = mut(
+        LITERALS["positive"],
+        [
+            (["fx", "foreign_ebitda_share"], {**q("page:2", Q_ROW_PBT), "percent_text": "20"}),
+            (["fx", "operating_fx_absence"], None),
+        ],
+    )
+    assert not check_submission(s, PAGES_OF["positive"]), (
+        "foreign share literal is not valid in isolation"
+    )
 
 
 isolated_ok()
@@ -1328,8 +2186,14 @@ def run_mutations():
     for name, edits, expect in MUTATIONS:
         iss = check_submission(mut(base, edits), PAGES_OF["positive"])
         assert iss and iss[0] == expect, (name, iss)
-        out.append({"id": name, "edits": [[".".join(str(x) for x in p), v] for p, v in edits],
-                    "issue": expect, "all_issues": iss})
+        out.append(
+            {
+                "id": name,
+                "edits": [[".".join(str(x) for x in p), v] for p, v in edits],
+                "issue": expect,
+                "all_issues": iss,
+            }
+        )
     return out
 
 
@@ -1344,7 +2208,12 @@ _var_page5 = FIN_PAGES["page:5"].replace(BAL_FROM, BAL_TO)
 VAR_PAGES = {**FIN_PAGES, "page:5": _var_page5}
 VAR_SOURCE_SHA = page_sha([VAR_PAGES[k] for k in VAR_PAGES])
 _var = copy.deepcopy(LITERALS["positive"])
-_var["rate_exposure"]["facility_balance"] = {"source_id": SRC, "locator": "page:5", "quote": BAL_TO, "value_text": "55"}
+_var["rate_exposure"]["facility_balance"] = {
+    "source_id": SRC,
+    "locator": "page:5",
+    "quote": BAL_TO,
+    "value_text": "55",
+}
 BALANCE_ABOVE_DEBT = {
     "id": "balance_exceeds_total_debt",
     "page_locator": "page:5",
@@ -1358,21 +2227,34 @@ _viss = check_submission(_var, VAR_PAGES)
 assert _viss == [BALANCE_ABOVE_DEBT["issue"]], _viss
 assert VAR_SOURCE_SHA != FIN_SHA["positive"] and "balance of 55" in _var_page5
 # On the frozen page the same payload fails earlier: its quote is not on the frozen page (no cross-check issue).
-assert check_submission(_var, FIN_PAGES)[0] == "rate_exposure.facility_balance: quote not found on financial page:5"
+assert (
+    check_submission(_var, FIN_PAGES)[0]
+    == "rate_exposure.facility_balance: quote not found on financial page:5"
+)
 
 # Tool-use refusals (journaled rules; wording prefixes of live/tools.py UNREAD_PAGE and UNBACKED_ABSENCE).
 _ALL_PAGES = [["financial", f"page:{i}"] for i in range(1, 6)]
 TOOL_USE = [
-    {"id": "unread_financial_page_3", "reads": [p for p in _ALL_PAGES if p[1] != "page:3"], "searches": 1,
-     "issue": "Cited page not read through read_pages: financial page:3"},
-    {"id": "unread_financial_page_5", "reads": [p for p in _ALL_PAGES if p[1] != "page:5"], "searches": 1,
-     "issue": "Cited page not read through read_pages: financial page:5"},
+    {
+        "id": "unread_financial_page_3",
+        "reads": [p for p in _ALL_PAGES if p[1] != "page:3"],
+        "searches": 1,
+        "issue": "Cited page not read through read_pages: financial page:3",
+    },
+    {
+        "id": "unread_financial_page_5",
+        "reads": [p for p in _ALL_PAGES if p[1] != "page:5"],
+        "searches": 1,
+        "issue": "Cited page not read through read_pages: financial page:5",
+    },
     {"id": "absence_without_search", "reads": _ALL_PAGES, "searches": 0, "issue": ABSENCE_ISSUE},
 ]
 _pos_pages = set(cited_pages(LITERALS["positive"]))
 assert _pos_pages == {("financial", f"page:{i}") for i in range(1, 6)}, _pos_pages
 for _t in TOOL_USE:
-    _got = tool_rule_issues(LITERALS["positive"], {tuple(r) for r in _t["reads"]}, _t["searches"] > 0)
+    _got = tool_rule_issues(
+        LITERALS["positive"], {tuple(r) for r in _t["reads"]}, _t["searches"] > 0
+    )
     assert _got == [_t["issue"]], (_t, _got)
 assert not tool_rule_issues(LITERALS["positive"], _pos_pages, True)
 _gap_pages = set(cited_pages(LITERALS["gap_no_facility_schedule"]))
@@ -1380,13 +2262,25 @@ assert _gap_pages == {("financial", f"page:{i}") for i in range(1, 5)}, _gap_pag
 
 # Blocked case: attempt 0 and attempt 1 both invalid.
 BLOCKED = {
-    "attempt_0": {"edits": [["assessments.0.text", "The term loan is the only debt and floats on 1 reference rate."]],
-                  "issue": "assessments[0].text: digits are not allowed"},
-    "attempt_1": {"edits": [["rate_exposure.floor.bps_text", "25"]],
-                  "issue": "rate_exposure.floor: bps_text 25 does not occur in the quote"},
+    "attempt_0": {
+        "edits": [
+            ["assessments.0.text", "The term loan is the only debt and floats on 1 reference rate."]
+        ],
+        "issue": "assessments[0].text: digits are not allowed",
+    },
+    "attempt_1": {
+        "edits": [["rate_exposure.floor.bps_text", "25"]],
+        "issue": "rate_exposure.floor: bps_text 25 does not occur in the quote",
+    },
 }
 for _a in ("attempt_0", "attempt_1"):
-    _s = mut(LITERALS["positive"], [([int(x) if x.isdigit() else x for x in e[0].split(".")], e[1]) for e in BLOCKED[_a]["edits"]])
+    _s = mut(
+        LITERALS["positive"],
+        [
+            ([int(x) if x.isdigit() else x for x in e[0].split(".")], e[1])
+            for e in BLOCKED[_a]["edits"]
+        ],
+    )
     assert check_submission(_s, PAGES_OF["positive"])[0] == BLOCKED[_a]["issue"], _a
 
 
@@ -1396,41 +2290,86 @@ BASE_INP = inputs_of(LITERALS["positive"])
 
 def fixture(inp, note):
     d = derive(inp)
-    return {"inputs": {k: (dstr(v) if isinstance(v, Decimal) else ([dstr(x) for x in v] if isinstance(v, list) else v))
-                       for k, v in inp.items()},
-            "stored": stored_all(d), "note": note}
+    return {
+        "inputs": {
+            k: (
+                dstr(v)
+                if isinstance(v, Decimal)
+                else ([dstr(x) for x in v] if isinstance(v, list) else v)
+            )
+            for k, v in inp.items()
+        },
+        "stored": stored_all(d),
+        "note": note,
+    }
 
 
 FIXTURES = {
-    "fixture_hedged": fixture({**BASE_INP, "hedge": D("0.4")},
-                              "hedge ratio 40 percent (test vector, an analyst assumption): net increase is 60 percent of the gross increase"),
-    "fixture_floor_may_bind": fixture({**BASE_INP, "floor_bp": D(25)},
-                                      "floor above zero with an unstated reference rate level: the effect of an upward shock is missing, never the gross amount"),
-    "fixture_fixed_rate": fixture({**BASE_INP, "rate_type": "FIXED"},
-                                  "fixed-rate facility: nothing floats, so the increase is a known zero and coverage is unchanged"),
-    "fixture_zero_interest": fixture({**BASE_INP, "interest": D(0)},
-                                     "no cash interest: baseline coverage not applicable; coverage after the shock is known"),
-    "fixture_zero_ebitda": fixture({**BASE_INP, "ebitda": D(0)},
-                                   "EBITDA zero: coverage is a known 0; leverage and the share of EBITDA are not applicable"),
-    "fixture_foreign_debt": fixture({**BASE_INP, "debt_foreign": True, "foreign_ebitda_share": D("0.2")},
-                                    "debt in another currency and 20 percent of EBITDA earned abroad (test vectors, not source figures): both effects known"),
-    "fixture_partial_facility": fixture({**BASE_INP, "facility_balance": D(30)},
-                                        "quoted facility 30 below total debt 50 (test vector, not a source figure): the shock figures cover the quoted facility alone, the floating share stays known (balance / total debt) and the own limitation below is added"),
-    "fixture_no_rate_terms": fixture({k: v for k, v in BASE_INP.items() if k not in ("facility_balance", "rate_type", "floor_bp")},
-                                     "no facility terms: floating debt, increases and coverage after the shock are missing; baselines known"),
+    "fixture_hedged": fixture(
+        {**BASE_INP, "hedge": D("0.4")},
+        "hedge ratio 40 percent (test vector, an analyst assumption): net increase is 60 percent of the gross increase",
+    ),
+    "fixture_floor_may_bind": fixture(
+        {**BASE_INP, "floor_bp": D(25)},
+        "floor above zero with an unstated reference rate level: the effect of an upward shock is missing, never the gross amount",
+    ),
+    "fixture_fixed_rate": fixture(
+        {**BASE_INP, "rate_type": "FIXED"},
+        "fixed-rate facility: nothing floats, so the increase is a known zero and coverage is unchanged",
+    ),
+    "fixture_zero_interest": fixture(
+        {**BASE_INP, "interest": D(0)},
+        "no cash interest: baseline coverage not applicable; coverage after the shock is known",
+    ),
+    "fixture_zero_ebitda": fixture(
+        {**BASE_INP, "ebitda": D(0)},
+        "EBITDA zero: coverage is a known 0; leverage and the share of EBITDA are not applicable",
+    ),
+    "fixture_foreign_debt": fixture(
+        {**BASE_INP, "debt_foreign": True, "foreign_ebitda_share": D("0.2")},
+        "debt in another currency and 20 percent of EBITDA earned abroad (test vectors, not source figures): both effects known",
+    ),
+    "fixture_partial_facility": fixture(
+        {**BASE_INP, "facility_balance": D(30)},
+        "quoted facility 30 below total debt 50 (test vector, not a source figure): the shock figures cover the quoted facility alone, the floating share stays known (balance / total debt) and the own limitation below is added",
+    ),
+    "fixture_no_rate_terms": fixture(
+        {
+            k: v
+            for k, v in BASE_INP.items()
+            if k not in ("facility_balance", "rate_type", "floor_bp")
+        },
+        "no facility terms: floating debt, increases and coverage after the shock are missing; baselines known",
+    ),
 }
 _fx = FIXTURES
-assert remainder_applies(D(30), BASE_INP["total_debt"]) and not remainder_applies(BASE_INP["facility_balance"], BASE_INP["total_debt"])
+assert remainder_applies(D(30), BASE_INP["total_debt"]) and not remainder_applies(
+    BASE_INP["facility_balance"], BASE_INP["total_debt"]
+)
 FIXTURES["fixture_partial_facility"]["own_limitation_added"] = LIM_REMAINDER
 assert _fx["fixture_partial_facility"]["stored"]["floating"] == {"state": "known", "amount": "30"}
-assert _fx["fixture_partial_facility"]["stored"]["floating_share"] == {"state": "known", "amount": "0.6"}
-assert _fx["fixture_partial_facility"]["stored"]["rate"][0]["gross"] == {"state": "known", "amount": "0.3"}
-assert _fx["fixture_partial_facility"]["stored"]["rate"][1]["gross"] == {"state": "known", "amount": "0.6"}
-assert not any(LIM_REMAINDER == t for c in LITERALS for t in own_limitations(LITERALS[c]))  # frozen pack: balance equals total debt
+assert _fx["fixture_partial_facility"]["stored"]["floating_share"] == {
+    "state": "known",
+    "amount": "0.6",
+}
+assert _fx["fixture_partial_facility"]["stored"]["rate"][0]["gross"] == {
+    "state": "known",
+    "amount": "0.3",
+}
+assert _fx["fixture_partial_facility"]["stored"]["rate"][1]["gross"] == {
+    "state": "known",
+    "amount": "0.6",
+}
+assert not any(
+    LIM_REMAINDER == t for c in LITERALS for t in own_limitations(LITERALS[c])
+)  # frozen pack: balance equals total debt
 assert _fx["fixture_hedged"]["stored"]["rate"][0]["net"]["amount"] == "0.3"
 assert _fx["fixture_floor_may_bind"]["stored"]["rate"][0]["gross"]["state"] == "missing"
 assert _fx["fixture_fixed_rate"]["stored"]["rate"][0]["gross"] == {"state": "known", "amount": "0"}
-assert _fx["fixture_fixed_rate"]["stored"]["rate"][0]["cov_change"] == {"state": "known", "amount": "0"}
+assert _fx["fixture_fixed_rate"]["stored"]["rate"][0]["cov_change"] == {
+    "state": "known",
+    "amount": "0",
+}
 assert _fx["fixture_zero_interest"]["stored"]["cov_base"]["state"] == "not_applicable"
 assert _fx["fixture_zero_interest"]["stored"]["rate"][0]["cov_after"]["amount"] == "60"
 assert _fx["fixture_zero_ebitda"]["stored"]["cov_base"] == {"state": "known", "amount": "0"}
@@ -1442,15 +2381,26 @@ assert _fx["fixture_no_rate_terms"]["stored"]["floating"]["state"] == "missing"
 
 # --- assembly ------------------------------------------------------------------------------------------------
 def run_of(case):
-    return {"run_id": RUNS[case], "issuer_id": ISSUER_ID, "issuer_name": ISSUER, "as_of": AS_OF,
-            "method_version": "deploy-v-r14", "case_kind": "synthetic", "pathway": "credit_snapshot",
-            "requested_modules": ["CP-2E"]}
+    return {
+        "run_id": RUNS[case],
+        "issuer_id": ISSUER_ID,
+        "issuer_name": ISSUER,
+        "as_of": AS_OF,
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "requested_modules": ["CP-2E"],
+    }
 
 
 def main():
     reviews = {c: readiness_review(c) for c in LITERALS}
-    cp0 = {c: cp0_expected(pack_rows(("identity", "financial")), reviews[c], RUNS[c], PLAN, ["CP-2E"], sha_map(c))
-           for c in LITERALS}
+    cp0 = {
+        c: cp0_expected(
+            pack_rows(("identity", "financial")), reviews[c], RUNS[c], PLAN, ["CP-2E"], sha_map(c)
+        )
+        for c in LITERALS
+    }
     cases = {}
     for c, lit in LITERALS.items():
         d = derive(inputs_of(lit))
@@ -1466,13 +2416,27 @@ def main():
         inherited = [t for t in cp0[c]["limitations"] if t not in own]
         cases[c] = {
             "run": run_of(c),
-            "pack_sources": [{"source_id": "identity", "name": NAMES["identity"], "sha256": ID_SHA, "status": "ready"},
-                             {"source_id": "financial", "name": NAMES["financial"], "sha256": FIN_SHA[c], "status": "ready",
-                              "pages": list(PAGES_OF[c])}],
+            "pack_sources": [
+                {
+                    "source_id": "identity",
+                    "name": NAMES["identity"],
+                    "sha256": ID_SHA,
+                    "status": "ready",
+                },
+                {
+                    "source_id": "financial",
+                    "name": NAMES["financial"],
+                    "sha256": FIN_SHA[c],
+                    "status": "ready",
+                    "pages": list(PAGES_OF[c]),
+                },
+            ],
             "status": "restricted",
             "derived": stored_all(d),
             "missing_not_zero": [f["fact_id"] for f in by_id.values() if f["status"] == "missing"],
-            "not_applicable": [f["fact_id"] for f in by_id.values() if f["status"] == "not_applicable"],
+            "not_applicable": [
+                f["fact_id"] for f in by_id.values() if f["status"] == "not_applicable"
+            ],
             "tables": tables,
             "claims": claims,
             "claim_literal_text": scan,
@@ -1488,16 +2452,26 @@ def main():
         }
     pos = cases["positive"]["derived"]
     assert pos["floating"]["amount"] == "50" and pos["floating_share"]["amount"] == "1"
-    assert pos["cov_base"]["amount"] == "6" and pos["lev_base"]["amount"].startswith("1.666666666666666666666666666666666666")
+    assert pos["cov_base"]["amount"] == "6" and pos["lev_base"]["amount"].startswith(
+        "1.666666666666666666666666666666666666"
+    )
     assert [r["gross"]["amount"] for r in pos["rate"]] == ["0.5", "1"]
     assert pos["rate"][0]["cov_after"]["amount"].startswith("5.4545454545454545454545454545454545")
     assert pos["rate"][1]["cov_after"]["amount"] == "5"
-    assert pos["rate"][0]["fcf_after"]["amount"] == "8.5" and pos["rate"][1]["fcf_after"]["amount"] == "8"
-    assert pos["rate"][0]["net"]["state"] == "missing" and pos["fx"][0]["ebitda_change"]["state"] == "missing"
+    assert (
+        pos["rate"][0]["fcf_after"]["amount"] == "8.5"
+        and pos["rate"][1]["fcf_after"]["amount"] == "8"
+    )
+    assert (
+        pos["rate"][0]["net"]["state"] == "missing"
+        and pos["fx"][0]["ebitda_change"]["state"] == "missing"
+    )
     assert pos["foreign_debt"] == {"state": "known", "amount": "0"}
     gap = cases["gap_no_facility_schedule"]["derived"]
     assert gap["floating"]["state"] == "missing" and gap["cov_base"]["amount"] == "6"
-    assert gap["rate"][0]["gross"]["state"] == "missing" and gap["foreign_debt"]["state"] == "missing"
+    assert (
+        gap["rate"][0]["gross"]["state"] == "missing" and gap["foreign_debt"]["state"] == "missing"
+    )
 
     # LEAD ruling 1: the positive operands equal the frozen CP-1 values for the same items (assertion only; no edge,
     # no runtime read). Sources: cases/financial/manifest.json (FY2025 observations; Q4 twelve-month derived units)
@@ -1509,23 +2483,45 @@ def main():
     assert row_decimal(ex_["fcf"]["value_text"]) == D(ltm["fcf"]) == D("9")
     assert row_decimal(ex_["total_debt"]["value_text"]) == D(ltm["total_debt"]) == D("50")
     cp1r = S1E["CP-1"]["ratios"]
-    assert cp1r["interest_coverage_reported"][1:] == ["30/5", "x", "6.00x"] and cp1r["total_leverage_reported"][1:] == ["50/30", "x", "1.67x"]
-    assert D(pos["cov_base"]["amount"]) == D(30) / D(5) and D(pos["lev_base"]["amount"]) == with_ctx(lambda: D(50) / D(30))
+    assert cp1r["interest_coverage_reported"][1:] == ["30/5", "x", "6.00x"] and cp1r[
+        "total_leverage_reported"
+    ][1:] == ["50/30", "x", "1.67x"]
+    assert D(pos["cov_base"]["amount"]) == D(30) / D(5) and D(
+        pos["lev_base"]["amount"]
+    ) == with_ctx(lambda: D(50) / D(30))
     assert show(D(pos["cov_base"]["amount"]), "multiple") == cp1r["interest_coverage_reported"][3]
     assert show(D(pos["lev_base"]["amount"]), "multiple") == cp1r["total_leverage_reported"][3]
     CP1_CROSS_CHECK = {
         "rule": "assertion only (LEAD ruling 1): no CP-1 edge, no runtime read; the two modules cannot disagree on the frozen pack",
         "operands": {
-            "ebitda": {"cp2e": "30.0", "frozen": "cases/financial/manifest.json#fy2025_observations.ebitda = 30.0"},
-            "cash_interest_paid": {"cp2e": "5.00", "frozen": "cases/financial/manifest.json#fy2025_observations.cash_interest_paid = 5.00"},
-            "fcf": {"cp2e": "9.00", "frozen": "cases/financial/manifest.json#q4_ltm_derived_source_units.fcf = 9",
-                    "basis": "twelve months to Q4 2025 equals FY 2025 in the frozen pack (metric_coordinate_rule)"},
-            "total_debt": {"cp2e": "50.00", "frozen": "cases/financial/manifest.json#q4_ltm_derived_source_units.total_debt = 50",
-                           "basis": "balance at 2025-12-31, equal to the Q4 twelve-month value (metric_coordinate_rule)"},
+            "ebitda": {
+                "cp2e": "30.0",
+                "frozen": "cases/financial/manifest.json#fy2025_observations.ebitda = 30.0",
+            },
+            "cash_interest_paid": {
+                "cp2e": "5.00",
+                "frozen": "cases/financial/manifest.json#fy2025_observations.cash_interest_paid = 5.00",
+            },
+            "fcf": {
+                "cp2e": "9.00",
+                "frozen": "cases/financial/manifest.json#q4_ltm_derived_source_units.fcf = 9",
+                "basis": "twelve months to Q4 2025 equals FY 2025 in the frozen pack (metric_coordinate_rule)",
+            },
+            "total_debt": {
+                "cp2e": "50.00",
+                "frozen": "cases/financial/manifest.json#q4_ltm_derived_source_units.total_debt = 50",
+                "basis": "balance at 2025-12-31, equal to the Q4 twelve-month value (metric_coordinate_rule)",
+            },
         },
         "ratios": {
-            "T2F.2.r03.value": {"cp2e": "6.00x", "cp1": "cases/snapshot/expected.json#CP-1.ratios.interest_coverage_reported = 30/5 = 6.00x"},
-            "T2F.2.r04.value": {"cp2e": "1.67x", "cp1": "cases/snapshot/expected.json#CP-1.ratios.total_leverage_reported = 50/30 = 1.67x"},
+            "T2F.2.r03.value": {
+                "cp2e": "6.00x",
+                "cp1": "cases/snapshot/expected.json#CP-1.ratios.interest_coverage_reported = 30/5 = 6.00x",
+            },
+            "T2F.2.r04.value": {
+                "cp2e": "1.67x",
+                "cp1": "cases/snapshot/expected.json#CP-1.ratios.total_leverage_reported = 50/30 = 1.67x",
+            },
         },
         "no_frozen_cp1_head_file": "no CP-1 head file is frozen; the pinned S1 oracle is the CP-1 reference",
     }
@@ -1534,14 +2530,34 @@ def main():
     # T2F.1-6 to the evidence rail as bindings/cp5.py does for its non-limitation tables.
     LIMITATION_TABLES = ("T2F.7", "T2F.9")
     TABLE_TITLES = {t["table_id"]: t["title"] for t in cases["positive"]["tables"]}
-    BINDINGS = [{"table_id": tid, "block_id": "limitations" if tid in LIMITATION_TABLES else "evidence",
-                 "cell_slot": "cp2e-" + tid.lower().replace(".", "-"), "unit_class": "text", "label": TABLE_TITLES[tid]}
-                for tid in (f"T2F.{i}" for i in range(1, 10))]
-    for c in cases:
-        cases[c]["module_tables"] = [
-            {"table_id": t["table_id"], "title": t["title"], "row_header": t["row_header"], "columns": t["columns"],
-             "rows": [{"row_id": r["row_id"], "label": r["label"], "fact_ids": [f["fact_id"] for f in r["facts"]]} for r in t["rows"]]}
-            for t in cases[c]["tables"]]
+    BINDINGS = [
+        {
+            "table_id": tid,
+            "block_id": "limitations" if tid in LIMITATION_TABLES else "evidence",
+            "cell_slot": "cp2e-" + tid.lower().replace(".", "-"),
+            "unit_class": "text",
+            "label": TABLE_TITLES[tid],
+        }
+        for tid in (f"T2F.{i}" for i in range(1, 10))
+    ]
+    for case in cases.values():
+        case["module_tables"] = [
+            {
+                "table_id": t["table_id"],
+                "title": t["title"],
+                "row_header": t["row_header"],
+                "columns": t["columns"],
+                "rows": [
+                    {
+                        "row_id": r["row_id"],
+                        "label": r["label"],
+                        "fact_ids": [f["fact_id"] for f in r["facts"]],
+                    }
+                    for r in t["rows"]
+                ],
+            }
+            for t in case["tables"]
+        ]
 
     manifest = {
         "schema_version": "cp2e-owner-cases/1",
@@ -1549,16 +2565,42 @@ def main():
         "status": "DRAFT by owner-preparation task cp2e-owner, 2026-10-28; not executed",
         "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
         "pins": {**PINS},
-        "reuse": {"identity": "cases/financial/manifest.json source identity, bytes unchanged",
-                  "financial": "cases/financial/manifest.json source financial, bytes unchanged (positive case)",
-                  "financial_gap_variant": "pages page:1 to page:4 of the same source, bytes unchanged; page:5 (the facility schedule) dropped; source sha256 recomputed by the pack rule (gap case only)"},
+        "reuse": {
+            "identity": "cases/financial/manifest.json source identity, bytes unchanged",
+            "financial": "cases/financial/manifest.json source financial, bytes unchanged (positive case)",
+            "financial_gap_variant": "pages page:1 to page:4 of the same source, bytes unchanged; page:5 (the facility schedule) dropped; source sha256 recomputed by the pack rule (gap case only)",
+        },
         "no_new_source": "No synthetic source is added. The frozen financial source states the currency (USD), no FX cash movements, no currency translation, one floating-rate SOFR term loan (spread 0, floor 0 basis points) and the FY 2025 EBITDA, cash interest and free cash flow; it states no reference rate level, no revenue or earnings split by currency and no hedging instrument, which the oracle shows as missing, never 0",
-        "run": {"requested_modules": ["CP-2E"], "plan_order": PLAN, "live_consumers_of_cp0": ["CP-2E"], "pathway": "credit_snapshot",
-                "edges": {"required": CAT["CP-2E"]["required"], "optional": CAT["CP-2E"]["optional"], "aliases": CAT["CP-2E"]["aliases"]}},
-        "step_scope": {"step": "macro_fx", "sources": ["financial"], "why": "every quote is a financial-source page; the identity source adds nothing the step cites"},
-        "cases": [{"case_id": c, "run": run_of(c), "pack_sources": cases[c]["pack_sources"], "submission": f"submissions.json#{c}"}
-                  for c in LITERALS],
-        "table_ids": {"CP-2E": CP2E_TABLES, "used": [f"T2F.{i}" for i in range(1, 10)], "unused": [f"T2G.{i}" for i in range(1, 9)]},
+        "run": {
+            "requested_modules": ["CP-2E"],
+            "plan_order": PLAN,
+            "live_consumers_of_cp0": ["CP-2E"],
+            "pathway": "credit_snapshot",
+            "edges": {
+                "required": CAT["CP-2E"]["required"],
+                "optional": CAT["CP-2E"]["optional"],
+                "aliases": CAT["CP-2E"]["aliases"],
+            },
+        },
+        "step_scope": {
+            "step": "macro_fx",
+            "sources": ["financial"],
+            "why": "every quote is a financial-source page; the identity source adds nothing the step cites",
+        },
+        "cases": [
+            {
+                "case_id": c,
+                "run": run_of(c),
+                "pack_sources": cases[c]["pack_sources"],
+                "submission": f"submissions.json#{c}",
+            }
+            for c in LITERALS
+        ],
+        "table_ids": {
+            "CP-2E": CP2E_TABLES,
+            "used": [f"T2F.{i}" for i in range(1, 10)],
+            "unused": [f"T2G.{i}" for i in range(1, 9)],
+        },
     }
     submissions = {
         "schema_version": "cp2e-owner-submissions/1",
@@ -1588,7 +2630,7 @@ def main():
             "rate_shock_gross": "floating debt x shock_bp / 10000 (annual, before hedges); computed only when the floor is quoted as zero (the reference rate level is in no source, so an upward move by k passes in full); a floor above zero or not stated makes it missing; a fixed-rate facility makes it a known zero; downward shocks are refused by the validator",
             "rate_shock_net": "gross x (1 - hedge ratio); missing without a hedge ratio",
             "interest_after": "cash interest paid + gross increase",
-            "coverage": "EBITDA / cash interest; EBITDA / interest after the shock; change = after - before; a zero or negative divisor is not_applicable (a negative one reads \"... is negative\"), never infinity or 0",
+            "coverage": 'EBITDA / cash interest; EBITDA / interest after the shock; change = after - before; a zero or negative divisor is not_applicable (a negative one reads "... is negative"), never infinity or 0',
             "fcf_after": "levered free cash flow - gross increase (no tax shield, no repricing date)",
             "share_of_ebitda": "gross increase / EBITDA; EBITDA zero is not_applicable",
             "leverage": "total debt / EBITDA",
@@ -1601,15 +2643,21 @@ def main():
         "table_id_check": {
             "registered_for_CP-2E": CP2E_TABLES,
             "occurs_in_other_module_table_ids": [],
-            "used": "T2F.1 to T2F.9 (the alias CP-2F depth)", "unused": "T2G.1 to T2G.8 stay registered and unproduced (open question in the lease)",
+            "used": "T2F.1 to T2F.9 (the alias CP-2F depth)",
+            "unused": "T2G.1 to T2G.8 stay registered and unproduced (open question in the lease)",
         },
         "cp1_cross_check": CP1_CROSS_CHECK,
         "cp0": cp0,
         "cases": cases,
         "fixtures": FIXTURES,
         "refusals": [{"id": m["id"], "issue": m["issue"]} for m in MUT_LIST],
-        "hand_built_page_refusals": [{"id": BALANCE_ABOVE_DEBT["id"], "issue": BALANCE_ABOVE_DEBT["issue"],
-                                      "rule": "outside the 27 frozen-page literals: a hand-built variant of page:5 (closing balance 55) with its own page and pack sha256, in submissions.json#hand_built_page_refusals"}],
+        "hand_built_page_refusals": [
+            {
+                "id": BALANCE_ABOVE_DEBT["id"],
+                "issue": BALANCE_ABOVE_DEBT["issue"],
+                "rule": "outside the 27 frozen-page literals: a hand-built variant of page:5 (closing balance 55) with its own page and pack sha256, in submissions.json#hand_built_page_refusals",
+            }
+        ],
         "tool_use_refusals": [{"id": t["id"], "issue": t["issue"]} for t in TOOL_USE],
         "tamper": {
             "case": "positive (closed run: CP-0 and CP-2E settled, receipt sealed)",
@@ -1632,8 +2680,11 @@ def main():
             "step_output_edit": "an edited CP-2E step output is caught by the store's own blob hash check, not by the probe's output comparison (recorded limitation)",
         },
         "negative_cases": {
-            "blocked_cp2e": {"attempt_0_issue": BLOCKED["attempt_0"]["issue"], "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
-                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)"},
+            "blocked_cp2e": {
+                "attempt_0_issue": BLOCKED["attempt_0"]["issue"],
+                "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
+                "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)",
+            },
             "begin_refused_cp0_blocked": "CP-0 blocked or stale refuses begin of CP-2E (edge_rule block, no attempt consumed); built on a clone with two invalid CP-0 attempts, no literal",
             "stale_binding": "a snapshot change between the last read_pages and the submit refuses stale_binding",
         },
@@ -1642,18 +2693,36 @@ def main():
             "gap_no_facility_schedule": "ok read_pages covers financial page:1 to page:4; at least one ok search_pack (rate_absence, debt_currency_absence, operating_fx_absence, hedge_absence)",
             "refused_calls": "extract_statements and read_inputs are refused not_permitted receipts for CP-2E",
         },
-        "plan": {"requested": ["CP-2E"], "plan": PLAN, "alias": "plan(('CP-2F',)) equals it", "edge_rule_CP-2E_CP-0": "block",
-                 "consumer_edges": {"CP-5": "restricted (fan-in, no core)", "CP-6": "restricted (optional; cp6_committee.py:112 never reads it)"}},
+        "plan": {
+            "requested": ["CP-2E"],
+            "plan": PLAN,
+            "alias": "plan(('CP-2F',)) equals it",
+            "edge_rule_CP-2E_CP-0": "block",
+            "consumer_edges": {
+                "CP-5": "restricted (fan-in, no core)",
+                "CP-6": "restricted (optional; cp6_committee.py:112 never reads it)",
+            },
+        },
         "consumption": {
             "status": "OPEN",
             "completion": "CP-2E is not complete until a consumer reads it (PLAN.md:8: actual downstream consumption); docs/MODULES.csv row CP-2E stays open on consumption; no test of this lease claims it",
             "reason": "No consumer core reads CP-2E: cp6_committee.py:112-114 states CP-2E is never read whatever the run binds, and the frozen CP-3 lease lists it among the CP-6 optional inputs that are not read; CP-5 counts only after a D3 scope lease and has no core",
             "reader_pinned": {
                 "function": "cp2e_reader(store, head)",
-                "exposes": ["head sha256", "status", "floating-rate debt", "per rate shock: added interest before hedges, coverage after, state of the after-hedge value",
-                            "foreign-currency debt", "hedge ratio or its absence", "own limitations"],
-                "positive_values": {"floating": pos["floating"], "first_shock_gross": pos["rate"][0]["gross"],
-                                    "first_shock_cov_after": pos["rate"][0]["cov_after"]},
+                "exposes": [
+                    "head sha256",
+                    "status",
+                    "floating-rate debt",
+                    "per rate shock: added interest before hedges, coverage after, state of the after-hedge value",
+                    "foreign-currency debt",
+                    "hedge ratio or its absence",
+                    "own limitations",
+                ],
+                "positive_values": {
+                    "floating": pos["floating"],
+                    "first_shock_gross": pos["rate"][0]["gross"],
+                    "first_shock_cov_after": pos["rate"][0]["cov_after"],
+                },
             },
         },
         "render": {
@@ -1668,7 +2737,8 @@ def main():
             },
             "bindings": BINDINGS,
             "binding_rule": "validate_bindings (bindings/__init__.py) needs every fact of a restricted module bound exactly once, so all of T2F.1 to T2F.9 are bound; T2F.1 to T2F.6 and T2F.8 to the evidence rail (as bindings/cp5.py binds its non-limitation tables), T2F.7 and T2F.9 to limitations; unit_class text; no Front Page block is composed",
-            "evidence rail": ["T2F.1", "T2F.2", "T2F.3", "T2F.4", "T2F.5", "T2F.6", "T2F.8"], "limitations rail": ["T2F.9", "T2F.7"],
+            "evidence rail": ["T2F.1", "T2F.2", "T2F.3", "T2F.4", "T2F.5", "T2F.6", "T2F.8"],
+            "limitations rail": ["T2F.9", "T2F.7"],
             "slot_prefix": "cp2e-",
             "gap_cells": "shown '∅ G<n>' with n bound at run time",
         },
@@ -1680,8 +2750,14 @@ def main():
             "display spelling of parenthesised negative multiples and of the percent decimals override follows display.py as transcribed by cases/cpl10-owner, not a render",
         ],
     }
-    for name, obj in (("manifest.json", manifest), ("submissions.json", submissions), ("expected.json", expected)):
-        (OUT / name).write_text(json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=False) + "\n", encoding="utf-8")
+    for name, obj in (
+        ("manifest.json", manifest),
+        ("submissions.json", submissions),
+        ("expected.json", expected),
+    ):
+        (OUT / name).write_text(
+            json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=False) + "\n", encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":

@@ -45,19 +45,19 @@ PINS = {
     "cases/cp2e-owner/manifest.json": "76b3b31f6a46c1dbe40792bd19fbccdaf5bca67b32777fab6ea5b6bf3977fe21",
     "cases/cp2e-owner/submissions.json": "d0e5915d1148d7a895915b70e7c56d937759f4a6eddc0feff0c5e8e163a7a804",
     "cases/cp2e-owner/expected.json": "08a80e96cf23de2a5acbcc8f24ba2c713a1dc02152e3f5b99417d5ced3871592",
-    "cases/cp2e-owner/builder/build.py": "0a124ceebbe4a3a03de38a6c28ca79cd676efcd6ef9d1d40adb39627b86684b8",
+    "cases/cp2e-owner/builder/build.py": "3ceb58a4522aa6e781d28f588d48374a21e3d3456d1ae38563a84e69f3dfb908",
     "cases/cp3c-owner/manifest.json": "23f519682ca8caf7cf32a8357316f11ac945e7f717862293d553e7e3ed95c74b",
     "cases/cp3c-owner/submissions.json": "eff5c4fb64452a8aa40a646f58772e6eb55767ea18db9ff54f2f47183d6e2b11",
     "cases/cp3c-owner/expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
     "cases/cp3d-owner/manifest.json": "6fb18d629c9537b72be986c36f660c456768ed44ec25e98080950041d90fef84",
     "cases/cp3d-owner/submissions.json": "c4437879636ed0fe4a8624c71a640873b2c02df789ff9cd5cd05e3bc72bc0579",
     "cases/cp3d-owner/expected.json": "8e28b859d56ba51c3d299c0e35c584bbded6ed18a258dee44c217ae4f43da039",
-    "cases/cp3d-owner/builder/build.py": "44beb4e34f17746c76856a3ac067590a2cdc1db575fc49412a2a876023184b8c",
+    "cases/cp3d-owner/builder/build.py": "912f74399b4f8d3e6905bc5496eff74267a51d6f6bc20e38c97fa4feef18afae",
     "cases/cp4c-owner/manifest.json": "1c133a62f34f8fd5e28f451168820fea3a28f1bf49ce0ef2c835a8dc89110fc5",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
-    "cases/cp4c-owner/builder/build.py": "30d31a9f443a957a2ef299256c382c48d464082188863d239c85359578624616",
-    "cases/cp3c-owner/builder/build.py": "f3accd8727104a8e94300daf224a503b4a64b35bb652634fc90922e8cc60cd3a",
+    "cases/cp4c-owner/builder/build.py": "4c8b07a43d67aa2386355a42135af2a68800106cb208f804e556dd65a7dd21fc",
+    "cases/cp3c-owner/builder/build.py": "e6047564c44f2d70e911d1934be8704b23e1e7359b200d1b40c0e7ef7a0cc314",
 }
 
 RAW = {}
@@ -1503,8 +1503,8 @@ def build_4c():
             # partly paid pro-rata rank by exact largest remainder. The two agree on every frozen case (reproduction check
             # below) and differ in the last digit elsewhere (CP-4C one_multiple), so the ruled recipe is used.
             (
-                'dist = div(ex(lambda: c["claim"] * paid), tot)',
-                'dist = div(ex(lambda: c["claim"] * paid), tot) if paid == tot else _alloc(mem, paid, tot)[c["id"]]',
+                'dist = div(ex(lambda c=c, paid=paid: c["claim"] * paid), tot)',
+                'dist = div(ex(lambda c=c, paid=paid: c["claim"] * paid), tot) if paid == tot else _alloc(mem, paid, tot)[c["id"]]',
             ),
         ),
         inject={"_alloc": allocate_pro_rata},

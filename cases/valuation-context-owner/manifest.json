@@ -374,7 +374,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "60cc6c5a912715163eb40a5b78e310155bf8821d954116c4b1f9aabb03cd176d",
+    "sha256": "50e4e54697b3d8f59105959be0067911005db4a81c9485e6d395a70601e5c4f8",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {

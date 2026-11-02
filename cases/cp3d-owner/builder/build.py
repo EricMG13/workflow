@@ -69,7 +69,10 @@ ISSUER_ID = FIN["run"]["issuer_id"]
 AS_OF = FIN["run"]["as_of"]
 SYNTH = "Synthetic case; not real issuer qualification"
 LIMIT_FIN = S1M["financial_pack_limitation"]["text"]
-assert LIMIT_FIN == "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+assert (
+    LIMIT_FIN
+    == "Unaudited without auditor; borrower, guarantor and restricted perimeters unavailable."
+)
 
 # --- sources (bytes reused, hash-checked) --------------------------------------------------------
 fin_src = {s["source_id"]: s for s in FIN["sources"]}
@@ -77,7 +80,9 @@ for _sid, _s in fin_src.items():
     assert page_sha([p["text"] for p in _s["pages"]]) == _s["sha256"], _sid
 _mk = json.loads((ROOT / MARKET_FILE).read_text(encoding="utf-8"))["market_source"]
 MARKET_PAGES = [(p["locator"], p["text"]) for p in _mk["pages"]]
-assert page_sha([t for _, t in MARKET_PAGES]) == MARKET_SHA, "market source bytes differ from the pin"
+assert page_sha([t for _, t in MARKET_PAGES]) == MARKET_SHA, (
+    "market source bytes differ from the pin"
+)
 MARKET_NAME = _mk["name"]
 assert MARKET_NAME == "Third-party loan market quotation sheet" and _mk["status"] == "ready"
 BUS = S1M["business_source"]  # used only by the CP-0 transcription self-check against S1
@@ -126,7 +131,9 @@ Q_MARGIN = "spread 0 basis points"
 Q_SOFR = "SOFR reference rate"
 Q_AMORT = "Mandatory annual amortisation is 0"
 Q_FIN_MATURITY = "final maturity is December 31, 2029"
-Q_FIN_INSTRUMENT = "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+Q_FIN_INSTRUMENT = (
+    "There is exactly one debt facility: Northbridge Term Loan, facility_id term-loan."
+)
 Q_ONE_DEALER = "The quotation comes from one dealer."
 Q_NO_TRADE = "No trade in the instrument was reported in the 30 days to January 9, 2026."
 Q_TALK_NOTE = "This is talk and not a quotation or a trade."
@@ -150,9 +157,26 @@ def with_ctx(fn):
         return fn()
 
 
-MONTHS = {m: i for i, m in enumerate(
-    ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-     "November", "December"], 1)}
+MONTHS = {
+    m: i
+    for i, m in enumerate(
+        [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ],
+        1,
+    )
+}
 DATE_RE = re.compile(r"^(" + "|".join(MONTHS) + r") ([1-9]|[12][0-9]|3[01]), ((?:19|20)[0-9]{2})$")
 MON_SHORT = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
@@ -177,8 +201,17 @@ NUM_RE = re.compile(r"^[0-9]{1,3}(?:\.[0-9]{1,4})?$")
 def token_once(value_text, quote):
     """value_text occurs exactly once in the quote as a whole numeric token (round 13 item 8: a comma or a comma and
     one space joins a digit on either side, so `31, 2029` is one run)."""
-    return len(re.findall(r"(?<![0-9.])(?<![0-9],)(?<![0-9], )" + re.escape(value_text)
-                          + r"(?![0-9]|\.[0-9]|,[0-9]|, [0-9])", quote)) == 1
+    return (
+        len(
+            re.findall(
+                r"(?<![0-9.])(?<![0-9],)(?<![0-9], )"
+                + re.escape(value_text)
+                + r"(?![0-9]|\.[0-9]|,[0-9]|, [0-9])",
+                quote,
+            )
+        )
+        == 1
+    )
 
 
 def spell(amount, unit, decimals):
@@ -187,7 +220,9 @@ def spell(amount, unit, decimals):
         places = decimals if decimals is not None else 1
         scaled = amount * 100
         body = f"{qz(scaled, places):,.{places}f}"
-        return ("(" + body.lstrip("-") + ")" if scaled < 0 and qz(scaled, places) < 0 else body) + "%"
+        return (
+            "(" + body.lstrip("-") + ")" if scaled < 0 and qz(scaled, places) < 0 else body
+        ) + "%"
     suffix = {"basis_points": " bp", "years": " years", "days": " days"}[unit]
     return format(amount, "f") + suffix
 
@@ -196,9 +231,19 @@ def spell(amount, unit, decimals):
 KINDS = ("bid", "offer", "indicative_talk")
 ASPECTS = ("quote_quality", "trading_activity", "talk_versus_quote", "rating")
 CATEGORIES = ("Documentary Fact", "Analyst Interpretation", "Insufficient Information")
-PROHIBITED = ("buy", "sell", "overweight", "underweight", "recommend", "cheap", "undervalued",
-              "overvalued", "outperform", "attractive")
-PROHIBITED_RE = re.compile(r"\b(?:" + "|".join(PROHIBITED) + r")\b", re.I)
+PROHIBITED = (
+    "buy",
+    "sell",
+    "overweight",
+    "underweight",
+    "recommend",
+    "cheap",
+    "undervalued",
+    "overvalued",
+    "outperform",
+    "attractive",
+)
+PROHIBITED_RE = re.compile(r"\b(?:" + "|".join(PROHIBITED) + r")\b", re.IGNORECASE)
 THIRD_PARTY = {"market"}  # CP-0 T3 authority third_party sources of the run's CP-0 literal
 
 
@@ -247,11 +292,19 @@ def check_submission(sub, pack_ids):
             continue
         label = rf"\b(?:bid|offer)\s+{re.escape(o['level_text'])}(?![0-9])"
         if o["kind"] == "indicative_talk":
-            if re.search(label, norm(o["quote"]), re.I):
-                issues.append(f"{p}: indicative_talk level_text {o['level_text']} is a bid or offer level in the quote")
+            if re.search(label, norm(o["quote"]), re.IGNORECASE):
+                issues.append(
+                    f"{p}: indicative_talk level_text {o['level_text']} is a bid or offer level in the quote"
+                )
                 continue
-        elif not re.search(rf"\b{o['kind']}\s+{re.escape(o['level_text'])}(?![0-9])", norm(o["quote"]), re.I):
-            issues.append(f"{p}: {o['kind']} level_text {o['level_text']} is not labelled {o['kind']} in the quote")
+        elif not re.search(
+            rf"\b{o['kind']}\s+{re.escape(o['level_text'])}(?![0-9])",
+            norm(o["quote"]),
+            re.IGNORECASE,
+        ):
+            issues.append(
+                f"{p}: {o['kind']} level_text {o['level_text']} is not labelled {o['kind']} in the quote"
+            )
             continue
         lv = Decimal(o["level_text"])
         if not (0 < lv <= 200):
@@ -278,37 +331,45 @@ def check_submission(sub, pack_ids):
             digit_free(f"{key}.follow_up", a["follow_up"], issues)
     inst = sub["instrument"]
     digit_free("instrument.name", inst["name"], issues)
-    if on_page(inst["quote"], "instrument.quote", issues, pack_ids) and inst["name"] not in inst["quote"]["quote"]:
+    if (
+        on_page(inst["quote"], "instrument.quote", issues, pack_ids)
+        and inst["name"] not in inst["quote"]["quote"]
+    ):
         issues.append("instrument: name does not occur in the quote")
     t = sub["terms"]
     mat = t["maturity"]
     qdate = dates.get("bid") or dates.get("offer")
     if bool(mat.get("date_text")) == bool(mat.get("absence")):
         issues.append("maturity: exactly one of date_text and absence is required")
-    elif mat.get("date_text"):
-        if on_page(mat["quote"], "maturity", issues, pack_ids):
-            md = parse_date(mat["date_text"])
-            if md is None or mat["date_text"] not in mat["quote"]["quote"]:
-                issues.append(f"maturity: date_text {mat['date_text']} does not occur in the quote")
-            elif qdate is not None and md <= qdate:
-                issues.append("maturity: date is not after the quotation date")
+    elif mat.get("date_text") and on_page(mat["quote"], "maturity", issues, pack_ids):
+        md = parse_date(mat["date_text"])
+        if md is None or mat["date_text"] not in mat["quote"]["quote"]:
+            issues.append(f"maturity: date_text {mat['date_text']} does not occur in the quote")
+        elif qdate is not None and md <= qdate:
+            issues.append("maturity: date is not after the quotation date")
     for key, label in (("margin", "bps_text"), ("amortisation", "value_text")):
         term = t[key]
         if bool(term.get(label)) == bool(term.get("absence")):
             issues.append(f"{key}: exactly one of {label} and absence is required")
-        elif term.get(label):
-            if on_page(term["quote"], key, issues, pack_ids):
-                if not NUM_RE.match(term[label]) or not token_once(term[label], term["quote"]["quote"]):
-                    issues.append(f"{key}: {label} {term[label]} does not occur in the quote")
-                elif key == "amortisation" and Decimal(term[label]) != 0:
-                    issues.append("amortisation: the simple margin convention requires zero amortisation")
+        elif term.get(label) and on_page(term["quote"], key, issues, pack_ids):
+            if not NUM_RE.match(term[label]) or not token_once(term[label], term["quote"]["quote"]):
+                issues.append(f"{key}: {label} {term[label]} does not occur in the quote")
+            elif key == "amortisation" and Decimal(term[label]) != 0:
+                issues.append(
+                    "amortisation: the simple margin convention requires zero amortisation"
+                )
     rr = t["reference_rate"]
     digit_free("reference_rate.name", rr["name"], issues)
-    if on_page(rr["quote"], "reference_rate.quote", issues, pack_ids) and rr["name"] not in rr["quote"]["quote"]:
+    if (
+        on_page(rr["quote"], "reference_rate.quote", issues, pack_ids)
+        and rr["name"] not in rr["quote"]["quote"]
+    ):
         issues.append("reference_rate: name does not occur in the quote")
     if bool(rr.get("level")) == bool(rr.get("absence")):
         issues.append("reference_rate: exactly one of level and absence is required")
-    elif rr.get("level") and on_page(rr["level"]["quote"], "reference_rate.level.quote", issues, pack_ids):
+    elif rr.get("level") and on_page(
+        rr["level"]["quote"], "reference_rate.level.quote", issues, pack_ids
+    ):
         pt = rr["level"]["percent_text"]
         if not NUM_RE.match(pt) or not token_once(pt, rr["level"]["quote"]["quote"]):
             issues.append(f"reference_rate: level percent_text {pt} does not occur in the quote")
@@ -321,7 +382,7 @@ def check_submission(sub, pack_ids):
     elif rec:
         digit_free("recovery.rationale", rec["rationale"], issues)
         ok = re.match(r"^[0-9]{1,3}(?:\.[0-9]{1,2})?$", rec["percent_text"])
-        if not ok or not (Decimal("0") <= Decimal(rec["percent_text"]) < 100):
+        if not ok or not (Decimal(0) <= Decimal(rec["percent_text"]) < 100):
             issues.append("recovery: percent must be at least 0 and below 100")
     aspects = [x["aspect"] for x in sub["technicals"]]
     for i, x in enumerate(sub["technicals"]):
@@ -336,7 +397,9 @@ def check_submission(sub, pack_ids):
         if PROHIBITED_RE.search(x["text"]):
             issues.append(f"{p}.text: text carries a prohibited conclusion")
         if (x["category"] == "Insufficient Information") != bool(x.get("limitation")):
-            issues.append(f"{p}: limitation is required for Insufficient Information and only for it")
+            issues.append(
+                f"{p}: limitation is required for Insufficient Information and only for it"
+            )
         if x["category"] == "Documentary Fact" and not x["basis"]:
             issues.append(f"{p}: a Documentary Fact needs at least one basis quote")
         for j, b in enumerate(x["basis"]):
@@ -392,26 +455,43 @@ def tool_rule_issues(sub, read, searched):
     """The core RULES(text, seen) result in ToolRules order: the absence rule, then unread citations in the
     product's sorted (source_id, locator) order (live/tools.py unread_citation_issues)."""
     out = [ABSENCE_ISSUE] if absence_paths(sub) and not searched else []
-    out += [f"{UNREAD_ISSUE}: {s} {loc}" for s, loc in sorted(cited_pages(sub)) if (s, loc) not in read]
+    out += [
+        f"{UNREAD_ISSUE}: {s} {loc}" for s, loc in sorted(cited_pages(sub)) if (s, loc) not in read
+    ]
     return out
 
 
 # --- literal submissions -----------------------------------------------------------------------------
 def technicals_positive():
     return [
-        {"aspect": "quote_quality", "category": "Analyst Interpretation",
-         "text": "The observed level is one dealer quotation, so it indicates the market and is not a consensus level.",
-         "basis": [q("market", "page:1", Q_ONE_DEALER)], "limitation": None},
-        {"aspect": "trading_activity", "category": "Documentary Fact",
-         "text": "The sheet reports no trade in the instrument in the period to the quotation date.",
-         "basis": [q("market", "page:1", Q_NO_TRADE)], "limitation": None},
-        {"aspect": "talk_versus_quote", "category": "Analyst Interpretation",
-         "text": "Dealer talk is shown beside the quotation for context only; it is not a quotation or a trade and no calculation uses it.",
-         "basis": [q("market", "page:2", Q_TALK_NOTE)], "limitation": None},
-        {"aspect": "rating", "category": "Insufficient Information",
-         "text": "No rating is available to compare with the market level.",
-         "basis": [q("market", "page:2", Q_NO_RATING)],
-         "limitation": "No rating agency has assigned a rating to the instrument"},
+        {
+            "aspect": "quote_quality",
+            "category": "Analyst Interpretation",
+            "text": "The observed level is one dealer quotation, so it indicates the market and is not a consensus level.",
+            "basis": [q("market", "page:1", Q_ONE_DEALER)],
+            "limitation": None,
+        },
+        {
+            "aspect": "trading_activity",
+            "category": "Documentary Fact",
+            "text": "The sheet reports no trade in the instrument in the period to the quotation date.",
+            "basis": [q("market", "page:1", Q_NO_TRADE)],
+            "limitation": None,
+        },
+        {
+            "aspect": "talk_versus_quote",
+            "category": "Analyst Interpretation",
+            "text": "Dealer talk is shown beside the quotation for context only; it is not a quotation or a trade and no calculation uses it.",
+            "basis": [q("market", "page:2", Q_TALK_NOTE)],
+            "limitation": None,
+        },
+        {
+            "aspect": "rating",
+            "category": "Insufficient Information",
+            "text": "No rating is available to compare with the market level.",
+            "basis": [q("market", "page:2", Q_NO_RATING)],
+            "limitation": "No rating agency has assigned a rating to the instrument",
+        },
     ]
 
 
@@ -419,7 +499,11 @@ def base_terms(maturity_ref):
     return {
         "maturity": {"quote": maturity_ref[0], "date_text": "December 31, 2029", "absence": None},
         "margin": {"quote": q("financial", "page:5", Q_MARGIN), "bps_text": "0", "absence": None},
-        "amortisation": {"quote": q("financial", "page:5", Q_AMORT), "value_text": "0", "absence": None},
+        "amortisation": {
+            "quote": q("financial", "page:5", Q_AMORT),
+            "value_text": "0",
+            "absence": None,
+        },
         "reference_rate": {
             "name": "SOFR",
             "quote": q("financial", "page:5", Q_SOFR),
@@ -445,11 +529,29 @@ SUMMARY_POS = (
 def literal_positive():
     mat = q("market", "page:1", Q_INSTRUMENT)
     return {
-        "instrument": {"name": "Northbridge Term Loan", "quote": q("market", "page:1", Q_INSTRUMENT)},
+        "instrument": {
+            "name": "Northbridge Term Loan",
+            "quote": q("market", "page:1", Q_INSTRUMENT),
+        },
         "observations": [
-            {"kind": "bid", **q("market", "page:1", Q_BID), "level_text": "98.50", "as_of_text": "January 9, 2026"},
-            {"kind": "offer", **q("market", "page:1", Q_BID), "level_text": "99.25", "as_of_text": "January 9, 2026"},
-            {"kind": "indicative_talk", **q("market", "page:2", Q_TALK), "level_text": "99.75", "as_of_text": None},
+            {
+                "kind": "bid",
+                **q("market", "page:1", Q_BID),
+                "level_text": "98.50",
+                "as_of_text": "January 9, 2026",
+            },
+            {
+                "kind": "offer",
+                **q("market", "page:1", Q_BID),
+                "level_text": "99.25",
+                "as_of_text": "January 9, 2026",
+            },
+            {
+                "kind": "indicative_talk",
+                **q("market", "page:2", Q_TALK),
+                "level_text": "99.75",
+                "as_of_text": None,
+            },
         ],
         "market_absence": None,
         "terms": base_terms([mat]),
@@ -473,7 +575,10 @@ def literal_gap_no_recovery():
 def literal_gap_no_market():
     fin_mat = q("financial", "page:5", Q_FIN_MATURITY)
     s = {
-        "instrument": {"name": "Northbridge Term Loan", "quote": q("financial", "page:5", Q_FIN_INSTRUMENT)},
+        "instrument": {
+            "name": "Northbridge Term Loan",
+            "quote": q("financial", "page:5", Q_FIN_INSTRUMENT),
+        },
         "observations": [],
         "market_absence": {
             "reason": "The pack holds no third-party market quotation source",
@@ -483,11 +588,17 @@ def literal_gap_no_market():
         "recovery": dict(RECOVERY),
         "recovery_absence": None,
         "technicals": [
-            {"aspect": "quote_quality", "category": "Insufficient Information",
-             "text": "No market level is available to assess.", "basis": [],
-             "limitation": "The pack holds no third-party market quotation source"},
+            {
+                "aspect": "quote_quality",
+                "category": "Insufficient Information",
+                "text": "No market level is available to assess.",
+                "basis": [],
+                "limitation": "The pack holds no third-party market quotation source",
+            },
         ],
-        "summary": {"text": "No market level is available, so the market-implied credit risk cannot be assessed from this pack."},
+        "summary": {
+            "text": "No market level is available, so the market-implied credit risk cannot be assessed from this pack."
+        },
     }
     s["terms"]["maturity"]["date_text"] = "December 31, 2029"
     return s
@@ -513,6 +624,7 @@ def derive(inp):
     """Pure Decimal composer over validated numeric inputs. inp keys: bid, offer, talk, asof, maturity,
     margin_bp, amort_zero (bool|None), recovery (fraction|None), ref_level (fraction|None).
     Returns exact (unrounded, 28 digits) intermediates and the quantised stored outputs."""
+
     def run():
         d = {"missing": []}
         bid, offer, talk = inp.get("bid"), inp.get("offer"), inp.get("talk")
@@ -533,7 +645,9 @@ def derive(inp):
         d["margin_bp"] = margin
         points = {"bid": bid, "mid": mid, "offer": offer}
         for name, p in points.items():
-            disc = (100 - p) / years * 100 if (p is not None and years is not None) else None  # bp per annum
+            disc = (
+                (100 - p) / years * 100 if (p is not None and years is not None) else None
+            )  # bp per annum
             d[f"disc_{name}"] = disc
             dm = margin + disc if (disc is not None and dm_ok) else None
             d[f"dm_{name}"] = dm
@@ -610,14 +724,25 @@ def trace(cites):
 
 PER_TERMS = "Facility terms in the financial source published 2026-01-10"
 PER_RUN = "Run as of 2026-01-10"
-_pub = re.search(r"Published ((?:" + "|".join(MONTHS) + r") [0-9]{1,2}, [0-9]{4})", PAGES["market"]["page:2"])
+_pub = re.search(
+    r"Published ((?:" + "|".join(MONTHS) + r") [0-9]{1,2}, [0-9]{4})", PAGES["market"]["page:2"]
+)
 assert _pub and parse_date(_pub.group(1)) == date(2026, 1, 10)
 PER_TALK = f"Commentary published {parse_date(_pub.group(1)).isoformat()}"
 
 
 def N(amount, unit, decimals, cites=(), vc="calculated", calc=None, formula=None, per=None):
-    return {"kind": "num", "per": per, "amount": amount, "unit": unit, "decimals": decimals, "cites": trace(cites),
-            "vc": vc, "calc": calc, "formula": formula}
+    return {
+        "kind": "num",
+        "per": per,
+        "amount": amount,
+        "unit": unit,
+        "decimals": decimals,
+        "cites": trace(cites),
+        "vc": vc,
+        "calc": calc,
+        "formula": formula,
+    }
 
 
 def T(text, cites=(), vc=None):
@@ -629,17 +754,42 @@ def G(reason, unit=None, status="missing", cites=()):
 
 
 def fact(tid, rid, field, label, c, per_q):
-    f = {"fact_id": f"{tid}.{rid}.{field}", "column": label, "period": None, "amount": None, "unit": None, "decimals": None,
-         "text": None, "shown": None, "status": "known", "cites": c["cites"], "value_class": c.get("vc"),
-         "calculation_id": None, "formula": None, "limitation": None}
+    f = {
+        "fact_id": f"{tid}.{rid}.{field}",
+        "column": label,
+        "period": None,
+        "amount": None,
+        "unit": None,
+        "decimals": None,
+        "text": None,
+        "shown": None,
+        "status": "known",
+        "cites": c["cites"],
+        "value_class": c.get("vc"),
+        "calculation_id": None,
+        "formula": None,
+        "limitation": None,
+    }
     if c["kind"] == "num":
-        f.update(amount=c["amount"], period=c["per"] or per_q, unit=c["unit"], decimals=c["decimals"], calculation_id=c["calc"],
-                 formula=c["formula"], shown=spell(Decimal(c["amount"]), c["unit"], c["decimals"]))
+        f.update(
+            amount=c["amount"],
+            period=c["per"] or per_q,
+            unit=c["unit"],
+            decimals=c["decimals"],
+            calculation_id=c["calc"],
+            formula=c["formula"],
+            shown=spell(Decimal(c["amount"]), c["unit"], c["decimals"]),
+        )
     elif c["kind"] == "text":
         f.update(text=c["text"], shown=c["text"])
     else:
-        f.update(unit=c["unit"], status=c["status"], limitation=c["reason"], value_class=None,
-                 shown="∅ G#" if c["status"] == "missing" else "∅ G# n.m.")
+        f.update(
+            unit=c["unit"],
+            status=c["status"],
+            limitation=c["reason"],
+            value_class=None,
+            shown="∅ G#" if c["status"] == "missing" else "∅ G# n.m.",
+        )
     return f
 
 
@@ -647,10 +797,20 @@ def table(tid, title, cols, rows, row_header="Item", per_q=PER_RUN):
     out = []
     for rid, label, cells in rows:
         assert len(cells) == len(cols), (tid, rid)
-        out.append({"row_id": rid, "label": label,
-                    "facts": [fact(tid, rid, fld, lab, c, per_q) for (fld, lab), c in zip(cols, cells)]})
-    return {"table_id": tid, "title": title, "row_header": row_header,
-            "columns": [{"field": f, "label": l} for f, l in cols], "rows": out}
+        out.append(
+            {
+                "row_id": rid,
+                "label": label,
+                "facts": [fact(tid, rid, fld, lab, c, per_q) for (fld, lab), c in zip(cols, cells)],
+            }
+        )
+    return {
+        "table_id": tid,
+        "title": title,
+        "row_header": row_header,
+        "columns": [{"field": f, "label": l} for f, l in cols],
+        "rows": out,
+    }
 
 
 def compose_case(case, sub, d):
@@ -676,15 +836,27 @@ def compose_case(case, sub, d):
     def lvl(kind, label):
         if kind in obs:
             o = obs[kind]
-            return N(s["talk" if kind == "indicative_talk" else kind], "decimal_fraction", 2, [o], vc="source",
-                     per=PER_TALK if kind == "indicative_talk" else None)
-        return G(NO_MKT if mk_absent else f"Not calculable: no {label} was submitted", "decimal_fraction")
+            return N(
+                s["talk" if kind == "indicative_talk" else kind],
+                "decimal_fraction",
+                2,
+                [o],
+                vc="source",
+                per=PER_TALK if kind == "indicative_talk" else None,
+            )
+        return G(
+            NO_MKT if mk_absent else f"Not calculable: no {label} was submitted", "decimal_fraction"
+        )
 
     def basis_of(kind):
         if kind not in obs:
             return G(NO_MKT if mk_absent else "Not stated: no observation submitted", None)
-        return T("Observed dealer quotation" if kind != "indicative_talk"
-                 else "Indicative talk; not a quotation or a trade", [obs[kind]])
+        return T(
+            "Observed dealer quotation"
+            if kind != "indicative_talk"
+            else "Indicative talk; not a quotation or a trade",
+            [obs[kind]],
+        )
 
     def asof_of(kind):
         o = obs.get(kind)
@@ -696,173 +868,505 @@ def compose_case(case, sub, d):
 
     def src_of(kind):
         o = obs.get(kind)
-        return G(NO_MKT if mk_absent else "Not stated: no observation submitted") if o is None else \
-            T(f"{NAMES[o['source_id']]}, {o['locator']}", [o])
+        return (
+            G(NO_MKT if mk_absent else "Not stated: no observation submitted")
+            if o is None
+            else T(f"{NAMES[o['source_id']]}, {o['locator']}", [o])
+        )
 
     tables = []
-    tables.append(tbl("T3E.1", "Market levels", [("level", "Level (% of par)"), ("as_of", "As of"),
-                                                   ("basis", "Basis"), ("source", "Source")], [
-        ("r01", "Dealer bid", [lvl("bid", "bid"), asof_of("bid"), basis_of("bid"), src_of("bid")]),
-        ("r02", "Dealer offer", [lvl("offer", "offer"), asof_of("offer"), basis_of("offer"), src_of("offer")]),
-        ("r03", "Indicative dealer talk", [lvl("indicative_talk", "talk"), asof_of("indicative_talk"),
-                                            basis_of("indicative_talk"), src_of("indicative_talk")]),
-    ], "Level"))
+    tables.append(
+        tbl(
+            "T3E.1",
+            "Market levels",
+            [
+                ("level", "Level (% of par)"),
+                ("as_of", "As of"),
+                ("basis", "Basis"),
+                ("source", "Source"),
+            ],
+            [
+                (
+                    "r01",
+                    "Dealer bid",
+                    [lvl("bid", "bid"), asof_of("bid"), basis_of("bid"), src_of("bid")],
+                ),
+                (
+                    "r02",
+                    "Dealer offer",
+                    [lvl("offer", "offer"), asof_of("offer"), basis_of("offer"), src_of("offer")],
+                ),
+                (
+                    "r03",
+                    "Indicative dealer talk",
+                    [
+                        lvl("indicative_talk", "talk"),
+                        asof_of("indicative_talk"),
+                        basis_of("indicative_talk"),
+                        src_of("indicative_talk"),
+                    ],
+                ),
+            ],
+            "Level",
+        )
+    )
 
     bo = c_obs["bid"] + c_obs["offer"]
     mid_cites = bo
 
     def calc_or_gap(val, unit, dec, cites, calc, formula, need, per=None):
-        return N(val, unit, dec, cites, calc=calc, formula=formula, per=per) if val is not None else G(need, unit)
+        return (
+            N(val, unit, dec, cites, calc=calc, formula=formula, per=per)
+            if val is not None
+            else G(need, unit)
+        )
 
     mat_cite = [sub["terms"]["maturity"]["quote"]] if sub["terms"]["maturity"].get("quote") else []
     cites_days = bo[:1] + mat_cite
     t2 = [
-        ("r01", "Mid of bid and offer", [calc_or_gap(s["mid"], "decimal_fraction", 3, mid_cites, "cp3d.mid",
-                                                     "(bid + offer) / 2", MID_NEEDS),
-                                         T("(bid + offer) / 2")]),
-        ("r02", "Bid-offer width", [calc_or_gap(s["width"], "decimal_fraction", 2, mid_cites, "cp3d.width",
-                                                "offer - bid", MID_NEEDS), T("offer - bid")]),
-        ("r03", "Discount to par at mid", [calc_or_gap(s["discount_mid_pts"], "decimal_fraction", 3, mid_cites,
-                                                       "cp3d.discount_mid", "par - mid", MID_NEEDS),
-                                           T("par - mid")]),
-        ("r04", "Indicative talk less mid (context only, not used in any calculation)",
-         [calc_or_gap(s["talk_less_mid_pts"], "decimal_fraction", 3, mid_cites + c_obs["indicative_talk"],
-                      "cp3d.talk_less_mid", "talk - mid", why("Not calculable: needs an indicative talk level and a mid"),
-                      per=f"{PER_TALK} and {per_q[0].lower()}{per_q[1:]}"),
-          T("talk - mid")]),
-        ("r05", "Days from quotation date to final maturity",
-         [calc_or_gap(s["days"], "days", None, cites_days, "cp3d.days", "maturity date - quotation date",
-                      CALC_NEEDS["years"]), T("Calendar days")]),
-        ("r06", "Years to final maturity",
-         [calc_or_gap(s["years"], "years", None, cites_days, "cp3d.years", "days / 365 (Act/365 Fixed, unrounded in later steps)",
-                      CALC_NEEDS["years"]), T("Act/365 Fixed; shown to two places, later steps use the unrounded value")]),
+        (
+            "r01",
+            "Mid of bid and offer",
+            [
+                calc_or_gap(
+                    s["mid"],
+                    "decimal_fraction",
+                    3,
+                    mid_cites,
+                    "cp3d.mid",
+                    "(bid + offer) / 2",
+                    MID_NEEDS,
+                ),
+                T("(bid + offer) / 2"),
+            ],
+        ),
+        (
+            "r02",
+            "Bid-offer width",
+            [
+                calc_or_gap(
+                    s["width"],
+                    "decimal_fraction",
+                    2,
+                    mid_cites,
+                    "cp3d.width",
+                    "offer - bid",
+                    MID_NEEDS,
+                ),
+                T("offer - bid"),
+            ],
+        ),
+        (
+            "r03",
+            "Discount to par at mid",
+            [
+                calc_or_gap(
+                    s["discount_mid_pts"],
+                    "decimal_fraction",
+                    3,
+                    mid_cites,
+                    "cp3d.discount_mid",
+                    "par - mid",
+                    MID_NEEDS,
+                ),
+                T("par - mid"),
+            ],
+        ),
+        (
+            "r04",
+            "Indicative talk less mid (context only, not used in any calculation)",
+            [
+                calc_or_gap(
+                    s["talk_less_mid_pts"],
+                    "decimal_fraction",
+                    3,
+                    mid_cites + c_obs["indicative_talk"],
+                    "cp3d.talk_less_mid",
+                    "talk - mid",
+                    why("Not calculable: needs an indicative talk level and a mid"),
+                    per=f"{PER_TALK} and {per_q[0].lower()}{per_q[1:]}",
+                ),
+                T("talk - mid"),
+            ],
+        ),
+        (
+            "r05",
+            "Days from quotation date to final maturity",
+            [
+                calc_or_gap(
+                    s["days"],
+                    "days",
+                    None,
+                    cites_days,
+                    "cp3d.days",
+                    "maturity date - quotation date",
+                    CALC_NEEDS["years"],
+                ),
+                T("Calendar days"),
+            ],
+        ),
+        (
+            "r06",
+            "Years to final maturity",
+            [
+                calc_or_gap(
+                    s["years"],
+                    "years",
+                    None,
+                    cites_days,
+                    "cp3d.years",
+                    "days / 365 (Act/365 Fixed, unrounded in later steps)",
+                    CALC_NEEDS["years"],
+                ),
+                T("Act/365 Fixed; shown to two places, later steps use the unrounded value"),
+            ],
+        ),
     ]
-    tables.append(tbl("T3E.2", "Price metrics", [("value", "Value"), ("convention", "Convention")], t2, "Metric"))
+    tables.append(
+        tbl(
+            "T3E.2",
+            "Price metrics",
+            [("value", "Value"), ("convention", "Convention")],
+            t2,
+            "Metric",
+        )
+    )
 
     mg = sub["terms"]["margin"]
     mg_cite = [mg["quote"]] if mg.get("quote") else []
     amort = sub["terms"]["amortisation"]
     am_cite = [amort["quote"]] if amort.get("quote") else []
-    cols3 = [("bid", "At bid"), ("mid", "At mid"), ("offer", "At offer"), ("convention", "Convention")]
+    cols3 = [
+        ("bid", "At bid"),
+        ("mid", "At mid"),
+        ("offer", "At offer"),
+        ("convention", "Convention"),
+    ]
     pt_cites = {"bid": c_obs["bid"], "mid": mid_cites, "offer": c_obs["offer"]}
-    PT_NEED = {"bid": why("Not calculable: no observed bid"), "mid": MID_NEEDS, "offer": why("Not calculable: no observed offer")}
-    DM_NEED = {n: (PT_NEED[n] if s[f"disc_{n}"] is None else
-                   why("Not calculable: needs a stated contractual margin and a stated zero amortisation"))
-               for n in ("bid", "mid", "offer")}
-    disc_row = [calc_or_gap(s[f"disc_{n}"], "basis_points", None, pt_cites[n] + cites_days[1:], f"cp3d.disc_{n}",
-                            "(par - price) / years", PT_NEED[n] if d["days"] is not None else CALC_NEEDS["years"])
-                for n in ("bid", "mid", "offer")] + [T("Redemption at par at final maturity")]
-    margin_cell = (N(s["margin_bp"], "basis_points", None, mg_cite, vc="source", per=PER_TERMS)
-                   if s["margin_bp"] is not None else G("Not stated: no contractual margin cited", "basis_points"))
+    PT_NEED = {
+        "bid": why("Not calculable: no observed bid"),
+        "mid": MID_NEEDS,
+        "offer": why("Not calculable: no observed offer"),
+    }
+    DM_NEED = {
+        n: (
+            PT_NEED[n]
+            if s[f"disc_{n}"] is None
+            else why(
+                "Not calculable: needs a stated contractual margin and a stated zero amortisation"
+            )
+        )
+        for n in ("bid", "mid", "offer")
+    }
+    disc_row = [
+        calc_or_gap(
+            s[f"disc_{n}"],
+            "basis_points",
+            None,
+            pt_cites[n] + cites_days[1:],
+            f"cp3d.disc_{n}",
+            "(par - price) / years",
+            PT_NEED[n] if d["days"] is not None else CALC_NEEDS["years"],
+        )
+        for n in ("bid", "mid", "offer")
+    ] + [T("Redemption at par at final maturity")]
+    margin_cell = (
+        N(s["margin_bp"], "basis_points", None, mg_cite, vc="source", per=PER_TERMS)
+        if s["margin_bp"] is not None
+        else G("Not stated: no contractual margin cited", "basis_points")
+    )
     margin_row = [margin_cell] * 3 + [T("Stated contractual spread over the reference rate")]
-    dm_row = [calc_or_gap(s[f"dm_{n}"], "basis_points", None, pt_cites[n] + mg_cite + am_cite + cites_days[1:],
-                          f"cp3d.dm_{n}", "contractual margin + annualised discount to par",
-                          DM_NEED[n] if d["days"] is not None else CALC_NEEDS["years"])
-              for n in ("bid", "mid", "offer")] + [T("Simple margin; no amortisation; quotation date as settlement")]
+    dm_row = [
+        calc_or_gap(
+            s[f"dm_{n}"],
+            "basis_points",
+            None,
+            pt_cites[n] + mg_cite + am_cite + cites_days[1:],
+            f"cp3d.dm_{n}",
+            "contractual margin + annualised discount to par",
+            DM_NEED[n] if d["days"] is not None else CALC_NEEDS["years"],
+        )
+        for n in ("bid", "mid", "offer")
+    ] + [T("Simple margin; no amortisation; quotation date as settlement")]
     rr = sub["terms"]["reference_rate"]
     RR_NEED = "Not calculable: no reference rate level in any source"
-    ref_cells = ([N(dstr(Decimal(rr["level"]["percent_text"]) / 100), "decimal_fraction", 2, [rr["level"]["quote"]],
-                    vc="source", per=PER_TERMS)] * 3 if rr.get("level") else [G(RR_NEED, "decimal_fraction")] * 3) + \
-        [T("Dated reference rate level or curve required")]
+    ref_cells = (
+        [
+            N(
+                dstr(Decimal(rr["level"]["percent_text"]) / 100),
+                "decimal_fraction",
+                2,
+                [rr["level"]["quote"]],
+                vc="source",
+                per=PER_TERMS,
+            )
+        ]
+        * 3
+        if rr.get("level")
+        else [G(RR_NEED, "decimal_fraction")] * 3
+    ) + [T("Dated reference rate level or curve required")]
     lvl_cite = [rr["level"]["quote"]] if rr.get("level") else []
-    yld_row = [calc_or_gap(s[f"yield_{n}"], "decimal_fraction", 2,
-                           pt_cites[n] + mg_cite + am_cite + cites_days[1:] + lvl_cite, f"cp3d.yield_{n}",
-                           "reference rate level + simple discount margin",
-                           RR_NEED if not rr.get("level") else DM_NEED[n] if d["days"] is not None else CALC_NEEDS["years"])
-               for n in ("bid", "mid", "offer")] + [T("Reference rate level + simple discount margin")]
-    tables.append(tbl("T3E.3", "Spread and yield", cols3, [
-        ("r01", "Annualised discount to par", disc_row),
-        ("r02", "Contractual margin", margin_row),
-        ("r03", "Simple discount margin", dm_row),
-        ("r04", "Reference rate level", ref_cells),
-        ("r05", "All-in yield (simple)", yld_row),
-    ], "Measure"))
+    yld_row = [
+        calc_or_gap(
+            s[f"yield_{n}"],
+            "decimal_fraction",
+            2,
+            pt_cites[n] + mg_cite + am_cite + cites_days[1:] + lvl_cite,
+            f"cp3d.yield_{n}",
+            "reference rate level + simple discount margin",
+            RR_NEED
+            if not rr.get("level")
+            else DM_NEED[n]
+            if d["days"] is not None
+            else CALC_NEEDS["years"],
+        )
+        for n in ("bid", "mid", "offer")
+    ] + [T("Reference rate level + simple discount margin")]
+    tables.append(
+        tbl(
+            "T3E.3",
+            "Spread and yield",
+            cols3,
+            [
+                ("r01", "Annualised discount to par", disc_row),
+                ("r02", "Contractual margin", margin_row),
+                ("r03", "Simple discount margin", dm_row),
+                ("r04", "Reference rate level", ref_cells),
+                ("r05", "All-in yield (simple)", yld_row),
+            ],
+            "Measure",
+        )
+    )
 
     # T3E.4 assumptions and terms
     rec = sub.get("recovery")
-    rec_cell = (N(dstr(Decimal(rec["percent_text"]) / 100), "decimal_fraction", 0, (), vc="analyst_judgment", per=PER_RUN)
-                if rec else G("Not calculable: recovery assumption not assessed", "decimal_fraction"))
+    rec_cell = (
+        N(
+            dstr(Decimal(rec["percent_text"]) / 100),
+            "decimal_fraction",
+            0,
+            (),
+            vc="analyst_judgment",
+            per=PER_RUN,
+        )
+        if rec
+        else G("Not calculable: recovery assumption not assessed", "decimal_fraction")
+    )
     rr_cell = T(rr["name"], [rr["quote"]])
     mat = sub["terms"]["maturity"]
-    mat_cell = (T(fmt_date(parse_date(mat["date_text"])), [mat["quote"]]) if mat.get("date_text")
-                else G("Not stated: no final maturity cited"))
-    amort_cell = T("Zero, as stated", am_cite) if amort.get("value_text") else G("Not stated: amortisation not cited")
-    tables.append(tbl("T3E.4", "Assumptions and terms", [("value", "Value")], [
-        ("r01", "Recovery rate (analyst assumption)", [rec_cell]),
-        ("r02", "Reference rate", [rr_cell]),
-        ("r03", "Final maturity", [mat_cell]),
-        ("r04", "Mandatory amortisation", [amort_cell]),
-        ("r05", "Instrument", [T(sub["instrument"]["name"], [sub["instrument"]["quote"]])]),
-    ], "Input"))
+    mat_cell = (
+        T(fmt_date(parse_date(mat["date_text"])), [mat["quote"]])
+        if mat.get("date_text")
+        else G("Not stated: no final maturity cited")
+    )
+    amort_cell = (
+        T("Zero, as stated", am_cite)
+        if amort.get("value_text")
+        else G("Not stated: amortisation not cited")
+    )
+    tables.append(
+        tbl(
+            "T3E.4",
+            "Assumptions and terms",
+            [("value", "Value")],
+            [
+                ("r01", "Recovery rate (analyst assumption)", [rec_cell]),
+                ("r02", "Reference rate", [rr_cell]),
+                ("r03", "Final maturity", [mat_cell]),
+                ("r04", "Mandatory amortisation", [amort_cell]),
+                ("r05", "Instrument", [T(sub["instrument"]["name"], [sub["instrument"]["quote"]])]),
+            ],
+            "Input",
+        )
+    )
 
     # T3E.5 market-implied default
     def lam_cell(n):
         st = s[f"pd_state_{n}"]
         if st == "known":
-            return N(s[f"lam_{n}"], "basis_points", None, pt_cites[n] + mg_cite + am_cite + cites_days[1:],
-                     calc=f"cp3d.lambda_{n}", formula="simple discount margin / (1 - recovery)")
+            return N(
+                s[f"lam_{n}"],
+                "basis_points",
+                None,
+                pt_cites[n] + mg_cite + am_cite + cites_days[1:],
+                calc=f"cp3d.lambda_{n}",
+                formula="simple discount margin / (1 - recovery)",
+            )
         if st == "not_applicable":
-            return G("Not meaningful: the simple discount margin is not positive", "basis_points", "not_applicable")
-        return G(why("Not calculable: needs a simple discount margin and a recovery assumption"), "basis_points")
+            return G(
+                "Not meaningful: the simple discount margin is not positive",
+                "basis_points",
+                "not_applicable",
+            )
+        return G(
+            why("Not calculable: needs a simple discount margin and a recovery assumption"),
+            "basis_points",
+        )
 
     def pd_cell(n):
         st = s[f"pd_state_{n}"]
         if st == "known":
-            return N(s[f"pd_{n}"], "decimal_fraction", 2, pt_cites[n] + mg_cite + am_cite + cites_days[1:],
-                     calc=f"cp3d.pd_{n}", formula="1 - exp(-(intensity) x years)")
+            return N(
+                s[f"pd_{n}"],
+                "decimal_fraction",
+                2,
+                pt_cites[n] + mg_cite + am_cite + cites_days[1:],
+                calc=f"cp3d.pd_{n}",
+                formula="1 - exp(-(intensity) x years)",
+            )
         if st == "not_applicable":
-            return G("Not meaningful: the simple discount margin is not positive", "decimal_fraction", "not_applicable")
-        return G(why("Not calculable: needs a simple discount margin and a recovery assumption"), "decimal_fraction")
+            return G(
+                "Not meaningful: the simple discount margin is not positive",
+                "decimal_fraction",
+                "not_applicable",
+            )
+        return G(
+            why("Not calculable: needs a simple discount margin and a recovery assumption"),
+            "decimal_fraction",
+        )
 
-    cols5 = [("bid", "At bid"), ("mid", "At mid"), ("offer", "At offer"), ("convention", "Convention")]
-    tables.append(tbl("T3E.5", "Market-implied default", cols5, [
-        ("r01", "Annual default intensity", [lam_cell(n) for n in ("bid", "mid", "offer")] +
-         [T("Credit triangle: spread / (1 - recovery)")]),
-        ("r02", "Cumulative default probability to final maturity", [pd_cell(n) for n in ("bid", "mid", "offer")] +
-         [T("Constant intensity to final maturity; risk-neutral")]),
-    ], "Measure"))
+    cols5 = [
+        ("bid", "At bid"),
+        ("mid", "At mid"),
+        ("offer", "At offer"),
+        ("convention", "Convention"),
+    ]
+    tables.append(
+        tbl(
+            "T3E.5",
+            "Market-implied default",
+            cols5,
+            [
+                (
+                    "r01",
+                    "Annual default intensity",
+                    [lam_cell(n) for n in ("bid", "mid", "offer")]
+                    + [T("Credit triangle: spread / (1 - recovery)")],
+                ),
+                (
+                    "r02",
+                    "Cumulative default probability to final maturity",
+                    [pd_cell(n) for n in ("bid", "mid", "offer")]
+                    + [T("Constant intensity to final maturity; risk-neutral")],
+                ),
+            ],
+            "Measure",
+        )
+    )
 
     # T3E.6 technicals + summary
     t6 = []
     for i, x in enumerate(sub["technicals"], 1):
-        t6.append((f"r{i:02d}", x["aspect"].replace("_", " ").capitalize(), [
-            T(x["category"], x["basis"], "analyst_judgment"),
-            T(x["text"], x["basis"], "analyst_judgment")]))
-    t6.append((f"r{len(t6) + 1:02d}", "Summary", [T("Analyst Interpretation", (), "analyst_judgment"),
-                                                  T(sub["summary"]["text"], (), "analyst_judgment")]))
-    tables.append(tbl("T3E.6", "Technicals", [("category", "Category"), ("assessment", "Assessment")], t6, "Aspect"))
+        t6.append(
+            (
+                f"r{i:02d}",
+                x["aspect"].replace("_", " ").capitalize(),
+                [
+                    T(x["category"], x["basis"], "analyst_judgment"),
+                    T(x["text"], x["basis"], "analyst_judgment"),
+                ],
+            )
+        )
+    t6.append(
+        (
+            f"r{len(t6) + 1:02d}",
+            "Summary",
+            [
+                T("Analyst Interpretation", (), "analyst_judgment"),
+                T(sub["summary"]["text"], (), "analyst_judgment"),
+            ],
+        )
+    )
+    tables.append(
+        tbl(
+            "T3E.6",
+            "Technicals",
+            [("category", "Category"), ("assessment", "Assessment")],
+            t6,
+            "Aspect",
+        )
+    )
 
     # missing-input ledger (T3E.7), evidence (T3E.8), own limitations (T3E.9)
     miss = []
     if mk_absent:
-        miss.append(("market_levels", "Dealer levels, price metrics, days and years, discount margin and default measures",
-                     "Pack holds no third-party market quotation source"))
+        miss.append(
+            (
+                "market_levels",
+                "Dealer levels, price metrics, days and years, discount margin and default measures",
+                "Pack holds no third-party market quotation source",
+            )
+        )
     elif d["days"] is None:
-        miss.append(("years", "Days and years to final maturity", "Needs a quotation date and a final maturity date"))
+        miss.append(
+            (
+                "years",
+                "Days and years to final maturity",
+                "Needs a quotation date and a final maturity date",
+            )
+        )
     if rr.get("absence"):
-        miss.append(("reference_rate_level", "Reference rate level and all-in yield", rr["absence"]["reason"]))
+        miss.append(
+            (
+                "reference_rate_level",
+                "Reference rate level and all-in yield",
+                rr["absence"]["reason"],
+            )
+        )
     if sub.get("recovery_absence"):
-        miss.append(("recovery", "Annual default intensity and cumulative default probability",
-                     sub["recovery_absence"]["reason"]))
+        miss.append(
+            (
+                "recovery",
+                "Annual default intensity and cumulative default probability",
+                sub["recovery_absence"]["reason"],
+            )
+        )
     if s["dm_mid"] is None and not mk_absent:  # 6e (h): the first missing cause in formula order
-        miss.append(("discount_margin", "Simple discount margin",
-                     "Needs a quotation date and a final maturity date" if d["days"] is None
-                     else "Needs both an observed bid and an observed offer" if s["mid"] is None
-                     else "Needs a contractual margin and stated zero amortisation"))
-    t7 = [(f"r{i:02d}", name, [T(aff), T(why)]) for i, (_, name, _w) in enumerate(miss, 1)
-          for aff, why in [(miss[i - 1][1], miss[i - 1][2])]]
+        miss.append(
+            (
+                "discount_margin",
+                "Simple discount margin",
+                "Needs a quotation date and a final maturity date"
+                if d["days"] is None
+                else "Needs both an observed bid and an observed offer"
+                if s["mid"] is None
+                else "Needs a contractual margin and stated zero amortisation",
+            )
+        )
+    t7 = [
+        (f"r{i:02d}", name, [T(aff), T(why)])
+        for i, (_, name, _w) in enumerate(miss, 1)
+        for aff, why in [(miss[i - 1][1], miss[i - 1][2])]
+    ]
     if not t7:
         t7 = [("r01", "Missing inputs", [T("None"), T("No input is missing")])]
-    tables.append(tbl("T3E.7", "Missing inputs", [("affected", "Not calculated"), ("reason", "Reason")], t7, "Input"))
+    tables.append(
+        tbl(
+            "T3E.7",
+            "Missing inputs",
+            [("affected", "Not calculated"), ("reason", "Reason")],
+            t7,
+            "Input",
+        )
+    )
 
     ev = []
     for i, (sid, loc) in enumerate(cited_pages(sub), 1):
         ev.append((f"r{i:02d}", f"{NAMES[sid]}, {loc}", [T(sid), T(loc)]))
-    tables.append(tbl("T3E.8", "Evidence", [("source", "Source"), ("locator", "Locator")], ev, "Page"))
+    tables.append(
+        tbl("T3E.8", "Evidence", [("source", "Source"), ("locator", "Locator")], ev, "Page")
+    )
 
     own = own_limitations(case, sub, d)
-    tables.append(tbl("T3E.9", "Limitations", [("text", "Limitation")],
-                        [(f"r{i:02d}", f"Limitation {i}", [T(t)]) for i, t in enumerate(own, 1)], "Limitation"))
+    tables.append(
+        tbl(
+            "T3E.9",
+            "Limitations",
+            [("text", "Limitation")],
+            [(f"r{i:02d}", f"Limitation {i}", [T(t)]) for i, t in enumerate(own, 1)],
+            "Limitation",
+        )
+    )
 
     claims = compose_claims(case, sub, d, tables)
     return tables, claims, own
@@ -871,30 +1375,50 @@ def compose_case(case, sub, d):
 def own_limitations(case, sub, d):
     out = []
     if sub.get("market_absence"):
-        out.append("No third-party market quotation source is in the pack, so no market level is shown")
+        out.append(
+            "No third-party market quotation source is in the pack, so no market level is shown"
+        )
     else:
-        out.append("Single dealer quotation; the sheet reports no trade in the period to the quotation date")
+        out.append(
+            "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
+        )
     out += [x["limitation"] for x in sub["technicals"] if x.get("limitation")]
     if any(o["kind"] == "indicative_talk" for o in sub["observations"]):
         out.append("Indicative dealer talk is shown but is not used in any calculation")
     if sub["terms"]["reference_rate"].get("absence"):
-        out.append("The reference rate level is not in any source, so the all-in yield is not calculated")
+        out.append(
+            "The reference rate level is not in any source, so the all-in yield is not calculated"
+        )
     if sub.get("recovery"):
-        out.append("The recovery rate is an analyst assumption following the first-lien loan CDS convention, not a source "
-                   "figure; the convention itself is not verified against a source")
-        out.append("A higher recovery raises the implied default intensity and default probability for the same margin")
+        out.append(
+            "The recovery rate is an analyst assumption following the first-lien loan CDS convention, not a source "
+            "figure; the convention itself is not verified against a source"
+        )
+        out.append(
+            "A higher recovery raises the implied default intensity and default probability for the same margin"
+        )
     else:
         out.append("The recovery rate was not assessed, so the default measures are not calculated")
-    out.append("The simple discount margin assumes redemption at par at final maturity, no amortisation and the "
-               "quotation date as settlement date; it is not a Z-spread; not divided by price; not the three-year-life convention")
-    out.append("The whole spread is attributed to default risk and the intensity is constant, so the default "
-               "measures are risk-neutral and overstate the default component if a liquidity premium is present")
-    out.append("The contractual margin and the amortisation are read from the financial source page, not from a "
-               "CP-1 fact")
-    out.append("The alignment of the market-implied view with the fundamentals is not shown: no fundamental comparator "
-               "is bound, so only the market-implied default half of the market-against-fundamentals block is populated")
+    out.append(
+        "The simple discount margin assumes redemption at par at final maturity, no amortisation and the "
+        "quotation date as settlement date; it is not a Z-spread; not divided by price; not the three-year-life convention"
+    )
+    out.append(
+        "The whole spread is attributed to default risk and the intensity is constant, so the default "
+        "measures are risk-neutral and overstate the default component if a liquidity premium is present"
+    )
+    out.append(
+        "The contractual margin and the amortisation are read from the financial source page, not from a "
+        "CP-1 fact"
+    )
+    out.append(
+        "The alignment of the market-implied view with the fundamentals is not shown: no fundamental comparator "
+        "is bound, so only the market-implied default half of the market-against-fundamentals block is populated"
+    )
     if absence_paths(sub):
-        out.append("An absence is backed only by a recorded search over some source, not by a search for the specific item")
+        out.append(
+            "An absence is backed only by a recorded search over some source, not by a search for the specific item"
+        )
     return dedupe(out)
 
 
@@ -916,75 +1440,146 @@ def compose_claims(case, sub, d, tables):
                     cites.append(c)
         claims.append({"claim_id": cid, "text": text, "refs": refs, "cites": cites})
 
-    asof = d["days"] is not None and next(
-        (o["as_of_text"] for o in sub["observations"] if o["kind"] == "bid"), None)
-    bidf, offf, midf = fid("T3E.1", "r01", "level"), fid("T3E.1", "r02", "level"), fid("T3E.2", "r01", "value")
+    bidf, offf, midf = (
+        fid("T3E.1", "r01", "level"),
+        fid("T3E.1", "r02", "level"),
+        fid("T3E.2", "r01", "value"),
+    )
     if mk_absent:
-        add("CP-3D-LVL-01", f"No market level is available: [{bidf}] and [{offf}] are not stated because the pack holds no "
-            "third-party market quotation source.", [bidf, offf])
+        add(
+            "CP-3D-LVL-01",
+            f"No market level is available: [{bidf}] and [{offf}] are not stated because the pack holds no "
+            "third-party market quotation source.",
+            [bidf, offf],
+        )
     else:
         # X1 (i)-(iii): the claim follows the observations that were submitted, never observations[0]
         by_kind = {o["kind"]: o for o in sub["observations"]}
         talkf = fid("T3E.1", "r03", "level")
         if "bid" in by_kind and "offer" in by_kind:
-            add("CP-3D-LVL-01", f"On {by_kind['bid']['as_of_text']} the dealer quotation was {{{bidf}|%}} bid and "
-                f"{{{offf}|%}} offer, a mid of {{{midf}|%}} of par.", [bidf, offf, midf])
+            add(
+                "CP-3D-LVL-01",
+                f"On {by_kind['bid']['as_of_text']} the dealer quotation was {{{bidf}|%}} bid and "
+                f"{{{offf}|%}} offer, a mid of {{{midf}|%}} of par.",
+                [bidf, offf, midf],
+            )
         elif "bid" in by_kind:
-            add("CP-3D-LVL-01", f"On {by_kind['bid']['as_of_text']} the dealer quotation was {{{bidf}|%}} bid; no offer was "
-                f"submitted, so the mid is not calculated: [{midf}].", [bidf, midf])
+            add(
+                "CP-3D-LVL-01",
+                f"On {by_kind['bid']['as_of_text']} the dealer quotation was {{{bidf}|%}} bid; no offer was "
+                f"submitted, so the mid is not calculated: [{midf}].",
+                [bidf, midf],
+            )
         elif "offer" in by_kind:
-            add("CP-3D-LVL-01", f"On {by_kind['offer']['as_of_text']} the dealer quotation was {{{offf}|%}} offer; no bid was "
-                f"submitted, so the mid is not calculated: [{midf}].", [offf, midf])
+            add(
+                "CP-3D-LVL-01",
+                f"On {by_kind['offer']['as_of_text']} the dealer quotation was {{{offf}|%}} offer; no bid was "
+                f"submitted, so the mid is not calculated: [{midf}].",
+                [offf, midf],
+            )
         else:
-            assert "indicative_talk" in by_kind, "no observation and no market absence: the rulings settle 1..3 observations"
-            add("CP-3D-LVL-01", f"No dealer quotation was submitted: [{bidf}] and [{offf}] are not stated; indicative talk of "
-                f"{{{talkf}|%}} of par is shown as context only.", [bidf, offf, talkf])
+            assert "indicative_talk" in by_kind, (
+                "no observation and no market absence: the rulings settle 1..3 observations"
+            )
+            add(
+                "CP-3D-LVL-01",
+                f"No dealer quotation was submitted: [{bidf}] and [{offf}] are not stated; indicative talk of "
+                f"{{{talkf}|%}} of par is shown as context only.",
+                [bidf, offf, talkf],
+            )
     yrs = fid("T3E.2", "r06", "value")
     dmm = fid("T3E.3", "r03", "mid")
     mgf = fid("T3E.3", "r02", "mid")
     if s["dm_mid"] is not None:
-        add("CP-3D-DM-01", f"At the mid the simple discount margin over the reference rate is {{{dmm}|bp}}, from a "
+        add(
+            "CP-3D-DM-01",
+            f"At the mid the simple discount margin over the reference rate is {{{dmm}|bp}}, from a "
             f"contractual margin of {{{mgf}|bp}} and {{{yrs}|years}} to final maturity on December 31, 2029.",
-            [dmm, mgf, yrs])
+            [dmm, mgf, yrs],
+        )
     else:
-        add("CP-3D-DM-01", f"The simple discount margin is not calculated: [{dmm}] is not available.", [dmm])
+        add(
+            "CP-3D-DM-01",
+            f"The simple discount margin is not calculated: [{dmm}] is not available.",
+            [dmm],
+        )
     yld = fid("T3E.3", "r05", "mid")
     if s["yield_mid"] is not None:
-        add("CP-3D-YLD-01", f"At the mid the all-in yield is {{{yld}|%}}, the reference rate level plus the simple "
-            f"discount margin of {{{dmm}|bp}}.", [yld, dmm])
-    elif sub["terms"]["reference_rate"].get("level") and d["days"] is None:  # X1 (v): a level is quoted, no final maturity date
-        add("CP-3D-YLD-01", f"The all-in yield is not calculated: [{yld}] needs a final maturity date, which no source in "
-            "the pack states.", [yld])
-    elif sub["terms"]["reference_rate"].get("level"):  # 6e (g): maturity known, the margin at the mid is missing
-        add("CP-3D-YLD-01", f"The all-in yield is not calculated: [{yld}] needs the simple discount margin at the mid, "
-            f"which is not calculated: [{dmm}].", [yld, dmm])
+        add(
+            "CP-3D-YLD-01",
+            f"At the mid the all-in yield is {{{yld}|%}}, the reference rate level plus the simple "
+            f"discount margin of {{{dmm}|bp}}.",
+            [yld, dmm],
+        )
+    elif (
+        sub["terms"]["reference_rate"].get("level") and d["days"] is None
+    ):  # X1 (v): a level is quoted, no final maturity date
+        add(
+            "CP-3D-YLD-01",
+            f"The all-in yield is not calculated: [{yld}] needs a final maturity date, which no source in "
+            "the pack states.",
+            [yld],
+        )
+    elif sub["terms"]["reference_rate"].get(
+        "level"
+    ):  # 6e (g): maturity known, the margin at the mid is missing
+        add(
+            "CP-3D-YLD-01",
+            f"The all-in yield is not calculated: [{yld}] needs the simple discount margin at the mid, "
+            f"which is not calculated: [{dmm}].",
+            [yld, dmm],
+        )
     else:
-        add("CP-3D-YLD-01", f"The all-in yield is not calculated: [{yld}] needs a reference rate level that no source in "
-            "the pack states.", [yld])
+        add(
+            "CP-3D-YLD-01",
+            f"The all-in yield is not calculated: [{yld}] needs a reference rate level that no source in "
+            "the pack states.",
+            [yld],
+        )
     lam, pdm = fid("T3E.5", "r01", "mid"), fid("T3E.5", "r02", "mid")
     if s["pd_state_mid"] == "known":
-        add("CP-3D-PD-01", f"At the analyst recovery assumption the mid spread implies an annual default intensity of "
+        add(
+            "CP-3D-PD-01",
+            f"At the analyst recovery assumption the mid spread implies an annual default intensity of "
             f"{{{lam}|bp}} and a cumulative default probability to final maturity of {{{pdm}|%}}; both are "
-            "risk-neutral measures.", [lam, pdm])
+            "risk-neutral measures.",
+            [lam, pdm],
+        )
     elif s["pd_state_mid"] == "not_applicable":  # X1 (iv): the mid margin is known and not positive
-        add("CP-3D-PD-01", f"The market-implied default probability is not meaningful: [{lam}] and [{pdm}] need a positive "
-            f"simple discount margin, and at the mid the margin is {{{dmm}|bp}}.", [lam, pdm, dmm])
+        add(
+            "CP-3D-PD-01",
+            f"The market-implied default probability is not meaningful: [{lam}] and [{pdm}] need a positive "
+            f"simple discount margin, and at the mid the margin is {{{dmm}|bp}}.",
+            [lam, pdm, dmm],
+        )
     else:
-        needs = "simple discount margin" if sub.get("recovery") else "simple discount margin and a recovery assumption"
-        add("CP-3D-PD-01", f"The market-implied default probability is not calculated: [{lam}] and [{pdm}] need a "
-            f"{needs}.", [lam, pdm])
-    claims.append({"claim_id": "CP-3D-VIEW-01", "text": sub["summary"]["text"], "refs": [], "cites": []})
+        needs = (
+            "simple discount margin"
+            if sub.get("recovery")
+            else "simple discount margin and a recovery assumption"
+        )
+        add(
+            "CP-3D-PD-01",
+            f"The market-implied default probability is not calculated: [{lam}] and [{pdm}] need a "
+            f"{needs}.",
+            [lam, pdm],
+        )
+    claims.append(
+        {"claim_id": "CP-3D-VIEW-01", "text": sub["summary"]["text"], "refs": [], "cites": []}
+    )
     return claims
 
 
 def claim_issues(claim, by_id):
     """Transcription of prose.issues for these claims: tokens resolve, figures need a known numeric fact with a
     citation or calculation id and an allowed unit, chips must name unsettled facts or non-numeric facts."""
-    tok = re.compile(r"\{(?P<f>[A-Za-z0-9][A-Za-z0-9_.:-]*)(?:\|(?P<u>[^{}\[\]|]+))?\}|\[(?P<c>[A-Za-z0-9][A-Za-z0-9_.:-]*)\]")
+    tok = re.compile(
+        r"\{(?P<f>[A-Za-z0-9][A-Za-z0-9_.:-]*)(?:\|(?P<u>[^{}\[\]|]+))?\}|\[(?P<c>[A-Za-z0-9][A-Za-z0-9_.:-]*)\]"
+    )
     issues, rest, last = [], [], 0
     text = claim["text"]
     for m in tok.finditer(text):
-        rest.append(text[last:m.start()])
+        rest.append(text[last : m.start()])
         last = m.end()
         ref = m.group("f") or m.group("c")
         f = by_id.get(ref)
@@ -999,8 +1594,15 @@ def claim_issues(claim, by_id):
             elif not f["cites"] and f["calculation_id"] is None:
                 issues.append(f"Figure reference has no citation or calculation: {ref}")
             else:
-                allowed = {f["unit"], {"decimal_fraction": "%", "basis_points": "bp", "years": "years",
-                                       "days": "days"}[f["unit"]]}
+                allowed = {
+                    f["unit"],
+                    {
+                        "decimal_fraction": "%",
+                        "basis_points": "bp",
+                        "years": "years",
+                        "days": "days",
+                    }[f["unit"]],
+                }
                 if m.group("u") not in allowed:
                     issues.append(f"Unit {m.group('u')} differs from the fact's unit: {ref}")
         elif f["status"] == "known" and f["amount"] is not None:
@@ -1018,8 +1620,13 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers):
     facts = []
 
     def add(table_, row, key, value, cites=()):
-        facts.append({"fact_id": f"{table_}.{row}.{key}", "text": value,
-                      "cites": [[c["source_id"], c["locator"]] for c in cites]})
+        facts.append(
+            {
+                "fact_id": f"{table_}.{row}.{key}",
+                "text": value,
+                "cites": [[c["source_id"], c["locator"]] for c in cites],
+            }
+        )
 
     add("T1", "run", "objective", sub["objective"])
     add("T1", "run", "issuer", ISSUER)
@@ -1029,10 +1636,19 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers):
     assert [p[0] for p in pack] == [a["source_id"] for a in sub["sources"]]
     for sid, name, status, lim in pack:
         a = by[sid]
-        for key, value in (("family", a["document_family"]), ("entity", a["entity"] or "Unconfirmed"),
-                           ("period", a["period"] or "Unconfirmed"), ("version_relationship", a["version_relationship"])):
+        for key, value in (
+            ("family", a["document_family"]),
+            ("entity", a["entity"] or "Unconfirmed"),
+            ("period", a["period"] or "Unconfirmed"),
+            ("version_relationship", a["version_relationship"]),
+        ):
             add("P3", sid, key, value, a["citations"])
-        add("P5", sid, "preparation", f"complete; fidelity {a['fidelity']}; {lim or 'No mechanical limitation'}")
+        add(
+            "P5",
+            sid,
+            "preparation",
+            f"complete; fidelity {a['fidelity']}; {lim or 'No mechanical limitation'}",
+        )
         add("T2", sid, "source", f"{name}; {status}; SHA-256 {SHA[sid]}")
         add("T3", sid, "authority", a["authority"], a["citations"])
         for i, c in enumerate(a["citations"]):
@@ -1045,7 +1661,9 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers):
         add("T4", m, "readiness", c["readiness"])
         add("T4", m, "rationale", c["rationale"], c["citations"])
         add("T8", m, "candidate_command", "Run " + m)
-        commands[m] = "Run " + m if c["readiness"] in ("READY", "READY_WITH_LIMITATIONS") else "DO NOT RUN"
+        commands[m] = (
+            "Run " + m if c["readiness"] in ("READY", "READY_WITH_LIMITATIONS") else "DO NOT RUN"
+        )
         add("T8", m, "exact_command", commands[m])
         add("T8", m, "sources", ", ".join(c["source_ids"]) or "None")
         lims = list(c["limitations"])
@@ -1058,14 +1676,23 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers):
         add("T8", m, "limits", "; ".join(dict.fromkeys(lims)) or "None identified")
         add("T8", m, "upstream", f"CP-0 {run_id}; analytical dependencies checked separately")
     for g in sub["gaps"]:
-        add("T5", g["gap_id"], "gap",
+        add(
+            "T5",
+            g["gap_id"],
+            "gap",
             f"{g['kind']}/{g['severity']}: {g['description']}; affects {', '.join(g['affected_modules'])}; {g['remediation']}",
-            g["citations"])
+            g["citations"],
+        )
     if not sub["gaps"]:
         add("T5", "review", "gaps", "No gaps identified by this supplied review")
     add("T7", "run", "preparation", "<<PreparedPack.content_hash(), bound at run time>>")
     add("T7", "run", "method", "deploy-v-r14")
-    add("T7", "run", "assertion_scope", "SOURCE_SUFFICIENCY_ONLY; CP_MODEL_INPUT_CONTRACT_NOT_EVALUATED")
+    add(
+        "T7",
+        "run",
+        "assertion_scope",
+        "SOURCE_SUFFICIENCY_ONLY; CP_MODEL_INPUT_CONTRACT_NOT_EVALUATED",
+    )
     limitations = dedupe(
         [lim for _, _, _, lim in pack if lim]
         + [t for a in sub["sources"] for t in a["limitations"]]
@@ -1073,17 +1700,36 @@ def cp0_expected(pack, sub, run_id, plan_order, live_consumers):
         + [g["description"] for g in sub["gaps"]]
         + [SYNTH]
     )
-    return {"status": "restricted", "why": "own limitations are non-empty (readiness.py:518-531; execution.py:451-457)",
-            "live_consumers": live_consumers, "plan_order": plan_order, "exact_commands": commands,
-            "limitations": limitations, "facts": facts}
+    return {
+        "status": "restricted",
+        "why": "own limitations are non-empty (readiness.py:518-531; execution.py:451-457)",
+        "live_consumers": live_consumers,
+        "plan_order": plan_order,
+        "exact_commands": commands,
+        "limitations": limitations,
+        "facts": facts,
+    }
 
 
 S1P = S1E["positive"]
 _s1_pack = pack_rows(("identity", "financial", "business"))
 # Self-check: the transcription reproduces the frozen S1 positive CP-0 from the frozen S1 literal review.
-_s1_pos = cp0_expected(_s1_pack, S1S["positive"]["readiness_review"], "slice-snapshot-positive",
-                       ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"], ["CP-1", "CP-1A", "CP-2"])
-for _k in ("status", "why", "live_consumers", "plan_order", "exact_commands", "limitations", "facts"):
+_s1_pos = cp0_expected(
+    _s1_pack,
+    S1S["positive"]["readiness_review"],
+    "slice-snapshot-positive",
+    ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"],
+    ["CP-1", "CP-1A", "CP-2"],
+)
+for _k in (
+    "status",
+    "why",
+    "live_consumers",
+    "plan_order",
+    "exact_commands",
+    "limitations",
+    "facts",
+):
     assert _s1_pos[_k] == S1P["CP-0"][_k], f"CP-0 transcription differs from the S1 oracle at {_k}"
 
 
@@ -1097,7 +1743,9 @@ def meth_plan(requested):
             if dep not in selected:
                 selected.add(dep)
                 pending.append(dep)
-    remaining = {m: set(cat[m]["required"]) | (set(cat[m]["optional"]) & selected) for m in selected}
+    remaining = {
+        m: set(cat[m]["required"]) | (set(cat[m]["optional"]) & selected) for m in selected
+    }
     out = []
     while remaining:
         ready = [m for m in order if m in remaining and not remaining[m]]
@@ -1130,41 +1778,67 @@ def readiness_review(case):
     fin5 = cite("financial", "page:5", Q_FIN_INSTRUMENT)
     if case != "gap_no_market":
         mq = cite("market", "page:1", Q_BID)
-        sub["sources"].append({
-            "source_id": "market", "document_family": "Loan market quotation sheet", "authority": "third_party",
-            "entity": ISSUER, "period": "January 2026",
-            "version_relationship": "Standalone third-party dealer quotation sheet",
-            "fidelity": "verified", "citations": [mq], "limitations": [],
-        })
-        sub["consumers"] = [{
-            "module_id": "CP-3D", "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Located dated third-party market quotations and the facility pricing terms",
-            "source_ids": ["financial", "market"],
-            "rationale": "The market-implied assessment can run on the located dealer quotation and the stated facility margin, with source limitations.",
-            "citations": [mq, fin5], "missing_source": None, "limitations": [LIMIT_FIN],
-        }]
+        sub["sources"].append(
+            {
+                "source_id": "market",
+                "document_family": "Loan market quotation sheet",
+                "authority": "third_party",
+                "entity": ISSUER,
+                "period": "January 2026",
+                "version_relationship": "Standalone third-party dealer quotation sheet",
+                "fidelity": "verified",
+                "citations": [mq],
+                "limitations": [],
+            }
+        )
+        sub["consumers"] = [
+            {
+                "module_id": "CP-3D",
+                "readiness": "READY_WITH_LIMITATIONS",
+                "evidence_demand": "Located dated third-party market quotations and the facility pricing terms",
+                "source_ids": ["financial", "market"],
+                "rationale": "The market-implied assessment can run on the located dealer quotation and the stated facility margin, with source limitations.",
+                "citations": [mq, fin5],
+                "missing_source": None,
+                "limitations": [LIMIT_FIN],
+            }
+        ]
         sub["gaps"] = []
     else:
-        sub["consumers"] = [{
-            "module_id": "CP-3D", "readiness": "READY_WITH_LIMITATIONS",
-            "evidence_demand": "Facility pricing terms; no third-party market quotation is available",
-            "source_ids": ["financial"],
-            "rationale": "The assessment can run on the stated facility terms and records the absence of market levels.",
-            "citations": [fin5], "missing_source": None, "limitations": [GAP_MARKET],
-        }]
-        sub["gaps"] = [{
-            "gap_id": "missing-market-source", "kind": "source", "severity": "material",
-            "description": GAP_MARKET, "affected_modules": ["CP-3D"],
-            "remediation": "Supply a dated dealer quotation or trade record", "citations": [],
-        }]
+        sub["consumers"] = [
+            {
+                "module_id": "CP-3D",
+                "readiness": "READY_WITH_LIMITATIONS",
+                "evidence_demand": "Facility pricing terms; no third-party market quotation is available",
+                "source_ids": ["financial"],
+                "rationale": "The assessment can run on the stated facility terms and records the absence of market levels.",
+                "citations": [fin5],
+                "missing_source": None,
+                "limitations": [GAP_MARKET],
+            }
+        ]
+        sub["gaps"] = [
+            {
+                "gap_id": "missing-market-source",
+                "kind": "source",
+                "severity": "material",
+                "description": GAP_MARKET,
+                "affected_modules": ["CP-3D"],
+                "remediation": "Supply a dated dealer quotation or trade record",
+                "citations": [],
+            }
+        ]
     cites = [ident, fin] + ([mq] if case != "gap_no_market" else [])
-    sub["analysis"] = [{
-        "claim_id": "source-assessment",
-        "text": "The located statements and the dealer quotation sheet support a market-implied assessment with limitations."
-        if case != "gap_no_market" else
-        "The located statements support only the facility terms; no market quotation is available.",
-        "citations": cites, "limitation": LIMIT_FIN,
-    }]
+    sub["analysis"] = [
+        {
+            "claim_id": "source-assessment",
+            "text": "The located statements and the dealer quotation sheet support a market-implied assessment with limitations."
+            if case != "gap_no_market"
+            else "The located statements support only the facility terms; no market quotation is available.",
+            "citations": cites,
+            "limitation": LIMIT_FIN,
+        }
+    ]
     return sub
 
 
@@ -1173,6 +1847,7 @@ RUNS = {
     "gap_no_recovery": "slice-cp3d-positive",  # a clone of the settled CP-0; only the CP-3D submission differs
     "gap_no_market": "slice-cp3d-gap-no-market",
 }
+
 
 # --- refusal mutations -------------------------------------------------------------------------------------
 def setp(obj, path, value):
@@ -1190,42 +1865,104 @@ def mut(base, edits):
 
 
 MUTATIONS = [
-    ("level_not_in_quote", [(["observations", 0, "level_text"], "98.60")],
-     "observations[0]: level_text 98.60 does not occur in the quote"),
-    ("level_not_numeric", [(["observations", 0, "level_text"], "ninety")],
-     "observations[0]: level_text ninety is not a decimal number"),
-    ("quote_off_page", [(["observations", 0, "locator"], "page:2")],
-     "observations[0]: quote not found on market page:2"),
-    ("source_not_third_party", [(["observations", 0, "source_id"], "financial"), (["observations", 0, "locator"], "page:5")],
-     "observations[0]: source financial is not a third_party source (CP-0 T3)"),
-    ("duplicate_kind", [(["observations", 1, "kind"], "bid"), (["observations", 1, "level_text"], "98.50")],
-     "observations: kind bid appears more than once"),
-    ("bid_level_is_the_offer", [(["observations", 0, "level_text"], "99.25")],
-     "observations[0]: bid level_text 99.25 is not labelled bid in the quote"),
-    ("talk_cites_bid_offer_sentence", [(["observations", 2, "locator"], "page:1"), (["observations", 2, "quote"], Q_BID),
-                                       (["observations", 2, "level_text"], "99.25")],
-     "observations[2]: indicative_talk level_text 99.25 is a bid or offer level in the quote"),
-    ("as_of_not_in_quote", [(["observations", 0, "as_of_text"], "January 8, 2026")],
-     "observations[0]: as_of_text January 8, 2026 does not occur in the quote"),
-    ("margin_not_in_quote", [(["terms", "margin", "bps_text"], "25")], "margin: bps_text 25 does not occur in the quote"),
-    ("recovery_out_of_range", [(["recovery", "percent_text"], "100")],
-     "recovery: percent must be at least 0 and below 100"),
-    ("recovery_both", [(["recovery_absence"], {"reason": "Not assessed", "follow_up": "Assess it"})],
-     "recovery: exactly one of recovery and recovery_absence is required"),
-    ("reference_level_not_in_quote", [(["terms", "reference_rate", "absence"], None),
-                                      (["terms", "reference_rate", "level"],
-                                       {"quote": q("financial", "page:5", Q_SOFR), "percent_text": "4.30"})],
-     "reference_rate: level percent_text 4.30 does not occur in the quote"),
-    ("reference_rate_neither", [(["terms", "reference_rate", "absence"], None)],
-     "reference_rate: exactly one of level and absence is required"),
-    ("digit_in_text", [(["technicals", 0, "text"], "The observed level is one dealer quotation of 1 dealer.")],
-     "technicals[0].text: digits are not allowed"),
-    ("prohibited_conclusion", [(["summary", "text"], "The loan looks cheap, so buy it.")],
-     "summary.text: text carries a prohibited conclusion"),
-    ("insufficient_without_limitation", [(["technicals", 3, "limitation"], None)],
-     "technicals[3]: limitation is required for Insufficient Information and only for it"),
-    ("observations_and_absence", [(["market_absence"], {"reason": "None", "follow_up": "None"})],
-     "observations: exactly one of observations and market_absence is required"),
+    (
+        "level_not_in_quote",
+        [(["observations", 0, "level_text"], "98.60")],
+        "observations[0]: level_text 98.60 does not occur in the quote",
+    ),
+    (
+        "level_not_numeric",
+        [(["observations", 0, "level_text"], "ninety")],
+        "observations[0]: level_text ninety is not a decimal number",
+    ),
+    (
+        "quote_off_page",
+        [(["observations", 0, "locator"], "page:2")],
+        "observations[0]: quote not found on market page:2",
+    ),
+    (
+        "source_not_third_party",
+        [
+            (["observations", 0, "source_id"], "financial"),
+            (["observations", 0, "locator"], "page:5"),
+        ],
+        "observations[0]: source financial is not a third_party source (CP-0 T3)",
+    ),
+    (
+        "duplicate_kind",
+        [(["observations", 1, "kind"], "bid"), (["observations", 1, "level_text"], "98.50")],
+        "observations: kind bid appears more than once",
+    ),
+    (
+        "bid_level_is_the_offer",
+        [(["observations", 0, "level_text"], "99.25")],
+        "observations[0]: bid level_text 99.25 is not labelled bid in the quote",
+    ),
+    (
+        "talk_cites_bid_offer_sentence",
+        [
+            (["observations", 2, "locator"], "page:1"),
+            (["observations", 2, "quote"], Q_BID),
+            (["observations", 2, "level_text"], "99.25"),
+        ],
+        "observations[2]: indicative_talk level_text 99.25 is a bid or offer level in the quote",
+    ),
+    (
+        "as_of_not_in_quote",
+        [(["observations", 0, "as_of_text"], "January 8, 2026")],
+        "observations[0]: as_of_text January 8, 2026 does not occur in the quote",
+    ),
+    (
+        "margin_not_in_quote",
+        [(["terms", "margin", "bps_text"], "25")],
+        "margin: bps_text 25 does not occur in the quote",
+    ),
+    (
+        "recovery_out_of_range",
+        [(["recovery", "percent_text"], "100")],
+        "recovery: percent must be at least 0 and below 100",
+    ),
+    (
+        "recovery_both",
+        [(["recovery_absence"], {"reason": "Not assessed", "follow_up": "Assess it"})],
+        "recovery: exactly one of recovery and recovery_absence is required",
+    ),
+    (
+        "reference_level_not_in_quote",
+        [
+            (["terms", "reference_rate", "absence"], None),
+            (
+                ["terms", "reference_rate", "level"],
+                {"quote": q("financial", "page:5", Q_SOFR), "percent_text": "4.30"},
+            ),
+        ],
+        "reference_rate: level percent_text 4.30 does not occur in the quote",
+    ),
+    (
+        "reference_rate_neither",
+        [(["terms", "reference_rate", "absence"], None)],
+        "reference_rate: exactly one of level and absence is required",
+    ),
+    (
+        "digit_in_text",
+        [(["technicals", 0, "text"], "The observed level is one dealer quotation of 1 dealer.")],
+        "technicals[0].text: digits are not allowed",
+    ),
+    (
+        "prohibited_conclusion",
+        [(["summary", "text"], "The loan looks cheap, so buy it.")],
+        "summary.text: text carries a prohibited conclusion",
+    ),
+    (
+        "insufficient_without_limitation",
+        [(["technicals", 3, "limitation"], None)],
+        "technicals[3]: limitation is required for Insufficient Information and only for it",
+    ),
+    (
+        "observations_and_absence",
+        [(["market_absence"], {"reason": "None", "follow_up": "None"})],
+        "observations: exactly one of observations and market_absence is required",
+    ),
 ]
 
 
@@ -1236,8 +1973,14 @@ def run_mutations():
         s = mut(base, edits)
         iss = check_submission(s, PACK_IDS["positive"])
         assert iss == [expect], (name, iss)
-        out.append({"id": name, "edits": [[".".join(str(x) for x in p), v] for p, v in edits],
-                    "issue": expect, "all_issues": iss})
+        out.append(
+            {
+                "id": name,
+                "edits": [[".".join(str(x) for x in p), v] for p, v in edits],
+                "issue": expect,
+                "all_issues": iss,
+            }
+        )
     return out
 
 
@@ -1249,7 +1992,11 @@ def run_mutations():
 def maturity_before_literal():
     """Replace the maturity with a date before the quotation: the quote is the one sentence that states a past date."""
     s = copy.deepcopy(LITERALS["positive"])
-    s["terms"]["maturity"]["quote"] = q("market", "page:1", "Published January 10, 2026. Quotations are as of the close on January 9, 2026.")
+    s["terms"]["maturity"]["quote"] = q(
+        "market",
+        "page:1",
+        "Published January 10, 2026. Quotations are as of the close on January 9, 2026.",
+    )
     s["terms"]["maturity"]["date_text"] = "January 9, 2026"
     return s
 
@@ -1261,8 +2008,15 @@ assert _iss == ["maturity: date is not after the quotation date"], _iss
 
 def amort_nonzero_literal():
     s = copy.deepcopy(LITERALS["positive"])
-    s["terms"]["amortisation"] = {"quote": q("financial", "page:5", "Mandatory annual amortisation is 0; final maturity is December 31, 2029"),
-                                  "value_text": "31", "absence": None}
+    s["terms"]["amortisation"] = {
+        "quote": q(
+            "financial",
+            "page:5",
+            "Mandatory annual amortisation is 0; final maturity is December 31, 2029",
+        ),
+        "value_text": "31",
+        "absence": None,
+    }
     return s
 
 
@@ -1273,25 +2027,46 @@ assert _an == ["amortisation: value_text 31 does not occur in the quote"], _an
 MUT_LIST = []
 for m in [*run_mutations(), {"id": "maturity_before_quotation"}, {"id": "amortisation_nonzero"}]:
     if m["id"] == "maturity_before_quotation":
-        m = {"id": m["id"], "edits": [["terms.maturity.quote", _bm["terms"]["maturity"]["quote"]],
-                                      ["terms.maturity.date_text", "January 9, 2026"]],
-             "issue": "maturity: date is not after the quotation date", "all_issues": _iss}
+        m = {
+            "id": m["id"],
+            "edits": [
+                ["terms.maturity.quote", _bm["terms"]["maturity"]["quote"]],
+                ["terms.maturity.date_text", "January 9, 2026"],
+            ],
+            "issue": "maturity: date is not after the quotation date",
+            "all_issues": _iss,
+        }
     if m["id"] == "amortisation_nonzero":
-        m = {"id": m["id"], "edits": [["terms.amortisation.quote", amort_nonzero_literal()["terms"]["amortisation"]["quote"]],
-                                      ["terms.amortisation.value_text", "31"]],
-             "issue": "amortisation: value_text 31 does not occur in the quote", "all_issues": _an,
-             "note": "value_text 31 is the day-of-month numeral of 'December 31, 2029' in the quote; under the "
-                     "comma-space join '31, 2029' is one run, so 31 is no figure of the quote and the refusal is the "
-                     "text-occurrence one (round 13 addendum 2, re-pinned at the Stage 2 close). The nonzero-amortisation "
-                     "branch itself is pinned by tests/test_method_cp3d.py::"
-                     "test_amortisation_above_zero_is_refused_on_a_page_without_a_date"}
+        m = {
+            "id": m["id"],
+            "edits": [
+                [
+                    "terms.amortisation.quote",
+                    amort_nonzero_literal()["terms"]["amortisation"]["quote"],
+                ],
+                ["terms.amortisation.value_text", "31"],
+            ],
+            "issue": "amortisation: value_text 31 does not occur in the quote",
+            "all_issues": _an,
+            "note": "value_text 31 is the day-of-month numeral of 'December 31, 2029' in the quote; under the "
+            "comma-space join '31, 2029' is one run, so 31 is no figure of the quote and the refusal is the "
+            "text-occurrence one (round 13 addendum 2, re-pinned at the Stage 2 close). The nonzero-amortisation "
+            "branch itself is pinned by tests/test_method_cp3d.py::"
+            "test_amortisation_above_zero_is_refused_on_a_page_without_a_date",
+        }
     MUT_LIST.append(m)
 
 # Tool-use refusals: the core RULES(text, seen) attribute (protocol section 2), reusing live/tools.py
 # unread_citation_issues (sorted by source_id, locator) and UNBACKED_ABSENCE, in ToolRules order (absence, then unread).
 # The expected issues are exact strings; the oracle has no case in which both rules fire.
-MARGIN_ABSENT = {"quote": None, "bps_text": None,
-                 "absence": {"reason": "No contractual margin is stated", "follow_up": "Supply the facility pricing terms"}}
+MARGIN_ABSENT = {
+    "quote": None,
+    "bps_text": None,
+    "absence": {
+        "reason": "No contractual margin is stated",
+        "follow_up": "Supply the facility pricing terms",
+    },
+}
 
 
 def term_absence_literal():
@@ -1304,22 +2079,46 @@ assert not check_submission(term_absence_literal(), PACK_IDS["positive"])
 
 
 TOOL_USE = [
-    {"id": "unread_market_page_1", "reads": [["market", "page:2"], ["financial", "page:5"]], "searches": 1,
-     "issues": ["Cited page not read through read_pages: market page:1"]},
-    {"id": "unread_financial_page_5", "reads": [["market", "page:1"], ["market", "page:2"]], "searches": 1,
-     "issues": ["Cited page not read through read_pages: financial page:5"]},
-    {"id": "unread_two_pages_sorted", "reads": [["market", "page:2"]], "searches": 1,
-     "issues": ["Cited page not read through read_pages: financial page:5",
-                "Cited page not read through read_pages: market page:1"]},
-    {"id": "absence_without_search", "reads": [["market", "page:1"], ["market", "page:2"], ["financial", "page:5"]],
-     "searches": 0, "issues": ["Absence claim without a recorded search"]},
-    {"id": "term_absence_without_search", "edits": [["terms.margin", MARGIN_ABSENT]],
-     "note": "the reference rate absence also holds in every pack case, so this case shows the term absence is reached, not that it alone fires",
-     "reads": [["market", "page:1"], ["market", "page:2"], ["financial", "page:5"]],
-     "searches": 0, "issues": ["Absence claim without a recorded search"]},
+    {
+        "id": "unread_market_page_1",
+        "reads": [["market", "page:2"], ["financial", "page:5"]],
+        "searches": 1,
+        "issues": ["Cited page not read through read_pages: market page:1"],
+    },
+    {
+        "id": "unread_financial_page_5",
+        "reads": [["market", "page:1"], ["market", "page:2"]],
+        "searches": 1,
+        "issues": ["Cited page not read through read_pages: financial page:5"],
+    },
+    {
+        "id": "unread_two_pages_sorted",
+        "reads": [["market", "page:2"]],
+        "searches": 1,
+        "issues": [
+            "Cited page not read through read_pages: financial page:5",
+            "Cited page not read through read_pages: market page:1",
+        ],
+    },
+    {
+        "id": "absence_without_search",
+        "reads": [["market", "page:1"], ["market", "page:2"], ["financial", "page:5"]],
+        "searches": 0,
+        "issues": ["Absence claim without a recorded search"],
+    },
+    {
+        "id": "term_absence_without_search",
+        "edits": [["terms.margin", MARGIN_ABSENT]],
+        "note": "the reference rate absence also holds in every pack case, so this case shows the term absence is reached, not that it alone fires",
+        "reads": [["market", "page:1"], ["market", "page:2"], ["financial", "page:5"]],
+        "searches": 0,
+        "issues": ["Absence claim without a recorded search"],
+    },
 ]
 _pos_pages = set(cited_pages(LITERALS["positive"]))
-assert _pos_pages == {("market", "page:1"), ("market", "page:2"), ("financial", "page:5")}, _pos_pages
+assert _pos_pages == {("market", "page:1"), ("market", "page:2"), ("financial", "page:5")}, (
+    _pos_pages
+)
 for _t in TOOL_USE:
     _lit = term_absence_literal() if "edits" in _t else LITERALS["positive"]
     _got = tool_rule_issues(_lit, {tuple(r) for r in _t["reads"]}, _t["searches"] > 0)
@@ -1329,9 +2128,15 @@ assert not tool_rule_issues(LITERALS["positive"], _pos_pages, True)
 # every absence object is covered by the absence rule: each, alone, needs a search
 _one = copy.deepcopy(LITERALS["positive"])
 _one["terms"]["reference_rate"]["absence"] = None
-assert absence_paths(_one) == [] and absence_paths(term_absence_literal()) == ["terms.margin.absence", "terms.reference_rate.absence"]
+assert absence_paths(_one) == [] and absence_paths(term_absence_literal()) == [
+    "terms.margin.absence",
+    "terms.reference_rate.absence",
+]
 _alt = copy.deepcopy(_one)
-for _k, _v in (("maturity", {"quote": None, "date_text": None}), ("amortisation", {"quote": None, "value_text": None})):
+for _k, _v in (
+    ("maturity", {"quote": None, "date_text": None}),
+    ("amortisation", {"quote": None, "value_text": None}),
+):
     _a = copy.deepcopy(_alt)
     _a["terms"][_k] = {**_v, "absence": {"reason": "Not stated", "follow_up": "Supply it"}}
     assert absence_paths(_a) == [f"terms.{_k}.absence"], _k
@@ -1343,37 +2148,67 @@ assert absence_paths(_a) == ["market_absence"]
 
 # Blocked case: attempt 0 and attempt 1 both invalid.
 BLOCKED = {
-    "attempt_0": {"edits": [["technicals.0.text", "The observed level is one dealer quotation of 1 dealer."]],
-                  "issue": "technicals[0].text: digits are not allowed"},
-    "attempt_1": {"edits": [["observations.0.level_text", "98.60"]],
-                  "issue": "observations[0]: level_text 98.60 does not occur in the quote"},
+    "attempt_0": {
+        "edits": [["technicals.0.text", "The observed level is one dealer quotation of 1 dealer."]],
+        "issue": "technicals[0].text: digits are not allowed",
+    },
+    "attempt_1": {
+        "edits": [["observations.0.level_text", "98.60"]],
+        "issue": "observations[0]: level_text 98.60 does not occur in the quote",
+    },
 }
+
 
 # --- fixtures (composer only, derived values; not pack runs) -------------------------------------------------
 def fixture(inp):
     d = derive(inp)
-    return {"inputs": {k: (dstr(v) if isinstance(v, Decimal) else (v.isoformat() if isinstance(v, date) else v))
-                       for k, v in inp.items()},
-            "stored": stored(d)}
+    return {
+        "inputs": {
+            k: (
+                dstr(v) if isinstance(v, Decimal) else (v.isoformat() if isinstance(v, date) else v)
+            )
+            for k, v in inp.items()
+        },
+        "stored": stored(d),
+    }
 
 
 BASE_INP = inputs_of(LITERALS["positive"])
 FIXTURES = {
-    "fixture_with_benchmark": {**fixture({**BASE_INP, "ref_level": Decimal("0.043")}),
-                               "note": "reference rate level 4.30 percent is a test vector for the pure function, not a source figure"},
-    "fixture_above_par": {**fixture({**BASE_INP, "bid": Decimal("100.50"), "offer": Decimal("101.00")}),
-                          "note": "price above par: discount negative, simple discount margin not positive, default measures not meaningful"},
-    "fixture_bid_only": {**fixture({k: v for k, v in BASE_INP.items() if k != "offer"}),
-                         "note": "no offer: mid, width and offer columns missing; bid column known"},
-    "fixture_zero_recovery": {**fixture({**BASE_INP, "recovery": Decimal("0")}),
-                              "note": "recovery 0: intensity equals the simple discount margin"},
-    "fixture_no_margin": {**fixture({**BASE_INP, "margin_bp": None}),
-                          "note": "contractual margin not cited: discount margin missing, annualised discount known"},
+    "fixture_with_benchmark": {
+        **fixture({**BASE_INP, "ref_level": Decimal("0.043")}),
+        "note": "reference rate level 4.30 percent is a test vector for the pure function, not a source figure",
+    },
+    "fixture_above_par": {
+        **fixture({**BASE_INP, "bid": Decimal("100.50"), "offer": Decimal("101.00")}),
+        "note": "price above par: discount negative, simple discount margin not positive, default measures not meaningful",
+    },
+    "fixture_bid_only": {
+        **fixture({k: v for k, v in BASE_INP.items() if k != "offer"}),
+        "note": "no offer: mid, width and offer columns missing; bid column known",
+    },
+    "fixture_zero_recovery": {
+        **fixture({**BASE_INP, "recovery": Decimal(0)}),
+        "note": "recovery 0: intensity equals the simple discount margin",
+    },
+    "fixture_no_margin": {
+        **fixture({**BASE_INP, "margin_bp": None}),
+        "note": "contractual margin not cited: discount margin missing, annualised discount known",
+    },
 }
 assert FIXTURES["fixture_above_par"]["stored"]["pd_state_mid"] == "not_applicable"
-assert FIXTURES["fixture_bid_only"]["stored"]["mid"] is None and FIXTURES["fixture_bid_only"]["stored"]["dm_bid"] is not None
-assert FIXTURES["fixture_zero_recovery"]["stored"]["lam_mid"] == FIXTURES["fixture_zero_recovery"]["stored"]["dm_mid"]
-assert FIXTURES["fixture_no_margin"]["stored"]["dm_mid"] is None and FIXTURES["fixture_no_margin"]["stored"]["disc_mid"] is not None
+assert (
+    FIXTURES["fixture_bid_only"]["stored"]["mid"] is None
+    and FIXTURES["fixture_bid_only"]["stored"]["dm_bid"] is not None
+)
+assert (
+    FIXTURES["fixture_zero_recovery"]["stored"]["lam_mid"]
+    == FIXTURES["fixture_zero_recovery"]["stored"]["dm_mid"]
+)
+assert (
+    FIXTURES["fixture_no_margin"]["stored"]["dm_mid"] is None
+    and FIXTURES["fixture_no_margin"]["stored"]["disc_mid"] is not None
+)
 
 # --- assembly ------------------------------------------------------------------------------------------------
 CASE_META = {
@@ -1384,9 +2219,16 @@ CASE_META = {
 
 
 def run_of(case):
-    return {"run_id": RUNS[case], "issuer_id": ISSUER_ID, "issuer_name": ISSUER, "as_of": AS_OF,
-            "method_version": "deploy-v-r14", "case_kind": "synthetic", "pathway": "relative_value",
-            "requested_modules": ["CP-3D"]}
+    return {
+        "run_id": RUNS[case],
+        "issuer_id": ISSUER_ID,
+        "issuer_name": ISSUER,
+        "as_of": AS_OF,
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "relative_value",
+        "requested_modules": ["CP-3D"],
+    }
 
 
 def selftest_known_level():
@@ -1397,14 +2239,24 @@ def selftest_known_level():
     try:
         lit = copy.deepcopy(LITERALS["positive"])
         lit["terms"]["reference_rate"]["absence"] = None
-        lit["terms"]["reference_rate"]["level"] = {"quote": q("financial", "page:9", page), "percent_text": "4.30"}
+        lit["terms"]["reference_rate"]["level"] = {
+            "quote": q("financial", "page:9", page),
+            "percent_text": "4.30",
+        }
         assert not check_submission(lit, PACK_IDS["positive"])
         d = derive(inputs_of(lit))
         tables, claims, _own = compose_case("positive", lit, d)
         by_id = {f["fact_id"]: f for t in tables for r in t["rows"] for f in r["facts"]}
-        assert by_id["T3E.3.r04.mid"]["shown"] == "4.30%" and by_id["T3E.3.r04.mid"]["status"] == "known"
+        assert (
+            by_id["T3E.3.r04.mid"]["shown"] == "4.30%"
+            and by_id["T3E.3.r04.mid"]["status"] == "known"
+        )
         y = by_id["T3E.3.r05.mid"]
-        assert y["status"] == "known" and y["amount"] == stored(d)["yield_mid"] and y["calculation_id"] == "cp3d.yield_mid"
+        assert (
+            y["status"] == "known"
+            and y["amount"] == stored(d)["yield_mid"]
+            and y["calculation_id"] == "cp3d.yield_mid"
+        )
         assert ["financial", "page:9"] in y["cites"] and y["shown"] == "4.58%", y
         claim = next(c for c in claims if c["claim_id"] == "CP-3D-YLD-01")
         assert not claim_issues(claim, by_id)[0], claim
@@ -1438,8 +2290,10 @@ def main():
         missing = [f["fact_id"] for f in by_id.values() if f["status"] != "known"]
         cases[c] = {
             "run": run_of(c),
-            "pack_sources": [{"source_id": sid, "name": NAMES[sid], "sha256": SHA[sid], "status": "ready"}
-                             for sid in PACK_IDS[c]],
+            "pack_sources": [
+                {"source_id": sid, "name": NAMES[sid], "sha256": SHA[sid], "status": "ready"}
+                for sid in PACK_IDS[c]
+            ],
             "status": "restricted",
             "derived": stored(d),
             "missing_not_zero": missing,
@@ -1459,8 +2313,14 @@ def main():
     # headline checks on the positive values
     pos = cases["positive"]["derived"]
     assert pos["mid"] == "0.98875" and pos["days"] == "1452" and pos["years"] == "3.98"
-    assert cases["gap_no_recovery"]["derived"]["lam_mid"] is None and cases["gap_no_recovery"]["derived"]["dm_mid"] == pos["dm_mid"]
-    assert cases["gap_no_market"]["derived"]["mid"] is None and cases["gap_no_market"]["derived"]["bid"] is None
+    assert (
+        cases["gap_no_recovery"]["derived"]["lam_mid"] is None
+        and cases["gap_no_recovery"]["derived"]["dm_mid"] == pos["dm_mid"]
+    )
+    assert (
+        cases["gap_no_market"]["derived"]["mid"] is None
+        and cases["gap_no_market"]["derived"]["bid"] is None
+    )
 
     manifest = {
         "schema_version": "cp3d-owner-cases/1",
@@ -1468,20 +2328,43 @@ def main():
         "status": "DRAFT revision 2 (fix round 1) by owner-preparation task cp3d-owner, 2026-10-28; not executed",
         "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (same rule as cases/financial/manifest.json)",
         "pins": {**PINS},
-        "market_source_pin": {"file_read": MARKET_FILE, "file_pinned": False,
-                              "why": "that file belongs to another preparation and may be revised; the two page bytes are pinned by the source sha256",
-                              "source_sha256": MARKET_SHA, "source_id": "market", "name": MARKET_NAME,
-                              "pages": [{"locator": l, "text": t} for l, t in MARKET_PAGES]},
-        "reuse": {"identity": "cases/financial/manifest.json source identity, bytes unchanged",
-                  "financial": "cases/financial/manifest.json source financial, bytes unchanged",
-                  "market": "cases/cp3-cp6-owner/manifest.json market_source, bytes unchanged (the CP-3 preparation's frozen third-party sheet)"},
+        "market_source_pin": {
+            "file_read": MARKET_FILE,
+            "file_pinned": False,
+            "why": "that file belongs to another preparation and may be revised; the two page bytes are pinned by the source sha256",
+            "source_sha256": MARKET_SHA,
+            "source_id": "market",
+            "name": MARKET_NAME,
+            "pages": [{"locator": l, "text": t} for l, t in MARKET_PAGES],
+        },
+        "reuse": {
+            "identity": "cases/financial/manifest.json source identity, bytes unchanged",
+            "financial": "cases/financial/manifest.json source financial, bytes unchanged",
+            "market": "cases/cp3-cp6-owner/manifest.json market_source, bytes unchanged (the CP-3 preparation's frozen third-party sheet)",
+        },
         "no_new_source": "No second market source is added. The method needs no content the sheet and the financial schedule lack, except a reference rate level, which is deliberately absent so the all-in yield is shown Not calculable (see expected.json#arithmetic.reference_rate)",
-        "run": {"requested_modules": ["CP-3D"], "plan_order": PLAN, "live_consumers_of_cp0": ["CP-3D"],
-                "pathway": "relative_value", "optional_cp2h": "CP-2H is not built: treated as unbound, not selected, not read"},
-        "cases": [{"case_id": c, "run": run_of(c), "pack_sources": cases[c]["pack_sources"],
-                   "clone_of": "positive" if c == "gap_no_recovery" else None,
-                   "submission": f"submissions.json#{c}"} for c in LITERALS],
-        "table_ids": {"CP-3D": CP3D_TABLES, "used": [f"T3E.{i}" for i in range(1, 10)], "unused": ["T3E.10"]},
+        "run": {
+            "requested_modules": ["CP-3D"],
+            "plan_order": PLAN,
+            "live_consumers_of_cp0": ["CP-3D"],
+            "pathway": "relative_value",
+            "optional_cp2h": "CP-2H is not built: treated as unbound, not selected, not read",
+        },
+        "cases": [
+            {
+                "case_id": c,
+                "run": run_of(c),
+                "pack_sources": cases[c]["pack_sources"],
+                "clone_of": "positive" if c == "gap_no_recovery" else None,
+                "submission": f"submissions.json#{c}",
+            }
+            for c in LITERALS
+        ],
+        "table_ids": {
+            "CP-3D": CP3D_TABLES,
+            "used": [f"T3E.{i}" for i in range(1, 10)],
+            "unused": ["T3E.10"],
+        },
     }
     submissions = {
         "schema_version": "cp3d-owner-submissions/1",
@@ -1521,7 +2404,9 @@ def main():
             "registered_for_CP-3D": CP3D_TABLES,
             "occurs_in_other_module_table_ids": [],
             "src_tests_docs_cases_grep_2026-10-28": "T3E appears only in src/deploy_vii/methodology.json before this preparation",
-            "unused": ["T3E.10 is registered and left unused (no composed content); open question in the lease"],
+            "unused": [
+                "T3E.10 is registered and left unused (no composed content); open question in the lease"
+            ],
         },
         "cp0": cp0,
         "cases": cases,
@@ -1529,8 +2414,11 @@ def main():
         "refusals": [{"id": m["id"], "issue": m["issue"]} for m in MUT_LIST],
         "tool_use_refusals": [{"id": t["id"], "issues": t["issues"]} for t in TOOL_USE],
         "negative_cases": {
-            "blocked_cp3d": {"attempt_0_issue": BLOCKED["attempt_0"]["issue"], "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
-                             "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)"},
+            "blocked_cp3d": {
+                "attempt_0_issue": BLOCKED["attempt_0"]["issue"],
+                "attempt_1_issue": BLOCKED["attempt_1"]["issue"],
+                "result": "attempt 0 invalid, re-begun as attempt 1 (repair_of set), attempt 1 invalid: module blocked, the store holds a blocked head (status blocked)",
+            },
             "begin_refused_cp0_blocked": "CP-0 blocked or stale refuses begin of CP-3D (edge_rule block, no attempt consumed); built by making CP-0 blocked on a clone (two invalid CP-0 attempts), no literal",
             "stale_binding": "a snapshot change between the last read_pages and the submit refuses stale_binding",
         },
@@ -1545,9 +2433,18 @@ def main():
             "reason": "No consumer core reads CP-3D: cp3_relative_value.py:100 and cp6_committee.py:113 state they never read it; CP-5 counts only after a D3 scope lease; CP-3C (optional CP-3D edge) has no core, lease or chain",
             "reader_pinned_for_cp3c": {
                 "function": "cp3d_reader(store, head)",
-                "exposes": ["head sha256", "status", "simple discount margin at mid (fact id and amount)", "annual default intensity at mid",
-                            "cumulative default probability at mid", "recovery assumption or its absence", "own limitations"],
-                "positive_values": {k: cases["positive"]["derived"][k] for k in ("dm_mid", "lam_mid", "pd_mid")},
+                "exposes": [
+                    "head sha256",
+                    "status",
+                    "simple discount margin at mid (fact id and amount)",
+                    "annual default intensity at mid",
+                    "cumulative default probability at mid",
+                    "recovery assumption or its absence",
+                    "own limitations",
+                ],
+                "positive_values": {
+                    k: cases["positive"]["derived"][k] for k in ("dm_mid", "lam_mid", "pd_mid")
+                },
             },
         },
         "render": {
@@ -1559,8 +2456,17 @@ def main():
             },
             "blocks": {
                 "market-against-fundamentals": {
-                    "owner": "CP-3D", "layout": "dense _Spec", "route_label": "Full analysis",
-                    "tabs": [["T3E.5", "Market-implied default"], ["T3E.4", "Assumptions and terms"], ["T3E.6", "Technicals"], ["T3E.1", "Market levels"], ["T3E.2", "Price metrics"], ["T3E.3", "Spread and yield"]],
+                    "owner": "CP-3D",
+                    "layout": "dense _Spec",
+                    "route_label": "Full analysis",
+                    "tabs": [
+                        ["T3E.5", "Market-implied default"],
+                        ["T3E.4", "Assumptions and terms"],
+                        ["T3E.6", "Technicals"],
+                        ["T3E.1", "Market levels"],
+                        ["T3E.2", "Price metrics"],
+                        ["T3E.3", "Spread and yield"],
+                    ],
                     "primary": "T3E.5",
                     "populated": "the market-implied default panel (FP03 draws a market-implied default frame beside the alignment panel)",
                     "partial": "the alignment panel (market implication against fundamentals, per-row alignment chip) is not populated: CP-3D reads no fundamental comparator; the own limitation says so and T3E.9 carries it",
@@ -1585,8 +2491,14 @@ def main():
             "Decimal.exp rounding is relied on only at 0.0001 quantisation",
         ],
     }
-    for name, obj in (("manifest.json", manifest), ("submissions.json", submissions), ("expected.json", expected)):
-        (OUT / name).write_text(json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=False) + "\n", encoding="utf-8")
+    for name, obj in (
+        ("manifest.json", manifest),
+        ("submissions.json", submissions),
+        ("expected.json", expected),
+    ):
+        (OUT / name).write_text(
+            json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=False) + "\n", encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":

@@ -722,9 +722,11 @@ def waterfall(classes, ev, ev_why):
     for r in sorted({c["rank"] for c in classes}):
         mem = [c for c in classes if c["rank"] == r]
         miss = next((c for c in mem if c["claim"] is None), None)
-        tot = None if miss else ex(lambda: sum((c["claim"] for c in mem), D(0)))
+        tot = None if miss else ex(lambda mem=mem: sum((c["claim"] for c in mem), D(0)))
         tot_why = miss["why"] if miss else None
-        through = None if (tot is None or ahead is None) else ex(lambda: ahead + tot)
+        through = (
+            None if (tot is None or ahead is None) else ex(lambda ahead=ahead, tot=tot: ahead + tot)
+        )
         through_why = ahead_why or tot_why
         paid = None
         if avail is not None and tot is not None:
@@ -748,7 +750,7 @@ def waterfall(classes, ev, ev_why):
                 )
             else:
                 rec = div(paid, tot)
-                dist = div(ex(lambda: c["claim"] * paid), tot)
+                dist = div(ex(lambda c=c, paid=paid: c["claim"] * paid), tot)
                 x.update(dist=dist, rec=rec, short=sub38(c["claim"], dist), why=None)
         if not brk_found:
             if avail is None or tot is None:
@@ -761,7 +763,7 @@ def waterfall(classes, ev, ev_why):
         elif tot is None:
             avail, avail_why = None, tot_why
         else:
-            avail = ex(lambda: avail - paid)
+            avail = ex(lambda avail=avail, paid=paid: avail - paid)
     if not brk_found:
         brk = ["equity"]
     total = None if ahead is None else ahead
@@ -1077,7 +1079,7 @@ def build_case(name):
         elif m is None:
             ev, why = None, R_EV_NA
         else:
-            ev, why = ex(lambda: e * m), None
+            ev, why = ex(lambda e=e, m=m: e * m), None
         ev_in[v["case_id"]] = {
             "ebitda": e,
             "ebitda_why": ef["limitation"] if e is None else None,
@@ -2545,8 +2547,6 @@ PATTERN = {
 
 def refusals(built):
     pos = SUBMISSION["positive"]
-    S = built["positive"]["waterfall"]
-    P = pages_of("positive")
     out = []
 
     def mut(fn, base=None):

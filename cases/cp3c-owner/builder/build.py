@@ -170,7 +170,7 @@ assert (
     "floating rate type with SOFR reference rate, spread 0 basis points and floor 0 basis points"
     in fac_text
 )
-row = re.search(r"^2025-12-31\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$", fac_text, re.M)
+row = re.search(r"^2025-12-31\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$", fac_text, re.MULTILINE)
 FAC_PRINCIPAL = D(row.group(2))
 assert FAC_PRINCIPAL == TOTAL_DEBT == D(row.group(3))
 mm = re.search(r"final maturity is ([A-Z][a-z]+) (\d+), (\d{4})", fac_text)
@@ -413,9 +413,13 @@ def tl(
 
 
 STEP_UP = D(400)
-BASE_IN = dict(
-    cash=CASH, undrawn=UNDRAWN, f_annual=F_ANNUAL, ebitda=EBITDA_ADJ, interest=CASH_INTEREST
-)
+BASE_IN = {
+    "cash": CASH,
+    "undrawn": UNDRAWN,
+    "f_annual": F_ANNUAL,
+    "ebitda": EBITDA_ADJ,
+    "interest": CASH_INTEREST,
+}
 SCEN = {  # pack-run cases: inputs mirror the CP-2D case they consume (cp2d_case)
     "positive": {"cp2d_case": "positive", "horizon": 24, "min": D(10), "step": STEP_UP},
     "gap_minimum_cash": {
@@ -767,15 +771,23 @@ def _near(phrase, noun):
 
 
 GUARD = (
-    [("product", k, p, re.compile(_word(p), re.I)) for k, ps in BC_PROHIBITED.items() for p in ps]
+    [
+        ("product", k, p, re.compile(_word(p), re.IGNORECASE))
+        for k, ps in BC_PROHIBITED.items()
+        for p in ps
+    ]
     + [
-        ("product", k, p, re.compile(_near(p, BC_NOUN), re.I))
+        ("product", k, p, re.compile(_near(p, BC_NOUN), re.IGNORECASE))
         for k, ps in BC_NEAR.items()
         for p in ps
     ]
-    + [("core-local", k, p, re.compile(_word(p), re.I)) for k, ps in LOCAL_WORD.items() for p in ps]
     + [
-        ("core-local", k, p, re.compile(_near(p, LOCAL_NOUN), re.I))
+        ("core-local", k, p, re.compile(_word(p), re.IGNORECASE))
+        for k, ps in LOCAL_WORD.items()
+        for p in ps
+    ]
+    + [
+        ("core-local", k, p, re.compile(_near(p, LOCAL_NOUN), re.IGNORECASE))
         for k, ps in LOCAL_NEAR.items()
         for p in ps
     ]
@@ -1190,7 +1202,6 @@ def build_tables(case):
     r = R[case]
     c2d = C2D_EXP["cases"][s["cp2d_case"]]["tables"]
     T = {}
-    f = r["rows"][0]
     # T3D.1 refinancing need by maturity
     t1 = []
     for ri, x in enumerate(r["rows"], 1):
@@ -1467,7 +1478,7 @@ def build_tables(case):
     # T3D.6 refinancing paths (analyst)
     t6 = []
     for kind in KINDS:
-        feas, cat, text, impl, refs, lim = JUDG[case][kind]
+        feas, _cat, text, impl, refs, _lim = JUDG[case][kind]
         t6.append(
             [
                 KIND_LABEL[kind],
@@ -1498,7 +1509,7 @@ def build_tables(case):
 
 
 def limitations(case):
-    s, r = SCEN[case], R[case]
+    s = SCEN[case]
     out = [
         (
             "Run-rate basis",

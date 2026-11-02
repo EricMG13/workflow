@@ -48,7 +48,7 @@ Row -> existing nodes (file::node), status:
     misc::test_eur_evidence_states_the_currency_and_usd_keeps_its_bytes
     misc::test_cpl10_usd_upstream_keeps_the_us_dollar_token
  6  no hard-coded period left in `src/deploy_workflow/owners`: NEW test_no_hardcoded_period_left   run
- 7  EUR runs render `EUR m` and no `US$`: BLOCKED, not committed (CP-2H emits no money fact; see report)
+ 7  EUR runs render `EUR m` and no `US$`: NEW test_eur_runs_render_no_usd_token                    run
 """
 
 from __future__ import annotations
@@ -56,13 +56,28 @@ from __future__ import annotations
 import ast
 import json
 import re
+from collections.abc import Callable, Iterator, Mapping
+from dataclasses import asdict, fields, is_dataclass
+from datetime import date
+from decimal import Decimal
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
 import pytest
+import test_periods_currency_cp1c as c1c
+import test_periods_currency_cp1d as c1d
+import test_periods_currency_cp2g_cp2h as g
+import test_periods_currency_cp4c as c4c
+import test_periods_currency_e2e_cp2d as e2d
+import test_periods_currency_e2e_cp3c as e3c
+import test_periods_currency_misc as misc
+from pydantic import BaseModel
 
+from deploy_vii.contracts import Fact
+from deploy_vii.report_view import figure_unit
 from deploy_workflow.context_periods import quarters_ending_at
-from deploy_workflow.owners import cpl10
+from deploy_workflow.owners import cp1d, cp2a, cp3c, cpl10
 
 ROOT = Path(__file__).resolve().parents[1]
 KEY: dict[str, Any] = json.loads(
@@ -274,3 +289,96 @@ def test_no_hardcoded_period_left() -> None:
     assert [(f, n, s) for f, n, s in hits if (f, s) not in ALLOWED] == []
     assert sorted({(f, s) for f, _, s in hits}) == sorted(ALLOWED)  # no stale allow-list entry
     assert all(ALLOWED[(f, s)] for f, _, s in hits)
+
+
+# ---- row 7: the EUR runs' output holds `EUR m` and no `US$` -----------------------------------
+
+
+def _facts(value: Any) -> Iterator[Fact]:
+    """Every `Fact` inside a composed output, wherever it sits (module, result, report, cell)."""
+    if isinstance(value, Fact):
+        yield value
+    elif isinstance(value, BaseModel):
+        for name in type(value).model_fields:
+            yield from _facts(getattr(value, name))
+    elif is_dataclass(value) and not isinstance(value, type):
+        for item in fields(value):
+            yield from _facts(getattr(value, item.name))
+    elif isinstance(value, Mapping):
+        for item in value.values():
+            yield from _facts(item)
+    elif isinstance(value, list | tuple | set | frozenset):
+        for item in value:
+            yield from _facts(item)
+
+
+def _text(value: Any) -> str:
+    """The composed output as text, plus the unit the report view spells after each figure
+    (`deploy_vii.report_view.figure_unit`: `EUR m` from the fact's unit and currency)."""
+
+    def default(item: Any) -> Any:
+        if hasattr(item, "model_dump"):
+            return item.model_dump(mode="json")
+        if is_dataclass(item) and not isinstance(item, type):
+            return asdict(item)
+        if isinstance(item, Decimal | Fraction):
+            return str(item)
+        if isinstance(item, date):
+            return item.isoformat()
+        if isinstance(item, set | frozenset):
+            return sorted(str(x) for x in item)
+        raise TypeError(f"cannot serialise {type(item)}")
+
+    units = {unit for fact in _facts(value) if (unit := figure_unit(fact))}
+    return json.dumps(value, default=default, ensure_ascii=False) + "\n" + "\n".join(sorted(units))
+
+
+Compose = Callable[[Path, pytest.MonkeyPatch], Any]
+
+
+def _cp3c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    _store, pack, attempt, upstream = e3c._compose(tmp_path, monkeypatch)
+    report = cp3c.refinancing_risk(
+        pack=pack, submission=e3c._submission(upstream), upstream=upstream
+    )
+    return cp3c.cp3c_module(report=report, inputs=attempt.inputs, attempt=attempt.number)
+
+
+def _cpl10(_tmp: Path, _mp: pytest.MonkeyPatch) -> Any:
+    return cpl10.change_screen(submission=misc._l10_payload(), upstream=misc._l10_upstream())
+
+
+EUR_OUTPUT: dict[tuple[str, str], Compose] = {
+    ("R2", "CP-2A"): lambda t, m: cp2a.compute(misc._cp2a_inputs("EUR")),
+    ("R2", "CP-2G"): lambda t, m: g.G_RESULT,
+    ("R2", "CP-2H"): lambda t, m: g.H_REPORT,
+    ("R2", "CP-4C"): lambda t, m: c4c.eur_result(),
+    ("R2", "CP-2E"): lambda t, m: misc._cp2e_report("fy-2026"),
+    ("R2", "CP-L10"): _cpl10,
+    ("R3", "CP-1B"): lambda t, m: misc._compose("EUR")[0],
+    ("R3", "CP-1D"): lambda t, m: cp1d.compute(c1d._eur_inputs(c1d._eur_basis())),
+    ("R6", "CP-1C"): lambda t, m: c1c._composed("R6")[1],
+    ("R6", "CP-2D"): lambda t, m: e2d._compose(t, m, e2d.cp1_2026())[2],
+    ("R6", "CP-3C"): _cp3c,
+}
+
+
+def test_eur_output_covers_every_settled_eur_module() -> None:
+    """The table above holds exactly the settled modules of R2, R3 and R6, no more, no fewer."""
+    want = {(run, module) for run in ("R2", "R3", "R6") for module in _settled(run)}
+    assert set(EUR_OUTPUT) == want
+
+
+@pytest.mark.parametrize(("run", "module"), sorted(EUR_OUTPUT))
+def test_eur_runs_render_no_usd_token(
+    run: str, module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The whole composed output of the module (facts, tables, claims, limitations) holds each of
+    the key's required tokens (none for a module with no money fact) and none of its forbidden ones (`US$`, `USD`)."""
+    key = RUNS[run]["modules"][module]
+    text = _text(EUR_OUTPUT[(run, module)](tmp_path, monkeypatch))
+    assert "US$" in key["forbidden_tokens"]
+    for token in key["required_tokens"]:
+        assert token in text, token
+    for token in key["forbidden_tokens"]:
+        assert token not in text, token

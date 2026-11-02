@@ -495,6 +495,8 @@ def _oracle_item(case: str, ident: str) -> dict[str, Any]:
         if isinstance(node, dict):
             if node.get("id") == ident:
                 found.append(node)
+            elif isinstance(node.get(ident), dict):
+                found.append(node[ident])  # a dict-keyed container, by its name
             for value in node.values():
                 walk(value)
         elif isinstance(node, list):
@@ -516,7 +518,12 @@ def test_a_non_content_oracle_id_arises_with_no_step_submission() -> None:
         _, case, ident = check.split(":")
         item = _oracle_item(case, ident)
         seen += 1
-        if why == rules.UPSTREAM:
+        if why == rules.ANCHOR:
+            assert item, check
+            for name, entry in item.items():
+                assert entry["research_brief_json_written"] is False, f"{check}:{name}"
+                assert entry["calls_jsonl_lines_added"] == 0, f"{check}:{name}"
+        elif why == rules.UPSTREAM:
             issues = item["expected_issues"]
             assert issues and all(i.startswith("Stale input ") for i in issues), check
         else:
@@ -527,7 +534,7 @@ def test_a_non_content_oracle_id_arises_with_no_step_submission() -> None:
                 or "context" in item
                 and item["id"] == "context-unreadable"
             ), check
-    assert seen == 15
+    assert seen == 16
 
 
 def test_owner_gaps_may_only_shrink() -> None:

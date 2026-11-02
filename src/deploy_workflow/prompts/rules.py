@@ -332,6 +332,10 @@ def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
 UPSTREAM = "upstream binding: stale or blocked bound input; the remedy is a rerun, not a rewrite"
 OWN_TEXT = "Python's own limitation text, not a refusal of anything the model wrote"
 UNREADABLE = "source unreadable; the remedy is a new pack"
+ANCHOR = (
+    "CP-DR stops before its first step when CP-0 or CP-1 is not settled and bound: "
+    "there is no submission, and the remedy is a rerun"
+)
 CLAIM_TEXT = "builds Python's claim text"
 NON_CONTENT: Mapping[str, str] = {
     "fn:deploy_vii.cp2_synthesis:_provenance_issues": UPSTREAM,
@@ -357,7 +361,7 @@ NON_CONTENT: Mapping[str, str] = {
     **{f"oracle:cp2g:{i}": UPSTREAM for i in ("v18", "v19", "v20")},
     **{f"oracle:cp2h:{i}": UPSTREAM for i in ("v17", "v18")},
     **{f"oracle:cp4c:{i}": UPSTREAM for i in ("v24", "v25", "v26", "v27")},
-    "oracle:cpdr-research:anchors": UPSTREAM,
+    "oracle:cpdr-research:anchors": ANCHOR,
     "oracle:cp1d:r14": UNREADABLE,
     "oracle:cp1c:r11": UNREADABLE,
     "oracle:cp2h:s01": UNREADABLE,

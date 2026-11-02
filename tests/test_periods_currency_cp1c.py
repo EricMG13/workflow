@@ -356,12 +356,8 @@ def test_currency_mismatch_is_the_keys_validator_issue() -> None:
     issues = cp1c.validate_peer_benchmark(
         pack=_pack("R4"), submission=_submission("USD"), upstream=_mismatch_upstream()
     )
-    # `issue_exact` omits the `run.` that period_basis's committed text carries (Task 1, not this
-    # task's file); the key's `issue_contains` and the `Period basis: ` prefix are what hold.
-    assert len(issues) == 1
-    assert issues[0].startswith("Period basis: ")
+    assert issues == (key["issue_exact"],)
     assert key["issue_contains"] in issues[0]
-    assert issues[0].removeprefix("Period basis: ").endswith(key["issue_contains"])
 
 
 def test_unsupported_period_base_is_a_period_basis_issue() -> None:

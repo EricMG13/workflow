@@ -1919,7 +1919,7 @@
    "src/deploy_vii/downstream_readiness.py": "29c71a90df07d1eed7df2903b30211377a77588fa7f564d09389d6d47c11dbdd",
    "src/deploy_vii/financial_contracts.py": "527090d4c2a6ed38f21eb5e2022d7508a1b2421f07240e31bb58e6a4695a375b",
    "src/deploy_vii/financial_validation.py": "91b5ef7d52ad8cb87c0627c5c794b1f6014ab8257bb3b7cd57ca22f8ff220c28",
-   "src/deploy_vii/live/tools.py": "a5451e47977f7f57d56c3563dfa7e1ef7f9eef24d59d668b90ea5295aaac3ece",
+   "src/deploy_vii/live/tools.py": "dc5bda3e4d12547713eb4e7be23ff8b6c0fe812983f4e727cb901429447d731e",
    "src/deploy_vii/narrative.py": "d766f0fae83bb40a5cf20b91bbce279c61137177752d9e3bf455544739972ebf",
    "src/deploy_vii/prose.py": "8dcb2a51ba1865970fca7c17dba2fb8a8657e4a8bfae4679ffd5c7b6823cbbef",
    "src/deploy_vii/quality.py": "d1934a5902422d22717217c6961f0ea58e34aa0326ce469c28db1eb815e21426",

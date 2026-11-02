@@ -181,7 +181,7 @@ def world(tmp_path: Path) -> World:
     page = corpus / "FIX" / "fixture.htm"
     page.write_bytes(PAGE)
     gold = tmp_path / "financial_gold.json"
-    gold.write_text("{}", encoding="utf-8")
+    gold.write_text(json.dumps({"periods": [], "facts": []}), encoding="utf-8")
     cases = tmp_path / "cases"
     for pathway, case_id in CASES.items():
         case_dir = cases / case_id

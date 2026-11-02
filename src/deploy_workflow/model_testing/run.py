@@ -159,17 +159,21 @@ def _precheck_ruling(ruling: Path) -> None:
         raise DriverError(f"ruling {ruling} must be a file under docs/rulings/")
 
 
+def check_out_inside_root(settings: Settings) -> None:
+    if not settings.out.resolve().is_relative_to(settings.runs_root.resolve()):
+        raise DriverError(
+            f"--out {settings.out} is outside --runs-root {settings.runs_root}: spend stored "
+            "outside the runs root is not counted against the account caps"
+        )
+
+
 def check_settings(settings: Settings) -> None:
     if settings.live and not settings.runs_root.is_absolute():
         raise DriverError(
             "--live needs an explicit absolute --runs-root: the default is relative, so each "
             "worktree would keep its own ledger and miss spend recorded elsewhere"
         )
-    if not settings.out.resolve().is_relative_to(settings.runs_root.resolve()):
-        raise DriverError(
-            f"--out {settings.out} is outside --runs-root {settings.runs_root}: spend stored "
-            "outside the runs root is not counted against the account caps"
-        )
+    check_out_inside_root(settings)
     if settings.live:
         if settings.ruling is None:
             raise DriverError("--live needs --ruling docs/rulings/<file>.md")
@@ -262,8 +266,8 @@ def _read_all(root: Path) -> list[tuple[Path, RunMeta, tuple[CallRecord, ...]]]:
     for folder in _run_dirs(root):
         if not (folder / "run.json").is_file():
             raise DriverError(
-                f"run folder {folder.name} has no run.json: a crashed run, its spend cannot be "
-                "counted; resume it or move it away"
+                f"run folder {folder.name} has no run.json yet (in flight or crashed): its "
+                "spend cannot be counted; wait for it, resume it or move it away"
             )
         meta, records = read_run(folder)
         found.append((folder, meta, records))
@@ -315,30 +319,28 @@ def needed_usd(
     return max(measured) if measured else RUN_ESTIMATE_USD[config_id]
 
 
-def _opus_five(runs: Sequence[tuple[RunMeta, tuple[CallRecord, ...]]]) -> list[RunMeta]:
-    done = [
-        meta
-        for meta, _ in runs
-        if meta.config_id == OPUS_CONFIG
-        and meta.outcome == "settled"
-        and meta.pathway in OPUS_PATHWAYS
-    ]
-    return done if {m.pathway for m in done} == set(OPUS_PATHWAYS) else []
-
-
 def distressed_opus_estimate(
     runs: Sequence[tuple[RunMeta, tuple[CallRecord, ...]]],
     settlements: Sequence[Settlement] = (),
 ) -> Decimal | None:
     """The spec 7.2 estimate of distressed_restructuring on Opus, scaled by how the five Opus
-    pathways measured against their 125.72 estimate; ``None`` until all five have settled."""
-    five = {m.run_id for m in _opus_five(runs)}
-    if not five:
+    pathways measured against their 125.72 estimate; ``None`` until all five have settled.
+    Each pathway counts once, at the highest spend of its settled live runs (the rule
+    ``needed_usd`` uses); an offline run spends nothing and does not count."""
+    best: dict[str, Decimal] = {}
+    for meta, records in runs:
+        if (
+            meta.config_id == OPUS_CONFIG
+            and meta.mode == "live"
+            and meta.outcome == "settled"
+            and meta.pathway in OPUS_PATHWAYS
+        ):
+            spend = _run_spend(meta, records, settlements)
+            best[meta.pathway] = max(best.get(meta.pathway, spend), spend)
+    if set(best) != set(OPUS_PATHWAYS):
         return None
     with localcontext(_WIDE):
-        spent = sum(
-            (_run_spend(m, r, settlements) for m, r in runs if m.run_id in five), Decimal(0)
-        )
+        spent = sum(best.values(), Decimal(0))
         scaled = DISTRESSED_OPUS_ESTIMATE_USD * spent / OPUS_FIVE_ESTIMATE_USD
         return scaled.quantize(Decimal("0.01"), rounding=ROUND_UP)
 
@@ -560,6 +562,7 @@ def _check_refusal_names(meta: RunMeta, refusals: MappingABC[str, tuple[str, ...
 
 def score_out(settings: Settings) -> Path:
     """Score every run folder under ``out`` into ``scores.json`` (reads only the run folders)."""
+    check_out_inside_root(settings)
     found = _read_all(settings.out)
     if not found:
         raise DriverError(f"no run folders under {settings.out}")
@@ -671,6 +674,7 @@ def report_out(settings: Settings) -> Path:
     the run folders and ``faults.jsonl``. The stopped configurations are derived from the runs
     and settlements as they are now; only a skipped distressed run, which cannot be derived, is
     taken from the last stage command."""
+    check_out_inside_root(settings)
     scores_path = settings.out / SCORES_FILE
     if not scores_path.is_file():
         raise DriverError(f"no {SCORES_FILE} under {settings.out}: run the score command first")

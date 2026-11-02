@@ -991,4 +991,15 @@ def test_period_ref_two_period_rows_is_mismatch_even_if_one_holds_the_fact() -> 
     )
     fs = _ref_score(facts).facts[0]
     assert fs.outcome == "mismatch"
-    assert fs.observed == "2 facts at one locator"
+    assert fs.observed == "2 period rows match period_ref"
+
+
+def test_period_ref_ignores_period_rows_of_another_table() -> None:
+    # a T4.14-shaped row in table "other" must not resolve the reference
+    foreign = [
+        _cell("other", "p9", "period_id", "P7"),
+        _cell("other", "p9", "end_date", "2024-12-28"),
+        _cell("other", "p9", "period_type", "QUARTER"),
+    ]
+    facts = foreign + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+    assert _ref_score(facts).facts[0].outcome == "missing_in_output"

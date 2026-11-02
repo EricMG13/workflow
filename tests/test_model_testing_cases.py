@@ -277,3 +277,10 @@ def test_financial_gold_malformed_refused(drop: str, key: str) -> None:
     del (gold if where == "file" else gold["facts"][0])[name]
     with pytest.raises(CaseError, match=rf"my_gold\.json.*{key}"):
         financial_gold_facts(gold, "my_gold.json")
+
+
+def test_financial_gold_unknown_period_id_refused() -> None:
+    gold = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    gold["facts"][0]["period_id"] = "no-such-period"
+    with pytest.raises(CaseError, match=r"my_gold\.json.*no-such-period"):
+        financial_gold_facts(gold, "my_gold.json")

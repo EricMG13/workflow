@@ -137,7 +137,7 @@ def _key(record: CallRecord) -> Key:
 
 def _exact(amount: Decimal) -> bool:
     """Whether sums with the amount stay exact in ``_EXACT``: at most ``_PLACES`` decimal places
-    and below ``10 ** _MAGNITUDE`` (so an exponent such as 1E-1000000 is refused, not summed)."""
+    and below ``10 ** (_MAGNITUDE + 1)``, i.e. ``adjusted() <= _MAGNITUDE`` (so an exponent such as 1E-1000000 is refused, not summed)."""
     exponent = amount.as_tuple().exponent
     return isinstance(exponent, int) and exponent >= -_PLACES and amount.adjusted() <= _MAGNITUDE
 

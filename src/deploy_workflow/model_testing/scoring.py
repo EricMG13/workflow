@@ -295,7 +295,11 @@ def _score_entry(
     # Two or more period rows matching a period_ref are ambiguous even if one holds the fact.
     found = max(len(facts), period_rows)
     if found > 1:
-        seen = f"{found} facts at one locator"
+        seen = (
+            f"{found} period rows match period_ref"
+            if len(facts) < period_rows
+            else f"{found} facts at one locator"
+        )
         if status in _NO_VALUE_STATUSES and any(_has_value(f) for f in facts):
             return out("invented", seen)
         return out("mismatch", seen)

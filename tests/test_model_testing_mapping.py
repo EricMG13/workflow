@@ -375,10 +375,52 @@ def test_all_mappings_load(case_id: str) -> None:
     report = (
         ROOT / "work" / "model-testing" / "mapping" / "output" / f"{case_id}-report.md"
     ).read_text(encoding="utf-8")
-    for module, fids in sorted(known.items()):
-        share = sum(1 for f in fids if f in unmapped) / len(fids)
-        if share > 0.2:
-            pattern = rf"(?<![A-Za-z0-9-]){re.escape(module)}(?![A-Za-z0-9])"
-            assert re.search(pattern, report), (
-                f"{case_id}: {module} is {share:.0%} unmapped but its report does not name it"
-            )
+    over = {
+        module
+        for module, fids in known.items()
+        if sum(1 for f in fids if f in unmapped) / len(fids) > 0.2
+    }
+    _assert_named_in_over_section(case_id, report, over)
+
+
+_OVER_HEADING = re.compile(r"^(#{1,6})[^\n]*over 20% unmapped[^\n]*$", re.IGNORECASE | re.MULTILINE)
+_ANY_HEADING = re.compile(r"^(#{1,6}) ", re.MULTILINE)
+
+
+def _over_section(report: str) -> str | None:
+    """The report section whose heading contains "over 20% unmapped": from the heading to the
+    next heading of the same or a higher level; None when there is no such heading."""
+    head = _OVER_HEADING.search(report)
+    if head is None:
+        return None
+    rest = report[head.end() :]
+    for nxt in _ANY_HEADING.finditer(rest):
+        if len(nxt.group(1)) <= len(head.group(1)):
+            return rest[: nxt.start()]
+    return rest
+
+
+def _assert_named_in_over_section(case_id: str, report: str, over: set[str]) -> None:
+    if not over:
+        return
+    section = _over_section(report)
+    assert section is not None, (
+        f"{case_id}: modules {sorted(over)} are over 20% unmapped but the report has no 'over 20% unmapped' section"
+    )
+    for module in sorted(over):
+        pattern = rf"(?<![A-Za-z0-9-]){re.escape(module)}(?![A-Za-z0-9])"
+        assert re.search(pattern, section), (
+            f"{case_id}: {module} is over 20% unmapped but the section does not name it"
+        )
+
+
+def test_over_20_check_needs_the_section_and_the_module_in_it() -> None:
+    table = "| CP-1 | files | commit |\n"
+    report = f"# R\n\n## Per module\n\n{table}\n## Over 20% unmapped\n\nCP-2: 100%.\n\n## Next\n\nCP-1 again\n"
+    _assert_named_in_over_section("x", report, {"CP-2"})
+    with pytest.raises(AssertionError, match="does not name it"):
+        _assert_named_in_over_section("x", report, {"CP-1"})  # named only outside the section
+    with pytest.raises(AssertionError, match="no 'over 20% unmapped' section"):
+        _assert_named_in_over_section("x", f"# R\n\n## Per module\n\n{table}", {"CP-1"})
+    nested = "## Over 20% unmapped\n\n### Detail\n\nCP-3\n\n## Other\n"
+    _assert_named_in_over_section("x", nested, {"CP-3"})  # sub-headings stay inside

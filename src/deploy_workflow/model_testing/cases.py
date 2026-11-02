@@ -129,6 +129,10 @@ def financial_gold_facts(
                 raise CaseError(
                     f"financial_gold {fin_id}: value {value!r} is not a number"
                 ) from exc
+        if fact["period_id"] not in ends:
+            raise CaseError(
+                f"{name}: fact {fin_id} names period_id {fact['period_id']!r} not in 'periods'"
+            )
         unit, scale = _gold_unit(fact)
         out[fid] = {
             "fact_id": fid,
@@ -136,7 +140,7 @@ def financial_gold_facts(
             "topic": "financial_gold",
             "subject": fact["metric"],
             "field": fact["metric"],
-            "period_end": ends.get(fact["period_id"]),
+            "period_end": ends[fact["period_id"]],
             "status": fact["status"],
             "value": value,
             "value_type": "decimal",

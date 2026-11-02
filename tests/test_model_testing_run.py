@@ -24,7 +24,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, Literal, NoReturn
 
 import pytest
 import test_model_testing_budget as budget_tests
@@ -587,14 +587,17 @@ def test_distressed_on_opus_estimate_scales_with_the_measured_five() -> None:
     assert distressed_opus_estimate(cheaper) == Decimal("14.47")  # half, rounded up
 
 
-def _settled_double(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, str]]:
-    """Replace ``run_pathway`` with a double that writes a settled offline ``run.json``."""
+def _settled_double(
+    monkeypatch: pytest.MonkeyPatch, mode: Literal["offline", "live"] = "offline"
+) -> list[tuple[str, str]]:
+    """Replace ``run_pathway`` with a double that writes a settled ``run.json`` (offline by
+    default; ``live`` for a stage whose Opus runs must count toward the distressed estimate)."""
     calls: list[tuple[str, str]] = []
 
     def settled(**kwargs: Any) -> RunOutcome:
         run_dir: Path = kwargs["run_dir"]
         run_dir.mkdir()
-        meta = budget_tests.meta("offline", kwargs["model"].config_id, kwargs["run_id"])
+        meta = budget_tests.meta(mode, kwargs["model"].config_id, kwargs["run_id"])
         meta = meta.model_copy(update={"case_id": kwargs["case_id"], "pathway": kwargs["pathway"]})
         (run_dir / "run.json").write_text(meta.model_dump_json(), encoding="utf-8")
         calls.append((kwargs["pathway"], kwargs["model"].config_id))
@@ -607,7 +610,9 @@ def _settled_double(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, str]]:
 def test_distressed_runs_on_opus_after_the_five_when_the_cap_allows(
     world: World, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    calls = _settled_double(monkeypatch)
+    # live doubles: since the whole-branch review only settled live Opus runs count toward the
+    # five (an offline run spends nothing), so the estimate needs them to be live
+    calls = _settled_double(monkeypatch, "live")
     result = run_stage("comparison", world.settings())
     assert len(calls) == 12 and not result.stopped
     assert calls[-1] == ("distressed_restructuring", "opus-medium")
@@ -1065,3 +1070,51 @@ def test_an_unopenable_lock_file_is_a_driver_error_exit_2(
     assert main(world.argv("pilot", "--recordings", str(world.recordings))) == 2
     err = capsys.readouterr().err
     assert ".driver.lock" in err and "Traceback" not in err
+
+
+def _opus_run(
+    run_id: str, pathway: PathwayId, cost: str, mode: str = "live"
+) -> tuple[RunMeta, tuple[CallRecord, ...]]:
+    meta = budget_tests.meta("live", "opus-medium", run_id)
+    meta = meta.model_copy(update={"pathway": pathway, "mode": mode})
+    return (meta, (budget_tests.call("opus-medium", cost, run_id=run_id),))
+
+
+def test_a_second_settled_run_of_a_pathway_does_not_raise_the_distressed_estimate() -> None:
+    five: list[PathwayId] = list(OPUS_PATHWAYS)
+    base = [_opus_run(f"c-{p}-1", p, "25.144") for p in five]
+    assert distressed_opus_estimate(base) == Decimal("28.93")
+    # a pilot run of one pathway, and a rerun of the whole stage, at the same cost
+    extra = [_opus_run("pilot-1", five[0], "25.144")]
+    rerun = [_opus_run(f"c-{p}-2", p, "25.144") for p in five]
+    assert distressed_opus_estimate(extra + base) == Decimal("28.93")
+    assert distressed_opus_estimate(base + rerun) == Decimal("28.93")
+    # one measurement per pathway is the highest of its runs, the rule needed_usd uses
+    dearer = [_opus_run("c-x-3", five[1], "50.288")]
+    assert distressed_opus_estimate(base + dearer) == Decimal(
+        "34.72"
+    )  # 28.93 * 150.864 / 125.72, up
+
+
+def test_an_offline_run_does_not_count_toward_the_five_opus_pathways() -> None:
+    five: list[PathwayId] = list(OPUS_PATHWAYS)
+    live = [_opus_run(f"c-{p}-1", p, "25.144") for p in five[:4]]
+    offline = [_opus_run("c-off", five[4], "25.144", mode="offline")]
+    assert distressed_opus_estimate(live + offline) is None
+
+
+def test_score_and_report_refuse_an_out_outside_the_runs_root(
+    world: World, tmp_path_factory: pytest.TempPathFactory, capsys: pytest.CaptureFixture[str]
+) -> None:
+    elsewhere = tmp_path_factory.mktemp("elsewhere-out")
+    for command in ("score", "report"):
+        argv = world.argv(command)
+        argv[argv.index("--out") + 1] = str(elsewhere)
+        assert main(argv) == 2
+        assert "outside --runs-root" in capsys.readouterr().err
+
+
+def test_an_in_flight_run_folder_is_named_as_such(world: World) -> None:
+    (world.out / "live-run" / "sources").mkdir(parents=True)
+    with pytest.raises(DriverError, match=r"no run\.json yet \(in flight or crashed\)"):
+        load_runs(world.out)

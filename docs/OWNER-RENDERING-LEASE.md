@@ -235,7 +235,7 @@ Prepared for `docs/rulings/2026-10-29-stage3.md` item 2 on the release base `ab9
 | `cp4-fp04-covenants` | covenant_refinancing | `("CP-4",)` | `covenant-tests-headroom`, `red-flags`, `lender-protection-score`, `capacity`, `ebitda-definition`, `documents-structure` | positive, gap, gap_false_same_definition | none | ready |
 | `cp8-fp01-what-changed` | credit_snapshot | `("CP-8",)` | `what-changed` | positive, no_outcome | no_record | ready |
 | `slice-cp2e-sensitivity` | credit_snapshot | `("CP-2E",)` | none (rails and module page) | positive, gap_no_facility_schedule | none | ready |
-| `slice-cpdr-research` | credit_snapshot | `("CP-DR",)` | none (rails) | partial, unresolved, empty_agenda | none | ready |
+| `slice-cpdr-research` | relative_value | `("CP-1","CP-DR")` | none (rails) | positive | none | ready (Rev 5) |
 | `slice-cpl10-screen` | credit_snapshot | `("CP-L10",)` | none (rails) | positive, limited | deferred (R2.5) | ready |
 
 Rows: 2 existing plus 17 new (15 ready, 2 gated). Scope ids keep the module leases' names where a lease names one (`cp1c-fp03-peers`, `cp1d-fp02-quality`, `cp2a-fp05-downside`, `cp2g-fp05-forward`, `cp2h-fp05-ratings`, `slice-cp2e-sensitivity`, `slice-cpl10-screen`); the others are assigned here. `strengths-weaknesses` on the gated CP-6 row is the block owned `CP-2 · CP-6` (`report_view.py:1109`); its CP-2 side belongs to `s1a-credit-snapshot`.
@@ -273,7 +273,7 @@ Style as rev 0: what the scope covers, then that the rest remains unqualified. N
 | `cp8-fp01-what-changed` | refused | What changed since the last Report did not run: the readiness review refused this owner itself because no prior case was supplied. Every other block on this page remains unqualified. |
 | `cp8-fp01-what-changed` | complete | What changed since the last Report only: a comparison with the recorded prior case. Every other block on this page remains unqualified. |
 | `slice-cp2e-sensitivity` | complete | Macro and FX sensitivity only, on its module page with its evidence and limitations. No Front Page block on this page is qualified. |
-| `slice-cpdr-research` | complete | Local research agenda coverage only, shown as evidence and limitations. No Front Page block on this page is qualified. |
+| `slice-cpdr-research` | complete | Local research evidence and limitations only, from the supplied items. No Front Page block on this page is qualified. |
 | `slice-cpl10-screen` | complete | Screening only, shown as evidence and limitations. No Front Page block on this page is qualified. |
 
 `cp1-model` and `s1a-credit-snapshot` keep their rev 0 texts (`:173-181`; the s1a refused text is dropped by M1).
@@ -299,7 +299,7 @@ Style as rev 0: what the scope covers, then that the rest remains unqualified. N
 | `cp4-fp04-covenants` | `cp4-owner/E#/render` (`sections`, `evidence_rail_tables`, `limitations_rail_tables`, `displayed_literals/<positive or gap>`, `limitations_rail_module_limitations`) with cases at `#/positive`, `#/gap`, `#/gap_false_same_definition` | none | `cp4_closed(case, root, *, template=None) -> (store, receipt, None)` `cp4_runs.py:149` (pack `test_method_cp4.py:89` via `cp4_runs.py:50`) |
 | `cp8-fp01-what-changed` | `cp8-owner/E#/render` (`blocks`, `rails`, `lines_positive`) with `#/cases/<c>` | `cp8-owner/E#/refused/no_record` | complete: `cp8_closed -> (OwnerWorkflow, PreparedPack)` `cp8_runs.py:127` (pack `:42`) returns the settled workflow, so the test writes the receipt with `workflow.write_receipt` as `cpl10_closed` does (`cpl10_runs.py:175`). Refused: `cp8_runs.start("no_record", root)` (`cp8_runs.py:94`) then `workflow.write_receipt`, as `tests/test_owner_cp8.py:121-130` |
 | `slice-cp2e-sensitivity` | `cp2e-owner/E#/render` (`module_page`, `evidence rail`, `limitations rail`) and `#/cases/<c>/module_tables` | none | `cp2e_closed -> (store, receipt)` `cp2e_runs.py:146` (pack `:44`) |
-| `slice-cpdr-research` | `cpdr-owner/E#/evidence_rail`, `#/limitations_rail` (rails); `#/rendering` pins the surrounding page and is not asserted by G2 | none | `cpdr_closed -> (store, receipt)` `cpdr_runs.py:128` (pack `:43`) |
+| `slice-cpdr-research` | `cpdr-research-owner/E#/delivery` (scope, banner), `#/evidence_rail`, `#/limitations_rail` (rails) | none | `closed_run(case, factory) -> ClosedRun` `cpdr_runs.py:523` |
 | `slice-cpl10-screen` | `cpl10-owner/E#/rendered/rails` | oracle `#/refused` exists, driver lacks it | `cpl10_closed -> (store, receipt)` `cpl10_runs.py:169` (pack `:40`) |
 
 Deferred refused outcomes (oracle pins a refused run, driver cannot yet run it): `cp1d-fp02-quality` (`cp1d_runs.py:26` `CASES`) and `slice-cpl10-screen`. Each gets a banner and the outcome in one later amendment when its driver gains the case; until then a refused receipt for these triples raises `owner_render_*`. This is M1 applied: no outcome without a pinned run **and** a driver.
@@ -432,3 +432,7 @@ When a context exists, the same `replace` that inserts the banner also inserts, 
 Each user-supplied value carries the mark `user-supplied (context source, line N)`, where N is the line of its key in the frozen context source. Empty fields are omitted, and so is the issuer row when no CP-0 head is shown. Every value is HTML-escaped, and a control (Cc) or format (Cf) character is then shown as a visible `\uXXXX` escape (`\UXXXXXXXX` above U+FFFF); a value without one is byte-identical to its plain escape. N is found from the key's `"<key>":` token inside the `identity` object, on the reader's own line split, never from a line prefix. A key the spans cannot place there, or a span whose locator is not `line:N`, refuses the delivery as `owner_render_context`. The section is part of `report.html`, so the `files` digests and the verifier's two `_capture` comparisons cover it; the receipt gains no field. The builder is the pure function `run_context_section(context, spans, cp0_fields, t42_cells)`; its answer key is `cases/context-identity-periods/expected.json#render`.
 
 Consequence for the equivalence test (Acceptance 3): for a delivery that carries a context, the page with the banner and the run-context section removed equals `render_financial_slice`'s page with its banner removed. A delivery without a context is unchanged.
+
+## Rev 5 amendment (context plan O7c C2, 2026-11-02): the CP-DR row
+
+O7-R47 Q3 re-keys the dead `slice-cpdr-research` row to the run that now produces CP-DR: `relative_value`, `("CP-1","CP-DR")`, rails only. The R2.2, R2.4 and R2.5 rows above are amended in place, because the scope tests parse those tables. The banner is the key's `cases/cpdr-research-owner/expected.json#delivery/banner/complete`; the pointers name `cpdr-research-owner`, which replaced `cpdr-owner` in O7b-1 S3. Ruling O7-R58.

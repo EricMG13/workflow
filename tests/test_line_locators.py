@@ -8,6 +8,8 @@ BASE 63a5bbb8, before the change).
 
 import hashlib
 import json
+import re
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -24,6 +26,7 @@ from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.workflow import SourceEvidence
 
 FIN = "financial"
+WINDOW_KEY = Path(__file__).parents[1] / "cases" / "pilot-fixes" / "read-window.json"
 make_pack: Any = page_fixture.make_pack
 FIRST_ROW = "24 | Revenue | CONSOLIDATED INCOME STATEMENT | 30 30 30 30 120 | -"
 
@@ -40,6 +43,11 @@ PAGE_GOLDEN = {
     "extract_repeat": ("err", "405ea77404be73482a03838de0bc6966a847099ffe1393a2da27c90ac32a78d0"),
     "evidence": ("ok", "d2e4a2cc7c5152ce3ce08ded1bbe30c0cd74885862366988c367879e6c08046e"),
 }
+
+
+def _window() -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads(WINDOW_KEY.read_text(encoding="utf-8"))
+    return loaded
 
 
 @pytest.fixture(scope="module")
@@ -74,8 +82,13 @@ def test_read_pages_names_a_missing_line_and_keeps_the_cap(tools: PackTools) -> 
     body = tools.read_pages({"source_id": FIN, "first_page": 130, "last_page": 134})
     assert f"line:132 is not a located span of {FIN}." in body
     assert tools.read == {(FIN, "line:130"), (FIN, "line:131")}
-    with pytest.raises(ToolError, match="at most 5 pages per call"):
-        tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": 6})
+    key = _window()
+    long_lines = _line_spans(["x" * 2000] * (key["max_spans_per_read"] + 1))
+    assert sum(len(sp.text.encode()) for sp in long_lines) > key["max_line_read_bytes"]
+    capped = PackTools(_with_spans(long_lines), sources=(FIN,))
+    with pytest.raises(ToolError, match=re.escape(key["line_refusal"])):
+        capped.read_pages({"source_id": FIN, "first_page": 1, "last_page": len(long_lines)})
+    assert capped.read == set()
 
 
 def test_extract_statements_rebases_rows_to_their_own_line(tools: PackTools) -> None:  # (b)
@@ -351,3 +364,53 @@ def test_a_row_whose_caption_names_no_statement_takes_the_unit_heading_text(
     assert {(caption, text, kind) for caption, text, kind in seen} == {
         ("OPERATING ITEMS", "\n".join(lines), "IS")
     }
+
+
+# --- PF-R7: the line-source read window (cases/pilot-fixes/read-window.json) ---------------------
+
+
+def _window_tools(lines: list[str]) -> PackTools:
+    return PackTools(_with_spans(_line_spans(lines)), sources=(FIN,))
+
+
+def test_a_line_read_of_more_than_five_lines_within_the_byte_bound_is_allowed() -> None:  # (h)
+    key = _window()
+    count = key["max_spans_per_read"] + 3
+    tools = _window_tools(["Row 1  2  3"] * count)
+    body = tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": count})
+    assert sum(len(line.encode()) for line in ["Row 1  2  3"] * count) <= key["max_line_read_bytes"]
+    assert body.count("<<<SOURCE ") == count
+    assert tools.read == {(FIN, f"line:{n}") for n in range(1, count + 1)}
+
+
+def test_a_line_read_over_five_lines_and_over_the_byte_bound_is_refused() -> None:  # (i)
+    key = _window()
+    per_line = key["max_line_read_bytes"] // key["max_spans_per_read"]
+    count = key["max_spans_per_read"] + 1
+    tools = _window_tools(["y" * per_line] * count)
+    with pytest.raises(ToolError) as refused:
+        tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": count})
+    assert str(refused.value) == key["line_refusal"]
+    assert tools.read == set()
+
+
+def test_a_read_of_five_lines_is_allowed_even_when_one_line_exceeds_the_bound() -> None:  # (j)
+    key = _window()
+    tools = _window_tools(["z" * (key["max_line_read_bytes"] + 1000), "short"])
+    body = tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": 2})
+    assert body.count("<<<SOURCE ") == 2
+    assert tools.read == {(FIN, "line:1"), (FIN, "line:2")}
+
+
+def test_a_page_source_still_refuses_six_pages_with_the_old_text() -> None:  # (k)
+    tools = PackTools(make_pack(), sources=(FIN,))
+    with pytest.raises(ToolError) as refused:
+        tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": 6})
+    assert str(refused.value) == "bad arguments: at most 5 pages per call"
+    assert tools.read == set()
+
+
+def test_the_read_tool_description_is_the_keys() -> None:  # (l)
+    specs = live_tools.tool_specs("source_readiness", "pack")
+    read = next(spec for spec in specs if spec["function"]["name"] == live_tools.READ)
+    assert read["function"]["description"] == _window()["tool_description"]

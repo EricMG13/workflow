@@ -19,17 +19,30 @@ import hashlib
 import json
 import re
 import shutil
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import cp4c_runs as runs
 import pytest
 import refusal_view
+import test_cp1c_valuation_context as valuation_context
+import test_cp4c_valuation_context as valuation_cp4c
 import test_method_cp4c as stage1
 import view_tree
 from defect_classes import model_text_failures
 from s1a_runs import clone_workflow
-from test_connect_cp4c import CP4C_VERBATIM
+from test_connect_cp1c import _cp1_module, _read_all
+from test_connect_cp1c import _payload as cp1c_payload
+from test_connect_cp4c import (
+    CP4C_VERBATIM,
+    _command,
+    _finish,
+    _submit,
+    _t2h7,
+    cp1_facts,
+    oracle_facts,
+)
 
 from deploy_vii.bindings import validate_bindings
 from deploy_vii.bindings.shipped import SHIPPED_MAPS
@@ -39,7 +52,7 @@ from deploy_vii.live.tools import UNREAD_PAGE
 from deploy_vii.report_view import fact_spelling
 from deploy_workflow import owner_workflow as ow
 from deploy_workflow.owner_workflow import OwnerRunReceipt, OwnerWorkflow
-from deploy_workflow.owners import cp2g, cp4c
+from deploy_workflow.owners import cp1c, cp2g, cp4c
 from deploy_workflow.workflow import WorkflowError
 
 EXPECTED: dict[str, Any] = runs.oracle()["expected"]
@@ -662,3 +675,46 @@ def test_gap_label_refuses_a_model_copy_of_the_cp1c_selection_line() -> None:
     clean = json.loads(json.dumps(payload))
     clean["gaps"] = [{**clean["gaps"][0], "gap": benign}]
     assert cp4c._gap_label_issues(stage1._submission(clean)) == []
+
+
+def test_auto_public_store_binds_the_cp1c_selected_multiple(tmp_path: Path) -> None:
+    """Store level, no promotion (CP-0, CP-1, CP-2A, CP-4 and CP-2G are hand-built modules settled
+    through `begin`/`finish`): the `auto-public` pack runs `cp1c.submit`, then `cp4c.submit` with
+    the CP-1C head bound, so `cp4c_upstream`, `inherited_limitations` and the settlement all run.
+    The result equals `valuation-context-owner/expected.json#cases/auto-public`: the CP-4C
+    valuations, the added limitation, and the settled CP-1C limitations that head carries."""
+    key = valuation_context.case_of("auto-public")
+    pack = valuation_cp4c.pack_of("auto-public")
+    store = Execution.create(tmp_path / "store", pack)
+    commands = tuple(_command(m) for m in ("CP-1", "CP-1C", "CP-2A", "CP-4", "CP-2G", MODULE))
+    _finish(store, "CP-0", commands, "CP-0 note")
+    _finish(store, "CP-1", (*cp1_facts(), *_cp1_module().facts), "CP-1 note")
+    ticket = store.begin("CP-1C")
+    payload = json.dumps(cp1c_payload("no_peers"))
+    seen = _read_all(payload)
+    settled = cp1c.submit(
+        store, ticket.ticket_id, "peer_benchmark", payload, lambda text: cp1c.RULES(text, seen)
+    )
+    assert settled.journal.status == "finished" and settled.journal.issues == ()
+    _finish(store, "CP-2A", oracle_facts(stage1.CP2A_EXP, "positive"), "CP-2A note")
+    _finish(store, "CP-4", stage1._cp4("positive").facts, "CP-4 note")
+    _finish(store, "CP-2G", oracle_facts(stage1.CP2G_EXP, "gap"), "CP-2G note", (_t2h7(),))
+    attempt = store.begin(MODULE)
+    cp1c_head = _head(store, "CP-1C")
+    assert [(i.input_id, i.sha256) for i in attempt.inputs if i.input_id == "CP-1C"] == [
+        ("CP-1C", cp1c_head.result_sha256)
+    ]
+    multiples = key["cp4c"]["accepted_submissions"][0]["multiples"]
+    submitted = _submit(store, attempt, json.dumps(valuation_cp4c.payload_of(*multiples)))
+    assert submitted.journal.status == "finished" and submitted.journal.issues == ()
+    module = store.head_module(_head(store, MODULE))
+    facts = {f.fact_id: f for f in module.facts}
+    for row in key["cp4c"]["valuations"]:
+        case = row["case_id"]
+        assert facts[f"T4E.3.{case}.ev"].amount == Decimal(row["ev_exact"])
+        assert facts[f"T4E.3.{case}.multiple"].formula == row["multiple_formula"]
+        assert facts[f"T4E.3.{case}.implied_ltm_multiple"].amount == Decimal(
+            row["implied_ltm_multiple_exact"]
+        )
+    assert module.limitations.count(key["cp4c"]["added_limitation"]) == 1
+    assert list(store.head_module(cp1c_head).limitations) == key["cp1c"]["settled_limitations"]

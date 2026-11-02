@@ -34,7 +34,16 @@ import test_method_cp1c as stage1
 import view_tree
 from defect_classes import model_text_failures
 from s1a_runs import clone_workflow
-from test_connect_cp1c import CP1C_VERBATIM, assert_equals_oracle, assert_fp03_cells
+from test_connect_cp1c import (
+    CP1C_VERBATIM,
+    STEP,
+    _command,
+    _cp0_module,
+    _payload,
+    _read_all,
+    assert_equals_oracle,
+    assert_fp03_cells,
+)
 
 from deploy_vii import registry
 from deploy_vii.bindings import validate_bindings
@@ -592,3 +601,35 @@ def test_d3_the_reader_exposes_the_pinned_facts_of_the_genuine_head(
     by_id = {f.fact_id: f for f in module.facts}
     assert [f.fact_id for f in read.facts] == list(cp1c.READER_FACTS)
     assert all(f == by_id[f.fact_id] for f in read.facts)
+
+
+def test_auto_public_store_settles_the_key_limitations(tmp_path: Path) -> None:
+    """Store level, no promotion (CP-0 and CP-1 are hand-built modules settled through
+    `begin`/`finish`): the `auto-public` pack runs `cp1c.submit` over a real `Execution`, and the
+    settled head equals `valuation-context-owner/expected.json#cases/auto-public/cp1c`."""
+    key = valuation_context.case_of("auto-public")["cp1c"]
+    pack = valuation_context.pack_of("auto-public")
+    store = Execution.create(tmp_path / "store", pack)
+    ticket = store.begin("CP-0")
+    cp0 = _cp0_module(pack.run.as_of).model_copy(
+        update={
+            "status": "candidate",
+            "inputs": ticket.inputs,
+            "run_id": pack.run.run_id,
+            "facts": (_command("CP-1"), _command(MODULE)),
+        }
+    )
+    store.finish(ticket.ticket_id, cp0.model_dump_json(), lambda _m: ())
+    ticket = store.begin("CP-1")
+    cp1 = valuation_context.full_cp1().model_copy(
+        update={"status": "candidate", "inputs": ticket.inputs, "run_id": pack.run.run_id}
+    )
+    store.finish(ticket.ticket_id, cp1.model_dump_json(), lambda _m: ())
+    ticket = store.begin(MODULE)
+    payload = json.dumps(_payload("no_peers"))
+    sight = _read_all(payload)
+    done = cp1c.submit(store, ticket.ticket_id, STEP, payload, lambda text: cp1c.RULES(text, sight))
+    assert done.journal.status == "finished" and done.journal.issues == ()
+    head = _head(store, MODULE)
+    assert head.status == key["module_status"]
+    assert list(store.head_module(head).limitations) == key["settled_limitations"]

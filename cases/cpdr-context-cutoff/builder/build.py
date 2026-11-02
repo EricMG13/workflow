@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "cases" / "cpdr-context-cutoff"
 SRC_MANIFEST = "cases/cpdr-research-owner/manifest.json"
-SRC_PIN = "6baf6aaaaac0e87ed817e9f30bd442fd285e6ec61d69c7ab5a5e469fab0f217b"
+SRC_PIN = "c4f3a66f2a627dce038f78685024901b81590aa87c23e2c140e09950393d7c6c"
 
 raw = (ROOT / SRC_MANIFEST).read_bytes()
 assert hashlib.sha256(raw).hexdigest() == SRC_PIN
@@ -25,7 +25,11 @@ SRC = json.loads(raw.decode("utf-8"))
 AS_OF, CUTOFF = "2026-01-10", "2025-12-31"
 BAD = {"cutoff_after_as_of": "2026-01-11", "cutoff_malformed": "31/12/2025"}
 assert SRC["run"]["as_of"] == AS_OF
-assert date.fromisoformat(CUTOFF) < date.fromisoformat(AS_OF) < date.fromisoformat(BAD["cutoff_after_as_of"])
+assert (
+    date.fromisoformat(CUTOFF)
+    < date.fromisoformat(AS_OF)
+    < date.fromisoformat(BAD["cutoff_after_as_of"])
+)
 
 
 def dump(obj, indent):
@@ -135,7 +139,11 @@ accepted, refused, entries = [], [], []
 for row in M["research_manifest"]["rows"]:
     key = KEY_OF[row["locator"]]
     pub = row.get("published")
-    base = {"locator": row["locator"], "family": row["family"], "published": pub}  # product order (O7-R48 H1)
+    base = {
+        "locator": row["locator"],
+        "family": row["family"],
+        "published": pub,
+    }  # product order (O7-R48 H1)
     if pub is None:
         reason = f"undated evidence item refused: as_of {AS_OF} is before today"
     elif pub > effective:
@@ -218,7 +226,7 @@ EXPECTED = {
             "rule": "{t:'date', after:true}",
             "label": "Research cutoff",
         },
-        "_note": "\"s3\" is the `fld` section variable and the id prefix (the field id is s3-cutoff), not the element id sec3 (O7-R48 L1)",
+        "_note": '"s3" is the `fld` section variable and the id prefix (the field id is s3-cutoff), not the element id sec3 (O7-R48 L1)',
     },
 }
 OUT.mkdir(parents=True, exist_ok=True)

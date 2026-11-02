@@ -6,10 +6,10 @@
  "pins": {
   "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
   "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
-  "cases/cp2g-owner/manifest.json": "5c54e81cff90b19ebac019cf443ef5251ab41960c37427257eaa6e4ed990f0ce",
+  "cases/cp2g-owner/manifest.json": "d9522033fa9f1ca0fdf41454999f6791e2274c92128e95c4870fe1551ee16a5c",
   "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
   "cases/cp2g-owner/expected.json": "d1935a73770227172cd37a552b5583721f391da6f988ef4ef8baf1797f1e1b65",
-  "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f"
+  "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e"
  },
  "financial_baseline": {
   "path": "cases/financial/manifest.json",

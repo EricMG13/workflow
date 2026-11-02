@@ -21,7 +21,7 @@ CASE_DIR = "cases/cp3-context-owner"
 
 # --- 0. frozen inputs, pinned by hash --------------------------------------------------------------
 PINS = {
-    "cases/cp3-cp6-owner/manifest.json": "18250c810827e45269d06b7647b820064470bf3a5cbb681bc524bb96c8b68857",
+    "cases/cp3-cp6-owner/manifest.json": "d76b0d9349005b3c55299fbf64e4f3e0310bf5ed28fc88d68464132d08e46ece",
     "cases/cp3-cp6-owner/submissions.json": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
     "cases/cp3-cp6-owner/expected.json": "8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f",
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",

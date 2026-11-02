@@ -25,7 +25,7 @@ OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "cases" / "cp
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
-    "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
 }
 for rel, want in PINS.items():
     got = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
@@ -70,7 +70,14 @@ SYNTH_SENTENCE = "This invented case is test data, not evidence about real issue
 
 # --- registry as it is today (pre-O7b-1); the post-change registry is DATA below, never asserted from the file ----
 ENTRY = next(m for m in METH if m["module_id"] == "CP-DR")
-assert ENTRY["required"] == ["CP-0", "CP-1"] and ENTRY["table_ids"] == ["TDR.1", "TDR.2", "TDR.3"]
+assert ENTRY["required"] == ["CP-0", "CP-1"] and ENTRY["table_ids"] == [
+    "TDR.1",
+    "TDR.2",
+    "TDR.3",
+    "TDR.4",
+    "TDR.5",
+    "TDR.6",
+]
 assert "cp-dr/2026-10-31" in ENTRY["purpose"]
 for _m in METH:
     if _m["module_id"] != "CP-DR":
@@ -1776,7 +1783,7 @@ REGISTRY_AFTER = {
     "note": "DATA for O7b-1's tests, not an assertion against methodology.json (which does not yet hold it)",
     "CP-DR": {
         "required": ["CP-0", "CP-1"],
-        "table_ids": ["TDR.1", "TDR.2", "TDR.3"],
+        "table_ids": ["TDR.1", "TDR.2", "TDR.3", "TDR.4", "TDR.5", "TDR.6"],
         "purpose_contains": CPDR_VERSION,
         "row_position": "before CP-1C (so registry.plan orders CP-DR after CP-1, "
         "before CP-1C and CP-2)",
@@ -1871,14 +1878,18 @@ assert _EV1_L9.startswith("The desk describes the sector as trading at a discoun
     _NOT_IN_ITEM in e["text"] for e in EVIDENCE
 )
 _VAL = next(a for a in ANSWERS_V1 if a["question_id"] == "valuation-context")["limitation"]
-_LOCAL = "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run."
+_LOCAL = (
+    "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run."
+)
 _SYNTH = "Synthetic case; not real issuer qualification"
 _PLAN = {
     "plan_without_cpdr": ["CP-0", "CP-1", "CP-1C"],
     "plan_with_cpdr": ["CP-0", "CP-1", "CP-DR", "CP-1C"],
     "plan_cp2_with_cpdr": ["CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2"],
 }
-assert all(_PLAN["plan_with_cpdr"].index("CP-DR") < _PLAN["plan_with_cpdr"].index("CP-1C") for _ in "x")
+assert all(
+    _PLAN["plan_with_cpdr"].index("CP-DR") < _PLAN["plan_with_cpdr"].index("CP-1C") for _ in "x"
+)
 CONSUMERS = {
     "context_producers": {"CP-1C": ["CP-DR"], "CP-2": ["CP-DR"]},
     "context_producers_note": "added to execution.CONTEXT_PRODUCERS; the CP-1A entry is unchanged",
@@ -1950,7 +1961,12 @@ DELIVERY = {
     "receipt": "render-receipt.json records sections == [] and one rail proof per destination",
 }
 REPLACEMENT = {
-    "plan": {"requested": ["CP-1", "CP-DR"], "repaired": ["CP-DR"], "replayed": ["CP-0", "CP-1"], "live": ["CP-DR"]},
+    "plan": {
+        "requested": ["CP-1", "CP-DR"],
+        "repaired": ["CP-DR"],
+        "replayed": ["CP-0", "CP-1"],
+        "live": ["CP-DR"],
+    },
     "plan_with_consumers": {
         "earlier": "the v1 closed run (CP-0, CP-1, CP-DR settled)",
         "requested": ["CP-1C", "CP-2", "CP-DR"],

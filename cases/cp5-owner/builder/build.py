@@ -33,11 +33,11 @@ if "--out" in sys.argv:
     assert not str(OUT.resolve()).startswith(str(ROOT)), "--out must be outside the repository"
 
 PINS = {
-    "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
     "cases/snapshot/manifest.json": "68d591f672d1fb799e630d1359f5cb135d8ee9439209b23dcae38ca6a0eca3f4",
     "cases/snapshot/submissions.json": "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c",
     "cases/snapshot/expected.json": "d1aa1af9677cc4bd77b890261f0ceeca664acc72aac77f91da55cf36d7279baa",
-    "cases/cp3-cp6-owner/manifest.json": "18250c810827e45269d06b7647b820064470bf3a5cbb681bc524bb96c8b68857",
+    "cases/cp3-cp6-owner/manifest.json": "d76b0d9349005b3c55299fbf64e4f3e0310bf5ed28fc88d68464132d08e46ece",
     "cases/cp3-cp6-owner/submissions.json": "9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38",
     "cases/cp3-cp6-owner/expected.json": "8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f",
 }

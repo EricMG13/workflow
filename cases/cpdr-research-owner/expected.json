@@ -8404,7 +8404,10 @@
    "table_ids": [
     "TDR.1",
     "TDR.2",
-    "TDR.3"
+    "TDR.3",
+    "TDR.4",
+    "TDR.5",
+    "TDR.6"
    ],
    "purpose_contains": "cp-dr/2026-10-31",
    "row_position": "before CP-1C (so registry.plan orders CP-DR after CP-1, before CP-1C and CP-2)"

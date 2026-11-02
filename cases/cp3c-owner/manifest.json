@@ -6,7 +6,7 @@
   "frozen_inputs": [
     {
       "path": "src/deploy_vii/methodology.json",
-      "sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "sha256": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
       "use": "edges and table ids: required CP-0, CP-1, CP-2D; optional CP-1A, CP-2A, CP-4, CP-3D; T3D.1-T3D.11 registered under CP-3C only (D4: used as is, no edit proposed)"
     },
     {

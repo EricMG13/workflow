@@ -11,7 +11,7 @@
  "inputs_pinned": {
   "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
   "cases/context/research-minimal.json": "c09646df4743d845f6b972558bb92c288f0335c1d4959ddd0fb2a1bf39bfbcca",
-  "cases/cp2h-owner/manifest.json": "eb2d6854bc59e2c99ea197a432684e6f7d3fd09f02873c7c35fe29c311e41beb",
+  "cases/cp2h-owner/manifest.json": "37f0ce710c4d6a0a19fcdff4e08b1a24dfc3b2b7553c32e437b3b580ccada700",
   "cases/cp2h-owner/submissions.json": "bde5785ea2dee72c2f78fbb8f0762655f81b86b9565f541931f8ef033180f54e",
   "cases/cp2h-owner/expected.json": "851abf7dc71237cb9e300b4cd20c962d17b27186df28ee12543f395f19261d4c",
   "cases/cp2h-owner/cp2h-view-tree.json": "3fb8cf29e73431ac2be72f168d26f72d830c475d42590032a49d5a466b5e0728"
@@ -671,7 +671,7 @@
  },
  "run_time_bindings": "as cases/cp2h-owner/manifest.json run_time_bindings: pack hash, {{FIG:..}}, {{EVID:..}}, {{INPUTS_SHA256}} and ticket ids are bound at run time",
  "outputs": {
-  "expected.json": "4ff6b6a0f186e7e9e68c9ac4277b2f4d416902779055d777e62317856076beab",
+  "expected.json": "09d9051a21e0fe1ea15541e6583bdbfd9e2c7aa9fef7e61e049698291f0e53cc",
   "submissions.json": "52339f9986fba7504ffeccad9e2618e0fdf992d4bc81db3249ecaed85e37cd21",
   "cp2h-context-view-tree.json": "145c9ad05ce4cd838a846135fb4c4275ad9f775a19a3270e6964c077e4bcfa4a"
  }

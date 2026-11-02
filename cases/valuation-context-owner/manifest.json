@@ -9,11 +9,11 @@
     "cases/cp1c-owner/manifest.json": "851d1b8df0b61c08f11a79003d98dd80d8872fb61213049b1138110dec517b6d",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
     "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
-    "cases/cp4c-owner/manifest.json": "47918d84500c3c4b4cf593c937126916625a49c81fca625e5f609313f9e65353",
+    "cases/cp4c-owner/manifest.json": "3f0570ffbf4a52baedbedac4112310432af9a18302c32922a8123e7f40e5db98",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
     "cases/pins-context-owner/expected.json": "d25fbf661bae908e7d61ea261f94c5437a0692782750b597278574d8320b67f1",
-    "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f"
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e"
   },
   "packs": {
     "closed-chain": {
@@ -374,7 +374,7 @@
   },
   "builder": {
     "file": "builder/build.py",
-    "sha256": "be809f40b796a1894c7aa81cb24431510fea4c7c887770b378ca791ecd28b1b1",
+    "sha256": "29bca31739cc97f5e0f5e98d68173e84437d45ac97689ce832a63627322c513f",
     "run": "python3 -I cases/valuation-context-owner/builder/build.py"
   },
   "files_sha256": {

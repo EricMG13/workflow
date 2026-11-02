@@ -33,7 +33,7 @@ def pinned(path, sha):
 
 FIN_SHA = "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
 SNAP_SUB_SHA = "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
-METH_SHA = "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f"
+METH_SHA = "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e"
 FIN = pinned("cases/financial/manifest.json", FIN_SHA)
 SNAP = pinned("cases/snapshot/submissions.json", SNAP_SUB_SHA)
 METH = pinned("src/deploy_vii/methodology.json", METH_SHA)

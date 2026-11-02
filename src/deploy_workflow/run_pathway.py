@@ -27,7 +27,7 @@ from typing import Any, Protocol
 
 from deploy_vii.contracts import PathwayId
 from deploy_vii.execution import Execution
-from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
+from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_vii.registry import plan
 from deploy_workflow.model.adapter import LiveAdapter, ModelAdapter, RecordingMissing
@@ -36,24 +36,22 @@ from deploy_workflow.model.loop import (
     PromptFor,
     StepStopped,
     ToolLoop,
-    contract_prompt_for,
-    contract_tools_for,
     recorded_stop,
 )
 from deploy_workflow.model.pricing import money_text
 from deploy_workflow.model.record import CallLog
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import Message, ModelSpec
+from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.owner_rendering import render_owner_slice, verify_owner_rendered_slice
 from deploy_workflow.owner_workflow import (
     AUDIT,
     OWNER_SPECS,
-    OwnerBinding,
     OwnerWorkflow,
-    StepSpec,
     TornAudit,
     verify_owner_run_receipt,
 )
+from deploy_workflow.prompts import NoPrompt, prompt_factory
+from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.replay import (
     ReplayDiverged,
     ReplayError,
@@ -111,29 +109,6 @@ class CapExists(RunInputError):
 
 CAP_FILE = "cap.json"
 _EXACT_ADD = Context(prec=120, traps=[Inexact, InvalidOperation]).add
-
-
-class NoPrompt(Exception):
-    """No prompt composer exists for this step yet (O6 supplies the rest); the run stops."""
-
-    def __init__(self, step: str) -> None:
-        super().__init__(step)
-        self.step = step
-
-
-def _default_prompt_for(pack: PreparedPack) -> PromptFor:
-    """O5's contract composer for a step that has a ``STEP_CONTRACTS`` entry; a named refusal for
-    every other step. It is the real composer where one exists, never a placeholder prompt."""
-    composer = contract_prompt_for(pack)
-
-    def prompt_for(
-        binding: OwnerBinding, spec: StepSpec, issues: tuple[str, ...]
-    ) -> tuple[Message, ...]:
-        if binding.step_id not in STEP_CONTRACTS:
-            raise NoPrompt(binding.step_id)
-        return composer(binding, spec, issues)
-
-    return prompt_for
 
 
 @contextlib.contextmanager
@@ -581,7 +556,7 @@ def _drive_and_finish(
     checked: CheckedRun,
     run_dir: Path,
     adapter: ModelAdapter,
-    prompt_for: PromptFactory,
+    prompt_for: PromptFactory | None,
     meta: _Meta,
     pack: PreparedPack,
     workflow: OwnerWorkflow,
@@ -595,17 +570,19 @@ def _drive_and_finish(
     try:
         if replay is not None:
             journal_unreplayable(replay, execution)
+        store = Execution(execution)
+        composer = prompt_factory(pack, store) if prompt_for is None else prompt_for(pack)
         loop = ToolLoop(
             workflow,
             adapter,
             budget,
             CallLog(run_dir, redactor),
-            prompt_for(pack),
-            contract_tools_for,
+            composer,
+            tools_for,
             redactor,
             time.time,
             time.sleep,
-            execution=Execution(execution),
+            execution=store,
             spec=checked.model,
             case_id=checked.case_id,
             pathway=checked.pathway,
@@ -625,7 +602,7 @@ def _stages(
     checked: CheckedRun,
     run_dir: Path,
     adapter: ModelAdapter,
-    prompt_for: PromptFactory,
+    prompt_for: PromptFactory | None,
     meta: _Meta,
     resume: bool = False,
     replay: ReplayPlan | None = None,
@@ -653,7 +630,7 @@ def _walk(
     checked: CheckedRun,
     run_dir: Path,
     adapter: ModelAdapter,
-    prompt_for: PromptFactory,
+    prompt_for: PromptFactory | None,
     meta: _Meta,
     resume: bool = False,
     replay: ReplayPlan | None = None,
@@ -679,7 +656,7 @@ def _run_pathway(
     checked: CheckedRun,
     run_dir: Path,
     adapter: ModelAdapter,
-    prompt_for: PromptFactory = _default_prompt_for,
+    prompt_for: PromptFactory | None = None,
     *,
     entries: tuple[dict[str, Any], ...] | None = None,
     resume: bool = False,

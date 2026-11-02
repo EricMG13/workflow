@@ -19,8 +19,10 @@ from typing import Any, NoReturn
 
 import pytest
 
+from deploy_vii.execution import Execution
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import prepare
+from deploy_workflow import prompts
 from deploy_workflow import run_inputs as run_inputs_module
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model import adapter as adapter_module
@@ -36,7 +38,8 @@ from deploy_workflow.model.budget import Budget
 from deploy_workflow.model.loop import PromptFor, ToolLoop
 from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.turn import ModelSpec
-from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
+from deploy_workflow.prompts import tools as prompts_tools
 from deploy_workflow.run_inputs import (
     BadCap,
     CaseSource,
@@ -169,10 +172,12 @@ def test_a_missing_recording_stops_the_run_with_the_stopped_file_set(args: dict[
     assert outcome.spent_usd > 0
 
 
-def test_a_step_with_no_composer_stops_as_no_prompt(
+def test_a_step_with_no_prompt_stops_as_no_prompt(
     args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(rp, "STEP_CONTRACTS", {})
+    # Every step of OWNER_SPECS has a prompt now, so the seam is used: O6's own ``has_prompt``,
+    # read by its factory, is patched to False for the first step.
+    monkeypatch.setattr(prompts, "has_prompt", lambda step_id: False)
     outcome = run_pathway(**args)
     assert outcome.outcome == "stopped"
     assert outcome.stopped_reason == "NoPrompt: source_readiness"
@@ -181,26 +186,77 @@ def test_a_step_with_no_composer_stops_as_no_prompt(
     assert run_json(args["run_dir"])["stopped_reason"] == "NoPrompt: source_readiness"
 
 
-def test_the_default_composer_is_the_contract_composer_for_a_contract_step(
-    args: dict[str, Any],
+def test_run_pathway_and_prompts_share_one_no_prompt_class() -> None:
+    assert rp.NoPrompt is prompts.NoPrompt
+
+
+def test_the_default_composer_is_the_o6_composer(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    seen: list[str] = []
+    composed: list[Any] = []
+    sent: list[Any] = []
+    real_compose = prompts.compose
+    real_complete = RecordedAdapter.complete
 
-    def factory(pack: Any) -> PromptFor:
-        inner = rp._default_prompt_for(pack)
+    def spy_compose(request: Any) -> Any:
+        composed.append(request)
+        return real_compose(request)
 
-        def prompt_for(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
-            seen.append(binding.step_id)
-            return inner(binding, spec, issues)
+    def spy_complete(self: Any, request: Any, **kw: Any) -> Any:
+        sent.append(request)
+        return real_complete(self, request, **kw)
 
-        return prompt_for
+    monkeypatch.setattr(prompts, "compose", spy_compose)
+    monkeypatch.setattr(RecordedAdapter, "complete", spy_complete)
+    run_pathway(**args)
+    assert [r.step_id for r in composed] == ["source_readiness"] and len(sent) == 1
+    assert sent[0].messages == real_compose(composed[0])  # what the model got is O6's output
 
-    checked = check_arguments(**args)
-    stage_sources(checked, args["run_dir"])
-    outcome = rp._run_pathway(checked, args["run_dir"], args["adapter"], factory)
-    assert seen == ["source_readiness"]
-    assert outcome.stopped_reason is not None
-    assert outcome.stopped_reason.startswith("RecordingMissing")  # NoPrompt was not hit
+
+def test_the_default_run_offers_the_tools_the_step_can_use(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    offered: list[tuple[str, tuple[str, ...]]] = []
+    real = prompts_tools.tools_for
+
+    def spy(binding: Any, spec: Any) -> Any:
+        tools = real(binding, spec)
+        offered.append((binding.step_id, tuple(t.name for t in tools)))
+        return tools
+
+    monkeypatch.setattr(rp, "tools_for", spy)
+    run_pathway(**args)
+    assert offered, "no step was offered tools"
+    specs = {s.step_id: s for o in OWNER_SPECS.values() for s in o.steps}
+    for step_id, names in offered:
+        spec = specs[step_id]
+        expected = (
+            *(("search_pack", "read_pages") if spec.sources else ()),
+            *(("extract_statements",) if spec.extract else ()),
+            f"submit_{step_id}",
+        )
+        assert names == expected
+
+
+def test_the_default_composer_and_the_loop_share_one_execution(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    stores: list[Execution] = []
+    real_factory = prompts.prompt_factory
+
+    def factory(pack: Any, store: Execution, **kw: Any) -> Any:
+        stores.append(store)
+        return real_factory(pack, store, **kw)
+
+    class Spy(ToolLoop):
+        def __init__(self, *a: Any, **k: Any) -> None:
+            super().__init__(*a, **k)
+            stores.append(k["execution"])
+
+    monkeypatch.setattr(rp, "prompt_factory", factory)
+    monkeypatch.setattr(rp, "ToolLoop", Spy)
+    run_pathway(**args)
+    assert len(stores) == 2 and stores[0] is stores[1]
 
 
 def test_a_prompt_error_stops_the_run_and_sends_nothing(args: dict[str, Any]) -> None:
@@ -350,7 +406,7 @@ def test_a_key_written_to_stderr_inside_the_loop_is_redacted(
     args: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     def factory(pack: Any) -> PromptFor:
-        inner = rp._default_prompt_for(pack)
+        inner = prompts.prompt_factory(pack, Execution(args["run_dir"] / "execution"))
 
         def prompt_for(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
             print(f"debug {SECRET}", file=sys.stderr)
@@ -723,7 +779,7 @@ def test_a_partial_stderr_line_with_a_key_is_redacted_when_the_run_ends(
     args: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     def factory(pack: Any) -> PromptFor:
-        inner = rp._default_prompt_for(pack)
+        inner = prompts.prompt_factory(pack, Execution(args["run_dir"] / "execution"))
 
         def prompt_for(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
             print(f"tail {SECRET}", end="", file=sys.stderr)  # no newline

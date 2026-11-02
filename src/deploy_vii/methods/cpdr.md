@@ -61,7 +61,7 @@ TDR.4-6 exist only when the run asks for the peer pack (see The peer pack). TDR.
 - Python owns every count (questions, answered, partly, not found, contrary items) and the downstream-use text of each question.
 - Readiness comes from the claim states, one per brief question: empty, or any blocked, gives BLOCKED; any contrary or missing gives `RESEARCH_READY_WITH_LIMITATIONS`; otherwise `RESEARCH_READY`. It is never above `RESEARCH_READY`, because the lineage is `LOCAL`.
 - The module always carries the LOCAL limitation, and a pack source carries no publication date or family, which is also stated as a limitation.
-- Consumers: CP-1C and CP-2 are the named receivers of a question. Both read CP-DR output once it settles: each prompt carries the dossier block, and CP-1C also reads TDR.6 through its source session when the peer pack is bound. The dossier (`cp-dr-dossier`) is the rendered form of the settled tables.
+- Consumers: CP-1C and CP-2 are the named receivers of a question. Both read CP-DR output once it settles: each prompt carries the dossier block, and CP-1C also reads the bound head's TDR.6 figures (its `read_inputs` view and its peer sheet) when the peer pack is bound. The dossier (`cp-dr-dossier`) is the rendered form of the settled tables.
 
 ## The peer pack
 

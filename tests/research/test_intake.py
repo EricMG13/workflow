@@ -733,3 +733,13 @@ def test_a_locator_a_dossier_cell_cannot_hold_stops_intake_before_any_fetch(name
     with pytest.raises(it.IntakeError) as raised:
         it.parse_rows([one_url_row(locator=case["locator"])])
     assert str(raised.value) == case["reason"]
+
+
+@pytest.mark.parametrize("name", ["pipe", "line_feed", "carriage_return", "block_opener"])
+def test_a_family_a_dossier_cell_cannot_hold_stops_intake_before_any_fetch(name: str) -> None:
+    """O7-R69: `cpdr-web-retrieval#family_checks/*`: the manifest is refused with the key's reason
+    at argument time."""
+    case = WEB_KEY["family_checks"][name]
+    with pytest.raises(it.IntakeError) as raised:
+        it.parse_rows([one_url_row(family=case["family"])])
+    assert str(raised.value) == case["reason"]

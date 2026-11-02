@@ -9,6 +9,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Self
 
+import cpdr_consumers as cc
+import cpdr_runs as runs
 import pytest
 from cpdr_s1_support import ResearchCase, WebCase, key_file, web_file
 
@@ -49,6 +51,7 @@ from deploy_workflow.run_inputs import (
     read_capped,
     stage_sources,
 )
+from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
@@ -624,27 +627,65 @@ def test_intake_is_given_the_research_clocks_retrieval_time(
     assert {row["retrieved"] for row in rows} == set(seen)
 
 
+LATER_CLOCK = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
+LATER_TEXT = "2026-11-02T06:40:00Z"
+
+
+def rerun_arguments(base: Path, earlier: Path, **change: Any) -> dict[str, Any]:
+    return ResearchCase(base).arguments(base, run_id="rerun-1", replay_from=earlier, **change)
+
+
 def test_a_rerun_keeps_the_earlier_retrieved_for_unchanged_evidence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """O7-R67: staging a rerun that names the earlier run keeps that run's `retrieved` for an item
-    whose sha256 is a row of its `research/evidence.json`; a changed or new item takes the clock."""
-    earlier_clock = datetime(2026, 11, 2, 5, 40, 0, tzinfo=UTC)
-    later_clock = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
-    monkeypatch.setattr(evidence, "research_clock", lambda: earlier_clock)
+    """O7-R67: staging a rerun that names a run with a settled CP-DR head keeps that run's
+    `retrieved` for each item whose sha256 is a row of its `research/evidence.json`; an item whose
+    bytes changed takes the clock."""
+    earlier = cc.settled_through_cpdr(tmp_path / "earlier", ("CP-1", "CP-DR"), name="execution")
+    kept_text = runs.RETRIEVED
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    base = tmp_path / "second"
+    case = ResearchCase(base)
+    first = json.loads(case.manifest_path.read_text("utf-8"))[0]["path"]
+    changed = case.inputs / first
+    changed.write_text(changed.read_text("utf-8") + "\nA new sentence.\n", encoding="utf-8")
+    arguments = case.arguments(base, run_id="rerun-1", replay_from=earlier.directory.parent)
+    stage_sources(check_arguments(**arguments), base / "run")
+    staged = evidence.read_evidence(base / "run" / "research" / "evidence.json")
+    instants = [row["retrieved"] for row in staged]
+    assert sorted(instants) == sorted([LATER_TEXT, kept_text, kept_text])
+    assert instants.count(LATER_TEXT) == 1
+
+
+def test_a_rerun_of_a_run_without_a_settled_cp_dr_head_keeps_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L2: an earlier run staged but never settled through CP-DR authenticates nothing, so every
+    item takes the clock."""
+    monkeypatch.setattr(
+        evidence, "research_clock", lambda: datetime(2026, 11, 2, 5, 40, tzinfo=UTC)
+    )
     first = tmp_path / "first"
     stage_sources(check_arguments(**ResearchCase(first).arguments(first)), first / "run")
-    record = first / "run" / "research" / "evidence.json"
-    rows = json.loads(record.read_text(encoding="utf-8"))
-    rows[0]["sha256"] = "0" * 64  # ev-1 changed since: no row holds its bytes
-    record.write_text(json.dumps(rows[:-1]), encoding="utf-8")  # ev-3 is new: no row at all
-    monkeypatch.setattr(evidence, "research_clock", lambda: later_clock)
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
     second = tmp_path / "second"
-    rerun = ResearchCase(second).arguments(second, run_id="rerun-1", replay_from=first / "run")
-    stage_sources(check_arguments(**rerun), second / "run")
-    staged = evidence.read_evidence(second / "run" / "research" / "evidence.json")
-    assert [(r["item_id"], r["retrieved"]) for r in staged] == [
-        ("ev-1", "2026-11-02T06:40:00Z"),
-        ("ev-2", "2026-11-02T05:40:00Z"),
-        ("ev-3", "2026-11-02T06:40:00Z"),
-    ]
+    checked = check_arguments(**rerun_arguments(second, first / "run"))
+    assert checked.research is not None and checked.research.kept == {}
+
+
+def test_an_edited_earlier_evidence_record_is_refused_before_anything_is_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L2: the earlier run's `evidence.json` must be the bytes its settled CP-DR head bound
+    (`cpdr.check_records`); an edited `retrieved` is `identity_mismatch`, never kept."""
+    earlier = cc.settled_through_cpdr(tmp_path / "earlier", ("CP-1", "CP-DR"), name="execution")
+    record = earlier.directory.parent / "research" / "evidence.json"
+    rows = json.loads(record.read_text(encoding="utf-8"))
+    rows[0]["retrieved"] = "2000-01-01T00:00:00Z"
+    record.write_text(json.dumps(rows), encoding="utf-8")
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    second = tmp_path / "second"
+    with pytest.raises(WorkflowError) as refused:
+        check_arguments(**rerun_arguments(second, earlier.directory.parent))
+    assert refused.value.code == "identity_mismatch"
+    assert not (second / "run").exists()

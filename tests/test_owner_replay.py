@@ -22,6 +22,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, NoReturn, cast
 
+import cpdr_consumers as cc
+import cpdr_runs as runs
 import o2_case
 import pytest
 from cpdr_s1_support import ResearchCase
@@ -1464,29 +1466,35 @@ def test_a_binding_naming_an_absent_snapshot_is_a_named_refusal(
 
 # ---------------------------------------------------------------- CP-DR across a rerun (O7-R67)
 
-FIRST_INSTANT = datetime(2026, 11, 2, 5, 40, 0, tzinfo=UTC)
 LATER_INSTANT = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
+EARLIER_TEXT = runs.RETRIEVED  # the instant the settled earlier run's evidence.json records
 READ_EV1 = {"source_id": "ev-1", "first_page": 1, "last_page": 1}
 
 
-def stage_research(
-    root: Path, moment: datetime, monkeypatch: pytest.MonkeyPatch, **more: Any
-) -> Path:
-    """A CP-DR run staged under ``root`` with the research clock at ``moment``."""
-    monkeypatch.setattr(evidence, "research_clock", lambda: moment)
+def settled_earlier(root: Path) -> Path:
+    """An earlier run directory whose execution/ holds CP-0, CP-1 and a settled CP-DR head, with
+    the research records the head bound under research/."""
+    cc.settled_through_cpdr(root, ("CP-1", "CP-DR", "CP-1C"), name="execution")
+    return root
+
+
+def stage_rerun(root: Path, monkeypatch: pytest.MonkeyPatch, earlier: Path) -> Path:
+    """A CP-DR rerun naming ``earlier``, staged with the research clock at LATER_INSTANT."""
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_INSTANT)
     case = ResearchCase(root)
-    stage_sources(check_arguments(**case.arguments(root, **more)), root / "run")
+    checked = check_arguments(**case.arguments(root, run_id="rerun-1", replay_from=earlier))
+    stage_sources(checked, root / "run")
     return root / "run"
 
 
-def research_read(run: Path) -> dict[str, Any]:
-    """What ``read_pages`` answers for ``ev-1`` in ``run``: the session's own tools, the
-    retrieval times read from the run's ``research/evidence.json``."""
+def research_read(run: Path, times_from: Path) -> dict[str, Any]:
+    """What ``read_pages`` answers for ``ev-1`` over ``run``'s pack, with the retrieval times read
+    from ``times_from``'s ``research/evidence.json`` (the session's own tools)."""
     tools = SourceTools(
         load_pack(run / "pack"),
         ("ev-1",),
         extraction=False,
-        retrieved=evidence.research_retrieved(run / "execution", ("ev-1",)),
+        retrieved=evidence.research_retrieved(times_from / "execution", ("ev-1",)),
     )
     body, _ = tools.stage("read_pages", READ_EV1)
     return {"body": body, "status": "ok", "error_code": None}
@@ -1496,13 +1504,12 @@ def test_a_cpdr_read_replays_across_a_rerun_staged_later(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """O7-R67: the retained read_pages body holds the earlier intake instant; the rerun, staged an
-    hour later with the earlier run named, answers the same body, so the replay does not diverge."""
-    earlier = stage_research(tmp_path / "earlier", FIRST_INSTANT, monkeypatch)
-    rerun = stage_research(
-        tmp_path / "rerun", LATER_INSTANT, monkeypatch, run_id="rerun-1", replay_from=earlier
-    )
-    kept = research_read(earlier)
-    assert "retrieved=2026-11-02T05:40:00Z" in str(kept["body"])
+    hour later with the settled earlier run named, answers the same body, so the replay does not
+    diverge."""
+    earlier = settled_earlier(tmp_path / "earlier")
+    rerun = stage_rerun(tmp_path / "rerun", monkeypatch, earlier)
+    kept = research_read(rerun, earlier)
+    assert f"retrieved={EARLIER_TEXT}" in str(kept["body"])
     call = SimpleNamespace(
         tool="read_pages",
         arguments=READ_EV1,
@@ -1511,7 +1518,7 @@ def test_a_cpdr_read_replays_across_a_rerun_staged_later(
         body=kept["body"],
         content_hash=lambda: "0" * 64,
     )
-    workflow = SimpleNamespace(invoke=lambda tool, arguments: research_read(rerun))
+    workflow = SimpleNamespace(invoke=lambda tool, arguments: research_read(rerun, rerun))
     retained = SimpleNamespace(calls={"call-1": call})
     submission = SimpleNamespace(
         binding=SimpleNamespace(
@@ -1521,6 +1528,32 @@ def test_a_cpdr_read_replays_across_a_rerun_staged_later(
     execution = tmp_path / "audit"
     replay._replay_calls(cast(Any, workflow), cast(Any, retained), cast(Any, submission), execution)
     assert not (execution / AUDIT / "faults").exists()
+
+
+def test_run_pathway_hands_the_earlier_run_to_the_research_staging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7 phase fix review M1: a rerun through `run_pathway` reaches `check_replay` with every
+    `ev-*` kept at the earlier run's instant (the `replay_from` wiring), and a refused rerun
+    writes nothing."""
+    earlier = settled_earlier(tmp_path / "earlier")
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_INSTANT)
+    seen: dict[str, Any] = {}
+
+    def refuse(checked: Any, run_dir: Path, replay_from: Path | None, repaired: Any) -> NoReturn:
+        seen["kept"] = dict(checked.research.kept)
+        seen["ids"] = [item.item_id for item in checked.research.accepted]
+        raise ReplayRefused("stop here")
+
+    monkeypatch.setattr(rp, "check_replay", refuse)
+    base = tmp_path / "rerun"
+    arguments = ResearchCase(base).arguments(
+        base, run_id="rerun-1", replay_from=earlier, repaired=frozenset({"CP-1C"})
+    )
+    with pytest.raises(ReplayRefused):
+        run_pathway(**arguments)
+    assert seen["ids"] and seen["kept"] == {i: EARLIER_TEXT for i in seen["ids"]}
+    assert not (base / "run").exists()
 
 
 def test_the_cpdr_edge_is_the_context_producer_edge_and_not_cp1as(

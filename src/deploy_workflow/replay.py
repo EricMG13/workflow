@@ -56,10 +56,17 @@ REBOUND_FIELDS: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType(
     {
         ("CP-0", "source_readiness"): ("pack_sha256",),
         ("CP-1", "financials"): ("run_id",),
+        ("CP-DR", "brief"): ("run_id",),
+        ("CP-DR", "research"): ("run_id",),
     }
 )
 REBOUND_HOLDER: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType(
-    {("CP-0", "source_readiness"): (), ("CP-1", "financials"): ("financial",)}
+    {
+        ("CP-0", "source_readiness"): (),
+        ("CP-1", "financials"): ("financial",),
+        ("CP-DR", "brief"): (),
+        ("CP-DR", "research"): (),
+    }
 )
 REPLAYS = "replays"
 FAULTS = "faults"

@@ -665,6 +665,8 @@ def test_every_unfilled_identity_field_is_rebound_or_named_run_independent() -> 
     assert REBOUND_FIELDS == {
         ("CP-0", "source_readiness"): ("pack_sha256",),
         ("CP-1", "financials"): ("run_id",),
+        ("CP-DR", "brief"): ("run_id",),
+        ("CP-DR", "research"): ("run_id",),
     }
 
 

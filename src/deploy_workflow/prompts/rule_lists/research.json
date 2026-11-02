@@ -2,59 +2,71 @@
  "rules": [
   {
    "id": "research.1",
-   "statement": "Submit exactly one `gaps` entry, by its `gap_id`, for every gap on the CP-0 agenda (`gaps` of the module context), none twice and none for an id the agenda does not list, each with one to four `questions`; when the agenda is empty, `gaps` is empty.",
+   "statement": "Submit one `answers` entry for every question of the locked brief (`questions` of the research inputs), by its `question_id`: none twice, none for an id the brief does not list, and none left out.",
    "checks": [
-    "oracle:cpdr:gap_unaddressed",
-    "oracle:cpdr:gap_with_five_questions",
-    "oracle:cpdr:unknown_gap",
-    "oracle:cpdr:gap_repeated",
-    "oracle:cpdr:submission_against_empty_agenda",
+    "fn:deploy_workflow.research.review:research_issues",
     "fn:deploy_workflow.owners.cpdr:validate_research"
    ]
   },
   {
    "id": "research.2",
-   "statement": "Every `question_id` is different from every other in the whole submission, and at most 145 characters, since fact ids are composed from it.",
+   "statement": "Every `claim_id` is different from every other in the whole submission, and at most 142 characters, since fact ids are composed from it.",
    "checks": [
-    "oracle:cpdr:question_id_repeated"
+    "fn:deploy_workflow.research.review:research_issues"
    ]
   },
   {
    "id": "research.3",
-   "statement": "An `answered` question has an `answer`, a `category` and at least one citation, and a null `limitation`. A `not_found` question has a null `answer` and `category`, no citations, and states its `limitation`.",
+   "statement": "An `answered` or `partly` answer has at least one claim, each claim with at least one citation; at least one `contrary` entry; and a nonblank `uncertainty`. A `partly` answer also has a nonblank `limitation`.",
    "checks": [
-    "oracle:cpdr:answered_without_citation",
-    "oracle:cpdr:not_found_with_answer",
-    "oracle:cpdr:not_found_without_limitation",
-    "oracle:cpdr:answered_with_limitation",
+    "fn:deploy_workflow.research.review:research_issues",
     "fn:deploy_workflow.owners.cpdr:_question_issues"
    ]
   },
   {
    "id": "research.4",
-   "statement": "Each question lists in `searched_sources` one or more sources, every one a ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
+   "statement": "A `not_found` answer has no claim, a nonblank `limitation`, and names the items it searched in `searched`.",
    "checks": [
-    "oracle:cpdr:no_searched_source",
-    "oracle:cpdr:searched_source_not_in_pack",
-    "oracle:cpdr:searched_source_not_searched"
+    "fn:deploy_workflow.research.review:research_issues"
    ]
   },
   {
    "id": "research.5",
-   "statement": "Cite only pack sources whose cited page you read with `read_pages`, each quote verbatim under its locator; a source outside the pack is refused.",
+   "statement": "Each `contrary` entry is either `cited`, with an `item` that is the source of its citation, or `none_found`, with the items it `searched` and a nonblank `limitation`; every item searched is a held source.",
    "checks": [
-    "oracle:cpdr:cited_page_not_read",
-    "oracle:cpdr:quote_not_verbatim",
-    "oracle:cpdr:citation_outside_pack"
+    "fn:deploy_workflow.research.review:research_issues"
    ]
   },
   {
    "id": "research.6",
-   "statement": "A question's `text`, `answer` and `limitation` are nonblank, contain no digit or figure, no braces or brackets, and none of the words recommend, refinanc, covenant or recovery in any case; an answer is plain text with no reference.",
+   "statement": "Cite only a held source (an `ev-*` evidence item or a pack source), under a locator that source has, with a quote that is verbatim under that locator; a cited `page:N` that `read_pages` did not return in this step is refused as not read. An evidence block in this prompt is orientation, never a citation.",
    "checks": [
-    "oracle:cpdr:digit_in_text",
-    "oracle:cpdr:prohibited_conclusion",
-    "fn:deploy_workflow.owners.cpdr:_model_text_issues"
+    "fn:deploy_workflow.research.review:research_issues",
+    "fn:deploy_workflow.research.steps:research_rules"
+   ]
+  },
+  {
+   "id": "research.7",
+   "statement": "Before you list a source as searched, in an answer's `searched` or in a `none_found` entry, run `search_pack` on it, or the item is refused as an absence claim with no recorded search.",
+   "checks": [
+    "fn:deploy_workflow.research.steps:research_rules"
+   ]
+  },
+  {
+   "id": "research.8",
+   "statement": "A claim's `independent_items` are distinct `ev-*` items, each cited by that claim; two items of one family are not independent, and a claim that lists both is refused.",
+   "checks": [
+    "fn:deploy_workflow.research.review:research_issues",
+    "oracle:cpdr-research:research"
+   ]
+  },
+  {
+   "id": "research.9",
+   "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend; quotes are source text and are not held to this.",
+   "checks": [
+    "fn:deploy_workflow.research.review:research_issues",
+    "fn:deploy_workflow.owners.cpdr:_model_text_issues",
+    "oracle:cpdr-research:research"
    ]
   }
  ]

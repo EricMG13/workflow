@@ -60,7 +60,7 @@
   },
   {
    "id": "research.9",
-   "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this. Each of those texts also holds no block delimiter such as `<<<` and no lookalike of one.",
+   "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this. Each of those texts also holds no block delimiter such as `<<<`, no lookalike of one, no line break and no `|`.",
    "checks": [
     "fn:deploy_workflow.research.review:research_issues",
     "oracle:cpdr-research:research",

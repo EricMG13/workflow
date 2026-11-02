@@ -30,7 +30,7 @@
   },
   {
    "id": "brief.5",
-   "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too. A `text` that holds a block delimiter such as `<<<`, or a lookalike of one, is refused too.",
+   "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too. A `text` that holds a block delimiter such as `<<<`, a lookalike of one, a line break or a `|` is refused too.",
    "checks": [
     "fn:deploy_workflow.research.steps:_language",
     "fn:deploy_workflow.owners.cpdr:_fence_issues"

@@ -60,7 +60,7 @@ from deploy_workflow.research.contracts import (
     EvidenceItem,
     ResearchBrief,
 )
-from deploy_workflow.research.dossier import DossierInput, brief_json
+from deploy_workflow.research.dossier import DossierInput, breaks_a_table_cell, brief_json
 from deploy_workflow.research.intake import RefusedItem
 from deploy_workflow.research.review import (
     ResearchSubmission,
@@ -188,7 +188,7 @@ def _run_issues(submitted: str, run: Run) -> tuple[str, ...]:
 
 def _fence_issues(texts: Iterable[tuple[str, str]]) -> tuple[str, ...]:
     """O7-R33: a model-written text the dossier fence would refuse (a block delimiter or a
-    lookalike of one) is a step issue, so the model repairs it instead of the sealed run failing at
+    lookalike of one) or its table cell would refuse (a line break or a ``|``) is a step issue, so the model repairs it instead of the sealed run failing at
     the dossier. The fence's own check (``data_block``), never a copy of it."""
     issues = []
     for where, text in texts:
@@ -196,6 +196,10 @@ def _fence_issues(texts: Iterable[tuple[str, str]]) -> tuple[str, ...]:
             data_block("CONTEXT", "dossier", text)
         except FenceError:
             issues.append(f"{where}: holds a block delimiter or a lookalike of one")
+        if breaks_a_table_cell(text):  # O7-R49: the dossier's cell rule, never a copy of it
+            issues.append(
+                f"{where}: holds a line break or a | and cannot be written in a table cell"
+            )
     return tuple(issues)
 
 

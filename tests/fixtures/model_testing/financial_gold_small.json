@@ -1,0 +1,37 @@
+{
+  "periods": [
+    {"period_id": "FY2024Q2", "start": "2023-12-31", "end": "2024-03-30"},
+    {"period_id": "FY2025Q1", "start": "2025-01-01", "end": "2025-03-31"}
+  ],
+  "facts": [
+    {
+      "fact_id": "TDG:CFO:FY2024Q2", "metric": "CFO", "period_id": "FY2024Q2",
+      "status": "known", "value": "229", "canonical_unit": "USD millions",
+      "currency": "USD", "unit_scale": 6, "source_evidence": {"classification": "visible"}
+    },
+    {
+      "stable_fact_id": "BGS:FY2024Q2:revenue", "metric": "revenue", "period_id": "FY2024Q2",
+      "status": "known", "value": "461.073", "canonical_unit": "USD millions",
+      "currency": "USD", "unit_scale": 3,
+      "source_evidence": {"source_display_scale": "USD thousands (x1,000 to base USD)"}
+    },
+    {
+      "fact_id": "TDG:principal:FY2024Q2", "metric": "principal", "period_id": "FY2024Q2",
+      "status": "missing", "value": null, "canonical_unit": "USD millions",
+      "currency": "USD", "unit_scale": 6, "gap_reason": "not in the limited source corpus",
+      "source_evidence": {"classification": "not_applicable"}
+    },
+    {
+      "stable_fact_id": "NATL:FY2025Q1:adjusted_EBITDA", "metric": "adjusted_EBITDA",
+      "period_id": "FY2025Q1", "status": "conflicting", "value": null,
+      "canonical_unit": "USD millions", "currency": "USD", "unit_scale": null,
+      "source_evidence": {
+        "conflicting_versions": [
+          {"version": "original_Q1", "value": "175",
+           "evidence": {"original_source_id": "natl_q1", "small_quote": "Adjusted EBITDA $ 175"}},
+          {"version": "H1_less_Q2", "value": "172", "evidence": {}}
+        ]
+      }
+    }
+  ]
+}

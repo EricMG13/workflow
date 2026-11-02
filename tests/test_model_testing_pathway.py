@@ -215,7 +215,7 @@ def _tree(root: Path) -> dict[str, bytes]:
 def test_scores_plan_order(gap_run: Path) -> None:
     case, mapping = _gap_case()
     before = _tree(gap_run)
-    score = score_run(gap_run, case, mapping, refusals={"CP-1": ("financial source",)})
+    score = score_run(gap_run, case, mapping, refusals={"CP-1": ("CP-0",)})
     assert isinstance(score, PathwayScore)
     assert [m.module_id for m in score.modules] == list(PRESET)
     assert len(score.modules) == 9
@@ -290,12 +290,30 @@ def test_refusal_names_flow_to_the_module(gap_run: Path) -> None:
     assert plain.modules[1].facts[0].observed is None
     assert plain.modules[1].passed is False  # refused, and it named nothing it lacked
     assert plain.passed is False
-    named = score_run(gap_run, case, mapping, refusals={"CP-1": ("financial source",)})
+    named = score_run(gap_run, case, mapping, refusals={"CP-1": ("CP-0",)})
     assert named.modules[1].facts[0].outcome == "gap_ok"
-    assert named.modules[1].facts[0].observed == "refused: financial source"
+    assert named.modules[1].facts[0].observed == "refused: CP-0"
     assert named.modules[1].passed is True
     assert named.modules[2].passed is False and named.passed is False  # CP-MODEL absent
     assert [m.passed for m in named.modules[2:]] == 7 * [False]
+
+
+@pytest.mark.parametrize(
+    ("refusals", "named"),
+    [
+        ({"CP-9": ("CP-0",)}, "CP-9"),  # a module that does not exist
+        ({"CP-8": ("CP-0",)}, "CP-8"),  # a module of another pathway's preset
+        ({"CP-1": ("financial source",)}, "financial source"),  # an input that is no module
+        ({"CP-1": ("CP-8",)}, "CP-8"),  # an input outside this pathway's preset
+    ],
+)
+def test_refusal_names_outside_the_preset_are_refused(
+    gap_run: Path, refusals: dict[str, tuple[str, ...]], named: str
+) -> None:
+    case, mapping = _gap_case()
+    with pytest.raises(ValueError, match="preset") as caught:
+        score_run(gap_run, case, mapping, refusals=refusals)
+    assert named in str(caught.value)
 
 
 def test_upstream_mismatch_reaches_downstream_modules(

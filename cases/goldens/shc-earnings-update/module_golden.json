@@ -171,36 +171,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.period_comparison.Sterigenics.net_revenues_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Sterigenics",
-      "field": "net_revenues_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "18485",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Sterigenics > $ Change column (printed; cross-check only)",
-          "quote": "Sterigenics $ 194,839 $ 176,354 $ 18,485 10.5 %",
-          "printed": "18,485"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Sterigenics.net_revenues.2025-06-30",
-          "CP-1B.period_comparison.Sterigenics.net_revenues.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-1B.period_comparison.Nordion.net_revenues.2025-06-30",
       "module": "CP-1B",
       "topic": "period_comparison",
@@ -244,36 +214,6 @@
         }
       ],
       "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.period_comparison.Nordion.net_revenues_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Nordion",
-      "field": "net_revenues_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "1187",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nordion > $ Change column (printed; cross-check only)",
-          "quote": "Nordion 42,431 41,244 1,187 2.9 %",
-          "printed": "1,187"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Nordion.net_revenues.2025-06-30",
-          "CP-1B.period_comparison.Nordion.net_revenues.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
       "gap_reason": null
     },
     {
@@ -323,36 +263,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.period_comparison.Nelson Labs.net_revenues_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Nelson Labs",
-      "field": "net_revenues_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "-1925",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Net Revenues > Nelson Labs > $ Change column (printed; cross-check only)",
-          "quote": "Nelson Labs 57,071 58,996 (1,925) (3.3) %",
-          "printed": "(1,925)"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Nelson Labs.net_revenues.2025-06-30",
-          "CP-1B.period_comparison.Nelson Labs.net_revenues.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income.2025-06-30",
       "module": "CP-1B",
       "topic": "period_comparison",
@@ -396,36 +306,6 @@
         }
       ],
       "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.period_comparison.Sterigenics.segment_income_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Sterigenics",
-      "field": "segment_income_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "10967",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Sterigenics > $ Change column (printed; cross-check only)",
-          "quote": "Sterigenics $ 107,745 $ 96,778 $ 10,967 11.3 %",
-          "printed": "10,967"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Sterigenics.segment_income.2025-06-30",
-          "CP-1B.period_comparison.Sterigenics.segment_income.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
       "gap_reason": null
     },
     {
@@ -475,36 +355,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.period_comparison.Nordion.segment_income_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Nordion",
-      "field": "segment_income_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "57",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nordion > $ Change column (printed; cross-check only)",
-          "quote": "Nordion 23,477 23,420 57 0.2 %",
-          "printed": "57"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Nordion.segment_income.2025-06-30",
-          "CP-1B.period_comparison.Nordion.segment_income.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income.2025-06-30",
       "module": "CP-1B",
       "topic": "period_comparison",
@@ -548,112 +398,6 @@
         }
       ],
       "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.period_comparison.Nelson Labs.segment_income_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Nelson Labs",
-      "field": "segment_income_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "2376",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Segment Results for the Three Months Ended June 30, 2025 and 2024 > Segment Income > Nelson Labs > $ Change column (printed; cross-check only)",
-          "quote": "Nelson Labs 19,513 17,137 2,376 13.9 %",
-          "printed": "2,376"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Nelson Labs.segment_income.2025-06-30",
-          "CP-1B.period_comparison.Nelson Labs.segment_income.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.period_comparison.Consolidated.net_income.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Consolidated",
-      "field": "net_income",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "7962",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Net income > 2025 column",
-          "quote": "Net income 7,962 8,754 (792) (9.0) %",
-          "printed": "7,962"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.period_comparison.Consolidated.net_income.2024-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Consolidated",
-      "field": "net_income",
-      "period_end": "2024-06-30",
-      "status": "known",
-      "value": "8754",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Net income > 2024 column",
-          "quote": "Net income 7,962 8,754 (792) (9.0) %",
-          "printed": "8,754"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.period_comparison.Consolidated.net_income_change.2025-06-30",
-      "module": "CP-1B",
-      "topic": "period_comparison",
-      "subject": "Consolidated",
-      "field": "net_income_change",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "-792",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Item 2 MD&A > Consolidated Results of Operations, three months ended June 30 2025 vs 2024 > table > Net income > $ Change column (printed; cross-check only)",
-          "quote": "Net income 7,962 8,754 (792) (9.0) %",
-          "printed": "(792)"
-        }
-      ],
-      "derivation": {
-        "op": "difference",
-        "operands": [
-          "CP-1B.period_comparison.Consolidated.net_income.2025-06-30",
-          "CP-1B.period_comparison.Consolidated.net_income.2024-06-30"
-        ],
-        "script": "derive.py"
-      },
       "gap_reason": null
     },
     {
@@ -1423,8 +1167,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).principal_outstanding_gross.2025-06-30",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).principal_outstanding_gross.2025-06-30",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Term loan due 2031 (Refinancing Term Loans)",
       "field": "principal_outstanding_gross",
@@ -1446,8 +1190,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).carrying_amount_net.2025-06-30",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).carrying_amount_net.2025-06-30",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Term loan due 2031 (Refinancing Term Loans)",
       "field": "carrying_amount_net",
@@ -1469,8 +1213,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Secured notes due 2031.principal_outstanding_gross.2025-06-30",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Secured notes due 2031.principal_outstanding_gross.2025-06-30",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Secured notes due 2031",
       "field": "principal_outstanding_gross",
@@ -1486,75 +1230,6 @@
           "locator": "Note 8 Long-Term Debt > table as of June 30, 2025 > Secured notes due 2031 > Gross Amount",
           "quote": "Secured notes due 2031 $ 750,000 $ (3,418) $ — 746,582",
           "printed": "750,000"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Total long-term debt (term loan + secured notes).principal_outstanding_gross.2025-06-30",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Total long-term debt (term loan + secured notes)",
-      "field": "principal_outstanding_gross",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "2248030",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "thousands",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 8 Long-Term Debt > table as of June 30, 2025 > total row > Gross Amount",
-          "quote": "2,248,030 (9,419) (21,140) 2,217,471",
-          "printed": "2,248,030"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).original_principal_at_amendment_no4",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "original_principal_at_amendment_no4",
-      "period_end": null,
-      "status": "known",
-      "value": "1509350000",
-      "value_type": "decimal",
-      "unit": "USD",
-      "scale": "units",
-      "evidence": [
-        {
-          "source_id": "SHC_legal_event_amendment_no4",
-          "locator": "Schedule I / Section 1.01 \"2024 Refinancing Term Loans\"",
-          "quote": "The aggregate principal amount of 2024 Refinancing Term Loans outstanding on the Amendment No. 4 Effective Date is $1,509,350,000.",
-          "printed": "$1,509,350,000"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).amendment_no4_date",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "amendment_no4_date",
-      "period_end": null,
-      "status": "known",
-      "value": "2024-05-30",
-      "value_type": "date",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_legal_event_amendment_no4",
-          "locator": "Amendment preamble",
-          "quote": "AMENDMENT NO. 4 TO FIRST LIEN CREDIT AGREEMENT, dated as of May 30,2024",
-          "printed": "dated as of May 30,2024"
         }
       ],
       "derivation": null,
@@ -1613,8 +1288,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).rate_floor",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).rate_floor",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Term loan due 2031 (Refinancing Term Loans)",
       "field": "rate_floor",
@@ -1630,52 +1305,6 @@
           "locator": "Note 8 > Amendment No. 4 paragraph",
           "quote": "in each case with a 0.00% applicable floor",
           "printed": "0.00%"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "margin_step_down",
-      "period_end": null,
-      "status": "known",
-      "value": "0.25",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 8 > Amendment No. 4 paragraph",
-          "quote": "pricing step-down of 0.25% when the Senior Secured Leverage Ratio (as defined in the Credit Agreement) is less than or equal to 3.30:1.00",
-          "printed": "0.25%"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down_threshold_senior_secured_leverage",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "margin_step_down_threshold_senior_secured_leverage",
-      "period_end": null,
-      "status": "known",
-      "value": "3.30:1.00",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_legal_event_amendment_no4",
-          "locator": "Annex A > Applicable Rate for 2024 Refinancing Term Loans > Category 2",
-          "quote": "Category 2 Less than or equal to 2.00% 3.00% 3.00% 3.30:1.00",
-          "printed": "3.30:1.00"
         }
       ],
       "derivation": null,
@@ -1698,77 +1327,8 @@
       "gap_reason": "The 10-Q prints the margin grid and step-down condition but not the Senior Secured Leverage Ratio or which pricing category applied at 2025-06-30; only the weighted average rate (separate fact) is printed."
     },
     {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).weighted_average_interest_rate_three_months.2025-06-30",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "weighted_average_interest_rate_three_months",
-      "period_end": "2025-06-30",
-      "status": "known",
-      "value": "7.55",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 8 > Amendment No. 4 paragraph > three months ended June 30, 2025",
-          "quote": "for the three months ended June 30, 2025 and 2024 was 7.55% and 8.58%",
-          "printed": "7.55%"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).weighted_average_interest_rate_three_months.2024-06-30",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "weighted_average_interest_rate_three_months",
-      "period_end": "2024-06-30",
-      "status": "known",
-      "value": "8.58",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 8 > Amendment No. 4 paragraph > three months ended June 30, 2024",
-          "quote": "for the three months ended June 30, 2025 and 2024 was 7.55% and 8.58%",
-          "printed": "8.58%"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).amortization_rate_per_annum",
-      "module": "CP-1B",
-      "topic": "debt_context",
-      "subject": "Term loan due 2031 (Refinancing Term Loans)",
-      "field": "amortization_rate_per_annum",
-      "period_end": null,
-      "status": "known",
-      "value": "1.00",
-      "value_type": "percent",
-      "unit": "percent",
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 8 > Amendment No. 4 paragraph",
-          "quote": "The Refinancing Term Loans amortize at a rate of 1.00% per annum and mature on May 30, 2031.",
-          "printed": "1.00%"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).maturity_date",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Term loan due 2031 (Refinancing Term Loans).maturity_date",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Term loan due 2031 (Refinancing Term Loans)",
       "field": "maturity_date",
@@ -1790,8 +1350,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Secured notes due 2031.coupon_fixed",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Secured notes due 2031.coupon_fixed",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Secured notes due 2031",
       "field": "coupon_fixed",
@@ -1813,8 +1373,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Secured notes due 2031.maturity_date",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Secured notes due 2031.maturity_date",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Secured notes due 2031",
       "field": "maturity_date",
@@ -1859,8 +1419,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.drawn_balance.2025-06-30",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Revolving Credit Facility.drawn_balance.2025-06-30",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Revolving Credit Facility",
       "field": "drawn_balance",
@@ -1928,8 +1488,8 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-1B.debt_context.Revolving Credit Facility.maturity_date",
-      "module": "CP-1B",
+      "fact_id": "CP-1.debt_context.Revolving Credit Facility.maturity_date",
+      "module": "CP-1",
       "topic": "debt_context",
       "subject": "Revolving Credit Facility",
       "field": "maturity_date",
@@ -1990,259 +1550,6 @@
       "gap_reason": null
     },
     {
-      "fact_id": "CP-0.identity.Registrant.ticker_exchange",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "ticker_exchange",
-      "period_end": null,
-      "status": "known",
-      "value": "SHC; The Nasdaq Stock Market LLC",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Cover page > Securities registered under Section 12(b)",
-          "quote": "Common Stock, $0.01 par value per share SHC The Nasdaq Stock Market LLC",
-          "printed": "SHC The Nasdaq Stock Market LLC"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.state_of_incorporation",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "state_of_incorporation",
-      "period_end": null,
-      "status": "known",
-      "value": "Delaware",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Cover page",
-          "quote": "Delaware 47-3531161 (State or other jurisdiction of incorporation or organization)",
-          "printed": "Delaware"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.commission_file_number",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "commission_file_number",
-      "period_end": null,
-      "status": "known",
-      "value": "001-39729",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Cover page",
-          "quote": "Commission File Number 001-39729",
-          "printed": "001-39729"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.filer_category",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "filer_category",
-      "period_end": null,
-      "status": "known",
-      "value": "Large accelerated filer",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Cover page",
-          "quote": "Large accelerated filer ☒ Accelerated filer ☐",
-          "printed": "Large accelerated filer ☒"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.shares_outstanding_2025-07-29",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "shares_outstanding_2025-07-29",
-      "period_end": null,
-      "status": "known",
-      "value": "284046606",
-      "value_type": "decimal",
-      "unit": null,
-      "scale": "units",
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Cover page",
-          "quote": "As of July 29, 2025, there were 284,046,606 shares of the registrant’s common stock",
-          "printed": "284,046,606"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.principal_executive_office",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "principal_executive_office",
-      "period_end": null,
-      "status": "known",
-      "value": "9100 South Hills Blvd, Suite 300, Broadview Heights, Ohio 44147",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Cover page",
-          "quote": "9100 South Hills Blvd, Suite 300 Broadview Heights, Ohio 44147",
-          "printed": "Broadview Heights, Ohio 44147"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.sponsors",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "sponsors",
-      "period_end": null,
-      "status": "known",
-      "value": "Investment funds and entities affiliated with Warburg Pincus and GTCR",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2024-12-31_10-K_0001822479-25-000015_shc-20241231",
-          "locator": "Item 1A Risk Factors summary (as of the FY2024 10-K)",
-          "quote": "certain investment funds and entities affiliated with Warburg Pincus and GTCR, which we refer to collectively as the “Sponsors,”",
-          "printed": "Warburg Pincus and GTCR"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Credit borrower.borrower_name",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Credit borrower",
-      "field": "borrower_name",
-      "period_end": null,
-      "status": "known",
-      "value": "Sotera Health Holdings, LLC",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_legal_event_amendment_no4",
-          "locator": "Preamble",
-          "quote": "SOTERA HEALTH HOLDINGS, LLC, a Delaware limited liability company (the “Borrower”)",
-          "printed": "SOTERA HEALTH HOLDINGS, LLC"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Listed parent (Holdings).parent_name",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Listed parent (Holdings)",
-      "field": "parent_name",
-      "period_end": null,
-      "status": "known",
-      "value": "Sotera Health Company (f/k/a Sotera Health Topco, Inc.)",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_legal_event_amendment_no4",
-          "locator": "Preamble",
-          "quote": "Sotera Health Company (f/k/a Sotera Health Topco, Inc.), a Delaware corporation (“Holdings”)",
-          "printed": "Sotera Health Company (f/k/a Sotera Health Topco, Inc.)"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Credit borrower.guarantors",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Credit borrower",
-      "field": "guarantors",
-      "period_end": null,
-      "status": "known",
-      "value": "Sotera Health Company and each existing and subsequently acquired or organized direct or indirect wholly owned domestic restricted subsidiary (individual subsidiaries not named in the 10-Q)",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 8 > guarantee paragraph",
-          "quote": "are unconditionally guaranteed by the Company and each existing and subsequently acquired or organized direct or indirect wholly owned domestic restricted subsidiary",
-          "printed": "guaranteed by the Company and each existing and subsequently acquired or organized direct or indirect wholly owned domestic restricted subsidiary"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.identity.Registrant.reportable_segments",
-      "module": "CP-0",
-      "topic": "identity",
-      "subject": "Registrant",
-      "field": "reportable_segments",
-      "period_end": null,
-      "status": "known",
-      "value": "Sterigenics; Nordion; Nelson Labs",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Note 16 Segment Information",
-          "quote": "We have three reportable segments: Sterigenics, Nordion and Nelson Labs.",
-          "printed": "Sterigenics, Nordion and Nelson Labs"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
       "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.period_end",
       "module": "CP-0",
       "topic": "documents",
@@ -2264,75 +1571,6 @@
       ],
       "derivation": null,
       "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.signature_date",
-      "module": "CP-0",
-      "topic": "documents",
-      "subject": "Q2 2025 Form 10-Q",
-      "field": "signature_date",
-      "period_end": null,
-      "status": "known",
-      "value": "2025-08-08",
-      "value_type": "date",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Signatures",
-          "quote": "Name: Jonathan M. Lyons Title: Senior Vice President and Chief Financial Officer (Principal Financial Officer) Date: August 8, 2025",
-          "printed": "August 8, 2025"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.documents.Registrant.fiscal_year_end",
-      "module": "CP-0",
-      "topic": "documents",
-      "subject": "Registrant",
-      "field": "fiscal_year_end",
-      "period_end": null,
-      "status": "known",
-      "value": "12-31",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2024-12-31_10-K_0001822479-25-000015_shc-20241231",
-          "locator": "Cover page",
-          "quote": "For the fiscal year ended December 31, 2024",
-          "printed": "December 31, 2024"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
-    },
-    {
-      "fact_id": "CP-0.documents.Q2 2025 Form 10-Q.reporting_unit",
-      "module": "CP-0",
-      "topic": "documents",
-      "subject": "Q2 2025 Form 10-Q",
-      "field": "reporting_unit",
-      "period_end": null,
-      "status": "known",
-      "value": "USD thousands",
-      "value_type": "text",
-      "unit": null,
-      "scale": null,
-      "evidence": [
-        {
-          "source_id": "SHC_2025-06-30_10-Q_0001822479-25-000044_shc-20250630",
-          "locator": "Segment note table headings",
-          "quote": "(thousands of U.S. dollars) Three Months Ended June 30, 2025",
-          "printed": "thousands of U.S. dollars"
-        }
-      ],
-      "derivation": null,
-      "gap_reason": null
     }
   ],
   "not_golden": [
@@ -2347,6 +1585,130 @@
     {
       "module": "CP-5",
       "why": "Judgment module: narrative and conclusions; the checkable inputs it needs are the CP-1B, CP-1D and debt facts above."
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Sterigenics.net_revenues_change.2025-06-30: period_comparison / Sterigenics / net_revenues_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Nordion.net_revenues_change.2025-06-30: period_comparison / Nordion / net_revenues_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Nelson Labs.net_revenues_change.2025-06-30: period_comparison / Nelson Labs / net_revenues_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Sterigenics.segment_income_change.2025-06-30: period_comparison / Sterigenics / segment_income_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Nordion.segment_income_change.2025-06-30: period_comparison / Nordion / segment_income_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Nelson Labs.segment_income_change.2025-06-30: period_comparison / Nelson Labs / segment_income_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Consolidated.net_income.2025-06-30: covered by financial_gold net_income_total FY2025Q2"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Consolidated.net_income.2024-06-30: period_comparison / Consolidated / net_income @ 2024-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.period_comparison.Consolidated.net_income_change.2025-06-30: period_comparison / Consolidated / net_income_change @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53); segment rows and net income are not written (T1B.1 holds consolidated revenue and adjusted EBITDA only)"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Total long-term debt (term loan + secured notes).principal_outstanding_gross.2025-06-30: covered by financial_gold total_debt_principal FY2025Q2"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).original_principal_at_amendment_no4: debt_context / Term loan due 2031 (Refinancing Term Loans) / original_principal_at_amendment_no4: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).amendment_no4_date: debt_context / Term loan due 2031 (Refinancing Term Loans) / amendment_no4_date: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down: debt_context / Term loan due 2031 (Refinancing Term Loans) / margin_step_down: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).margin_step_down_threshold_senior_secured_leverage: debt_context / Term loan due 2031 (Refinancing Term Loans) / margin_step_down_threshold_senior_secured_leverage: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).weighted_average_interest_rate_three_months.2025-06-30: debt_context / Term loan due 2031 (Refinancing Term Loans) / weighted_average_interest_rate_three_months @ 2025-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).weighted_average_interest_rate_three_months.2024-06-30: debt_context / Term loan due 2031 (Refinancing Term Loans) / weighted_average_interest_rate_three_months @ 2024-06-30: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-1B",
+      "why": "CP-1B.debt_context.Term loan due 2031 (Refinancing Term Loans).amortization_rate_per_annum: debt_context / Term loan due 2031 (Refinancing Term Loans) / amortization_rate_per_annum: no module field; CP-1B writes T1B.1 consolidated paired results, T1B.2 cash_closing/total_debt/net_debt and T1B.3 evidence rows (src/deploy_vii/bindings/cp1b.py:25-53): T1B.2 holds cash_closing/total_debt/net_debt only; CP-1 writes no weighted-average rate, amendment, step-down or LC cell (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.ticker_exchange: CP-0 identity/document fact (identity / Registrant / ticker_exchange) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.state_of_incorporation: CP-0 identity/document fact (identity / Registrant / state_of_incorporation) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.commission_file_number: CP-0 identity/document fact (identity / Registrant / commission_file_number) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.filer_category: CP-0 identity/document fact (identity / Registrant / filer_category) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.shares_outstanding_2025-07-29: CP-0 identity/document fact (identity / Registrant / shares_outstanding_2025-07-29) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.principal_executive_office: CP-0 identity/document fact (identity / Registrant / principal_executive_office) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.sponsors: CP-0 identity/document fact (identity / Registrant / sponsors) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Credit borrower.borrower_name: CP-0 identity/document fact (identity / Credit borrower / borrower_name) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Listed parent (Holdings).parent_name: CP-0 identity/document fact (identity / Listed parent (Holdings) / parent_name) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Credit borrower.guarantors: CP-0 identity/document fact (identity / Credit borrower / guarantors) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.identity.Registrant.reportable_segments: CP-0 identity/document fact (identity / Registrant / reportable_segments) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.documents.Q2 2025 Form 10-Q.signature_date: CP-0 identity/document fact (documents / Q2 2025 Form 10-Q / signature_date) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.documents.Registrant.fiscal_year_end: CP-0 identity/document fact (documents / Registrant / fiscal_year_end) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+    },
+    {
+      "module": "CP-0",
+      "why": "CP-0.documents.Q2 2025 Form 10-Q.reporting_unit: CP-0 identity/document fact (documents / Q2 2025 Form 10-Q / reporting_unit) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
     }
   ],
   "needs_user_input": [

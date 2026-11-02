@@ -81,127 +81,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-0.identity.Registrant.ticker",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Registrant",
-   "field": "ticker",
-   "period_end": null,
-   "status": "known",
-   "value": "IHRT",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Cover page > Securities registered under 12(b)",
-     "quote": "Class A Common Stock, par value $0.001 per share IHRT Nasdaq Global Select Market",
-     "printed": "IHRT"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Borrower.legal_name",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Borrower",
-   "field": "legal_name",
-   "period_end": null,
-   "status": "known",
-   "value": "iHeartCommunications, Inc.",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Cover page > Among",
-     "quote": "IHEARTCOMMUNICATIONS, INC., as the Borrower",
-     "printed": "IHEARTCOMMUNICATIONS, INC."
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Parent_guarantor_(Holdings).legal_name",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Parent guarantor (Holdings)",
-   "field": "legal_name",
-   "period_end": null,
-   "status": "known",
-   "value": "iHeartMedia Capital I, LLC",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Cover page > Among",
-     "quote": "IHEARTMEDIA CAPITAL I, LLC, as Holdings",
-     "printed": "IHEARTMEDIA CAPITAL I, LLC"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Capital_I.relationship_to_borrower",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Capital I",
-   "field": "relationship_to_borrower",
-   "period_end": null,
-   "status": "known",
-   "value": "direct parent of iHeartCommunications, Inc. (parent guarantor); subsidiary of iHeartMedia, Inc.",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility Due 2027",
-     "quote": "iHeartMedia Capital I, LLC, the direct parent of iHeartCommunications, Inc., as parent guarantor",
-     "printed": "the direct parent of iHeartCommunications, Inc., as parent guarantor"
-    },
-    {
-     "source_id": "k",
-     "locator": "Item 7 > Supplemental Financial Information under Debt Agreements",
-     "quote": "iHeartMedia Capital I, LLC (\"Capital I\"), the parent guarantor and a subsidiary of iHeartMedia",
-     "printed": "the parent guarantor and a subsidiary of iHeartMedia"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-0.identity.Fiscal_year.fiscal_year_end",
-   "module": "CP-0",
-   "topic": "identity",
-   "subject": "Fiscal year",
-   "field": "fiscal_year_end",
-   "period_end": null,
-   "status": "known",
-   "value": "12-31",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Cover page",
-     "quote": "For the fiscal year ended December 31, 2023",
-     "printed": "December 31, 2023"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-1A.business.iHeartMedia,_Inc..business_description",
    "module": "CP-1A",
    "topic": "business",
@@ -294,8 +173,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.TLF2026.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Term Loan Facility due 2026",
    "field": "principal_outstanding",
@@ -317,8 +196,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.ITLF2026.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Incremental Term Loan Facility due 2026",
    "field": "principal_outstanding",
@@ -340,8 +219,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "6.375% Senior Secured Notes due 2026",
    "field": "principal_outstanding",
@@ -363,8 +242,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "5.25% Senior Secured Notes due 2027",
    "field": "principal_outstanding",
@@ -386,8 +265,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "4.75% Senior Secured Notes due 2028",
    "field": "principal_outstanding",
@@ -409,8 +288,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "8.375% Senior Unsecured Notes due 2027",
    "field": "principal_outstanding",
@@ -432,8 +311,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.drawn_balance.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.ABL2027.drawn_balance.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Asset-based Revolving Credit Facility due 2027",
    "field": "drawn_balance",
@@ -455,8 +334,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.OtherSecuredSub.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.OtherSecuredSub.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Other secured subsidiary debt (finance leases)",
    "field": "principal_outstanding",
@@ -478,8 +357,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.OtherUnsecuredSub.principal_outstanding.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.OtherUnsecuredSub.principal_outstanding.2024-09-30",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Other unsecured subsidiary debt",
    "field": "principal_outstanding",
@@ -570,29 +449,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.TotalDebtCarrying.carrying_amount.2024-09-30",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Total debt (carrying amount, net of OID and fees)",
-   "field": "carrying_amount",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "5221847",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Note 5 Long-Term Debt > table > Total debt",
-     "quote": "Total debt 5,221,847 5,215,150",
-     "printed": "5,221,847"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-2.debt_stack_pre_exchange.GrossPrincipal.principal_total.2024-09-30",
    "module": "CP-2",
    "topic": "debt_stack_pre_exchange",
@@ -609,57 +465,11 @@
     "op": "sum",
     "operands": [
      "CP-2.debt_stack_pre_exchange.TotalSecured.principal_total.2024-09-30",
-     "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
-     "CP-2.debt_stack_pre_exchange.OtherUnsecuredSub.principal_outstanding.2024-09-30"
+     "CP-1.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
+     "CP-1.debt_stack_pre_exchange.OtherUnsecuredSub.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.WAIR.rate.2024-09-30",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Weighted average interest rate",
-   "field": "rate",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "7.1",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Note 5 > after table",
-     "quote": "The Company’s weighted average interest rate was 7.1% and 7.3% as of September 30, 2024",
-     "printed": "7.1%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.DebtMarketValue.market_value.2024-09-30",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Market value of debt (quoted, approximately; not principal or carrying)",
-   "field": "market_value",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "3.9",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "billions",
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Note 5 > after table",
-     "quote": "The aggregate market value of the Company’s debt based on market prices for which quotes were available was approximately $3.9 billion",
-     "printed": "$3.9 billion"
-    }
-   ],
-   "derivation": null,
    "gap_reason": null
   },
   {
@@ -678,16 +488,16 @@
    "derivation": {
     "op": "sum",
     "operands": [
-     "CP-2.debt_stack_pre_exchange.TLF2026.principal_outstanding.2024-09-30",
-     "CP-2.debt_stack_pre_exchange.ITLF2026.principal_outstanding.2024-09-30"
+     "CP-1.debt_stack_pre_exchange.TLF2026.principal_outstanding.2024-09-30",
+     "CP-1.debt_stack_pre_exchange.ITLF2026.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.maturity_date",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.TLF2026.maturity_date",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Term Loan Facility due 2026",
    "field": "maturity_date",
@@ -709,8 +519,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.maturity_date",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N6375_2026.maturity_date",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "6.375% Senior Secured Notes due 2026",
    "field": "maturity_date",
@@ -732,8 +542,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.maturity_date",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N525_2027.maturity_date",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "5.25% Senior Secured Notes due 2027",
    "field": "maturity_date",
@@ -755,8 +565,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.maturity_date",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N475_2028.maturity_date",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "4.75% Senior Secured Notes due 2028",
    "field": "maturity_date",
@@ -778,8 +588,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.maturity_date",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N8375_2027.maturity_date",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "8.375% Senior Unsecured Notes due 2027",
    "field": "maturity_date",
@@ -801,8 +611,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.maturity_date",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.ABL2027.maturity_date",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Asset-based Revolving Credit Facility due 2027",
    "field": "maturity_date",
@@ -847,8 +657,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.fixed_coupon",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N6375_2026.fixed_coupon",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "6.375% Senior Secured Notes due 2026",
    "field": "fixed_coupon",
@@ -870,8 +680,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.fixed_coupon",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N525_2027.fixed_coupon",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "5.25% Senior Secured Notes due 2027",
    "field": "fixed_coupon",
@@ -893,8 +703,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.fixed_coupon",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N475_2028.fixed_coupon",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "4.75% Senior Secured Notes due 2028",
    "field": "fixed_coupon",
@@ -916,8 +726,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.fixed_coupon",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.N8375_2027.fixed_coupon",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "8.375% Senior Unsecured Notes due 2027",
    "field": "fixed_coupon",
@@ -939,8 +749,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.margin_over_term_sofr",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.TLF2026.margin_over_term_sofr",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Term Loan Facility due 2026",
    "field": "margin_over_term_sofr",
@@ -962,8 +772,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.margin_over_term_sofr",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.ITLF2026.margin_over_term_sofr",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Incremental Term Loan Facility due 2026",
    "field": "margin_over_term_sofr",
@@ -985,8 +795,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.term_sofr_floor",
-   "module": "CP-2",
+   "fact_id": "CP-1.debt_stack_pre_exchange.ITLF2026.term_sofr_floor",
+   "module": "CP-1",
    "topic": "debt_stack_pre_exchange",
    "subject": "Incremental Term Loan Facility due 2026",
    "field": "term_sofr_floor",
@@ -1008,273 +818,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.margin_over_term_sofr_low",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Asset-based Revolving Credit Facility due 2027",
-   "field": "margin_over_term_sofr_low",
-   "period_end": null,
-   "status": "known",
-   "value": "1.25",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Interest Rate and Fees",
-     "quote": "The applicable margin for borrowings under the ABL Facility range from 1.25% to 1.75% for both term SOFR and eurocurrency borrowings",
-     "printed": "1.25%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.margin_over_term_sofr_high",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Asset-based Revolving Credit Facility due 2027",
-   "field": "margin_over_term_sofr_high",
-   "period_end": null,
-   "status": "known",
-   "value": "1.75",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Interest Rate and Fees",
-     "quote": "The applicable margin for borrowings under the ABL Facility range from 1.25% to 1.75% for both term SOFR and eurocurrency borrowings",
-     "printed": "1.75%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.post_exchange_rate_increase",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Asset-based Revolving Credit Facility due 2027",
-   "field": "post_exchange_rate_increase",
-   "period_end": null,
-   "status": "known",
-   "value": "0.50",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01 > ABL Amendment",
-     "quote": "providing for, among other things, the applicable rate with respect to the loans provided thereunder to be increased by 0.50%",
-     "printed": "0.50%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "6.375% Senior Secured Notes due 2026",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior secured; first priority lien on substantially all assets of iHeartCommunications and the guarantors other than accounts receivable and related assets; second priority lien on accounts receivable and related assets securing the ABL Facility",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > 6.375% Senior Secured Notes due 2026",
-     "quote": "by a first priority lien on the capital stock of iHeartCommunications and substantially all of the assets of iHeartCommunications and the guarantors, other than accounts receivable and related assets, and by a second priority lien on accounts receivable and related assets securing the ABL Facility",
-     "printed": "by a first priority lien on the capital stock of iHeartCommunications"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "5.25% Senior Secured Notes due 2027",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior secured; first priority lien on substantially all assets of iHeartCommunications and the guarantors other than accounts receivable and related assets; second priority lien on accounts receivable and related assets securing the ABL Facility",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > 5.25% Senior Secured Notes due 2027",
-     "quote": "by a first priority lien on the capital stock of iHeartCommunications and substantially all of the assets of iHeartCommunications and the guarantors, other than accounts receivable and related assets, and by a second priority lien on accounts receivable and related assets securing the ABL Facility",
-     "printed": "by a first priority lien on the capital stock of iHeartCommunications"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "4.75% Senior Secured Notes due 2028",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior secured; first priority lien on substantially all assets of iHeartCommunications and the guarantors other than accounts receivable and related assets; second priority lien on accounts receivable and related assets securing the ABL Facility",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > 4.75% Senior Secured Notes due 2028",
-     "quote": "by a first priority lien on the capital stock of iHeartCommunications and substantially all of the assets of iHeartCommunications and the guarantors, other than accounts receivable and related assets, and by a second priority lien on accounts receivable and related assets securing the ABL Facility",
-     "printed": "by a first priority lien on the capital stock of iHeartCommunications"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Term Loan Facility due 2026",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior secured; first priority lien on substantially all assets of iHeartCommunications and the guarantors other than accounts receivable and related assets; second priority lien on accounts receivable and related assets securing the ABL Facility",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > Term Loan Facility due 2026 > Collateral and Guarantees",
-     "quote": "are secured, subject to permitted liens and other exceptions, by a first priority lien in substantially all of the",
-     "printed": "by a first priority lien in substantially all of the"
-    },
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > Term Loan Facility due 2026 > Collateral and Guarantees",
-     "quote": "and by a second priority lien on accounts receivable and related assets securing iHeartCommunications’ ABL Facility",
-     "printed": "second priority lien on accounts receivable"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Incremental Term Loan Facility due 2026",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior secured; first priority lien on substantially all assets of iHeartCommunications and the guarantors other than accounts receivable and related assets; second priority lien on accounts receivable and related assets securing the ABL Facility",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > Term Loan Facility due 2026 > Collateral and Guarantees",
-     "quote": "are secured, subject to permitted liens and other exceptions, by a first priority lien in substantially all of the",
-     "printed": "by a first priority lien in substantially all of the"
-    },
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > Term Loan Facility due 2026 > Collateral and Guarantees",
-     "quote": "and by a second priority lien on accounts receivable and related assets securing iHeartCommunications’ ABL Facility",
-     "printed": "second priority lien on accounts receivable"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "8.375% Senior Unsecured Notes due 2027",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior unsecured; effectively subordinated to secured debt to the extent of collateral value; structurally subordinated to non-guarantor subsidiary debt",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > 8.375% Senior Unsecured Notes due 2027",
-     "quote": "effectively subordinated to all of iHeartCommunications’ and the guarantors’ existing and future indebtedness that is secured (including the 6.375% Senior Secured Notes, the 5.25% Senior Secured Notes, the 4.75% Senior Secured Notes and borrowings under the ABL Facility and the Term Loan Facility)",
-     "printed": "effectively subordinated"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.ranking",
-   "module": "CP-2",
-   "topic": "debt_stack_pre_exchange",
-   "subject": "Asset-based Revolving Credit Facility due 2027",
-   "field": "ranking",
-   "period_end": null,
-   "status": "known",
-   "value": "senior secured; perfected security interest in accounts receivable, qualified cash and related assets, senior to the Term Loan Facility security interest in those assets",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility > Guarantees and Security",
-     "quote": "that is senior to the security interest of iHeartCommunications’ Term Loan Facility in such accounts receivable, qualified cash and related assets",
-     "printed": "senior to the security interest"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.Cash.amount.2024-09-30",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "Cash and cash equivalents",
-   "field": "amount",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "431764",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "thousands",
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Item 2 MD&A > Net Debt table",
-     "quote": "Less: Cash and cash equivalents 431,764 346,382",
-     "printed": "431,764"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.NetDebt.amount.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.liquidity.NetDebt.amount.2024-09-30",
+   "module": "CP-1",
    "topic": "liquidity",
    "subject": "Net debt (company-defined: total debt less cash)",
    "field": "amount",
@@ -1296,8 +841,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.liquidity.ABL.facility_size_commitment.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.liquidity.ABL.facility_size_commitment.2024-09-30",
+   "module": "CP-1",
    "topic": "liquidity",
    "subject": "ABL Facility",
    "field": "facility_size_commitment",
@@ -1319,54 +864,8 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-2.liquidity.ABL.letters_of_credit_outstanding.2024-09-30",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility",
-   "field": "letters_of_credit_outstanding",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "23.7",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Item 2 MD&A > Liquidity",
-     "quote": "As of September 30, 2024, iHeartCommunications had no amounts outstanding under the ABL Facility, a facility size of $450.0 million and $23.7 million in outstanding letters of credit, resulting in $426.3 million of borrowing base availability.",
-     "printed": "$23.7 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.borrowing_base_availability.2024-09-30",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility",
-   "field": "borrowing_base_availability",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "426.3",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Item 2 MD&A > Liquidity",
-     "quote": "As of September 30, 2024, iHeartCommunications had no amounts outstanding under the ABL Facility, a facility size of $450.0 million and $23.7 million in outstanding letters of credit, resulting in $426.3 million of borrowing base availability.",
-     "printed": "$426.3 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.drawn_balance.2024-09-30",
-   "module": "CP-2",
+   "fact_id": "CP-1.liquidity.ABL.drawn_balance.2024-09-30",
+   "module": "CP-1",
    "topic": "liquidity",
    "subject": "ABL Facility",
    "field": "drawn_balance",
@@ -1382,144 +881,6 @@
      "locator": "Item 2 MD&A > Liquidity",
      "quote": "As of September 30, 2024, iHeartCommunications had no amounts outstanding under the ABL Facility, a facility size of $450.0 million and $23.7 million in outstanding letters of credit, resulting in $426.3 million of borrowing base availability.",
      "printed": "no amounts outstanding"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.Liquidity.amount.2024-09-30",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "Total available liquidity (cash plus ABL availability)",
-   "field": "amount",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "858.1",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Item 2 MD&A > Liquidity",
-     "quote": "Our total available liquidity1 as of September 30, 2024 was $858.1 million.",
-     "printed": "$858.1 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.springing_fixed_charge_coverage_min",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility",
-   "field": "springing_fixed_charge_coverage_min",
-   "period_end": null,
-   "status": "known",
-   "value": "1.00",
-   "value_type": "decimal",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
-     "quote": "a minimum fixed charge coverage ratio of at least 1.00 to 1.00",
-     "printed": "1.00 to 1.00"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_fixed_component",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility (fixed leg of the greater-of trigger test)",
-   "field": "springing_trigger_availability_fixed_component",
-   "period_end": null,
-   "status": "known",
-   "value": "40.0",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
-     "quote": "borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility",
-     "printed": "$40.0 million"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_pct_of_commitments_component",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility (percentage leg of the greater-of trigger test)",
-   "field": "springing_trigger_availability_pct_of_commitments_component",
-   "period_end": null,
-   "status": "known",
-   "value": "10",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
-     "quote": "borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility",
-     "printed": "10%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_rule",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility (springing covenant trigger)",
-   "field": "springing_trigger_availability_rule",
-   "period_end": null,
-   "status": "known",
-   "value": "Trigger Event when borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility, for two consecutive business days",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility > Certain Covenants",
-     "quote": "If borrowing availability is less than the greater of (a) $40.0 million and (b) 10% of the aggregate commitments under the ABL Facility, in each case, for two consecutive business days",
-     "printed": "greater of (a) $40.0 million and (b) 10% of the aggregate commitments"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.liquidity.ABL.trigger_event_occurred_at_period_end.2024-09-30",
-   "module": "CP-2",
-   "topic": "liquidity",
-   "subject": "ABL Facility",
-   "field": "trigger_event_occurred_at_period_end",
-   "period_end": "2024-09-30",
-   "status": "known",
-   "value": "false",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "q3",
-     "locator": "Item 2 MD&A > Debt",
-     "quote": "As of September 30, 2024, no triggering event had occurred",
-     "printed": "no triggering event had occurred"
     }
    ],
    "derivation": null,
@@ -1594,7 +955,7 @@
     "op": "ratio",
     "operands": [
      "CP-4.exchange_tendered.2026_Secured_Notes.principal_exchanged.2024-12-20",
-     "CP-2.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30"
+     "CP-1.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
@@ -1692,7 +1053,7 @@
     "op": "ratio",
     "operands": [
      "CP-4.exchange_tendered.2027_Secured_Notes.principal_exchanged.2024-12-20",
-     "CP-2.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30"
+     "CP-1.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
@@ -1790,7 +1151,7 @@
     "op": "ratio",
     "operands": [
      "CP-4.exchange_tendered.2028_Secured_Notes.principal_exchanged.2024-12-20",
-     "CP-2.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30"
+     "CP-1.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
@@ -1888,7 +1249,7 @@
     "op": "ratio",
     "operands": [
      "CP-4.exchange_tendered.Unsecured_Notes.principal_exchanged.2024-12-20",
-     "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30"
+     "CP-1.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
@@ -2361,288 +1722,6 @@
      "locator": "Note 10 Subsequent Events",
      "quote": "92% of the aggregate principal amount of its outstanding term loans",
      "printed": "92%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.2029_First_Lien_Notes.initial_fixed_coupon.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "2029 First Lien Notes",
-   "field": "initial_fixed_coupon",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "9.125",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The 2029 First Lien Notes will mature on May 1, 2029, bear interest at an initial rate of 9.125% per annum",
-     "printed": "9.125%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.2029_First_Lien_Notes.maturity_date.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "2029 First Lien Notes",
-   "field": "maturity_date",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "2029-05-01",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The 2029 First Lien Notes will mature on May 1, 2029, bear interest at an initial rate of 9.125% per annum",
-     "printed": "May 1, 2029"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.2030_First_Lien_Notes.initial_fixed_coupon.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "2030 First Lien Notes",
-   "field": "initial_fixed_coupon",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "7.750",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The 2030 First Lien Notes will mature on August 15, 2030, bear interest at an initial rate of 7.750% per annum",
-     "printed": "7.750%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.2030_First_Lien_Notes.maturity_date.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "2030 First Lien Notes",
-   "field": "maturity_date",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "2030-08-15",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The 2030 First Lien Notes will mature on August 15, 2030, bear interest at an initial rate of 7.750% per annum",
-     "printed": "August 15, 2030"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.2031_First_Lien_Notes.initial_fixed_coupon.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "2031 First Lien Notes",
-   "field": "initial_fixed_coupon",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "7.000",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The 2031 First Lien Notes will mature on January 15, 2031, bear interest at an initial rate of 7.000% per annum",
-     "printed": "7.000%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.2031_First_Lien_Notes.maturity_date.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "2031 First Lien Notes",
-   "field": "maturity_date",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "2031-01-15",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The 2031 First Lien Notes will mature on January 15, 2031, bear interest at an initial rate of 7.000% per annum",
-     "printed": "January 15, 2031"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.Second_Lien_Notes.initial_fixed_coupon.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "Second Lien Notes",
-   "field": "initial_fixed_coupon",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "10.875",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The Second Lien Notes will mature on May 1, 2030, bear interest at an initial rate of 10.875% per annum",
-     "printed": "10.875%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.Second_Lien_Notes.maturity_date.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "Second Lien Notes",
-   "field": "maturity_date",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "2030-05-01",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The Second Lien Notes will mature on May 1, 2030, bear interest at an initial rate of 10.875% per annum",
-     "printed": "May 1, 2030"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.maturity_date.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "New Term Loans",
-   "field": "maturity_date",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "2029-05-01",
-   "value_type": "date",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "The New Term Loans will mature on May 1, 2029",
-     "printed": "May 1, 2029"
-    },
-    {
-     "source_id": "ca",
-     "locator": "Art. I > Maturity Date",
-     "quote": "with respect to the Initial Term Loans, May 1, 2029 (the “Initial Term Loan Maturity Date”)",
-     "printed": "May 1, 2029"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.margin_over_term_sofr_initial.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "New Term Loans",
-   "field": "margin_over_term_sofr_initial",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "5.775",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "plus an initial applicable margin of 5.775% (subject to decrease in the future upon iHeartCommunications obtaining certain corporate credit ratings)",
-     "printed": "5.775%"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.term_sofr_floor.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "New Term Loans",
-   "field": "term_sofr_floor",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "0",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "term SOFR, subject to a 0% floor, plus an initial applicable margin of 5.775%",
-     "printed": "0% floor"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.quarterly_amortization_pct_of_original_principal.2024-12-20",
-   "module": "CP-2",
-   "topic": "post_exchange_new_instruments",
-   "subject": "New Term Loans",
-   "field": "quarterly_amortization_pct_of_original_principal",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "0.25",
-   "value_type": "percent",
-   "unit": "percent",
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "quarterly amortization payments on the New Term Loans in an amount equal to 0.25% of the original principal amount thereof",
-     "printed": "0.25%"
     }
    ],
    "derivation": null,
@@ -3190,98 +2269,6 @@
    "gap_reason": null
   },
   {
-   "fact_id": "CP-4C.post_exchange_remaining_existing.2028N.principal_outstanding_at_closing.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_remaining_existing",
-   "subject": "Existing Secured Notes (4.750%) remaining",
-   "field": "principal_outstanding_at_closing",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "276868000",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "units",
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Art. I > definition",
-     "quote": "“Existing Secured Notes (4.750%)” means the 4.750% Senior Notes due 2028 in an aggregate principal amount outstanding of $276,868,000",
-     "printed": "$276,868,000"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_remaining_existing.2027N.principal_outstanding_at_closing.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_remaining_existing",
-   "subject": "Existing Secured Notes (5.250%) remaining",
-   "field": "principal_outstanding_at_closing",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "6983000",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "units",
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Art. I > definition",
-     "quote": "“Existing Secured Notes (5.250%)” means the 5.250% Senior Notes due 2027 in an aggregate principal amount outstanding of $6,983,000",
-     "printed": "$6,983,000"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_remaining_existing.2026N.principal_outstanding_at_closing.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_remaining_existing",
-   "subject": "Existing Secured Notes (6.375%) remaining",
-   "field": "principal_outstanding_at_closing",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "44643791",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "units",
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Art. I > definition",
-     "quote": "“Existing Secured Notes (6.375%)” means the 6.375% Senior Notes due 2026 in an aggregate principal amount outstanding of $44,643,791",
-     "printed": "$44,643,791"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_remaining_existing.UnsN.principal_outstanding_at_closing.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_remaining_existing",
-   "subject": "Existing Unsecured Notes remaining",
-   "field": "principal_outstanding_at_closing",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "72387976",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "units",
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Art. I > definition",
-     "quote": "“Existing Unsecured Notes” means the 8.375% Senior Notes due 2027 in an aggregate principal amount outstanding of $72,387,976",
-     "printed": "$72,387,976"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
    "fact_id": "CP-4.exchange_total.TotalTendered.principal_exchanged.2024-12-20",
    "module": "CP-4",
    "topic": "exchange_total",
@@ -3533,345 +2520,14 @@
    "derivation": {
     "op": "sum",
     "operands": [
-     "CP-2.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30",
-     "CP-2.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30",
-     "CP-2.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30",
-     "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
+     "CP-1.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30",
+     "CP-1.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30",
+     "CP-1.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30",
+     "CP-1.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
      "CP-2.debt_stack_pre_exchange.ExistingTLTotal.principal_outstanding.2024-09-30"
     ],
     "script": "derive.py"
    },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.FirstLienNew.principal_issued.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "First lien debt (three First Lien Notes plus New Term Loans)",
-   "field": "principal_issued",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "3703.0",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [],
-   "derivation": {
-    "op": "sum",
-    "operands": [
-     "CP-4.exchange_new_issued.2029_First_Lien_Notes.principal_issued.2024-12-20",
-     "CP-4.exchange_new_issued.2030_First_Lien_Notes.principal_issued.2024-12-20",
-     "CP-4.exchange_new_issued.2031_First_Lien_Notes.principal_issued.2024-12-20",
-     "CP-4.exchange_new_issued.New_Term_Loans.principal_issued.2024-12-20"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.ABLclass.lien_rank.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "ABL Facility",
-   "field": "lien_rank",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "first priority on ABL collateral (accounts receivable and related assets); New Debt holds second priority lien on ABL collateral",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "(the “ABL Collateral” and, together with the Fixed Asset Collateral, the “Collateral”), and by a second priority lien on the ABL Collateral",
-     "printed": "and by a second priority lien on the ABL Collateral"
-    },
-    {
-     "source_id": "k",
-     "locator": "Note 6 Long-Term Debt > ABL Facility > Guarantees and Security",
-     "quote": "that is senior to the security interest of iHeartCommunications’ Term Loan Facility in such accounts receivable, qualified cash and related assets",
-     "printed": "senior to the security interest"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.FirstLienClass.lien_rank.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "First lien notes and New Term Loans",
-   "field": "lien_rank",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "first priority lien on Fixed Asset Collateral; second priority lien on ABL Collateral",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "Each series of the First Lien Debt and the related guarantees are secured, subject to permitted liens and certain other exceptions, by a first priority lien on substantially all of the assets",
-     "printed": "by a first priority lien on substantially all of the assets"
-    },
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "and by a second priority lien on the ABL Collateral, and the Second Lien Notes",
-     "printed": "second priority lien on the ABL Collateral"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.SecondLienClass.lien_rank.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Second Lien Notes",
-   "field": "lien_rank",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "second priority lien on Fixed Asset Collateral; third priority lien on ABL Collateral",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "by a second priority lien on the Fixed Asset Collateral and by a third priority lien on the ABL Collateral",
-     "printed": "by a second priority lien on the Fixed Asset Collateral and by a third priority lien on the ABL Collateral"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.TLremainClass.lien_rank.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Existing Term Loans remaining",
-   "field": "lien_rank",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "liens on Collateral subordinated to the liens securing the New Debt; most restrictive covenants eliminated (Amendment No. 5)",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01 > Existing Term Loan Credit Agreement Amendment",
-     "quote": "and subordinate the liens on the Collateral securing the obligations thereunder to the liens on the collateral securing the New Debt",
-     "printed": "subordinate the liens on the Collateral securing the obligations thereunder to the liens on the collateral securing the New Debt"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.Rem2026_2027Class.lien_status.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Remaining 6.375% 2026 and 5.250% 2027 secured notes",
-   "field": "lien_status",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "liens on collateral released and guarantees released by the Second Supplemental Indentures; most restrictive covenants eliminated",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01 > Supplemental Indentures",
-     "quote": "(c) solely in the case of the Secured Supplemental Indentures, release all liens on the collateral securing the obligations under the Secured Indentures",
-     "printed": "release all liens on the collateral securing the obligations under the Secured Indentures"
-    },
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01 > Supplemental Indentures",
-     "quote": "(b) release the guarantees of the guarantors under the Existing Indentures",
-     "printed": "release the guarantees of the guarantors under the Existing Indentures"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.RemUnsecClass.guarantee_status.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Remaining 8.375% Senior Notes due 2027",
-   "field": "guarantee_status",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "guarantees released and most restrictive covenants eliminated by the Unsecured Supplemental Indenture; notes were unsecured",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01 > Supplemental Indentures",
-     "quote": "(b) release the guarantees of the guarantors under the Existing Indentures",
-     "printed": "release the guarantees of the guarantors under the Existing Indentures"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.Rem2028Class.lien_rank.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Remaining 4.750% Senior Secured Notes due 2028",
-   "field": "lien_rank",
-   "period_end": "2024-12-20",
-   "status": "missing",
-   "value": null,
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [],
-   "derivation": null,
-   "gap_reason": "Filings show the 2028 notes (no supplemental indenture) are a party to the Multi-Lien Intercreditor Agreement and are treated as Junior Financing under New Credit Agreement Section 7.13(a)(iv), but no filing in the corpus states their post-exchange lien rank. New Credit Agreement Section 2.05(b) (asset-sale prepayment) reduces the prepayment where the Borrower must offer to repurchase \"First Lien Notes or other Indebtedness (other than the Existing Secured Notes (4.750%)) outstanding at such time that is secured by a Lien on the Collateral ranking pari passu with the Liens on the Collateral securing the Term Loans\"; this suggests, but does not state, that the 2028 notes kept first-lien status"
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.TLremainDisclosed.principal_outstanding_disclosed.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Existing Term Loans remaining",
-   "field": "principal_outstanding_disclosed",
-   "period_end": "2024-12-20",
-   "status": "missing",
-   "value": null,
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [],
-   "derivation": null,
-   "gap_reason": "No filing states the unexchanged Existing Term Loan principal; it is not derived here because the operands are printed at different scales (thousands vs millions) and the checker recomputes without rescaling"
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_remaining_existing.TLN.principal_outstanding_derived.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_remaining_existing",
-   "subject": "Existing Term Loans remaining (pre-exchange principal less approximate exchanged principal)",
-   "field": "principal_outstanding_derived",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "6.552",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [],
-   "derivation": {
-    "op": "difference",
-    "operands": [
-     "CP-2.debt_stack_pre_exchange.ExistingTLTotal.principal_outstanding.2024-09-30",
-     "CP-4.exchange_tendered.Existing_Term_Loans.principal_exchanged.2024-12-20"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_remaining_existing.AllFive.principal_outstanding_derived.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_remaining_existing",
-   "subject": "Existing instruments remaining after the exchange (2028N + 2027N + 2026N + UnsN + Term Loans) (includes approximate Term Loan remnant)",
-   "field": "principal_outstanding_derived",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "407.434767",
-   "value_type": "decimal",
-   "unit": "USD",
-   "scale": "millions",
-   "evidence": [],
-   "derivation": {
-    "op": "sum",
-    "operands": [
-     "CP-4C.post_exchange_remaining_existing.2028N.principal_outstanding_at_closing.2024-12-20",
-     "CP-4C.post_exchange_remaining_existing.2027N.principal_outstanding_at_closing.2024-12-20",
-     "CP-4C.post_exchange_remaining_existing.2026N.principal_outstanding_at_closing.2024-12-20",
-     "CP-4C.post_exchange_remaining_existing.UnsN.principal_outstanding_at_closing.2024-12-20",
-     "CP-4C.post_exchange_remaining_existing.TLN.principal_outstanding_derived.2024-12-20"
-    ],
-    "script": "derive.py"
-   },
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.Rem2028Junior.new_credit_agreement_definition.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Junior Financing treatment of 4.750% notes",
-   "field": "new_credit_agreement_definition",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "Existing Secured Notes (4.750%) are Junior Financing under Section 7.13(a)(iv)",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "ca",
-     "locator": "Section 7.13(a)",
-     "quote": "(iv) that constitutes Existing Secured Notes (4.750%) (the foregoing clauses (i), (ii), (iii) and (iv), collectively “Junior Financing”)",
-     "printed": "(iv) that constitutes Existing Secured Notes (4.750%)"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.Intercreditor_arrangements.multi_lien_intercreditor_parties.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Intercreditor arrangements",
-   "field": "multi_lien_intercreditor_parties",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "Multi-Lien Intercreditor Agreement among iHeartCommunications, the Guarantors and the agents/trustees for each series of New Debt, the Existing Term Loans and the 2028 Secured Notes",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "for each series of New Debt, the Existing Term Loans and the 2028 Secured Notes entered into a Multi-Lien Intercreditor Agreement",
-     "printed": "for each series of New Debt, the Existing Term Loans and the 2028 Secured Notes entered into a Multi-Lien Intercreditor Agreement"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
-  },
-  {
-   "fact_id": "CP-4C.post_exchange_classes.Existing_Term_Loan_representative.intercreditor_position.2024-12-20",
-   "module": "CP-4C",
-   "topic": "post_exchange_classes",
-   "subject": "Existing Term Loan representative",
-   "field": "intercreditor_position",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "third lien existing credit agreement representative",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 9.01 Exhibit 10.3 description",
-     "quote": "and a third lien existing credit agreement representative",
-     "printed": "a third lien existing credit agreement representative"
-    }
-   ],
-   "derivation": null,
    "gap_reason": null
   },
   {
@@ -3905,29 +2561,6 @@
    "evidence": [],
    "derivation": null,
    "gap_reason": "No filing in the corpus discloses an assigned rating; the 8-K says the new notes pricing may decrease upon obtaining certain credit ratings, and the credit agreement applies Level 1 pricing when no Index Debt Rating exists"
-  },
-  {
-   "fact_id": "CP-2H.ratings.New_notes_and_New_Term_Loans.rating_linked_coupon_stepdown.2024-12-20",
-   "module": "CP-2H",
-   "topic": "ratings",
-   "subject": "New notes and New Term Loans",
-   "field": "rating_linked_coupon_stepdown",
-   "period_end": "2024-12-20",
-   "status": "known",
-   "value": "coupon/margin subject to decrease in the future upon obtaining certain credit ratings",
-   "value_type": "text",
-   "unit": null,
-   "scale": null,
-   "evidence": [
-    {
-     "source_id": "8k",
-     "locator": "Item 1.01",
-     "quote": "subject to decrease in the future upon obtaining certain credit ratings on such 2029 First Lien Notes",
-     "printed": "subject to decrease in the future upon obtaining certain credit ratings"
-    }
-   ],
-   "derivation": null,
-   "gap_reason": null
   }
  ],
  "not_golden": [
@@ -3946,6 +2579,238 @@
   {
    "module": "CP-5",
    "why": "Judgment module (recommendation and synthesis); no filing-derived answer key."
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Registrant.ticker: CP-0 identity/document fact (identity / Registrant / ticker) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Borrower.legal_name: CP-0 identity/document fact (identity / Borrower / legal_name) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Parent_guarantor_(Holdings).legal_name: CP-0 identity/document fact (identity / Parent guarantor (Holdings) / legal_name) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Capital_I.relationship_to_borrower: CP-0 identity/document fact (identity / Capital I / relationship_to_borrower) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-0",
+   "why": "CP-0.identity.Fiscal_year.fiscal_year_end: CP-0 identity/document fact (identity / Fiscal year / fiscal_year_end) has no CP-0 field; CP-0 build_readiness writes only T1 run, P3/P5/T2/T3/T6 per source, T4/T8 per consumer, T5 gaps, T7 run (src/deploy_vii/readiness.py:474)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.TotalDebtCarrying.carrying_amount.2024-09-30: covered by financial_gold total_debt FY2024Q3"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.WAIR.rate.2024-09-30: debt_stack_pre_exchange / Weighted average interest rate / rate @ 2024-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average rate, market-value, step-up or margin-grid cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.DebtMarketValue.market_value.2024-09-30: debt_stack_pre_exchange / Market value of debt (quoted, approximately; not principal or carrying) / market_value @ 2024-09-30: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average rate, market-value, step-up or margin-grid cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.ABL2027.margin_over_term_sofr_low: debt_stack_pre_exchange / Asset-based Revolving Credit Facility due 2027 / margin_over_term_sofr_low: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average rate, market-value, step-up or margin-grid cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.ABL2027.margin_over_term_sofr_high: debt_stack_pre_exchange / Asset-based Revolving Credit Facility due 2027 / margin_over_term_sofr_high: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average rate, market-value, step-up or margin-grid cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.ABL2027.post_exchange_rate_increase: debt_stack_pre_exchange / Asset-based Revolving Credit Facility due 2027 / post_exchange_rate_increase: no module field; CP-1 T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation) has no weighted-average rate, market-value, step-up or margin-grid cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.N6375_2026.ranking: debt_stack_pre_exchange / 6.375% Senior Secured Notes due 2026 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.N525_2027.ranking: debt_stack_pre_exchange / 5.25% Senior Secured Notes due 2027 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.N475_2028.ranking: debt_stack_pre_exchange / 4.75% Senior Secured Notes due 2028 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.TLF2026.ranking: debt_stack_pre_exchange / Term Loan Facility due 2026 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.ITLF2026.ranking: debt_stack_pre_exchange / Incremental Term Loan Facility due 2026 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.N8375_2027.ranking: debt_stack_pre_exchange / 8.375% Senior Unsecured Notes due 2027 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.debt_stack_pre_exchange.ABL2027.ranking: debt_stack_pre_exchange / Asset-based Revolving Credit Facility due 2027 / ranking: no module field; CP-1 writes the enums secured_status/seniority, not this prose (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation))"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.Cash.amount.2024-09-30: covered by financial_gold cash FY2024Q3"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.letters_of_credit_outstanding.2024-09-30: liquidity / ABL Facility / letters_of_credit_outstanding @ 2024-09-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.borrowing_base_availability.2024-09-30: liquidity / ABL Facility / borrowing_base_availability @ 2024-09-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.Liquidity.amount.2024-09-30: liquidity / Total available liquidity (cash plus ABL availability) / amount @ 2024-09-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.springing_fixed_charge_coverage_min: liquidity / ABL Facility / springing_fixed_charge_coverage_min: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.springing_trigger_availability_fixed_component: liquidity / ABL Facility (fixed leg of the greater-of trigger test) / springing_trigger_availability_fixed_component: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.springing_trigger_availability_pct_of_commitments_component: liquidity / ABL Facility (percentage leg of the greater-of trigger test) / springing_trigger_availability_pct_of_commitments_component: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.springing_trigger_availability_rule: liquidity / ABL Facility (springing covenant trigger) / springing_trigger_availability_rule: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.liquidity.ABL.trigger_event_occurred_at_period_end.2024-09-30: liquidity / ABL Facility / trigger_event_occurred_at_period_end @ 2024-09-30: no module field; CP-1 writes commitment and drawn_amount (T4.18 Debt Facility Register (src/deploy_vii/model_interface.py:75-85 columns, :465-497 rows written; src/deploy_vii/financial_contracts.py:227-258 FacilityObservation)) and CP-1 KPI undrawn_rcf = rcf_commitment - rcf_drawn with no letters-of-credit deduction (src/deploy_vii/model/debt.py:293-301, src/deploy_vii/canonical_kpis.py:220); liquidity KPI = cash + undrawn_rcf also ignores LCs; no springing-covenant or trigger cell"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.2029_First_Lien_Notes.initial_fixed_coupon.2024-12-20: post_exchange_new_instruments / 2029 First Lien Notes / initial_fixed_coupon @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.2029_First_Lien_Notes.maturity_date.2024-12-20: post_exchange_new_instruments / 2029 First Lien Notes / maturity_date @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.2030_First_Lien_Notes.initial_fixed_coupon.2024-12-20: post_exchange_new_instruments / 2030 First Lien Notes / initial_fixed_coupon @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.2030_First_Lien_Notes.maturity_date.2024-12-20: post_exchange_new_instruments / 2030 First Lien Notes / maturity_date @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.2031_First_Lien_Notes.initial_fixed_coupon.2024-12-20: post_exchange_new_instruments / 2031 First Lien Notes / initial_fixed_coupon @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.2031_First_Lien_Notes.maturity_date.2024-12-20: post_exchange_new_instruments / 2031 First Lien Notes / maturity_date @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.Second_Lien_Notes.initial_fixed_coupon.2024-12-20: post_exchange_new_instruments / Second Lien Notes / initial_fixed_coupon @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.Second_Lien_Notes.maturity_date.2024-12-20: post_exchange_new_instruments / Second Lien Notes / maturity_date @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.New_Term_Loans.maturity_date.2024-12-20: post_exchange_new_instruments / New Term Loans / maturity_date @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.New_Term_Loans.margin_over_term_sofr_initial.2024-12-20: post_exchange_new_instruments / New Term Loans / margin_over_term_sofr_initial @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.New_Term_Loans.term_sofr_floor.2024-12-20: post_exchange_new_instruments / New Term Loans / term_sofr_floor @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-2",
+   "why": "CP-2.post_exchange_new_instruments.New_Term_Loans.quarterly_amortization_pct_of_original_principal.2024-12-20: post_exchange_new_instruments / New Term Loans / quarterly_amortization_pct_of_original_principal @ 2024-12-20: no module field; instrument created at the 2024-12-20 exchange, after the 2024-09-30 balance date: CP-1 T4.18 rows are per filed period_id (src/deploy_vii/financial_contracts.py:229, :234 FacilityObservation), not post-exchange terms; CP-2 writes judged prose rows T2.1/T2.7/T2.10-T2.12 (src/deploy_vii/cp2_synthesis.py:501-536) and refNN copies of CP-1 facts (cp2_synthesis.py:839)"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_remaining_existing.2028N.principal_outstanding_at_closing.2024-12-20: post_exchange_remaining_existing / Existing Secured Notes (4.750%) remaining / principal_outstanding_at_closing @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_remaining_existing.2027N.principal_outstanding_at_closing.2024-12-20: post_exchange_remaining_existing / Existing Secured Notes (5.250%) remaining / principal_outstanding_at_closing @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_remaining_existing.2026N.principal_outstanding_at_closing.2024-12-20: post_exchange_remaining_existing / Existing Secured Notes (6.375%) remaining / principal_outstanding_at_closing @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_remaining_existing.UnsN.principal_outstanding_at_closing.2024-12-20: post_exchange_remaining_existing / Existing Unsecured Notes remaining / principal_outstanding_at_closing @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.FirstLienNew.principal_issued.2024-12-20: post_exchange_classes / First lien debt (three First Lien Notes plus New Term Loans) / principal_issued @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.ABLclass.lien_rank.2024-12-20: post_exchange_classes / ABL Facility / lien_rank @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.FirstLienClass.lien_rank.2024-12-20: post_exchange_classes / First lien notes and New Term Loans / lien_rank @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.SecondLienClass.lien_rank.2024-12-20: post_exchange_classes / Second Lien Notes / lien_rank @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.TLremainClass.lien_rank.2024-12-20: post_exchange_classes / Existing Term Loans remaining / lien_rank @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.Rem2026_2027Class.lien_status.2024-12-20: post_exchange_classes / Remaining 6.375% 2026 and 5.250% 2027 secured notes / lien_status @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.RemUnsecClass.guarantee_status.2024-12-20: post_exchange_classes / Remaining 8.375% Senior Notes due 2027 / guarantee_status @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.Rem2028Class.lien_rank.2024-12-20: post_exchange_classes / Remaining 4.750% Senior Secured Notes due 2028 / lien_rank @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.TLremainDisclosed.principal_outstanding_disclosed.2024-12-20: post_exchange_classes / Existing Term Loans remaining / principal_outstanding_disclosed @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_remaining_existing.TLN.principal_outstanding_derived.2024-12-20: post_exchange_remaining_existing / Existing Term Loans remaining (pre-exchange principal less approximate exchanged principal) / principal_outstanding_derived @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_remaining_existing.AllFive.principal_outstanding_derived.2024-12-20: post_exchange_remaining_existing / Existing instruments remaining after the exchange (2028N + 2027N + 2026N + UnsN + Term Loans) (includes approximate Term Loan remnant) / principal_outstanding_derived @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.Rem2028Junior.new_credit_agreement_definition.2024-12-20: post_exchange_classes / Junior Financing treatment of 4.750% notes / new_credit_agreement_definition @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.Intercreditor_arrangements.multi_lien_intercreditor_parties.2024-12-20: post_exchange_classes / Intercreditor arrangements / multi_lien_intercreditor_parties @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-4C",
+   "why": "CP-4C.post_exchange_classes.Existing_Term_Loan_representative.intercreditor_position.2024-12-20: post_exchange_classes / Existing Term Loan representative / intercreditor_position @ 2024-12-20: no module field; CP-4C writes T4E.1-T4E.10 waterfall tables (src/deploy_workflow/owners/cp4c.py:8); no post-exchange lien rank, guarantee status, intercreditor text or remaining principal"
+  },
+  {
+   "module": "CP-2H",
+   "why": "CP-2H.ratings.New_notes_and_New_Term_Loans.rating_linked_coupon_stepdown.2024-12-20: ratings / New notes and New Term Loans / rating_linked_coupon_stepdown @ 2024-12-20: no module field; CP-2H writes T2R.2 rating rows (src/deploy_workflow/owners/cp2h.py); no coupon step-down field"
   }
  ],
  "needs_user_input": [

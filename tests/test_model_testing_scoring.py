@@ -12,7 +12,14 @@ from hypothesis import strategies as st
 
 from deploy_vii.contracts import Citation, Fact, Module
 from deploy_workflow.model_testing.cases import GoldenCase, checker
-from deploy_workflow.model_testing.mapping import Locator, Mapping, MappingEntry, Unmapped
+from deploy_workflow.model_testing.mapping import (
+    Locator,
+    Mapping,
+    MappingEntry,
+    PeriodRef,
+    RowKey,
+    Unmapped,
+)
 from deploy_workflow.model_testing.scoring import (
     JUDGMENT_MODULES,
     ModuleScore,
@@ -23,14 +30,23 @@ GOLDENS = Path(__file__).resolve().parents[1] / "cases" / "goldens"
 SHA = "a" * 40
 H = "b" * 64
 
-IHRT_BILLIONS = "CP-2.debt_stack_pre_exchange.DebtMarketValue.market_value.2024-09-30"
+# 6da4c9f1 (step 4) dropped IHRT's DebtMarketValue 3.9 billions fact (no module writes it).
+# Stand-in with the same properties the tests need (known, decimal, USD, scaled, CP-2 as the
+# IHRT_PCT fact stays the only CP-4 one): GrossPrincipal 5236876 thousands = 5236876000 units.
+IHRT_BILLIONS = "CP-2.debt_stack_pre_exchange.GrossPrincipal.principal_total.2024-09-30"
+IHRT_UNITS = "5236876000"
 IHRT_PCT = "CP-4.exchange_total.Participation.participation_pct_of_principal.2024-12-20"
+# 6da4c9f1 removed LTH's aggregate principal total (1534356 thousands). Stand-in: a known
+# USD thousands total, CP-2, 1534356 thousands = 1534356000 units.
 LTH_THOUSANDS = (
-    "CP-2.debt_stack.total_debt_principal_sum_of_components_excluding_fair_value_adjustment"
-    ".principal_total.2025-06-30"
+    "CP-2.debt_stack.total_debt_before_discounts.carrying_total_incl_fair_value_adjustment"
+    ".2025-06-30"
 )
-LTH_GUARANTOR = "CP-2.obligors.subsidiary_guarantor_ltf_club_operations_company_inc.name"
-NATL_TERM_B = "CP-2.debt_stack.term_b.principal_outstanding.2025-09-30"
+# 6da4c9f1 removed LTH's subsidiary-guarantor name fact. Stand-in: a known entity-name text
+# fact, CP-0 legal name "Life Time Group Holdings, Inc.".
+LTH_GUARANTOR = "CP-0.identity.Life_Time_Group_Holdings.legal_name"
+# 6da4c9f1 moved NATL's golden-missing Term B principal from CP-2 to CP-1.
+NATL_TERM_B = "CP-1.debt_stack.term_b.principal_outstanding.2025-09-30"
 LTH_CONFLICT = "CP-4.amendment_13.13th_amendment.incremental_commitments_split"
 
 
@@ -91,7 +107,7 @@ def _cite() -> tuple[Citation, ...]:
 def _fact(entry: MappingEntry, *, traced: bool = True, **kw: Any) -> Fact:
     loc = entry.locator
     base: dict[str, Any] = {
-        "fact_id": "f-" + loc.row_id,
+        "fact_id": f"f-{loc.row_id}",
         "label": "x",
         "table_id": loc.table_id,
         "row_id": loc.row_id,
@@ -144,26 +160,26 @@ NATL = "natl-portfolio-decision"
 
 
 def test_millions_vs_units_match() -> None:
-    # golden IHRT 3.9 billions; module amount 3900000000 at scale 1
-    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(3900000000))
+    # golden IHRT 5236876 thousands; module amount 5236876000 at scale 1
+    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(IHRT_UNITS))
     fs = score.facts[0]
     assert fs.outcome == "match"
-    assert fs.expected == "3900000000"
-    assert fs.observed == "3900000000"
+    assert fs.expected == IHRT_UNITS
+    assert fs.observed == IHRT_UNITS
     assert score.passed
 
 
 def test_thousands_vs_scale_match() -> None:
-    # golden LTH 1534149 thousands; module 1534.149 at scale 1000000 (amount x scale, as
+    # golden LTH 1534356 thousands; module 1534.356 at scale 1000000 (amount x scale, as
     # cp5_integrity.py:371 and the Fact contract define it)
-    score, _, _ = _one(LTH_THOUSANDS, LTH, amount=Decimal("1534.149"), scale=Decimal(1000000))
+    score, _, _ = _one(LTH_THOUSANDS, LTH, amount=Decimal("1534.356"), scale=Decimal(1000000))
     assert score.facts[0].outcome == "match"
-    assert score.facts[0].expected == "1534149000"
+    assert score.facts[0].expected == "1534356000"
     assert score.passed
 
 
 def test_scale_mismatch_is_a_mismatch() -> None:
-    score, _, _ = _one(LTH_THOUSANDS, LTH, amount=Decimal("1534.149"), scale=Decimal(1000))
+    score, _, _ = _one(LTH_THOUSANDS, LTH, amount=Decimal("1534.356"), scale=Decimal(1000))
     assert score.facts[0].outcome == "mismatch"
     assert not score.passed
 
@@ -179,9 +195,9 @@ def test_fewer_golden_decimals() -> None:
 
 
 def test_entity_case_insensitive() -> None:
-    score, _, _ = _one(LTH_GUARANTOR, LTH, text="LTF CLUB OPERATIONS COMPANY, INC.")
+    score, _, _ = _one(LTH_GUARANTOR, LTH, text="LIFE TIME GROUP HOLDINGS, INC.")
     assert score.facts[0].outcome == "match"
-    score, _, _ = _one(LTH_GUARANTOR, LTH, text="  LTF Club   Operations Company, Inc. ")
+    score, _, _ = _one(LTH_GUARANTOR, LTH, text="  Life Time   Group Holdings, Inc. ")
     assert score.facts[0].outcome == "match"
     score, _, _ = _one(LTH_GUARANTOR, LTH, text="Someone Else")
     assert score.facts[0].outcome == "mismatch"
@@ -189,8 +205,8 @@ def test_entity_case_insensitive() -> None:
 
 def test_subject_alias_matches() -> None:
     case = _case(LTH, LTH_GUARANTOR)
-    entry = _entry(LTH_GUARANTOR, "CP-2", subject_aliases=("LTF Club Ops",))
-    module = _module([_fact(entry, text="ltf club ops")])
+    entry = _entry(LTH_GUARANTOR, "CP-2", subject_aliases=("LTGH",))
+    module = _module([_fact(entry, text="ltgh")])
     assert _score(module, case, _mapping(case, [entry])).facts[0].outcome == "match"
 
 
@@ -243,13 +259,13 @@ def test_inherited_excluded() -> None:
 
 
 def test_untraced_fails() -> None:
-    score, _, entry = _one(IHRT_BILLIONS, IHRT, amount=Decimal(3900000000), traced=False)
+    score, _, entry = _one(IHRT_BILLIONS, IHRT, amount=Decimal(IHRT_UNITS), traced=False)
     assert score.facts[0].outcome == "match"
-    assert score.untraced == ("f-" + entry.locator.row_id,)
+    assert score.untraced == (f"f-{entry.locator.row_id}",)
     assert score.passed is False
     # a calculation id counts as a trace
     ok, _, _ = _one(
-        IHRT_BILLIONS, IHRT, amount=Decimal(3900000000), traced=False, calculation_id="c1"
+        IHRT_BILLIONS, IHRT, amount=Decimal(IHRT_UNITS), traced=False, calculation_id="c1"
     )
     assert ok.untraced == ()
     assert ok.passed
@@ -279,7 +295,7 @@ def test_unscored_counts_traced_unmapped_amount_facts() -> None:
         unit="USD",
         period="2025-06-30",
     )
-    module = _module([_fact(entry, amount=Decimal(3900000000)), extra, extra_untraced])
+    module = _module([_fact(entry, amount=Decimal(IHRT_UNITS)), extra, extra_untraced])
     score = _score(module, case, _mapping(case, [entry]))
     assert score.unscored == 1
     assert score.untraced == ("extra2",)
@@ -348,7 +364,7 @@ def test_refusal_naming_input_is_honest_gap() -> None:
     )
     assert score.facts[0].outcome == "gap_ok"
     assert score.facts[0].observed == "refused: portfolio_workbook"
-    assert score.facts[0].expected == "3900000000"
+    assert score.facts[0].expected == IHRT_UNITS
     assert score.passed is True
     assert score.head_status == "refused"
 
@@ -467,12 +483,12 @@ def test_percent_unit_is_a_fraction() -> None:
 
 
 def test_unit_scale_disagreement_is_mismatch() -> None:
-    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(3900000000), unit="MILLIONS")
+    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(IHRT_UNITS), unit="MILLIONS")
     assert score.facts[0].outcome == "mismatch"
     assert "MILLIONS" in (score.facts[0].observed or "")
     assert score.passed is False
     agree, _, _ = _one(
-        IHRT_BILLIONS, IHRT, amount=Decimal(3900), unit="MILLIONS", scale=Decimal(1000000)
+        IHRT_BILLIONS, IHRT, amount=Decimal("5236.876"), unit="MILLIONS", scale=Decimal(1000000)
     )
     assert agree.facts[0].outcome == "match"
 
@@ -487,7 +503,7 @@ def test_unit_class_must_agree_with_golden() -> None:
 def test_duplicate_locator_is_mismatch() -> None:
     case = _case(IHRT, IHRT_BILLIONS)
     entry = _entry(IHRT_BILLIONS, "CP-2")
-    good = _fact(entry, amount=Decimal(3900000000))
+    good = _fact(entry, amount=Decimal(IHRT_UNITS))
     wrong = _fact(entry, fact_id="other", amount=Decimal(7100000000))
     score = _score(_module([good, wrong]), case, _mapping(case, [entry]))
     assert score.facts[0].outcome == "mismatch"
@@ -719,3 +735,271 @@ def test_not_applicable_golden_is_a_gap_not_a_value() -> None:
     )
     assert _score(twice, case, mapping).facts[0].outcome == "invented"
     assert _score(None, case, mapping, head="absent").facts[0].outcome == "gap_ok"
+
+
+def _rk_entry(fid: str, module: str = "CP-2", **rk: Any) -> MappingEntry:
+    return MappingEntry(
+        fact_id=fid,
+        module=module,
+        locator=Locator(
+            table_id="t",
+            row_key=RowKey(field="name", **rk),
+            field="f",
+            period="2025-06-30",
+        ),
+    )
+
+
+def _row(
+    row: str, key: str | None, value: Decimal | None, period: str | None = "2025-06-30"
+) -> list[Fact]:
+    """A register row: a key cell (field name) and a value cell (field f)."""
+    facts = [
+        Fact(
+            fact_id=f"k-{row}",
+            label="x",
+            table_id="t",
+            row_id=row,
+            field="name",
+            period=None,
+            text=key,
+            citations=_cite(),
+        )
+    ]
+    if value is not None:
+        facts.append(
+            Fact(
+                fact_id=f"v-{row}",
+                label="x",
+                table_id="t",
+                row_id=row,
+                field="f",
+                period=period,
+                amount=value,
+                unit="USD",
+                citations=_cite(),
+            )
+        )
+    return facts
+
+
+_RK_GOLD = Decimal(IHRT_UNITS)
+
+
+def _rk_score(facts: list[Fact], **rk: Any) -> tuple[ModuleScore, GoldenCase]:
+    case = _case(IHRT, IHRT_BILLIONS)
+    entry = _rk_entry(IHRT_BILLIONS, **rk)
+    return _score(_module(facts), case, _mapping(case, [entry])), case
+
+
+def _subject() -> str:
+    return str(_case(IHRT, IHRT_BILLIONS).facts[IHRT_BILLIONS]["subject"])
+
+
+def test_row_key_finds_row_by_subject() -> None:
+    facts = _row("r01", "Other", Decimal(1)) + _row("r03", _subject(), _RK_GOLD)
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "match"
+    assert score.passed
+
+
+def test_row_key_alias_finds_row() -> None:
+    facts = _row("r02", "Senior Notes 2029", _RK_GOLD)
+    score, _ = _rk_score(facts, aliases=("senior notes 2029",))
+    assert score.facts[0].outcome == "match"
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "missing_in_output"
+
+
+def test_row_key_normalises_case_and_space() -> None:
+    facts = _row("r07", "  " + _subject().upper().replace(" ", "   ") + " ", _RK_GOLD)
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "match"
+
+
+def test_row_key_no_row_is_missing() -> None:
+    score, _ = _rk_score(_row("r01", "Other", _RK_GOLD))
+    assert score.facts[0].outcome == "missing_in_output"
+    assert not score.passed
+
+
+def test_row_key_two_rows_is_mismatch() -> None:
+    facts = _row("r01", _subject(), _RK_GOLD) + _row("r02", _subject(), _RK_GOLD)
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "mismatch"
+    assert score.facts[0].observed == "2 facts at one locator"
+
+
+def test_row_key_period_must_match() -> None:
+    score, _ = _rk_score(_row("r03", _subject(), _RK_GOLD, period="2024-06-30"))
+    assert score.facts[0].outcome == "missing_in_output"
+
+
+def test_row_key_fact_not_unscored() -> None:
+    facts = _row("r03", _subject(), _RK_GOLD) + _row("r04", "Other", Decimal(5))
+    score, _ = _rk_score(facts)
+    assert score.unscored == 1  # only r04's value; the located r03 value is scored
+
+
+def test_row_id_locator_unchanged() -> None:
+    score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(IHRT_UNITS))
+    assert score.facts[0].outcome == "match"
+    assert score.unscored == 0
+
+
+def _cell(table: str, row: str, field: str, text: str, period: str | None = None) -> Fact:
+    return Fact(
+        fact_id=f"{table}-{row}-{field}",
+        label="x",
+        table_id=table,
+        row_id=row,
+        field=field,
+        period=period,
+        text=text,
+        citations=_cite(),
+    )
+
+
+def _period_row(row: str, pid: str, end: str, ptype: str = "QUARTER") -> list[Fact]:
+    return [
+        _cell("T4.14", row, "period_id", pid),
+        _cell("T4.14", row, "end_date", end),
+        _cell("T4.14", row, "period_type", ptype),
+    ]
+
+
+def _metric_row(row: str, metric: str, pid: str, value: Decimal | None = None) -> list[Fact]:
+    """A T4.15 row: metric_id and period_id key cells, the value cell at period ``pid``."""
+    facts = [_cell("T4.15", row, "metric_id", metric), _cell("T4.15", row, "period_id", pid)]
+    if value is not None:
+        facts.append(
+            Fact(
+                fact_id=f"T4.15-{row}-value",
+                label="x",
+                table_id="T4.15",
+                row_id=row,
+                field="value",
+                period=pid,
+                amount=value,
+                unit="USD",
+                citations=_cite(),
+            )
+        )
+    return facts
+
+
+def _ref_entry(
+    row_key: bool = True, end: str = "2024-12-28", ptype: str = "QUARTER"
+) -> MappingEntry:
+    return MappingEntry(
+        fact_id=IHRT_BILLIONS,
+        module="CP-2",
+        locator=Locator(
+            table_id="T4.15",
+            row_id=None if row_key else "r01",
+            row_key=RowKey(field="metric_id", aliases=("revenue",)) if row_key else None,
+            field="value",
+            period=None,
+            period_ref=PeriodRef(
+                table_id="T4.14",
+                id_field="period_id",
+                match={"end_date": end, "period_type": ptype},
+            ),
+        ),
+    )
+
+
+def _ref_score(facts: list[Fact], entry: MappingEntry | None = None) -> ModuleScore:
+    case = _case(IHRT, IHRT_BILLIONS)
+    return _score(_module(facts), case, _mapping(case, [entry or _ref_entry()]))
+
+
+def test_period_ref_resolves_model_period_id() -> None:
+    facts = (
+        _period_row("p1", "P3", "2024-09-28")
+        + _period_row("p2", "P7", "2024-12-28")
+        + _metric_row("r01", "revenue", "P3", Decimal(1))
+        + _metric_row("r02", "revenue", "P7", Decimal(IHRT_UNITS))
+    )
+    score = _ref_score(facts)
+    assert score.facts[0].outcome == "match"
+    assert score.passed
+
+
+def test_period_ref_quarter_vs_annual() -> None:
+    facts = (
+        _period_row("p1", "P7", "2024-12-28", "QUARTER")
+        + _period_row("p2", "P9", "2024-12-28", "ANNUAL")
+        + _metric_row("r01", "revenue", "P7", Decimal(1))
+        + _metric_row("r02", "revenue", "P9", Decimal(IHRT_UNITS))
+    )
+    assert _ref_score(facts, _ref_entry(ptype="ANNUAL")).facts[0].outcome == "match"
+    assert _ref_score(facts, _ref_entry(ptype="QUARTER")).facts[0].outcome == "mismatch"
+
+
+def test_period_ref_no_period_row_is_missing() -> None:
+    facts = _period_row("p1", "P3", "2024-09-28") + _metric_row(
+        "r01", "revenue", "P3", Decimal(IHRT_UNITS)
+    )
+    assert _ref_score(facts).facts[0].outcome == "missing_in_output"
+
+
+def test_period_ref_two_period_rows_is_mismatch() -> None:
+    facts = (
+        _period_row("p1", "P7", "2024-12-28")
+        + _period_row("p2", "P8", "2024-12-28")
+        + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+        + _metric_row("r02", "revenue", "P8", Decimal(IHRT_UNITS))
+    )
+    fs = _ref_score(facts).facts[0]
+    assert fs.outcome == "mismatch"
+    assert fs.observed == "2 facts at one locator"
+
+
+def test_period_ref_with_row_id_locator() -> None:
+    facts = _period_row("p2", "P7", "2024-12-28") + _metric_row(
+        "r01", "revenue", "P7", Decimal(IHRT_UNITS)
+    )
+    assert _ref_score(facts, _ref_entry(row_key=False)).facts[0].outcome == "match"
+
+
+def test_period_ref_fact_not_unscored() -> None:
+    facts = (
+        _period_row("p2", "P7", "2024-12-28")
+        + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+        + _metric_row("r02", "margin", "P7", Decimal(5))
+    )
+    assert _ref_score(facts).unscored == 1  # only the margin value; revenue was located
+
+
+def test_row_key_ignores_same_key_text_in_another_table() -> None:
+    # table u holds the key text in row r09; table t has an r09 row whose key cell differs
+    facts = [
+        _cell("u", "r09", "name", _subject()),
+        *_row("r09", "Other", Decimal(IHRT_UNITS)),
+    ]
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "missing_in_output"
+
+
+def test_period_ref_two_period_rows_is_mismatch_even_if_one_holds_the_fact() -> None:
+    # an ambiguous period register is surfaced, not hidden (step 2b brief)
+    facts = (
+        _period_row("p1", "P7", "2024-12-28")
+        + _period_row("p2", "P8", "2024-12-28")
+        + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+    )
+    fs = _ref_score(facts).facts[0]
+    assert fs.outcome == "mismatch"
+    assert fs.observed == "2 period rows match period_ref"
+
+
+def test_period_ref_ignores_period_rows_of_another_table() -> None:
+    # a T4.14-shaped row in table "other" must not resolve the reference
+    foreign = [
+        _cell("other", "p9", "period_id", "P7"),
+        _cell("other", "p9", "end_date", "2024-12-28"),
+        _cell("other", "p9", "period_type", "QUARTER"),
+    ]
+    facts = foreign + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+    assert _ref_score(facts).facts[0].outcome == "missing_in_output"

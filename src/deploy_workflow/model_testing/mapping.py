@@ -24,11 +24,56 @@ class MappingError(ValueError):
     """A golden mapping cannot be used for scoring."""
 
 
+def _norm(text: str) -> str:
+    from deploy_workflow.model_testing.scoring import _text  # scoring imports this module
+
+    return _text(text)
+
+
+class RowKey(Contract):
+    """Finds a register row by the text of its key cell instead of a fixed row id (register
+    modules number rows in model submission order). ``aliases`` only help find the row."""
+
+    field: str = Field(min_length=1)
+    aliases: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def _aliases_nonblank(self) -> RowKey:
+        if any(not _norm(a) for a in self.aliases):
+            raise ValueError("row_key aliases must be non-blank")
+        return self
+
+
+class PeriodRef(Contract):
+    """Names a locator's period by a register row (e.g. T4.14) instead of a literal string:
+    the row whose ``match`` cells all equal gives its ``id_field`` cell text as the period."""
+
+    table_id: str = Field(min_length=1)
+    id_field: str = Field(min_length=1)
+    match: dict[str, str] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _match_nonblank(self) -> PeriodRef:
+        if any(not _norm(k) or not _norm(v) for k, v in self.match.items()):
+            raise ValueError("period_ref match keys and values must be non-blank")
+        return self
+
+
 class Locator(Contract):
     table_id: str = Field(min_length=1)
-    row_id: str = Field(min_length=1)
+    row_id: str | None = Field(default=None, min_length=1)
+    row_key: RowKey | None = None
     field: str = Field(min_length=1)
     period: str | None
+    period_ref: PeriodRef | None = None
+
+    @model_validator(mode="after")
+    def _one_row_locator(self) -> Locator:
+        if (self.row_id is None) == (self.row_key is None):
+            raise ValueError("locator needs exactly one of row_id or row_key")
+        if self.period_ref is not None and self.period is not None:
+            raise ValueError("locator sets both period and period_ref; use only one")
+        return self
 
 
 class MappingEntry(Contract):
@@ -63,6 +108,8 @@ class Mapping(Contract):
         seen: set[tuple[str, str, str, str, str | None]] = set()
         for e in self.entries:
             loc = e.locator
+            if loc.row_id is None or loc.period_ref is not None:
+                continue  # row-key and period_ref entries are checked in load_mapping
             key = (e.module, loc.table_id, loc.row_id, loc.field, loc.period)
             if key in seen:
                 raise ValueError(
@@ -85,6 +132,35 @@ def _no_dups(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise ValueError("duplicate key")
         out[k] = v
     return out
+
+
+def _check_row_key_collisions(m: Mapping, case: GoldenCase, name: str) -> None:
+    seen: list[tuple[tuple[Any, ...], set[str], str]] = []
+    for e in m.entries:
+        loc = e.locator
+        rk = loc.row_key
+        ref = loc.period_ref
+        if rk is None and ref is None:
+            continue
+        if rk is not None:
+            texts = {_norm(str(case.facts[e.fact_id].get("subject", "")))}
+            texts.update(_norm(a) for a in rk.aliases)
+            row_part: tuple[Any, ...] = ("key", rk.field)
+        else:
+            texts = {str(loc.row_id)}
+            row_part = ("id",)
+        ref_part: tuple[Any, ...] | None = None
+        if ref is not None:
+            items = sorted((_norm(k), _norm(v)) for k, v in ref.match.items())
+            ref_part = (ref.table_id, ref.id_field, tuple(items))
+        ident = (e.module, loc.table_id, loc.field, loc.period, row_part, ref_part)
+        for other_ident, other_texts, other_id in seen:
+            if other_ident == ident and texts & other_texts:
+                raise MappingError(
+                    f"{name}: locators of {other_id} and {e.fact_id} collide in module "
+                    f"{e.module}: {loc.table_id}/{loc.field}/{loc.period}"
+                )
+        seen.append((ident, texts, e.fact_id))
 
 
 def _check_against_case(m: Mapping, case: GoldenCase, name: str) -> None:
@@ -111,6 +187,7 @@ def _check_against_case(m: Mapping, case: GoldenCase, name: str) -> None:
             raise MappingError(
                 f"{name}: unmapped {u.fact_id}: {fact['module']} has no module_commits entry"
             )
+    _check_row_key_collisions(m, case, name)
     counts = Counter([e.fact_id for e in m.entries] + [u.fact_id for u in m.unmapped])
     for fid, n in counts.items():
         if n > 1:

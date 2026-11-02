@@ -13,7 +13,7 @@ from pydantic import Field
 from deploy_vii.contracts import Contract, Fact, Module
 from deploy_vii.cp5_integrity import UNIT_SCALE
 from deploy_workflow.model_testing.cases import GoldenCase, checker
-from deploy_workflow.model_testing.mapping import Mapping, MappingEntry
+from deploy_workflow.model_testing.mapping import Locator, Mapping, MappingEntry
 
 Outcome = Literal[
     "match",
@@ -159,12 +159,60 @@ def _observed_text(fact: Fact | None, golden: Any) -> str | None:
     return fact.text
 
 
-def _locate(module: Module | None, entry: MappingEntry) -> list[Fact]:
+def _resolve_periods(module: Module, loc: Locator) -> list[str | None]:
+    """The periods a locator names: its literal one, or the ``id_field`` text of every row of
+    the referenced register whose ``match`` cells all equal the reference (spec: model-declared
+    period ids, e.g. CP-1 T4.14/T4.15)."""
+    ref = loc.period_ref
+    if ref is None:
+        return [loc.period]
+    # ponytail: O(facts) per entry; index by table if scoring ever becomes slow.
+    in_table = [f for f in module.facts if f.table_id == ref.table_id]
+    periods: list[str | None] = []
+    for row in dict.fromkeys(f.row_id for f in in_table):
+        cells = [f for f in in_table if f.row_id == row and f.text is not None]
+        if all(
+            any(c.field == k and _text(str(c.text)) == _text(v) for c in cells)
+            for k, v in ref.match.items()
+        ):
+            periods.extend(c.text for c in cells if c.field == ref.id_field)
+    return periods
+
+
+def _locate(module: Module | None, entry: MappingEntry, golden: Any) -> list[Fact]:
     if module is None:
         return []
     loc = entry.locator
-    key = (loc.table_id, loc.row_id, loc.field, loc.period)
-    return [f for f in module.facts if (f.table_id, f.row_id, f.field, f.period) == key]
+    if loc.period_ref is None:
+        return _locate_at(module, loc, golden)
+    found: list[Fact] = []
+    for period in _resolve_periods(module, loc):
+        found.extend(_locate_at(module, loc.model_copy(update={"period": period}), golden))
+    return found
+
+
+def _locate_at(module: Module, loc: Locator, golden: Any) -> list[Fact]:
+    rk = loc.row_key
+    if rk is None:
+        key = (loc.table_id, loc.row_id, loc.field, loc.period)
+        return [f for f in module.facts if (f.table_id, f.row_id, f.field, f.period) == key]
+    candidates = {_text(str(golden["subject"]))} | {_text(a) for a in rk.aliases}
+    rows = {
+        f.row_id
+        for f in module.facts
+        if f.table_id == loc.table_id
+        and f.field == rk.field
+        and f.text is not None
+        and _text(f.text) in candidates
+    }
+    return [
+        f
+        for f in module.facts
+        if f.table_id == loc.table_id
+        and f.row_id in rows
+        and f.field == loc.field
+        and f.period == loc.period
+    ]
 
 
 def _has_value(fact: Fact | None) -> bool:
@@ -228,6 +276,7 @@ def _score_entry(
     golden: Any,
     module: Module,
     upstream: frozenset[str],
+    period_rows: int = 0,
 ) -> FactScore:
     fid = entry.fact_id
     expected = _expected_text(golden)
@@ -243,8 +292,14 @@ def _score_entry(
             observed=observed if seen is None else seen,
         )
 
-    if len(facts) > 1:
-        seen = f"{len(facts)} facts at one locator"
+    # Two or more period rows matching a period_ref are ambiguous even if one holds the fact.
+    found = max(len(facts), period_rows)
+    if found > 1:
+        seen = (
+            f"{found} period rows match period_ref"
+            if len(facts) < period_rows
+            else f"{found} facts at one locator"
+        )
         if status in _NO_VALUE_STATUSES and any(_has_value(f) for f in facts):
             return out("invented", seen)
         return out("mismatch", seen)
@@ -319,8 +374,9 @@ def score_module(
     unscored = 0
     if live is not None:
         mapped_locators = {
-            (e.locator.table_id, e.locator.row_id, e.locator.field, e.locator.period)
+            (f.table_id, f.row_id, f.field, f.period)
             for e in entries
+            for f in _locate(live, e, case.facts[e.fact_id])
         }
         for fact in live.facts:
             if fact.status != "known" or fact.amount is None:
@@ -348,7 +404,11 @@ def score_module(
                 )
             )
             continue
-        scored = _score_entry(entry, _locate(live, entry), golden, live, upstream_mismatches)
+        ref = entry.locator.period_ref
+        rows = len(_resolve_periods(live, entry.locator)) if ref is not None else 0
+        scored = _score_entry(
+            entry, _locate(live, entry, golden), golden, live, upstream_mismatches, rows
+        )
         if refused_honestly and scored.outcome == "missing_in_output":
             scored = gap(entry.fact_id, golden)
         scores.append(scored)

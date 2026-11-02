@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 import pytest
 
 from deploy_workflow.model_testing.cases import GoldenCase, load_case
+from deploy_workflow.model_testing.configs import CASES
 from deploy_workflow.model_testing.mapping import MappingError, load_mapping
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -220,5 +222,205 @@ def test_real_case_two_modules(tmp_path: Path) -> None:
     )
     m = load_mapping(_write(tmp_path, doc), case)
     pending = m.pending(case)
-    assert pending and all(case.facts[f]["module"] == "CP-1B" for f in pending)
+    assert pending and all(case.facts[f]["module"] in {"CP-1", "CP-1B"} for f in pending)
+    assert any(case.facts[f]["module"] == "CP-1" for f in pending)  # financial_gold facts
     assert len(m.entries) + len(m.unmapped) + len(pending) == len(case.facts)
+
+
+def _rk_entry(fid: str, module: str = "CP-0", **rk: Any) -> dict[str, Any]:
+    return {
+        "fact_id": fid,
+        "module": module,
+        "locator": {
+            "table_id": "t",
+            "row_key": {"field": "name", **rk},
+            "field": "f",
+            "period": None,
+        },
+    }
+
+
+def _rk_case(subject_a: str, subject_b: str) -> GoldenCase:
+    case = _case()
+    facts = dict(case.facts)
+    facts["a0"] = {**facts["a0"], "subject": subject_a}
+    facts["a1"] = {**facts["a1"], "subject": subject_b}
+    return GoldenCase(
+        case_id=case.case_id,
+        pathway=case.pathway,
+        case_dir=case.case_dir,
+        context_path=case.context_path,
+        facts=MappingProxyType(facts),
+        out_of_plan=case.out_of_plan,
+        financial_gold_path=case.financial_gold_path,
+        financial_gold_sha256=case.financial_gold_sha256,
+    )
+
+
+def test_locator_needs_row_id_or_row_key(tmp_path: Path) -> None:
+    neither = _entry("a0", "CP-0")
+    del neither["locator"]["row_id"]
+    with pytest.raises(MappingError, match="row_id or row_key"):
+        load_mapping(_write(tmp_path, _doc(entries=[neither])), _case())
+    both = _rk_entry("a0")
+    both["locator"]["row_id"] = "r01"
+    with pytest.raises(MappingError, match="row_id or row_key"):
+        load_mapping(_write(tmp_path, _doc(entries=[both])), _case())
+
+
+def test_row_key_entries_collide_on_shared_key_text(tmp_path: Path) -> None:
+    case = _rk_case("Term Loan B", "  term LOAN  b ")
+    doc = _doc(entries=[_rk_entry("a0"), _rk_entry("a1")], unmapped=[])
+    with pytest.raises(MappingError, match="a0.*a1|a1.*a0"):
+        load_mapping(_write(tmp_path, doc), case)
+    # a shared alias collides too
+    case = _rk_case("Term Loan B", "Revolver")
+    doc = _doc(entries=[_rk_entry("a0"), _rk_entry("a1", aliases=["TERM loan b"])], unmapped=[])
+    with pytest.raises(MappingError, match="collide"):
+        load_mapping(_write(tmp_path, doc), case)
+
+
+def test_row_key_distinct_subjects_ok(tmp_path: Path) -> None:
+    case = _rk_case("Term Loan B", "Revolver")
+    doc = _doc(entries=[_rk_entry("a0"), _rk_entry("a1")], unmapped=[])
+    m = load_mapping(_write(tmp_path, doc), case)
+    assert [e.locator.row_key is not None for e in m.entries] == [True, True]
+    # a row-id and a row-key entry never collide
+    doc = _doc(entries=[_rk_entry("a0"), _entry("a1", "CP-0")], unmapped=[])
+    assert len(load_mapping(_write(tmp_path, doc), case).entries) == 2
+
+
+def test_row_id_mapping_still_loads(tmp_path: Path) -> None:
+    m = load_mapping(_write(tmp_path, _doc()), _case())
+    loc = m.entries[0].locator
+    assert loc.row_id == "a0"
+    assert loc.row_key is None
+
+
+def _ref_entry(
+    fid: str, module: str = "CP-0", end: str = "2024-12-28", **ref: Any
+) -> dict[str, Any]:
+    entry = _rk_entry(fid, module)
+    entry["locator"]["period"] = None
+    entry["locator"]["period_ref"] = {
+        "table_id": "T4.14",
+        "id_field": "period_id",
+        "match": {"end_date": end, "period_type": "QUARTER"},
+        **ref,
+    }
+    return entry
+
+
+def test_period_ref_excludes_literal_period(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Margin")
+    entry = _ref_entry("a0")
+    entry["locator"]["period"] = "P7"
+    with pytest.raises(MappingError, match="period.*period_ref"):
+        load_mapping(_write(tmp_path, _doc(entries=[entry], unmapped=[])), case)
+    ok = _ref_entry("a0")
+    assert (
+        load_mapping(_write(tmp_path, _doc(entries=[ok])), case).entries[0].locator.period is None
+    )
+
+
+def test_period_ref_entries_collide_on_same_match(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Revenue")
+    # same row key text, same ref (values normalised): collide
+    other = _ref_entry("a1", end="2024-12-28 ")
+    doc = _doc(entries=[_ref_entry("a0"), other], unmapped=[])
+    with pytest.raises(MappingError, match="collide"):
+        load_mapping(_write(tmp_path, doc), case)
+    # the same ref on row-id locators collides too
+    one, two = _ref_entry("a0"), _ref_entry("a1")
+    for e in (one, two):
+        del e["locator"]["row_key"]
+        e["locator"]["row_id"] = "r01"
+    with pytest.raises(MappingError, match="collide"):
+        load_mapping(_write(tmp_path, _doc(entries=[one, two], unmapped=[])), case)
+
+
+def test_period_ref_distinct_match_ok(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Revenue")
+    different = _ref_entry("a1", end="2024-09-28")
+    doc = _doc(entries=[_ref_entry("a0"), different], unmapped=[])
+    assert len(load_mapping(_write(tmp_path, doc), case).entries) == 2
+    # a literal-period entry never collides with a period_ref one
+    literal = _rk_entry("a1")
+    literal["locator"]["period"] = "P7"
+    doc = _doc(entries=[_ref_entry("a0"), literal], unmapped=[])
+    assert len(load_mapping(_write(tmp_path, doc), case).entries) == 2
+
+
+def test_zero_width_alias_and_blank_ref_refused(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Margin")
+    bad_alias = _rk_entry("a0", aliases=["\u200b"])
+    with pytest.raises(MappingError, match="non-blank"):
+        load_mapping(_write(tmp_path, _doc(entries=[bad_alias], unmapped=[])), case)
+    blank_ref = _ref_entry("a0", match={"end_date": "\u200b"})
+    with pytest.raises(MappingError, match="non-blank"):
+        load_mapping(_write(tmp_path, _doc(entries=[blank_ref], unmapped=[])), case)
+
+
+@pytest.mark.skipif(not CORPUS.is_dir(), reason="public corpus v1 is not on this machine")
+@pytest.mark.parametrize("case_id", sorted(CASES.values()))
+def test_all_mappings_load(case_id: str) -> None:
+    case_dir = ROOT / "cases" / "goldens" / case_id
+    case = load_case(case_dir, CORPUS)
+    mapping = load_mapping(case_dir / "mapping.json", case)
+    unmapped = {u.fact_id for u in mapping.unmapped} | mapping.pending(case)
+    known: dict[str, list[str]] = {}
+    for fid, fact in case.facts.items():
+        if fact.get("status") == "known":
+            known.setdefault(fact["module"], []).append(fid)
+    report = (
+        ROOT / "work" / "model-testing" / "mapping" / "output" / f"{case_id}-report.md"
+    ).read_text(encoding="utf-8")
+    over = {
+        module
+        for module, fids in known.items()
+        if sum(1 for f in fids if f in unmapped) / len(fids) > 0.2
+    }
+    _assert_named_in_over_section(case_id, report, over)
+
+
+_OVER_HEADING = re.compile(r"^(#{1,6})[^\n]*over 20% unmapped[^\n]*$", re.IGNORECASE | re.MULTILINE)
+_ANY_HEADING = re.compile(r"^(#{1,6}) ", re.MULTILINE)
+
+
+def _over_section(report: str) -> str | None:
+    """The report section whose heading contains "over 20% unmapped": from the heading to the
+    next heading of the same or a higher level; None when there is no such heading."""
+    head = _OVER_HEADING.search(report)
+    if head is None:
+        return None
+    rest = report[head.end() :]
+    for nxt in _ANY_HEADING.finditer(rest):
+        if len(nxt.group(1)) <= len(head.group(1)):
+            return rest[: nxt.start()]
+    return rest
+
+
+def _assert_named_in_over_section(case_id: str, report: str, over: set[str]) -> None:
+    if not over:
+        return
+    section = _over_section(report)
+    assert section is not None, (
+        f"{case_id}: modules {sorted(over)} are over 20% unmapped but the report has no 'over 20% unmapped' section"
+    )
+    for module in sorted(over):
+        pattern = rf"(?<![A-Za-z0-9-]){re.escape(module)}(?![A-Za-z0-9])"
+        assert re.search(pattern, section), (
+            f"{case_id}: {module} is over 20% unmapped but the section does not name it"
+        )
+
+
+def test_over_20_check_needs_the_section_and_the_module_in_it() -> None:
+    table = "| CP-1 | files | commit |\n"
+    report = f"# R\n\n## Per module\n\n{table}\n## Over 20% unmapped\n\nCP-2: 100%.\n\n## Next\n\nCP-1 again\n"
+    _assert_named_in_over_section("x", report, {"CP-2"})
+    with pytest.raises(AssertionError, match="does not name it"):
+        _assert_named_in_over_section("x", report, {"CP-1"})  # named only outside the section
+    with pytest.raises(AssertionError, match="no 'over 20% unmapped' section"):
+        _assert_named_in_over_section("x", f"# R\n\n## Per module\n\n{table}", {"CP-1"})
+    nested = "## Over 20% unmapped\n\n### Detail\n\nCP-3\n\n## Other\n"
+    _assert_named_in_over_section("x", nested, {"CP-3"})  # sub-headings stay inside

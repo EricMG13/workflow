@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from decimal import Decimal, localcontext
+from pathlib import Path
 from typing import Any, Literal
 
 import pytest
@@ -12,10 +14,13 @@ from pydantic import ValidationError
 from deploy_workflow.model.record import CallRecord
 from deploy_workflow.model_testing.budget import (
     AccountExhausted,
+    BudgetError,
     Runs,
+    Settlement,
     UnknownCharge,
     account_spend,
     cap_for,
+    load_settlements,
     require_budget,
 )
 from deploy_workflow.model_testing.configs import CONFIGS
@@ -32,6 +37,7 @@ def call(
     index: int = 0,
     run_id: str = "run-1",
     provider: str | None = None,
+    module: str = "CP-1",
 ) -> CallRecord:
     config = CONFIGS[config_id]
     body: dict[str, Any] = {
@@ -39,7 +45,7 @@ def call(
         "run_id": run_id,
         "case_id": "case-1",
         "pathway": "credit_snapshot",
-        "module_id": "CP-1",
+        "module_id": module,
         "step_id": "step-1",
         "attempt": 0,
         "call_index": index,
@@ -250,3 +256,201 @@ def test_run_config_mismatch_refused() -> None:
     batch: Runs = [(meta(config_id="sol-medium"), [call("deepseek-max", "9")])]
     with pytest.raises(ValueError, match="config_id"):
         account_spend(batch, "openrouter")
+
+
+# ------------------------------------------------------------------ settlements (ruling 2026-11-01)
+
+
+def settle(run_id: str = "run-2", call_index: int = 0, amount: str = "1.00") -> Settlement:
+    return Settlement(
+        run_id=run_id,
+        module_id="CP-1",
+        step_id="step-1",
+        attempt=0,
+        call_index=call_index,
+        settled_usd=Decimal(amount),
+        by="eric",
+        date="2026-11-01",
+        source="provider invoice",
+    )
+
+
+def test_settlement_replaces_the_reservation_and_releases_the_stop() -> None:
+    # run-2 holds an unknown charge reserved at 3.25; the user settled it at 1.00
+    assert account_spend(runs(), "openai") == Decimal("13.75")
+    assert account_spend(runs(), "openai", [settle()]) == Decimal("11.50")
+    assert cap_for("sol-high", runs(), [settle()]) == Decimal("117.00") - Decimal("11.50")
+    assert require_budget("sol-high", runs(), Decimal(1), [settle()]) == Decimal("105.50")
+    with pytest.raises(UnknownCharge):  # without it the configuration stays stopped
+        require_budget("sol-high", runs(), Decimal(1))
+
+
+def test_settlement_amount_may_exceed_the_reservation() -> None:
+    assert account_spend(runs(), "openai", [settle(amount="9.00")]) == Decimal("19.50")
+
+
+def test_settlement_of_a_known_charge_refused() -> None:
+    batch: Runs = [(meta(), [call("sol-medium", "10.50")])]
+    with pytest.raises(ValueError, match=r"run run-1 .*call 0.*not unknown"):
+        account_spend(batch, "openai", [settle("run-1", 0)])
+
+
+def test_settlement_matching_no_record_refused() -> None:
+    with pytest.raises(ValueError, match=r"run run-2 .*call 7.*no record"):
+        account_spend(runs(), "openai", [settle("run-2", 7)])
+    with pytest.raises(ValueError, match=r"run nope .*call 0"):
+        cap_for("sol-high", runs(), [settle("nope", 0)])
+
+
+def test_duplicate_settlement_refused() -> None:
+    with pytest.raises(ValueError, match=r"run run-2 .*call 0.*duplicate"):
+        require_budget("sol-high", runs(), Decimal(1), [settle(), settle(amount="2")])
+
+
+@pytest.mark.parametrize("amount", ["-0.01", "NaN", "Infinity"])
+def test_negative_or_non_finite_settlement_refused(amount: str) -> None:
+    # the model refuses NaN itself; model_copy models a settlement that bypassed it
+    bad = settle().model_copy(update={"settled_usd": Decimal(amount)})
+    with pytest.raises(ValueError, match=r"run run-2 .*call 0"):
+        account_spend(runs(), "openai", [bad])
+
+
+def test_settlement_matching_two_records_refused() -> None:
+    twin = call("sol-high", None, reserved="1", status="unknown", index=0, run_id="run-2")
+    batch: Runs = [(meta(config_id="sol-high", run_id="run-2"), [twin, twin])]
+    with pytest.raises(ValueError, match=r"run run-2 .*call 0.*2 records"):
+        account_spend(batch, "openai", [settle()])
+
+
+def test_offline_settled_record_does_not_count() -> None:
+    offline = (
+        meta("offline", "sol-high", "run-3"),
+        [call("sol-high", None, reserved="5", status="unknown", run_id="run-3")],
+    )
+    assert account_spend([offline], "openai", [settle("run-3", 0, "4")]) == Decimal(0)
+
+
+def test_load_settlements(tmp_path: Path) -> None:
+    path = tmp_path / "settlements.json"
+    assert load_settlements(path) == ()  # no file, no settlements
+    entry = {
+        "run_id": "run-2",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "1.00",
+        "by": "eric",
+        "date": "2026-11-01",
+        "source": "provider invoice",
+    }
+    path.write_text(json.dumps({"schema_version": "charge-settlement/1", "entries": [entry]}))
+    assert load_settlements(path) == (settle(),)
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        {"by": ""},
+        {"source": ""},
+        {"date": "11/01/2026"},
+        {"settled_usd": "NaN"},
+        {"extra": 1},
+    ],
+)
+def test_load_settlements_refuses_bad_entries(tmp_path: Path, edit: dict[str, Any]) -> None:
+    entry = {
+        "run_id": "run-2",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "1.00",
+        "by": "eric",
+        "date": "2026-11-01",
+        "source": "provider invoice",
+        **edit,
+    }
+    path = tmp_path / "settlements.json"
+    path.write_text(json.dumps({"schema_version": "charge-settlement/1", "entries": [entry]}))
+    with pytest.raises(ValueError, match="settlements.json"):
+        load_settlements(path)
+
+
+def test_load_settlements_refuses_a_wrong_schema(tmp_path: Path) -> None:
+    path = tmp_path / "settlements.json"
+    path.write_text(json.dumps({"schema_version": "charge-settlement/2", "entries": []}))
+    with pytest.raises(ValueError, match="settlements.json"):
+        load_settlements(path)
+
+
+def _write_entries(path: Path, entries: list[dict[str, Any]]) -> None:
+    path.write_text(json.dumps({"schema_version": "charge-settlement/1", "entries": entries}))
+
+
+def _entry(**changes: Any) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "run_id": "run-2",
+        "module_id": "CP-1",
+        "step_id": "step-1",
+        "attempt": 0,
+        "call_index": 0,
+        "settled_usd": "1.00",
+        "by": "eric",
+        "date": "2026-11-01",
+        "source": "provider invoice",
+    }
+    entry.update(changes)
+    return entry
+
+
+def test_settlement_names_the_call_by_module_step_and_attempt() -> None:
+    """O5 restarts call_index at 0 for every (module, step, attempt): the unknown charge of the
+    second step shares run_id and call_index 0 with a known call of the first."""
+    known = call("sol-medium", "0.40", module="CP-0", index=0)
+    unknown = call("sol-medium", None, reserved="9.00", status="unknown", index=0)
+    batch: Runs = [(meta(), [known, unknown])]
+    assert account_spend(batch, "openai", [settle("run-1", 0, "2.10")]) == Decimal("2.50")
+    other_step = settle("run-1", 0, "2.10").model_copy(update={"step_id": "step-2"})
+    with pytest.raises(BudgetError, match="step step-2.*matches no record"):
+        account_spend(batch, "openai", [other_step])
+    other_attempt = settle("run-1", 0, "2.10").model_copy(update={"attempt": 1})
+    with pytest.raises(BudgetError, match="attempt 1.*matches no record"):
+        account_spend(batch, "openai", [other_attempt])
+
+
+@pytest.mark.parametrize("missing", ["module_id", "step_id", "attempt"])
+def test_load_settlements_requires_the_whole_call_key(tmp_path: Path, missing: str) -> None:
+    entry = _entry()
+    del entry[missing]
+    path = tmp_path / "settlements.json"
+    _write_entries(path, [entry])
+    with pytest.raises(BudgetError, match=missing):
+        load_settlements(path)
+
+
+@pytest.mark.parametrize("raw", ["12.345678901234567891", "1e-400", "5"])
+def test_settled_usd_must_be_a_json_string(tmp_path: Path, raw: str) -> None:
+    path = tmp_path / "settlements.json"
+    _write_entries(path, [_entry(settled_usd="0")])
+    path.write_text(path.read_text().replace('"settled_usd": "0"', f'"settled_usd": {raw}'))
+    with pytest.raises(BudgetError, match="settled_usd must be a string"):
+        load_settlements(path)
+
+
+def test_an_amount_the_exact_context_cannot_hold_is_refused() -> None:
+    batch: Runs = [(meta(), [call("sol-medium", None, reserved="9", status="unknown")])]
+    for text in ("1E-1000000", "1E+1000000", "0." + "1" * 150):
+        bad = settle("run-1", 0).model_copy(update={"settled_usd": Decimal(text)})
+        with pytest.raises(BudgetError, match="cannot be held exactly"):
+            account_spend(batch, "openai", [bad])
+
+
+def test_key_shaped_text_is_refused_and_never_echoed(tmp_path: Path) -> None:
+    fake = "sk-proj-" + "Q" * 24  # fabricated, not a key
+    for field in ("by", "source", "run_id", "module_id", "step_id"):
+        path = tmp_path / f"{field}.json"
+        _write_entries(path, [_entry(**{field: f"note {fake}"})])
+        with pytest.raises(BudgetError, match=field) as caught:
+            load_settlements(path)
+        assert fake not in str(caught.value)

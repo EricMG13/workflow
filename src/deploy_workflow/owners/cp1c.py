@@ -498,7 +498,7 @@ class PeerBenchmarkInputs:
     context: RunContext | None = None
     context_source: Source | None = None
     cp1_ebitda: Fact | None = None
-    # Phase 8: the run's period and currency (the default is the 2025 USD run); the issuer
+    # Phase 8: the run's period and currency (the default is the pre-Phase 8 run); the issuer
     # column, the mixed period and the peers page's Basis clause follow it.
     basis: PeriodBasis = DEFAULT_BASIS
 

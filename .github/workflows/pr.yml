@@ -30,8 +30,9 @@ jobs:
         run: uv run --frozen python -I cases/prove/scope.py "$BASE" HEAD
       - name: Pins
         run: uv run --frozen python -I cases/pins.py --check
-      - name: Goldens
-        run: uv run --frozen python -I cases/goldens/check.py cases/goldens/*/
+      # Goldens (cases/goldens/check.py) is not run here: it defaults --corpus to a local
+      # absolute path under the gitignored artifacts/public-corpus/v1, so it needs the local corpus;
+      # the controller runs it locally for each release (O7-R72).
       - name: Lint and types on changed files
         run: |
           set -euo pipefail

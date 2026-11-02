@@ -334,7 +334,7 @@ def test_load_settlements(tmp_path: Path) -> None:
         "settled_usd": "1.00",
         "by": "eric",
         "date": "2026-11-01",
-        "source": "invoice",
+        "source": "provider invoice",
     }
     path.write_text(json.dumps({"schema_version": "charge-settlement/1", "entries": [entry]}))
     assert load_settlements(path) == (settle(),)

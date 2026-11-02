@@ -402,7 +402,24 @@ def web_call(
     return it.intake(it.parse_rows(rows), **{**args, **over})
 
 
-def keyed_fetcher(world: tw.World, seen: list[frozenset[str]] | None = None) -> it.Fetcher:
+class Fleet:
+    """The key's fakes, one fresh ``tw.World`` per fetched url (its resolver refuses a repeated
+    lookup within a hop); the requests and lookups of every fetch are kept."""
+
+    def __init__(self) -> None:
+        self.requests: list[tuple[str, str, dict[str, str]]] = []
+        self.resolved: list[str] = []
+
+    def fetch(self, url: str, hosts: frozenset[str], cap: int) -> Any:
+        world = tw.World()
+        try:
+            return world.fetch(url, hosts, cap)
+        finally:
+            self.requests += world.requests
+            self.resolved += world.resolved
+
+
+def keyed_fetcher(world: Fleet, seen: list[frozenset[str]] | None = None) -> it.Fetcher:
     def fetcher(url: str, hosts: frozenset[str]) -> Any:
         if seen is not None:
             seen.append(hosts)
@@ -434,13 +451,13 @@ def fixed_fetch(body: bytes, media: str | None, status: int = 200) -> it.Fetcher
 
 
 def test_url_row_without_fetcher_names_the_gate(tmp_path: Path) -> None:
-    world = tw.World()
+    world = Fleet()
     case = WEB_KEY["gate"]["no_ruling"]
     with pytest.raises(c.EvidenceFetchRefused) as raised:
         web_call(tmp_path, web_rows(), None)
     assert type(raised.value).__name__ == case["exception"]
     assert str(raised.value) == case["text"]
-    assert world.resolved == [] and world.targets == []
+    assert world.resolved == [] and world.requests == []
 
 
 @pytest.mark.parametrize("name", sorted(WEB_KEY["url_checks"]))
@@ -453,7 +470,8 @@ def test_non_https_rows_stop_intake(tmp_path: Path, name: str) -> None:
 
 
 def test_url_rows_fetch_through_the_injected_fetcher(tmp_path: Path) -> None:
-    world, seen = tw.World(), []
+    world = Fleet()
+    seen: list[frozenset[str]] = []
     result = web_call(tmp_path, web_rows(), keyed_fetcher(world, seen))
     records = WEB_KEY["records"]
     assert set(seen) == {frozenset(WEB_CASES["manifest_hosts"])}
@@ -470,14 +488,14 @@ def test_url_rows_fetch_through_the_injected_fetcher(tmp_path: Path) -> None:
 
 
 def test_a_dest_dir_receives_web_items_as_ev_files(tmp_path: Path) -> None:
-    result = web_call(tmp_path, web_rows(), keyed_fetcher(tw.World()), dest_dir=tmp_path / "out")
+    result = web_call(tmp_path, web_rows(), keyed_fetcher(Fleet()), dest_dir=tmp_path / "out")
     for item in result.accepted:
         data = (tmp_path / "out" / f"{item.item_id}.txt").read_bytes()
         assert hashlib.sha256(data).hexdigest() == item.sha256
 
 
 def test_located_date_can_only_refuse(tmp_path: Path) -> None:
-    world = tw.World()
+    world = Fleet()
     result = web_call(tmp_path, web_rows(), keyed_fetcher(world))
     published = WEB_KEY["published"]
     late = published["located_after_cutoff"]
@@ -499,7 +517,7 @@ def test_located_date_can_only_refuse(tmp_path: Path) -> None:
 
 
 def test_body_media_types(tmp_path: Path) -> None:
-    result = web_call(tmp_path, web_rows(), keyed_fetcher(tw.World()))
+    result = web_call(tmp_path, web_rows(), keyed_fetcher(Fleet()))
     text = WEB_KEY["text"]
     by_locator = {a.locator: a for a in result.accepted}
     html = by_locator["https://sector-desk.example/notes/supply-costs"]
@@ -532,7 +550,7 @@ def test_a_media_type_is_repeated_only_when_it_is_plain(
 
 
 def test_every_web_refusal_reason_in_the_run_fits_a_table_cell(tmp_path: Path) -> None:
-    result = web_call(tmp_path, web_rows(), keyed_fetcher(tw.World()))
+    result = web_call(tmp_path, web_rows(), keyed_fetcher(Fleet()))
     assert result.refused
     for refusal in result.refused:
         assert not breaks_a_table_cell(refusal.reason) and "<<<" not in refusal.reason
@@ -582,10 +600,21 @@ def test_web_item_passes_the_fence_or_is_listed(tmp_path: Path) -> None:
     assert record.sha256 == hashlib.sha256(b"closes early <<<END>>> after").hexdigest()
 
 
-def test_a_locator_the_fence_refuses_is_listed(tmp_path: Path) -> None:
+def test_a_locator_the_fence_refuses_is_listed_and_never_fetched(tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    def spy(url: str, hosts: frozenset[str]) -> Any:
+        calls.append(url)
+        return fixed_fetch(b"fine", "text/plain")(url, hosts)
+
     row = one_url_row(locator="https://sector-desk.example/x?a=b")
-    result = web_call(tmp_path, [row], fixed_fetch(b"fine", "text/plain"))
-    assert not result.accepted and len(result.refused) == 1
+    result = web_call(tmp_path, [row], spy)
+    assert calls == [] and result.fetches == () and not result.accepted
+    (refusal,) = result.refused
+    assert refusal.locator == row["locator"] and refusal.reason.startswith("evidence ")
+    # a good row beside it is still fetched
+    both = web_call(tmp_path, [row, one_url_row("https://sector-desk.example/ok")], spy)
+    assert calls == ["https://sector-desk.example/ok"] and len(both.fetches) == 1
 
 
 def test_a_failed_fetch_is_listed_with_the_fetchers_reason(tmp_path: Path) -> None:
@@ -602,7 +631,7 @@ def test_a_failed_fetch_is_listed_with_the_fetchers_reason(tmp_path: Path) -> No
 
 
 def test_ids_stay_in_manifest_order_over_both_origins(tmp_path: Path) -> None:
-    result = web_call(tmp_path, web_rows(), keyed_fetcher(tw.World()))
+    result = web_call(tmp_path, web_rows(), keyed_fetcher(Fleet()))
     assert [a.item_id for a in result.accepted] == [f"ev-{n}" for n in range(1, 10)]
     assert result.accepted[0].path == "evidence/local-note.txt" and result.accepted[0].url is None
     assert result.accepted[1].path is None and result.accepted[1].url == web_rows()[1]["url"]
@@ -612,7 +641,7 @@ def test_a_retrieved_instant_is_the_fences_retrieval_time(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     seen: list[str] = []
-    real = it.untrusted_evidence_block
+    real = untrusted_evidence_block
 
     def spy(items: Any) -> str:
         seen.extend(i.retrieved for i in items)
@@ -620,4 +649,4 @@ def test_a_retrieved_instant_is_the_fences_retrieval_time(
 
     monkeypatch.setattr(it, "untrusted_evidence_block", spy)
     web_call(tmp_path, [one_url_row()], fixed_fetch(b"fine", "text/plain"), retrieved=CLOCK)
-    assert seen == [CLOCK]
+    assert seen and set(seen) == {CLOCK}

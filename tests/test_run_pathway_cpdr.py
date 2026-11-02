@@ -105,6 +105,8 @@ def test_evidence_json_records_the_intake_instant_once(
         {
             **{k: item[k] for k in ("item_id", "family", "published", "locator", "sha256", "path")},
             "retrieved": "2026-11-02T05:40:00Z",
+            "origin": "supplied",
+            "url": None,
         }
         for item in accepted
     ]

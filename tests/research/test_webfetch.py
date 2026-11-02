@@ -1034,7 +1034,11 @@ def test_check_live_gate_delegates(tmp_path: Path) -> None:
     assert check_live_gate(spec, path, rulings_root=root) == check_ruling(
         "sol-medium", path, rulings_root=root
     )
-    for text in (CASES["ruling_texts"]["lifts_missing"], CASES["ruling_texts"]["configs_missing"]):
+    unlisted = good.replace("sol-medium", "opus-medium")
+    for text in (
+        CASES["ruling_texts"]["lifts_missing"].replace("web-retrieval", "sol-medium"),
+        unlisted,
+    ):
         root, path = _ruling_under(tmp_path, text)
         with pytest.raises(LivePauseInForce) as via_gate:
             check_live_gate(spec, path, rulings_root=root)

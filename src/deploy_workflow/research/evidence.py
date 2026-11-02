@@ -9,17 +9,31 @@ staging and read back by the host, so a resumed run shows the value it began wit
 import json
 import re
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import fields
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
 
 from deploy_workflow.research.intake import AcceptedItem
+from deploy_workflow.research.webfetch import FetchRecord
 
 RESEARCH_DIR: Final = "research"
 EVIDENCE_FILE: Final = "evidence.json"
 REJECTED_FILE: Final = "rejected.json"
+FETCHES_FILE: Final = "fetches.json"
 MANIFEST_SHA_FILE: Final = "manifest.sha256"
-_KEYS: Final = ("item_id", "family", "published", "locator", "sha256", "retrieved", "path")
+_KEYS: Final = (
+    "item_id",
+    "family",
+    "published",
+    "locator",
+    "sha256",
+    "retrieved",
+    "path",
+    "origin",
+    "url",
+)
+_FETCH_KEYS: Final = tuple(field.name for field in fields(FetchRecord))
 _TIME: Final = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 
@@ -39,7 +53,8 @@ def retrieved_text(moment: datetime) -> str:
 
 def evidence_rows(accepted: Sequence[AcceptedItem], retrieved: str) -> list[dict[str, Any]]:
     """The records, sorted by ``item_id``: ``{item_id, family, published, locator, sha256,
-    retrieved, path}``."""
+    retrieved, path, origin, url}`` (a supplied item has a ``path`` and no ``url``; a web item the
+    reverse)."""
     return [
         {
             "item_id": item.item_id,
@@ -49,6 +64,8 @@ def evidence_rows(accepted: Sequence[AcceptedItem], retrieved: str) -> list[dict
             "sha256": item.sha256,
             "retrieved": retrieved,
             "path": item.path,
+            "origin": item.origin,
+            "url": item.url,
         }
         for item in sorted(accepted, key=lambda item: int(item.item_id.removeprefix("ev-")))
     ]
@@ -76,12 +93,22 @@ def _valid_time(value: object) -> bool:
     return True
 
 
+def _located(row: Mapping[str, Any]) -> bool:
+    """A supplied row names a path and no url; a web row a url and no path (O7b-2 D10)."""
+    if row["origin"] == "supplied":
+        return isinstance(row["path"], str) and row["url"] is None
+    if row["origin"] == "web":
+        return row["path"] is None and isinstance(row["url"], str)
+    return False
+
+
 def _valid_row(row: object) -> bool:
     if not isinstance(row, dict) or set(row) != set(_KEYS):
         return False
-    texts = all(isinstance(row[k], str) for k in _KEYS if k != "published")
+    texts = all(isinstance(row[k], str) for k in _KEYS if k not in ("published", "path", "url"))
     return (
         texts
+        and _located(row)
         and (row["published"] is None or isinstance(row["published"], str))
         and _valid_time(row["retrieved"])
     )
@@ -89,8 +116,8 @@ def _valid_row(row: object) -> bool:
 
 def read_evidence(path: Path) -> tuple[Mapping[str, Any], ...]:
     """The records of ``evidence.json``; any other shape raises ``EvidenceRecordInvalid``: every
-    value a string (``published`` may be null), ``retrieved`` a full UTC-second time, and unique
-    ``item_id``s."""
+    value a string (``published`` may be null; ``path`` xor ``url`` is the string, by ``origin``),
+    ``retrieved`` a full UTC-second time, and unique ``item_id``s."""
     try:
         rows = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, RecursionError) as error:
@@ -100,6 +127,57 @@ def read_evidence(path: Path) -> tuple[Mapping[str, Any], ...]:
     if len({row["item_id"] for row in rows}) != len(rows):
         raise EvidenceRecordInvalid(f"{path.name} repeats an item_id")
     return tuple(rows)
+
+
+def fetches_bytes(records: Sequence[FetchRecord]) -> bytes:
+    """``research/fetches.json``: one entry per attempted fetch, in manifest order."""
+    entries = [{name: getattr(record, name) for name in _FETCH_KEYS} for record in records]
+    return (json.dumps(entries, indent=1, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+def write_fetches(path: Path, records: Sequence[FetchRecord]) -> bytes:
+    """Write ``fetches.json`` (the directory exists) and return its bytes."""
+    data = fetches_bytes(records)
+    path.write_bytes(data)
+    return data
+
+
+def _text_or_none(value: object) -> bool:
+    return value is None or isinstance(value, str)
+
+
+def _int_or_none(value: object) -> bool:
+    return value is None or (isinstance(value, int) and not isinstance(value, bool))
+
+
+def _valid_fetch(entry: object) -> bool:
+    if not isinstance(entry, dict) or set(entry) != set(_FETCH_KEYS):
+        return False
+    hops = entry["hops"]
+    return (
+        isinstance(entry["url"], str)
+        and isinstance(hops, int)
+        and not isinstance(hops, bool)
+        and _int_or_none(entry["status"])
+        and _int_or_none(entry["bytes"])
+        and all(
+            _text_or_none(entry[k])
+            for k in ("resolved_ip", "sha256", "published_located", "published_source")
+        )
+        and _text_or_none(entry["item_id"])
+        and _text_or_none(entry["reason"])
+    )
+
+
+def read_fetches(path: Path) -> tuple[FetchRecord, ...]:
+    """The records of ``fetches.json``; any other shape raises ``EvidenceRecordInvalid``."""
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, RecursionError) as error:
+        raise EvidenceRecordInvalid(f"{path.name} cannot be read") from error
+    if not isinstance(entries, list) or not all(_valid_fetch(entry) for entry in entries):
+        raise EvidenceRecordInvalid(f"{path.name} is not a list of fetch records")
+    return tuple(FetchRecord(**entry) for entry in entries)
 
 
 def write_manifest_sha(path: Path, digest: str) -> None:

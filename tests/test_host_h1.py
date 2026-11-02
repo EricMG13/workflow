@@ -667,6 +667,8 @@ def _evidence_session(
             "sha256": "b" * 64,
             "retrieved": RETRIEVED,
             "path": "evidence/a.txt",
+            "origin": "supplied",
+            "url": None,
         }
         written = [record_row] if rows is None else rows
         (research / "evidence.json").write_text(json.dumps(written), encoding="utf-8")
@@ -729,6 +731,8 @@ def test_a_record_for_other_bytes_refuses_construction(
         "sha256": "0" * 64,
         "retrieved": RETRIEVED,
         "path": "a.txt",
+        "origin": "supplied",
+        "url": None,
     }
     with pytest.raises(SourceError) as refused:
         _evidence_session(monkeypatch, tmp_path, settled_cp1, record=True, rows=[row])

@@ -146,7 +146,7 @@ def _items(rows: Sequence[Mapping[str, Any]]) -> tuple[EvidenceItem, ...]:
     return tuple(
         EvidenceItem(
             item_id=row["item_id"],
-            origin="supplied",
+            origin=row["origin"],
             sha256=row["sha256"],
             locator=row["locator"],
             published=None if row["published"] is None else date.fromisoformat(row["published"]),

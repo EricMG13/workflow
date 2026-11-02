@@ -347,13 +347,16 @@ def _source_entries(
 
 
 def _research_entries(checked: CheckedRun) -> list[dict[str, Any]]:
-    """One entry per accepted ``ev-<n>`` item: its manifest-relative path, always ``text/plain``."""
+    """One entry per accepted ``ev-<n>`` item: its manifest-relative path (``None`` for a web item,
+    which names its ``url``), always ``text/plain``."""
     if checked.research is None:
         return []
     return [
         {
             "source_id": item.item_id,
             "path": item.path,
+            "origin": item.origin,
+            "url": item.url,
             "sha256": item.sha256,
             "media_type": "text/plain",
             "converted_sha256": None,

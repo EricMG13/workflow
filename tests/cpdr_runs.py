@@ -157,6 +157,8 @@ def accepted_items() -> tuple[AcceptedItem, ...]:
             locator=a["locator"],
             sha256=a["sha256"],
             text=texts[a["path"]],
+            origin="supplied",
+            url=None,
         )
         for a in material["expected"]["intake"]["accepted"]
     )

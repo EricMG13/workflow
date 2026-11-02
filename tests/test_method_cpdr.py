@@ -7,6 +7,7 @@ read from git at the S5 base commit (the shipped slots).
 
 import hashlib
 import importlib.util
+import itertools
 import json
 import re
 import subprocess
@@ -31,6 +32,7 @@ BINDINGS_PY = ROOT / "src" / "deploy_vii" / "bindings" / "cpdr.py"
 METHODOLOGY = ROOT / "src" / "deploy_vii" / "methodology.json"
 MANIFEST = ROOT / "docs" / "reuse" / "manifest.json"
 BASE = "312b2351"  # HEAD when S5 was dispatched: the vii files as S5 found them
+S5_COMMIT = "14fb0c328e028b30eb3ad330a2659ca933f6eb84"  # the S5 feat commit
 REVIEW = ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
 VERSION_SHAPE = re.compile(r"cp-dr/\d{4}-\d{2}-\d{2}")
 TEXT = METHOD_MD.read_text(encoding="utf-8")
@@ -147,6 +149,23 @@ def test_shipped_maps_carry_cpdr_with_unchanged_slots(tmp_path: Path) -> None:
     assert _slots(shipped[0].entries) == _slots(_base_bindings(tmp_path))
 
 
+def _git_sha(commit: str, destination: str) -> str:
+    shown = subprocess.run(
+        ["git", "show", f"{commit}:{destination}"], cwd=ROOT, check=True, capture_output=True
+    ).stdout
+    return hashlib.sha256(shown).hexdigest()
+
+
+def _commit_exists(commit: str) -> bool:
+    found = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+    )
+    return found.returncode == 0
+
+
 def _records(destination: str) -> list[dict[str, Any]]:
     patches = json.loads(MANIFEST.read_text(encoding="utf-8"))["post_import_patches"]
     return [r for r in patches if r["destination"] == destination]
@@ -161,16 +180,20 @@ def _records(destination: str) -> list[dict[str, Any]]:
 )
 def test_d12_record_carries_the_file_sha256(destination: str, path: Path) -> None:
     records = _records(destination)
-    assert records, f"no D12 record for {destination}"
-    last = records[-1]
-    assert last["sha256"] == _sha(path)
-    assert last["review"] == REVIEW
-    assert re.fullmatch(r"[0-9a-f]{40}", last["project_commit"])
-    prior = subprocess.run(
-        ["git", "show", f"{BASE}:{destination}"], cwd=ROOT, check=True, capture_output=True
-    ).stdout
-    assert last["prior_project_sha256"] == hashlib.sha256(prior).hexdigest()
-    assert last["reason"].strip()
+    starts = [i for i, r in enumerate(records) if r["project_commit"] == S5_COMMIT]
+    assert len(starts) == 1, f"no single S5 D12 record for {destination}"
+    first = records[starts[0]]
+    assert first["review"] == REVIEW
+    assert first["prior_project_sha256"] == _git_sha(BASE, destination)
+    chain = records[starts[0] :]
+    for before, after in itertools.pairwise(chain):
+        assert after["prior_project_sha256"] == before["sha256"], "the chain is broken"
+    assert chain[-1]["sha256"] == _sha(path)
+    for record in chain:
+        assert re.fullmatch(r"[0-9a-f]{40}", record["project_commit"])
+        assert record["reason"].strip()
+        if _commit_exists(record["project_commit"]):
+            assert _git_sha(record["project_commit"], destination) == record["sha256"]
 
 
 def test_methodology_chain_runs_7d164d11_to_the_current_file() -> None:

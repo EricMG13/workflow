@@ -28,7 +28,7 @@ CTX = Context(prec=38, rounding=ROUND_HALF_EVEN)
 # --- 0. pinned inputs (every file this builder reads) -------------------------------------------
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
-    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+    "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
 }
 RAW = {}
 for _rel, _sha in PINS.items():

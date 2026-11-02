@@ -6,7 +6,7 @@
  "pins": {
   "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
   "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
-  "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb"
+  "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f"
  },
  "known_repin": "src/deploy_vii/methodology.json changes in O7b-1 (CP-DR required [CP-0, CP-1], row moved ahead of CP-1C, purpose containing cp-dr/2026-10-31) and so changes the hash pinned above and in 44 other tracked files. The re-pin is a separate oracle dispatch in O7b-1's commit (ruling Q16); this case moves with it (its manifest.json and build.py hold the pin). The post-change registry is data in expected.json registry_after_o7b1, never asserted from the file.",
  "financial_baseline": {

@@ -42,22 +42,22 @@ PINS = {
     "cases/cp2d-owner/manifest.json": "d92861e03dc43b6e92504b10b61fdd2d4a61d243c378e2d3b4bf816b3aed4503",
     "cases/cp2d-owner/submissions.json": "cf0a4a773053f5925e0ab69ec64f0962e75d5e051287a1176ff994c74319946c",
     "cases/cp2d-owner/expected.json": "c60797a22c9700fb3ded9cb5de58d64349bf6672a445a6cbbc9c595bc3a124dc",
-    "cases/cp2e-owner/manifest.json": "76b3b31f6a46c1dbe40792bd19fbccdaf5bca67b32777fab6ea5b6bf3977fe21",
+    "cases/cp2e-owner/manifest.json": "82246d1b238f35bc2b1f123e519df1b69da270ba78af1547741fc20dd99d0721",
     "cases/cp2e-owner/submissions.json": "d0e5915d1148d7a895915b70e7c56d937759f4a6eddc0feff0c5e8e163a7a804",
     "cases/cp2e-owner/expected.json": "08a80e96cf23de2a5acbcc8f24ba2c713a1dc02152e3f5b99417d5ced3871592",
-    "cases/cp2e-owner/builder/build.py": "3ceb58a4522aa6e781d28f588d48374a21e3d3456d1ae38563a84e69f3dfb908",
-    "cases/cp3c-owner/manifest.json": "23f519682ca8caf7cf32a8357316f11ac945e7f717862293d553e7e3ed95c74b",
+    "cases/cp2e-owner/builder/build.py": "3e8670121203f2eea874633d3dd20025a89a9342ccac0c02d8338323aa8b4ce6",
+    "cases/cp3c-owner/manifest.json": "5c5c1520cfd762f185655eedbe28c1bdada3e0129edf4efa08e9b04735b79e07",
     "cases/cp3c-owner/submissions.json": "eff5c4fb64452a8aa40a646f58772e6eb55767ea18db9ff54f2f47183d6e2b11",
     "cases/cp3c-owner/expected.json": "c5089cff7c42f2436f957dbaf441b69064bb62f9244bc62c672687f03fe398e3",
-    "cases/cp3d-owner/manifest.json": "6fb18d629c9537b72be986c36f660c456768ed44ec25e98080950041d90fef84",
+    "cases/cp3d-owner/manifest.json": "84060ac783305b55fef49c24b2b1607fb29a36913b0f00f58681a2e6930f6946",
     "cases/cp3d-owner/submissions.json": "c4437879636ed0fe4a8624c71a640873b2c02df789ff9cd5cd05e3bc72bc0579",
     "cases/cp3d-owner/expected.json": "8e28b859d56ba51c3d299c0e35c584bbded6ed18a258dee44c217ae4f43da039",
-    "cases/cp3d-owner/builder/build.py": "912f74399b4f8d3e6905bc5496eff74267a51d6f6bc20e38c97fa4feef18afae",
-    "cases/cp4c-owner/manifest.json": "1c133a62f34f8fd5e28f451168820fea3a28f1bf49ce0ef2c835a8dc89110fc5",
+    "cases/cp3d-owner/builder/build.py": "923e4aca56c3c0667ad72ffe9c8ac0ea8089771a0a6a12ec8995e83f93f8ef22",
+    "cases/cp4c-owner/manifest.json": "47918d84500c3c4b4cf593c937126916625a49c81fca625e5f609313f9e65353",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
-    "cases/cp4c-owner/builder/build.py": "4c8b07a43d67aa2386355a42135af2a68800106cb208f804e556dd65a7dd21fc",
-    "cases/cp3c-owner/builder/build.py": "e6047564c44f2d70e911d1934be8704b23e1e7359b200d1b40c0e7ef7a0cc314",
+    "cases/cp4c-owner/builder/build.py": "faca999109dd4b00f940cd92233b2f82d7f2bd6ab3f86242098ddc4cd830dc0c",
+    "cases/cp3c-owner/builder/build.py": "0aab0254a9b352458720afa50e8b26f434c8ebdab2ed6fea5ca50eb4fe16042c",
 }
 
 RAW = {}
@@ -1495,10 +1495,6 @@ def build_4c():
     ns = load_oracle(
         "cases/cp4c-owner/builder/build.py",
         replace=(
-            (
-                "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",
-                PINS["cases/cp3c-owner/manifest.json"],
-            ),
             # the frozen builder divides each class on its own (the pre-ruling form); the lease (round 8 A-1) allocates a
             # partly paid pro-rata rank by exact largest remainder. The two agree on every frozen case (reproduction check
             # below) and differ in the last digit elsewhere (CP-4C one_multiple), so the ruled recipe is used.

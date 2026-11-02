@@ -25,7 +25,7 @@ OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "cases" / "cp
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
-    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+    "src/deploy_vii/methodology.json": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
 }
 for rel, want in PINS.items():
     got = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
@@ -70,7 +70,8 @@ SYNTH_SENTENCE = "This invented case is test data, not evidence about real issue
 
 # --- registry as it is today (pre-O7b-1); the post-change registry is DATA below, never asserted from the file ----
 ENTRY = next(m for m in METH if m["module_id"] == "CP-DR")
-assert ENTRY["required"] == ["CP-0"] and ENTRY["table_ids"] == ["TDR.1", "TDR.2", "TDR.3"]
+assert ENTRY["required"] == ["CP-0", "CP-1"] and ENTRY["table_ids"] == ["TDR.1", "TDR.2", "TDR.3"]
+assert "cp-dr/2026-10-31" in ENTRY["purpose"]
 for _m in METH:
     if _m["module_id"] != "CP-DR":
         assert not set(_m["table_ids"]) & set(ENTRY["table_ids"]), _m["module_id"]
@@ -1788,8 +1789,8 @@ REGISTRY_AFTER = {
         "METHOD_VERSION_CPDR",
     ],
     "today_before_change": {
-        "required": ENTRY["required"],
-        "methodology_sha256": PINS["src/deploy_vii/methodology.json"],
+        "required": ["CP-0"],
+        "methodology_sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
     },
 }
 

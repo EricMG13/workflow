@@ -54,7 +54,7 @@ def hand_built_upstream(monkeypatch: pytest.MonkeyPatch) -> None:
         "_producer_inputs",
         lambda st, sn, p: True if p.module_id in ("CP-0", "CP-1", "CP-1A") else real(st, sn, p),
     )
-    host._CPDR_VERIFIED.clear()
+    host._SUBMISSION_VERIFIED.clear()
 
 
 def _binding(store: Execution, consumer: str) -> OwnerBinding:

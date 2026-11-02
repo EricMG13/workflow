@@ -698,17 +698,22 @@ def _submission_producer_inputs(
 
 
 # In-process only, never persisted, as `_CP1_VERIFIED`: key (snapshot content hash, producer
-# result hash), value the blob digests a passing `_submission_producer_inputs` read. Only a pass
-# is kept; a hit re-reads and hash-checks each digest, so tampered or missing bytes still refuse.
+# result hash), value the blob digests a passing check read. One memo serves the one-step
+# `*-submission` rule and CP-DR's probe (their producers' result hashes differ, so their keys
+# never meet). Only a pass is kept; a hit re-reads and hash-checks each digest, so tampered or
+# missing bytes still refuse.
 _SUBMISSION_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
 _SUBMISSION_VERIFIED_LIMIT = 16
 _SUBMISSION_VERIFIED_LOCK = Lock()
 
 
-def _submission_producer_inputs_memoised(
-    store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
+def _verified_once(
+    store: Execution,
+    snapshot: ExecutionSnapshot,
+    producer: Module,
+    check: Callable[[Execution], bool],
 ) -> bool:
-    # `expected` is `current_inputs(snapshot, producer.module_id)`, fixed by the key's snapshot.
+    """`check(store)` over the memo: a pass is remembered with the blobs it read."""
     key = (sha256(snapshot.model_dump_json().encode()).hexdigest(), producer.content_hash())
     with _SUBMISSION_VERIFIED_LOCK:
         touched = _SUBMISSION_VERIFIED.get(key)
@@ -717,13 +722,25 @@ def _submission_producer_inputs_memoised(
             store._load(digest)  # raises ValueError for missing or tampered bytes
         return True
     recorder = _RecordingExecution(store.directory)
-    if not _submission_producer_inputs(recorder, snapshot, producer, expected):
+    if not check(recorder):
         return False
     with _SUBMISSION_VERIFIED_LOCK:
         while len(_SUBMISSION_VERIFIED) >= _SUBMISSION_VERIFIED_LIMIT:
             del _SUBMISSION_VERIFIED[next(iter(_SUBMISSION_VERIFIED))]
         _SUBMISSION_VERIFIED[key] = frozenset(recorder.touched)
     return True
+
+
+def _submission_producer_inputs_memoised(
+    store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
+) -> bool:
+    # `expected` is `current_inputs(snapshot, producer.module_id)`, fixed by the key's snapshot.
+    return _verified_once(
+        store,
+        snapshot,
+        producer,
+        lambda recorder: _submission_producer_inputs(recorder, snapshot, producer, expected),
+    )
 
 
 def _cpdr_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
@@ -748,31 +765,15 @@ def _cpdr_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, produce
     return True
 
 
-# In-process only, never persisted, as `_SUBMISSION_VERIFIED`: a passing probe's key and the blob
-# digests it read; a hit re-reads and hash-checks each digest.
-_CPDR_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
-_CPDR_VERIFIED_LIMIT = 16
-_CPDR_VERIFIED_LOCK = Lock()
-
-
 def _cpdr_producer_inputs_memoised(
     store: Execution, snapshot: ExecutionSnapshot, producer: Module
 ) -> bool:
-    key = (sha256(snapshot.model_dump_json().encode()).hexdigest(), producer.content_hash())
-    with _CPDR_VERIFIED_LOCK:
-        touched = _CPDR_VERIFIED.get(key)
-    if touched is not None:
-        for digest in sorted(touched):
-            store._load(digest)  # raises ValueError for missing or tampered bytes
-        return True
-    recorder = _RecordingExecution(store.directory)
-    if not _cpdr_producer_inputs(recorder, snapshot, producer):
-        return False
-    with _CPDR_VERIFIED_LOCK:
-        while len(_CPDR_VERIFIED) >= _CPDR_VERIFIED_LIMIT:
-            del _CPDR_VERIFIED[next(iter(_CPDR_VERIFIED))]
-        _CPDR_VERIFIED[key] = frozenset(recorder.touched)
-    return True
+    return _verified_once(
+        store,
+        snapshot,
+        producer,
+        lambda recorder: _cpdr_producer_inputs(recorder, snapshot, producer),
+    )
 
 
 def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:

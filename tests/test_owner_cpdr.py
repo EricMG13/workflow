@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import cpdr_runs as runs
@@ -155,12 +156,13 @@ def test_a_defaults_only_brief_gives_the_keys_eight_questions(
 
 
 def test_the_dossier_is_the_key_template_and_its_hashes_are_recorded(
-    closed: Closed, key: dict[str, Any]
+    closed: Closed, key: dict[str, Any], tmp_path: Path
 ) -> None:
     """`dossier_sha256_rule` and `head_hash_rule`: the file is the template with the brief hash;
     the record holds the file's hash, the brief's hash and the head's own `result_sha256`, which is
     not the dossier's."""
-    research = closed.root / "research"
+    research = tmp_path / "research"
+    shutil.copytree(closed.root / "research", research)  # never write into the shared tree
     record = rp.write_dossier(closed.execution(), research)
     dossier = key["cases"]["positive"]["dossier"]
     template = key["cases"]["positive"]["brief"]["template_file"]
@@ -184,11 +186,11 @@ def test_run_json_takes_the_three_hashes_from_the_record(
     monkeypatch.setattr(evidence, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
     case = ResearchCase(tmp_path)
     checked = check_arguments(**case.arguments(tmp_path))
-    record = rp.write_dossier(closed.execution(), closed.root / "research")
+    research = tmp_path / "copy" / "research"
+    shutil.copytree(closed.root / "research", research)  # never write into the shared tree
+    record = rp.write_dossier(closed.execution(), research)
     keys = rp._cp_dr_keys(checked, record)
-    assert keys["cp_dr_dossier_sha256"] == sha(
-        (closed.root / "research" / "dossier.md").read_bytes()
-    )
+    assert keys["cp_dr_dossier_sha256"] == sha((research / "dossier.md").read_bytes())
     assert keys["cp_dr_head_sha256"] == closed.head("CP-DR").result_sha256
     assert keys["cp_dr_brief_sha256"] == record.brief_sha256
     assert rp._cp_dr_keys(checked, None)["cp_dr_dossier_sha256"] is None
@@ -378,20 +380,40 @@ def test_anchor_refusals(tmp_path: Path, key: dict[str, Any], name: str, edit: A
     with pytest.raises(CpDrNotAnchored) as raised:
         owner_workflow._PRE_BEGIN["CP-DR"](store, store.read())
     assert str(raised.value) == want["reason"]
-    assert want["research_brief_json_written"] is False
     assert not (tmp_path / "research" / "brief.json").exists()
     assert all(a.module_id != "CP-DR" for a in store.read().attempts)
 
 
-def test_anchors_with_cp1_unrun_name_cp1_not_the_edge(tmp_path: Path) -> None:
-    """The hook runs before `current_inputs`: an unrun CP-1 is named, not `BLOCKED_EDGE`'s generic
-    'Required upstream is unrun, stale or blocked'."""
-    store = runs.settled_pair("positive", tmp_path, ("CP-0",))
+class _RecordingStore:
+    """The store `_begin` reads, recording every `begin` it is asked for."""
+
+    def __init__(self, inner: Execution) -> None:
+        self._inner = inner
+        self.begun: list[str] = []
+
+    def read(self) -> Any:
+        return self._inner.read()
+
+    def result(self, digest: str) -> Any:
+        return self._inner.result(digest)
+
+    def begin(self, module_id: str) -> Any:
+        self.begun.append(module_id)
+        return self._inner.begin(module_id)
+
+
+def test_anchors_with_cp1_unrun_name_cp1_not_the_edge_through_begin(tmp_path: Path) -> None:
+    """O7-R42 M-1: with CP-1 never run, `OwnerWorkflow._begin("CP-DR")` raises `CpDrNotAnchored`
+    naming CP-1 before `store.begin` is asked (the hook runs before `current_inputs`), not the
+    edge's 'Required upstream is unrun, stale or blocked'."""
+    store = _RecordingStore(runs.settled_pair("positive", tmp_path, ("CP-0",)))
+    stand_in: Any = SimpleNamespace(_store=store, _refusals=[], _refusal_kind=None)
     with pytest.raises(CpDrNotAnchored) as raised:
-        owner_workflow._PRE_BEGIN["CP-DR"](store, store.read())
+        owner_workflow.OwnerWorkflow._begin(stand_in, "CP-DR")
     message = str(raised.value)
     assert "CP-1" in message
     assert "BLOCKED_EDGE" not in message and "unrun, stale or blocked" not in message
+    assert store.begun == []
 
 
 def test_the_begin_hook_calls_check_anchors_with_the_snapshots_heads_and_run(
@@ -519,11 +541,10 @@ def test_research_v1_states_counts_readiness(tmp_path: Path, key: dict[str, Any]
     for field in ("answer", "contrary", "uncertainty"):
         fact = facts[f"TDR.3.valuation-context.{field}"]
         assert (fact.status, fact.amount, fact.limitation) == ("missing", None, limitation)
-    answers = {a["question_id"]: a for a in runs.oracle()["submissions"]["research_v1"]["answers"]}
-    supporting = [i for c in answers["competition"]["claims"] for i in c["independent_items"]]
-    assert "ev-3" in supporting  # ev-3 supports the competition claim ...
-    assert any(c.get("item") == "ev-3" for c in answers["market-demand"]["contrary"])  # ... and is
-    # the cited contrary of market-demand
+    contrary = facts["TDR.3.market-demand.contrary"]  # the settled head's own facts
+    assert "ev-3" in [c.source_id for c in contrary.citations]
+    evidence_id = facts["TDR.2.competition.c1.evidence_id"].text or ""
+    assert "ev-3" in evidence_id.split("; ")
 
 
 def research_with(text_for: str, text: str) -> str:
@@ -625,7 +646,6 @@ def test_closed_run_v2(closed: Closed, key: dict[str, Any], tmp_path: Path) -> N
     assert second["brief_sha256"] != first["brief_sha256"]
     for field in ("as_of", "cutoff", "version", "peer_pack"):
         assert second[field] == first[field], field
-    assert want["differs_from_positive"]["brief_questions_identical"] is True
 
 
 def closed_head(store: Execution, module_id: str) -> Head:
@@ -654,5 +674,7 @@ def test_forged_fact_is_refused_by_the_probe(closed: Closed, tmp_path: Path) -> 
     with pytest.raises(WorkflowError, match="identity_mismatch"):
         cpdr.probe(store, snapshot, attempt)  # the honest attempt, over the forged head
     receipt = OwnerRunReceipt.model_validate_json((moved / "owner-run.json").read_bytes())
-    with pytest.raises(WorkflowError):  # the sealed head hash no longer binds: `stale_binding`
+    with pytest.raises(
+        WorkflowError, match="stale_binding"
+    ):  # the sealed head hash no longer binds
         verify_owner_run_receipt(Execution(moved / "execution"), receipt)

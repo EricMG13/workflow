@@ -451,7 +451,6 @@ def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
     outcome = rp._stop(tmp_path, meta, result.reason, result.spent)
     assert outcome.outcome == "stopped"
     assert run_json(tmp_path)["stopped_reason"] == want["fault_record"]
-    assert want["research_brief_json_written"] is False
     assert not (tmp_path / "research" / "brief.json").exists()
     lines = (tmp_path / "calls.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(lines) - adapter.calls == want["calls_jsonl_lines_added"]

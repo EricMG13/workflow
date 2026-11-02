@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
+from types import MappingProxyType
 from typing import Any, cast
 
 from deploy_workflow.model.redact import Redactor
@@ -185,6 +186,10 @@ def _args_json(call: ToolCall) -> str:
     return dump_json(call.arguments)
 
 
+# PF-R6: sent explicitly so the write tier is the 30m one the price table charges.
+OPENAI_PROMPT_CACHE_OPTIONS: Mapping[str, str] = MappingProxyType({"mode": "implicit", "ttl": "30m"})
+
+
 def _openai_body(spec: ModelSpec, request: TurnRequest, effort: str) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     for m in request.messages:
@@ -224,6 +229,7 @@ def _openai_body(spec: ModelSpec, request: TurnRequest, effort: str) -> dict[str
         "reasoning": {"effort": effort},
         "max_output_tokens": request.max_output_tokens,
         "store": False,  # controller ruling: do not retain request data at the provider
+        "prompt_cache_options": dict(OPENAI_PROMPT_CACHE_OPTIONS),
     }
 
 

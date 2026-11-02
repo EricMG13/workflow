@@ -2600,10 +2600,17 @@ def _lines(
     refuses keeps the staleness or provenance line and adds its own issue."""
     try:
         basis = cp2d.run_basis(pack, upstream.cp1)
-    except ContextRefused:
-        # `_pin_lines` reports the refused context as an issue, so nothing composes from this
-        # default basis.
-        basis = DEFAULT_BASIS
+    except ContextRefused as error:
+        # `_pin_lines` reports the refused context after the content (the frozen shape). The
+        # content is checked over the default basis when that selects; otherwise (a CP-1 of
+        # another year, ruling P8T4-R2) the context line stands alone.
+        try:
+            content = validate_refinancing(
+                submission=submission, upstream=upstream, basis=DEFAULT_BASIS
+            )
+        except ValueError:
+            return tuple(dict.fromkeys((*_upstream_issues(upstream), _context_issue(error))))
+        return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
     except PeriodRefused as error:
         return tuple(dict.fromkeys((*_upstream_issues(upstream), _period_issue(error))))
     content = validate_refinancing(submission=submission, upstream=upstream, basis=basis)
@@ -2795,16 +2802,19 @@ def cp3c_module(*, report: RefinancingRiskReport, inputs: Sequence[Input], attem
 def _view_selection(pack: PreparedPack, upstream: Upstream) -> tuple[Selection | None, str | None]:
     """The view's selection and the issue line the entry validator returns for the same refusal
     (P8-R5: `read_inputs` never raises on a context, period or currency refusal). A refused
-    context keeps the default basis, as before; a refused period or currency offers nothing."""
-    issue = None
+    context offers what the default basis selects when that selection succeeds and nothing when
+    it fails (ruling P8T4-R2); a refused period or currency offers nothing."""
     try:
         basis = cp2d.run_basis(pack, upstream.cp1)
     except ContextRefused as error:
-        basis, issue = DEFAULT_BASIS, _context_issue(error)
+        try:
+            return select(upstream, DEFAULT_BASIS), _context_issue(error)
+        except ValueError:  # the CP-1 is not the default year: offer nothing, carry the issue
+            return None, _context_issue(error)
     except PeriodRefused as error:
         return None, _period_issue(error)
     try:
-        return select(upstream, basis), issue
+        return select(upstream, basis), None
     except PeriodRefused as error:
         return None, _period_issue(error)
 

@@ -2352,10 +2352,15 @@ def validate_liquidity_bridge(
     issues = [*_stale_issues(upstream), *_provenance_issues(upstream)]
     try:
         basis = run_basis(pack, upstream.cp1)
-    except ContextRefused:
-        # `_pin_lines` below reports the refused context as an issue, so nothing composes from
-        # this default basis.
+    except ContextRefused as error:
+        # `_pin_lines` reports the refused context after the content (the frozen shape). The
+        # content is checked over the default basis when that selects; otherwise (a CP-1 of
+        # another year, ruling P8T4-R2) the context line stands alone.
         basis = DEFAULT_BASIS
+        try:
+            select_cp1(upstream.cp1, basis)
+        except ValueError:
+            return tuple(dict.fromkeys([*issues, _context_issue(error)]))
     except PeriodRefused as error:
         return tuple(dict.fromkeys([*issues, _period_issue(error)]))
     selection = select_cp1(upstream.cp1, basis)
@@ -2707,10 +2712,15 @@ VIEW_NOTE = (
 def _view_basis(pack: PreparedPack, cp1: Module) -> tuple[PeriodBasis | None, str | None]:
     """The run's basis for the view and the issue line the entry validator returns for the same
     refusal (P8-R5: `read_inputs` never raises on a context or period refusal). A refused
-    context keeps the default basis, as before; a refused period offers nothing."""
+    context offers what the default basis selects when that selection succeeds (the parent's
+    rendering) and nothing when it fails (ruling P8T4-R2); a refused period offers nothing."""
     try:
         return run_basis(pack, cp1), None
     except ContextRefused as error:
+        try:
+            select_cp1(cp1, DEFAULT_BASIS)
+        except ValueError:  # the CP-1 is not the default year: offer nothing, carry the issue
+            return None, _context_issue(error)
         return DEFAULT_BASIS, _context_issue(error)
     except PeriodRefused as error:
         return None, _period_issue(error)

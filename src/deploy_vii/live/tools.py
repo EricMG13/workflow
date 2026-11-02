@@ -56,8 +56,9 @@ outside the step's declared sources, a locator the source does not hold, more th
 B22 (user ruling, 31 Oct 2026): a prepared text or HTML pack locates its spans as `line:N`, one per
 converted line. A source with no `page:N` span and only `line:N` spans is a *line source*; every
 other source keeps the page behaviour above unchanged. On a line source `read_pages` takes line
-numbers as `first_page`/`last_page` (at most `MAX_PAGES_PER_READ` lines, or any number of lines
-whose text totals at most `MAX_LINE_READ_BYTES` bytes; PF-R7, B31a) and returns one SOURCE
+numbers as `first_page`/`last_page` (at most `MAX_PAGES_PER_READ` lines, or at most
+`MAX_LINES_PER_READ` lines whose text totals at most `MAX_LINE_READ_BYTES` bytes, the line count
+checked before any measure; PF-R7, PF-R9, B31a) and returns one SOURCE
 block per `line:N`; `extract_statements` takes ranges `line:N-M` (at most `MAX_PAGES_PER_EXTRACT`
 ranges and `MAX_LINES_PER_EXTRACT` lines per call), extracts each range as one text and rebases each
 row's `line_no` and locator to its own `line:K`. A range counts as extracted, with each of its data
@@ -106,6 +107,13 @@ MAX_PAGES_PER_READ = 5
 # PF-R7 (B31a): on a line source a `read_pages` call may also span more than MAX_PAGES_PER_READ
 # lines while their text totals at most this many bytes.
 MAX_LINE_READ_BYTES = 8192
+# PF-R9: ... but never more than this many lines, checked before any measure so a model-chosen
+# `last_page` cannot make the call iterate an unbounded range.
+MAX_LINES_PER_READ = 200
+_LINE_READ_REFUSAL = (
+    f"bad arguments: on a line source, at most {MAX_PAGES_PER_READ} lines, or at most "
+    f"{MAX_LINES_PER_READ} lines totalling {MAX_LINE_READ_BYTES} bytes, per call"
+)
 # Task 8.10b: an extracted page is compact (one row per printed data line), so a call may name
 # more pages than `read_pages` returns.
 MAX_PAGES_PER_EXTRACT = 8
@@ -283,9 +291,9 @@ def tool_specs(step_id: str, kind: ToolSet | None = None) -> tuple[dict[str, Any
         _function(
             READ,
             "Verbatim text of pages first_page..last_page of one source (at most "
-            f"{MAX_PAGES_PER_READ} pages; on a line source, at most {MAX_PAGES_PER_READ} lines or "
-            f"{MAX_LINE_READ_BYTES} bytes of lines), each page or line as a SOURCE block with "
-            "its locator.",
+            f"{MAX_PAGES_PER_READ} pages; on a line source, at most {MAX_PAGES_PER_READ} lines, "
+            f"or at most {MAX_LINES_PER_READ} lines totalling {MAX_LINE_READ_BYTES} bytes), "
+            "each page or line as a SOURCE block with its locator.",
             {
                 "type": "object",
                 "properties": {
@@ -436,16 +444,15 @@ class PackTools:
         if last - first + 1 > MAX_PAGES_PER_READ:
             if unit == "page":
                 raise ToolError(f"bad arguments: at most {MAX_PAGES_PER_READ} pages per call")
+            if last - first + 1 > MAX_LINES_PER_READ:
+                raise ToolError(_LINE_READ_REFUSAL)  # before any iteration over the range
             measured = sum(
                 len(span.text.encode("utf-8"))
                 for number in range(first, last + 1)
                 if (span := located.get(number)) is not None
             )
             if measured > MAX_LINE_READ_BYTES:
-                raise ToolError(
-                    f"bad arguments: on a line source, at most {MAX_PAGES_PER_READ} lines or "
-                    f"{MAX_LINE_READ_BYTES} bytes of lines per call"
-                )
+                raise ToolError(_LINE_READ_REFUSAL)
         if not located:
             raise ToolError(f"source {source_id} has no page:N locators")
         digest = str(self.ready[source_id].sha256)

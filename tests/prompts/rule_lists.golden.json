@@ -596,7 +596,7 @@
    },
    {
     "id": "earnings_delta.2",
-    "statement": "Take `prior_period_id` and `current_period_id` together from one entry of `pairs` in the read_inputs view; any other pair is refused as `unsupported_pair`, and a register Python cannot compare is refused with its code (incompatible_periods, incomplete_register, invalid_source_view, incompatible_dimensions, ambiguous_coordinate or invalid_fact).",
+    "statement": "Take `prior_period_id` and `current_period_id` together from one entry of `pairs` in the read_inputs view; any other pair is refused as `unsupported_pair`; when the run context names the pair, a pair that differs from it is refused as `context_period_mismatch`, a current context period that matches no single register row is refused as `context_period_unresolved`, and a context prior that matches no single register row is not a context refusal: it is passed on as given, and the pair is accepted or refused as above (fy-2024 -> fy-2025 gives the `comparative_not_supplied` gap); a context file that is refused is refused as `Context refused: ...`; and a register Python cannot compare is refused with its code (incompatible_periods, incomplete_register, invalid_source_view, incompatible_dimensions, ambiguous_coordinate or invalid_fact).",
     "checks": [
      "code:cp1b:period:ambiguous_coordinate",
      "code:cp1b:period:incompatible_dimensions",
@@ -604,7 +604,8 @@
      "code:cp1b:period:incomplete_register",
      "code:cp1b:period:invalid_fact",
      "code:cp1b:period:invalid_source_view",
-     "code:cp1b:unsupported_pair"
+     "code:cp1b:unsupported_pair",
+     "fn:deploy_workflow.owners.cp1b:_validate_step"
     ]
    },
    {
@@ -1875,7 +1876,7 @@
    "src/deploy_vii/cp1_workflow.py": "966a982d4068bd962df47228ded77f1929b79a1e51624fb7c4cfa9470e1878d3",
    "src/deploy_vii/cp2_synthesis.py": "ac8856fddb71e7ddef9715febeffdeaa88ff9aa34526dd299ecb1cbc92d4d04e",
    "src/deploy_vii/cp3_relative_value.py": "d53035f7368704e750ecaded0985ecdfdb18c86acf8aaa8d60cab371df05e24b",
-   "src/deploy_vii/cp4_legal.py": "025d1f2ee7002ebb95d7c45459e3e20d7b266956409de01198d55195674eadda",
+   "src/deploy_vii/cp4_legal.py": "d7c78ba0bdb6cae78053e76dfce08e35f6c545ae53cfdcb1da01861b32c54233",
    "src/deploy_vii/cp5_integrity.py": "eb3a766f5ed1ff5bb856c64d0e5a477855d421ded57b91279d365c1fa03ea901",
    "src/deploy_vii/cp6_committee.py": "e97d5074292aa29dc93651dedce0dbc734e38d0373a34f769e0cfef65e2196ac",
    "src/deploy_vii/downstream_readiness.py": "29c71a90df07d1eed7df2903b30211377a77588fa7f564d09389d6d47c11dbdd",
@@ -1889,19 +1890,19 @@
    "src/deploy_vii/source_context.py": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
    "src/deploy_vii/statement_validation.py": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "03fb2914b1c7233a8a673a9e5d40d118e955b1ce9bf965ca5e71df07a8757247",
+   "src/deploy_workflow/owner_workflow.py": "c8c4ff9748a353e9fd3482118e162b35427f105f5403b1304d04d2d40ba7c413",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
-   "src/deploy_workflow/owners/cp1b.py": "635c222f972c2033de8b09b9d5085c19b1387d27c804209b991ebaf9124f69cd",
+   "src/deploy_workflow/owners/cp1b.py": "0dea74a1aefcb3ad7408854ee8d2a4c11931934b955ddbf6f99bcb565ccdaf61",
    "src/deploy_workflow/owners/cp1c.py": "c8dce2d6efea23e79be1aa85d6ed39ae586d1fcc602e8517313f15a3360ec335",
-   "src/deploy_workflow/owners/cp1d.py": "2a8bebd72aa10358104948ede3ca8e7d36476a6453b32d38efed29e6c41fb90d",
+   "src/deploy_workflow/owners/cp1d.py": "5caf1cb327fa00381b05425b74557606a3edb8b5b04a3b729353de31b4534f40",
    "src/deploy_workflow/owners/cp2.py": "902dea0e690a9054b06e064d1b3636367a6a8c02ff75d5ae9c746bf4fdf085e2",
    "src/deploy_workflow/owners/cp2a.py": "6a490337508132ad58c303af767a3dc2330ed6147d710bd6ee20ce538ceec815",
-   "src/deploy_workflow/owners/cp2d.py": "cc7a462168e7498c0af4facc5197b32a0ee2f0054a6b5ecc03a1657bbfca7423",
+   "src/deploy_workflow/owners/cp2d.py": "33efdce39210f5114abdbc629d69f21e3436e48dc2e5549406bb465fc4a0059a",
    "src/deploy_workflow/owners/cp2e.py": "88b87ae65766ac5368096967c538d88127e98f4ef4b9cb9ff0916c55657a2732",
    "src/deploy_workflow/owners/cp2g.py": "71c06be61716570408bfed1913c5f8853bb8010c5a96f61554b61f84923e4bdb",
    "src/deploy_workflow/owners/cp2h.py": "6c631c63645bfd1a2009aa13c93d99994670f48d521ab34bc96959a771bf4349",
    "src/deploy_workflow/owners/cp3.py": "73c5629977cd39ee48cb49f2c851df6177f59a616deb7bc4cc0ae9dac3f4d39e",
-   "src/deploy_workflow/owners/cp3c.py": "6ce5989769711e1f978f300a205e0fd80a5ac8a011c9f2eee5831210cb7cdb0b",
+   "src/deploy_workflow/owners/cp3c.py": "c9d2c18c275d5b83b4fb56a2d406873f53f44810cd24661acf8e0e09eb751fd3",
    "src/deploy_workflow/owners/cp3d.py": "50a541d29c3b2ed73d506c587ec054bfd4e8b30655260a2cf3d0a129499228bc",
    "src/deploy_workflow/owners/cp4.py": "4b7746e5af316f6321c7f0c002d35d3280858c19f59fb1d14be0da06c9a10f6a",
    "src/deploy_workflow/owners/cp4c.py": "2744a09e104c1cb5b1a480544f3cef23a560936530bc44912e7c479f516a48e0",
@@ -1909,9 +1910,9 @@
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
    "src/deploy_workflow/owners/cpdr.py": "844516fc229f72447f33d40481133f684c0340f87a480aaa69945aad560da2d9",
-   "src/deploy_workflow/owners/cpl10.py": "acc24b334a81727e95ee9eef9574c1ce43cc4433fb29d4e588a2a3967da1df50",
+   "src/deploy_workflow/owners/cpl10.py": "2202594818adddc05268a7188a2541bc90f8f2ce314000f3fec1fad77015bed5",
    "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
-   "src/deploy_workflow/prompts/fence.py": "92506b6585b3e3b11db86524fc0c7fe4e5b875b35a100097c98c63882f08e408"
+   "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b"
   },
   "oracles": {
    "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",

@@ -2300,6 +2300,33 @@
       "sha256": "b66438b5b6e17d8e8e21814c488e7a75f73c87544ee79bce5d338626f488de72",
       "reason": "repo-authored (not in files[]): B9: wording only; the money-cell currency and unit label follow the run's reporting currency (Phase 8 Task 8, B9)",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "imported_sha256": "8c797c12c236c2e58efa5a4f6fea098866d9811c08798e561c19903a833511e3",
+      "prior_project_sha256": "331137e787f48576e2aaceddb1cfc977864b89660a8b8fdacadef1c1467084d4",
+      "project_commit": "69d68664564503e3750750629deeb3d09684b6c5",
+      "sha256": "1308cf6c421bd09eb11eb4988e0667f50fb5c2e8eb59492730a9f6fcedc22ae3",
+      "reason": "repo-authored (not in files[]): B9: wording only; methods fix 1 (P8T8-R1, P8T8-R2): figures date and period wording, the selected_multiple view key, omission 5, the CP-2D money-fact currency and the CP-4C reader claim",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-fix1-rereview.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp4c.md",
+      "imported_sha256": "1cd1ff108960fb8c5869b87692bf0047f6edb75fd2c3e0eeac3716c0b1cba10b",
+      "prior_project_sha256": "aa95d40eaf162614370c8bcc394d7eecd39ef8edf267d2f24b29c2ebdc00d28d",
+      "project_commit": "69d68664564503e3750750629deeb3d09684b6c5",
+      "sha256": "5d8f43c53a062b875430d4eef5cfc806d9b32d4a2ebfc595b82e951837218432",
+      "reason": "repo-authored (not in files[]): B9: wording only; methods fix 1 (P8T8-R1, P8T8-R2): figures date and period wording, the selected_multiple view key, omission 5, the CP-2D money-fact currency and the CP-4C reader claim",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-fix1-rereview.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp2d.md",
+      "imported_sha256": "b09c8ac53023bb88b50b9249b70386225b64bc26dec50a055767598f0dc4446f",
+      "prior_project_sha256": "b206dca9f5b17dd29ef161b01858c3ca7b412f4b6d0b6eedd2cf2d67935e7385",
+      "project_commit": "69d68664564503e3750750629deeb3d09684b6c5",
+      "sha256": "df8ec4b240315b7837144143b10b4861faf47826612d48f4be0e24f2ea5edcdd",
+      "reason": "B9: wording only; methods fix 1 (P8T8-R1): the adapter's money-fact rule names the run's reporting currency",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-fix1-rereview.md"
     }
   ],
   "local_patch_lineage": [

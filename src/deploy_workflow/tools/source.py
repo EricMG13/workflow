@@ -88,8 +88,10 @@ class SourceTools:
     def _fenced(self, body: str) -> str:
         """Research (`ev-*`) hits and pages enter the model only as UNTRUSTED_EVIDENCE blocks.
 
-        Fails closed: an `ev-*` source with no recorded retrieval time, or a span the fence cannot
-        hold, refuses the whole call (`unavailable`); nothing is staged, truncated or rewritten.
+        Fails closed: an `ev-*` source with no recorded retrieval time refuses the whole call
+        (`unavailable`; the host refuses such a session at construction, O7-R8), and a span the
+        fence cannot hold raises its `FenceError` (a `PromptError`, which the host receipts as
+        `render_refused`); nothing is staged, truncated or rewritten.
         """
 
         def fence(found: re.Match[str]) -> str:
@@ -102,13 +104,10 @@ class SourceTools:
             )
             return untrusted_evidence_block([item])
 
-        try:
-            fenced = _RESEARCH_BLOCK.sub(fence, body)
-            if _RESEARCH_HEADER in fenced:  # a header the match did not recognise stays unfenced
-                raise FenceError("a research block was left outside the fence")
-            return fenced
-        except FenceError:
-            raise SourceError("unavailable") from None
+        fenced = _RESEARCH_BLOCK.sub(fence, body)
+        if _RESEARCH_HEADER in fenced:  # a header the match did not recognise stays unfenced
+            raise FenceError("a research block was left outside the fence")
+        return fenced
 
     def commit(self, staged: PackTools) -> None:
         self._tools = staged

@@ -41,6 +41,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
+from deploy_workflow.research.evidence import research_retrieved
 from deploy_workflow.tools.source import SourceError, SourceTools
 
 # The steps that may open a source session, per module. CP-0, CP-1, CP-1A, CP-3 and CP-4 have a
@@ -56,7 +57,7 @@ _SOURCE_STEPS = {
     "CP-4": ("legal_covenants",),
     "CP-1D": ("earnings_quality",),
     "CP-3D": ("market_implied",),
-    "CP-DR": ("research",),
+    "CP-DR": ("brief", "research"),
     "CP-1C": ("peer_benchmark",),
     "CP-2E": ("macro_fx",),
     "CP-2H": ("rating_triggers",),
@@ -78,6 +79,12 @@ def _every_held(pack: PreparedPack) -> tuple[str, ...]:
     return tuple(s.source_id for s in pack.sources)
 
 
+def _without_research(pack: PreparedPack) -> tuple[str, ...]:
+    """Every held source whose id is not a research item (`ev-*`), in pack order: CP-DR's `brief`
+    step plans from the run's own sources and never sees supplied evidence (O7-R26)."""
+    return tuple(s.source_id for s in pack.sources if not s.source_id.startswith("ev-"))
+
+
 # H1 (G1-X §3, §5): the fixed readable-source scope of each owner-only sourced step, as its lease
 # pins it. Never caller-supplied and never `live.context.SOURCE_SCOPES` (deploy_vii never imports
 # deploy_workflow). A row here applies only to a module without a live step contract. One
@@ -94,6 +101,7 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             # docs/CP3D-OWNER-LEASE.md:46, :87: market and financial only, never identity.
             ("CP-3D", "market_implied"): _held("market", "financial"),
             # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
+            ("CP-DR", "brief"): _without_research,
             ("CP-DR", "research"): _every_held,
             # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers.
             ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
@@ -981,6 +989,23 @@ def _json_arguments(arguments: Any) -> dict[str, Any]:
     return _detached(arguments)
 
 
+def _retrieval_times(
+    store: Execution, pack: PreparedPack, sources: tuple[str, ...]
+) -> dict[str, str]:
+    """The `ev-*` retrieval times of a session (O7-R13), read from the run's `research/evidence.json`.
+    A ready `ev-*` source in scope with no recorded time refuses the session at construction
+    (O7-R8, `retrieval_unrecorded`): the fence needs a real time and none is invented."""
+    try:
+        retrieved = research_retrieved(store.directory, sources)
+    except ValueError:  # EvidenceRecordInvalid: the record is missing, unreadable or malformed
+        raise SourceError("retrieval_unrecorded") from None
+    ready = {s.source_id for s in pack.sources if s.status == "ready"}
+    unrecorded = [i for i in sources if i.startswith("ev-") and i in ready and i not in retrieved]
+    if unrecorded:
+        raise SourceError("retrieval_unrecorded")
+    return retrieved
+
+
 class SourceSession:
     """Trusted factory pins authority; analytical callers can only invoke or bind bytes."""
 
@@ -1011,7 +1036,12 @@ class SourceSession:
             "attempt": attempt.number,
             "inputs": [i.model_dump(mode="json") for i in attempt.inputs],
         }
-        self._tools = SourceTools(pack, sources, extraction=step_id == "financials")
+        self._tools = SourceTools(
+            pack,
+            sources,
+            extraction=step_id == "financials",
+            retrieved=_retrieval_times(store, pack, sources),
+        )
         self._operation = Lock()
         self._records_lock = Lock()
         self._sequence = 0

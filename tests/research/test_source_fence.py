@@ -11,6 +11,7 @@ from deploy_vii.contracts import Run, Source, Span
 from deploy_vii.live import tools as lt
 from deploy_vii.live.tools import PackTools
 from deploy_vii.preparation import PreparedPack
+from deploy_workflow.prompts.fence import FenceError
 from deploy_workflow.tools.source import SourceError, SourceTools
 
 RETRIEVED = "2026-01-10T09:30:00Z"
@@ -140,9 +141,8 @@ def test_a_span_the_fence_cannot_hold_is_refused_and_records_nothing(
     )
     pack = pack_of(bad)
     held = SourceTools(pack, ["ev-1"], extraction=False, retrieved={"ev-1": RETRIEVED})
-    with pytest.raises(SourceError) as refused:
+    with pytest.raises(FenceError):  # O7-R8: the host maps it to render_refused
         held.stage("read_pages", {"source_id": "ev-1", "first_page": 1, "last_page": 1})
-    assert refused.value.code == "unavailable"
     assert held.evidence()["read"] == []
 
 
@@ -198,6 +198,5 @@ def test_an_unfenced_research_header_after_the_wrap_is_refused(
         return prompts.block(kind, input_id, sha256, body, projection="text")
 
     monkeypatch.setattr(lt, "block", drifted)
-    with pytest.raises(SourceError) as refused:
+    with pytest.raises(FenceError):
         tools(manifest).stage("read_pages", {"source_id": "ev-1", "first_page": 5, "last_page": 5})
-    assert refused.value.code == "unavailable"

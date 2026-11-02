@@ -12,7 +12,7 @@ from prompt_support import request_for
 
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.context import load_context
-from deploy_workflow.prompts import compose
+from deploy_workflow.prompts.compose import compose
 from deploy_workflow.prompts.fence import cp0_run_context_block, run_context_block
 
 CASE = Path(__file__).resolve().parents[2] / "cases" / "context-attachments-owner"

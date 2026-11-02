@@ -37,7 +37,7 @@ from deploy_vii.registry import PACK_TOOLS
 from deploy_workflow.financial_workflow import MAX_CALLS
 from deploy_workflow.model.turn import Message
 from deploy_workflow.owner_workflow import OwnerBinding
-from deploy_workflow.prompts import NoPrompt, compose, inventory
+from deploy_workflow.prompts import inventory
 from deploy_workflow.prompts.compose import (
     O1,
     O2,
@@ -45,6 +45,8 @@ from deploy_workflow.prompts.compose import (
     O4,
     O5_LINE_LOCATORS,
     O6_PINS,
+    NoPrompt,
+    compose,
     pinned_assumptions_block,
 )
 from deploy_workflow.prompts.fence import FenceError, UntrustedItem

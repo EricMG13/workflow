@@ -50,7 +50,7 @@ from deploy_workflow.owner_workflow import (
     TornAudit,
     verify_owner_run_receipt,
 )
-from deploy_workflow.prompts import NoPrompt
+from deploy_workflow.prompts.compose import NoPrompt
 from deploy_workflow.prompts.factory import prompt_factory
 from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.replay import (

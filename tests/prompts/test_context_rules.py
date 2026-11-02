@@ -10,8 +10,8 @@ import pytest
 from prompt_support import request_for
 
 from deploy_vii.preparation import PreparedPack
-from deploy_workflow.prompts import compose, rules
-from deploy_workflow.prompts.compose import TEXTS_DIR
+from deploy_workflow.prompts import rules
+from deploy_workflow.prompts.compose import TEXTS_DIR, compose
 
 STEP_RULE = "Rows from the context are Python's; refer to them by row id; never copy their figures."
 TEXT = (TEXTS_DIR / "market_implied.md").read_text(encoding="utf-8")

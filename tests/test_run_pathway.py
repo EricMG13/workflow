@@ -23,7 +23,7 @@ import pytest
 from deploy_vii.execution import Execution
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import prepare
-from deploy_workflow import host, prompts
+from deploy_workflow import host
 from deploy_workflow import run_inputs as run_inputs_module
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model import adapter as adapter_module
@@ -41,6 +41,8 @@ from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
 from deploy_workflow.prompts import factory as factory_module
+from deploy_workflow.prompts.compose import NoPrompt
+from deploy_workflow.prompts.compose import compose as compose_function
 from deploy_workflow.prompts.factory import prompt_factory
 from deploy_workflow.run_inputs import (
     BadCap,
@@ -189,7 +191,7 @@ def test_a_step_with_no_prompt_stops_as_no_prompt(
 
 
 def test_run_pathway_and_prompts_share_one_no_prompt_class() -> None:
-    assert rp.NoPrompt is prompts.NoPrompt
+    assert rp.NoPrompt is NoPrompt
 
 
 def test_the_default_composer_is_the_o6_composer(
@@ -197,7 +199,7 @@ def test_the_default_composer_is_the_o6_composer(
 ) -> None:
     composed: list[Any] = []
     sent: list[Any] = []
-    real_compose = prompts.compose
+    real_compose = compose_function
     real_complete = RecordedAdapter.complete
 
     def spy_compose(request: Any) -> Any:
@@ -265,7 +267,7 @@ def test_a_step_sees_the_head_settled_earlier_in_the_same_run(
     composed: list[Any] = []
     stores: list[tuple[str, Path]] = []
     sent: list[Any] = []
-    real_compose, real_sources = prompts.compose, host.session_sources
+    real_compose, real_sources = compose_function, host.session_sources
 
     def spy_compose(request: Any) -> Any:
         out = real_compose(request)

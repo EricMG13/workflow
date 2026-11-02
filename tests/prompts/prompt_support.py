@@ -12,8 +12,7 @@ from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_workflow.context import RunContext, context_facts, load_context
 from deploy_workflow.model.adapter import recorded_adapter
 from deploy_workflow.owner_workflow import OWNER_SPECS, StepSpec
-from deploy_workflow.prompts import PromptRequest
-from deploy_workflow.prompts.compose import TEXTS_DIR
+from deploy_workflow.prompts.compose import TEXTS_DIR, PromptRequest
 
 CONTRACT_STEPS = tuple(sorted(STEP_CONTRACTS))  # steps whose text is a STEP_CONTRACTS entry
 

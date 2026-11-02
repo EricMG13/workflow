@@ -19,7 +19,8 @@ from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 from deploy_vii.live.prompts import CP3_EVIDENCE_RULE, STEP_CONTRACTS
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import live_consumers
-from deploy_workflow.prompts import compose, rules
+from deploy_workflow.prompts import rules
+from deploy_workflow.prompts.compose import compose
 from deploy_workflow.prompts.g8 import G8_RULE_ID, G8_STATEMENT, module_set_statement
 
 TOKEN = re.compile(r"^\[compose\.[A-Za-z0-9]+\] ", re.MULTILINE)

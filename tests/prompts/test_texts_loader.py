@@ -19,7 +19,7 @@ from prompt_support import CONTRACT_STEPS, EXISTING, request_for, steps_with_tex
 from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.context import load_context
-from deploy_workflow.prompts import NoPrompt, compose
+from deploy_workflow.prompts.compose import NoPrompt, compose
 
 compose_module: Any = importlib.import_module("deploy_workflow.prompts.compose")
 ctx: Any = importlib.import_module("test_cp3d_context")

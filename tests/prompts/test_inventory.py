@@ -16,7 +16,8 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.registry import plan
 from deploy_workflow import prompts
 from deploy_workflow.owner_workflow import OWNER_SPECS
-from deploy_workflow.prompts import NoPrompt, compose, inventory
+from deploy_workflow.prompts import inventory
+from deploy_workflow.prompts.compose import NoPrompt, compose
 
 EXPECTED = (
     "business_context",
@@ -88,7 +89,7 @@ def test_compose_raises_no_prompt_for_a_step_outside_the_inventory(pack: Prepare
 
 
 def test_the_public_names_are_the_ruled_ones() -> None:
-    assert {"NoPrompt", "PromptRequest", "compose", "inventory"} <= set(dir(prompts))
+    assert {"FenceError", "inventory"} <= set(dir(prompts))
 
 
 @pytest.mark.parametrize(

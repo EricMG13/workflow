@@ -21,8 +21,8 @@ from prompt_support import CONTRACT_STEPS, EXISTING, request_for
 
 from deploy_vii.live.prompts import STEP_CONTRACTS
 from deploy_vii.preparation import PreparedPack
-from deploy_workflow.prompts import NoPrompt, compose, inventory, rules
-from deploy_workflow.prompts.compose import PromptRequest
+from deploy_workflow.prompts import inventory, rules
+from deploy_workflow.prompts.compose import NoPrompt, PromptRequest, compose
 from deploy_workflow.prompts.g8 import G8_RULE_ID
 from deploy_workflow.prompts.p5 import P5_RULE_ID
 

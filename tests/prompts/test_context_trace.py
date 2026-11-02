@@ -32,7 +32,8 @@ from prompt_support import CP3_MODULE_CONTEXT, module_of, request_for
 from deploy_vii.contracts import Run
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.context import ContextRefused, RunContext, context_facts, load_context
-from deploy_workflow.prompts import compose, inventory
+from deploy_workflow.prompts import inventory
+from deploy_workflow.prompts.compose import compose
 
 compose_module: Any = importlib.import_module("deploy_workflow.prompts.compose")
 

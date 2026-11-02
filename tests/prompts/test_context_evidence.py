@@ -24,7 +24,7 @@ from deploy_vii.live import prompts as live_prompts
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow.context import context_facts
 from deploy_workflow.owners import cp3d
-from deploy_workflow.prompts import compose
+from deploy_workflow.prompts.compose import compose
 from deploy_workflow.prompts.fence import FenceError
 
 compose_module: Any = importlib.import_module("deploy_workflow.prompts.compose")

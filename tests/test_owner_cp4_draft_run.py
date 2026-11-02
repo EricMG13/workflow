@@ -40,6 +40,9 @@ CASE = attach.CASE
 EXPECTED = attach.EXPECTED
 SUBMISSIONS = attach.SUBMISSIONS
 DRAFT_LIMITATION: str = EXPECTED["draft_limitation"]
+SYNTHETIC_LINE: str = json.loads(
+    (attach.ROOT / "cases/cp1d-owner/expected.json").read_text(encoding="utf-8")
+)["cases"]["positive"]["settled_limitations"][7]
 DRAFT_CASE = "draft-ok"
 LEGAL_ID = "legal-draft"
 
@@ -133,7 +136,9 @@ def _rendered_cp4() -> dict[str, Any]:
     block, which is what the page's script displays."""
     pack, _upstream = draft._upstream(DRAFT_CASE)
     module = cp4_legal.cp4_module(draft._report(DRAFT_CASE), draft._inputs(pack), 1)
-    page = render(cp0_view(pack, module.model_copy(update={"status": "restricted"}), accepted=True))
+    # delivery.py:172-177 and execution.py:488 both derive `restricted` from non-empty limitations
+    restricted = module.model_copy(update={"status": "restricted"})
+    page = render(cp0_view(pack, restricted, accepted=True))
     found = re.search(
         r'<script id="report-data" type="application/json">(.*?)</script>', page, re.DOTALL
     )
@@ -211,9 +216,13 @@ def test_the_cp4_head_carries_the_draft_limitation_once(
     head = next(h for h in store.read().heads if h.module_id == "CP-4")
     limitations = list(store.head_module(head).limitations)
     want = EXPECTED["cases"][DRAFT_CASE]["M"]["CP-4"]["own_limitations"]
+    # The oracle runs are synthetic, so `execution.py` appends one line after the module's own
+    # limitations: pinned at cases/cp1d-owner/expected.json#cases/positive/settled_limitations/7.
+    own = want["exact_order"]
+    assert limitations[: len(own)] == own
+    assert len(own) == want["total_count"]
+    assert limitations[len(own) :] == [SYNTHETIC_LINE]
     assert limitations.count(DRAFT_LIMITATION) == 1
-    assert limitations == want["exact_order"]
-    assert len(limitations) == want["total_count"]
 
 
 @_PROMOTION

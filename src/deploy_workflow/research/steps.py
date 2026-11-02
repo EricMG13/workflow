@@ -8,6 +8,7 @@ evidence rules (absence needs a recorded search, a cited page needs a read).
 """
 
 import json
+import re
 from collections.abc import Mapping, Sequence
 from datetime import date
 from typing import Any, Final, NamedTuple, Self
@@ -15,10 +16,11 @@ from typing import Any, Final, NamedTuple, Self
 from deploy_vii.contracts import Contract, Identifier, Input, Text
 from deploy_vii.execution import listed_issues
 from deploy_vii.live.schema import json_object
-from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
+from deploy_vii.live.tools import UNBACKED_ABSENCE, UNREAD_PAGE, Seen, cited_locators
 from deploy_workflow.research.brief import CONTEXT_PREFIX, TailoredQuestion
 from deploy_workflow.research.contracts import (
     MAX_QUESTIONS,
+    RESERVED_PREFIX,
     EvidenceItem,
     QuestionKind,
     ResearchBrief,
@@ -244,11 +246,35 @@ def _absent(document: Mapping[str, object], seen: Seen) -> list[str]:
     return [" ".join(parts) for parts in sorted(found)]
 
 
+_PAGE: Final = re.compile(r"page:[0-9]+")
+_LINE: Final = re.compile(r"line:[0-9]+")
+
+
+def _unread_issues(text: str, seen: Seen) -> tuple[str, ...]:
+    """O7-R29: every cited ``page:N`` locator, and every cited ``line:N`` locator of an ``ev-*``
+    item, that ``read_pages`` never returned in this step, sorted. ``unread_citation_issues`` of
+    deploy_vii judges ``page:N`` only (I4); an ``ev-*`` item is a line source."""
+    unread = sorted(
+        (source_id, locator)
+        for source_id, locator in cited_locators(text)
+        if (
+            _PAGE.fullmatch(locator)
+            or (source_id.startswith(RESERVED_PREFIX) and _LINE.fullmatch(locator))
+        )
+        and (source_id, locator) not in seen.read
+    )
+    return listed_issues(
+        unread,
+        lambda cited: (UNREAD_PAGE, ": ", cited[0], " ", cited[1]),
+        lambda count: f"{UNREAD_PAGE}: {count} further cited pages not listed",
+    )
+
+
 def research_rules(text: str, seen: Seen) -> tuple[str, ...]:
     """The research step's evidence rules over the payload text and ``Seen``: absence first (every
     searched item of an answer or a ``none_found`` entry needs a recorded ``search_pack``), then
-    unread page citations, each sorted. A payload that is not a JSON object has no rule issues;
-    the schema check reports it."""
+    unread citations (a ``page:N``, or a ``line:N`` of an ``ev-*`` item), each sorted. A payload
+    that is not a JSON object has no rule issues; the schema check reports it."""
     document = json_object(text)
     absent = [] if document is None else _absent(document, seen)
     return (
@@ -262,7 +288,7 @@ def research_rules(text: str, seen: Seen) -> tuple[str, ...]:
             ),
             lambda count: f"{UNBACKED_ABSENCE}: {count} further absence claims not listed",
         ),
-        *unread_citation_issues(text, seen),
+        *_unread_issues(text, seen),
     )
 
 

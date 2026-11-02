@@ -76,6 +76,7 @@ class Run:
             self.evidence,
             rejected(self.expected),
             head_sha256,
+            self.brief.brief_sha256,
         )
 
 
@@ -215,7 +216,8 @@ def test_dossier_input_renders_the_key_bytes(
     text = template["template_text"].replace(BRIEF_MARKER, given.brief.brief_sha256)
     head = hashlib.sha256(text.encode()).hexdigest()
     assert d.dossier_markdown(given.dossier(head)) == text
-    assert given.dossier(head).result_sha256 == head
+    assert given.dossier(head).head_sha256 == head
+    assert given.dossier(head).head_brief_sha256 == given.brief.brief_sha256
 
 
 def test_two_not_found_questions_are_counted_and_named(

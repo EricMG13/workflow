@@ -518,9 +518,11 @@ def dossier_input(
     evidence: Sequence[EvidenceItem],
     rejected: Sequence[RefusedItem],
     head_sha256: str,
+    head_brief_sha256: str,
 ) -> DossierInput:
     """What the 1b renderer takes. ``head_sha256`` is the CP-DR head's hash, recorded and not
-    compared (O7-R10); the tables carry each cell's shown string, derived from its fact."""
+    compared (O7-R10); ``head_brief_sha256`` is its ``research-brief`` input, which the dossier's
+    brief must equal; the tables carry each cell's shown string, derived from its fact."""
     by_id = {fact.fact_id: fact for fact in composed.facts}
     return DossierInput(
         brief=brief,
@@ -529,5 +531,6 @@ def dossier_input(
         facts=[fact.model_dump(include=FACT_RECORD) for fact in composed.facts],
         evidence=tuple(evidence),
         rejected=tuple(rejected),
-        result_sha256=head_sha256,
+        head_sha256=head_sha256,
+        head_brief_sha256=head_brief_sha256,
     )

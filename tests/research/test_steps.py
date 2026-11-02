@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from deploy_vii.contracts import Input
-from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen
+from deploy_vii.live.tools import UNBACKED_ABSENCE, UNREAD_PAGE, Seen
 from deploy_workflow.research import brief as b
 from deploy_workflow.research import contracts as c
 from deploy_workflow.research import steps as s
@@ -212,7 +212,9 @@ def test_a_not_found_answer_item_with_no_search_is_an_absence_issue(
 
 def test_no_search_at_all_flags_every_absence_item(submissions: dict[str, Any]) -> None:
     got = s.research_rules(json.dumps(submissions["research_v1"]), Seen())
-    assert got and all(line.startswith(UNBACKED_ABSENCE) for line in got)
+    absence = [line for line in got if line.startswith(UNBACKED_ABSENCE)]
+    assert absence and list(got[: len(absence)]) == absence  # absence first (O7-R29: then unread)
+    assert all(line.startswith(UNREAD_PAGE) for line in got[len(absence) :])
 
 
 def test_an_unread_page_is_flagged(submissions: dict[str, Any]) -> None:
@@ -221,6 +223,27 @@ def test_an_unread_page_is_flagged(submissions: dict[str, Any]) -> None:
     sub["answers"][0]["claims"][0]["citations"][0]["locator"] = "page:3"
     got = s.research_rules(json.dumps(sub), seen)
     assert got and "ev-2 page:3" in got[0]
+
+
+def test_an_unread_line_of_an_evidence_item_is_one_unread_issue(
+    submissions: dict[str, Any],
+) -> None:
+    """I4 / O7-R29: a ``line:N`` citation of an ``ev-*`` item that ``read_pages`` never returned
+    is judged unread, as a ``page:N`` one is."""
+    sub = copy.deepcopy(submissions["research_v1"])
+    seen = seen_from(submissions["tool_calls"]["research"])
+    cited = sub["answers"][0]["claims"][0]["citations"][0]
+    cited["locator"] = "line:30"
+    got = s.research_rules(json.dumps(sub), seen)
+    assert got == (f"{UNREAD_PAGE}: {cited['source_id']} line:30",)
+
+
+def test_a_line_of_a_pack_source_is_not_judged(submissions: dict[str, Any]) -> None:
+    """Only ``ev-*`` items are line sources; a pack source cites ``page:N``."""
+    sub = copy.deepcopy(submissions["research_v1"])
+    seen = seen_from(submissions["tool_calls"]["research"])
+    sub["answers"][0]["claims"][0]["citations"][0].update(source_id="financial", locator="line:30")
+    assert s.research_rules(json.dumps(sub), seen) == ()
 
 
 def test_a_payload_that_is_not_an_object_has_no_rule_issues() -> None:

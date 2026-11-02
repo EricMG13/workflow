@@ -513,14 +513,16 @@ def test_a_missing_pack_figure_gives_its_reason_to_the_ratio_and_the_limitation(
     limitation, never 'not stated'."""
     held = {f.fact_id: f for f in _key_facts()}[f"TDR.6.{cell}.amount"]
     report = _report(_peers_pack(), _upstream(_head_with_pack()))
+    why = held.limitation
+    assert why is not None
     peer, operand = cell.split(".")
     got = {f.fact_id: f for f in report.facts}[f"T1C.3.{peer}.{ratio}"]
-    assert got.status == "missing" and held.limitation in (got.limitation or "")
+    assert got.status == "missing" and why in (got.limitation or "")
     assert "not stated" not in (got.limitation or "")
     lines = [
         line for line in report.limitations if operand in line.lower() or "interest" in line.lower()
     ]
-    named = [line for line in lines if held.limitation in line]
+    named = [line for line in lines if why in line]
     assert named and not any("not stated" in line for line in named)
 
 

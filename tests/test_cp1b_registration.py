@@ -1,6 +1,5 @@
 """Registration is component evidence, never CP1B owner acceptance."""
 
-import hashlib
 import json
 import os
 import subprocess
@@ -43,10 +42,12 @@ def test_only_cp1b_table_ownership_changes():
     rows = json.loads((Path(__file__).parents[1] / "src/deploy_vii/methodology.json").read_text())
     cp1b = next(row for row in rows if row["module_id"] == "CP-1B")
     assert cp1b.pop("table_ids") == ["T1B.1", "T1B.2", "T1B.3"]
-    digest = hashlib.sha256(
-        json.dumps(rows, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    assert digest == "c89118c68039b0948e192298c334f9cfb22b13fa0d2d6d175d8eb289a227e3d2"
+    # Whole-file coverage is cases/PINS.json through `python3 -I cases/pins.py --check`.
+    # CP-2, CP-1D and CP-5 list CP-1B in `optional` (fan-in); only `required` is guarded.
+    assert cp1b["required"] == ["CP-0", "CP-1"] and cp1b["optional"] == []
+    others = [row for row in rows if row is not cp1b]
+    assert not [r["module_id"] for r in others if any(t.startswith("T1B.") for t in r["table_ids"])]
+    assert not [r["module_id"] for r in others if "CP-1B" in r["required"]]
     assert next(m for m in modules() if m.module_id == "CP-1B").required == ("CP-0", "CP-1")
     assert dependencies(("CP-1B", "CP-5"))["CP-5"] == {"CP-0", "CP-1", "CP-1B"}
     assert step_chain("CP-5").steps == ("integrity_review",)

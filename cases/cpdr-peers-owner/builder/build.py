@@ -787,6 +787,71 @@ MATRIX = [
     for cr in (True, False)
 ]
 assert sum(r[3] for r in MATRIX) == 1
+
+
+def reason_case(
+    template, **values
+):  # a template and one worked example (the example's reason is the template filled)
+    return {"template": template, "example": {**values, "reason": template.format(**values)}}
+
+
+# O7-R66: the peers.py reason texts at HEAD (research/peers.py _basis_refusal, _admit, _sheet and the _Unusable raises).
+# None names model text: a currency or unit is echoed only after _unsafe passed it (fence and cell rule), a row id and a
+# field are Identifiers ([A-Za-z0-9_.:-]), and an unsafe text is never quoted. Each is short and cell-safe.
+NOT_ADMITTED_REASONS = {
+    "currency": reason_case(
+        "currency {currency} is not the run's {run_currency}", currency="EUR", run_currency=RUN_CUR
+    ),
+    "unit": reason_case("unit {unit} is not millions", unit="thousands"),
+    "different_dates": reason_case("the located figures end on different dates"),
+    "no_figure": reason_case("no figure is located"),
+    "no_amount": reason_case("no figure amount is located"),
+    "issuer": reason_case("named as the issuer"),
+}
+assert NOT_ADMITTED_REASONS["currency"]["example"]["reason"] == NOT_ADMITTED[0]["reason"]
+PACK_UNUSABLE = {
+    "malformed_cell": reason_case(
+        "{where}: the {field} cell is not a stated text", where="TDR.4 p01", field="name"
+    ),
+    "malformed_amount_cell": reason_case(
+        "{where}: the amount cell is neither located nor missing", where="TDR.6 p01.revenue"
+    ),
+    "duplicate_name": reason_case("TDR.4: two peers share one name"),
+    "unknown_operand": reason_case(
+        "{where}: not a TDR.4 peer's CP-1C operand", where="TDR.6 p01.gross_margin"
+    ),
+    "non_ev_citation": reason_case(
+        "{where}: the amount cell is not one number quoted from an ev-* item",
+        where="TDR.6 p01.revenue",
+    ),
+    "unsafe_delimiter": reason_case(
+        "{where} {field}: holds a block delimiter or a lookalike of one",
+        where="TDR.4 p01",
+        field="name",
+    ),
+    "unsafe_cell": reason_case(
+        "{where} {field}: holds a line break or a pipe character", where="TDR.4 p01", field="name"
+    )
+    | {
+        "code_text_at_head": "{where} {field}: holds a line break or a |",
+        "unfit": "the code text holds a | and so cannot itself sit in a dossier table cell; the builder changes it to the template",
+    },
+    "repeated_cell": reason_case(
+        "{where}: the {field} cell appears twice", where="TDR.6 p01.revenue", field="unit"
+    ),
+    "period_end_not_a_date": reason_case(
+        "{where}: period_end is not a calendar date", where="TDR.6 p01.revenue"
+    ),
+}
+for _c in (
+    *NOT_ADMITTED_REASONS.values(),
+    *PACK_UNUSABLE.values(),
+):  # cell-safe: no line break or <<< in an example
+    assert not any(t in _c["example"]["reason"] for t in ("\n", "\r", "<<<")), _c
+assert all(
+    "|" not in c["template"] and "|" not in c["example"]["reason"] for c in PACK_UNUSABLE.values()
+)
+
 EXPECTED = {
     "schema_version": "cpdr-peers-owner-expected/1",
     "derivation_note": "Derived by builder/build.py with the stdlib from the invented pages, O7-R47 Q4-Q6 and the method texts; no product module is imported or run. Each _source names where a value comes from.",
@@ -897,6 +962,8 @@ EXPECTED = {
                 "typed_amount": "submissions.json#refusal_inputs.typed_amount (shape refusal)",
                 "leak_field": "submissions.json#refusal_inputs.leak_field (shape refusal)",
             },
+            "not_admitted_reasons": NOT_ADMITTED_REASONS,
+            "pack_unusable": PACK_UNUSABLE,
             "_source": "unlocated_figure and after_cutoff are the plan's fixed texts (O7d D0a); pack_not_requested and pack_missing the plan's D1a texts; both_sources_conflict the plan's section 1 issue text; operand_unknown and not_in_tdr4 are preparer texts in the research-review form '<where>: <text>'",
         }
     },

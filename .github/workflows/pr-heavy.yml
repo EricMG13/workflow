@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 360
     env:
       BASE: origin/${{ github.base_ref }}
+      PYTHONPATH: tests
     steps:
       - uses: actions/checkout@v5
         with:

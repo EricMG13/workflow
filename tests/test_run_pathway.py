@@ -39,7 +39,7 @@ from deploy_workflow.model.budget import Budget
 from deploy_workflow.model.loop import PromptFor, ToolLoop
 from deploy_workflow.model.pricing import money_text
 from deploy_workflow.model.redact import Redactor
-from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.model.turn import CONFIG_MODELS, CONFIG_PROVIDERS, ModelSpec
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
 from deploy_workflow.prompts import factory as factory_module
 from deploy_workflow.prompts.compose import NoPrompt
@@ -221,10 +221,18 @@ def test_the_default_composer_is_the_o6_composer(
     assert sent[0].messages == real_compose(composed[0])  # what the model got is O6's output
 
 
+CONFIG_SPECS = [
+    ModelSpec(config, provider, CONFIG_MODELS[config], config.rsplit("-", 1)[1])
+    for config, provider in CONFIG_PROVIDERS.items()
+]
+
+
+@pytest.mark.parametrize("spec", CONFIG_SPECS, ids=lambda spec: spec.config_id)
 def test_the_loop_gets_the_providers_bytes_per_token_bound(
-    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch, spec: ModelSpec
 ) -> None:
-    """The seam is ToolLoop's constructor keyword, spied on the class ``run_pathway`` builds."""
+    """The seam is ToolLoop's constructor keyword, spied on the class ``run_pathway`` builds,
+    for a run of each configuration."""
     limits = json.loads((ROOT / "cases" / "pilot-fixes" / "limits.json").read_text("utf-8"))
     key = limits["bytes_per_token_lower_bound"]
     given: list[Decimal] = []
@@ -235,8 +243,9 @@ def test_the_loop_gets_the_providers_bytes_per_token_bound(
             super().__init__(*a, **kw)
 
     monkeypatch.setattr(rp, "ToolLoop", Spy)
-    run_pathway(**args)  # MODEL is a sol configuration: provider openai
-    assert given == [Decimal(key["openai"])]
+    recordings = Path(args["run_dir"]).parent / "recordings"
+    run_pathway(**{**args, "model": spec, "adapter": recorded_adapter(spec, recordings)})
+    assert given == [Decimal(key[CONFIG_PROVIDERS[spec.config_id]])]
 
 
 def _o2_run(
@@ -1464,8 +1473,8 @@ def test_a_live_run_resumed_offline_is_refused(
     [
         '{"cap_usd": "sNaN", "mode": "offline"}',
         '{"cap_usd": "NaN", "mode": "offline"}',
-        '{"cap_usd": "1"}',
-        '{"cap_usd": "1", "mode": "x"}',
+        f'{{"cap_usd": "{money_text(CAP)}"}}',
+        f'{{"cap_usd": "{money_text(CAP)}", "mode": "x"}}',
         "[]",
         "not json",
     ],

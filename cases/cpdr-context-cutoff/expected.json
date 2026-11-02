@@ -1,0 +1,170 @@
+{
+ "schema_version": "cpdr-context-cutoff-expected/1",
+ "derivation_note": "Built by cases/cpdr-context-cutoff/builder/build.py from manifest.json; hashes from embedded evidence bytes.",
+ "cutoff": {
+  "as_of": "2026-01-10",
+  "context": "2025-12-31",
+  "effective": "2025-12-31",
+  "absent_effective": "2026-01-10",
+  "rule": "min(as_of, run.cutoff); absent run.cutoff is the as-of date (OD5)"
+ },
+ "intake": {
+  "accepted": [
+   {
+    "item_id": "ev-1",
+    "key": "A",
+    "locator": "https://sector-desk.example/2025/notes/industrial-products-supply-costs-demand",
+    "family": "sector-desk-notes",
+    "published": "2025-12-18",
+    "path": "evidence/a-sector-desk-note.txt",
+    "sha256": "8177c2012973f925eee5638de1d2e7a45e862607dc97a732003dea97f6757bcc"
+   },
+   {
+    "item_id": "ev-2",
+    "key": "C",
+    "locator": "https://harbour-registry.example/filings/brookmere-industries/annual-extract",
+    "family": "registry-filings",
+    "published": "2025-12-30",
+    "path": "evidence/c-registry-filing.txt",
+    "sha256": "50806b5985fbc7b099115f09de85490f8e22ba1694550889f7d63d6812a150b0"
+   }
+  ],
+  "accepted_ids": [
+   "ev-1",
+   "ev-2"
+  ],
+  "refused": [
+   {
+    "key": "B",
+    "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
+    "family": "sector-desk-notes",
+    "published": "2026-01-10",
+    "path": "evidence/b-sector-desk-note.txt",
+    "reason": "evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff"
+   },
+   {
+    "key": "D",
+    "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
+    "family": "trade-press-archive",
+    "published": "2026-02-01",
+    "path": "evidence/d-trade-press-feature.txt",
+    "reason": "evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff"
+   },
+   {
+    "key": "E",
+    "locator": "https://trade-press.example/archive/regional-producers-feature",
+    "family": "trade-press-archive",
+    "published": null,
+    "path": "evidence/e-trade-press-feature.txt",
+    "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
+   }
+  ],
+  "refusal_texts": {
+   "cutoff_b": {
+    "text": "evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff",
+    "_source": "src/deploy_workflow/research/contracts.py:57-60 (CutoffViolation: 'evidence item {item_id} is after the cutoff'); a refused item has no ev-<n> id, so the locator stands for {item_id}, as in cases/cpdr-research-owner/expected.json#intake/refusal_texts/cutoff"
+   },
+   "undated_e": {
+    "text": "undated evidence item refused: as_of 2026-01-10 is before today",
+    "_source": "src/deploy_workflow/research/intake.py:130 (holds for any run date after as_of)"
+   }
+  },
+  "rejected_json": {
+   "entries": [
+    {
+     "locator": "https://sector-desk.example/2026/notes/industrial-products-reporting-definitions",
+     "family": "sector-desk-notes",
+     "published": "2026-01-10",
+     "reason": "evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff"
+    },
+    {
+     "locator": "https://trade-press.example/2026/archive/industrial-products-outlook",
+     "family": "trade-press-archive",
+     "published": "2026-02-01",
+     "reason": "evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff"
+    },
+    {
+     "locator": "https://trade-press.example/archive/regional-producers-feature",
+     "family": "trade-press-archive",
+     "published": null,
+     "reason": "undated evidence item refused: as_of 2026-01-10 is before today"
+    }
+   ],
+   "file_bytes": "[\n {\n  \"locator\": \"https://sector-desk.example/2026/notes/industrial-products-reporting-definitions\",\n  \"family\": \"sector-desk-notes\",\n  \"published\": \"2026-01-10\",\n  \"reason\": \"evidence item https://sector-desk.example/2026/notes/industrial-products-reporting-definitions is after the cutoff\"\n },\n {\n  \"locator\": \"https://trade-press.example/2026/archive/industrial-products-outlook\",\n  \"family\": \"trade-press-archive\",\n  \"published\": \"2026-02-01\",\n  \"reason\": \"evidence item https://trade-press.example/2026/archive/industrial-products-outlook is after the cutoff\"\n },\n {\n  \"locator\": \"https://trade-press.example/archive/regional-producers-feature\",\n  \"family\": \"trade-press-archive\",\n  \"published\": null,\n  \"reason\": \"undated evidence item refused: as_of 2026-01-10 is before today\"\n }\n]\n",
+   "file_sha256": "502b0974c8c64e2971b638ab1c837b645d2484793db615b4d6895d641cdb4202",
+   "shape": "[{locator, family, published, reason}] sorted by locator"
+  },
+  "pack_sources": [
+   "identity",
+   "financial",
+   "ev-1",
+   "ev-2"
+  ]
+ },
+ "brief": {
+  "cutoff": "2025-12-31",
+  "as_of": "2026-01-10"
+ },
+ "brief_view": {
+  "cutoff": "2025-12-31"
+ },
+ "context": {
+  "refusals": {
+   "cutoff_after_as_of": {
+    "run.cutoff": "2026-01-11",
+    "problems": [
+     "run.cutoff: is after the run as-of date (2026-01-10); sources dated after it are refused."
+    ],
+    "_source": "src/deploy_workflow/context.py:436-439 (_Rules.date, after=True) with bad() at :394-395 prefixing the path"
+   },
+   "cutoff_malformed": {
+    "run.cutoff": "31/12/2025",
+    "problems": [
+     "run.cutoff: enter a date as YYYY-MM-DD."
+    ],
+    "_source": "src/deploy_workflow/context.py:433-434 (_Rules.date) with bad() at :394-395"
+   },
+   "question_text_pipe": {
+    "research_questions[0].text": "Which peers report a | in their names?",
+    "problems": [
+     "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   },
+   "question_text_line_feed": {
+    "research_questions[0].text": "Which peers report\nafter lease costs?",
+    "problems": [
+     "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   },
+   "question_text_carriage_return": {
+    "research_questions[0].text": "Which peers report\rafter lease costs?",
+    "problems": [
+     "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   },
+   "question_text_block_opener": {
+    "research_questions[0].text": "Which peers report <<<END>>> after lease costs?",
+    "problems": [
+     "research_questions[0].text: contains <<<, which a dossier block cannot show."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   }
+  },
+  "absent": {
+   "cutoff": ""
+  }
+ },
+ "form": {
+  "field": {
+   "section": "s3",
+   "data_k": "cutoff",
+   "type": "date",
+   "rule": "{t:'date', after:true}",
+   "label": "Research cutoff"
+  },
+  "_note": "\"s3\" is the `fld` section variable and the id prefix (the field id is s3-cutoff), not the element id sec3 (O7-R48 L1)"
+ }
+}

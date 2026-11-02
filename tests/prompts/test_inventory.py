@@ -1,6 +1,6 @@
 """O6 Task 1: the inventory of steps that need an owner-path prompt, and the prompt-set contract.
 
-The inventory is the 26 steps of ``OWNER_SPECS``. The ``compose`` cases are strict xfail until
+The inventory is the 27 steps of ``OWNER_SPECS``. The ``compose`` cases are strict xfail until
 a step has a prompt; each marker comes off when its step gets one (the strict flag turns an
 unexpected pass into a failure, so the marker cannot be forgotten). Task 2 gave the 12 steps that
 already have a ``STEP_CONTRACTS`` text their prompt; the 14 new steps wait for Task 4's texts.
@@ -20,6 +20,7 @@ from deploy_workflow.prompts import inventory
 from deploy_workflow.prompts.compose import NoPrompt, compose
 
 EXPECTED = (
+    "brief",
     "business_context",
     "change_screen",
     "committee_challenge",
@@ -49,9 +50,9 @@ EXPECTED = (
 )
 
 
-def test_inventory_is_the_26_steps_of_owner_specs() -> None:
+def test_inventory_is_the_27_steps_of_owner_specs() -> None:
     found = inventory()
-    assert len(found) == 26
+    assert len(found) == 27
     assert found == EXPECTED
     assert list(found) == sorted(found)
     assert set(found) == {s.step_id for spec in OWNER_SPECS.values() for s in spec.steps}

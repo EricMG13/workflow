@@ -161,7 +161,10 @@ ENTRIES: Mapping[str, tuple[str, ...]] = {
     "integrity_review": (VII + "cp5_integrity:_validate_step", OWNERS + "cp5:_entry_validator"),
     "legal_covenants": (VII + "cp4_legal:_validate_step", OWNERS + "cp4:semantic_issues"),
     "committee_challenge": (VII + "cp6_committee:_validate_step",),
-    "research": (OWNERS + "cpdr:ENTRY_VALIDATOR",),
+    # CP-DR's one `ENTRY_VALIDATOR` dispatches on the attempt's latest step; each step's entry is
+    # the validator it dispatches to, so a step's rules cover that step's sites only.
+    "brief": (OWNERS + "cpdr:_validate_brief",),
+    "research": (OWNERS + "cpdr:_validate_research",),
     "market_implied": (OWNERS + "cp3d:_validate_step",),
     "macro_fx": (OWNERS + "cp2e:_validate_step",),
     "decision_ledger": (OWNERS + "cp8:_validate_step",),
@@ -185,7 +188,6 @@ OWNER_MODULE: Mapping[str, str] = {
     "integrity_review": OWNERS + "cp5",
     "legal_covenants": OWNERS + "cp4",
     "committee_challenge": OWNERS + "cp6",
-    "research": OWNERS + "cpdr",
     "market_implied": OWNERS + "cp3d",
     "macro_fx": OWNERS + "cp2e",
     "decision_ledger": OWNERS + "cp8",
@@ -217,7 +219,7 @@ ORACLES: Mapping[str, tuple[OracleSpec, ...]] = {
     "relative_value": (OracleSpec("cp3-cp6", "cp3-"), OracleSpec("cp3-context")),
     "committee_challenge": (OracleSpec("cp3-cp6", "cp6-"),),
     "integrity_review": (OracleSpec("cp5"),),
-    "research": (OracleSpec("cpdr"),),
+    "research": (OracleSpec("cpdr-research"),),
     "market_implied": (OracleSpec("cp3d"), OracleSpec("cp3-context", part="cp3d")),
     "macro_fx": (OracleSpec("cp2e"),),
     "decision_ledger": (OracleSpec("cp8"),),
@@ -332,6 +334,10 @@ def oracle_ids(step_id: str) -> dict[str, tuple[str, ...]]:
 UPSTREAM = "upstream binding: stale or blocked bound input; the remedy is a rerun, not a rewrite"
 OWN_TEXT = "Python's own limitation text, not a refusal of anything the model wrote"
 UNREADABLE = "source unreadable; the remedy is a new pack"
+ANCHOR = (
+    "CP-DR stops before its first step when CP-0 or CP-1 is not settled and bound: "
+    "there is no submission, and the remedy is a rerun"
+)
 CLAIM_TEXT = "builds Python's claim text"
 NON_CONTENT: Mapping[str, str] = {
     "fn:deploy_vii.cp2_synthesis:_provenance_issues": UPSTREAM,
@@ -357,6 +363,7 @@ NON_CONTENT: Mapping[str, str] = {
     **{f"oracle:cp2g:{i}": UPSTREAM for i in ("v18", "v19", "v20")},
     **{f"oracle:cp2h:{i}": UPSTREAM for i in ("v17", "v18")},
     **{f"oracle:cp4c:{i}": UPSTREAM for i in ("v24", "v25", "v26", "v27")},
+    "oracle:cpdr-research:anchors": ANCHOR,
     "oracle:cp1d:r14": UNREADABLE,
     "oracle:cp1c:r11": UNREADABLE,
     "oracle:cp2h:s01": UNREADABLE,

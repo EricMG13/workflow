@@ -41,6 +41,8 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
+from deploy_workflow.research.contracts import RESERVED_PREFIX
+from deploy_workflow.research.evidence import research_hashes, research_retrieved
 from deploy_workflow.tools.source import SourceError, SourceTools
 
 # The steps that may open a source session, per module. CP-0, CP-1, CP-1A, CP-3 and CP-4 have a
@@ -56,7 +58,7 @@ _SOURCE_STEPS = {
     "CP-4": ("legal_covenants",),
     "CP-1D": ("earnings_quality",),
     "CP-3D": ("market_implied",),
-    "CP-DR": ("research",),
+    "CP-DR": ("brief", "research"),
     "CP-1C": ("peer_benchmark",),
     "CP-2E": ("macro_fx",),
     "CP-2H": ("rating_triggers",),
@@ -78,6 +80,23 @@ def _every_held(pack: PreparedPack) -> tuple[str, ...]:
     return tuple(s.source_id for s in pack.sources)
 
 
+def _without_research(pack: PreparedPack) -> tuple[str, ...]:
+    """Every held source whose id is not a research item (`ev-*`), in pack order: CP-DR's `brief`
+    step plans from the run's own sources and never sees supplied evidence (O7-R26)."""
+    return tuple(s.source_id for s in pack.sources if not s.source_id.startswith("ev-"))
+
+
+def _held_with_research(*source_ids: str) -> Callable[[PreparedPack], tuple[str, ...]]:
+    """The named sources the pack holds, then every held research item (`ev-*`), in pack order
+    (O7c C1, O7-R47). A held source that is not ready stays named, as for `_held`."""
+    named = frozenset(source_ids)
+    return lambda pack: tuple(
+        s.source_id
+        for s in pack.sources
+        if s.source_id in named or s.source_id.startswith(RESERVED_PREFIX)
+    )
+
+
 # H1 (G1-X §3, §5): the fixed readable-source scope of each owner-only sourced step, as its lease
 # pins it. Never caller-supplied and never `live.context.SOURCE_SCOPES` (deploy_vii never imports
 # deploy_workflow). A row here applies only to a module without a live step contract. One
@@ -93,10 +112,13 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-1D", "earnings_quality"): _held("identity", "financial", "bridge"),
             # docs/CP3D-OWNER-LEASE.md:46, :87: market and financial only, never identity.
             ("CP-3D", "market_implied"): _held("market", "financial"),
+            # O7-R26: the brief step reads every held source but the supplied evidence (`ev-*`).
+            ("CP-DR", "brief"): _without_research,
             # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
             ("CP-DR", "research"): _every_held,
-            # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers.
-            ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
+            # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers;
+            # O7c C1 (O7-R47): then every held `ev-*`, which CP-1C may cite. `owners/cp1c.in_scope`.
+            ("CP-1C", "peer_benchmark"): _held_with_research("identity", "financial", "peers"),
             # docs/CP2E-OWNER-LEASE.md:40: the financial source only, never identity.
             ("CP-2E", "macro_fx"): _held("financial"),
             # docs/CP2H-OWNER-LEASE.md:36, :46: identity, financial, ratings and, when the pack
@@ -676,17 +698,23 @@ def _submission_producer_inputs(
 
 
 # In-process only, never persisted, as `_CP1_VERIFIED`: key (snapshot content hash, producer
-# result hash), value the blob digests a passing `_submission_producer_inputs` read. Only a pass
-# is kept; a hit re-reads and hash-checks each digest, so tampered or missing bytes still refuse.
+# result hash), value the blob digests a passing check read. One memo serves the one-step
+# `*-submission` rule and CP-DR's probe (their producers' result hashes differ, so their keys
+# never meet). Only a pass is kept; a hit re-reads and hash-checks each store blob it read, so
+# tampered or missing blobs still refuse. Files outside the store (CP-DR's research records) are
+# not re-checked here; `_cpdr_producer_inputs_memoised` checks them before the memo.
 _SUBMISSION_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
 _SUBMISSION_VERIFIED_LIMIT = 16
 _SUBMISSION_VERIFIED_LOCK = Lock()
 
 
-def _submission_producer_inputs_memoised(
-    store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
+def _verified_once(
+    store: Execution,
+    snapshot: ExecutionSnapshot,
+    producer: Module,
+    check: Callable[[Execution], bool],
 ) -> bool:
-    # `expected` is `current_inputs(snapshot, producer.module_id)`, fixed by the key's snapshot.
+    """`check(store)` over the memo: a pass is remembered with the blobs it read."""
     key = (sha256(snapshot.model_dump_json().encode()).hexdigest(), producer.content_hash())
     with _SUBMISSION_VERIFIED_LOCK:
         touched = _SUBMISSION_VERIFIED.get(key)
@@ -695,7 +723,7 @@ def _submission_producer_inputs_memoised(
             store._load(digest)  # raises ValueError for missing or tampered bytes
         return True
     recorder = _RecordingExecution(store.directory)
-    if not _submission_producer_inputs(recorder, snapshot, producer, expected):
+    if not check(recorder):
         return False
     with _SUBMISSION_VERIFIED_LOCK:
         while len(_SUBMISSION_VERIFIED) >= _SUBMISSION_VERIFIED_LIMIT:
@@ -704,12 +732,66 @@ def _submission_producer_inputs_memoised(
     return True
 
 
+def _submission_producer_inputs_memoised(
+    store: Execution, snapshot: ExecutionSnapshot, producer: Module, expected: tuple[Input, ...]
+) -> bool:
+    # `expected` is `current_inputs(snapshot, producer.module_id)`, fixed by the key's snapshot.
+    return _verified_once(
+        store,
+        snapshot,
+        producer,
+        lambda recorder: _submission_producer_inputs(recorder, snapshot, producer, expected),
+    )
+
+
+def _cpdr_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
+    """O7-R54 H-1: a settled CP-DR head is a two-step module, so the one-step `*-submission` rule
+    cannot authenticate it. Its core's registered probe (`owner_workflow._PROBES["CP-DR"]`, the
+    verifier's own re-settle check) rebuilds the head's attempt over `snapshot`; a
+    `WorkflowError` (`identity_mismatch`) is a head the journal would not write, so False."""
+    from deploy_workflow import owner_workflow  # imported here: owner_workflow imports this module
+    from deploy_workflow.workflow import WorkflowError
+
+    selected = [
+        a
+        for a in snapshot.attempts
+        if a.module_id == producer.module_id and a.result_sha256 == producer.content_hash()
+    ]
+    if len(selected) != 1:
+        return False
+    try:
+        owner_workflow._PROBES[producer.module_id](store, snapshot, selected[0])
+    except WorkflowError:
+        return False
+    return True
+
+
+def _cpdr_producer_inputs_memoised(
+    store: Execution, snapshot: ExecutionSnapshot, producer: Module
+) -> bool:
+    from deploy_workflow.owners import cpdr  # imported here, as `_cpdr_producer_inputs` does
+    from deploy_workflow.workflow import WorkflowError
+
+    try:  # outside the memo: the records are files, which a warm memo never re-reads
+        cpdr.check_records(store, producer)
+    except WorkflowError:
+        return False
+    return _verified_once(
+        store,
+        snapshot,
+        producer,
+        lambda recorder: _cpdr_producer_inputs(recorder, snapshot, producer),
+    )
+
+
 def _producer_inputs(store: Execution, snapshot: ExecutionSnapshot, producer: Module) -> bool:
     """Authenticate CP0 canonical readiness, CP1's actual promotion/failure history and any
     other module's one-step settlement (the `*-submission` rule)."""
     expected = current_inputs(snapshot, producer.module_id)
     if producer.module_id == "CP-1":
         return _cp1_producer_inputs(store, snapshot, producer)
+    if producer.module_id == "CP-DR":
+        return _cpdr_producer_inputs_memoised(store, snapshot, producer)
     if producer.module_id != "CP-0":
         return _submission_producer_inputs_memoised(store, snapshot, producer, expected)
     selected = [
@@ -981,6 +1063,27 @@ def _json_arguments(arguments: Any) -> dict[str, Any]:
     return _detached(arguments)
 
 
+def _retrieval_times(
+    store: Execution, pack: PreparedPack, sources: tuple[str, ...]
+) -> dict[str, str]:
+    """The `ev-*` retrieval times of a session (O7-R13), read from the run's `research/evidence.json`.
+    A ready `ev-*` source in scope with no recorded time refuses the session at construction
+    (O7-R8, `retrieval_unrecorded`): the fence needs a real time and none is invented."""
+    try:
+        retrieved = research_retrieved(store.directory, sources)
+        recorded = research_hashes(store.directory, sources)
+    except ValueError:  # EvidenceRecordInvalid: the record is missing, unreadable or malformed
+        raise SourceError("retrieval_unrecorded") from None
+    held = {s.source_id: s.sha256 for s in pack.sources if s.status == "ready"}
+    if any(i in held and i in recorded and recorded[i] != held[i] for i in sources):
+        raise SourceError("evidence_mismatch")  # the record is for other bytes than the pack's
+    ready = set(held)
+    unrecorded = [i for i in sources if i.startswith("ev-") and i in ready and i not in retrieved]
+    if unrecorded:
+        raise SourceError("retrieval_unrecorded")
+    return retrieved
+
+
 class SourceSession:
     """Trusted factory pins authority; analytical callers can only invoke or bind bytes."""
 
@@ -1011,7 +1114,12 @@ class SourceSession:
             "attempt": attempt.number,
             "inputs": [i.model_dump(mode="json") for i in attempt.inputs],
         }
-        self._tools = SourceTools(pack, sources, extraction=step_id == "financials")
+        self._tools = SourceTools(
+            pack,
+            sources,
+            extraction=step_id == "financials",
+            retrieved=_retrieval_times(store, pack, sources),
+        )
         self._operation = Lock()
         self._records_lock = Lock()
         self._sequence = 0

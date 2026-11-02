@@ -1,3 +1,5 @@
+SUPERSEDED by 2026-10-31-part-b-o7 (O7b-1c S3 removed cases/cpdr-owner/; the CP-DR oracle is cases/cpdr-research-owner/).
+
 # CP-DR (Deep research, LOCAL) owner lease — FROZEN by LEAD 2026-10-28 (draft rev 4)
 
 Amended by LEAD 2026-10-28 (CP-6 freeze re-pin, `work/lead/cp6-freeze/report.md`): `src/deploy_vii/methodology.json` registers `T6-FINAL` under CP-6 `table_ids` (ruling Q7), 1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6 → 0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8; this module's builder re-pins it and its manifest records the new hash. Only pin hashes move: no other leaf of this module's oracle changes. Own files, old → new sha256: `manifest.json` 44862ca3166a29f7d8ff44e7c1073bbdfa2229201c46d83586a262f5de192066 → 5993636b888c71ac7ca22fe01230d0c85737c0d8ccba67a0a155b092dcd5aa42; `submissions.json` unchanged; `expected.json` unchanged; `builder/build.py` 591da654cfe1eb0e932bffa3b48b7dc362d9d1f3180821bd838e3bdd0f99aae5 → 3ede62b7e593d8e8145663e5d13e76c09b5b2a86d188c1279a54fd9282ce8d28.

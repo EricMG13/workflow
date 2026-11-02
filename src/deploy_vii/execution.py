@@ -224,7 +224,11 @@ class NotAuthorized(ValueError):
 
 # Settled modules whose facts a consumer may reference without requiring them (CP-1A cites
 # CP-1 figures as `{ref|unit}` only when CP-1 is settled; its registry edge stays CP-0 only).
-CONTEXT_PRODUCERS: dict[str, tuple[str, ...]] = {"CP-1A": ("CP-1",)}
+CONTEXT_PRODUCERS: dict[str, tuple[str, ...]] = {
+    "CP-1A": ("CP-1",),
+    "CP-1C": ("CP-DR",),
+    "CP-2": ("CP-DR",),
+}
 
 
 def current_inputs(snapshot: ExecutionSnapshot, module_id: str) -> tuple[Input, ...]:

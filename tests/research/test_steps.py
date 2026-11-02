@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from cpdr_peers_support import load, peers_case
 
 from deploy_vii.contracts import Input
-from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen
+from deploy_vii.live.tools import UNBACKED_ABSENCE, UNREAD_PAGE, Seen
 from deploy_workflow.research import brief as b
 from deploy_workflow.research import contracts as c
 from deploy_workflow.research import steps as s
@@ -212,7 +213,9 @@ def test_a_not_found_answer_item_with_no_search_is_an_absence_issue(
 
 def test_no_search_at_all_flags_every_absence_item(submissions: dict[str, Any]) -> None:
     got = s.research_rules(json.dumps(submissions["research_v1"]), Seen())
-    assert got and all(line.startswith(UNBACKED_ABSENCE) for line in got)
+    absence = [line for line in got if line.startswith(UNBACKED_ABSENCE)]
+    assert absence and list(got[: len(absence)]) == absence  # absence first (O7-R29: then unread)
+    assert all(line.startswith(UNREAD_PAGE) for line in got[len(absence) :])
 
 
 def test_an_unread_page_is_flagged(submissions: dict[str, Any]) -> None:
@@ -223,18 +226,47 @@ def test_an_unread_page_is_flagged(submissions: dict[str, Any]) -> None:
     assert got and "ev-2 page:3" in got[0]
 
 
+def test_an_unread_line_of_an_evidence_item_is_one_unread_issue(
+    submissions: dict[str, Any],
+) -> None:
+    """I4 / O7-R29: a ``line:N`` citation of an ``ev-*`` item that ``read_pages`` never returned
+    is judged unread, as a ``page:N`` one is."""
+    sub = copy.deepcopy(submissions["research_v1"])
+    seen = seen_from(submissions["tool_calls"]["research"])
+    cited = sub["answers"][0]["claims"][0]["citations"][0]
+    cited["locator"] = "line:30"
+    got = s.research_rules(json.dumps(sub), seen)
+    assert got == (f"{UNREAD_PAGE}: {cited['source_id']} line:30",)
+
+
+def test_a_line_of_a_pack_source_is_not_judged(submissions: dict[str, Any]) -> None:
+    """Only ``ev-*`` items are line sources; a pack source cites ``page:N``."""
+    sub = copy.deepcopy(submissions["research_v1"])
+    seen = seen_from(submissions["tool_calls"]["research"])
+    sub["answers"][0]["claims"][0]["citations"][0].update(source_id="financial", locator="line:30")
+    assert s.research_rules(json.dumps(sub), seen) == ()
+
+
 def test_a_payload_that_is_not_an_object_has_no_rule_issues() -> None:
     assert s.research_rules("[1]", Seen()) == ()
     assert s.research_rules("not json", Seen()) == ()
 
 
-def test_candidate_inputs_append_the_brief_and_submission_hashes() -> None:
+def test_candidate_inputs_append_the_brief_submission_and_record_hashes() -> None:
     base = (Input(input_id="CP-0", sha256="1" * 64),)
-    got = s.candidate_inputs(base, brief_sha256="2" * 64, submission_sha256="3" * 64)
+    got = s.candidate_inputs(
+        base,
+        brief_sha256="2" * 64,
+        submission_sha256="3" * 64,
+        evidence_sha256="4" * 64,
+        rejected_sha256="5" * 64,
+    )
     assert got == (
         *base,
         Input(input_id="research-brief", sha256="2" * 64),
         Input(input_id="research-submission", sha256="3" * 64),
+        Input(input_id="research-evidence", sha256="4" * 64),
+        Input(input_id="research-rejected", sha256="5" * 64),
     )
 
 
@@ -244,7 +276,11 @@ def test_the_brief_view_names_the_defaults_the_context_and_the_limits(
     ctx = [(q["text"], q["focus_module"]) for q in manifest["context"]["research_questions"]]
     body = json.loads(
         s.brief_view_body(
-            context_questions=ctx, as_of=date(2026, 1, 10), cutoff=date(2026, 1, 10), sources=("a",)
+            context_questions=ctx,
+            as_of=date(2026, 1, 10),
+            cutoff=date(2026, 1, 10),
+            sources=("a",),
+            peer_pack=True,
         )
     )
     key = expected["brief"]
@@ -254,6 +290,7 @@ def test_the_brief_view_names_the_defaults_the_context_and_the_limits(
     assert [q["focus_module"] for q in body["context_questions"]] == ["CP-1C", "CP-2"]
     assert body["limits"] == {"max_questions": c.MAX_QUESTIONS}
     assert (body["as_of"], body["cutoff"], body["sources"]) == ("2026-01-10", "2026-01-10", ["a"])
+    assert body["peer_pack"] is True
 
 
 def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
@@ -273,6 +310,8 @@ def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
     )
     assert [q["question_id"] for q in body["questions"]] == expected["brief"]["question_ids"]
     assert body["brief_sha256"] == brief.brief_sha256
+    assert body["peer_pack"] is brief.peer_pack is False
+    assert body["cutoff"] == brief.cutoff.isoformat()
     assert body["evidence"] == [
         {
             "item_id": "ev-1",
@@ -282,3 +321,18 @@ def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
         }
     ]
     assert body["sources"] == ["ev-1", "pack-1"]
+
+
+def test_every_tdr6_citation_line_must_have_been_read() -> None:
+    """O7d D1a: a figure's ``line:N`` citation is judged unread like an answer's (O7-R29)."""
+    case = peers_case()
+    body = json.dumps(case.body)
+    seen = seen_from(load("submissions.json")["tool_calls"]["research"])
+    assert s.research_rules(body, seen) == ()
+    figure = case.body["peers"]["figures"][0]["citation"]
+    unread = Seen(
+        read=seen.read - {(figure["source_id"], figure["locator"])}, searched=seen.searched
+    )
+    assert s.research_rules(body, unread) == (
+        f"{UNREAD_PAGE}: {figure['source_id']} {figure['locator']}",
+    )

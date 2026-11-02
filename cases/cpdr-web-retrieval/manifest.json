@@ -1,0 +1,288 @@
+{
+ "schema_version": "cpdr-web-retrieval-cases/1",
+ "scope": "Key for web retrieval behind the live pause (O7b-2 D1-D8). SYNTHETIC: every host is an .example name resolved only by an injected resolver; every body says so.",
+ "status": "frozen",
+ "hosts": {
+  "sector-desk.example": ["93.184.216.34"],
+  "trade-press.example": ["93.184.216.35", "10.0.0.5"],
+  "loop.example": ["127.0.0.1"],
+  "metadata.example": ["169.254.169.254"],
+  "six-loop.example": ["::1"],
+  "mapped.example": ["::ffff:10.0.0.1"],
+  "link.example": ["fe80::1"],
+  "redirect-a.example": ["93.184.216.40"],
+  "redirect-b.example": ["93.184.216.41"],
+  "redirect-c.example": ["93.184.216.42"],
+  "redirect-d.example": ["93.184.216.43"],
+  "outside.example": ["93.184.216.50"]
+ },
+ "research_manifest": {
+  "file": "research-manifest.json",
+  "rows": [
+   {
+    "path": "evidence/local-note.txt",
+    "family": "registry-filings",
+    "published": "2025-12-16",
+    "locator": "evidence/local-note.txt",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
+    "family": "sector-desk-notes",
+    "published": "2025-12-18",
+    "locator": "https://sector-desk.example/notes/supply-costs",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/header-dated",
+    "family": "sector-desk-notes",
+    "published": "2025-12-20",
+    "locator": "https://sector-desk.example/notes/header-dated",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/body-dated",
+    "family": "sector-desk-notes",
+    "published": "2025-12-28",
+    "locator": "https://sector-desk.example/notes/body-dated",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/body-late",
+    "family": "sector-desk-notes",
+    "published": "2026-01-05",
+    "locator": "https://sector-desk.example/notes/body-late",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/no-date",
+    "family": "sector-desk-notes",
+    "locator": "https://sector-desk.example/notes/no-date",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/located-only",
+    "family": "sector-desk-notes",
+    "locator": "https://sector-desk.example/notes/located-only",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/at-cap",
+    "family": "sector-desk-notes",
+    "published": "2025-12-10",
+    "locator": "https://sector-desk.example/notes/at-cap",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/over-cap",
+    "family": "sector-desk-notes",
+    "published": "2025-12-11",
+    "locator": "https://sector-desk.example/notes/over-cap",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/server-error",
+    "family": "sector-desk-notes",
+    "published": "2025-12-12",
+    "locator": "https://sector-desk.example/notes/server-error",
+    "tag": "research"
+   },
+   {
+    "url": "https://sector-desk.example/notes/report.pdf",
+    "family": "sector-desk-notes",
+    "published": "2025-12-13",
+    "locator": "https://sector-desk.example/notes/report.pdf",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-a.example/three-hops",
+    "family": "redirect-notes",
+    "published": "2025-12-14",
+    "locator": "https://redirect-a.example/three-hops",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-a.example/four-hops",
+    "family": "redirect-notes",
+    "published": "2025-12-14",
+    "locator": "https://redirect-a.example/four-hops",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-a.example/to-http",
+    "family": "redirect-notes",
+    "published": "2025-12-14",
+    "locator": "https://redirect-a.example/to-http",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-a.example/to-outside",
+    "family": "redirect-notes",
+    "published": "2025-12-14",
+    "locator": "https://redirect-a.example/to-outside",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-a.example/to-private",
+    "family": "redirect-notes",
+    "published": "2025-12-14",
+    "locator": "https://redirect-a.example/to-private",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-b.example/anchor",
+    "family": "redirect-notes",
+    "published": "2025-12-17",
+    "locator": "https://redirect-b.example/anchor",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-c.example/anchor",
+    "family": "redirect-notes",
+    "published": "2025-12-17",
+    "locator": "https://redirect-c.example/anchor",
+    "tag": "research"
+   },
+   {
+    "url": "https://redirect-d.example/anchor",
+    "family": "redirect-notes",
+    "published": "2025-12-17",
+    "locator": "https://redirect-d.example/anchor",
+    "tag": "research"
+   },
+   {
+    "url": "https://trade-press.example/anchor",
+    "family": "trade-press-archive",
+    "published": "2025-12-17",
+    "locator": "https://trade-press.example/anchor",
+    "tag": "research"
+   }
+  ],
+  "files": {
+   "evidence/local-note.txt": "Synthetic local registry note.\nThis invented case is test data, not evidence about real issuers."
+  }
+ },
+ "manifest_hosts": [
+  "redirect-a.example",
+  "redirect-b.example",
+  "redirect-c.example",
+  "redirect-d.example",
+  "sector-desk.example",
+  "trade-press.example"
+ ],
+ "responses": {
+  "https://sector-desk.example/notes/supply-costs?edition=2&lang=en": {
+   "status": 200,
+   "headers": {"Content-Type": "text/html; charset=utf-8"},
+   "body": "<html><head><title>Hidden</title></head><body><p>Synthetic sector desk note.</p><p>Supply of industrial products is concentrated.</p><p>This invented case is test data, not evidence about real issuers.</p></body></html>"
+  },
+  "https://sector-desk.example/notes/header-dated": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8", "Last-Modified": "Mon, 15 Dec 2025 08:00:00 GMT"},
+   "body": "Synthetic header-dated note.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://sector-desk.example/notes/body-dated": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Published: 2025-12-22\nSynthetic body-dated note.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://sector-desk.example/notes/body-late": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Published: 2026-02-03\nSynthetic late-dated note.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://sector-desk.example/notes/no-date": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic note with no publication date.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://sector-desk.example/notes/located-only": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Published: 2025-12-21\nSynthetic note dated only in its body.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://sector-desk.example/notes/at-cap": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler "
+  },
+  "https://sector-desk.example/notes/over-cap": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler note. This invented case is test data, not evidence about real issuers.\nSynthetic at-cap filler n"
+  },
+  "https://sector-desk.example/notes/server-error": {"status": 500, "headers": {"Content-Type": "text/plain; charset=utf-8"}, "body": "error"},
+  "https://sector-desk.example/notes/report.pdf": {"status": 200, "headers": {"Content-Type": "application/pdf"}, "body": "%PDF-1.4 synthetic"},
+  "https://redirect-a.example/three-hops": {"status": 302, "headers": {"Location": "https://redirect-b.example/three-1"}, "body": ""},
+  "https://redirect-b.example/three-1": {"status": 302, "headers": {"Location": "https://redirect-c.example/three-2"}, "body": ""},
+  "https://redirect-c.example/three-2": {"status": 302, "headers": {"Location": "https://redirect-d.example/three-3"}, "body": ""},
+  "https://redirect-d.example/three-3": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic note reached after three redirects.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://redirect-a.example/four-hops": {"status": 302, "headers": {"Location": "https://redirect-b.example/four-1"}, "body": ""},
+  "https://redirect-b.example/four-1": {"status": 302, "headers": {"Location": "https://redirect-c.example/four-2"}, "body": ""},
+  "https://redirect-c.example/four-2": {"status": 302, "headers": {"Location": "https://redirect-d.example/four-3"}, "body": ""},
+  "https://redirect-d.example/four-3": {"status": 302, "headers": {"Location": "https://redirect-a.example/four-4"}, "body": ""},
+  "https://redirect-a.example/to-http": {"status": 302, "headers": {"Location": "http://redirect-b.example/plain"}, "body": ""},
+  "https://redirect-a.example/to-outside": {"status": 302, "headers": {"Location": "https://outside.example/page"}, "body": ""},
+  "https://redirect-a.example/to-private": {"status": 302, "headers": {"Location": "https://trade-press.example/target"}, "body": ""},
+  "https://redirect-b.example/anchor": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic anchor note b.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://redirect-c.example/anchor": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic anchor note c.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://redirect-d.example/anchor": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "Synthetic anchor note d.\nThis invented case is test data, not evidence about real issuers."
+  },
+  "https://trade-press.example/anchor": {
+   "status": 200,
+   "headers": {"Content-Type": "text/plain; charset=utf-8"},
+   "body": "never read: the host is refused first"
+  }
+ },
+ "cap": 600,
+ "timeouts": {"connect_seconds": 10, "total_seconds": 30},
+ "slow_connector_seconds": 31,
+ "clock": "2026-11-02T05:40:00Z",
+ "as_of": "2026-01-10",
+ "today": "2026-11-02",
+ "ruling_texts": {
+  "good": "lifts: live-provider-pause\nby: user\ndate: 2026-11-02\nconfigs: web-retrieval\n",
+  "configs_missing": "lifts: live-provider-pause\nby: user\ndate: 2026-11-02\nconfigs: sol-medium sol-high opus-medium deepseek-max\n",
+  "lifts_missing": "by: user\ndate: 2026-11-02\nconfigs: web-retrieval\n"
+ },
+ "url_checks": {
+  "http": "http://sector-desk.example/x",
+  "file": "file:///etc/passwd",
+  "ftp": "ftp://sector-desk.example/x",
+  "data": "data:text/plain,hi",
+  "userinfo": "https://user:pw@sector-desk.example/x",
+  "empty_host": "https:///x"
+ },
+ "locator_checks": {
+  "pipe": "https://sector-desk.example/notes|x",
+  "line_feed": "https://sector-desk.example/notes\nx",
+  "carriage_return": "https://sector-desk.example/notes\rx",
+  "block_opener": "https://sector-desk.example/notes<<<x"
+ },
+ "family_checks": {
+  "pipe": "filing|annual",
+  "line_feed": "filing\nannual",
+  "carriage_return": "filing\rannual",
+  "block_opener": "filing <<<x"
+ },
+ "probes": {
+  "timeout": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
+  "request": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
+  "connection": "https://sector-desk.example/notes/header-dated"
+ }
+}

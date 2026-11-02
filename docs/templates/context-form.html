@@ -275,6 +275,7 @@ legend{padding:0;font-weight:600;margin-bottom:var(--rb-s-3)}
   <p class="intro">Set the as-of date, reporting periods and currency the run is anchored to.</p>
   <div class="grid">
     <div class="f"><label for="s3-as_of">As-of date</label><input type="date" id="s3-as_of" data-k="as_of" aria-describedby="s3-as_of-h"><p class="help" id="s3-as_of-h">Sources and quotes dated after this are refused. Format YYYY-MM-DD, for example 2026-10-31.</p></div>
+    <div class="f"><label for="s3-cutoff">Research cutoff</label><input type="date" id="s3-cutoff" data-k="cutoff" aria-describedby="s3-cutoff-h"><p class="help" id="s3-cutoff-h">Research items published after this are refused; not after the as-of date. Optional.</p></div>
     <div class="f"><label for="s3-current_period">Current period</label><input type="text" id="s3-current_period" placeholder="e.g. q3-2026" data-k="current_period" aria-describedby="s3-current_period-h"><p class="help" id="s3-current_period-h">For example q3-2026 or fy-2025. Required for Earnings update. Format q3-2026, h1-2026 or fy-2025. On an Earnings update: quarters or fiscal years, same kind.</p></div>
     <div class="f"><label for="s3-prior_period">Prior period</label><input type="text" id="s3-prior_period" placeholder="e.g. q2-2026" data-k="prior_period" aria-describedby="s3-prior_period-h"><p class="help" id="s3-prior_period-h">Must be earlier than the current period (same kind: quarter, half or year). On an Earnings update: quarters or fiscal years, same kind.</p></div>
     <div class="f"><label for="s3-reporting_currency">Reporting currency</label><input type="text" id="s3-reporting_currency" placeholder="e.g. USD" data-k="reporting_currency" value="USD" maxlength="3" aria-describedby="s3-reporting_currency-h"><p class="help" id="s3-reporting_currency-h">Three uppercase letters. <span id="ccynote"></span></p></div>
@@ -732,6 +733,7 @@ function build() {
   const as_of = fld(s3, 'as_of', {t:'date', req:true});
   runAsOf = as_of;
   const earn = run_type === 'earnings';
+  const cutoff = fld(s3, 'cutoff', {t:'date', after:true});
   const current_period = fld(s3, 'current_period', {t:'period', req:earn});
   const prior_period = fld(s3, 'prior_period', {t:'period', req:earn});
   const a = pkey(current_period), b = pkey(prior_period);
@@ -742,7 +744,7 @@ function build() {
   }
   if (a && b && a.kind === b.kind && (b.y > a.y || (b.y === a.y && b.n >= a.n))) bad(els(s3, 'prior_period')[0], 'must be earlier than the current period.');
   const reporting_currency = fld(s3, 'reporting_currency', {t:'cur', req:true});
-  const run = {run_type, pathway, case_kind, as_of, current_period, prior_period, reporting_currency};
+  const run = {run_type, pathway, case_kind, as_of, cutoff, current_period, prior_period, reporting_currency};
 
   const listed = getV(s2, 'listed_equity') === 'yes';
   const identity = {
@@ -1022,7 +1024,7 @@ function summaryLines(n, o) {
   switch (n) {
     case 1: return ['Run type: ' + RUN_LABEL[o.run.run_type], 'Pathway: ' + PATH_LABEL[o.run.pathway], 'Filing status: ' + o.run.case_kind];
     case 2: return [nz(o.identity)];
-    case 3: return [nz({as_of:o.run.as_of, current_period:o.run.current_period, prior_period:o.run.prior_period, reporting_currency:o.run.reporting_currency})];
+    case 3: return [nz({as_of:o.run.as_of, cutoff:o.run.cutoff, current_period:o.run.current_period, prior_period:o.run.prior_period, reporting_currency:o.run.reporting_currency})];
     case 4: return o.deal_terms.map((r, i) => 'Facility ' + (i + 1) + ': ' + nz(r));
     case 5: return o.quotes.map((r, i) => 'Quote ' + (i + 1) + ': ' + nz(r));
     case 6: return o.ratings.map((r, i) => 'Rating ' + (i + 1) + ': ' + nz(r));
@@ -1269,7 +1271,7 @@ function fill(o) {
   setV(s1, 'pathway', txt(run.pathway), 'run.pathway', warn);
   pathTouched = getV(s1, 'pathway') !== RUN_DEFAULT_PATH[getV(s1, 'run_type')];
   setV(s1, 'case_kind', txt(run.case_kind), 'run.case_kind', warn);
-  for (const k of ['as_of','current_period','prior_period','reporting_currency']) if (k === 'as_of' || txt(run[k]) !== '') setV(s3, k, txt(run[k]), 'run.' + k, warn);
+  for (const k of ['as_of','cutoff','current_period','prior_period','reporting_currency']) if (k === 'as_of' || txt(run[k]) !== '') setV(s3, k, txt(run[k]), 'run.' + k, warn);
   for (const k of ['issuer_name','issuer_id','borrower_name','parent_name','ticker','sector','country','sponsor']) setV(s2, k, txt(id[k]), 'identity.' + k, warn);
   setV(s2, 'guarantors', id.guarantors.map(txt).join('\n'), 'identity.guarantors', warn);
   setV(s2, 'aliases', id.aliases.map(txt).join('\n'), 'identity.aliases', warn);

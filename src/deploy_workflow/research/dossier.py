@@ -1,8 +1,8 @@
 """CP-DR dossier and ``brief.json`` renderer (O7b-1b, Behaviour 9).
 
 Pure over plain data the CP-DR head supplies (O7b-1c passes the real head): the head's tables and
-facts, the locked brief, the accepted evidence list, the rejected items and the head's
-``result_sha256``. Readiness is ``assign_readiness`` over the claim states, so it is never above
+facts, the locked brief, the accepted evidence list, the rejected items and the head's hash and
+``research-brief`` input. Readiness is ``assign_readiness`` over the claim states, so it is never above
 ``RESEARCH_READY`` and the lineage is always ``LOCAL``. The dossier is the Q10 layout: LF, UTF-8,
 one trailing LF; a cell is its shown string.
 """
@@ -13,6 +13,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Final
 
+from deploy_workflow.prompts.fence import FenceError, data_block
 from deploy_workflow.research.contracts import (
     METHOD_VERSION_CPDR,
     ClaimState,
@@ -30,6 +31,12 @@ TABLE_IDS: Final = ("TDR.1", "TDR.2", "TDR.3")
 LIMITATIONS_TABLE: Final = "TDR.3"
 UNDATED: Final = "undated"
 LINEAGE: Final[Lineage] = "LOCAL"
+DOSSIER_BLOCK_ID: Final = "cp-dr-dossier"
+# The words `fence._refuse_markers` puts in a refusal that names a reserved delimiter (the intake
+# reason of a terminator item); the dossier shows TERMINATOR_SHOWN in place of such a reason
+# (O7-R6; `expected.json#refusals/research/fence_terminator/dossier_shown_reason`).
+TERMINATOR_REASON: Final = "contains the reserved delimiter"
+TERMINATOR_SHOWN: Final = "the item holds a reserved block delimiter, so its text is not shown here"
 
 
 class DossierInvalid(ResearchError):
@@ -37,7 +44,8 @@ class DossierInvalid(ResearchError):
 
 
 class DossierMismatch(ResearchError):
-    """The rendered dossier is not the bytes the CP-DR head hashed."""
+    """The dossier's brief is not the brief the CP-DR head recorded as its ``research-brief``
+    input (the content binding; the head's own hash is never compared, O7-R10)."""
 
 
 @dataclass(frozen=True)
@@ -55,7 +63,8 @@ class DossierInput:
     facts: Sequence[Mapping[str, Any]]
     evidence: Sequence[EvidenceItem]
     rejected: Sequence[RefusedItem]
-    result_sha256: str
+    head_sha256: str  # the CP-DR head's Module.content_hash(): recorded, never compared
+    head_brief_sha256: str  # the head's ``research-brief`` input: the dossier's brief must be it
 
 
 @dataclass(frozen=True)
@@ -72,9 +81,14 @@ def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def breaks_a_table_cell(text: str) -> bool:
+    """The cell rule: a text holding a ``|`` or a line break cannot sit in a table cell."""
+    return "|" in text or "\n" in text or "\r" in text
+
+
 def _cell(where: str, value: object) -> str:
     text = str(value)
-    if "|" in text or "\n" in text or "\r" in text:
+    if breaks_a_table_cell(text):
         raise DossierInvalid(f"{where} cannot be written in a table cell")
     if "<<<" in text:  # CP-2 reads the dossier through fences that refuse any block opener
         raise DossierInvalid(f"{where} holds a block delimiter and cannot be shown")
@@ -119,6 +133,12 @@ def _date(value: object) -> str:
     return UNDATED if value is None else str(value)
 
 
+def _shown_reason(reason: str) -> str:
+    """The reason as the dossier shows it: a terminator refusal names the delimiter, which no
+    table cell may hold, so the pinned label stands in; ``rejected.json`` keeps the literal."""
+    return TERMINATOR_SHOWN if TERMINATOR_REASON in reason else reason
+
+
 def dossier_markdown(given: DossierInput) -> str:
     """The Markdown dossier; raises ``DossierInvalid`` for a table it cannot write."""
     absent = [table_id for table_id in TABLE_IDS if table_id not in given.tables]
@@ -156,7 +176,7 @@ def dossier_markdown(given: DossierInput) -> str:
         [
             [
                 _cell("rejected item", value)
-                for value in (r.locator, r.family, _date(r.published), r.reason)
+                for value in (r.locator, r.family, _date(r.published), _shown_reason(r.reason))
             ]
             for r in given.rejected
         ],
@@ -171,14 +191,20 @@ def brief_json(brief: ResearchBrief) -> str:
 
 
 def render_dossier(given: DossierInput) -> RenderedDossier:
-    """Markdown, ``brief.json`` and the hashes. The dossier's hash must be the head's
-    ``result_sha256`` (the head hashes the dossier bytes); any other value is ``DossierMismatch``."""
-    markdown = dossier_markdown(given)
-    digest = _sha256(markdown)
-    if digest != given.result_sha256:
+    """Markdown, ``brief.json`` and the hashes. The dossier must be bound to the brief the head
+    recorded (``DossierMismatch``) and must pass the fence it is read through (``DossierInvalid``,
+    O7-R23(b)); its hash is its own (O7-R10)."""
+    if given.brief.brief_sha256 != given.head_brief_sha256:
         raise DossierMismatch(
-            f"dossier sha256 {digest} is not the head result_sha256 {given.result_sha256}"
+            f"dossier brief_sha256 {given.brief.brief_sha256} is not the head's research-brief "
+            f"input {given.head_brief_sha256}"
         )
+    markdown = dossier_markdown(given)
+    try:
+        data_block("CONTEXT", DOSSIER_BLOCK_ID, markdown)
+    except FenceError as error:
+        raise DossierInvalid(str(error)) from error
+    digest = _sha256(markdown)
     readiness = assign_readiness(given.claim_states)
     # Validates the ceiling: a LOCAL dossier is never COMMITTEE_READY.
     Dossier(brief_sha256=given.brief.brief_sha256, lineage=LINEAGE, readiness=readiness)

@@ -1,14 +1,21 @@
 """Call-shape checks and source staging for run_pathway (O2 Task 2). Offline; no key read."""
 
+import json
 import os
 import signal
+import time
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Self
 
+import cpdr_consumers as cc
+import cpdr_runs as runs
 import pytest
+from cpdr_s1_support import ResearchCase, WebCase, key_file, web_file
 
 from deploy_vii.preparation import MAX_BYTES, load_pack, prepare
+from deploy_workflow import run_inputs
 from deploy_workflow.context import ContextRefused
 from deploy_workflow.html_text import UndecodableHtml, convert_html
 from deploy_workflow.model import adapter as adapter_module
@@ -19,6 +26,9 @@ from deploy_workflow.model.adapter import (
     live_adapter,
 )
 from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.research import evidence, webfetch
+from deploy_workflow.research.contracts import EvidenceFetchRefused
+from deploy_workflow.research.intake import MAX_ITEM_BYTES, intake
 from deploy_workflow.run_inputs import (
     AdapterRefused,
     BadCap,
@@ -26,9 +36,11 @@ from deploy_workflow.run_inputs import (
     BadSourceId,
     CaseSource,
     ConfigMismatch,
-    CpDrNotBuilt,
     DuplicateSource,
     PathwayMismatch,
+    ResearchManifestRequired,
+    ResearchManifestUnused,
+    ResearchRulingUnused,
     RunDirExists,
     RunDirInvalid,
     SourceTooLarge,
@@ -39,6 +51,7 @@ from deploy_workflow.run_inputs import (
     read_capped,
     stage_sources,
 )
+from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
@@ -186,8 +199,64 @@ def test_undecodable_html_refused(args: dict[str, Any], tmp_path: Path) -> None:
     refused(args, UndecodableHtml)
 
 
-def test_cp_dr_refused(args: dict[str, Any]) -> None:
-    refused(args, CpDrNotBuilt, cp_dr=True)
+def test_cp_dr_without_a_manifest_refused(args: dict[str, Any]) -> None:
+    refused(args, ResearchManifestRequired, cp_dr=True)
+
+
+def test_a_manifest_without_cp_dr_refused(args: dict[str, Any], tmp_path: Path) -> None:
+    case = ResearchCase(tmp_path / "case")
+    refused(args, ResearchManifestUnused, research_manifest=case.manifest_path)
+    refused(args, ResearchManifestUnused, cp_dr=False, research_manifest=case.manifest_path)
+
+
+@pytest.mark.parametrize("source_id", ["ev-1", "EV-7", "peers", "cp-dr-dossier"])
+def test_reserved_research_ids(args: dict[str, Any], source_id: str) -> None:
+    """Plan 4 row 2: a case source named like a research id is BadSourceId with the key's text."""
+    texts = key_file("expected.json")["intake"]["refusal_texts"]["reserved_id"]
+    args["sources"][1] = CaseSource(source_id, args["sources"][1].path, "text/plain")
+    with pytest.raises(BadSourceId) as caught:
+        check_arguments(**args)
+    if source_id in texts:
+        assert str(caught.value) == texts[source_id]
+    assert not os.path.lexists(args["run_dir"])
+
+
+def test_cp_dr_checks_the_manifest_and_writes_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    moment = datetime(2026, 11, 2, 5, 40, 0, 999999, tzinfo=UTC)
+    monkeypatch.setattr(evidence, "research_clock", lambda: moment)
+    case = ResearchCase(tmp_path)
+    arguments = {**case.arguments(tmp_path), "adapter": RecordedAdapter(MODEL, {})}
+    before = sorted(tmp_path.rglob("*"))
+    checked = check_arguments(**arguments)
+    assert sorted(tmp_path.rglob("*")) == before
+    assert [f.filename for f in checked.files] == [
+        "identity.txt",
+        "financial.txt",
+        "ev-1.txt",
+        "ev-2.txt",
+        "ev-3.txt",
+        "context.json",
+    ]
+    assert {f.media_type for f in checked.files if f.source_id.startswith("ev-")} == {"text/plain"}
+    assert "CP-DR" in checked.request.run.requested_modules
+    assert checked.research is not None
+    key = key_file("expected.json")["intake"]
+    assert [a.item_id for a in checked.research.accepted] == [x["item_id"] for x in key["accepted"]]
+    assert [r.locator for r in checked.research.refused] == sorted(
+        r["locator"] for r in key["rejected_json"]["entries"]
+    )
+    assert checked.research.retrieved == "2026-11-02T05:40:00Z"  # to the second, UTC (O7-R13)
+    assert (
+        checked.research.manifest_sha256
+        == key_file("manifest.json")["research_manifest"]["file_sha256"]
+    )
+
+
+def test_presets_are_untouched_by_cp_dr(args: dict[str, Any]) -> None:
+    preset = check_arguments(**args).request.run.requested_modules
+    assert "CP-DR" not in preset
 
 
 def test_over_cap_source_refused_and_read_is_bounded(
@@ -451,3 +520,212 @@ def test_the_run_dir_is_private(args: dict[str, Any]) -> None:
 def test_a_staged_file_carries_the_callers_media_type(args: dict[str, Any]) -> None:
     checked = check_arguments(**args)
     assert [f.media_type for f in checked.files] == ["text/html", "text/plain", "text/plain"]
+
+
+# ---- the research_ruling argument (O7b-2 S4) against cases/cpdr-web-retrieval ----
+
+
+def web_arguments(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, with_urls: bool = True
+) -> tuple[WebCase, dict[str, Any]]:
+    case = WebCase(tmp_path, with_urls=with_urls)
+    case.install(monkeypatch)
+    return case, {**case.arguments(tmp_path), "adapter": RecordedAdapter(MODEL, {})}
+
+
+def test_url_rows_without_ruling_are_refused_before_resolution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`#gate/no_ruling/{exception,text}`, `#gate/resolver_calls_before_gate`: nothing resolved,
+    nothing written."""
+    case, arguments = web_arguments(tmp_path, monkeypatch)
+    key = web_file("expected.json")["gate"]
+    with pytest.raises(EvidenceFetchRefused) as raised:
+        check_arguments(**{**arguments, "research_ruling": None})
+    assert type(raised.value).__name__ == key["no_ruling"]["exception"]
+    assert str(raised.value) == key["no_ruling"]["text"]
+    assert len(case.resolved) == key["resolver_calls_before_gate"] and case.requests == []
+    assert not os.path.lexists(arguments["run_dir"])
+
+
+def test_ruling_without_url_rows_is_unused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`#gate/unused_ruling/{exception,text}`: a ruling is read only when a row has a url."""
+    case, arguments = web_arguments(tmp_path, monkeypatch, with_urls=False)
+    key = web_file("expected.json")["gate"]["unused_ruling"]
+    with pytest.raises(ResearchRulingUnused) as raised:
+        check_arguments(**arguments)
+    assert type(raised.value).__name__ == key["exception"]
+    assert str(raised.value) == key["text"]
+    assert case.resolved == [] and not os.path.lexists(arguments["run_dir"])
+
+
+@pytest.mark.parametrize("name", ["configs_missing", "lifts_missing"])
+def test_bad_ruling_is_refused_before_resolution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    """`#gate/{configs_missing,lifts_missing}/{exception,text}` and
+    `#gate/resolver_calls_before_gate`: the gate runs before the first resolver call."""
+    case, arguments = web_arguments(tmp_path, monkeypatch)
+    key = web_file("expected.json")["gate"][name]
+    arguments["research_ruling"] = case.write_ruling(name)
+    with pytest.raises(LivePauseInForce) as raised:
+        check_arguments(**arguments)
+    assert type(raised.value).__name__ == key["exception"]
+    assert str(raised.value) == key["text"]
+    assert len(case.resolved) == web_file("expected.json")["gate"]["resolver_calls_before_gate"]
+    assert case.requests == [] and not os.path.lexists(arguments["run_dir"])
+
+
+def test_a_ruling_without_a_manifest_is_unused(tmp_path: Path) -> None:
+    ruling = tmp_path / "r.md"
+    ruling.write_text("x", encoding="utf-8")
+    case = ResearchCase(tmp_path)
+    arguments = {**case.arguments(tmp_path), "adapter": RecordedAdapter(MODEL, {})}
+    arguments.update(cp_dr=False, research_manifest=None, research_ruling=ruling)
+    with pytest.raises(ResearchRulingUnused):
+        check_arguments(**arguments)
+
+
+def test_the_production_fetcher_uses_the_monotonic_clock_and_the_real_connection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """O7b-2 S4 review L-2: `_web_fetcher()` hands `webfetch.fetch` `time.monotonic` as the clock
+    (a mutant to `time.time` survived), the system resolver, the pinned connection and the item
+    byte cap, all read at call time."""
+    seen: dict[str, Any] = {}
+
+    def spy(url: str, **kwargs: Any) -> tuple[None, None, None]:
+        seen.update(kwargs, url=url)
+        return None, None, None
+
+    monkeypatch.setattr(webfetch, "fetch", spy)
+    run_inputs._web_fetcher()("https://sector-desk.example/x", frozenset({"sector-desk.example"}))
+    assert seen["clock"] is time.monotonic
+    assert seen["resolver"] is webfetch.system_resolver
+    assert seen["connect"] is webfetch.pinned_connection
+    assert seen["cap"] == MAX_ITEM_BYTES
+    assert seen["manifest_hosts"] == frozenset({"sector-desk.example"})
+
+
+def test_intake_is_given_the_research_clocks_retrieval_time(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7b-2 S4 review L-2: `intake`'s `retrieved` is the instant the research clock gave, the one
+    every `#records/evidence_json/rows/*/retrieved` records (a mutant that dropped it survived)."""
+    seen: list[str] = []
+    real = intake
+
+    def spy(*args: Any, **kwargs: Any) -> Any:
+        seen.append(kwargs["retrieved"])
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr("deploy_workflow.run_inputs.intake", spy)
+    _case, arguments = web_arguments(tmp_path, monkeypatch)
+    check_arguments(**arguments)
+    rows = web_file("expected.json")["records"]["evidence_json"]["rows"]
+    assert seen == [rows[0]["retrieved"]]
+    assert {row["retrieved"] for row in rows} == set(seen)
+
+
+LATER_CLOCK = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
+LATER_TEXT = "2026-11-02T06:40:00Z"
+
+
+def rerun_arguments(base: Path, earlier: Path, **change: Any) -> dict[str, Any]:
+    return ResearchCase(base).arguments(base, run_id="rerun-1", replay_from=earlier, **change)
+
+
+def test_a_rerun_keeps_the_earlier_retrieved_for_unchanged_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7-R67: staging a rerun that names a run with a settled CP-DR head keeps that run's
+    `retrieved` for each item whose sha256 is a row of its `research/evidence.json`; an item whose
+    bytes changed takes the clock."""
+    earlier = cc.settled_through_cpdr(tmp_path / "earlier", ("CP-1", "CP-DR"), name="execution")
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    base = tmp_path / "second"
+    case = ResearchCase(base)
+    rows = json.loads(case.manifest_path.read_text("utf-8"))
+    changed = case.inputs / rows[0]["path"]
+    changed.write_text(changed.read_text("utf-8") + "\nA new sentence.\n", encoding="utf-8")
+    (case.inputs / "extra.txt").write_text("A fresh note on input costs.\n", encoding="utf-8")
+    extra = {**rows[0], "path": "extra.txt", "locator": "line:1"}
+    case.manifest_path.write_text(json.dumps([*rows, extra]), encoding="utf-8")
+    arguments = case.arguments(base, run_id="rerun-1", replay_from=earlier.directory.parent)
+    stage_sources(check_arguments(**arguments), base / "run")
+    staged = evidence.read_evidence(base / "run" / "research" / "evidence.json")
+    by_item = {row["item_id"]: row["retrieved"] for row in staged}
+    changed_id = next(r["item_id"] for r in staged if r["path"] == rows[0]["path"])
+    new_id = next(r["item_id"] for r in staged if r["path"] == "extra.txt")
+    unchanged = set(by_item) - {changed_id, new_id}
+    assert len(unchanged) == 2 and changed_id != new_id
+    assert by_item[changed_id] == LATER_TEXT  # changed bytes: the clock
+    assert by_item[new_id] == LATER_TEXT  # a new item: the clock
+    assert {by_item[i] for i in unchanged} == {runs.RETRIEVED}  # unchanged bytes: kept
+
+
+def test_a_rerun_of_a_run_without_a_settled_cp_dr_head_keeps_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L2: an earlier run staged but never settled through CP-DR authenticates nothing, so every
+    item takes the clock."""
+    monkeypatch.setattr(
+        evidence, "research_clock", lambda: datetime(2026, 11, 2, 5, 40, tzinfo=UTC)
+    )
+    first = tmp_path / "first"
+    stage_sources(check_arguments(**ResearchCase(first).arguments(first)), first / "run")
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    second = tmp_path / "second"
+    checked = check_arguments(**rerun_arguments(second, first / "run"))
+    assert checked.research is not None and checked.research.kept == {}
+
+
+def test_an_edited_earlier_evidence_record_is_refused_before_anything_is_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L2: the earlier run's `evidence.json` must be the bytes its settled CP-DR head bound
+    (`cpdr.check_records`); an edited `retrieved` is `identity_mismatch`, never kept."""
+    earlier = cc.settled_through_cpdr(tmp_path / "earlier", ("CP-1", "CP-DR"), name="execution")
+    record = earlier.directory.parent / "research" / "evidence.json"
+    rows = json.loads(record.read_text(encoding="utf-8"))
+    rows[0]["retrieved"] = "2000-01-01T00:00:00Z"
+    record.write_text(json.dumps(rows), encoding="utf-8")
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    second = tmp_path / "second"
+    with pytest.raises(WorkflowError) as refused:
+        check_arguments(**rerun_arguments(second, earlier.directory.parent))
+    assert refused.value.code == "identity_mismatch"
+    assert not (second / "run").exists()
+
+
+def _unsettled_earlier(root: Path, block: bool) -> Path:
+    """An earlier run directory whose execution/ has no settled CP-DR head: CP-0 and CP-1 settled
+    and no CP-DR head, or (``block``) CP-DR settled and then written `blocked`; its
+    `evidence.json` `retrieved` is then edited."""
+    requested = ("CP-1", "CP-DR", "CP-1C")
+    if block:
+        store = cc.settled_through_cpdr(root, requested, name="execution")
+        runs.edit_head(store, "CP-DR", status="blocked")
+        assert cc.head(store, "CP-DR").status == "blocked"
+    else:
+        store = cc.store_with(root, requested, name="execution")
+        for module_id in ("CP-0", "CP-1"):
+            cc.hand_settle(store, module_id)
+        assert all(h.module_id != "CP-DR" for h in store.read().heads)
+    record = root / "research" / "evidence.json"
+    rows = json.loads(record.read_text(encoding="utf-8"))
+    rows[0]["retrieved"] = "2000-01-01T00:00:00Z"
+    record.write_text(json.dumps(rows), encoding="utf-8")
+    return root
+
+
+@pytest.mark.parametrize("block", [False, True], ids=["no_cp_dr_head", "blocked_cp_dr_head"])
+def test_an_earlier_run_without_a_settled_cp_dr_head_keeps_nothing_even_if_edited(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, block: bool
+) -> None:
+    """L2 head gate: with no settled CP-DR head there is nothing to authenticate the earlier
+    record against, so an edited `retrieved` is not kept and every item takes the clock."""
+    earlier = _unsettled_earlier(tmp_path / "earlier", block)
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_CLOCK)
+    checked = check_arguments(**rerun_arguments(tmp_path / "second", earlier))
+    assert checked.research is not None and checked.research.kept == {}

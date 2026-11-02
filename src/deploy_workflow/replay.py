@@ -12,22 +12,29 @@ call: a replayed ``invoke`` whose answer differs from the retained one raises ``
 a replayed submission the validator does not accept raises ``ReplayRejected``; both journal an
 ``OwnerFault`` under ``faults/``.
 
-Two retained payloads bind the earlier run and are rewritten, by the allowlist ``REBOUND_FIELDS``
-alone and only while the rerun's pack equals the earlier one in everything but ``run.run_id``
-(``ReplayPackChanged`` otherwise): the CP-0 readiness review's ``pack_sha256`` (the pack hash
-includes ``run_id``) and the CP-1 financials' ``run_id``. Any other run-dependent value in a
-retained payload makes the submission ``ReplayRejected``.
+Retained payloads that bind the earlier run are rewritten, only while the rerun's pack equals the
+earlier one in everything but ``run.run_id`` (``ReplayPackChanged`` otherwise): by the allowlist
+``REBOUND_FIELDS`` the CP-0 readiness review's ``pack_sha256`` (the pack hash includes ``run_id``),
+the CP-1 financials' ``run_id`` and the CP-DR ``run_id``; and, by ``REBOUND_GAP_IDS``, the gap ids
+of the CP-1 readiness (an id hashes the report the gap came from, and every such report embeds the
+run id; ruling O7-R62). Those ids are mapped by position between the earlier and the rerun
+narrative ledgers, and only when the two ledgers agree in everything but ``gap_id`` and the
+one-to-one ``artifact_sha256``; otherwise the text is left unchanged and the validator refuses it.
+Any other run-dependent value in a retained payload makes the submission ``ReplayRejected``.
 """
 
 import hashlib
+import json
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal
 
+from deploy_vii.canonical_gaps import LedgerGap
 from deploy_vii.contracts import Contract, Hash, Identifier, Text
+from deploy_vii.downstream_readiness import DownstreamInputs
 from deploy_vii.execution import CONTEXT_PRODUCERS, Attempt, Execution, ExecutionSnapshot
 from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_vii.registry import dependencies, plan
@@ -50,17 +57,28 @@ from deploy_workflow.run_inputs import (
 from deploy_workflow.workflow import WorkflowError
 
 # (module, step) -> the payload fields rewritten to the rerun's own value, each only when it holds
-# the earlier run's own value. Nothing wider (ruling N1, T4-R4). The fields sit in the object at
-# ``_REBOUND_HOLDER[(module, step)]`` (the CP-1 financials keep ``run_id`` in ``financial``).
+# the earlier run's own value. Nothing wider (ruling N1, T4-R4; the gap ids of ``REBOUND_GAP_IDS``
+# are the one fail-closed extension, O7-R62). The fields sit in the object at
+# ``REBOUND_HOLDER[(module, step)]`` (the CP-1 financials keep ``run_id`` in ``financial``).
 REBOUND_FIELDS: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType(
     {
         ("CP-0", "source_readiness"): ("pack_sha256",),
         ("CP-1", "financials"): ("run_id",),
+        ("CP-DR", "brief"): ("run_id",),
+        ("CP-DR", "research"): ("run_id",),
     }
 )
 REBOUND_HOLDER: Mapping[tuple[str, str], tuple[str, ...]] = MappingProxyType(
-    {("CP-0", "source_readiness"): (), ("CP-1", "financials"): ("financial",)}
+    {
+        ("CP-0", "source_readiness"): (),
+        ("CP-1", "financials"): ("financial",),
+        ("CP-DR", "brief"): (),
+        ("CP-DR", "research"): (),
+    }
 )
+# (module, step) whose gap ids (``consumers[*].gaps[*].gap_ids``) are mapped by position from the
+# earlier run's narrative gap ledger to the rerun's (``_rebind_gap_ids``; ruling O7-R62).
+REBOUND_GAP_IDS: frozenset[tuple[str, str]] = frozenset({("CP-1", "readiness")})
 REPLAYS = "replays"
 FAULTS = "faults"
 
@@ -439,6 +457,76 @@ def _rebind(
     return (dump_json(document), tuple(changes)) if changes else (text, ())
 
 
+def _gap_map(earlier: tuple[LedgerGap, ...], rerun: tuple[LedgerGap, ...]) -> dict[str, str] | None:
+    """Each earlier gap id to the rerun's id at the same ledger position, or None unless the lists
+    are as long as one another, each pair is equal in everything but ``gap_id`` and
+    ``artifact_sha256``, and the artifact hashes map one to one."""
+    if len(earlier) != len(rerun):
+        return None
+    skip = {"gap_id", "artifact_sha256"}
+    artifacts: dict[str, str] = {}
+    ids: dict[str, str] = {}
+    for old, new in zip(earlier, rerun, strict=True):
+        if old.model_dump(exclude=skip) != new.model_dump(exclude=skip):
+            return None
+        if artifacts.setdefault(old.artifact_sha256, new.artifact_sha256) != new.artifact_sha256:
+            return None
+        if ids.setdefault(old.gap_id, new.gap_id) != new.gap_id:
+            return None
+    if len(set(artifacts.values())) != len(artifacts):
+        return None
+    return ids
+
+
+def _rebind_gap_ids(
+    text: str, earlier: tuple[LedgerGap, ...], rerun: tuple[LedgerGap, ...]
+) -> tuple[str, tuple[Rebound, ...]]:
+    """``text`` with each gap id in ``consumers[*].gaps[*].gap_ids`` that the earlier ledger holds
+    set to the rerun ledger's id at the same position; the text unchanged, and no record, unless
+    the ledgers map (``_gap_map``). An id the earlier ledger does not hold stays for the validator."""
+    mapping = _gap_map(earlier, rerun)
+    if mapping is None:
+        return text, ()
+    try:
+        document = load_arguments(text)
+    except TurnError:
+        return text, ()  # not an object: the validator refuses it
+    changes = tuple(_rebind_scopes(document, mapping))
+    return (dump_json(document), changes) if changes else (text, ())
+
+
+def _gap_scopes(document: dict[str, Any]) -> Iterator[tuple[str, dict[str, Any], list[str]]]:
+    """Each ``consumers[i].gaps[j]`` scope that holds a list of string ids, with its path."""
+    consumers = document.get("consumers")
+    for i, consumer in enumerate(consumers if isinstance(consumers, list) else ()):
+        scopes = consumer.get("gaps") if isinstance(consumer, dict) else None
+        for j, scope in enumerate(scopes if isinstance(scopes, list) else ()):
+            ids = scope.get("gap_ids") if isinstance(scope, dict) else None
+            if isinstance(ids, list) and all(isinstance(x, str) for x in ids):
+                yield f"consumers.{i}.gaps.{j}.gap_ids", scope, ids
+
+
+def _rebind_scopes(document: dict[str, Any], mapping: dict[str, str]) -> Iterator[Rebound]:
+    """Rewrite each gap scope's ids through ``mapping`` in place, yielding one ``Rebound`` per
+    scope that changed."""
+    for path, scope, ids in _gap_scopes(document):
+        moved = [mapping.get(x, x) for x in ids]
+        if moved != ids:
+            scope["gap_ids"] = moved
+            yield Rebound(path=path, old=json.dumps(ids), new=json.dumps(moved))
+
+
+def _narrative_gaps(store: Execution, ticket_id: str) -> tuple[LedgerGap, ...]:
+    """The CP-1 narrative gap ledger the store's attempt on ``ticket_id`` read (its ``narrative``
+    step output); empty when the store holds no such step, so that nothing maps."""
+    attempt = next((a for a in store.read().attempts if a.ticket_id == ticket_id), None)
+    held = next((s for s in attempt.steps if s.step_id == "narrative"), None) if attempt else None
+    if held is None or held.output_sha256 is None:
+        return ()
+    inputs = DownstreamInputs.model_validate_json(store.step_output(held.output_sha256))
+    return inputs.narrative.gaps
+
+
 def _same_answer(call: OwnerCall, got: dict[str, Any]) -> bool:
     """The retained call and the replayed one agree: the body (evidence text included), the status
     and the error code. The call id, sequence and binding are the rerun's own."""
@@ -480,6 +568,13 @@ def _replay_step(
     text, rebound = _rebind(
         module, step, payload, _Identity.of(retained.store), _Identity.of(Execution(execution))
     )
+    if (module, step) in REBOUND_GAP_IDS:
+        text, moved = _rebind_gap_ids(
+            text,
+            _narrative_gaps(retained.store, attempt.ticket_id),
+            _narrative_gaps(Execution(execution), binding.ticket_id),
+        )
+        rebound = (*rebound, *moved)
     result = workflow.submit_review(text)
     if result["status"] != "valid":
         _fault(execution, "replay_rejected", "submissions", submission.content_hash())
@@ -534,6 +629,7 @@ def replay_module(
 
 __all__ = [
     "REBOUND_FIELDS",
+    "REBOUND_GAP_IDS",
     "REBOUND_HOLDER",
     "Rebound",
     "ReplayDiverged",

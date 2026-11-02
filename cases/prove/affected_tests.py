@@ -47,6 +47,19 @@ HEAVY = (
     "tests/test_owner_s1a.py",
     "tests/test_financial_workflow.py",
     "tests/test_financial_render.py",
+    "tests/test_owner_cpdr.py",
+    "tests/test_run_pathway_cpdr.py",
+    "tests/test_host_h1.py",
+    "tests/research/test_attach.py",
+    "tests/test_owner_cp1c.py",
+    "tests/test_owner_cpdr_replace.py",
+    "tests/test_owner_cpdr_peers.py",
+    "tests/test_owner_cpos.py",
+    "tests/test_source_tools.py",
+    "tests/test_owner_cp3.py",
+    "tests/test_owner_cp4.py",
+    "tests/test_owner_cp4c.py",
+    "tests/test_cp1_absent_input.py",
 )
 ALL_NAMES = ("pyproject.toml", "uv.lock", ".python-version")
 IGNORED_PREFIXES = ("docs/", "work/", ".claude/")

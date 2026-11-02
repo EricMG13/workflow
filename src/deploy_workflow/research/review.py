@@ -21,6 +21,7 @@ from deploy_workflow.research.contracts import (
     EvidenceItem,
     ResearchBrief,
 )
+from deploy_workflow.research.peers import PeerPack, peer_issues
 
 AnswerState = Literal["answered", "partly", "not_found"]
 # OD11/L3: the owners/cpdr.py PROHIBITED list minus covenant, recovery and refinanc; nothing added.
@@ -70,6 +71,7 @@ class Answer(Contract):
 class ResearchSubmission(Contract):
     run_id: Identifier
     answers: tuple[Answer, ...]
+    peers: PeerPack | None = None
 
     @classmethod
     def parse(cls, body: Mapping[str, Any]) -> Self:
@@ -324,4 +326,5 @@ def research_issues(
     issues += [
         ReviewIssue(qid, "brief question has no answer") for qid in wanted if qid not in seen
     ]
+    issues += peer_issues(submission.peers, brief, evidence, held)
     return tuple(issues)

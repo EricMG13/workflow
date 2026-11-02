@@ -8,6 +8,7 @@ evidence rules (absence needs a recorded search, a cited page needs a read).
 """
 
 import json
+import re
 from collections.abc import Mapping, Sequence
 from datetime import date
 from typing import Any, Final, NamedTuple, Self
@@ -15,10 +16,11 @@ from typing import Any, Final, NamedTuple, Self
 from deploy_vii.contracts import Contract, Identifier, Input, Text
 from deploy_vii.execution import listed_issues
 from deploy_vii.live.schema import json_object
-from deploy_vii.live.tools import UNBACKED_ABSENCE, Seen, unread_citation_issues
+from deploy_vii.live.tools import UNBACKED_ABSENCE, UNREAD_PAGE, Seen, cited_locators
 from deploy_workflow.research.brief import CONTEXT_PREFIX, TailoredQuestion
 from deploy_workflow.research.contracts import (
     MAX_QUESTIONS,
+    RESERVED_PREFIX,
     EvidenceItem,
     QuestionKind,
     ResearchBrief,
@@ -36,6 +38,8 @@ QUESTION_ID_MAX: Final = IDENTIFIER_MAX - max(
 RESERVED_ROW_ID: Final = "total"
 RESEARCH_BRIEF_INPUT: Final = "research-brief"
 RESEARCH_SUBMISSION_INPUT: Final = "research-submission"
+RESEARCH_EVIDENCE_INPUT: Final = "research-evidence"  # sha256 of the staged evidence.json bytes
+RESEARCH_REJECTED_INPUT: Final = "research-rejected"  # sha256 of the staged rejected.json bytes
 DEFAULTS_FIRST: Final = "the six default questions come first, in their fixed order"
 
 
@@ -159,10 +163,13 @@ def brief_view_body(
     context_questions: Sequence[tuple[str, str]],
     as_of: date,
     cutoff: date,
+    peer_pack: bool,
     sources: Sequence[str],
 ) -> str:
     """The brief step's ``read_inputs`` body as compact JSON: the fixed defaults, the run's
-    context questions (ids as ``lock_brief`` assigns them), the bound and the held sources."""
+    context questions (ids as ``lock_brief`` assigns them), the bound, whether the run asks for
+    the peer pack (Python decides it: the locked brief carries ``peer_pack``, and the brief
+    submission carries no such field) and the held sources."""
     return _compact(
         {
             "default_questions": [
@@ -175,6 +182,7 @@ def brief_view_body(
             "limits": {"max_questions": MAX_QUESTIONS},
             "as_of": as_of.isoformat(),
             "cutoff": cutoff.isoformat(),
+            "peer_pack": peer_pack,
             "sources": list(sources),
         }
     )
@@ -188,6 +196,8 @@ def research_view_body(
     return _compact(
         {
             "brief_sha256": brief.brief_sha256,
+            "cutoff": brief.cutoff.isoformat(),
+            "peer_pack": brief.peer_pack,
             "questions": [
                 {
                     "question_id": q.question_id,
@@ -244,11 +254,35 @@ def _absent(document: Mapping[str, object], seen: Seen) -> list[str]:
     return [" ".join(parts) for parts in sorted(found)]
 
 
+_PAGE: Final = re.compile(r"page:[0-9]+")
+_LINE: Final = re.compile(r"line:[0-9]+")
+
+
+def unread_issues(text: str, seen: Seen) -> tuple[str, ...]:
+    """O7-R29: every cited ``page:N`` locator, and every cited ``line:N`` locator of an ``ev-*``
+    item, that ``read_pages`` never returned in this step, sorted. ``unread_citation_issues`` of
+    deploy_vii judges ``page:N`` only (I4); an ``ev-*`` item is a line source."""
+    unread = sorted(
+        (source_id, locator)
+        for source_id, locator in cited_locators(text)
+        if (
+            _PAGE.fullmatch(locator)
+            or (source_id.startswith(RESERVED_PREFIX) and _LINE.fullmatch(locator))
+        )
+        and (source_id, locator) not in seen.read
+    )
+    return listed_issues(
+        unread,
+        lambda cited: (UNREAD_PAGE, ": ", cited[0], " ", cited[1]),
+        lambda count: f"{UNREAD_PAGE}: {count} further cited pages not listed",
+    )
+
+
 def research_rules(text: str, seen: Seen) -> tuple[str, ...]:
     """The research step's evidence rules over the payload text and ``Seen``: absence first (every
     searched item of an answer or a ``none_found`` entry needs a recorded ``search_pack``), then
-    unread page citations, each sorted. A payload that is not a JSON object has no rule issues;
-    the schema check reports it."""
+    unread citations (a ``page:N``, or a ``line:N`` of an ``ev-*`` item), each sorted. A payload
+    that is not a JSON object has no rule issues; the schema check reports it."""
     document = json_object(text)
     absent = [] if document is None else _absent(document, seen)
     return (
@@ -262,16 +296,25 @@ def research_rules(text: str, seen: Seen) -> tuple[str, ...]:
             ),
             lambda count: f"{UNBACKED_ABSENCE}: {count} further absence claims not listed",
         ),
-        *unread_citation_issues(text, seen),
+        *unread_issues(text, seen),
     )
 
 
 def candidate_inputs(
-    attempt_inputs: Sequence[Input], *, brief_sha256: str, submission_sha256: str
+    attempt_inputs: Sequence[Input],
+    *,
+    brief_sha256: str,
+    submission_sha256: str,
+    evidence_sha256: str,
+    rejected_sha256: str,
 ) -> tuple[Input, ...]:
-    """The CP-DR head's inputs: the attempt's, then the locked brief and the research submission."""
+    """The CP-DR head's inputs: the attempt's, then the locked brief, the research submission and
+    the bytes of the two staged records the dossier shows (``evidence.json``, ``rejected.json``;
+    O7-R49 L-2), so an edit to either after the head settles is a head that does not re-derive."""
     return (
         *attempt_inputs,
         Input(input_id=RESEARCH_BRIEF_INPUT, sha256=brief_sha256),
         Input(input_id=RESEARCH_SUBMISSION_INPUT, sha256=submission_sha256),
+        Input(input_id=RESEARCH_EVIDENCE_INPUT, sha256=evidence_sha256),
+        Input(input_id=RESEARCH_REJECTED_INPUT, sha256=rejected_sha256),
     )

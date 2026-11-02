@@ -18,6 +18,7 @@ from types import SimpleNamespace
 from typing import Any, Literal, cast
 
 import cp1c_runs as runs
+import cpdr_runs
 import pytest
 import test_method_cp1c as stage1
 import view_tree
@@ -73,6 +74,7 @@ from deploy_workflow import host
 from deploy_workflow import owner_workflow as owner
 from deploy_workflow.financial_workflow import _FrozenExecution
 from deploy_workflow.owners import cp1c
+from deploy_workflow.research.steps import research_rules
 from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -1125,12 +1127,30 @@ def test_registrations_equal_the_lease() -> None:
     owner._check_steps(MODULE, owner.OWNER_SPECS[MODULE])
 
 
+def _cpdr_key() -> dict[str, Any]:
+    """`cases/cpdr-research-owner/expected.json#consumers`, through the pinned oracle reader."""
+    consumers: dict[str, Any] = cpdr_runs.oracle()["expected"]["consumers"]
+    return consumers
+
+
 def test_sources_flag_matches_the_h1_owner_scope_row() -> None:
-    """G1-X guard: `sources` agrees with the `_OWNER_SCOPES` row, which keeps the module's scope."""
+    """G1-X guard: `sources` agrees with the `_OWNER_SCOPES` row, which keeps the module's scope.
+    O7c C1 amends the row, never the cp1c-owner packs' rows: the named sources, then every held
+    `ev-*` in pack order (`#consumers/cp1c_scope`)."""
     row = host._OWNER_SCOPES[(MODULE, STEP)]
     for case in CASES:
         pack = _pack(case)
         assert row(pack) == tuple(s.source_id for s in pack.sources if s.source_id in cp1c.SCOPE)
+        assert row(pack) == tuple(s.source_id for s in pack.sources if cp1c.in_scope(s.source_id))
+    research = cpdr_runs.make_pack("positive")
+    assert list(row(research)) == _cpdr_key()["cp1c_scope"]["positive_pack"]
+    assert tuple(s.source_id for s in research.sources if cp1c.in_scope(s.source_id)) == row(
+        research
+    )
+    both = PreparedPack(
+        run=research.run, sources=(*stage1.sources("positive"), *research.sources[2:])
+    )
+    assert row(both) == ("identity", "financial", "peers", "ev-1", "ev-2", "ev-3")
     wrong = dataclasses.replace(owner.OWNER_SPECS[MODULE].steps[0], sources=False)
     with pytest.raises(WorkflowError):
         owner._check_steps(MODULE, dataclasses.replace(owner.OWNER_SPECS[MODULE], steps=(wrong,)))
@@ -1506,3 +1526,45 @@ def test_driver_binds_every_readiness_marker_by_its_oracle_predicate(
     )
     with pytest.raises(RuntimeError, match="2 catalogue records, expected exactly one"):
         runs.readiness_literal(cast(Any, None), case)
+
+
+def _ev_citation_payload(quote: str, source_id: str = "ev-1", locator: str = "line:9") -> str:
+    key = _cpdr_key()["cp1c_cite"]
+    sources = {s.source_id: s for s in cpdr_runs.evidence_sources()}
+    sha = sources[key["item"]].sha256 if source_id == key["item"] else sources["ev-2"].sha256
+    payload = _payload()
+    payload["assessments"][0]["evidence"].append(
+        {"source_id": source_id, "source_sha256": sha, "locator": locator, "quote": quote}
+    )
+    return json.dumps(payload)
+
+
+def _ev_issues(payload: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """(content issues, tool-use issues) of a payload over the cp1c-owner positive sources plus
+    the three CP-DR evidence items, through the store adapter's own scope."""
+    pack = PreparedPack(
+        run=_run("positive"), sources=(*stage1.sources("positive"), *cpdr_runs.evidence_sources())
+    )
+    inputs = cp1c._inputs(pack, _submission(payload=json.loads(payload)), _upstream())
+    return cp1c.calculation_issues(inputs), cp1c.RULES(payload, _read_all(payload))
+
+
+def test_cp1c_cites_ev_sources() -> None:
+    """`#consumers/cp1c_cite`: after `read_pages(ev-1, 9, 9)` a verbatim quote under `line:9` is
+    valid; a sentence not in the item and an absent item are refused by the citation check."""
+    key = _cpdr_key()["cp1c_cite"]
+    assert (key["item"], key["locator"]) == ("ev-1", "line:9")
+    assert _ev_issues(_ev_citation_payload(key["quote"], key["item"], key["locator"])) == ((), ())
+    # The tool-use rule (O7-R54 M-1, restored leg): the same cite, never read, is refused with
+    # CP-DR's own rule's issue (`research.steps.research_rules`); the page:N control is unchanged.
+    payload = _ev_citation_payload(key["quote"], key["item"], key["locator"])
+    cited = cited_locators(payload)
+    unread = Seen(read=frozenset(cited - {(key["item"], key["locator"])}))
+    ours = cp1c.RULES(payload, unread)
+    assert ours and ours == tuple(i for i in research_rules(payload, unread) if key["item"] in i)
+    page = min(c for c in cited if c[1].startswith("page:"))
+    assert cp1c.RULES(payload, Seen(read=frozenset(cited - {page})))
+    issues, _ = _ev_issues(_ev_citation_payload(key["not_in_item"], key["item"], key["locator"]))
+    assert any(i.startswith("Quote/locator mismatch") for i in issues), issues
+    issues, _ = _ev_issues(_ev_citation_payload(key["quote"], key["absent_item"], key["locator"]))
+    assert f"Unavailable or changed source: {key['absent_item']}" in issues

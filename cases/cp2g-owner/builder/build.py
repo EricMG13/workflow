@@ -48,10 +48,10 @@ PINS = {
     "cases/cp2a-owner/manifest.json": "099bfec94b1a7ab19df98646d528ece0871bb411bf45ce79b0d5250677eb3672",
     "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
     "cases/cp2a-owner/expected.json": "f6b22e02a196b8c621908f365ebbfacc4e7c5d6425d3cb842a99e164409ee66f",
-    "cases/cp1d-owner/manifest.json": "48f23431176d5b62fe84732f760b45b9e8f5fa93f78f968a59477e8dfb619910",
+    "cases/cp1d-owner/manifest.json": "0d3a2665e9dc54e1821e5a0b7beb0d2acf2eced708165482ed33d2e3db681639",
     "cases/cp1d-owner/submissions.json": "e19bc64bf6b9d388ca355fcb5de5160be1c4c0e7e27d3b348f1996a17fbd93d7",
     "cases/cp1d-owner/expected.json": "5abf5ec4aeaaac520fee35a86bbeeea0d5782b7fdf424316803849fb3688df94",
-    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
 }
 
 

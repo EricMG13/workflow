@@ -46,6 +46,19 @@ jobs:
           - tests/test_owner_s1a.py
           - tests/test_financial_workflow.py
           - tests/test_financial_render.py
+          - tests/test_owner_cpdr.py
+          - tests/test_run_pathway_cpdr.py
+          - tests/test_host_h1.py
+          - tests/research/test_attach.py
+          - tests/test_owner_cp1c.py
+          - tests/test_owner_cpdr_replace.py
+          - tests/test_owner_cpdr_peers.py
+          - tests/test_owner_cpos.py
+          - tests/test_source_tools.py
+          - tests/test_owner_cp3.py
+          - tests/test_owner_cp4.py
+          - tests/test_owner_cp4c.py
+          - tests/test_cp1_absent_input.py
     steps:
       - uses: actions/checkout@v5
         with:
@@ -104,6 +117,19 @@ jobs:
               -e tests/test_owner_s1a.py \
               -e tests/test_financial_workflow.py \
               -e tests/test_financial_render.py \
+              -e tests/test_owner_cpdr.py \
+              -e tests/test_run_pathway_cpdr.py \
+              -e tests/test_host_h1.py \
+              -e tests/research/test_attach.py \
+              -e tests/test_owner_cp1c.py \
+              -e tests/test_owner_cpdr_replace.py \
+              -e tests/test_owner_cpdr_peers.py \
+              -e tests/test_owner_cpos.py \
+              -e tests/test_source_tools.py \
+              -e tests/test_owner_cp3.py \
+              -e tests/test_owner_cp4.py \
+              -e tests/test_owner_cp4c.py \
+              -e tests/test_cp1_absent_input.py \
             | awk -v s="$SHARD" '(NR-1) % 8 == s' > "$RUNNER_TEMP/shard.txt"
           echo "shard $SHARD files:"
           cat "$RUNNER_TEMP/shard.txt"

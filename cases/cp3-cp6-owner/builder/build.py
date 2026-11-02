@@ -28,7 +28,7 @@ PINS = {
     # rev 1 (review L2, M4): the two other data files the builder reads. methodology.json changes when the
     # CP-6 freeze registered T6-FINAL (ruling Q7); the pin moved with that change.
     "cases/snapshot/cp2-view-tree.json": "f739395cbcf30ae2af710d8423927a8f810c8c4b948c07c6e6583e2a3b86f446",
-    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
 }
 S1_FILES = (
     "cases/snapshot/manifest.json",

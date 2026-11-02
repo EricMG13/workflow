@@ -25,7 +25,7 @@ OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "cases" / "cp
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
-    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
 }
 for rel, want in PINS.items():
     got = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
@@ -70,7 +70,15 @@ SYNTH_SENTENCE = "This invented case is test data, not evidence about real issue
 
 # --- registry as it is today (pre-O7b-1); the post-change registry is DATA below, never asserted from the file ----
 ENTRY = next(m for m in METH if m["module_id"] == "CP-DR")
-assert ENTRY["required"] == ["CP-0"] and ENTRY["table_ids"] == ["TDR.1", "TDR.2", "TDR.3"]
+assert ENTRY["required"] == ["CP-0", "CP-1"] and ENTRY["table_ids"] == [
+    "TDR.1",
+    "TDR.2",
+    "TDR.3",
+    "TDR.4",
+    "TDR.5",
+    "TDR.6",
+]
+assert "cp-dr/2026-10-31" in ENTRY["purpose"]
 for _m in METH:
     if _m["module_id"] != "CP-DR":
         assert not set(_m["table_ids"]) & set(ENTRY["table_ids"]), _m["module_id"]
@@ -1775,7 +1783,7 @@ REGISTRY_AFTER = {
     "note": "DATA for O7b-1's tests, not an assertion against methodology.json (which does not yet hold it)",
     "CP-DR": {
         "required": ["CP-0", "CP-1"],
-        "table_ids": ["TDR.1", "TDR.2", "TDR.3"],
+        "table_ids": ["TDR.1", "TDR.2", "TDR.3", "TDR.4", "TDR.5", "TDR.6"],
         "purpose_contains": CPDR_VERSION,
         "row_position": "before CP-1C (so registry.plan orders CP-DR after CP-1, "
         "before CP-1C and CP-2)",
@@ -1788,8 +1796,8 @@ REGISTRY_AFTER = {
         "METHOD_VERSION_CPDR",
     ],
     "today_before_change": {
-        "required": ENTRY["required"],
-        "methodology_sha256": PINS["src/deploy_vii/methodology.json"],
+        "required": ["CP-0"],
+        "methodology_sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
     },
 }
 
@@ -1861,6 +1869,129 @@ assert [e["item_id"] for e in accepted] == ITEMS_SEARCHED and BRIEF_TEMPLATE[
 assert (
     json.loads(BRIEF_TEMPLATE[RUN_V1])["questions"]
     == json.loads(BRIEF_TEMPLATE[RUN_V2])["questions"]
+)
+
+# --- O7c C0: consumers, attachments, cp_dr_state, delivery scope, tool_use, replacement (derived from the method and O7-R47) ---
+_EV1_L9 = EVIDENCE[0]["text"].split("\n")[8]
+_NOT_IN_ITEM = "The desk expects a rating action on the issuer within the quarter."
+assert _EV1_L9.startswith("The desk describes the sector as trading at a discount") and not any(
+    _NOT_IN_ITEM in e["text"] for e in EVIDENCE
+)
+_VAL = next(a for a in ANSWERS_V1 if a["question_id"] == "valuation-context")["limitation"]
+_LOCAL = (
+    "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run."
+)
+_SYNTH = "Synthetic case; not real issuer qualification"
+_PLAN = {
+    "plan_without_cpdr": ["CP-0", "CP-1", "CP-1C"],
+    "plan_with_cpdr": ["CP-0", "CP-1", "CP-DR", "CP-1C"],
+    "plan_cp2_with_cpdr": ["CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2"],
+}
+assert all(
+    _PLAN["plan_with_cpdr"].index("CP-DR") < _PLAN["plan_with_cpdr"].index("CP-1C") for _ in "x"
+)
+CONSUMERS = {
+    "context_producers": {"CP-1C": ["CP-DR"], "CP-2": ["CP-DR"]},
+    "context_producers_note": "added to execution.CONTEXT_PRODUCERS; the CP-1A entry is unchanged",
+    "input_form": "Input(input_id='CP-DR', sha256=<CP-DR head result_sha256>, status=<head status>)",
+    "positive_status": "restricted",
+    **_PLAN,
+    "plan_check": "each plan tuple was checked with deploy_vii.registry.plan in a scratch archive at ce3c9787; no CP-DR in dependencies()['CP-1C']",
+    "rejection_text": "Candidate does not bind the exact current upstream inputs",
+    "rejection_source": "src/deploy_vii/execution.py:292 (candidate_issues)",
+    "stale_note": "Input changed: CP-DR; rerun required",
+    "stale_source": "src/deploy_vii/execution.py:320 (invalidate: f'Input changed: {changed}; rerun required')",
+    "inherited": {
+        "cpdr_own": [_LOCAL, f"valuation-context: {_VAL}", _SYNTH],
+        "positive": [_LOCAL, f"valuation-context: {_VAL}"],
+        "order": "execution.settle keeps own = dedupe(candidate.limitations, synthetic line); candidate.limitations = [LOCAL_LIMITATION, 'question_id: limitation' per answer]. Compare (a) the CP-DR head's limitations == cpdr_own; (b) [t for t in consumer.inherited_limitations if t in head.limitations] == positive",
+        "note": "positive omits the synthetic line: on a synthetic run settle puts it in the consumer's own limitations (execution.py:477-482) and inherited_limitations filters own lines (:367), so it can never be inherited",
+        "_source": "src/deploy_workflow/research/tables.py:38-40 and :440-442; src/deploy_vii/execution.py:367 and :477-482",
+        "pack_source_line": "PACK_LIMITATION (tables.py:36) sits on TDR.2 cells of a pack-source claim, not in module.limitations; this run has no pack-source claim, so it is not listed",
+    },
+    "cp1c_scope": {
+        "positive_pack": ["identity", "financial", "ev-1", "ev-2", "ev-3"],
+        "rule": "identity, financial, peers when held, then every held ev-* in pack order",
+    },
+    "cp1c_cite": {
+        "item": "ev-1",
+        "locator": "line:9",
+        "quote": _EV1_L9,
+        "not_in_item": _NOT_IN_ITEM,
+        "absent_item": "ev-9",
+    },
+    "cp2": {
+        "sources": False,
+        "citation_fields": [],
+        "note": "CreditSynthesisSubmission has no citation field; a `citations` member is a shape refusal",
+    },
+    "prompt": {
+        "block_id": "cp-dr-dossier",
+        "label": "The block cp-dr-dossier is supplied research context, not an analytical upstream, and not authority for conclusions.",
+        "sha256_rule": "equals run.json cp_dr_dossier_sha256 and the sha256 of research/dossier.md",
+        "absent_when": "the attempt binds no CP-DR input (blocked or no CP-DR run)",
+    },
+}
+ATTACHMENTS = {
+    "keys": ["brief_sha256", "consumers", "dossier_sha256", "run_id", "supersedes", "version"],
+    "layout": "sorted keys, two-space indent, LF, one trailing LF",
+    "positive": {"consumers": [], "supersedes": None, "version": CPDR_VERSION},
+    "rule": "consumers = module ids whose settled head binds an Input CP-DR, in registry.plan order",
+}
+RUN_JSON_STATE = {
+    "values": ["settled", "blocked", "refused", None],
+    "positive": "settled",
+    "blocked_cp0": "refused",
+    "blocked_head": "blocked",
+    "note": "O7-R47 Q2: refused is the O7-R20 anchor stop (joins refusals/anchors/blocked_cp0); a blocked head continues and CP-5 settles restricted over the fan-in edge (registry.py:88-93); null when the run stops before CP-DR for another reason",
+}
+DELIVERY = {
+    "scope": {
+        "scope_id": "slice-cpdr-research",
+        "pathway": "relative_value",
+        "requested_modules": ["CP-1", "CP-DR"],
+        "case_kind": "synthetic",
+        "sections": [],
+    },
+    "banner": {
+        "complete": "Local research evidence and limitations only, from the supplied items. No Front Page block on this page is qualified.",
+        "replaces": "src/deploy_workflow/owner_rendering.py:363-364 ('Local research agenda coverage only, shown as evidence and limitations. ...')",
+    },
+    "rails": {"evidence_rail": ["TDR.1", "TDR.2"], "limitations_rail": ["TDR.3"]},
+    "receipt": "render-receipt.json records sections == [] and one rail proof per destination",
+}
+REPLACEMENT = {
+    "plan": {
+        "requested": ["CP-1", "CP-DR"],
+        "repaired": ["CP-DR"],
+        "replayed": ["CP-0", "CP-1"],
+        "live": ["CP-DR"],
+    },
+    "plan_with_consumers": {
+        "earlier": "the v1 closed run (CP-0, CP-1, CP-DR settled)",
+        "requested": ["CP-1C", "CP-2", "CP-DR"],
+        "repaired": ["CP-DR"],
+        "replayed": ["CP-0", "CP-1"],
+        "live": ["CP-1A", "CP-DR", "CP-1C", "CP-2"],
+        "unreplayable": {"CP-1A": "the earlier run holds no settled, valid attempt of it"},
+        "_source": "src/deploy_workflow/replay.py:267 (_Earlier.unusable)",
+        "note": "over v1 CP-1A has no settled attempt, so it is live; CP-1C and CP-2 are live through CP-1A as well as CP-DR",
+    },
+    "rebound": {
+        "CP-0 source_readiness": ["pack_sha256"],
+        "CP-1 financials": ["run_id"],
+        "CP-1 readiness": ["gap_ids"],
+    },
+    "rebound_source": "src/deploy_workflow/replay.py:63-70 (REBOUND_FIELDS) and replay.REBOUND_GAP_IDS "
+    "(the CP-1 readiness gap_ids, ruling O7-R62; .superpowers/sdd/2026-10-31-part-b-o7/c4-rootcause.md)",
+    "supersedes": RUN_V1,
+    "earlier_tree": "no file under the v1 run directory changes (tree hash equal)",
+    "pack_changed_text": "the sources or the run differ from the earlier run's: use a fresh run",
+    "pack_changed_source": "src/deploy_workflow/replay.py:343-345 (check_same_pack)",
+}
+TOOL_USE_CPDR = (
+    "brief: read_inputs once; source scope every held non-ev source (identity and financial in this pack), zero ev-* reads; research: read_inputs once, "
+    "ok read_pages over line:<n> for every cited line, search_pack over each searched item (calls in tool_use.calls)"
 )
 
 expected = {
@@ -1990,7 +2121,13 @@ expected = {
         "over each searched item backs the not_found claim; headers follow the documented rule "
         "(a span matches when it holds any query term, case-insensitive substring)",
         "calls": "submissions.json tool_calls.research",
+        "CP-DR": TOOL_USE_CPDR,
     },
+    "consumers": CONSUMERS,
+    "attachments": ATTACHMENTS,
+    "run_json": {"cp_dr_state": RUN_JSON_STATE},
+    "delivery": DELIVERY,
+    "replacement": REPLACEMENT,
     "registry_after_o7b1": REGISTRY_AFTER,
     "evidence_rail": ["TDR.1", "TDR.2"],
     "limitations_rail": ["TDR.3"],

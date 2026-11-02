@@ -30,13 +30,17 @@ from deploy_workflow.owners.period_basis import DEFAULT_BASIS
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases" / "valuation-context-owner"
 CP4C_CASE = ROOT / "cases" / "cp4c-owner"
-GAP_DR = "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
 GAP_UL = "No peer figures: user_list peers need the peer lookup (O7d)"
 
 
 def _load(path: Path) -> dict[str, Any]:
     document: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
     return document
+
+
+# O7d D2: the `cp_dr_public` gap is the peers oracle's wording (`cpdr-peers-owner#cp1c/t1c9_gap_reason`),
+# which replaces the Phase 7 wording this module's own oracle still holds.
+GAP_DR = _load(ROOT / "cases" / "cpdr-peers-owner" / "expected.json")["cp1c"]["t1c9_gap_reason"]
 
 
 @cache

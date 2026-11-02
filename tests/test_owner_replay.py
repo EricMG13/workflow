@@ -16,18 +16,25 @@ import os
 import shutil
 import socket
 from collections.abc import Callable
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, NoReturn, cast
 
+import cpdr_consumers as cc
+import cpdr_runs as runs
 import o2_case
 import pytest
+from cpdr_s1_support import ResearchCase
 from pydantic import BaseModel
 
+from deploy_vii.canonical_gaps import GapDetail, LedgerGap
 from deploy_vii.contracts import PREFILLED_MARKER
 from deploy_vii.execution import Execution
+from deploy_vii.financial_periods import _id
 from deploy_vii.preparation import load_pack
+from deploy_vii.registry import plan as registry_plan
 from deploy_workflow import replay
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.financial_workflow import _filled
@@ -52,8 +59,10 @@ from deploy_workflow.replay import (
     ReplayRefused,
     ReplayRejected,
 )
+from deploy_workflow.research import evidence
 from deploy_workflow.run_inputs import CaseSource, RunInputError, check_arguments, stage_sources
 from deploy_workflow.run_pathway import run_pathway
+from deploy_workflow.tools.source import SourceTools
 
 EARLIER_ID = o2_case.RUN_ID  # the frozen payloads bind the pack of this run id
 RERUN_ID = "o2-synthetic-rerun"
@@ -665,6 +674,8 @@ def test_every_unfilled_identity_field_is_rebound_or_named_run_independent() -> 
     assert REBOUND_FIELDS == {
         ("CP-0", "source_readiness"): ("pack_sha256",),
         ("CP-1", "financials"): ("run_id",),
+        ("CP-DR", "brief"): ("run_id",),
+        ("CP-DR", "research"): ("run_id",),
     }
 
 
@@ -685,6 +696,143 @@ def test_the_cp1_financials_run_id_is_rebound_and_nothing_else() -> None:
     other = json.dumps({**payload, "financial": {**payload["financial"], "run_id": "someone-else"}})
     assert replay._rebind("CP-1", "financials", other, earlier, rerun) == (other, ())
     assert replay._rebind("CP-2", "credit_synthesis", text, earlier, rerun) == (text, ())
+
+
+def test_the_cpdr_brief_and_research_run_id_are_rebound_and_nothing_else() -> None:
+    """CP-DR's model-written ``run_id`` (checked against the run) is the one field rewritten;
+    the frozen brief and research submissions otherwise stay as the earlier run wrote them."""
+    frozen = json.loads(
+        (
+            Path(__file__).resolve().parents[1]
+            / "cases"
+            / "cpdr-research-owner"
+            / "submissions.json"
+        ).read_text(encoding="utf-8")
+    )
+    earlier_id = frozen["research_v1"]["run_id"]
+    earlier = replay._Identity("a" * 64, earlier_id)
+    rerun = replay._Identity("b" * 64, RERUN_ID)
+    payloads = {
+        "brief": {"run_id": earlier_id, "questions": frozen["brief"]["model_tailored"]},
+        "research": frozen["research_v1"],
+    }
+    for step, payload in payloads.items():
+        text = json.dumps(payload)
+        rewritten, rebound = replay._rebind("CP-DR", step, text, earlier, rerun)
+        assert [(r.path, r.old, r.new) for r in rebound] == [("run_id", earlier_id, RERUN_ID)]
+        assert json.loads(rewritten) == {**payload, "run_id": RERUN_ID}
+        other = json.dumps({**payload, "run_id": "someone-else"})
+        assert replay._rebind("CP-DR", step, other, earlier, rerun) == (other, ())
+        assert replay._rebind("CP-2", step, text, earlier, rerun) == (text, ())
+
+
+# ------------------------------------------------------------ the CP-1 readiness gap ids (O7-R62)
+
+CASES = Path(__file__).resolve().parents[1] / "cases" / "cpdr-research-owner"
+ARTIFACTS = ("a", "a", "b", "c", "c", "c")
+
+
+def _ledger_gaps(book: str, artifacts: tuple[str, ...], run: str) -> tuple[LedgerGap, ...]:
+    """One gap per artifact, ids as the product builds them (``_id`` over the content hash);
+    ``run`` stands in for the run-dependent report hash that the artifact hash carries."""
+    out: list[LedgerGap] = []
+    for index, artifact in enumerate(artifacts):
+        detail = GapDetail(
+            origin="source_context",
+            artifact_sha256=hashlib.sha256(f"{artifact}-{run}".encode()).hexdigest(),
+            reference=f"ref-{index}",
+            metric=None,
+            periods=(),
+            description=f"gap {index}",
+            severity="WARN",
+            downstream_impact="limited",
+            recommended_action="retain",
+            citations=(),
+        )
+        out.append(LedgerGap(gap_id=_id("cp1-gap", book, detail.content_hash()), **dict(detail)))
+    return tuple(out)
+
+
+def _readiness_text(gaps: tuple[LedgerGap, ...]) -> str:
+    """The case's ``cp1_readiness`` payload with ``{{GAP_IDS}}`` bound to the gaps' ids, in order,
+    as ``tests/cp1d_runs.py`` binds it; the evidence placeholders stay (no run binds them here)."""
+    document = json.loads((CASES / "submissions.json").read_text(encoding="utf-8"))
+    payload = document["cp1_readiness"]["payload"]
+    payload.pop("inputs_sha256")
+    for consumer in payload["consumers"]:
+        for gap in consumer["gaps"]:
+            gap["gap_ids"] = [g.gap_id for g in gaps]
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def _gap_ids_of(text: str) -> list[list[str]]:
+    return [g["gap_ids"] for c in json.loads(text)["consumers"] for g in c["gaps"]]
+
+
+def test_the_cp1_readiness_gap_ids_are_rebound_by_position_in_order() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS, "v2")
+    assert {g.gap_id for g in earlier}.isdisjoint(g.gap_id for g in rerun)
+    text = _readiness_text(earlier)
+    rewritten, rebound = replay._rebind_gap_ids(text, earlier, rerun)
+    assert _gap_ids_of(rewritten) == [[g.gap_id for g in rerun]]
+    expected = json.loads(text)
+    expected["consumers"][0]["gaps"][0]["gap_ids"] = [g.gap_id for g in rerun]
+    assert json.loads(rewritten) == expected  # nothing else in the payload moved
+    assert [(r.path, json.loads(r.old), json.loads(r.new)) for r in rebound] == [
+        (
+            "consumers.0.gaps.0.gap_ids",
+            [g.gap_id for g in earlier],
+            [g.gap_id for g in rerun],
+        )
+    ]
+
+
+def test_the_cp1_readiness_rebound_names_equal_the_key() -> None:
+    expected = json.loads((CASES / "expected.json").read_text(encoding="utf-8"))
+    key = expected["replacement"]["rebound"]["CP-1 readiness"]
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS, "v2")
+    _, rebound = replay._rebind_gap_ids(_readiness_text(earlier), earlier, rerun)
+    assert [r.path.rsplit(".", 1)[-1] for r in rebound] == key
+    assert replay.REBOUND_GAP_IDS == frozenset({("CP-1", "readiness")})
+
+
+def test_a_pair_that_differs_beyond_the_artifact_hash_leaves_the_text_unchanged() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = list(_ledger_gaps("book", ARTIFACTS, "v2"))
+    rerun[2] = rerun[2].model_copy(update={"description": "another gap"})
+    text = _readiness_text(earlier)
+    assert replay._rebind_gap_ids(text, earlier, tuple(rerun)) == (text, ())
+
+
+def test_lists_of_different_lengths_leave_the_text_unchanged() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS[:-1], "v2")
+    text = _readiness_text(earlier)
+    assert replay._rebind_gap_ids(text, earlier, rerun) == (text, ())
+
+
+def test_an_artifact_map_that_is_not_one_to_one_leaves_the_text_unchanged() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    text = _readiness_text(earlier)
+    # one earlier artifact hash meets two rerun hashes
+    split = list(_ledger_gaps("book", ARTIFACTS, "v2"))
+    split[1] = split[1].model_copy(update={"artifact_sha256": "f" * 64})
+    assert replay._rebind_gap_ids(text, earlier, tuple(split)) == (text, ())
+    # two earlier artifact hashes meet one rerun hash
+    merged = list(_ledger_gaps("book", ARTIFACTS, "v2"))
+    merged[2] = merged[2].model_copy(update={"artifact_sha256": merged[0].artifact_sha256})
+    assert replay._rebind_gap_ids(text, earlier, tuple(merged)) == (text, ())
+
+
+def test_an_id_the_earlier_ledger_does_not_hold_is_left_for_the_validator() -> None:
+    earlier = _ledger_gaps("book", ARTIFACTS, "v1")
+    rerun = _ledger_gaps("book", ARTIFACTS, "v2")
+    document = json.loads(_readiness_text(earlier))
+    document["consumers"][0]["gaps"][0]["gap_ids"] = ["cp1-gap:unknown"]
+    text = json.dumps(document)
+    assert replay._rebind_gap_ids(text, earlier, rerun) == (text, ())
 
 
 # ================================================================================== part C
@@ -1314,3 +1462,111 @@ def test_a_binding_naming_an_absent_snapshot_is_a_named_refusal(
     with pytest.raises(ReplayRefused):
         rerun_public(root, copy)
     assert not (root / "run").exists()
+
+
+# ---------------------------------------------------------------- CP-DR across a rerun (O7-R67)
+
+LATER_INSTANT = datetime(2026, 11, 2, 6, 40, 0, tzinfo=UTC)
+EARLIER_TEXT = runs.RETRIEVED  # the instant the settled earlier run's evidence.json records
+READ_EV1 = {"source_id": "ev-1", "first_page": 1, "last_page": 1}
+
+
+def settled_earlier(root: Path) -> Path:
+    """An earlier run directory whose execution/ holds CP-0, CP-1 and a settled CP-DR head, with
+    the research records the head bound under research/."""
+    cc.settled_through_cpdr(root, ("CP-1", "CP-DR", "CP-1C"), name="execution")
+    return root
+
+
+def stage_rerun(root: Path, monkeypatch: pytest.MonkeyPatch, earlier: Path) -> Path:
+    """A CP-DR rerun naming ``earlier``, staged with the research clock at LATER_INSTANT."""
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_INSTANT)
+    case = ResearchCase(root)
+    checked = check_arguments(**case.arguments(root, run_id="rerun-1", replay_from=earlier))
+    stage_sources(checked, root / "run")
+    return root / "run"
+
+
+def research_read(run: Path, times_from: Path) -> dict[str, Any]:
+    """What ``read_pages`` answers for ``ev-1`` over ``run``'s pack, with the retrieval times read
+    from ``times_from``'s ``research/evidence.json`` (the session's own tools)."""
+    tools = SourceTools(
+        load_pack(run / "pack"),
+        ("ev-1",),
+        extraction=False,
+        retrieved=evidence.research_retrieved(times_from / "execution", ("ev-1",)),
+    )
+    body, _ = tools.stage("read_pages", READ_EV1)
+    return {"body": body, "status": "ok", "error_code": None}
+
+
+def test_a_cpdr_read_replays_across_a_rerun_staged_later(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7-R67: the retained read_pages body holds the earlier intake instant; the rerun, staged an
+    hour later with the settled earlier run named, answers the same body, so the replay does not
+    diverge."""
+    earlier = settled_earlier(tmp_path / "earlier")
+    rerun = stage_rerun(tmp_path / "rerun", monkeypatch, earlier)
+    kept = research_read(rerun, earlier)
+    assert f"retrieved={EARLIER_TEXT}" in str(kept["body"])
+    call = SimpleNamespace(
+        tool="read_pages",
+        arguments=READ_EV1,
+        status=kept["status"],
+        error_code=kept["error_code"],
+        body=kept["body"],
+        content_hash=lambda: "0" * 64,
+    )
+    workflow = SimpleNamespace(invoke=lambda tool, arguments: research_read(rerun, rerun))
+    retained = SimpleNamespace(calls={"call-1": call})
+    submission = SimpleNamespace(
+        binding=SimpleNamespace(
+            call_ids=("call-1",), binding=SimpleNamespace(module_id="CP-DR", step_id="research")
+        )
+    )
+    execution = tmp_path / "audit"
+    replay._replay_calls(cast(Any, workflow), cast(Any, retained), cast(Any, submission), execution)
+    assert not (execution / AUDIT / "faults").exists()
+
+
+def test_run_pathway_hands_the_earlier_run_to_the_research_staging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7 phase fix review M1: a rerun through `run_pathway` reaches `check_replay` with every
+    `ev-*` kept at the earlier run's instant (the `replay_from` wiring), and a refused rerun
+    writes nothing."""
+    earlier = settled_earlier(tmp_path / "earlier")
+    monkeypatch.setattr(evidence, "research_clock", lambda: LATER_INSTANT)
+    seen: dict[str, Any] = {}
+
+    def refuse(checked: Any, run_dir: Path, replay_from: Path | None, repaired: Any) -> NoReturn:
+        seen["kept"] = dict(checked.research.kept)
+        seen["ids"] = [item.item_id for item in checked.research.accepted]
+        raise ReplayRefused("stop here")
+
+    monkeypatch.setattr(rp, "check_replay", refuse)
+    base = tmp_path / "rerun"
+    arguments = ResearchCase(base).arguments(
+        base, run_id="rerun-1", replay_from=earlier, repaired=frozenset({"CP-1C"})
+    )
+    with pytest.raises(ReplayRefused):
+        run_pathway(**arguments)
+    assert seen["ids"] and seen["kept"] == {i: EARLIER_TEXT for i in seen["ids"]}
+    assert not (base / "run").exists()
+
+
+def test_the_cpdr_edge_is_the_context_producer_edge_and_not_cp1as(
+    earlier_run: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7 phase review I-2: with every module replayable, repairing CP-DR sends CP-1C and CP-2 live
+    (their context producer) and leaves CP-1A (its producer is CP-1) replayed; repairing CP-1C
+    leaves CP-DR and CP-1A replayed, so the CP-DR edge runs from producer to consumer only."""
+    monkeypatch.setattr(replay._Earlier, "unusable", lambda self, module: None)
+    planned = registry_plan((*PLANNED, "CP-1C", "CP-DR"))
+    by_dr = replay.plan_replay(earlier_run, planned, frozenset({"CP-DR"}))
+    assert {"CP-1C", "CP-2"} <= set(by_dr.live)
+    assert "CP-1A" in by_dr.replayed
+    by_cp1c = replay.plan_replay(earlier_run, planned, frozenset({"CP-1C"}))
+    assert {"CP-DR", "CP-1A"} <= set(by_cp1c.replayed)
+    assert "CP-1C" in by_cp1c.live

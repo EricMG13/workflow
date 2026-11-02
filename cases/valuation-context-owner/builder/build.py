@@ -29,14 +29,14 @@ OUT = ROOT / "cases" / "valuation-context-owner"
 PINS = {
     "cases/financial/manifest.json": "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432",
     "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
-    "cases/cp1c-owner/manifest.json": "8df535f8117ce9ca89e203b5fc7e6f818504a5b7b75e9d993b5a8eb0eebb6dd8",
+    "cases/cp1c-owner/manifest.json": "1d670f764e63c6c6e3a0cb0cbc7bb26b8b9d9c70a56609f10d9a3e5ef0119101",
     "cases/cp1c-owner/submissions.json": "13be79735066cd58bdcc4cfa7eebddc0eedbe0abb784153a2950ee38455a8912",
     "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
-    "cases/cp4c-owner/manifest.json": "1c133a62f34f8fd5e28f451168820fea3a28f1bf49ce0ef2c835a8dc89110fc5",
+    "cases/cp4c-owner/manifest.json": "3f0570ffbf4a52baedbedac4112310432af9a18302c32922a8123e7f40e5db98",
     "cases/cp4c-owner/submissions.json": "1f76a1d193e04db56a2917b30a4cdc470be54a259858a2c8712e0e4bf1feea68",
     "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
     "cases/pins-context-owner/expected.json": "d25fbf661bae908e7d61ea261f94c5437a0692782750b597278574d8320b67f1",
-    "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+    "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
 }
 RAW = {}
 for rel, digest in PINS.items():
@@ -78,7 +78,7 @@ PEER_MONTHS, PRECEDENT_MONTHS = 12, 36
 NOT_STATED = "Not stated by the user"
 WITHIN, OUTLIER = "Within range", "Outlier"
 INSUFFICIENT = "Insufficient Information"
-GAP_DR = "No peer figures: cp_dr_public peers come from the CP-DR peer pack (Part B O7d)"
+GAP_DR = "No peer figures: the CP-DR peer pack carries no enterprise value figure"  # O7-R47 Q5; cases/cpdr-peers-owner/expected.json#cp1c/t1c9_gap_reason
 GAP_UL = "No peer figures: user_list peers need the peer lookup (O7d)"
 NTM_GAP = "NTM needs a forecast EBITDA that CP-1C does not read"
 LTM_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"

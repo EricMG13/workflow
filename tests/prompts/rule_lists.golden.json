@@ -107,6 +107,51 @@
     ]
    }
   ],
+  "brief": [
+   {
+    "id": "brief.1",
+    "statement": "`run_id` is the run's id.",
+    "checks": [
+     "fn:deploy_workflow.owners.cpdr:_run_issues"
+    ]
+   },
+   {
+    "id": "brief.2",
+    "statement": "Submit each of the six default questions once, with the ids `competition`, `metric-definitions`, `valuation-context`, `market-demand`, `industry-structure` and `regulation`, and put them first, in that order, before any question of your own.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_default_issues"
+    ]
+   },
+   {
+    "id": "brief.3",
+    "statement": "A default question carries its own kind: `competition` is `default_1`, `metric-definitions` `default_2`, `valuation-context` `default_3`, `market-demand` `default_4`, `industry-structure` `default_5` and `regulation` `default_6`. Every other question is of kind `custom`.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_kind_issues"
+    ]
+   },
+   {
+    "id": "brief.4",
+    "statement": "The `question_id` of a question of your own does not start with `ctx-`, is not `total`, is different from every other `question_id` of the list, and is at most 138 characters, since fact ids are composed from it.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_id_issues"
+    ]
+   },
+   {
+    "id": "brief.5",
+    "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too. A `text` that holds a block delimiter such as `<<<`, a lookalike of one, a line break or a `|` is refused too.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_language",
+     "fn:deploy_workflow.owners.cpdr:_fence_issues"
+    ]
+   },
+   {
+    "id": "brief.6",
+    "statement": "When an earlier attempt of this run locked a brief, submit the same questions as that attempt: a lock is written once and is not changed.",
+    "checks": [
+     "fn:deploy_workflow.owners.cpdr:_relock_issues"
+    ]
+   }
+  ],
   "business_context": [
    {
     "id": "business_context.a",
@@ -1622,59 +1667,99 @@
   "research": [
    {
     "id": "research.1",
-    "statement": "Submit exactly one `gaps` entry, by its `gap_id`, for every gap on the CP-0 agenda (`gaps` of the module context), none twice and none for an id the agenda does not list, each with one to four `questions`; when the agenda is empty, `gaps` is empty.",
+    "statement": "Submit one `answers` entry for every question of the locked brief (`questions` of the research inputs), by its `question_id`: none twice, none for an id the brief does not list, and none left out.",
     "checks": [
-     "oracle:cpdr:gap_unaddressed",
-     "oracle:cpdr:gap_with_five_questions",
-     "oracle:cpdr:unknown_gap",
-     "oracle:cpdr:gap_repeated",
-     "oracle:cpdr:submission_against_empty_agenda",
-     "fn:deploy_workflow.owners.cpdr:validate_research"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
     "id": "research.2",
-    "statement": "Every `question_id` is different from every other in the whole submission, and at most 145 characters, since fact ids are composed from it.",
+    "statement": "Every `claim_id` is different from every other in the whole submission, and at most 142 characters, since fact ids are composed from it.",
     "checks": [
-     "oracle:cpdr:question_id_repeated"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
     "id": "research.3",
-    "statement": "An `answered` question has an `answer`, a `category` and at least one citation, and a null `limitation`. A `not_found` question has a null `answer` and `category`, no citations, and states its `limitation`.",
+    "statement": "An `answered` or `partly` answer has at least one claim, each claim with at least one citation; at least one `contrary` entry; and a nonblank `uncertainty`. A `partly` answer also has a nonblank `limitation`.",
     "checks": [
-     "oracle:cpdr:answered_without_citation",
-     "oracle:cpdr:not_found_with_answer",
-     "oracle:cpdr:not_found_without_limitation",
-     "oracle:cpdr:answered_with_limitation",
-     "fn:deploy_workflow.owners.cpdr:_question_issues"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
     "id": "research.4",
-    "statement": "Each question lists in `searched_sources` one or more sources, every one a ready prepared source (see `sources` of the module context); before you claim `not_found` for a source, run `search_pack` on that source, or the claim is refused as an absence with no recorded search.",
+    "statement": "A `not_found` answer has no claim, a nonblank `limitation`, and names the items it searched in `searched`.",
     "checks": [
-     "oracle:cpdr:no_searched_source",
-     "oracle:cpdr:searched_source_not_in_pack",
-     "oracle:cpdr:searched_source_not_searched"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
     "id": "research.5",
-    "statement": "Cite only pack sources whose cited page you read with `read_pages`, each quote verbatim under its locator; a source outside the pack is refused.",
+    "statement": "Each `contrary` entry is either `cited`, with an `item` that is the source of its citation, or `none_found`, with the items it `searched` and a nonblank `limitation`; every item searched is a held source.",
     "checks": [
-     "oracle:cpdr:cited_page_not_read",
-     "oracle:cpdr:quote_not_verbatim",
-     "oracle:cpdr:citation_outside_pack"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
     "id": "research.6",
-    "statement": "A question's `text`, `answer` and `limitation` are nonblank, contain no digit or figure, no braces or brackets, and none of the words recommend, refinanc, covenant or recovery in any case; an answer is plain text with no reference.",
+    "statement": "Cite only a held source (an `ev-*` evidence item or a pack source), under a locator that source has, with a quote that is verbatim under that locator; a cited `page:N`, or a cited `line:N` of an `ev-*` item, that `read_pages` did not return in this step is refused as not read. An evidence block in this prompt is orientation, never a citation.",
     "checks": [
-     "oracle:cpdr:digit_in_text",
-     "oracle:cpdr:prohibited_conclusion",
-     "fn:deploy_workflow.owners.cpdr:_model_text_issues"
+     "fn:deploy_workflow.research.review:research_issues",
+     "fn:deploy_workflow.research.steps:research_rules"
+    ]
+   },
+   {
+    "id": "research.7",
+    "statement": "Before you list a source as searched, in an answer's `searched` or in a `none_found` entry, run `search_pack` on it, or the item is refused as an absence claim with no recorded search.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:research_rules"
+    ]
+   },
+   {
+    "id": "research.8",
+    "statement": "A claim's `independent_items` are distinct `ev-*` items, each cited by that claim; two items of one family are not independent, and a claim that lists both is refused.",
+    "checks": [
+     "fn:deploy_workflow.research.review:research_issues",
+     "oracle:cpdr-research:research"
+    ]
+   },
+   {
+    "id": "research.9",
+    "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this. Each of those texts also holds no block delimiter such as `<<<`, no lookalike of one, no line break and no `|`.",
+    "checks": [
+     "fn:deploy_workflow.research.review:research_issues",
+     "oracle:cpdr-research:research",
+     "fn:deploy_workflow.owners.cpdr:_fence_issues"
+    ]
+   },
+   {
+    "id": "research.10",
+    "statement": "`run_id` is the run's id.",
+    "checks": [
+     "fn:deploy_workflow.owners.cpdr:_run_issues"
+    ]
+   },
+   {
+    "id": "research.11",
+    "statement": "When `read_inputs` shows `peer_pack: true`, also submit `peers` with `candidates`, `observations` and `figures`, each cited to an `ev-*` span that `read_pages` returned; when it shows `peer_pack: false`, submit no `peers`, and a submission that holds `peers` is refused.",
+    "checks": [
+     "fn:deploy_workflow.research.peers:peer_issues"
+    ]
+   },
+   {
+    "id": "research.12",
+    "statement": "A `figures` entry names a `peer_id`, an `operand`, a `unit`, a `currency` and a `period_end`, and cites a quote that states the amount: you type no amount, and no field of inclusion, comparability, normalisation or statistic. The `operand` is one of revenue, ebitda, debt, interest and ffo, and every `peer_id` of an observation or a figure is the `peer_id` of a candidate. A figure whose `period_end` is after the cutoff of `read_inputs`, or whose quote gives no readable amount, is recorded as missing, not accepted.",
+    "checks": [
+     "fn:deploy_workflow.research.peers:peer_issues",
+     "fn:deploy_workflow.owners.cpdr:_parse"
+    ]
+   },
+   {
+    "id": "research.13",
+    "statement": "A peer `name`, `basis_note` and `observation` each hold no block delimiter such as `<<<`, no lookalike of one, no line break and no `|`; a `basis_note` and an `observation` also contain no digit or figure and not the word recommend.",
+    "checks": [
+     "fn:deploy_workflow.research.peers:peer_issues",
+     "fn:deploy_workflow.owners.cpdr:_fence_issues"
     ]
    }
   ],
@@ -1927,10 +2012,10 @@
    "src/deploy_vii/source_context.py": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
    "src/deploy_vii/statement_validation.py": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
    "src/deploy_workflow/financial_workflow.py": "a3f61cdab9880102b199471bf4f4575784c2f4f46563dd7e738c55e96cacd9c2",
-   "src/deploy_workflow/owner_workflow.py": "ee1340c4bcabb7b2c21cfb0db7bcd0c9d238667435f36cf5f90d5f483204bb16",
+   "src/deploy_workflow/owner_workflow.py": "69993f630b040b54b8670bdb660e7c501edff16f6c0a08b5a28b61287c5a2275",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "db6d9307bb2f39abab7809a1a1660db0a9b2ec01a3523936d912500dd78b982d",
-   "src/deploy_workflow/owners/cp1c.py": "e4c6003dffaae5f0e58a665d11b38318a00242aaeacb76f62a9b7f5e08de4d99",
+   "src/deploy_workflow/owners/cp1c.py": "85e0b29bc0320f48ce724278b543f1d7425856b66b6f8bb4238cdc572a96cf33",
    "src/deploy_workflow/owners/cp1d.py": "f9544b356fd0b7b54fe2d4230958b349092e462c0a3c581b32968b081ab783fb",
    "src/deploy_workflow/owners/cp2.py": "902dea0e690a9054b06e064d1b3636367a6a8c02ff75d5ae9c746bf4fdf085e2",
    "src/deploy_workflow/owners/cp2a.py": "b246e5bdcb4622511ac557d4bb3a5afd7aa2f22960f69e00ac4fba235a76b5fe",
@@ -1946,10 +2031,13 @@
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
-   "src/deploy_workflow/owners/cpdr.py": "844516fc229f72447f33d40481133f684c0340f87a480aaa69945aad560da2d9",
+   "src/deploy_workflow/owners/cpdr.py": "c9e840d14b4235f58e93d3306698ec2d39c9e2152a0cde5a295fe009bb5b4336",
    "src/deploy_workflow/owners/cpl10.py": "18ccda2b51554188483554e69b07dbbb75f65108beb2ec6613367ba05b16990e",
    "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
-   "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b"
+   "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b",
+   "src/deploy_workflow/research/peers.py": "514b9445b6df58c9423f3142f73a5fc916cc839b5e3ad42ba2bad1f047993869",
+   "src/deploy_workflow/research/review.py": "69603ef10fa75ef4251d22c24d0965e282a92dbaca852e618f13d036d344014d",
+   "src/deploy_workflow/research/steps.py": "dabb97955c9f36317d7d86e2bf13cf3dc03989ca06a88fa4eeff25ad54f4bf7e"
   },
   "oracles": {
    "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",
@@ -1966,7 +2054,7 @@
    "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
    "cases/cp5-owner/expected.json": "48fcd8991b858b9b08fc12e965abfcde42d467dfce2aba04a98e9edba07e92d2",
    "cases/cp8-owner/expected.json": "84dc6072d8a1019a49aa0e93d6b6aaa3907f91aec3910820ccdb492bab95253a",
-   "cases/cpdr-owner/expected.json": "36572c50b663ab4a1f6eaa300d7ee2e668f511cb206dcacfa820105e60b65263",
+   "cases/cpdr-research-owner/expected.json": "345d7a1d123af9f1bb548bb49cfa8e6f041279f7f0dac6418b31dd6b6280f2fa",
    "cases/cpl10-owner/expected.json": "285915140dbd7722e406ce96bb11c20ab5f5ce370e6649748299f4809695ce45"
   }
  }

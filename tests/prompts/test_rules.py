@@ -213,7 +213,7 @@ def test_the_declared_entry_is_the_entry_validator(step_id: str) -> None:
 
 def test_there_is_one_list_per_inventory_step_and_one_for_the_composer() -> None:
     assert rules.step_ids() == STEPS
-    assert len(STEPS) == 26
+    assert len(STEPS) == 27
     assert [r.id for r in rules.load_rules(rules.COMPOSE)][:4] == [
         "compose.O1",
         "compose.O2",
@@ -234,6 +234,30 @@ def test_an_existing_step_carries_its_contract_rules_whole(step_id: str) -> None
     assert [i for i, _ in expected] == [f"{step_id}.{c}" for c in letters]
     for _, statement in expected:
         assert statement in STEP_CONTRACTS[step_id]
+
+
+PEER_PACK_RULES: dict[str, tuple[str, ...]] = {
+    # O7d D1b: the peer-pack rules of the research step; each statement names these phrases
+    "research.11": ("`peer_pack: true`", "`peers`", "`peer_pack: false`", "no `peers`"),
+    "research.12": ("`period_end`", "after the cutoff", "no readable amount", "you type no amount"),
+    "research.13": ("`name`", "`basis_note`", "`observation`", "`<<<`"),
+}
+
+
+def test_the_peer_pack_rules_are_stated_checked_and_in_the_prompt() -> None:
+    listed = {r.id: r for r in rules.load_rules("research")}
+    text = (Path(rules.__file__).parent / "texts" / "research.md").read_text(encoding="utf-8")
+    for rule_id, phrases in PEER_PACK_RULES.items():
+        rule = listed[rule_id]
+        for phrase in phrases:
+            assert phrase in rule.statement, (rule_id, phrase)
+        assert f"[{rule_id}] {rule.statement}" in text, rule_id
+        assert rule.checks, rule_id
+    assert "fn:deploy_workflow.research.peers:peer_issues" in listed["research.11"].checks
+    assert "fn:deploy_workflow.research.peers:peer_issues" in listed["research.12"].checks
+    assert "fn:deploy_workflow.owners.cpdr:_fence_issues" in listed["research.13"].checks
+    brief = (Path(rules.__file__).parent / "texts" / "brief.md").read_text(encoding="utf-8")
+    assert "`peer_pack`" in brief, "the brief step is told what the view's peer_pack means"
 
 
 @pytest.mark.parametrize("step_id", STEPS)
@@ -495,6 +519,8 @@ def _oracle_item(case: str, ident: str) -> dict[str, Any]:
         if isinstance(node, dict):
             if node.get("id") == ident:
                 found.append(node)
+            elif isinstance(node.get(ident), dict):
+                found.append(node[ident])  # a dict-keyed container, by its name
             for value in node.values():
                 walk(value)
         elif isinstance(node, list):
@@ -516,7 +542,12 @@ def test_a_non_content_oracle_id_arises_with_no_step_submission() -> None:
         _, case, ident = check.split(":")
         item = _oracle_item(case, ident)
         seen += 1
-        if why == rules.UPSTREAM:
+        if why == rules.ANCHOR:
+            assert item, check
+            for name, entry in item.items():
+                assert entry["research_brief_json_written"] is False, f"{check}:{name}"
+                assert entry["calls_jsonl_lines_added"] == 0, f"{check}:{name}"
+        elif why == rules.UPSTREAM:
             issues = item["expected_issues"]
             assert issues and all(i.startswith("Stale input ") for i in issues), check
         else:
@@ -527,7 +558,7 @@ def test_a_non_content_oracle_id_arises_with_no_step_submission() -> None:
                 or "context" in item
                 and item["id"] == "context-unreadable"
             ), check
-    assert seen == 15
+    assert seen == 16
 
 
 def test_owner_gaps_may_only_shrink() -> None:

@@ -1,0 +1,47 @@
+{
+ "rules": [
+  {
+   "id": "brief.1",
+   "statement": "`run_id` is the run's id.",
+   "checks": [
+    "fn:deploy_workflow.owners.cpdr:_run_issues"
+   ]
+  },
+  {
+   "id": "brief.2",
+   "statement": "Submit each of the six default questions once, with the ids `competition`, `metric-definitions`, `valuation-context`, `market-demand`, `industry-structure` and `regulation`, and put them first, in that order, before any question of your own.",
+   "checks": [
+    "fn:deploy_workflow.research.steps:_default_issues"
+   ]
+  },
+  {
+   "id": "brief.3",
+   "statement": "A default question carries its own kind: `competition` is `default_1`, `metric-definitions` `default_2`, `valuation-context` `default_3`, `market-demand` `default_4`, `industry-structure` `default_5` and `regulation` `default_6`. Every other question is of kind `custom`.",
+   "checks": [
+    "fn:deploy_workflow.research.steps:_kind_issues"
+   ]
+  },
+  {
+   "id": "brief.4",
+   "statement": "The `question_id` of a question of your own does not start with `ctx-`, is not `total`, is different from every other `question_id` of the list, and is at most 138 characters, since fact ids are composed from it.",
+   "checks": [
+    "fn:deploy_workflow.research.steps:_id_issues"
+   ]
+  },
+  {
+   "id": "brief.5",
+   "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too. A `text` that holds a block delimiter such as `<<<`, a lookalike of one, a line break or a `|` is refused too.",
+   "checks": [
+    "fn:deploy_workflow.research.steps:_language",
+    "fn:deploy_workflow.owners.cpdr:_fence_issues"
+   ]
+  },
+  {
+   "id": "brief.6",
+   "statement": "When an earlier attempt of this run locked a brief, submit the same questions as that attempt: a lock is written once and is not changed.",
+   "checks": [
+    "fn:deploy_workflow.owners.cpdr:_relock_issues"
+   ]
+  }
+ ]
+}

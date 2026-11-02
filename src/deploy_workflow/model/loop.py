@@ -64,6 +64,7 @@ from deploy_workflow.model.turn import (
     dump_json,
 )
 from deploy_workflow.owner_workflow import OwnerBinding, OwnerWorkflow, StepSpec
+from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.workflow import WorkflowError
 
 READ_INPUTS = "read_inputs"
@@ -79,10 +80,25 @@ class StepStopped(Exception):
     from the record's ``error_class`` (``AdapterError``). ``detail`` is redacted text. Raised
     ``from None``: no raw exception is chained to it."""
 
-    def __init__(self, reason: str, detail: str = "") -> None:
+    def __init__(self, reason: str, detail: str = "", *, cause: Exception | None = None) -> None:
         super().__init__(f"{reason}: {detail}" if detail else reason)
         self.reason = reason
         self.detail = detail
+        self.cause = (
+            cause  # the workflow failure the loop stopped on; never chained (``from None``)
+        )
+
+
+OWN_FORM = (CpDrNotAnchored, BriefInvalid)  # faults that keep their form through a loop stop
+
+
+def _own_form(text: str) -> str:
+    """The key's ``<Type>: <reason>`` of an own-form fault the loop wrapped as ``WorkflowError``
+    (O7-R32), as a fresh run records it; any other stop text is returned as it is."""
+    inner = text.removeprefix("WorkflowError: ")
+    if inner != text and any(inner.startswith(f"{kind.__name__}: ") for kind in OWN_FORM):
+        return inner
+    return text
 
 
 def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
@@ -90,7 +106,8 @@ def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
     form of the loop's stops (``_after_reply``, ``_outcome_of``, ``_validate``), which all write
     their class and detail into the call's own record before the loop raises. Not a stop: no error,
     a first 402 (the loop waits it out and resends), and a retryable unknown charge, whose stop is
-    the budget's (``Budget.stop_reason``). The text is the one ``StepStopped`` carries."""
+    the budget's (``Budget.stop_reason``). The text is the one ``StepStopped`` carries, except that an
+    own-form fault keeps its own form, as on a fresh run (O7-R32)."""
     if not records:
         return None
     last = records[-1]
@@ -105,7 +122,7 @@ def recorded_stop(records: Sequence[Mapping[str, Any]]) -> str | None:
     if last["http_status"] == 402 and not twice_402:
         return None
     detail = last["error"] or ""
-    return f"{error_class}: {detail}" if detail else str(error_class)
+    return _own_form(f"{error_class}: {detail}" if detail else str(error_class))
 
 
 # ---------------------------------------------------------------- repair scoping (runner port)
@@ -293,6 +310,7 @@ class _Validated:
     outcome: dict[str, Any] | None = None
     submit_sha256: str | None = None
     stop: tuple[str, str] | None = None  # (error class, redacted detail)
+    cause: Exception | None = None  # the workflow failure behind ``stop``, when it was one
 
 
 @dataclass
@@ -302,6 +320,7 @@ class _Attempt:
     turn: Turn | None = None
     validated: _Validated | None = None
     stop: tuple[str, str] | None = None
+    cause: Exception | None = None
     again: Literal["402", "retry"] | None = None
     held: str | None = None  # the call id kept held by an unknown charge
     wait: int = 0
@@ -506,7 +525,9 @@ class ToolLoop:
                 retry_of, self._retry_used = done.held, True
                 continue
             if done.stop is not None:
-                raise StepStopped(self._redactor.text(done.stop[0]), done.stop[1]) from None
+                raise StepStopped(
+                    self._redactor.text(done.stop[0]), done.stop[1], cause=done.cause
+                ) from None
             return done
 
     # -- one provider request ----------------------------------------------------------
@@ -644,6 +665,7 @@ class ToolLoop:
             )
         error_class, message = reply.error_class, reply.message
         stop: tuple[str, str] | None = None
+        cause: Exception | None = None
         raw_failure = self._retain_raw(ctx, index, reply)
         turn: Turn | None = None
         validated: _Validated | None = None
@@ -652,7 +674,7 @@ class ToolLoop:
             handled, failure = _caught(partial(self._handle, reply.turn))
             if handled is not None:
                 turn, validated = handled
-                stop = validated.stop
+                stop, cause = validated.stop, validated.cause
         usage = reply.usage if reply.usage is not None or reply.turn is None else reply.turn.usage
         settled, status, retryable, overrun = self._settle(call_id, reply, usage)
         if failure is not None:  # the raw write or the handling itself failed: settled, recorded
@@ -671,7 +693,7 @@ class ToolLoop:
         done = _Attempt(turn=turn, validated=validated, held=call_id, error_class=error_class)
         if stop is None:
             stop = self._outcome_of(reply, done, retry_of, retryable, settled, overrun)
-        done.stop = stop
+        done.stop, done.cause = stop, cause
         return done
 
     def _handle(self, returned: Turn) -> tuple[Turn, _Validated]:
@@ -805,6 +827,7 @@ class ToolLoop:
                 stop_class = _stop_class(failure)
                 record["refusal_code"] = stop_class
                 out.stop = (stop_class, self._named(failure))
+                out.cause = failure
                 return out
             content, refusal, outcome = result
             if returned:

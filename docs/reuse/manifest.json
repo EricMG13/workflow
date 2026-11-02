@@ -2354,6 +2354,153 @@
       "sha256": "c2675f0f3bc3d1843a4c4cf990e84bfc0d1029abe15ec29438e99e3c2241302c",
       "reason": "repo-authored (not in files[]): B9: wording only; cp1c.md omission 5 names the run context as the one source of market data (Release 3 end batch, methods fix 1 Low-1)",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/release3-end-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+      "project_commit": "8b19c74b426f82b6402c72dbf6929ec936ddc370",
+      "sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "reason": "O7b-1c S3 (M2): the CP-DR LOCAL registry row (required CP-0 and CP-1, purpose names cp-dr/2026-10-31, before CP-1C)",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S3-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "524a7542a73a2f6cb27504b5e1e7d9c52291e0eb04e85e3b28b85072b4051a9e",
+      "project_commit": "14fb0c328e028b30eb3ad330a2659ca933f6eb84",
+      "sha256": "bd5d5816e366a01bd55218a98bd09db823dfe020ad4704147fe685fee2109cf2",
+      "reason": "repo-authored (not in files[]): B1: O7b-1c S5 rewrites the CP-DR method as cp-dr/2026-10-31: LOCAL lineage, scope, the R7 tables TDR.1-3, intake caps (MAX_BYTES) and refused locator characters, brief lock, six default questions, rules, readiness ceiling. First D12 record for this file (no import baseline).",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cpdr.py",
+      "prior_project_sha256": "c85a6433e4ebee9509704c8aa51c7bf097805b57ffe21d93bfedc59303e42aaa",
+      "project_commit": "14fb0c328e028b30eb3ad330a2659ca933f6eb84",
+      "sha256": "aca3194d336b5edeb0b9ae92d3778e8443faaee76a8bb35189f300a9e4df2ae7",
+      "reason": "repo-authored (not in files[]): B1: O7b-1c S5 relabels the three CP-DR bindings to the R7 table titles (Locked questions and recipients; Claims and located evidence; Answers, contrary evidence, uncertainty and downstream use) and updates the docstring; no binding, block, slot or unit changes. First D12 record for this file (no import baseline).",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "bd5d5816e366a01bd55218a98bd09db823dfe020ad4704147fe685fee2109cf2",
+      "project_commit": "b1598c22fd357d72d6e60db953ddf5d11fc2e54e",
+      "sha256": "6f808d3e15278d9bf0484413fbaa9eb3bc4fdd1b86ad3551a81ad0ce8554d985",
+      "reason": "repo-authored (not in files[]): B1: O7-R40 fix round 1 of the O7b-1c S5 review: no run-context cutoff (the cutoff is the as-of date, M1); a refused item's text, not the item, stays out of the pack, prompts and dossier, and the dossier lists it under Rejected items (L1); the prompt carries accepted items' text in UNTRUSTED_EVIDENCE blocks (L2); no module reads CP-DR output until O7d (I1). Chained after the S5 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/execution.py",
+      "imported_sha256": "752ae7c74774f4410db0a24bb49c443d777dac7c8e3e6c8f8a11e088a3c9bff3",
+      "prior_project_sha256": "b2d5396c820c95669dda6afee5aec0e84fb4f6abcbe991b2a4ed99a1041e84d4",
+      "project_commit": "a7493793eeac15d26e856bc2b1fc55a2a6c9d180",
+      "sha256": "7a03df5a429052ba2f3235e5095a4e8cf29b3577d67a387ce939adcec6eb9177",
+      "reason": "repo-authored (not in files[]): B31a: O7c C1, O7-R47: CONTEXT_PRODUCERS gains CP-1C and CP-2 over CP-DR, so a settled CP-DR head is a bound context input of both consumers (not a dependency edge) and a re-settled CP-DR stales them. One mapping entry pair; nothing else in the file changes.",
+      "review": "work/context-plan/reviews/o7c-c1-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "6f808d3e15278d9bf0484413fbaa9eb3bc4fdd1b86ad3551a81ad0ce8554d985",
+      "project_commit": "3415f68213f2930ce1f2098b481b0e4a277026d0",
+      "sha256": "3f36135000f92c3d6d59d116d47f3413231572ed0cdb9975ea6ac8d2267f6ed7",
+      "reason": "repo-authored (not in files[]): B1/B31a: O7b-2 S5: the method states the context cutoff (the earlier of the as-of date and run.cutoff, D9) and the web-retrieval gate (a URL row is fetched only under a user ruling lifting the live-provider pause for web-retrieval; otherwise refused before anything is written). Replaces the as-of-date cutoff and URL-refused lines. Chained after the O7-R40 fix-round record.",
+      "review": "work/context-plan/reviews/o7b2-s5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "3f36135000f92c3d6d59d116d47f3413231572ed0cdb9975ea6ac8d2267f6ed7",
+      "project_commit": "61e335702bfa6ed35dc75644a302b76edaca0b99",
+      "sha256": "06322fe0d92e793ed5990da3c481a37ffd2335554f8aead9ac95c9513b7f92a9",
+      "reason": "repo-authored (not in files[]): B31a: O7b-2 S5 fix round 1: ruling O7-R56 and the S5 review M-1/L-1: line 3 no longer says no web is used (the web is used only to fetch the user's URL rows under the ruling Intake names) and line 26 says an item names a file or an https url. Chained after the S5 record.",
+      "review": "work/context-plan/reviews/o7b2-s5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "project_commit": "cffca98b7217f006e0ee60fa8213d17dcf98aaee",
+      "sha256": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
+      "reason": "O7d D0b (O7-R59, O7-R47 OD12): the CP-DR registry row gains TDR.4-6 (candidate peers, provisional alignment observations, located peer/transaction figures) for the peer pack; the preparer's change, chained here by the D1b builder after the 8b19c74b record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D0b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cpdr.py",
+      "prior_project_sha256": "aca3194d336b5edeb0b9ae92d3778e8443faaee76a8bb35189f300a9e4df2ae7",
+      "project_commit": "f413cfb0ac044cc460e32c633d5c05e032094a94",
+      "sha256": "48ce9d3aaecf6a4323142f708d785cc7114090f3e03fa47b360a6b104baa9d08",
+      "reason": "repo-authored (not in files[]): B1: O7d D1b adds three Evidence bindings, TDR.4 (Candidate peers), TDR.5 (Provisional alignment observations) and TDR.6 (Located peer/transaction figures), slots cpdr-tdr-4 to cpdr-tdr-6, with the R7 titles; the three S5 bindings are unchanged. Chained after the S5 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "06322fe0d92e793ed5990da3c481a37ffd2335554f8aead9ac95c9513b7f92a9",
+      "project_commit": "f413cfb0ac044cc460e32c633d5c05e032094a94",
+      "sha256": "e899818c038516068deece464c3f4252621272becc014b5cb89bf9b8906ee493",
+      "reason": "repo-authored (not in files[]): B31a: O7d D1b adds the TDR.4-6 table rows and a The peer pack section (located figures only, no amount typed by the model, no CP-1C ownership field, period end on or before the cutoff, the Q4 opt-in clause: peer_source cp_dr_public with CP-1C requested); every earlier sentence stays. Chained after the O7b-2 S5 fix record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "e899818c038516068deece464c3f4252621272becc014b5cb89bf9b8906ee493",
+      "project_commit": "d287ef16b2d804b8ac21b5b759a9f53c59daaa09",
+      "sha256": "a7fa3c90ad650a0f708706d3c0f34c0bb65eac5ec088242f2399ede69fc8d09a",
+      "reason": "repo-authored (not in files[]): B31a: O7d D1b fix round 1 (review M-1, L-1): the peer_id bullet now states that TDR.4 rows are unique on peer_id and TDR.5/TDR.6 rows on peer_id.dimension / peer_id.operand, and the peer pack section says TDR.4-6 are not in the dossier. Chained after the first O7d D1b record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D1b-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "prior_project_sha256": "c2675f0f3bc3d1843a4c4cf990e84bfc0d1029abe15ec29438e99e3c2241302c",
+      "project_commit": "157255c696a8d562ce239a526215fb72e6fa90d4",
+      "sha256": "7a409ea65998636e1e141dc5142ef8bf1c17c3ce865733d904056d7de4985321",
+      "reason": "repo-authored (not in files[]): B9 (O7d D2, B31a): omission 5 (line 22) adds that, when CP-DR's peer pack is bound, its located peer figures are market data the pack carries; the O7d gap paragraph (line 59) now says cp_dr_public peers come from the bound CP-DR head's TDR.6 (a held peers source beside them is a named conflict), that those figures carry no enterprise value so T1C.9 to T1C.11 keep the gap with the amended wording, and that user_list still needs the lookup. Nothing else changes. Chained after the Release 3 end batch record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "a7fa3c90ad650a0f708706d3c0f34c0bb65eac5ec088242f2399ede69fc8d09a",
+      "project_commit": "bf5575aef1a9b3a029f280aab9010d035032577a",
+      "sha256": "547dc50efda5a35e2dededbb6f8aac03c32b4dc369a82d3d8fdc91e2f48c8893",
+      "reason": "repo-authored (not in files[]): B31a: O7 end batch (D1b review I4): the Scope and Consumers lines no longer say no module reads CP-DR output until O7d; they say CP-1C and CP-2 read the settled head (each prompt carries the dossier block; CP-1C also reads TDR.6 when the peer pack is bound). Nothing else changes. Chained after the O7d D1b fix record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cpdr.py",
+      "prior_project_sha256": "48ce9d3aaecf6a4323142f708d785cc7114090f3e03fa47b360a6b104baa9d08",
+      "project_commit": "bf5575aef1a9b3a029f280aab9010d035032577a",
+      "sha256": "e9486d074ef14c987d70db2fda556a34dc129352d139b6d8681624e8fb22de9a",
+      "reason": "repo-authored (not in files[]): B1: O7 end batch (D1b review I4): the docstring says the settled head is read by CP-1C and CP-2 (the dossier block; CP-1C also TDR.6), not through a Front Page block; no binding, block, slot or unit changes. Chained after the O7d D1b record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "prior_project_sha256": "7a409ea65998636e1e141dc5142ef8bf1c17c3ce865733d904056d7de4985321",
+      "project_commit": "77e2650e818cc34dfd275fcff594294d4bb4c738",
+      "sha256": "838878d0cffb6513d6464064d4ee7940659c3972a03e73704de8bc81b4a055ad",
+      "reason": "repo-authored (not in files[]): B9 (O7d D2 fix 1, O7-R65, B31a): wording only; the universe, no-peer-source, definition-restatement, one-adapter and source-quotes lines are true on the CP-DR peer-sheet path as well (no issuer line and not-applicable tie-out cells, the head's TDR.6 amount facts cited by their ev-* quotes, a held peers source beside TDR.6 is the named conflict) and the not-admitted candidates are Python rows in T1C.7. Chained after the O7d D2 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "prior_project_sha256": "838878d0cffb6513d6464064d4ee7940659c3972a03e73704de8bc81b4a055ad",
+      "project_commit": "7fdb258dd3497477831cb2c320e0c4b348db1051",
+      "sha256": "bf786ddbf10ccbff2d6a6179337b7f4f9c676236614154a89e0bed7230af1600",
+      "reason": "repo-authored (not in files[]): B9 (O7d D2 fix 2, O7-R65, B31a): wording only; the universe sentence (line 20), the definitions clause (line 21) and the one-adapter scope list (line 29) are true on the CP-DR peer-sheet path as well: Python admits the TDR.4 candidates first (currency, unit, period ends, the issuer's name) and lists the rest in T1C.7, the operands are the TDR.6 figures, and the ev-* items the figures cite are in scope. Chained after the O7d D2 fix 1 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "547dc50efda5a35e2dededbb6f8aac03c32b4dc369a82d3d8fdc91e2f48c8893",
+      "project_commit": "4e38b041eb44dd82fb29aaa7240d579a6604dd9f",
+      "sha256": "9cf2bf6dac6a8dac039e0d63a2d5cb6aee444284ec14af7e6cac29c16fce86ec",
+      "reason": "repo-authored (not in files[]): B31a: O7 end batch 2 (end batch review L3): the Consumers line (64) says CP-1C reads the bound head's TDR.6 figures (its read_inputs view and its peer sheet) when the peer pack is bound, not 'through its source session'. Nothing else changes. Chained after the O7 end batch record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "prior_project_sha256": "bf786ddbf10ccbff2d6a6179337b7f4f9c676236614154a89e0bed7230af1600",
+      "project_commit": "1e6c56412dbe4802ea501586df317fdb1fee8640",
+      "sha256": "8836094d4ce388c36941d8a1c7e34f6e01e53121e127c3c2c5c077af89a0d1b0",
+      "reason": "repo-authored (not in files[]): B9 (O7 end batch 2, D2 re-review L-a, B31a): line 29 says the scope holds every held ev-* research item, which the analyst and the pack figures may cite, instead of only the items the pack figures cite (cp1c.in_scope and host._OWNER_SCOPES hold every held ev-* item). Nothing else changes. Chained after the O7d D2 fix 2 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-2-review.md"
     }
   ],
   "local_patch_lineage": [

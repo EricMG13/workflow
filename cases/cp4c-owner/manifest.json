@@ -8,13 +8,13 @@
   "cases/legal/manifest.json": "d6a8ec15285dbe16a6e2ff3f167c26a295b675decfb4df7231901b0243305168",
   "cases/cp2a-owner/submissions.json": "4f10743e9203e2fa6e9795f93c33af46d056e3574a58b85e71948a1a206974a3",
   "cases/cp2a-owner/expected.json": "f6b22e02a196b8c621908f365ebbfacc4e7c5d6425d3cb842a99e164409ee66f",
-  "cases/cp2g-owner/manifest.json": "0e23ae8b9361cb984f67f01b574ee2deea9d783a74df1991cb67c6533f88d9b9",
+  "cases/cp2g-owner/manifest.json": "d9522033fa9f1ca0fdf41454999f6791e2274c92128e95c4870fe1551ee16a5c",
   "cases/cp2g-owner/submissions.json": "25a96ebb6c0a16fca291684407161d53a4b1ee48c5fa7963bcc59d4d7f3bc69e",
   "cases/cp2g-owner/expected.json": "d1935a73770227172cd37a552b5583721f391da6f988ef4ef8baf1797f1e1b65",
   "cases/cp4-owner/submissions.json": "f2ef2e30d3541e3a72a2337ca6cec9c9396a364f61398057cc45172a6fce9461",
   "cases/cp4-owner/expected.json": "1dff2422178235931f0ad39a27eabc813700a2dcfd86748ba0f17bfdb16e5d78",
-  "cases/cp3c-owner/manifest.json": "2f65c085e164deb2f52f8de58178130caa6811ace704aaccbd6082b905cbb5ca",
-  "src/deploy_vii/methodology.json": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+  "cases/cp3c-owner/manifest.json": "d2c8286baca480d16f764cb690e7152c6d412ec4d05c842b005bdd235ef6c28c",
+  "src/deploy_vii/methodology.json": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
   "src/deploy_vii/business_context.py": "895cab5e09dd4e3eb48ddc41a2928e0441f74f1acb402539e85622934a2c9cde"
  },
  "sources": {

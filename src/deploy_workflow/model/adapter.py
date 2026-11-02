@@ -149,9 +149,23 @@ class GateResult:
 def check_live_gate(
     model: ModelSpec, ruling: Path, *, rulings_root: Path | None = None
 ) -> GateResult:
+    """The ruling check for a model's live config: ``check_ruling(model.config_id, ...)``."""
+    return check_ruling(model.config_id, ruling, rulings_root=rulings_root)
+
+
+def _ruling_date(raw_date: str) -> Date:
+    if not _ISO_DATE.fullmatch(raw_date):
+        raise LivePauseInForce("the ruling date is not YYYY-MM-DD")
+    try:
+        return datetime.strptime(raw_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise LivePauseInForce("the ruling date is not a valid date") from None
+
+
+def check_ruling(config_id: str, ruling: Path, *, rulings_root: Path | None = None) -> GateResult:
     """Refuse unless ``ruling`` resolves (symlinks and ``..`` followed) inside the rulings root
     and has the lines ``lifts: live-provider-pause``, ``by: user``, ``date: YYYY-MM-DD`` and a
-    ``configs:`` line naming ``model.config_id`` as a whole whitespace/comma-separated token.
+    ``configs:`` line naming ``config_id`` as a whole whitespace/comma-separated token.
     A tripwire, not an authenticator."""
     root = (LIVE_RULINGS_ROOT if rulings_root is None else rulings_root).resolve()
     try:
@@ -181,15 +195,9 @@ def check_live_gate(
         raise LivePauseInForce("the ruling does not lift live-provider-pause")
     if found["by"][0] != "user":
         raise LivePauseInForce("the ruling is not by: user")
-    raw_date = found["date"][0]
-    if not _ISO_DATE.fullmatch(raw_date):
-        raise LivePauseInForce("the ruling date is not YYYY-MM-DD")
-    try:
-        day = datetime.strptime(raw_date, "%Y-%m-%d").date()
-    except ValueError:
-        raise LivePauseInForce("the ruling date is not a valid date") from None
-    if model.config_id not in [t for t in re.split(r"[\s,]+", found["configs"][0]) if t]:
-        raise LivePauseInForce(f"the ruling does not list {model.config_id!r}")
+    day = _ruling_date(found["date"][0])
+    if config_id not in [t for t in re.split(r"[\s,]+", found["configs"][0]) if t]:
+        raise LivePauseInForce(f"the ruling does not list {config_id!r}")
     return GateResult(path, hashlib.sha256(data).hexdigest(), day)
 
 
@@ -470,6 +478,7 @@ __all__ = [
     "RecordingError",
     "RecordingMissing",
     "check_live_gate",
+    "check_ruling",
     "live_adapter",
     "recorded_adapter",
 ]

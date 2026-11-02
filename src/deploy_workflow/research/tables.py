@@ -23,6 +23,7 @@ from deploy_workflow.research.contracts import (
 )
 from deploy_workflow.research.dossier import UNDATED, DossierInput
 from deploy_workflow.research.intake import RefusedItem
+from deploy_workflow.research.peers import MISSING_PACK, NOT_REQUESTED, compose_peer_tables
 from deploy_workflow.research.review import (
     Answer,
     CitedContrary,
@@ -462,6 +463,30 @@ def _answers_in_brief_order(brief: ResearchBrief, submission: ResearchSubmission
     return [by_id[qid] for qid in wanted]
 
 
+def _with_peers(
+    own: Composed,
+    brief: ResearchBrief,
+    submission: ResearchSubmission,
+    items: Mapping[str, EvidenceItem],
+) -> Composed:
+    """TDR.4-6 appended when the brief asks for the peer pack; a pack that was not asked for, or
+    asked for and missing, is refused."""
+    pack = submission.peers
+    if pack is None:
+        if brief.peer_pack:
+            raise TablesInvalid(MISSING_PACK)
+        return own
+    if not brief.peer_pack:
+        raise TablesInvalid(NOT_REQUESTED)
+    peers = compose_peer_tables(pack, items, brief.cutoff)
+    return Composed(
+        facts=own.facts + peers.facts,
+        tables=own.tables + peers.tables,
+        claims=own.claims,
+        limitations=own.limitations,
+    )
+
+
 def compose(
     brief: ResearchBrief,
     submission: ResearchSubmission,
@@ -470,17 +495,19 @@ def compose(
     claim_states: Sequence[ClaimState],
     period: str,
 ) -> Composed:
-    """TDR.1-3 facts and tables, the count claims and the limitations; raises ``TablesInvalid``."""
+    """TDR.1-3 facts and tables (TDR.4-6 when the brief asks for the peer pack), the count claims
+    and the limitations; raises ``TablesInvalid``."""
     answers = _answers_in_brief_order(brief, submission)
     states = _states_by_question(brief, claim_states)
     items = {item.item_id: item for item in evidence}
     built = [_tdr1(brief), _tdr2(answers, items), _tdr3(brief, answers, states, counts, period)]
-    return Composed(
+    own = Composed(
         facts=tuple(fact for table in built for fact in table.facts),
         tables=tuple(table.report() for table in built),
         claims=_claims(),
         limitations=_limitations(answers),
     )
+    return _with_peers(own, brief, submission, items)
 
 
 def _shown(fact: Fact) -> tuple[str, str]:
@@ -518,9 +545,11 @@ def dossier_input(
     evidence: Sequence[EvidenceItem],
     rejected: Sequence[RefusedItem],
     head_sha256: str,
+    head_brief_sha256: str,
 ) -> DossierInput:
     """What the 1b renderer takes. ``head_sha256`` is the CP-DR head's hash, recorded and not
-    compared (O7-R10); the tables carry each cell's shown string, derived from its fact."""
+    compared (O7-R10); ``head_brief_sha256`` is its ``research-brief`` input, which the dossier's
+    brief must equal; the tables carry each cell's shown string, derived from its fact."""
     by_id = {fact.fact_id: fact for fact in composed.facts}
     return DossierInput(
         brief=brief,
@@ -529,5 +558,6 @@ def dossier_input(
         facts=[fact.model_dump(include=FACT_RECORD) for fact in composed.facts],
         evidence=tuple(evidence),
         rejected=tuple(rejected),
-        result_sha256=head_sha256,
+        head_sha256=head_sha256,
+        head_brief_sha256=head_brief_sha256,
     )

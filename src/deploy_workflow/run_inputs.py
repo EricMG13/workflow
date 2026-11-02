@@ -8,17 +8,20 @@ check is skipped on failure: each refusal is a named ``RunInputError`` subclass 
 """
 
 import hashlib
+import json
 import os
 import stat
-from collections.abc import Sequence
-from dataclasses import dataclass
+import time
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import ClassVar, Literal, get_args
 
 from pydantic import TypeAdapter, ValidationError
 
-from deploy_vii.contracts import Identifier, PathwayId
+from deploy_vii.contracts import Identifier, PathwayId, Run
 from deploy_vii.preparation import (
     MAX_BYTES,
     PreparationRequest,
@@ -29,8 +32,27 @@ from deploy_vii.preparation import (
 )
 from deploy_workflow.context import CONTEXT_SOURCE_ID, RunContext, load_context, preparation_request
 from deploy_workflow.html_text import convert_html
-from deploy_workflow.model.adapter import GateResult, LiveAdapter, ModelAdapter, RecordedAdapter
+from deploy_workflow.model.adapter import (
+    GateResult,
+    LiveAdapter,
+    ModelAdapter,
+    RecordedAdapter,
+    check_ruling,
+)
 from deploy_workflow.model.turn import ModelSpec
+from deploy_workflow.research import evidence, webfetch
+from deploy_workflow.research.contracts import ReservedSourceId, refuse_reserved
+from deploy_workflow.research.intake import (
+    MAX_ITEM_BYTES,
+    AcceptedItem,
+    Fetcher,
+    ManifestRow,
+    RefusedItem,
+    effective_cutoff,
+    intake,
+    parse_rows,
+    write_rejected,
+)
 
 HTML_MEDIA = "text/html"
 _PACK_MEDIA: tuple[str, ...] = get_args(SourceRequest.model_fields["media_type"].annotation)
@@ -92,8 +114,20 @@ class UnsupportedMedia(RunInputError):
     code = "unsupported_media"
 
 
-class CpDrNotBuilt(RunInputError):
-    code = "cp_dr_not_built"
+class ResearchManifestRequired(RunInputError):
+    code = "research_manifest_required"
+
+
+class ResearchManifestUnused(RunInputError):
+    code = "research_manifest_unused"
+
+
+class ResearchManifestInvalid(RunInputError):
+    code = "research_manifest_invalid"
+
+
+class ResearchRulingUnused(RunInputError):
+    code = "research_ruling_unused"
 
 
 class BadCap(RunInputError):
@@ -136,6 +170,23 @@ class StagedFile:
 
 
 @dataclass(frozen=True)
+class ResearchStaging:
+    """What intake decided, held until ``stage_sources`` writes it: the manifest file's sha256, the
+    accepted items (each yields its ``EvidenceItem``) with the one retrieval time they share (O7-R13)
+    except the items a rerun keeps the earlier instant for (``kept``, by ``item_id``; O7-R67), and
+    the refused items. A run that fetched (O7b-2) also holds the record of each attempted fetch
+    and the ``research_ruling`` that lifted the web pause (``ruling`` is set exactly then)."""
+
+    manifest_sha256: str
+    retrieved: str
+    accepted: tuple[AcceptedItem, ...]
+    refused: tuple[RefusedItem, ...]
+    fetches: tuple[webfetch.FetchRecord, ...] = ()
+    ruling: GateResult | None = None
+    kept: Mapping[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class CheckedRun:
     case_id: str
     run_id: str
@@ -146,8 +197,9 @@ class CheckedRun:
     cap_usd: Decimal
     cp_dr: bool
     context: RunContext
-    files: tuple[StagedFile, ...]  # sources in call order, then context.json
+    files: tuple[StagedFile, ...]  # sources in call order, ev-* items, then context.json
     request: PreparationRequest
+    research: ResearchStaging | None = None
 
 
 def read_capped(path: Path) -> bytes:
@@ -210,39 +262,19 @@ def _require_ready(request: SourceRequest, data: bytes) -> None:
         raise SourceUnreadable(f"source {request.source_id!r}: {prepared.limitation}")
 
 
-def check_arguments(
-    *,
-    case_id: str,
-    sources: Sequence[CaseSource],
-    context: Path,
-    pathway: PathwayId,
-    model: ModelSpec,
-    adapter: ModelAdapter,
-    cap_usd: Decimal,
-    run_dir: Path,
-    run_id: str,
-    cp_dr: bool = False,
-    resume: bool = False,
-) -> CheckedRun:
-    """Every call-shape check, in order, before any write. Raises a ``RunInputError``
-    subclass, ``ContextRefused`` or ``UndecodableHtml``; never writes. ``resume`` skips the
-    check that ``run_dir`` is new: ``run_pathway`` checks a run directory it resumes itself."""
-    if not resume:
-        _check_run_dir(run_dir)
-    gate = _check_adapter(adapter, model)
-    _check_cap(cap_usd)
-    _identifier(case_id, BadIdentifier, "case_id")
-    _identifier(run_id, BadIdentifier, "run_id")
-    context_raw = read_capped(context)
-    source_raw = [read_capped(item.path) for item in sources]
-    run_context = load_context(context_raw)
-    if run_context.run.pathway != pathway:
-        raise PathwayMismatch(f"context pathway {run_context.run.pathway!r} is not {pathway!r}")
+def _case_files(
+    sources: Sequence[CaseSource], source_raw: Sequence[bytes]
+) -> tuple[list[StagedFile], list[SourceRequest]]:
+    """The caller's sources as staged files and pack requests."""
     files: list[StagedFile] = []
     requests: list[SourceRequest] = []
     seen: set[str] = {CONTEXT_SOURCE_ID}
     for item, raw in zip(sources, source_raw, strict=True):
         source_id = _identifier(item.source_id, BadSourceId, "source_id")
+        try:
+            refuse_reserved(source_id)  # ev-*, cp-dr-dossier and peers belong to CP-DR
+        except ReservedSourceId as error:
+            raise BadSourceId(str(error)) from None
         if source_id == CONTEXT_SOURCE_ID:
             raise BadSourceId(f"source_id {source_id!r} is reserved for the context file")
         if source_id.casefold() in seen:
@@ -273,11 +305,178 @@ def check_arguments(
         )
         _require_ready(pack_request, data)
         requests.append(pack_request)
-    if cp_dr:
-        raise CpDrNotBuilt("cp_dr=True is refused until O7b")
+    return files, requests
+
+
+_WEB_CONFIG = "web-retrieval"
+_RULING_UNUSED = "a research_ruling is only read when the research manifest has a url row"
+
+
+def _web_fetcher() -> Fetcher:
+    """The production fetcher: the system resolver, the pinned TLS connection, the item byte cap and
+    ``time.monotonic`` as both the connection's clock and the fetch's (O7-R51, O7-R53). The module
+    attributes are read at call time, so a test replaces them."""
+
+    def fetcher(
+        url: str, hosts: frozenset[str]
+    ) -> tuple[webfetch.FetchRecord, bytes | None, str | None]:
+        return webfetch.fetch(
+            url,
+            manifest_hosts=hosts,
+            resolver=webfetch.system_resolver,
+            connect=webfetch.pinned_connection,
+            cap=MAX_ITEM_BYTES,
+            clock=time.monotonic,
+        )
+
+    return fetcher
+
+
+def _web_access(
+    rows: Sequence[ManifestRow], research_ruling: Path | None
+) -> tuple[GateResult | None, Fetcher | None]:
+    """The web gate (O7b-2 D1, D2), before anything resolves. No ruling: no fetcher, so a url row
+    is refused by ``intake`` naming the ruling it needs. A ruling with no url row is unused; a ruling
+    that does not lift the pause for ``web-retrieval`` raises ``LivePauseInForce``."""
+    if research_ruling is None:
+        return None, None
+    if not any(row.url is not None for row in rows):
+        raise ResearchRulingUnused(_RULING_UNUSED)
+    return check_ruling(_WEB_CONFIG, research_ruling), _web_fetcher()
+
+
+def _research_staging(
+    manifest: Path,
+    context: RunContext,
+    research_ruling: Path | None = None,
+    earlier: Mapping[str, str] | None = None,
+) -> ResearchStaging:
+    """Read the research manifest and assess every row; writes nothing. Item refusals are listed on
+    the result; a malformed manifest or a wrong row raises (``IntakeError`` and its kin).
+    ``earlier`` maps a sha256 to the ``retrieved`` of an earlier run's evidence record (a rerun,
+    O7-R67): an accepted item with such a sha256 keeps that instant, any other takes the clock."""
+    raw = read_capped(manifest)
+    try:
+        rows = json.loads(raw)
+    except (ValueError, RecursionError):  # not JSON, or nested past the parser's depth
+        raise ResearchManifestInvalid(f"{manifest}: not valid JSON") from None
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise ResearchManifestInvalid(f"{manifest}: not a JSON list of rows")
+    parsed = parse_rows(rows)
+    ruling, fetcher = _web_access(parsed, research_ruling)
+    as_of = date.fromisoformat(context.run.as_of)
+    held = earlier or {}
+    moment = evidence.research_clock()  # read once: the retrieval time and 'today' agree
+    retrieved = evidence.retrieved_text(moment)
+    result = intake(
+        parsed,
+        base_dir=manifest.parent,
+        dest_dir=None,
+        as_of=as_of,
+        cutoff=effective_cutoff(as_of, context.run.cutoff),  # O7b-2 D9: min(as_of, run.cutoff)
+        today=moment.date(),
+        max_bytes=MAX_ITEM_BYTES,
+        fetch=fetcher,
+        retrieved=retrieved,
+    )
+    return ResearchStaging(
+        hashlib.sha256(raw).hexdigest(),
+        retrieved,
+        result.accepted,
+        result.refused,
+        result.fetches if ruling is not None else (),
+        ruling,
+        {i.item_id: held[i.sha256] for i in result.accepted if i.sha256 in held},
+    )
+
+
+def _research_files(staging: ResearchStaging) -> tuple[list[StagedFile], list[SourceRequest]]:
+    """Each accepted item as a staged ``ev-<n>.txt`` (text/plain) and a pack request, checked ready."""
+    files: list[StagedFile] = []
+    requests: list[SourceRequest] = []
+    for item in staging.accepted:
+        filename = f"{item.item_id}.txt"
+        data = item.text.encode("utf-8")
+        files.append(
+            StagedFile(item.item_id, filename, data, item.sha256, item.sha256, "text/plain")
+        )
+        pack_request = SourceRequest.model_validate(
+            {"source_id": item.item_id, "path": filename, "media_type": "text/plain"}
+        )
+        _require_ready(pack_request, data)
+        requests.append(pack_request)
+    return files, requests
+
+
+def _with_cp_dr(request: PreparationRequest) -> PreparationRequest:
+    """The request with ``CP-DR`` after the pathway's preset modules; presets are untouched."""
+    run = request.run
+    modules = (*run.requested_modules, "CP-DR")
+    widened = Run.model_validate({**dict(run), "requested_modules": modules})
+    return request.model_copy(update={"run": widened})
+
+
+def _research_arguments(cp_dr: bool, manifest: Path | None, ruling: Path | None) -> None:
+    if cp_dr and manifest is None:
+        raise ResearchManifestRequired("cp_dr=True needs a research_manifest")
+    if manifest is not None and not cp_dr:
+        raise ResearchManifestUnused("a research_manifest is only read when cp_dr=True")
+    if ruling is not None and manifest is None:
+        raise ResearchRulingUnused(_RULING_UNUSED)
+
+
+def check_arguments(
+    *,
+    case_id: str,
+    sources: Sequence[CaseSource],
+    context: Path,
+    pathway: PathwayId,
+    model: ModelSpec,
+    adapter: ModelAdapter,
+    cap_usd: Decimal,
+    run_dir: Path,
+    run_id: str,
+    cp_dr: bool = False,
+    research_manifest: Path | None = None,
+    research_ruling: Path | None = None,
+    resume: bool = False,
+    replay_from: Path | None = None,
+) -> CheckedRun:
+    """Every call-shape check, in order, before any write. Raises a ``RunInputError``
+    subclass, ``ContextRefused``, ``UndecodableHtml`` or a CP-DR ``ResearchError``; never writes.
+    With ``replay_from`` it also raises ``WorkflowError("identity_mismatch")`` for an edited earlier
+    record (``evidence.earlier_retrieved`` calls ``cpdr.check_records``) and ``EvidenceRecordInvalid``
+    for an earlier record that is present but unreadable.
+    A ``research_ruling`` is read only when the research manifest has a url row.
+    ``resume`` skips the check that ``run_dir`` is new: ``run_pathway`` checks a run directory it
+    resumes itself. ``replay_from`` (the earlier run of a rerun) lets the research staging keep that
+    run's ``retrieved`` for unchanged evidence (O7-R67); ``check_replay`` still decides whether the
+    rerun is accepted, and a refused rerun writes nothing."""
+    _research_arguments(cp_dr, research_manifest, research_ruling)
+    if not resume:
+        _check_run_dir(run_dir)
+    gate = _check_adapter(adapter, model)
+    _check_cap(cap_usd)
+    _identifier(case_id, BadIdentifier, "case_id")
+    _identifier(run_id, BadIdentifier, "run_id")
+    context_raw = read_capped(context)
+    source_raw = [read_capped(item.path) for item in sources]
+    run_context = load_context(context_raw)
+    if run_context.run.pathway != pathway:
+        raise PathwayMismatch(f"context pathway {run_context.run.pathway!r} is not {pathway!r}")
+    files, requests = _case_files(sources, source_raw)
+    staging = None
+    if research_manifest is not None:
+        earlier = None if replay_from is None else evidence.earlier_retrieved(replay_from)
+        staging = _research_staging(research_manifest, run_context, research_ruling, earlier)
+        research_files, research_requests = _research_files(staging)
+        files.extend(research_files)
+        requests.extend(research_requests)
     request = preparation_request(
         run_context, run_id=run_id, context_path="context.json", sources=requests
     )
+    if cp_dr:
+        request = _with_cp_dr(request)
     files.append(
         StagedFile(
             CONTEXT_SOURCE_ID,
@@ -300,6 +499,7 @@ def check_arguments(
         context=run_context,
         files=tuple(files),
         request=request,
+        research=staging,
     )
 
 
@@ -321,6 +521,24 @@ def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
     except FileExistsError:
         raise RunDirExists(f"{run_dir} already exists") from None
     sources = run_dir / "sources"
+    if checked.research is not None:
+        research = run_dir / evidence.RESEARCH_DIR
+        os.mkdir(research)
+        evidence.write_evidence(
+            research / evidence.EVIDENCE_FILE,
+            checked.research.accepted,
+            checked.research.retrieved,
+            checked.research.kept,
+        )
+        write_rejected(research / evidence.REJECTED_FILE, checked.research.refused)
+        evidence.write_manifest_sha(
+            research / evidence.MANIFEST_SHA_FILE, checked.research.manifest_sha256
+        )
+        if checked.research.ruling is not None:  # a web run: its fetch records and its ruling
+            evidence.write_fetches(research / evidence.FETCHES_FILE, checked.research.fetches)
+            evidence.write_manifest_sha(
+                research / evidence.RULING_SHA_FILE, checked.research.ruling.sha256
+            )
     os.mkdir(sources)
     for staged in checked.files:
         _write_new(sources, staged.filename, staged.data)
@@ -342,9 +560,13 @@ __all__ = [
     "CaseSource",
     "CheckedRun",
     "ConfigMismatch",
-    "CpDrNotBuilt",
     "DuplicateSource",
     "PathwayMismatch",
+    "ResearchManifestInvalid",
+    "ResearchManifestRequired",
+    "ResearchManifestUnused",
+    "ResearchRulingUnused",
+    "ResearchStaging",
     "RunDirExists",
     "RunDirInvalid",
     "RunInputError",

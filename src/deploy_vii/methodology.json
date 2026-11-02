@@ -104,6 +104,25 @@
     ]
   },
   {
+    "module_id": "CP-DR",
+    "title": "Deep research",
+    "aliases": [],
+    "required": [
+      "CP-0",
+      "CP-1"
+    ],
+    "optional": [],
+    "purpose": "Resolve material evidence gaps for named consumers, or answer a standalone issuer/sector research question. Method cp-dr/2026-10-31.",
+    "table_ids": [
+      "TDR.1",
+      "TDR.2",
+      "TDR.3",
+      "TDR.4",
+      "TDR.5",
+      "TDR.6"
+    ]
+  },
+  {
     "module_id": "CP-1C",
     "title": "Peer benchmark",
     "aliases": [],
@@ -525,21 +544,6 @@
       "T7.6",
       "T7.7",
       "T7.8"
-    ]
-  },
-  {
-    "module_id": "CP-DR",
-    "title": "Deep research",
-    "aliases": [],
-    "required": [
-      "CP-0"
-    ],
-    "optional": [],
-    "purpose": "Resolve material evidence gaps for named consumers, or answer a standalone issuer/sector research question.",
-    "table_ids": [
-      "TDR.1",
-      "TDR.2",
-      "TDR.3"
     ]
   },
   {

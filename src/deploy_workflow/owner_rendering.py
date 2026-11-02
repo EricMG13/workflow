@@ -355,12 +355,12 @@ _DELIVERY_ROWS: tuple[DeliveryScope, ...] = (
     ),
     _scope(
         "slice-cpdr-research",
-        "credit_snapshot",
-        ("CP-DR",),
+        "relative_value",
+        ("CP-1", "CP-DR"),
         (),
         {
             "complete": (
-                "Local research agenda coverage only, shown as evidence and limitations. "
+                "Local research evidence and limitations only, from the supplied items. "
                 "No Front Page block on this page is qualified."
             )
         },

@@ -36,7 +36,7 @@ def pinned(path, sha):
 
 FIN_SHA = "6b3eeffe0871923f9f3ed9b6fd6739c86be2ee4dd8a7d35e8a6a516581b93432"
 SNAP_SUB_SHA = "bff9ed18a87627ceae14410961e70a2d6b055128981baa7f4a57d3cd5f9fb35c"
-METH_SHA = "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb"
+METH_SHA = "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e"
 FIN = pinned("cases/financial/manifest.json", FIN_SHA)
 SNAP = pinned("cases/snapshot/submissions.json", SNAP_SUB_SHA)
 METH = pinned("src/deploy_vii/methodology.json", METH_SHA)
@@ -2337,6 +2337,7 @@ def main():
         "host_scope": {
             "CP-1C": "fixed H1 mapping, never caller-supplied: identity, financial and peers when the prepared pack holds a source with id 'peers' (no_peers: identity and financial)",
             "protocol": "docs/G1X-OWNER-CORE-PROTOCOL.md section 3: an owner-only step may combine a module_context view with pack sources",
+            "o7c_amendment": "O7c (O7-R47 Q11): the mapping above is the pre-O7c form; once a CP-DR head is bound to CP-1C its scope also holds every held ev-* source, in pack order after peers (cases/cpdr-research-owner/expected.json#consumers/cp1c_scope)",
         },
         "d8": D8,
     }

@@ -6,8 +6,8 @@ which creates the ``OwnerWorkflow``, drives it step by step through ``ToolLoop``
 (receipt, verify, render, verify the render, ``run.json`` last).
 
 A named fault ends the run as ``stopped``: ``StepStopped``, any ``BudgetError``, ``RecordingMissing``,
-``WorkflowError``, ``NoPrompt``, ``PromptError``, and a ``ValueError`` from prepare or from the
-render and its verify. ``run.json`` records the outcome and a redacted reason. Any other exception
+``WorkflowError``, ``NoPrompt``, ``PromptError``, ``CpDrNotAnchored``, ``BriefInvalid``, and a
+``ValueError`` from prepare or from the render and its verify. ``run.json`` records the outcome and a redacted reason. Any other exception
 propagates and leaves the run directory WITHOUT ``run.json``: a crashed run is detectable by that
 absence. Nothing here reads the environment or the network; the live adapter reads keys only inside
 its own ``complete``, and this module's text is redacted by the key pattern alone.
@@ -15,6 +15,7 @@ its own ``complete``, and this module's text is redacted by the key pattern alon
 
 import contextlib
 import fcntl
+import hashlib
 import json
 import os
 import sys
@@ -31,9 +32,10 @@ from deploy_vii.execution import Execution
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import PreparedPack, load_pack
 from deploy_vii.registry import plan
-from deploy_workflow.model.adapter import LiveAdapter, ModelAdapter, RecordingMissing
+from deploy_workflow.model.adapter import GateResult, LiveAdapter, ModelAdapter, RecordingMissing
 from deploy_workflow.model.budget import Budget, BudgetError
 from deploy_workflow.model.loop import (
+    OWN_FORM,
     PromptFor,
     StepStopped,
     ToolLoop,
@@ -51,8 +53,9 @@ from deploy_workflow.owner_workflow import (
     TornAudit,
     verify_owner_run_receipt,
 )
+from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts.compose import NoPrompt
-from deploy_workflow.prompts.factory import prompt_factory
+from deploy_workflow.prompts.factory import UntrustedFor, prompt_factory
 from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.replay import (
     ReplayDiverged,
@@ -65,10 +68,15 @@ from deploy_workflow.replay import (
     journal_unreplayable,
     replay_module,
 )
+from deploy_workflow.research import evidence
+from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
+from deploy_workflow.research.dossier import DossierInvalid, DossierMismatch, render_dossier
+from deploy_workflow.research.intake import rejected_bytes
 from deploy_workflow.run_inputs import (
     HTML_MEDIA,
     CaseSource,
     CheckedRun,
+    ResearchStaging,
     RunDirInvalid,
     RunInputError,
     RunOutcome,
@@ -85,10 +93,18 @@ from deploy_workflow.workflow import WorkflowError
 MAX_OUTPUT_TOKENS = 98_304
 
 # PF-R12 (cases/pilot-fixes/limits.json#bytes_per_token_basis): a lower bound on bytes per token,
-# by provider, for the loop's input-token bound. OpenAI's 3.0 sits below every measurement (pilot
-# sol 4.314 and 4.317; Deploy VII sol min 4.885 over 36 calls); the others stay at 1, which is
-# sound by definition (a token is at least a byte) and over-reserves (pilot opus 2.394-2.545,
-# pilot deepseek 3.329-3.572).
+# by provider, for the loop's input-token bound. OpenAI's 3.0 sat below the pilot and Deploy VII
+# measurements (pilot sol 4.314 and 4.317; Deploy VII sol min 4.885 over 36 calls) but it is not
+# below every measurement. The figures are per request and cumulative (the whole request is
+# resent each call). Run 2's non-ciphertext text measured 3.02 bytes per token cumulative and
+# 2.51-2.64 per financials call, so 3.0 has little slack there. T11 (on the same branch) counts
+# encrypted reasoning at half its bytes, which shrinks that slack further: at call-19 size it
+# falls from 30,808 to 11,920 tokens (pinned table
+# `cases/pilot-fixes/encrypted-reasoning-table.md`, on Modules' branch
+# `claude/cp1h-estimator-oracle`; neither is on this branch). A request over 272K true
+# tokens stops as UnknownCharge, so an under-estimate is never silent (MANAGER ruling (A): the
+# value stays at 3.0). The others stay at 1, which is sound by definition (a token is at least a
+# byte) and over-reserves (pilot opus 2.394-2.545, pilot deepseek 3.329-3.572).
 BYTES_PER_TOKEN_LOWER_BOUND: Mapping[str, Decimal] = MappingProxyType(
     {"openai": Decimal("3.0"), "anthropic": Decimal(1), "openrouter": Decimal(1)}
 )
@@ -121,6 +137,7 @@ class CapExists(RunInputError):
 
 
 CAP_FILE = "cap.json"
+_CP_DR_LINEAGE = "LOCAL"
 _EXACT_ADD = Context(prec=120, traps=[Inexact, InvalidOperation]).add
 
 
@@ -219,6 +236,55 @@ def _retained_configs(run_dir: Path, redactor: Redactor) -> tuple[set[tuple[str,
     return identities, configs
 
 
+def _check_research(checked: CheckedRun, run_dir: Path) -> None:
+    """N1 for the research arguments (reads only): the manifest, the accepted items and the refused
+    items must be those staged under ``research/``; a run staged without research has none."""
+    staged = run_dir / evidence.RESEARCH_DIR
+    research = checked.research
+    if research is None:
+        if staged.exists():
+            raise ResumeMismatch("the run was staged with a research manifest; none was given")
+        return
+    try:
+        recorded = evidence.read_evidence(staged / evidence.EVIDENCE_FILE)
+        manifest_sha = evidence.read_manifest_sha(staged / evidence.MANIFEST_SHA_FILE)
+        rejected = (staged / evidence.REJECTED_FILE).read_bytes()
+    except (OSError, ValueError):  # EvidenceRecordInvalid is a ValueError
+        raise ResumeRefused(f"{staged} is missing or unreadable") from None
+    wanted = [
+        {k: v for k, v in row.items() if k != "retrieved"}
+        for row in evidence.evidence_rows(research.accepted, "")
+    ]
+    if [{k: v for k, v in row.items() if k != "retrieved"} for row in recorded] != wanted:
+        raise ResumeMismatch("the research items are not the staged run's")
+    if rejected != rejected_bytes(research.refused):
+        raise ResumeMismatch("the refused research items are not the staged run's")
+    if manifest_sha != research.manifest_sha256:
+        raise ResumeMismatch("the research manifest is not the staged run's")
+    _check_web(research, staged)
+
+
+def _check_web(research: ResearchStaging, staged: Path) -> None:
+    """N1 for the web arguments (O7b-2 D5): the fetch records and the ruling must be the staged
+    run's. The fetches are made again on a resume, so a changed page is a changed record. A run
+    staged without a ruling holds neither file."""
+    fetches, ruling_sha = staged / evidence.FETCHES_FILE, staged / evidence.RULING_SHA_FILE
+    if research.ruling is None:
+        if fetches.exists() or ruling_sha.exists():
+            raise ResumeMismatch("the run was staged with a research ruling; none was given")
+        return
+    try:
+        evidence.read_fetches(fetches)  # the shape check; the bytes are compared below
+        raw = fetches.read_bytes()
+        recorded_ruling = evidence.read_manifest_sha(ruling_sha)
+    except (OSError, ValueError):  # EvidenceRecordInvalid is a ValueError
+        raise ResumeRefused(f"{staged} is missing or unreadable") from None
+    if raw != evidence.fetches_bytes(research.fetches):  # a re-indented copy is a changed record
+        raise ResumeMismatch("the fetched pages are not the staged run's")
+    if recorded_ruling != research.ruling.sha256:
+        raise ResumeMismatch("the research ruling is not the staged run's")
+
+
 def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> None:
     """N1: a resume is the run it continues. Reads only: refused here, nothing has been written.
     ``run_id``, ``pathway`` and the staged sources against the retained pack, ``config_id`` against
@@ -235,6 +301,9 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         item.source_id: item.sha256 for item in checked.files
     }:  # the same ids and the same files, no subset (R17)
         raise ResumeMismatch("the sources are not the staged run's")
+    if pack.run.requested_modules != checked.request.run.requested_modules:
+        raise ResumeMismatch("the requested modules (cp_dr) are not the staged run's")
+    _check_research(checked, run_dir)
     _check_cap_and_mode(checked, run_dir)
     try:
         identities, configs = _retained_configs(run_dir, redactor)
@@ -244,6 +313,14 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         raise ResumeMismatch("case_id is not the run's")
     if configs - {checked.model.config_id}:
         raise ResumeMismatch("config_id is not the run's")
+
+
+_OWN_FORM = OWN_FORM
+
+
+class AttachmentsInvalid(ValueError):
+    """``research/attachments.json`` cannot be written. It is written after the receipt seal, so
+    this is a named post-seal stop (``AttachmentsInvalid: ...`` in ``run.json``), not a crash."""
 
 
 _FAULTS = (
@@ -256,6 +333,12 @@ _FAULTS = (
     ReplayRefused,
     ReplayError,
     ReplayPackChanged,
+    CpDrNotAnchored,  # O7-R20: a CP-DR run that is not anchored on CP-0 and CP-1 stops
+    BriefInvalid,  # a locked brief that was changed is not repairable by the model
+    DossierInvalid,  # the settled head cannot be written as the dossier layout
+    DossierMismatch,  # the dossier is not bound to the brief the head recorded
+    AttachmentsInvalid,  # post-seal: research/attachments.json cannot be written (O7c C3)
+    evidence.EvidenceRecordInvalid,  # the staged evidence record or an item's text changed
 )
 
 
@@ -268,6 +351,8 @@ class _Meta:
     live: bool
     redactor: Redactor
     replayed_from: str | None = None  # the earlier run's run_id, for a rerun after repair
+    # CP-DR's hook: evidence items (research step), dossier block (CP-1C, CP-2); none off-CP-DR.
+    untrusted_for: UntrustedFor | None = None
 
 
 def _source_entries(
@@ -288,6 +373,7 @@ def _source_entries(
         }
         for item in sources
     ]
+    entries.extend(_research_entries(checked))
     entries.append(
         {
             "source_id": staged["context"].source_id,
@@ -298,6 +384,150 @@ def _source_entries(
         }
     )
     return tuple(entries)
+
+
+def _research_entries(checked: CheckedRun) -> list[dict[str, Any]]:
+    """One entry per accepted ``ev-<n>`` item: its manifest-relative path (``None`` for a web item,
+    which names its ``url``), always ``text/plain``."""
+    if checked.research is None:
+        return []
+    return [
+        {
+            "source_id": item.item_id,
+            "path": item.path,
+            "origin": item.origin,
+            "url": item.url,
+            "sha256": item.sha256,
+            "media_type": "text/plain",
+            "converted_sha256": None,
+        }
+        for item in checked.research.accepted
+    ]
+
+
+@dataclass(frozen=True)
+class CpDrRecord:
+    """What a CP-DR run records of its head: the locked brief's hash, the sha256 of
+    ``research/dossier.md`` and the head's ``result_sha256``. Each is ``None`` until it exists."""
+
+    brief_sha256: str | None = None
+    dossier_sha256: str | None = None
+    head_sha256: str | None = None
+
+    @property
+    def state(self) -> str | None:
+        """``run.json.cp_dr_state`` (O7-R47 Q2): ``settled`` once the dossier is written,
+        ``blocked`` for a blocked head, ``None`` with no CP-DR head."""
+        if self.dossier_sha256 is not None:
+            return "settled"
+        return None if self.head_sha256 is None else "blocked"
+
+
+def _stopped_cp_dr_state(reason: str | None) -> str | None:
+    """``refused`` for the O7-R20 anchor stop (its reason keeps the ``CpDrNotAnchored: `` form
+    through a loop stop, O7-R32); a stop for any other reason records nothing of CP-DR's state."""
+    anchored = f"{CpDrNotAnchored.__name__}: "
+    return "refused" if reason is not None and reason.startswith(anchored) else None
+
+
+def _ruling_keys(ruling: GateResult | None) -> dict[str, Any]:
+    """The ``run.json`` keys of the ruling that lifted the web pause (O7b-2 D2); none without one."""
+    if ruling is None:
+        return {}
+    return {
+        "research_ruling_path": str(ruling.path),
+        "research_ruling_sha256": ruling.sha256,
+        "research_ruling_date": ruling.date.isoformat(),
+    }
+
+
+def _cp_dr_keys(
+    checked: CheckedRun,
+    record: CpDrRecord | None,
+    stopped_reason: str | None = None,
+    head_state: str | None = None,
+) -> dict[str, Any]:
+    """The ``run.json`` keys that exist only for a CP-DR run (a ``cp_dr=False`` file is unchanged).
+    The brief, dossier and head hashes are null until the walk has settled the head;
+    ``cp_dr_state`` is ``settled``, ``blocked``, ``refused`` (the anchor stop) or null."""
+    if not checked.cp_dr or checked.research is None:
+        return {}
+    held = CpDrRecord() if record is None else record
+    return {
+        "cp_dr_lineage": _CP_DR_LINEAGE,
+        "research_manifest_sha256": checked.research.manifest_sha256,
+        "cp_dr_brief_sha256": held.brief_sha256,
+        "cp_dr_dossier_sha256": held.dossier_sha256,
+        "cp_dr_head_sha256": held.head_sha256,
+        "cp_dr_state": _stopped_cp_dr_state(stopped_reason) or held.state or head_state,
+        **_ruling_keys(checked.research.ruling),
+    }
+
+
+def write_dossier(store: Execution, research: Path) -> CpDrRecord:
+    """After the walk: ``research/dossier.md`` from the settled CP-DR head (O7-R10), and the hashes
+    ``run.json`` records. No CP-DR head records nothing; a blocked head records its hash only. The
+    locked ``brief.json`` must be the bytes the dossier renders as the brief (1a M-4)."""
+    head = next((h for h in store.read().heads if h.module_id == cpdr.MODULE_ID), None)
+    if head is None:
+        return CpDrRecord()
+    if head.status == "blocked":
+        return CpDrRecord(head_sha256=head.result_sha256)
+    given = cpdr.dossier_input(store, head, research)
+    rendered = render_dossier(given)
+    if (research / cpdr.BRIEF_FILE).read_bytes() != rendered.brief_json.encode("utf-8"):
+        raise BriefInvalid("brief.json is not the bytes of the locked brief")
+    dossier = rendered.markdown.encode("utf-8")
+    (research / cpdr.DOSSIER_FILE).write_bytes(dossier)
+    return CpDrRecord(
+        brief_sha256=given.brief.brief_sha256,
+        dossier_sha256=hashlib.sha256(dossier).hexdigest(),
+        head_sha256=head.result_sha256,
+    )
+
+
+ATTACHMENTS_VERSION = "cp-dr/2026-10-31"  # cases/cpdr-research-owner/expected.json#attachments
+
+
+def write_attachments(
+    store: Execution,
+    research: Path,
+    run_id: str,
+    record: CpDrRecord,
+    supersedes: str | None = None,
+) -> None:
+    """After ``write_dossier`` (post-seal): ``research/attachments.json`` for a settled head, the
+    consumers' ids in plan order (the modules whose settled head binds this CP-DR head), sorted
+    keys, two-space indent, one trailing LF. ``supersedes`` is the earlier run's id on a rerun. A
+    run with no settled head writes none."""
+    if record.dossier_sha256 is None or record.head_sha256 is None:
+        return
+    snapshot = store.read()
+    held = {head.module_id: head for head in snapshot.heads}
+    consumers = [
+        module_id
+        for module_id in plan(store.pack(snapshot).run.requested_modules)
+        if module_id in held
+        and module_id != cpdr.MODULE_ID
+        and any(
+            i.input_id == cpdr.MODULE_ID and i.sha256 == record.head_sha256
+            for i in store.head_module(held[module_id]).inputs
+        )
+    ]
+    body = {
+        "brief_sha256": record.brief_sha256,
+        "consumers": consumers,
+        "dossier_sha256": record.dossier_sha256,
+        "run_id": run_id,
+        "supersedes": supersedes,
+        "version": ATTACHMENTS_VERSION,
+    }
+    try:
+        (research / cpdr.ATTACHMENTS_FILE).write_text(
+            json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    except OSError as error:
+        raise AttachmentsInvalid(f"{cpdr.ATTACHMENTS_FILE} cannot be written") from error
 
 
 def _staged_entries(checked: CheckedRun, run_dir: Path) -> tuple[dict[str, Any], ...]:
@@ -323,7 +553,14 @@ def _fsync_directory(directory: Path) -> None:
         os.close(fd)
 
 
-def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: str | None) -> None:
+def _write_run_json(
+    run_dir: Path,
+    meta: _Meta,
+    outcome: str,
+    stopped_reason: str | None,
+    record: CpDrRecord | None = None,
+    head_state: str | None = None,
+) -> None:
     """Write ``run.json`` last: a temp file in ``run_dir``, fsync, ``os.replace``."""
     checked = meta.checked
     body: dict[str, Any] = {
@@ -334,7 +571,8 @@ def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: st
         "mode": "live" if meta.live else "offline",
         "cap_usd": money_text(checked.cap_usd),
         "sources": list(meta.entries),
-        "cp_dr_invoked": False,
+        "cp_dr_invoked": checked.cp_dr,
+        **_cp_dr_keys(checked, record, stopped_reason, head_state),
         "replayed_from_run": meta.replayed_from,
         "outcome": outcome,
         "stopped_reason": stopped_reason,
@@ -354,12 +592,29 @@ def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: st
     _fsync_directory(run_dir)
 
 
+def _head_state(run_dir: Path) -> str | None:
+    """The CP-DR head's state for a stop after it began: absent is ``None`` (no execution store
+    either), blocked is ``blocked``, any other status is ``settled`` (O7-R47 Q2). The hashes stay
+    null: only a finished run records them."""
+    if not (run_dir / "execution").is_dir():
+        return None
+    heads = Execution(run_dir / "execution").read().heads
+    head = next((h for h in heads if h.module_id == cpdr.MODULE_ID), None)
+    return None if head is None else ("blocked" if head.status == "blocked" else "settled")
+
+
 def _stop(run_dir: Path, meta: _Meta, reason: str, spent: Decimal) -> RunOutcome:
     """End the run as ``stopped``: the redacted reason goes to ``run.json``. Callers build
     ``reason`` inside their ``except`` and call this after leaving it, so a failure to write
     ``run.json`` is not chained to the raw fault."""
     clean = meta.redactor.text(reason)
-    _write_run_json(run_dir, meta, "stopped", clean)
+    state = None
+    if meta.checked.cp_dr and _stopped_cp_dr_state(clean) is None:
+        try:
+            state = _head_state(run_dir)
+        except (OSError, ValueError, RecursionError) as error:  # named, never a crash
+            clean = f"{clean}; cp_dr_state unreadable: {type(error).__name__}"
+    _write_run_json(run_dir, meta, "stopped", clean, head_state=state)
     return RunOutcome(meta.checked.run_id, run_dir, "stopped", clean, spent)
 
 
@@ -373,6 +628,8 @@ class _Fault:
 
 def _fault_reason(fault: Exception, redactor: Redactor) -> str:
     if isinstance(fault, StepStopped):
+        if isinstance(fault.cause, _OWN_FORM):  # O7-R32: the key's `<Type>: <reason>` fault record
+            return _fault_reason(fault.cause, redactor)
         return redactor.text(str(fault))
     return f"{type(fault).__name__}: {redactor.text(str(fault))}"
 
@@ -404,7 +661,12 @@ def _finish_run(workflow: OwnerWorkflow, run_dir: Path, meta: _Meta, budget: Bud
     failure = _render(workflow, run_dir, shown)
     if failure is not None:
         return _stop(run_dir, meta, failure, budget.spent)
-    _write_run_json(run_dir, meta, "settled", None)
+    record = None
+    if meta.checked.cp_dr:
+        store, research = Execution(run_dir / "execution"), run_dir / evidence.RESEARCH_DIR
+        record = write_dossier(store, research)
+        write_attachments(store, research, meta.checked.run_id, record, meta.replayed_from)
+    _write_run_json(run_dir, meta, "settled", None, record)
     return RunOutcome(meta.checked.run_id, run_dir, "settled", None, budget.spent)
 
 
@@ -584,7 +846,11 @@ def _drive_and_finish(
         if replay is not None:
             journal_unreplayable(replay, execution)
         store = Execution(execution)
-        composer = prompt_factory(pack, store) if prompt_for is None else prompt_for(pack)
+        composer = (
+            prompt_factory(pack, store, untrusted_for=meta.untrusted_for if checked.cp_dr else None)
+            if prompt_for is None
+            else prompt_for(pack)
+        )
         loop = ToolLoop(
             workflow,
             adapter,
@@ -675,6 +941,7 @@ def _run_pathway(
     entries: tuple[dict[str, Any], ...] | None = None,
     resume: bool = False,
     replay: ReplayPlan | None = None,
+    untrusted_for: UntrustedFor | None = None,
 ) -> RunOutcome:
     """Run the walk over a staged ``run_dir``; ``resume`` reopens the killed run's workflow
     instead of creating one; ``replay`` (from ``check_replay``) makes it a rerun after repair. No adapter-type check here (``check_arguments``
@@ -687,6 +954,7 @@ def _run_pathway(
         type(adapter) is LiveAdapter,
         redactor,
         None if replay is None else replay.earlier_run_id,
+        untrusted_for,
     )
     with _redacted_stderr(redactor):
         return _walk(checked, run_dir, adapter, prompt_for, meta, resume, replay)
@@ -726,6 +994,8 @@ def run_pathway(
     run_dir: Path,
     run_id: str,
     cp_dr: bool = False,
+    research_manifest: Path | None = None,
+    research_ruling: Path | None = None,
     resume: bool = False,
     replay_from: Path | None = None,
     repaired: frozenset[str] = frozenset(),
@@ -743,7 +1013,13 @@ def run_pathway(
     every other analytical module is replayed from the earlier run's retained submissions (no model
     request), and the deterministic publisher runs again. It needs a new ``run_id`` and the earlier
     run's pack in everything but ``run_id``; every refusal comes before anything is written.
-    ``run.json.replayed_from_run`` is the earlier ``run_id``. A rerun is a fresh run: not a resume."""
+    ``run.json.replayed_from_run`` is the earlier ``run_id``. A rerun is a fresh run: not a resume.
+    ``cp_dr=True`` takes a ``research_manifest`` (and a manifest takes ``cp_dr=True``); intake runs
+    in ``check_arguments``, so a refused manifest raises before anything is written, and the staged
+    run holds ``research/evidence.json`` and ``research/rejected.json``. ``research_ruling`` (a user
+    ruling lifting the pause for ``web-retrieval``) lets the manifest's url rows be fetched: it is
+    checked before anything resolves, the fetches are staged in ``research/fetches.json``, the ruling
+    in ``run.json``, and a resume refuses a changed fetch record or ruling."""
     redactor = Redactor()
     with _redacted_stderr(redactor):
         checked = check_arguments(
@@ -757,7 +1033,10 @@ def run_pathway(
             run_dir=run_dir,
             run_id=run_id,
             cp_dr=cp_dr,
+            research_manifest=research_manifest,
+            research_ruling=research_ruling,
             resume=resume,
+            replay_from=replay_from,
         )
         entries = _source_entries(checked, sources, context)
         replay = _checked_replay(checked, run_dir, resume, replay_from, repaired)
@@ -775,7 +1054,22 @@ def run_pathway(
                 _mode_of(adapter),
                 None if replay is None else replay.earlier_run_id,
             )
-            return _run_pathway(checked, run_dir, adapter, entries=entries, replay=replay)
+            return _run_pathway(
+                checked,
+                run_dir,
+                adapter,
+                entries=entries,
+                replay=replay,
+                untrusted_for=_untrusted(checked, run_dir),
+            )
+
+
+def _untrusted(checked: CheckedRun, run_dir: Path) -> UntrustedFor | None:
+    """O7-R14: a CP-DR run's research step carries the staged evidence items' full text, and
+    CP-1C and CP-2 carry the CP-DR dossier block (O7c C3); every other run and step carries none."""
+    if not checked.cp_dr:
+        return None
+    return cpdr.untrusted_items(run_dir / evidence.RESEARCH_DIR)
 
 
 def _checked_replay(
@@ -808,7 +1102,14 @@ def _resume_pathway(
     with _single_writer(run_dir):
         _refuse_rerun(run_dir)
         _check_identity(checked, run_dir, redactor)
-        return _run_pathway(checked, run_dir, adapter, entries=entries, resume=True)
+        return _run_pathway(
+            checked,
+            run_dir,
+            adapter,
+            entries=entries,
+            resume=True,
+            untrusted_for=_untrusted(checked, run_dir),
+        )
 
 
 __all__ = [

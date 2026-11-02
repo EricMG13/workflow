@@ -454,8 +454,16 @@ def test_url_row_without_fetcher_names_the_gate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     calls: list[str] = []
-    monkeypatch.setattr(webfetch, "system_resolver", lambda host: calls.append(host) or [])
-    monkeypatch.setattr(webfetch, "pinned_connection", lambda target: calls.append(target.host))
+
+    def resolver(host: str) -> list[str]:
+        calls.append(host)
+        return []
+
+    def connector(target: webfetch.ConnectionTarget) -> Any:
+        calls.append(target.host)
+
+    monkeypatch.setattr(webfetch, "system_resolver", resolver)
+    monkeypatch.setattr(webfetch, "pinned_connection", connector)
     case = WEB_KEY["gate"]["no_ruling"]
     with pytest.raises(c.EvidenceFetchRefused) as raised:
         web_call(tmp_path, web_rows(), None)
@@ -694,7 +702,7 @@ def test_the_fence_runs_on_the_converted_text(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("url", [5, ["https://x.example/a"], True, "", "   "])
-def test_a_url_that_is_not_text_is_a_missing_field(url: object) -> None:
+def test_a_url_that_is_not_text_is_a_missing_field(url: Any) -> None:
     """S3 review L-5: the url goes through the text-field reader before the shape check."""
     with pytest.raises(it.IntakeError) as raised:
         it.parse_rows([one_url_row(url, locator="x")])

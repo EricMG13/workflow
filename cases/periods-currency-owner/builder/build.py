@@ -72,8 +72,12 @@ SNAP = load_pinned("cases/snapshot/manifest.json")
 LEGAL = load_pinned("cases/legal/manifest.json")
 EARN = load_pinned("cases/earnings/expected.json")
 EARN_OWNER = json.loads((ROOT / "cases/earnings/owner-expected.json").read_bytes())
-INPUT_SHAS["cases/earnings/owner-expected.json"] = hashlib.sha256((ROOT / "cases/earnings/owner-expected.json").read_bytes()).hexdigest()
-VAL = load_pinned("cases/valuation-context-owner/expected.json")  # Phase 7 key (ruling P7-R2); case auto-dr-public
+INPUT_SHAS["cases/earnings/owner-expected.json"] = hashlib.sha256(
+    (ROOT / "cases/earnings/owner-expected.json").read_bytes()
+).hexdigest()
+VAL = load_pinned(
+    "cases/valuation-context-owner/expected.json"
+)  # Phase 7 key (ruling P7-R2); case auto-dr-public
 VAL_CASE = VAL["cases"]["auto-dr-public"]
 UP = {}
 for _c in ("cp1c", "cp1d", "cp2a", "cp2d", "cp2e", "cp2g", "cp2h", "cp3c", "cp4c", "cpl10"):
@@ -135,7 +139,11 @@ class Tx:
     def obj(self, x, drop=frozenset()):
         if isinstance(x, dict):
             # `source: {path, sha256}` names the frozen oracle file a literal came from: provenance, not data
-            return {self.text(k): self.obj(v, drop) for k, v in x.items() if k not in drop and not (k == "source" and isinstance(v, dict) and "sha256" in v)}
+            return {
+                self.text(k): self.obj(v, drop)
+                for k, v in x.items()
+                if k not in drop and not (k == "source" and isinstance(v, dict) and "sha256" in v)
+            }
         if isinstance(x, list):
             return [self.obj(v, drop) for v in x]
         if isinstance(x, str):
@@ -148,13 +156,31 @@ _probe = Tx("USD", {})
 assert _probe.text("2024 2025 2026 2029 Q4 2025 LTM Q4 25 q4-2025 FY2025 FY25 _fy25") == (
     "2025 2026 2027 2030 Q4 2026 LTM Q4 26 q4-2026 FY2026 FY26 _fy25"
 )
-assert _probe.text("0" * 3 + "a1996b" * 8) == "0" * 3 + "a1996b" * 8  # a year inside a hex digest is not a year
+assert (
+    _probe.text("0" * 3 + "a1996b" * 8) == "0" * 3 + "a1996b" * 8
+)  # a year inside a hex digest is not a year
 assert Tx("EUR", {}).text("120 US$ m; Currency: USD") == "120 EUR m; Currency: EUR"
 SHIFTED_YEARS.clear()
 SHIFTED_Y2.clear()
 
 # provenance and process text is dropped, not mapped (it describes the frozen oracle's own history)
-DROP = frozenset({"validated_on", "replaces", "settled_limitations_note", "run_time_bindings", "note", "execution", "cp0", "plan_order", "derivation", "claims_note", "derivation_note", "not_verified", "source_variant"})
+DROP = frozenset(
+    {
+        "validated_on",
+        "replaces",
+        "settled_limitations_note",
+        "run_time_bindings",
+        "note",
+        "execution",
+        "cp0",
+        "plan_order",
+        "derivation",
+        "claims_note",
+        "derivation_note",
+        "not_verified",
+        "source_variant",
+    }
+)
 
 # --- 2. shifted sources --------------------------------------------------------------------------------
 
@@ -167,13 +193,85 @@ LEG = LEGAL["cases"][0]["legal_source"]
 assert LEGAL["cases"][0]["case_id"] == "legal-current-matching-definition"
 
 BASES = {  # source_id -> (frozen meta without pages/sha256, frozen pages, frozen sha256, frozen manifest path)
-    "identity": ({k: FIN_SRC["identity"][k] for k in ("source_id", "name", "status", "extraction_status")}, FIN_SRC["identity"]["pages"], FIN_SRC["identity"]["sha256"], "cases/financial/manifest.json#sources[identity]"),
-    "financial": ({k: FIN_SRC["financial"][k] for k in ("source_id", "name", "status", "extraction_status")}, FIN_SRC["financial"]["pages"], FIN_SRC["financial"]["sha256"], "cases/financial/manifest.json#sources[financial]"),
-    "peers": ({k: CP1C_SS[k] for k in ("source_id", "name", "status", "media_type", "extractor", "extraction_status", "pack_limitation")}, CP1C_SS["positive"]["pages"], CP1C_SS["positive"]["sha256"], "cases/cp1c-owner/manifest.json#synthetic_source.positive"),
-    "bridge": ({**{k: CP1D_SS[k] for k in ("source_id", "name", "status", "media_type", "extractor", "extraction_status")}, "pack_limitation": CP1D_SS["pack_limitation_positive"]}, CP1D_SS["positive"]["pages"], CP1D_SS["positive"]["sha256"], "cases/cp1d-owner/manifest.json#synthetic_source.positive"),
-    "ratings": ({**{k: CP2H_SS[k] for k in ("source_id", "name", "status", "media_type", "extractor", "extraction_status")}, "pack_limitation": CP2H_SS["pack_limitation_positive"]}, CP2H_SS["positive"]["pages"], CP2H_SS["positive"]["sha256"], "cases/cp2h-owner/manifest.json#synthetic_source.positive"),
-    "business": ({**BUS["common"], "pack_limitation": BUS["positive"]["pack_limitation"]}, BUS["positive"]["pages"], BUS["positive"]["sha256"], "cases/snapshot/manifest.json#business_source.positive"),
-    "legal-covenants": ({k: v for k, v in LEG.items() if k not in ("pages", "sha256")}, LEG["pages"], LEG["sha256"], "cases/legal/manifest.json#cases[0].legal_source"),
+    "identity": (
+        {k: FIN_SRC["identity"][k] for k in ("source_id", "name", "status", "extraction_status")},
+        FIN_SRC["identity"]["pages"],
+        FIN_SRC["identity"]["sha256"],
+        "cases/financial/manifest.json#sources[identity]",
+    ),
+    "financial": (
+        {k: FIN_SRC["financial"][k] for k in ("source_id", "name", "status", "extraction_status")},
+        FIN_SRC["financial"]["pages"],
+        FIN_SRC["financial"]["sha256"],
+        "cases/financial/manifest.json#sources[financial]",
+    ),
+    "peers": (
+        {
+            k: CP1C_SS[k]
+            for k in (
+                "source_id",
+                "name",
+                "status",
+                "media_type",
+                "extractor",
+                "extraction_status",
+                "pack_limitation",
+            )
+        },
+        CP1C_SS["positive"]["pages"],
+        CP1C_SS["positive"]["sha256"],
+        "cases/cp1c-owner/manifest.json#synthetic_source.positive",
+    ),
+    "bridge": (
+        {
+            **{
+                k: CP1D_SS[k]
+                for k in (
+                    "source_id",
+                    "name",
+                    "status",
+                    "media_type",
+                    "extractor",
+                    "extraction_status",
+                )
+            },
+            "pack_limitation": CP1D_SS["pack_limitation_positive"],
+        },
+        CP1D_SS["positive"]["pages"],
+        CP1D_SS["positive"]["sha256"],
+        "cases/cp1d-owner/manifest.json#synthetic_source.positive",
+    ),
+    "ratings": (
+        {
+            **{
+                k: CP2H_SS[k]
+                for k in (
+                    "source_id",
+                    "name",
+                    "status",
+                    "media_type",
+                    "extractor",
+                    "extraction_status",
+                )
+            },
+            "pack_limitation": CP2H_SS["pack_limitation_positive"],
+        },
+        CP2H_SS["positive"]["pages"],
+        CP2H_SS["positive"]["sha256"],
+        "cases/cp2h-owner/manifest.json#synthetic_source.positive",
+    ),
+    "business": (
+        {**BUS["common"], "pack_limitation": BUS["positive"]["pack_limitation"]},
+        BUS["positive"]["pages"],
+        BUS["positive"]["sha256"],
+        "cases/snapshot/manifest.json#business_source.positive",
+    ),
+    "legal-covenants": (
+        {k: v for k, v in LEG.items() if k not in ("pages", "sha256")},
+        LEG["pages"],
+        LEG["sha256"],
+        "cases/legal/manifest.json#cases[0].legal_source",
+    ),
 }
 for _sid, (_meta, _pages, _sha, _ref) in BASES.items():
     assert page_sha(_pages) == _sha, _sid
@@ -187,7 +285,13 @@ for _sid, (_meta, _pages, _sha, _ref) in BASES.items():
         t = Tx(ccy, {})
         pages = [{"locator": p["locator"], "text": t.text(p["text"])} for p in _pages]
         meta = {k: t.text(v) if isinstance(v, str) else v for k, v in _meta.items()}
-        built[ccy] = {**meta, "frozen_from": _ref, "frozen_sha256": _sha, "pages": pages, "sha256": page_sha(pages)}
+        built[ccy] = {
+            **meta,
+            "frozen_from": _ref,
+            "frozen_sha256": _sha,
+            "pages": pages,
+            "sha256": page_sha(pages),
+        }
         OLD2NEW[ccy][_sha] = built[ccy]["sha256"]
     if built["USD"] == built["EUR"]:  # no currency token anywhere in the source or its metadata
         SOURCES[_sid] = built["USD"]
@@ -225,8 +329,25 @@ def page_text(sid, ccy, locator):
 
 # --- 3. the period and currency strings, derived from the shifted statements ---------------------------------
 
-FIN_P = {c: {p["locator"]: p["text"] for p in SOURCES[source_key("financial", c)]["pages"]} for c in ("USD", "EUR")}
-MONTHS = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+FIN_P = {
+    c: {p["locator"]: p["text"] for p in SOURCES[source_key("financial", c)]["pages"]}
+    for c in ("USD", "EUR")
+}
+MONTHS = [
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
 
 
 def derive_basis(ccy):
@@ -241,7 +362,9 @@ def derive_basis(ccy):
     q4 = re.search(r"October 1-December 31 \((\d+) days\)", p1)
     q4_start = dt.date(year, 10, 1)
     assert (end - q4_start).days + 1 == int(q4.group(1)) == 92
-    hdr = re.search(r"Period end\s+Opening (\S+)\s+Q1 \S+\s+Q2 \S+\s+Q3 \S+\s+Q4 (\S+)\s+FY (\S+)", p4)
+    hdr = re.search(
+        r"Period end\s+Opening (\S+)\s+Q1 \S+\s+Q2 \S+\s+Q3 \S+\s+Q4 (\S+)\s+FY (\S+)", p4
+    )
     assert hdr.group(2) == hdr.group(3) == end.isoformat() and hdr.group(1) == "2025-12-31"
     yy = f"{year % 100:02d}"
     unit = "US$ m" if ccy == "USD" else "EUR m"
@@ -289,18 +412,39 @@ for _c in ("USD", "EUR"):
     for _k, _v in FROZEN_DEFAULT.items():
         assert TX["USD"].text(_v) == BASIS[_c][_k], (_k, TX["USD"].text(_v), BASIS[_c][_k])
     assert BASIS[_c]["bs_column"] == "Q4 2026-12-31"
-assert TX["USD"].text("FY2026, FY2027, FY2028; Not reached by FY2028") == "FY2027, FY2028, FY2029; Not reached by FY2029"
+assert (
+    TX["USD"].text("FY2026, FY2027, FY2028; Not reached by FY2028")
+    == "FY2027, FY2028, FY2029; Not reached by FY2029"
+)
 assert BASIS["EUR"]["not_reached_text"] == "Not reached by FY2029"
 assert BASIS["EUR"]["balance_date_text"] == "31 December 2026"
 # the bridge basis line is in the shifted bridge, in the run currency
 for _c in ("USD", "EUR"):
     _b = page_text("bridge", _c, "page:1")
-    assert _b.split("\n")[4].startswith(BASIS[_c]["bridge_basis_line"] + f"; {_c}; amounts in millions"), _b.split("\n")[4]
+    assert _b.split("\n")[4].startswith(
+        BASIS[_c]["bridge_basis_line"] + f"; {_c}; amounts in millions"
+    ), _b.split("\n")[4]
 
 # --- 3b. the CP-1 T4.14 rows of the shifted pack (pin-only, ruling P8-R1) ----------------------------------------------
 
 
-T414_COLUMNS = "period_id fiscal_year fiscal_quarter period_type start_date end_date day_count audit_status currency unit accounting_basis entity_perimeter source_id source_locator component_period_ids".split()  # model_interface.py:33-42
+T414_COLUMNS = [
+    "period_id",
+    "fiscal_year",
+    "fiscal_quarter",
+    "period_type",
+    "start_date",
+    "end_date",
+    "day_count",
+    "audit_status",
+    "currency",
+    "unit",
+    "accounting_basis",
+    "entity_perimeter",
+    "source_id",
+    "source_locator",
+    "component_period_ids",
+]  # model_interface.py:33-42
 
 
 def _cell(text, status="known"):
@@ -337,10 +481,17 @@ def t414_rows(ccy):
         row = {}
         for name in T414_COLUMNS:
             v = raw[name]
-            row[name] = _cell(v) if v is not None else _cell(None, "not_applicable" if name in refs else "missing")
+            row[name] = (
+                _cell(v)
+                if v is not None
+                else _cell(None, "not_applicable" if name in refs else "missing")
+            )
         # the row agrees with the shifted statements: dates give the day count, the balance-sheet header names the end date
         if raw["start_date"]:
-            d0, d1 = dt.date.fromisoformat(raw["start_date"]), dt.date.fromisoformat(raw["end_date"])
+            d0, d1 = (
+                dt.date.fromisoformat(raw["start_date"]),
+                dt.date.fromisoformat(raw["end_date"]),
+            )
             assert str((d1 - d0).days + 1) == raw["day_count"]
         assert raw["end_date"] in FIN_P[ccy]["page:4"], raw["period_id"]
         assert f"Currency: {ccy}; amounts in millions" in FIN_P[ccy]["page:1"]
@@ -373,19 +524,37 @@ T414 = {
     ),
     "columns": T414_COLUMNS,
     "contexts": {
-        "R1": {"context": "submissions.json#contexts/R1", "period_basis": "expected.json#period_basis/USD", "rows": t414_rows("USD")},
-        "R2": {"context": "submissions.json#contexts/R2", "period_basis": "expected.json#period_basis/EUR", "rows": t414_rows("EUR")},
+        "R1": {
+            "context": "submissions.json#contexts/R1",
+            "period_basis": "expected.json#period_basis/USD",
+            "rows": t414_rows("USD"),
+        },
+        "R2": {
+            "context": "submissions.json#contexts/R2",
+            "period_basis": "expected.json#period_basis/EUR",
+            "rows": t414_rows("EUR"),
+        },
     },
 }
 for _k, _c in (("R1", "USD"), ("R2", "EUR")):
     _rows = T414["contexts"][_k]["rows"]
     _fy = [r for r in _rows if _txt(r, "period_type") == "FY"]
-    _q4 = [r for r in _rows if _txt(r, "period_type") == "QUARTER" and _txt(r, "fiscal_quarter") == "4"]
+    _q4 = [
+        r for r in _rows if _txt(r, "period_type") == "QUARTER" and _txt(r, "fiscal_quarter") == "4"
+    ]
     assert len(_fy) == 1 and len(_q4) == 1 and _txt(_q4[0], "end_date") == _txt(_fy[0], "end_date")
-    assert _txt(_fy[0], "start_date") == BASIS[_c]["ltm_start"] and _txt(_fy[0], "end_date") == BASIS[_c]["ltm_end"] and _txt(_q4[0], "start_date") == BASIS[_c]["q4_start"]
-    assert _txt(_q4[0], "period_id") == BASIS[_c]["schedule_period"] and _txt(_fy[0], "fiscal_year") == str(BASIS[_c]["base_year"])
+    assert (
+        _txt(_fy[0], "start_date") == BASIS[_c]["ltm_start"]
+        and _txt(_fy[0], "end_date") == BASIS[_c]["ltm_end"]
+        and _txt(_q4[0], "start_date") == BASIS[_c]["q4_start"]
+    )
+    assert _txt(_q4[0], "period_id") == BASIS[_c]["schedule_period"] and _txt(
+        _fy[0], "fiscal_year"
+    ) == str(BASIS[_c]["base_year"])
     assert {_txt(r, "currency") for r in _rows} == {_c}
-    assert _fy[0]["fiscal_quarter"] == _cell(None, "not_applicable") and _rows[0]["start_date"] == _cell(None, "missing")
+    assert _fy[0]["fiscal_quarter"] == _cell(None, "not_applicable") and _rows[0][
+        "start_date"
+    ] == _cell(None, "missing")
 
 # --- 4. day counts and the 29 February 2028 check ----------------------------------------------------------
 
@@ -400,12 +569,19 @@ def add_months(d, n):
 def leap_and_day_count_checks():
     p1 = FIN_P["USD"]["page:1"]
     quarters = {}
-    for label, (a, b), stated in (("Q1", ((1, 1), (3, 31)), 90), ("Q2", ((4, 1), (6, 30)), 91), ("Q3", ((7, 1), (9, 30)), 92), ("Q4", ((10, 1), (12, 31)), 92)):
+    for label, (a, b), stated in (
+        ("Q1", ((1, 1), (3, 31)), 90),
+        ("Q2", ((4, 1), (6, 30)), 91),
+        ("Q3", ((7, 1), (9, 30)), 92),
+        ("Q4", ((10, 1), (12, 31)), 92),
+    ):
         n = (dt.date(2026, *b) - dt.date(2026, *a)).days + 1
         assert n == stated and f"({stated} days)" in p1, (label, n)
         quarters[label] = n
     fy = (dt.date(2026, 12, 31) - dt.date(2026, 1, 1)).days + 1
-    assert fy == 365 and "(365 days)" in p1 and not calendar.isleap(2026) and not calendar.isleap(2025)
+    assert (
+        fy == 365 and "(365 days)" in p1 and not calendar.isleap(2026) and not calendar.isleap(2025)
+    )
     feb29 = dt.date(2028, 2, 29)
     base_end = dt.date(2026, 12, 31)
     horizons = {}
@@ -413,20 +589,34 @@ def leap_and_day_count_checks():
         frozen_end = add_months(dt.date(2025, 12, 31), months)
         shifted_end = add_months(base_end, months)
         # month arithmetic lands on 31 December both times; no end-of-month clamp (February) is taken
-        assert (frozen_end.month, frozen_end.day) == (12, 31) == (shifted_end.month, shifted_end.day)
-        horizons[str(months)] = {"frozen": frozen_end.isoformat(), "shifted": shifted_end.isoformat(), "interval_crosses_29_feb_2028": base_end < feb29 < shifted_end, "interval_is_month_based": True}
+        assert (
+            (frozen_end.month, frozen_end.day) == (12, 31) == (shifted_end.month, shifted_end.day)
+        )
+        horizons[str(months)] = {
+            "frozen": frozen_end.isoformat(),
+            "shifted": shifted_end.isoformat(),
+            "interval_crosses_29_feb_2028": base_end < feb29 < shifted_end,
+            "interval_is_month_based": True,
+        }
     maturity_old, maturity_new = dt.date(2029, 12, 31), dt.date(2030, 12, 31)
     months_old = (maturity_old.year - 2025) * 12 + maturity_old.month - 12
     months_new = (maturity_new.year - 2026) * 12 + maturity_new.month - 12
     assert months_old == months_new == 48
     for months in (24, 60):
-        assert (maturity_old <= add_months(dt.date(2025, 12, 31), months)) == (maturity_new <= add_months(base_end, months))
+        assert (maturity_old <= add_months(dt.date(2025, 12, 31), months)) == (
+            maturity_new <= add_months(base_end, months)
+        )
     return {
         "statement_day_counts": {**quarters, "FY": fy},
         "statement_year_2026_is_leap": False,
         "owner_date_arithmetic": "month-based only (add_months with end-of-month clamp, annual forecast steps); no module computes an actual day count",
         "horizons_from_balance_date_2026_12_31": horizons,
-        "facility_maturity": {"frozen": "2029-12-31", "shifted": "2030-12-31", "months_after_balance_date": 48, "same_side_of_24_and_60_month_horizon": True},
+        "facility_maturity": {
+            "frozen": "2029-12-31",
+            "shifted": "2030-12-31",
+            "months_after_balance_date": 48,
+            "same_side_of_24_and_60_month_horizon": True,
+        },
         "feb_29_2028": "inside the 24-month horizon and the FY2028 forecast year; only month-end and annual-step arithmetic is applied across it, so no figure changes; the statement periods themselves (all 2026) contain no 29 February",
     }
 
@@ -444,23 +634,117 @@ def dig(x, path):
 
 # module -> (submission picks: name -> (case, path in submissions.json), expected picks: name -> (case, path in expected.json), frozen case id used)
 SPECS = {
-    "CP-1C": ("cp1c", "positive", {"submission": ["positive"], "cp0_consumer_row": None}, [("cases", "positive")], [("policy_constants",)]),
-    "CP-1D": ("cp1d", "positive", {"submission": ["positive"], "figures": ["figures"]}, [("cases", "positive")], []),
-    "CP-2A": ("cp2a", "positive", {"cp0_consumer_row_cp2a": ["cp0_consumer_row_cp2a"], "cp1_downstream_review": ["cp1_downstream_review"], "submission": ["positive"], "figures": ["figures"]}, [("cases", "positive")], []),
-    "CP-2D": ("cp2d", "positive", {"cp0_consumer_delta": ["cp0_consumer_delta"], "submission": ["cp2d", "positive"]}, [("cases", "positive")], [("source_facts",), ("method_rules",)]),
-    "CP-3C": ("cp3c", "positive", {"cp0_consumer_deltas": ["cp0_consumer_deltas"], "cp1a_consumer_deltas": ["cp1a_consumer_deltas"], "cp1_downstream_review": ["cp1_downstream_review"], "submission": ["cp3c", "positive"]}, [("cases", "positive")], [("source_facts",), ("method_rules",)]),
-    "CP-2G": ("cp2g", "gap", {"cp0_consumer_row_cp2g": ["cp0_consumer_row_cp2g"], "cp0_consumer_row_cp2a": ["cp0_consumer_row_cp2a"], "upstream_step_literals_CP-2A": ["upstream_step_literals", "CP-2A"], "submission": ["cases", "gap"], "figures": ["figures"]}, [("cases", "gap")], []),
-    "CP-2H": ("cp2h", "positive", {"agency_source": ["agency_source", "positive"], "upstream_step_literals_CP-2A": ["upstream_step_literals", "CP-2A"], "upstream_step_literals_CP-2G": ["upstream_step_literals", "CP-2G"], "submission": ["cases", "positive"], "figures": ["figures"]}, [("cases", "positive")], []),
-    "CP-4C": ("cp4c", "positive", {"upstream_step_literals_CP-2A": ["upstream_step_literals", "CP-2A"], "upstream_step_literals_CP-2G": ["upstream_step_literals", "CP-2G"], "upstream_step_literals_CP-4": ["upstream_step_literals", "CP-4", "positive"], "submission": ["cases", "positive"], "figures": ["figures"]}, [("cases", "positive")], []),
-    "CP-2E": ("cp2e", "positive", {"readiness_review": ["readiness_review", "positive"], "submission": ["positive"]}, [("cases", "positive")], []),
-    "CP-L10": ("cpl10", "positive", {"cp0_consumer_row_cpl10": ["cp0_consumer_row_cpl10"], "cp1_downstream_review": ["cp1_downstream_review"], "submission": ["positive"]}, [("cases", "positive")], []),
+    "CP-1C": (
+        "cp1c",
+        "positive",
+        {"submission": ["positive"], "cp0_consumer_row": None},
+        [("cases", "positive")],
+        [("policy_constants",)],
+    ),
+    "CP-1D": (
+        "cp1d",
+        "positive",
+        {"submission": ["positive"], "figures": ["figures"]},
+        [("cases", "positive")],
+        [],
+    ),
+    "CP-2A": (
+        "cp2a",
+        "positive",
+        {
+            "cp0_consumer_row_cp2a": ["cp0_consumer_row_cp2a"],
+            "cp1_downstream_review": ["cp1_downstream_review"],
+            "submission": ["positive"],
+            "figures": ["figures"],
+        },
+        [("cases", "positive")],
+        [],
+    ),
+    "CP-2D": (
+        "cp2d",
+        "positive",
+        {"cp0_consumer_delta": ["cp0_consumer_delta"], "submission": ["cp2d", "positive"]},
+        [("cases", "positive")],
+        [("source_facts",), ("method_rules",)],
+    ),
+    "CP-3C": (
+        "cp3c",
+        "positive",
+        {
+            "cp0_consumer_deltas": ["cp0_consumer_deltas"],
+            "cp1a_consumer_deltas": ["cp1a_consumer_deltas"],
+            "cp1_downstream_review": ["cp1_downstream_review"],
+            "submission": ["cp3c", "positive"],
+        },
+        [("cases", "positive")],
+        [("source_facts",), ("method_rules",)],
+    ),
+    "CP-2G": (
+        "cp2g",
+        "gap",
+        {
+            "cp0_consumer_row_cp2g": ["cp0_consumer_row_cp2g"],
+            "cp0_consumer_row_cp2a": ["cp0_consumer_row_cp2a"],
+            "upstream_step_literals_CP-2A": ["upstream_step_literals", "CP-2A"],
+            "submission": ["cases", "gap"],
+            "figures": ["figures"],
+        },
+        [("cases", "gap")],
+        [],
+    ),
+    "CP-2H": (
+        "cp2h",
+        "positive",
+        {
+            "agency_source": ["agency_source", "positive"],
+            "upstream_step_literals_CP-2A": ["upstream_step_literals", "CP-2A"],
+            "upstream_step_literals_CP-2G": ["upstream_step_literals", "CP-2G"],
+            "submission": ["cases", "positive"],
+            "figures": ["figures"],
+        },
+        [("cases", "positive")],
+        [],
+    ),
+    "CP-4C": (
+        "cp4c",
+        "positive",
+        {
+            "upstream_step_literals_CP-2A": ["upstream_step_literals", "CP-2A"],
+            "upstream_step_literals_CP-2G": ["upstream_step_literals", "CP-2G"],
+            "upstream_step_literals_CP-4": ["upstream_step_literals", "CP-4", "positive"],
+            "submission": ["cases", "positive"],
+            "figures": ["figures"],
+        },
+        [("cases", "positive")],
+        [],
+    ),
+    "CP-2E": (
+        "cp2e",
+        "positive",
+        {"readiness_review": ["readiness_review", "positive"], "submission": ["positive"]},
+        [("cases", "positive")],
+        [],
+    ),
+    "CP-L10": (
+        "cpl10",
+        "positive",
+        {
+            "cp0_consumer_row_cpl10": ["cp0_consumer_row_cpl10"],
+            "cp1_downstream_review": ["cp1_downstream_review"],
+            "submission": ["positive"],
+        },
+        [("cases", "positive")],
+        [],
+    ),
 }
 # CP-1C cp0_consumer_row_cp1c lives inside the positive submission set; no separate pick
 SPECS["CP-1C"][2].pop("cp0_consumer_row")
 # CP-2G in a distressed run has no CP-1D (the preset omits it, contracts.py:70-72): the frozen `gap` case is the CP-1D-unbound run.
 FROZEN_CASE = {m: s[1] for m, s in SPECS.items()}
 
-EXPECTED_KEEP_DROP = frozenset({"cp1_readiness"}) | DROP  # readiness literals are submission-side, not module output
+EXPECTED_KEEP_DROP = (
+    frozenset({"cp1_readiness"}) | DROP
+)  # readiness literals are submission-side, not module output
 
 
 EV_TABLES = ("T1C.9", "T1C.10", "T1C.11")
@@ -480,27 +764,53 @@ def with_ev_tables(block, ccy):
     src = VAL_CASE["cp1c"]
     tables = t.obj([tb for tb in src["tables"] if tb["table_id"] in EV_TABLES])
     facts = t.obj([f for f in src["facts"] if f["table_id"] in EV_TABLES], DROP)
-    assert [tb["table_id"] for tb in tables] == list(EV_TABLES) and [tb["table_id"] for tb in block["tables"]] == [f"T1C.{n}" for n in range(1, 9)]
+    assert [tb["table_id"] for tb in tables] == list(EV_TABLES) and [
+        tb["table_id"] for tb in block["tables"]
+    ] == [f"T1C.{n}" for n in range(1, 9)]
     new_lines = t.obj(src["own_limitations_new"])
     base_own, base_settled = block["own_limitations"], block["settled_limitations"]
-    assert base_settled[:-1] == base_own and base_settled[-1] == "Synthetic case; not real issuer qualification"
+    assert (
+        base_settled[:-1] == base_own
+        and base_settled[-1] == "Synthetic case; not real issuer qualification"
+    )
     own = base_own + [l for l in new_lines if l not in base_own]
     settled = own + [base_settled[-1]]
     b = BASIS[ccy]
     by_id = {f["fact_id"]: f for f in facts}
     for fid in ("T1C.11.selection.issuer_ebitda", "T1C.11.selection.implied_ev"):
         assert by_id[fid]["period"] == b["ltm_period"], fid
-    assert by_id["T1C.11.selection.issuer_ebitda"]["currency"] == ccy and by_id["T1C.11.selection.issuer_ebitda"]["amount_exact"] == "30"
+    assert (
+        by_id["T1C.11.selection.issuer_ebitda"]["currency"] == ccy
+        and by_id["T1C.11.selection.issuer_ebitda"]["amount_exact"] == "30"
+    )
     as_of = dt.date.fromisoformat(AS_OF)
     window = f"Window {add_months_back(as_of, 12).isoformat()} to {as_of.isoformat()}"  # Phase 7 rules.window: 12 months for public comps, back from the run as-of
     assert all(f["period"] == window for f in facts if f["table_id"] == "T1C.10"), window
     # the citation of the requested basis is the line of the run's own context file (Phase 7 rules.citations)
     cite = by_id["T1C.11.selection.requested_basis"]["citations"][0]
     ctx_lines = dumps(context("research", "relative_value", "fy-2026", "fy-2025", ccy)).split("\n")
-    assert cite["source_id"] == "context" and ctx_lines[int(cite["locator"].split(":")[1]) - 1].strip() == cite["quote"], cite
-    meta = {"source": "cases/valuation-context-owner/expected.json#cases/auto-dr-public/cp1c", "rule": "P7-R2", "table_ids": list(EV_TABLES), "facts_added": len(facts), "own_limitations_added": [l for l in new_lines if l not in base_own], "selected_basis": src["selection"]["selected_basis"], "gap": t.text(src["selection"]["gap"]), "window": window}
+    assert (
+        cite["source_id"] == "context"
+        and ctx_lines[int(cite["locator"].split(":")[1]) - 1].strip() == cite["quote"]
+    ), cite
+    meta = {
+        "source": "cases/valuation-context-owner/expected.json#cases/auto-dr-public/cp1c",
+        "rule": "P7-R2",
+        "table_ids": list(EV_TABLES),
+        "facts_added": len(facts),
+        "own_limitations_added": [l for l in new_lines if l not in base_own],
+        "selected_basis": src["selection"]["selected_basis"],
+        "gap": t.text(src["selection"]["gap"]),
+        "window": window,
+    }
     EV_META[ccy] = meta
-    return {**block, "facts": block["facts"] + facts, "tables": block["tables"] + tables, "own_limitations": own, "settled_limitations": settled}
+    return {
+        **block,
+        "facts": block["facts"] + facts,
+        "tables": block["tables"] + tables,
+        "own_limitations": own,
+        "settled_limitations": settled,
+    }
 
 
 EV_META = {}
@@ -531,14 +841,23 @@ def module_oracle(module, ccy):
 def _module_oracle(module, ccy):
     case, frozen_case, sub_picks, exp_cases, exp_top = SPECS[module]
     t = TX[ccy]
-    sub = {name: t.obj(dig(UP[case]["submissions"], path), DROP) for name, path in sub_picks.items()}
+    sub = {
+        name: t.obj(dig(UP[case]["submissions"], path), DROP) for name, path in sub_picks.items()
+    }
     exp_block = t.obj(dig(UP[case]["expected"], list(exp_cases[0])), EXPECTED_KEEP_DROP)
     top = {"/".join(p): t.obj(dig(UP[case]["expected"], list(p)), DROP) for p in exp_top}
     if module == "CP-1C":
         exp_block = with_ev_tables(exp_block, ccy)
     return {
         "frozen_case": f"cases/{case}-owner (case {frozen_case})",
-        **({"comparison_excludes": ["run", "pack_sources"], "comparison_excludes_note": "the frozen run block (slice-cp2e-positive, credit_snapshot) and its pack_sources are not mapped to R2 and are excluded from comparison against R2"} if module == "CP-2E" else {}),
+        **(
+            {
+                "comparison_excludes": ["run", "pack_sources"],
+                "comparison_excludes_note": "the frozen run block (slice-cp2e-positive, credit_snapshot) and its pack_sources are not mapped to R2 and are excluded from comparison against R2",
+            }
+            if module == "CP-2E"
+            else {}
+        ),
         "currency": ccy,
         "money_unit": BASIS[ccy]["money_unit"],
         "submission": sub,
@@ -550,10 +869,32 @@ def _module_oracle(module, ccy):
 
 # bindings/cp1b.py:32-49 (transcribed, the nine money labels carry `{unit}`; B18)
 CP1B_LAYOUT = {
-    "T1B.1": [("revenue", "Revenue ({unit})"), ("ebitda", "Reported EBITDA ({unit})"), ("adjusted_ebitda", "Adjusted EBITDA ({unit})"), ("ebitda_margin", "EBITDA margin (%; change pp)"), ("cfo_reported", "Reported CFO ({unit})"), ("capex", "Signed capex ({unit})"), ("fcf", "Levered FCF ({unit})")],
-    "T1B.2": [("cash_closing", "Closing cash ({unit})"), ("total_debt", "Total debt ({unit})"), ("net_debt", "Net debt ({unit})")],
+    "T1B.1": [
+        ("revenue", "Revenue ({unit})"),
+        ("ebitda", "Reported EBITDA ({unit})"),
+        ("adjusted_ebitda", "Adjusted EBITDA ({unit})"),
+        ("ebitda_margin", "EBITDA margin (%; change pp)"),
+        ("cfo_reported", "Reported CFO ({unit})"),
+        ("capex", "Signed capex ({unit})"),
+        ("fcf", "Levered FCF ({unit})"),
+    ],
+    "T1B.2": [
+        ("cash_closing", "Closing cash ({unit})"),
+        ("total_debt", "Total debt ({unit})"),
+        ("net_debt", "Net debt ({unit})"),
+    ],
 }
-CP1B_MONEY_ROWS = ["revenue", "ebitda", "adjusted_ebitda", "cfo_reported", "capex", "fcf", "cash_closing", "total_debt", "net_debt"]
+CP1B_MONEY_ROWS = [
+    "revenue",
+    "ebitda",
+    "adjusted_ebitda",
+    "cfo_reported",
+    "capex",
+    "fcf",
+    "cash_closing",
+    "total_debt",
+    "net_debt",
+]
 
 
 def cp1b_oracle(ccy):
@@ -563,7 +904,9 @@ def cp1b_oracle(ccy):
     points = t.obj(pos["points"])
     money = [p for p in points if p["measure_id"] in CP1B_MONEY_ROWS]
     assert [p["measure_id"] for p in money] == CP1B_MONEY_ROWS
-    assert all(p["unit"] == "MILLIONS" and p["currency"] == ccy and p["scale"] == "1000000" for p in money)
+    assert all(
+        p["unit"] == "MILLIONS" and p["currency"] == ccy and p["scale"] == "1000000" for p in money
+    )
     non_money = [p for p in points if p["measure_id"] not in CP1B_MONEY_ROWS]
     assert all(p["currency"] is None for p in non_money)
     unit = BASIS[ccy]["money_unit"]
@@ -577,8 +920,18 @@ def cp1b_oracle(ccy):
         "days_each": pos["days_each"],
         "points": points,
         "dimension_check": {"unit": "MILLIONS", "currency": ccy, "passes": True},
-        "money_fact_currency": {"rows": CP1B_MONEY_ROWS, "fields": ["prior", "current", "delta"], "currency": ccy, "unit": "MILLIONS", "scale": "1000000", "note": "C = currency of cp1b:T1B.1:revenue:current (B18); growth and non-money rows carry no currency"},
-        "row_labels": {tid: [{"row_id": r, "label": lab.format(unit=unit)} for r, lab in rows] for tid, rows in CP1B_LAYOUT.items()},
+        "money_fact_currency": {
+            "rows": CP1B_MONEY_ROWS,
+            "fields": ["prior", "current", "delta"],
+            "currency": ccy,
+            "unit": "MILLIONS",
+            "scale": "1000000",
+            "note": "C = currency of cp1b:T1B.1:revenue:current (B18); growth and non-money rows carry no currency",
+        },
+        "row_labels": {
+            tid: [{"row_id": r, "label": lab.format(unit=unit)} for r, lab in rows]
+            for tid, rows in CP1B_LAYOUT.items()
+        },
         "layout_check": "accepts these labels over facts of this currency; refuses the other currency's labels over them",
         "assessments": t.obj(owner_x["assessments"]["E-QOQ-FLAT"], DROP),
         "claim_text": t.text(owner_x["claim"]["texts"]["E-QOQ-FLAT"]),
@@ -595,7 +948,7 @@ def stmt_row(ccy, page, label, col):
     """The `col`-th number (0-based) of the statement row `label` on a shifted statement page."""
     for line in FIN_P[ccy][page].split("\n"):
         if line.startswith(label + "  "):
-            nums = re.findall(r"\(?-?\d+(?:\.\d+)?\)?", line[len(label):])
+            nums = re.findall(r"\(?-?\d+(?:\.\d+)?\)?", line[len(label) :])
             vals = [Fraction(n.strip("()")) * (-1 if n.startswith("(") else 1) for n in nums]
             return vals[col]
     raise KeyError(label)
@@ -611,17 +964,41 @@ def crosscheck(ccy):
     debt = stmt_row(ccy, "page:4", "Total debt", 5)
     cash = stmt_row(ccy, "page:4", "Cash and cash equivalents", 5)
     ltm = {
-        "revenue": rev, "ebitda": ebitda, "interest": interest, "fcf": fcf, "cfo": cfo,
-        "total_debt": debt, "cash": cash, "net_debt": debt - cash,
-        "total_leverage": debt / ebitda, "net_leverage": (debt - cash) / ebitda,
-        "interest_coverage": ebitda / interest, "fcf_to_debt": fcf / debt,
+        "revenue": rev,
+        "ebitda": ebitda,
+        "interest": interest,
+        "fcf": fcf,
+        "cfo": cfo,
+        "total_debt": debt,
+        "cash": cash,
+        "net_debt": debt - cash,
+        "total_leverage": debt / ebitda,
+        "net_leverage": (debt - cash) / ebitda,
+        "interest_coverage": ebitda / interest,
+        "fcf_to_debt": fcf / debt,
     }
     # quarters for CP-1B: Q3 and Q4 columns (0-based 2 and 3 on flows, 3 and 4 on the balance sheet whose first column is Opening)
     q = {}
-    for name, page, label, flow in (("revenue", "page:2", "Revenue", True), ("ebitda", "page:2", "Reported EBITDA", True), ("adjusted_ebitda", "page:2", "Adjusted EBITDA", True), ("cfo_reported", "page:3", "Operating cash flow", True), ("capex", "page:3", "Total capital expenditure", True), ("fcf", "page:3", "Levered free cash flow", True), ("cash_closing", "page:4", "Cash and cash equivalents", False), ("total_debt", "page:4", "Total debt", False)):
-        prior, cur = (stmt_row(ccy, page, label, 2), stmt_row(ccy, page, label, 3)) if flow else (stmt_row(ccy, page, label, 3), stmt_row(ccy, page, label, 4))
+    for name, page, label, flow in (
+        ("revenue", "page:2", "Revenue", True),
+        ("ebitda", "page:2", "Reported EBITDA", True),
+        ("adjusted_ebitda", "page:2", "Adjusted EBITDA", True),
+        ("cfo_reported", "page:3", "Operating cash flow", True),
+        ("capex", "page:3", "Total capital expenditure", True),
+        ("fcf", "page:3", "Levered free cash flow", True),
+        ("cash_closing", "page:4", "Cash and cash equivalents", False),
+        ("total_debt", "page:4", "Total debt", False),
+    ):
+        prior, cur = (
+            (stmt_row(ccy, page, label, 2), stmt_row(ccy, page, label, 3))
+            if flow
+            else (stmt_row(ccy, page, label, 3), stmt_row(ccy, page, label, 4))
+        )
         q[name] = (prior, cur)
-    q["net_debt"] = (q["total_debt"][0] - q["cash_closing"][0], q["total_debt"][1] - q["cash_closing"][1])
+    q["net_debt"] = (
+        q["total_debt"][0] - q["cash_closing"][0],
+        q["total_debt"][1] - q["cash_closing"][1],
+    )
     return ltm, q
 
 
@@ -638,9 +1015,14 @@ def exact(v):
     if d != 1:
         return f"{v.numerator}/{v.denominator}"
     from decimal import Decimal, localcontext
+
     with localcontext() as c:
         c.prec = 60
-        return format(Decimal(v.numerator) / Decimal(v.denominator), "f").rstrip("0").rstrip(".") if v.denominator != 1 else str(v.numerator)
+        return (
+            format(Decimal(v.numerator) / Decimal(v.denominator), "f").rstrip("0").rstrip(".")
+            if v.denominator != 1
+            else str(v.numerator)
+        )
 
 
 def check_against_oracles():
@@ -651,8 +1033,15 @@ def check_against_oracles():
     a = module_oracle("CP-2A", "USD")["expected"]
     for k, v in a["base_operands"].items():
         assert dec(v) == ltm[k], ("CP-2A", k)
-    assert dec(a["stress"]["s00"]["total_leverage"]) == ltm["total_leverage"].limit_denominator(10**40) or abs(dec(a["stress"]["s00"]["total_leverage"]) - ltm["total_leverage"]) < Fraction(1, 10**30)
-    assert dec(a["stress"]["s00"]["interest_coverage"]) == ltm["interest_coverage"] and dec(a["stress"]["s00"]["fcf_to_debt"]) == ltm["fcf_to_debt"]
+    assert dec(a["stress"]["s00"]["total_leverage"]) == ltm["total_leverage"].limit_denominator(
+        10**40
+    ) or abs(dec(a["stress"]["s00"]["total_leverage"]) - ltm["total_leverage"]) < Fraction(
+        1, 10**30
+    )
+    assert (
+        dec(a["stress"]["s00"]["interest_coverage"]) == ltm["interest_coverage"]
+        and dec(a["stress"]["s00"]["fcf_to_debt"]) == ltm["fcf_to_debt"]
+    )
     g = module_oracle("CP-2G", "USD")["expected"]
     for k, v in g["base_operands"].items():
         if k in ltm:
@@ -664,13 +1053,24 @@ def check_against_oracles():
         elif k == "capex":
             assert dec(v) == -stmt_row("USD", "page:3", "Total capital expenditure", 4)
         elif k == "undrawn":
-            assert dec(v) == stmt_row("USD", "page:4", "RCF commitment", 5) - stmt_row("USD", "page:4", "RCF drawings", 5)
+            assert dec(v) == stmt_row("USD", "page:4", "RCF commitment", 5) - stmt_row(
+                "USD", "page:4", "RCF drawings", 5
+            )
     pts = {p["measure_id"]: p for p in cp1b_oracle("USD")["points"]}
     for name, (prior, cur) in q.items():
-        assert dec(pts[name]["prior_value"]) == prior and dec(pts[name]["current_value"]) == cur and dec(pts[name]["delta"]) == cur - prior, name
-    assert dec(pts["total_leverage_reported"]["current_value"]) - ltm["total_leverage"] == 0 or abs(dec(pts["total_leverage_reported"]["current_value"]) - ltm["total_leverage"]) < Fraction(1, 10**30)
+        assert (
+            dec(pts[name]["prior_value"]) == prior
+            and dec(pts[name]["current_value"]) == cur
+            and dec(pts[name]["delta"]) == cur - prior
+        ), name
+    assert dec(pts["total_leverage_reported"]["current_value"]) - ltm["total_leverage"] == 0 or abs(
+        dec(pts["total_leverage_reported"]["current_value"]) - ltm["total_leverage"]
+    ) < Fraction(1, 10**30)
     checks["ltm_figures"] = {k: exact(v) for k, v in ltm.items()}
-    checks["cp1b_q3_to_q4"] = {k: {"prior": exact(v[0]), "current": exact(v[1]), "delta": exact(v[1] - v[0])} for k, v in q.items()}
+    checks["cp1b_q3_to_q4"] = {
+        k: {"prior": exact(v[0]), "current": exact(v[1]), "delta": exact(v[1] - v[0])}
+        for k, v in q.items()
+    }
     return checks
 
 
@@ -679,8 +1079,30 @@ CROSSCHECK = check_against_oracles()
 # --- 8. contexts and runs ------------------------------------------------------------------------------------
 
 PRESETS = {  # contracts.py:50-72 (transcribed)
-    "relative_value": ["CP-0", "CP-1", "CP-MODEL", "CP-1C", "CP-2", "CP-2D", "CP-3", "CP-3C", "CP-3D", "CP-5"],
-    "distressed_restructuring": ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4", "CP-4C", "CP-5"],
+    "relative_value": [
+        "CP-0",
+        "CP-1",
+        "CP-MODEL",
+        "CP-1C",
+        "CP-2",
+        "CP-2D",
+        "CP-3",
+        "CP-3C",
+        "CP-3D",
+        "CP-5",
+    ],
+    "distressed_restructuring": [
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-2",
+        "CP-2A",
+        "CP-2G",
+        "CP-2H",
+        "CP-4",
+        "CP-4C",
+        "CP-5",
+    ],
     "earnings_update": ["CP-0", "CP-1", "CP-MODEL", "CP-1B", "CP-1D", "CP-5"],
 }
 ISSUER = {"issuer_name": "Northbridge Synthetic Group", "issuer_id": "northbridge-synthetic"}
@@ -691,14 +1113,59 @@ def context(run_type, pathway, current, prior, ccy):
     """context/1 as the form writes it (cases/context-identity-periods/contexts/ctx-research.json key order); fields not set are defaults."""
     return {
         "schema": "context/1",
-        "run": {"run_type": run_type, "pathway": pathway, "case_kind": "synthetic", "as_of": AS_OF, "current_period": current, "prior_period": prior, "reporting_currency": ccy},
-        "identity": {**ISSUER, "borrower_name": "", "parent_name": "", "guarantors": [], "aliases": [], "listed_equity": False, "ticker": "", "sector": "", "country": "", "sponsor": ""},
+        "run": {
+            "run_type": run_type,
+            "pathway": pathway,
+            "case_kind": "synthetic",
+            "as_of": AS_OF,
+            "current_period": current,
+            "prior_period": prior,
+            "reporting_currency": ccy,
+        },
+        "identity": {
+            **ISSUER,
+            "borrower_name": "",
+            "parent_name": "",
+            "guarantors": [],
+            "aliases": [],
+            "listed_equity": False,
+            "ticker": "",
+            "sector": "",
+            "country": "",
+            "sponsor": "",
+        },
         "deal_terms": [],
         "quotes": [],
         "ratings": [],
-        "valuation": {"peer_source": "cp_dr_public", "basis": "auto", "issuer_market": {"market_cap_m": "", "net_debt_m": "", "ev_m": "", "ebitda_basis": "LTM", "as_of": "", "source": ""}, "peers": [], "precedents": [], "user_multiple": {"value": "", "basis": "LTM", "rationale": ""}},
-        "assumptions": {"cp2a": None, "cp2d": None, "cp2e": None, "cp3c": None, "cp3d": None, "cp4c": None},
-        "attachments": {"portfolio_workbook": False, "prior_case": False, "management_bridge": False, "legal_documents": "executed"},
+        "valuation": {
+            "peer_source": "cp_dr_public",
+            "basis": "auto",
+            "issuer_market": {
+                "market_cap_m": "",
+                "net_debt_m": "",
+                "ev_m": "",
+                "ebitda_basis": "LTM",
+                "as_of": "",
+                "source": "",
+            },
+            "peers": [],
+            "precedents": [],
+            "user_multiple": {"value": "", "basis": "LTM", "rationale": ""},
+        },
+        "assumptions": {
+            "cp2a": None,
+            "cp2d": None,
+            "cp2e": None,
+            "cp3c": None,
+            "cp3d": None,
+            "cp4c": None,
+        },
+        "attachments": {
+            "portfolio_workbook": False,
+            "prior_case": False,
+            "management_bridge": False,
+            "legal_documents": "executed",
+        },
         "research_questions": [],
     }
 
@@ -709,13 +1176,90 @@ EARN_PACK = ["identity", "financial", "bridge"]
 
 RUNS = [
     # id, run_type, pathway, extra modules, current, prior, ccy (context), pack ids, pack ccy
-    ("R1", "rv-fy2026-usd", "research", "relative_value", [], "fy-2026", "fy-2025", "USD", RV_PACK, "USD"),
-    ("R2", "dist-q4-2026-eur", "research", "distressed_restructuring", ["CP-2E", "CP-L10"], "q4-2026", "q3-2026", "EUR", DIST_PACK, "EUR"),
-    ("R3", "earn-q4-2026-eur", "earnings", "earnings_update", [], "q4-2026", "q3-2026", "EUR", EARN_PACK, "EUR"),
-    ("R4", "mismatch-eur-on-usd", "research", "relative_value", [], "fy-2026", "fy-2025", "EUR", RV_PACK, "USD"),
-    ("R5", "base-h2", "research", "distressed_restructuring", [], "h2-2026", "h1-2026", "USD", DIST_PACK, "USD"),
-    ("R5b", "base-q3", "research", "distressed_restructuring", ["CP-L10", "CP-1B"], "q3-2026", "q2-2026", "USD", DIST_PACK, "USD"),
-    ("R6", "rv-fy2026-eur", "research", "relative_value", [], "fy-2026", "fy-2025", "EUR", RV_PACK, "EUR"),
+    (
+        "R1",
+        "rv-fy2026-usd",
+        "research",
+        "relative_value",
+        [],
+        "fy-2026",
+        "fy-2025",
+        "USD",
+        RV_PACK,
+        "USD",
+    ),
+    (
+        "R2",
+        "dist-q4-2026-eur",
+        "research",
+        "distressed_restructuring",
+        ["CP-2E", "CP-L10"],
+        "q4-2026",
+        "q3-2026",
+        "EUR",
+        DIST_PACK,
+        "EUR",
+    ),
+    (
+        "R3",
+        "earn-q4-2026-eur",
+        "earnings",
+        "earnings_update",
+        [],
+        "q4-2026",
+        "q3-2026",
+        "EUR",
+        EARN_PACK,
+        "EUR",
+    ),
+    (
+        "R4",
+        "mismatch-eur-on-usd",
+        "research",
+        "relative_value",
+        [],
+        "fy-2026",
+        "fy-2025",
+        "EUR",
+        RV_PACK,
+        "USD",
+    ),
+    (
+        "R5",
+        "base-h2",
+        "research",
+        "distressed_restructuring",
+        [],
+        "h2-2026",
+        "h1-2026",
+        "USD",
+        DIST_PACK,
+        "USD",
+    ),
+    (
+        "R5b",
+        "base-q3",
+        "research",
+        "distressed_restructuring",
+        ["CP-L10", "CP-1B"],
+        "q3-2026",
+        "q2-2026",
+        "USD",
+        DIST_PACK,
+        "USD",
+    ),
+    (
+        "R6",
+        "rv-fy2026-eur",
+        "research",
+        "relative_value",
+        [],
+        "fy-2026",
+        "fy-2025",
+        "EUR",
+        RV_PACK,
+        "EUR",
+    ),
 ]
 
 H2_REFUSAL = "run.current_period h2-2026: forecast years need an fy or q4 base"
@@ -743,13 +1287,24 @@ def module_entry(module, ccy, extra=None):
     # `submission` is an input the owner is given, not a result it must emit, so it does not count
     body = {k: v for k, v in oracle.items() if k not in ("currency", "money_unit", "submission")}
     money = _carries_money(body, ccy, token)
-    entry = {"outcome": "settled", "oracle": key, "money_unit": token if money else None, "required_tokens": [token] if money else [], "forbidden_tokens": list(other)}
+    entry = {
+        "outcome": "settled",
+        "oracle": key,
+        "money_unit": token if money else None,
+        "required_tokens": [token] if money else [],
+        "forbidden_tokens": list(other),
+    }
     entry.update(extra or {})
     return entry
 
 
 def refused_entry(module, text, exact=None):
-    e = {"outcome": "refused", "layer": "entry validator", "issue_contains": text, "figures_produced": False}
+    e = {
+        "outcome": "refused",
+        "layer": "entry validator",
+        "issue_contains": text,
+        "figures_produced": False,
+    }
     if exact:
         e["issue_exact"] = exact
     return e
@@ -761,7 +1316,10 @@ def refused_entry(module, text, exact=None):
 # another kept phrase is dropped). Anything a correct owner legitimately emits on the 2026 pack is therefore never forbidden.
 _W = r"(?:[A-Za-z]+ ){0,2}"
 _PHRASE = [
-    re.compile(_W + r"(?:LTM )?(?:Q[1-4] |FY ?|q[1-4]-|fy-)?(?:19|20)\d\d(?:-\d\d-\d\d)?(?: to (?:19|20)\d\d-\d\d-\d\d)?(?: [A-Za-z]+)?"),
+    re.compile(
+        _W
+        + r"(?:LTM )?(?:Q[1-4] |FY ?|q[1-4]-|fy-)?(?:19|20)\d\d(?:-\d\d-\d\d)?(?: to (?:19|20)\d\d-\d\d-\d\d)?(?: [A-Za-z]+)?"
+    ),
     re.compile(r"(?:LTM )?(?:Q[1-4] |FY)\d\d(?: \(\d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d\))?"),
 ]
 
@@ -783,9 +1341,14 @@ def derive_stale():
     ident = Tx("USD", {})
     ident.text = lambda s: s
     frozen = []
-    for module, (case, _fc, _sp, exp_cases, exp_top) in SPECS.items():
-        _strings(ident.obj(dig(UP[case]["expected"], list(exp_cases[0])), EXPECTED_KEEP_DROP), frozen)
-    _strings(ident.obj([f for f in VAL_CASE["cp1c"]["facts"] if f["table_id"] in EV_TABLES], DROP), frozen)
+    for case, _fc, _sp, exp_cases, exp_top in SPECS.values():
+        _strings(
+            ident.obj(dig(UP[case]["expected"], list(exp_cases[0])), EXPECTED_KEEP_DROP), frozen
+        )
+    _strings(
+        ident.obj([f for f in VAL_CASE["cp1c"]["facts"] if f["table_id"] in EV_TABLES], DROP),
+        frozen,
+    )
     _strings(ident.obj(VAL_CASE["cp1c"]["own_limitations_new"]), frozen)
     _strings(ident.obj(EARN["positive"]["points"]), frozen)
     _strings(ident.obj(EARN_OWNER["assessments"]["E-QOQ-FLAT"], DROP), frozen)
@@ -794,7 +1357,9 @@ def derive_stale():
         for rx in _PHRASE:
             for m in rx.finditer(string):
                 cands.add(m.group(0).strip())
-                cands.add(re.sub(r" [A-Za-z]+$", "", m.group(0)).strip())  # also without the trailing word
+                cands.add(
+                    re.sub(r" [A-Za-z]+$", "", m.group(0)).strip()
+                )  # also without the trailing word
     shifted = []
     for ccy, mods in NEEDED.items():
         for m in mods:
@@ -805,7 +1370,11 @@ def derive_stale():
         o = cp1b_oracle(ccy)
         _strings(o, shifted)
     blob = "\n".join(shifted)
-    kept = sorted(c for c in cands if re.search(r"\d\d", c) and c not in blob and not re.fullmatch(r"[\d-]+", c))
+    kept = sorted(
+        c
+        for c in cands
+        if re.search(r"\d\d", c) and c not in blob and not re.fullmatch(r"[\d-]+", c)
+    )
     minimal = [c for c in kept if not any(o != c and o in c for o in kept)]
     return minimal
 
@@ -826,8 +1395,21 @@ def run_record(spec):
     ctx = context(run_type, pathway, cur, pri, ctx_ccy)
     rec = {
         "label": rid,
-        "run": {"run_id": run_id, **ISSUER, "as_of": AS_OF, "method_version": "deploy-v-r14", "case_kind": "synthetic", "pathway": pathway, "requested_modules": requested},
-        "requested_modules_note": "pathway preset" + (f" plus {extra} through Run.model_copy(update={{'requested_modules': ...}}); neither is in any preset" if extra else ""),
+        "run": {
+            "run_id": run_id,
+            **ISSUER,
+            "as_of": AS_OF,
+            "method_version": "deploy-v-r14",
+            "case_kind": "synthetic",
+            "pathway": pathway,
+            "requested_modules": requested,
+        },
+        "requested_modules_note": "pathway preset"
+        + (
+            f" plus {extra} through Run.model_copy(update={{'requested_modules': ...}}); neither is in any preset"
+            if extra
+            else ""
+        ),
         "pack_sources": pack(pack_ids, pack_ccy),
         "pack_currency": pack_ccy,
         "context": ctx,
@@ -837,17 +1419,41 @@ def run_record(spec):
 
 
 def issuer_metrics(ccy):
-    cells = [f for f in module_oracle("CP-1C", ccy)["expected"]["facts"] if f["fact_id"].startswith("T1C.3.issuer.")]
-    assert [f["field"] for f in cells] == ["adjusted_ebitda_margin", "total_leverage_adjusted", "interest_coverage_adjusted", "ffo_to_debt"]
-    assert all(f["copied_from_cp1"].startswith(BASIS[ccy]["ltm_column"] + " \u00b7 ") and f["period"] == BASIS[ccy]["ltm_period"] for f in cells)
-    return [{"fact_id": f["fact_id"], "cp1_fact_label": f["copied_from_cp1"], "amount_exact": f["amount_exact"], "shown": f["shown"], "period": f["period"]} for f in cells]
+    cells = [
+        f
+        for f in module_oracle("CP-1C", ccy)["expected"]["facts"]
+        if f["fact_id"].startswith("T1C.3.issuer.")
+    ]
+    assert [f["field"] for f in cells] == [
+        "adjusted_ebitda_margin",
+        "total_leverage_adjusted",
+        "interest_coverage_adjusted",
+        "ffo_to_debt",
+    ]
+    assert all(
+        f["copied_from_cp1"].startswith(BASIS[ccy]["ltm_column"] + " \u00b7 ")
+        and f["period"] == BASIS[ccy]["ltm_period"]
+        for f in cells
+    )
+    return [
+        {
+            "fact_id": f["fact_id"],
+            "cp1_fact_label": f["copied_from_cp1"],
+            "amount_exact": f["amount_exact"],
+            "shown": f["shown"],
+            "period": f["period"],
+        }
+        for f in cells
+    ]
 
 
 def binding_check(module, ccy):
     """Each T4.5 / T4.6 / T4.10 period string that the frozen module oracle holds occurs, shifted, in the module oracle,
     and no frozen (2025) form is left. Returns which of the four strings the oracle itself carries."""
     case = SPECS[module][0]
-    frozen_blob = json.dumps(dig(UP[case]["expected"], list(SPECS[module][3][0])), ensure_ascii=False)
+    frozen_blob = json.dumps(
+        dig(UP[case]["expected"], list(SPECS[module][3][0])), ensure_ascii=False
+    )
     blob = json.dumps(module_oracle(module, ccy)["expected"], ensure_ascii=False)
     b = BASIS[ccy]
     present = {}
@@ -864,80 +1470,158 @@ def build_expected_runs():
     out = {}
     for spec in RUNS:
         rid, _run_id, _rt, _pw, _extra, cur, pri, ctx_ccy, _pids, pack_ccy = spec
-        rec = {"run_id": _run_id, "current_period": cur, "prior_period": pri, "reporting_currency": ctx_ccy, "pack_currency": pack_ccy}
+        rec = {
+            "run_id": _run_id,
+            "current_period": cur,
+            "prior_period": pri,
+            "reporting_currency": ctx_ccy,
+            "pack_currency": pack_ccy,
+        }
         mods = {}
         if rid == "R1":
             rec["period_basis"] = BASIS["USD"]
             for m in ("CP-1C", "CP-2D", "CP-3C"):
                 mods[m] = module_entry(m, "USD")
-            mods["CP-1C"]["issuer_period"] = f"Mixed: issuer {BASIS['USD']['ltm_tag']}, each peer's own twelve months"
+            mods["CP-1C"]["issuer_period"] = (
+                f"Mixed: issuer {BASIS['USD']['ltm_tag']}, each peer's own twelve months"
+            )
             mods["CP-1C"]["t410_column_selected"] = BASIS["USD"]["ltm_column"]
             mods["CP-1C"]["t410_facts_selected"] = 4
             mods["CP-1C"]["issuer_metrics"] = issuer_metrics("USD")
             mods["CP-1C"]["ev_tables"] = (module_oracle("CP-1C", "USD"), EV_META["USD"])[1]
-            mods["CP-1C"]["limitation_counts"] = {"own": len(module_oracle("CP-1C", "USD")["expected"]["own_limitations"]), "settled": len(module_oracle("CP-1C", "USD")["expected"]["settled_limitations"])}
+            mods["CP-1C"]["limitation_counts"] = {
+                "own": len(module_oracle("CP-1C", "USD")["expected"]["own_limitations"]),
+                "settled": len(module_oracle("CP-1C", "USD")["expected"]["settled_limitations"]),
+            }
             for m in ("CP-2D", "CP-3C"):
                 mods[m]["bindings_carried_by_oracle"] = binding_check(m, "USD")
-                mods[m]["bindings"] = {"T4.5": BASIS["USD"]["t45_period"], "T4.6": BASIS["USD"]["t46_period"], "T4.10": BASIS["USD"]["ltm_period"], "SCHEDULE_PERIOD": BASIS["USD"]["schedule_period"]}
+                mods[m]["bindings"] = {
+                    "T4.5": BASIS["USD"]["t45_period"],
+                    "T4.6": BASIS["USD"]["t46_period"],
+                    "T4.10": BASIS["USD"]["ltm_period"],
+                    "SCHEDULE_PERIOD": BASIS["USD"]["schedule_period"],
+                }
         elif rid == "R6":
             rec["period_basis"] = BASIS["EUR"]
             for m in ("CP-1C", "CP-2D", "CP-3C"):
                 mods[m] = module_entry(m, "EUR")
-            mods["CP-1C"]["issuer_period"] = f"Mixed: issuer {BASIS['EUR']['ltm_tag']}, each peer's own twelve months"
+            mods["CP-1C"]["issuer_period"] = (
+                f"Mixed: issuer {BASIS['EUR']['ltm_tag']}, each peer's own twelve months"
+            )
             mods["CP-1C"]["t410_column_selected"] = BASIS["EUR"]["ltm_column"]
             mods["CP-1C"]["t410_facts_selected"] = 4
             mods["CP-1C"]["issuer_metrics"] = issuer_metrics("EUR")
             mods["CP-1C"]["ev_tables"] = (module_oracle("CP-1C", "EUR"), EV_META["EUR"])[1]
-            mods["CP-1C"]["limitation_counts"] = {"own": len(module_oracle("CP-1C", "EUR")["expected"]["own_limitations"]), "settled": len(module_oracle("CP-1C", "EUR")["expected"]["settled_limitations"])}
+            mods["CP-1C"]["limitation_counts"] = {
+                "own": len(module_oracle("CP-1C", "EUR")["expected"]["own_limitations"]),
+                "settled": len(module_oracle("CP-1C", "EUR")["expected"]["settled_limitations"]),
+            }
             for m in ("CP-2D", "CP-3C"):
                 mods[m]["bindings_carried_by_oracle"] = binding_check(m, "EUR")
-                mods[m]["bindings"] = {"T4.5": BASIS["EUR"]["t45_period"], "T4.6": BASIS["EUR"]["t46_period"], "T4.10": BASIS["EUR"]["ltm_period"], "SCHEDULE_PERIOD": BASIS["EUR"]["schedule_period"]}
-            rec["peers_basis_clause"] = "Basis: twelve months to the period end shown; EUR; amounts in millions; unaudited desk summaries."
+                mods[m]["bindings"] = {
+                    "T4.5": BASIS["EUR"]["t45_period"],
+                    "T4.6": BASIS["EUR"]["t46_period"],
+                    "T4.10": BASIS["EUR"]["ltm_period"],
+                    "SCHEDULE_PERIOD": BASIS["EUR"]["schedule_period"],
+                }
+            rec["peers_basis_clause"] = (
+                "Basis: twelve months to the period end shown; EUR; amounts in millions; unaudited desk summaries."
+            )
             assert rec["peers_basis_clause"] in page_text("peers", "EUR", "page:1")
         elif rid == "R2":
             rec["period_basis"] = BASIS["EUR"]
             for m in ("CP-2A", "CP-2G", "CP-2H", "CP-4C", "CP-2E", "CP-L10"):
                 mods[m] = module_entry(m, "EUR")
-            mods["CP-2A"]["offering"] = "the frozen CP-2A bases with 2026 labels (base period " + BASIS["EUR"]["ltm_period"] + ")"
+            mods["CP-2A"]["offering"] = (
+                "the frozen CP-2A bases with 2026 labels (base period "
+                + BASIS["EUR"]["ltm_period"]
+                + ")"
+            )
             mods["CP-2G"]["forecast_columns"] = BASIS["EUR"]["year_labels"]
-            mods["CP-2G"]["cp1d"] = "unbound (CP-1D is not in the distressed_restructuring preset); the frozen CP-2G gap case is the oracle"
+            mods["CP-2G"]["cp1d"] = (
+                "unbound (CP-1D is not in the distressed_restructuring preset); the frozen CP-2G gap case is the oracle"
+            )
             mods["CP-2H"]["first_reached_text"] = BASIS["EUR"]["not_reached_text"]
             mods["CP-4C"]["claims_period_column"] = BASIS["EUR"]["bs_column"]
             mods["CP-4C"]["balance_date_limitation"] = BASIS["EUR"]["balance_date_text"]
             mods["CP-2E"]["periods"] = {**BASIS["EUR"]["cp2e_periods"], "run": f"Run as of {AS_OF}"}
-            mods["CP-2E"]["basis_source"] = "the statement's own `FY 2026` header and run.current_period (Task 7); no CP-1 input"
+            mods["CP-2E"]["basis_source"] = (
+                "the statement's own `FY 2026` header and run.current_period (Task 7); no CP-1 input"
+            )
             mods["CP-L10"]["quarters"] = ["Q1 26", "Q2 26", "Q3 26", "Q4 26"]
-            mods["CP-L10"]["scope"] = "Phase 2 owns the offering; Phase 8 checks the currency token only"
+            mods["CP-L10"]["scope"] = (
+                "Phase 2 owns the offering; Phase 8 checks the currency token only"
+            )
         elif rid == "R3":
             rec["period_basis"] = BASIS["EUR"]
             mods["CP-1B"] = module_entry("CP-1B", "EUR")
             mods["CP-1D"] = module_entry("CP-1D", "EUR")
             mods["CP-1D"]["basis_line"] = BASIS["EUR"]["bridge_basis_line"]
             mods["CP-1D"]["amount_fact_currency"] = "EUR"
-            money = [f for f in module_oracle("CP-1D", "EUR")["expected"]["facts"] if f.get("unit") == "MILLIONS" and f.get("status") == "known"]
+            money = [
+                f
+                for f in module_oracle("CP-1D", "EUR")["expected"]["facts"]
+                if f.get("unit") == "MILLIONS" and f.get("status") == "known"
+            ]
             assert money and all(f.get("currency") == "EUR" for f in money)
             mods["CP-1D"]["millions_facts_checked_eur"] = len(money)
         elif rid == "R4":
             rec["period_basis"] = None
             for m in ("CP-1C", "CP-2D", "CP-3C"):
                 mods[m] = refused_entry(m, MISMATCH_REFUSAL, RESIDUAL.get(m))
-            rec["refusal"] = {"exception": "PeriodRefused", "message": MISMATCH_REFUSAL, "rule": "Task 1: T4.14 currency must equal run.reporting_currency; Task 2 prefixes CP-1C's issue with 'Period basis: '"}
+            rec["refusal"] = {
+                "exception": "PeriodRefused",
+                "message": MISMATCH_REFUSAL,
+                "rule": "Task 1: T4.14 currency must equal run.reporting_currency; Task 2 prefixes CP-1C's issue with 'Period basis: '",
+            }
         elif rid == "R5":
             rec["period_basis"] = None
             for m in ("CP-2G", "CP-2H", "CP-4C"):
                 mods[m] = refused_entry(m, H2_REFUSAL)
-            mods["CP-2A"] = module_entry("CP-2A", "USD", {"offering": "unchanged: period-agnostic (cp2a.py:160-173); the frozen CP-2A bases, base period " + BASIS["USD"]["ltm_period"]})
+            mods["CP-2A"] = module_entry(
+                "CP-2A",
+                "USD",
+                {
+                    "offering": "unchanged: period-agnostic (cp2a.py:160-173); the frozen CP-2A bases, base period "
+                    + BASIS["USD"]["ltm_period"]
+                },
+            )
             rec["refusal"] = {"exception": "PeriodRefused", "message": H2_REFUSAL}
         elif rid == "R5b":
             rec["period_basis"] = None
             rec["currency_basis"] = {"currency": "USD", "money_unit": "US$ m"}
-            mods["CP-2A"] = module_entry("CP-2A", "USD", {"offering": "unchanged: period-agnostic; a q3 base is not a refusal for a currency-only module (M3)"})
-            mods["CP-1B"] = {"outcome": "refused", "layer": "build_earnings_delta", "error": "incompatible_periods", "issue_contains": "incompatible_periods", "figures_produced": False, "is_period_refused": False, "ruling": "controller: freeze today's refusal; earnings.py:316-318 compares period lengths in raw days (prior q2-2026 = 91, current q3-2026 = 92); a pre-existing defect reported to the owner; if the owner fixes it this case is re-cut"}
+            mods["CP-2A"] = module_entry(
+                "CP-2A",
+                "USD",
+                {
+                    "offering": "unchanged: period-agnostic; a q3 base is not a refusal for a currency-only module (M3)"
+                },
+            )
+            mods["CP-1B"] = {
+                "outcome": "refused",
+                "layer": "build_earnings_delta",
+                "error": "incompatible_periods",
+                "issue_contains": "incompatible_periods",
+                "figures_produced": False,
+                "is_period_refused": False,
+                "ruling": "controller: freeze today's refusal; earnings.py:316-318 compares period lengths in raw days (prior q2-2026 = 91, current q3-2026 = 92); a pre-existing defect reported to the owner; if the owner fixes it this case is re-cut",
+            }
             quarters = ["q4-2025", "q1-2026", "q2-2026", "q3-2026"]
-            mods["CP-L10"] = {"outcome": "refused", "layer": "offering", "issue_contains": "unbound CP-1 operand: q4-2025 (no CP-1 T4.14 period)", "missing_quarter_id": "q4-2025", "quarters_needed": quarters, "figures_produced": False, "is_period_refused": False, "ruling": "controller: Phase 2 plan :114 (q3-2025 current -> q4-2024 missing) shifted one year; the shifted pack holds T4.14 periods q1-2026..q4-2026 only"}
+            mods["CP-L10"] = {
+                "outcome": "refused",
+                "layer": "offering",
+                "issue_contains": "unbound CP-1 operand: q4-2025 (no CP-1 T4.14 period)",
+                "missing_quarter_id": "q4-2025",
+                "quarters_needed": quarters,
+                "figures_produced": False,
+                "is_period_refused": False,
+                "ruling": "controller: Phase 2 plan :114 (q3-2025 current -> q4-2024 missing) shifted one year; the shifted pack holds T4.14 periods q1-2026..q4-2026 only",
+            }
         mods_clean = mods
         rec["modules"] = mods_clean
-        rec["stale_period_literals_forbidden_in_emitted_period_strings"] = stale_literals() if rid in ("R1", "R2", "R3", "R6") else []
+        rec["stale_period_literals_forbidden_in_emitted_period_strings"] = (
+            stale_literals() if rid in ("R1", "R2", "R3", "R6") else []
+        )
         out[rid] = rec
     return out
 
@@ -946,7 +1630,18 @@ def build_expected_runs():
 
 NEEDED = {  # module oracles referenced by the runs
     "USD": ["CP-1C", "CP-2D", "CP-3C", "CP-2A"],
-    "EUR": ["CP-1C", "CP-2D", "CP-3C", "CP-2A", "CP-2G", "CP-2H", "CP-4C", "CP-2E", "CP-L10", "CP-1D"],
+    "EUR": [
+        "CP-1C",
+        "CP-2D",
+        "CP-3C",
+        "CP-2A",
+        "CP-2G",
+        "CP-2H",
+        "CP-4C",
+        "CP-2E",
+        "CP-L10",
+        "CP-1D",
+    ],
 }
 
 
@@ -985,7 +1680,11 @@ def main():
             ids = set(SOURCES_BY_CCY(ccy))
             n, bad = citation_check(key, o["submission"], ccy, ids)
             n2, bad2 = citation_check(key, o["expected"], ccy, ids)
-            cite_report[key] = {"quotes_checked": n + n2, "quotes_not_in_shifted_page": len(bad) + len(bad2), "samples": (bad + bad2)[:2]}
+            cite_report[key] = {
+                "quotes_checked": n + n2,
+                "quotes_not_in_shifted_page": len(bad) + len(bad2),
+                "samples": (bad + bad2)[:2],
+            }
     oracles_exp["CP-1B@EUR"] = cp1b_oracle("EUR")
     oracles_exp["CP-1B@USD"] = cp1b_oracle("USD")
     # no US$ / USD anywhere in an EUR oracle, no EUR in a USD oracle
@@ -1019,7 +1718,11 @@ def main():
         "old_to_new_source_sha256": OLD2NEW,
         "runs": runs_manifest,
         "default_period_literals_mapped": FROZEN_DEFAULT,
-        "t414_file": {"path": "t414.json", "sha256": sha(dumps(T414).encode("utf-8")), "rule": "P8-R1: pin-only; the shifted pack's CP-1 T4.14 rows behind period_basis/USD and period_basis/EUR; no expected.json value depends on it"},
+        "t414_file": {
+            "path": "t414.json",
+            "sha256": sha(dumps(T414).encode("utf-8")),
+            "rule": "P8-R1: pin-only; the shifted pack's CP-1 T4.14 rows behind period_basis/USD and period_basis/EUR; no expected.json value depends on it",
+        },
         "stale_literal_derivation": "expected.json runs.*.stale_period_literals_forbidden_in_emitted_period_strings is derived by build.py derive_stale(): every period-bearing phrase (a year or two-digit period label, up to two words before and one after) of the frozen source oracles used here, kept only if no shifted oracle or submission of any module or currency contains it, then reduced to the minimal set. Bare dates and amounts are never candidates.",
         "dependencies": "R3's CP-1B settling on q3-2026 -> q4-2026 depends on Phase 2 Task 4 generalising the CP-1B prose (ruling B19); until then the owner path refuses unsupported_pair.",
     }
@@ -1047,7 +1750,14 @@ def main():
     (OUT / "expected.json").write_text(dumps(expected), encoding="utf-8")
     (OUT / "t414.json").write_text(dumps(T414), encoding="utf-8")
     bad = {k: v for k, v in cite_report.items() if v["quotes_not_in_shifted_page"]}
-    print("wrote", OUT, "quotes with no shifted page match:", sum(v["quotes_not_in_shifted_page"] for v in cite_report.values()), "unmapped digests:", len(unmapped))
+    print(
+        "wrote",
+        OUT,
+        "quotes with no shifted page match:",
+        sum(v["quotes_not_in_shifted_page"] for v in cite_report.values()),
+        "unmapped digests:",
+        len(unmapped),
+    )
     if bad:
         for k, v in bad.items():
             print("  ", k, v)

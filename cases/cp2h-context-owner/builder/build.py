@@ -151,7 +151,7 @@ RATINGS = {
     "gap": {"pages": with_terms(GAP_PAGES, GAP_TERMS)},
     "fitch_terms": {"pages": with_terms(POS_PAGES, FITCH_TERMS)},
 }
-for key, item in RATINGS.items():
+for item in RATINGS.values():
     item["sha256"] = page_sha(item["pages"])
 NEW_SHA = {"positive": RATINGS["positive"]["sha256"], "gap": RATINGS["gap"]["sha256"]}
 assert len({v["sha256"] for v in RATINGS.values()} | set(OLD_SHA.values())) == 5
@@ -188,7 +188,9 @@ ROWS = {
 
 def context_doc(rows, as_of=AS_OF):
     doc = deepcopy(BASE_CONTEXT)
-    doc["run"].update({"pathway": "distressed_restructuring", "case_kind": "synthetic", "as_of": as_of})
+    doc["run"].update(
+        {"pathway": "distressed_restructuring", "case_kind": "synthetic", "as_of": as_of}
+    )
     doc["identity"].update({"issuer_name": ISSUER[1], "issuer_id": ISSUER[0]})
     doc["ratings"] = deepcopy(rows)
     return doc
@@ -263,7 +265,7 @@ def rating_cites(text):
             pos += 1
         if text[pos] == "]":
             return out
-        obj, end = decoder.raw_decode(text, pos)
+        _obj, end = decoder.raw_decode(text, pos)
         cites = {}
         for key in FIELDS:
             m = re.search(_VALUE.format(key=key), text[pos:end])
@@ -289,7 +291,10 @@ def rating_cites(text):
 def issuer_name_cite(text):
     """The CP-0 / CP-1 `context` assessment's own cited line (as the Phase 2 oracle)."""
     lines = text.splitlines()
-    for quote in ('"issuer_name": "Northbridge Synthetic Group"', '"issuer_name":"Northbridge Synthetic Group"'):
+    for quote in (
+        '"issuer_name": "Northbridge Synthetic Group"',
+        '"issuer_name":"Northbridge Synthetic Group"',
+    ):
         hits = [n for n, ln in enumerate(lines, 1) if quote in ln]
         if len(hits) == 1 and lines[hits[0] - 1].count(quote) == 1:
             return f"line:{hits[0]}", quote
@@ -302,7 +307,9 @@ POSITION_UNIT = "scale position"
 NOTCH_UNIT = "notches"
 POSITION_FORMULA = "position of the rating on the fixed combined scale"
 NOTCH_FORMULA = "absolute difference of the two positions on the combined scale"
-UNDATED_PERIOD = "As of the rating register, publication date not stated"  # register_published is "not stated"
+UNDATED_PERIOD = (
+    "As of the rating register, publication date not stated"  # register_published is "not stated"
+)
 NOT_STATED = "Not stated"
 
 
@@ -425,25 +432,52 @@ class Register:
             outlook = r["outlook"] or NOT_STATED
             dated = r["as_of"] or NOT_STATED
             self.text_fact("T2R.2", rid, "agency", "Agency", r["agency"], "source", own=agency_cite)
-            self.text_fact("T2R.2", rid, "instrument", "Instrument", NOT_STATED, "source", own=rating_cite)
+            self.text_fact(
+                "T2R.2", rid, "instrument", "Instrument", NOT_STATED, "source", own=rating_cite
+            )
             self.text_fact("T2R.2", rid, "rating", "Rating", r["rating"], "source", own=rating_cite)
             self.text_fact(
-                "T2R.2", rid, "outlook", "Outlook", outlook, "source",
+                "T2R.2",
+                rid,
+                "outlook",
+                "Outlook",
+                outlook,
+                "source",
                 own=[self.cite(i, "outlook")] if r["outlook"] else rating_cite,
             )
             self.text_fact(
-                "T2R.2", rid, "date", "Rating date", dated, "source",
+                "T2R.2",
+                rid,
+                "date",
+                "Rating date",
+                dated,
+                "source",
                 own=[self.cite(i, "as_of")] if r["as_of"] else rating_cite,
             )
             period = f"Rating dated {r['as_of']}" if r["as_of"] else "Rating date not stated"
             position = None if r["rating"] in UNRATED else SCALE[r["agency"]][r["rating"]]
             if position is None:
                 reason = f"{possessive(r['agency'])} rating is {r['rating'].lower()}, so it has no position on the scale"
-                self.unsettled("T2R.2", rid, "position", "Position on the combined scale", POSITION_UNIT, reason, period)
+                self.unsettled(
+                    "T2R.2",
+                    rid,
+                    "position",
+                    "Position on the combined scale",
+                    POSITION_UNIT,
+                    reason,
+                    period,
+                )
             else:
                 self.number_fact(
-                    "T2R.2", rid, "position", "Position on the combined scale", position, POSITION_UNIT,
-                    period, POSITION_FORMULA, (f"T2R.2.{rid}.rating",),
+                    "T2R.2",
+                    rid,
+                    "position",
+                    "Position on the combined scale",
+                    position,
+                    POSITION_UNIT,
+                    period,
+                    POSITION_FORMULA,
+                    (f"T2R.2.{rid}.rating",),
                 )
             self.positions.append(position)
             self.parsed.append(
@@ -460,8 +494,12 @@ class Register:
         ra, rb = self.parsed
         pa, pb = self.positions
         at = ("T2R.8", "p01")
-        self.text_fact(*at, "first_agency", "First agency", ra["agency"], None, derives=("T2R.2.r01.agency",))
-        self.text_fact(*at, "second_agency", "Second agency", rb["agency"], None, derives=("T2R.2.r02.agency",))
+        self.text_fact(
+            *at, "first_agency", "First agency", ra["agency"], None, derives=("T2R.2.r01.agency",)
+        )
+        self.text_fact(
+            *at, "second_agency", "Second agency", rb["agency"], None, derives=("T2R.2.r02.agency",)
+        )
         self.divergence = {"row": "p01", "notches": None, "lower": None, "outlooks": None}
         if pa is None or pb is None:
             who = ra if pa is None else rb
@@ -472,20 +510,39 @@ class Register:
             return
         positions = ("T2R.2.r01.position", "T2R.2.r02.position")
         notches = abs(pa - pb)
-        self.number_fact(*at, "notches", "Notches apart", notches, NOTCH_UNIT, UNDATED_PERIOD, NOTCH_FORMULA, positions)
+        self.number_fact(
+            *at,
+            "notches",
+            "Notches apart",
+            notches,
+            NOTCH_UNIT,
+            UNDATED_PERIOD,
+            NOTCH_FORMULA,
+            positions,
+        )
         lower = "Same rating" if pa == pb else (ra["agency"] if pa > pb else rb["agency"])
         self.text_fact(
-            *at, "lower_rated", "Lower rated", lower, None,
+            *at,
+            "lower_rated",
+            "Lower rated",
+            lower,
+            None,
             derives=(*positions, "T2R.2.r01.agency", "T2R.2.r02.agency"),
         )
         self.divergence.update(notches=notches, lower=lower)
         if NOT_STATED in (ra["outlook"], rb["outlook"]):
             who = ra if ra["outlook"] == NOT_STATED else rb
-            self.missing_text(*at, "outlook_match", "Outlooks", f"An outlook is not stated for {who['agency']}")
+            self.missing_text(
+                *at, "outlook_match", "Outlooks", f"An outlook is not stated for {who['agency']}"
+            )
         else:
             same = "Same" if ra["outlook"] == rb["outlook"] else "Different"
             self.text_fact(
-                *at, "outlook_match", "Outlooks", same, None,
+                *at,
+                "outlook_match",
+                "Outlooks",
+                same,
+                None,
                 derives=("T2R.2.r01.outlook", "T2R.2.r02.outlook"),
             )
             self.divergence["outlooks"] = same
@@ -495,7 +552,9 @@ class Register:
         out = [
             "Scale positions come from a fixed combined-scale table in the module, not from an agency source."
         ]
-        out += [f"The rating date is not stated for {r['agency']}." for r in self.rows if not r["as_of"]]
+        out += [
+            f"The rating date is not stated for {r['agency']}." for r in self.rows if not r["as_of"]
+        ]
         out += [f"Rating scope: {r['scope']} ({r['agency']})." for r in self.rows]
         return out
 
@@ -625,7 +684,9 @@ def delta_case(base, reg, fp05_cell=None):
     }
     if fp05_cell is not None:
         cell = deepcopy(fp05_cell)
-        out["replaces"]["FP05.blocks.rating-triggers.tabs[T2R.8].rows[p01].cells[outlook_match]"] = cell
+        out["replaces"][
+            "FP05.blocks.rating-triggers.tabs[T2R.8].rows[p01].cells[outlook_match]"
+        ] = cell
     return out
 
 
@@ -634,37 +695,58 @@ def delta_case(base, reg, fp05_cell=None):
 SOURCE_REFUSALS = (
     # id, case, context file, ratings source, class, expected issue, derivation
     (
-        "no_ratings", "context-no-ratings.json", None, "context ratings empty",
+        "no_ratings",
+        "context-no-ratings.json",
+        None,
+        "context ratings empty",
         "Rating register not found",
         "ratings_source finds no ratings source (today's text, cp2h.py:154 REGISTER_NOT_FOUND) and the context holds no row",
     ),
     (
-        "no_terms", "context-positive.json", None, "no trigger terms source",
+        "no_terms",
+        "context-positive.json",
+        None,
+        "no trigger terms source",
         "Trigger terms not found",
         "rows but no `ratings` source: the terms cannot be read (cp2h.py:156 TERMS_NOT_FOUND)",
     ),
     (
-        "off_scale", "context-off-scale.json", "positive", "rating not on the scale",
+        "off_scale",
+        "context-off-scale.json",
+        "positive",
+        "rating not on the scale",
         "Rating not on the scale: Other A",
         "agency `Other` has no scale; cp2h.py:353 text `Rating not on the scale: <agency> <rating>`",
     ),
     (
-        "duplicate_agency", "context-duplicate-agency.json", "positive", "agency twice",
+        "duplicate_agency",
+        "context-duplicate-agency.json",
+        "positive",
+        "agency twice",
         "Rating register not found",
         "S&P twice (issuer BB, facility BB-): the duplicate-agency rule of cp2h.py:346-348 reads REGISTER_NOT_FOUND",
     ),
     (
-        "terms_agency_unrated", "context-terms-agency-unrated.json", "fitch_terms", "terms name an unrated agency",
+        "terms_agency_unrated",
+        "context-terms-agency-unrated.json",
+        "fitch_terms",
+        "terms name an unrated agency",
         "Trigger terms not found",
         "terms name Fitch, which has no rated register row: cp2h.py:430-432 reads TERMS_NOT_FOUND",
     ),
     (
-        "context_mismatch", "context-mismatch.json", "positive", "context disagrees with the run",
+        "context_mismatch",
+        "context-mismatch.json",
+        "positive",
+        "context disagrees with the run",
         "Context refused: run.as_of: context has '2026-01-11' but the run has '2026-01-10'",
         "context.py:764 `{path}: context has {theirs!r} but the run has {ours!r}` behind the `Context refused: ` prefix (plan Task 3 item 1); the only breach is run.as_of",
     ),
     (
-        "uncitable_row", "context-uncitable.json", "positive", "context row cannot be cited",
+        "uncitable_row",
+        "context-uncitable.json",
+        "positive",
+        "context row cannot be cited",
         "Context rating row 2 (Moody's) cannot be cited as one unique span; ratings not used",
         "row 2's rating and outlook values sit on lines apart from their keys and the object spans several lines: no key/value line, no one-line object quote (plan Task 3 item 3); a named issue, not a raise",
     ),
@@ -685,7 +767,11 @@ def trigger_view(positive_case):
                 "direction": t["direction"],
                 "metric": t["metric"],
                 "comparison": t["comparison"],
-                "threshold": {"ref": fact["fact_id"], "shown": fact["shown"], "status": fact["status"]},
+                "threshold": {
+                    "ref": fact["fact_id"],
+                    "shown": fact["shown"],
+                    "status": fact["status"],
+                },
             }
         )
     return out
@@ -697,16 +783,24 @@ def main():
         files[name] = text.encode("utf-8")
 
     regs = {
-        "positive": Register(ROWS["positive"], CONTEXT_FILES["context-positive.json"], "context-positive.json"),
+        "positive": Register(
+            ROWS["positive"], CONTEXT_FILES["context-positive.json"], "context-positive.json"
+        ),
         "gap": Register(ROWS["gap"], CONTEXT_FILES["context-gap.json"], "context-gap.json"),
         "outlook_unstated": Register(
-            ROWS["outlook_unstated"], CONTEXT_FILES["context-outlook-unstated.json"], "context-outlook-unstated.json"
+            ROWS["outlook_unstated"],
+            CONTEXT_FILES["context-outlook-unstated.json"],
+            "context-outlook-unstated.json",
         ),
-        "minified": Register(ROWS["positive"], CONTEXT_FILES["context-minified.json"], "context-minified.json"),
+        "minified": Register(
+            ROWS["positive"], CONTEXT_FILES["context-minified.json"], "context-minified.json"
+        ),
     }
     # the minified file really is one span
     assert len(CONTEXT_FILES["context-minified.json"].splitlines()) == 1
-    assert all(c["locator"] == "line:1" for f in regs["minified"].facts for c in f.get("citations", []))
+    assert all(
+        c["locator"] == "line:1" for f in regs["minified"].facts for c in f.get("citations", [])
+    )
     # the uncitable file: row 1 citable, row 2 rating/outlook not
     unc = rating_cites(CONTEXT_FILES["context-uncitable.json"])
     assert all(v is not None for v in unc[0].values())
@@ -723,7 +817,10 @@ def main():
     context_runs = {
         "positive": {"context": "context-positive.json", "ratings_source": "positive"},
         "gap": {"context": "context-gap.json", "ratings_source": "gap"},
-        "outlook_unstated": {"context": "context-outlook-unstated.json", "ratings_source": "positive"},
+        "outlook_unstated": {
+            "context": "context-outlook-unstated.json",
+            "ratings_source": "positive",
+        },
         "minified": {"context": "context-minified.json", "ratings_source": "positive"},
         "view": {"context": "context-positive.json", "ratings_source": "positive"},
     }
@@ -737,7 +834,10 @@ def main():
             "source_id": "context",
             "pages": [],
             "agencies": [
-                {"row": f"r{n:02d}", **{k: a[k] for k in ("agency", "rating", "outlook", "date", "position")}}
+                {
+                    "row": f"r{n:02d}",
+                    **{k: a[k] for k in ("agency", "rating", "outlook", "date", "position")},
+                }
                 for n, a in enumerate(positive["parsed_source"]["register"], 1)
             ],
         },
@@ -753,7 +853,9 @@ def main():
             {
                 "id": rid,
                 "class": klass,
-                "issue_kind": "context" if rid in ("context_mismatch", "uncitable_row") else "source",
+                "issue_kind": "context"
+                if rid in ("context_mismatch", "uncitable_row")
+                else "source",
                 "context": ctx,
                 "context_sha256": CTX_SHA[ctx],
                 "ratings_source": variant,
@@ -774,7 +876,11 @@ def main():
         ),
         "frozen_inputs": PINS,
         "agency_rename": {o: n for o, n in RENAME},
-        "possessive": {"S&P": "S&P's", "Moody's": "Moody's", "rule": "a name already ending in 's is unchanged, else 's is appended"},
+        "possessive": {
+            "S&P": "S&P's",
+            "Moody's": "Moody's",
+            "rule": "a name already ending in 's is unchanged, else 's is appended",
+        },
         "combined_scale": {
             "rows": [
                 {"position": p, "sp": sp, "fitch": fi, "moodys": mo} for p, sp, fi, mo in SCALE_ROWS
@@ -785,8 +891,8 @@ def main():
         },
         "citation_rules": {
             "span": "the context source `context`, locator `line:N` (splitlines of the file's bytes), source_sha256 = sha256 of the file bytes",
-            "key_value_quote": "when the field has its own line (the stripped line is the key/value text, one trailing comma allowed) and the text is unique in that line: `\"rating\": \"BB\"` (form layout)",
-            "object_anchored_quote": "else the text from the row object's `{` through the cited value when that is one line and unique in it (a minified file: `{\"agency\":\"S&P\",\"scope\":\"issuer\",\"rating\":\"BB\"`, locator line:1)",
+            "key_value_quote": 'when the field has its own line (the stripped line is the key/value text, one trailing comma allowed) and the text is unique in that line: `"rating": "BB"` (form layout)',
+            "object_anchored_quote": 'else the text from the row object\'s `{` through the cited value when that is one line and unique in it (a minified file: `{"agency":"S&P","scope":"issuer","rating":"BB"`, locator line:1)',
             "none": "else no citation: the named issue `Context rating row <n> (<agency>) cannot be cited as one unique span; ratings not used`",
             "fields": "agency -> agency value; instrument `Not stated`, rating, and a `Not stated` outlook or date -> the rating value; outlook -> outlook value; date -> as_of value",
             "derived": "a derived fact (position, notches, lower_rated, outlook_match, first_agency, second_agency) has one citation per (source, locator): the first of its inputs' citations on it, in input order (cases/cp2h-owner/builder/build.py lineage rule, rulings stage2 round 3 item 3); position derives from its rating fact and has no scale citation",
@@ -818,7 +924,12 @@ def main():
     # submissions -----------------------------------------------------------------------------
     def overlay(ctx_name, text):
         loc, quote = issuer_name_cite(text)
-        cite = {"source_id": "context", "source_sha256": CTX_SHA[ctx_name], "locator": loc, "quote": quote}
+        cite = {
+            "source_id": "context",
+            "source_sha256": CTX_SHA[ctx_name],
+            "locator": loc,
+            "quote": quote,
+        }
         return {
             "cp0_readiness_source": {
                 "source_id": "context",
@@ -910,7 +1021,10 @@ def main():
     tree["positive"]["tree"]["register"]["pages"] = []
 
     # manifest --------------------------------------------------------------------------------
-    sources_fin = {s["source_id"]: s["sha256"] for s in json.loads(RAW["cases/financial/manifest.json"])["sources"]}
+    sources_fin = {
+        s["source_id"]: s["sha256"]
+        for s in json.loads(RAW["cases/financial/manifest.json"])["sources"]
+    }
     run_base = {
         "issuer_id": ISSUER[0],
         "issuer_name": ISSUER[1],
@@ -944,13 +1058,21 @@ def main():
         "schema_version": "cp2h-context-owner-cases/1",
         "scope": "Phase 4: CP-2H builds its rating register from the context file's `ratings` rows (S&P, Moody's, Fitch) on a fixed combined scale; trigger terms from an attached `ratings` source",
         "status": "FROZEN 2026-11-01 (ac74bdf3): prepared by a86eb9b2, reviewed by mx-precise a828ec20; pins re-cut in 8a0b39cc",
-        "roles": {"preparer": "Task 0 preparer (this builder)", "reviewer": "mx-precise a828ec20", "builder": None},
+        "roles": {
+            "preparer": "Task 0 preparer (this builder)",
+            "reviewer": "mx-precise a828ec20",
+            "builder": None,
+        },
         "raw_rule": "ratings pages: literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256 (as cases/cp2h-owner). context files: the bytes the form writes (JSON.stringify(o, null, 2) + LF; context-minified.json: JSON.stringify(o) + LF), sha256 of the file bytes, spans line:N via splitlines",
         "inputs_pinned": PINS,
         "financial_baseline": {
             "path": "cases/financial/manifest.json",
             "sources": [
-                {"source_id": s, "sha256": sources_fin[s], "reuse": "Every page text and locator stays byte-identical; read by reference, never edited"}
+                {
+                    "source_id": s,
+                    "sha256": sources_fin[s],
+                    "reuse": "Every page text and locator stays byte-identical; read by reference, never edited",
+                }
                 for s in ("identity", "financial")
             ],
         },
@@ -968,7 +1090,11 @@ def main():
             **{k: v for k, v in RATINGS.items()},
         },
         "context_files": {
-            name: {"sha256": CTX_SHA[name], "lines": len(text.splitlines()), "bytes": len(text.encode("utf-8"))}
+            name: {
+                "sha256": CTX_SHA[name],
+                "lines": len(text.splitlines()),
+                "bytes": len(text.encode("utf-8")),
+            }
             for name, text in CONTEXT_FILES.items()
         },
         "context_source": {
@@ -996,9 +1122,7 @@ def main():
     }
     for name, text in out_text.items():
         (OUT / name).write_bytes(text.encode("utf-8"))
-    manifest["outputs"] = {
-        name: sha(text.encode("utf-8")) for name, text in out_text.items()
-    }
+    manifest["outputs"] = {name: sha(text.encode("utf-8")) for name, text in out_text.items()}
     (OUT / "manifest.json").write_bytes(dumps(manifest).encode("utf-8"))
     print(f"wrote {len(files) + len(out_text) + 1} files to {OUT}")
 

@@ -58,7 +58,9 @@ S1E = load_pinned("cases/snapshot/expected.json")
 C3M = load_pinned("cases/cp3-cp6-owner/manifest.json")
 C3S = load_pinned("cases/cp3-cp6-owner/submissions.json")
 C3E = load_pinned("cases/cp3-cp6-owner/expected.json")
-load_pinned("cases/snapshot/submissions.json")  # pinned for the record: the CP-1 literals are not read
+load_pinned(
+    "cases/snapshot/submissions.json"
+)  # pinned for the record: the CP-1 literals are not read
 
 SYNTH = "Synthetic case; not real issuer qualification"
 NONE_STATED = "None stated"
@@ -154,9 +156,13 @@ REGISTERS = [
     ("T5B.8", "Integrity verdict", "Item|Value"),
 ]
 TABLE_IDS = [r[0] for r in REGISTERS]
-assert TABLE_IDS == CP5_ENTRY["table_ids"], "CP-5 methodology table_ids differ from the transcribed registers"
+assert TABLE_IDS == CP5_ENTRY["table_ids"], (
+    "CP-5 methodology table_ids differ from the transcribed registers"
+)
 collisions = {
-    m["module_id"]: sorted(set(m["table_ids"]) & set(TABLE_IDS)) for m in METH if m["module_id"] != "CP-5"
+    m["module_id"]: sorted(set(m["table_ids"]) & set(TABLE_IDS))
+    for m in METH
+    if m["module_id"] != "CP-5"
 }
 collisions = {k: v for k, v in collisions.items() if v}
 assert not collisions, collisions
@@ -252,16 +258,22 @@ CP1A_FACTS = facts_of(CP1A_TABLES)
 CP2_TABLES = S1P["CP-2"]["tables"]
 CP2_FACTS = facts_of(CP2_TABLES)
 FIGURES = [f["name"] for f in S1P["CP-2"]["figures_referenced"]]
-assert FIGURES == ["total_leverage_reported", "net_leverage_reported", "interest_coverage_reported", "fcf_to_debt"]
+assert FIGURES == [
+    "total_leverage_reported",
+    "net_leverage_reported",
+    "interest_coverage_reported",
+    "fcf_to_debt",
+]
 CP2_FIGURE_NAMES = FIGURES
 
 
 def claims_of(case):
     """Per evaluated module the (claim_id, limitation, cites) the head carries, from the pinned oracles."""
-    cites = lambda c: [list(x) for x in c.get("cites", [])]  # noqa: E731
+    cites = lambda c: [list(x) for x in c.get("cites", [])]
     heads = {
         "CP-1": [
-            {"claim_id": d, "limitation": CP1_CLAIM_LIMITATION, "cites": None} for d in CP1_DIMENSIONS
+            {"claim_id": d, "limitation": CP1_CLAIM_LIMITATION, "cites": None}
+            for d in CP1_DIMENSIONS
         ],
         "CP-1A": [
             {"claim_id": c["claim_id"], "limitation": c.get("limitation"), "cites": cites(c)}
@@ -338,30 +350,48 @@ def review_for(case, module_id, claim):
         if cid == "credit_translation.r05":
             # F2: the security, guarantee and covenant absence is in #c2; the concentration absence is in r03#c1
             assert n >= 2
-            r03 = next(c for c in S1P["CP-1A"]["claims"] if c["claim_id"] == "credit_translation.r03")
+            r03 = next(
+                c for c in S1P["CP-1A"]["claims"] if c["claim_id"] == "credit_translation.r03"
+            )
             assert len(r03.get("cites", [])) >= 1
             refs += [f"{cid}#c2", "credit_translation.r03#c1"]
         why = RATIONALE["CP-1A"][cid]
     elif module_id == "CP-2":
         refs = [f"{cid}.assessment" if cid == "T2.1.assessment" else f"{cid}.finding"]
         if cid in ("T2.1.assessment", "T2.10.kf01"):
-            refs += [fig("total_leverage_reported"), fig("net_leverage_reported"), fig("interest_coverage_reported")]
+            refs += [
+                fig("total_leverage_reported"),
+                fig("net_leverage_reported"),
+                fig("interest_coverage_reported"),
+            ]
         else:
             refs += [f"{cid}.basis"] if f"{cid}.basis" in CP2_FACTS else []
             if cid == "T2.10.kf04":
                 refs += ["T2.1.assessment.limitation"]  # F2: the unaudited point
         if cid == "T2.1.assessment":
-            refs += ["T2.1.assessment.basis", "T2.10.kf02.basis"]  # F2: the caveats are carried by the basis cells
+            refs += [
+                "T2.1.assessment.basis",
+                "T2.10.kf02.basis",
+            ]  # F2: the caveats are carried by the basis cells
         for r in refs:
             assert r.startswith("{{FIG:") or r in CP2_FACTS, r
         why = RATIONALE["CP-2"][cid]
     elif module_id == "CP-3":
         facts = cp3_facts(case)
         if case == "positive" and cid == "T3.4.preference":
-            refs = ["T3.4.preference.rationale", "T3.4.preference.basis", *cite_refs(cid, len(cites))]
+            refs = [
+                "T3.4.preference.rationale",
+                "T3.4.preference.basis",
+                *cite_refs(cid, len(cites)),
+            ]
             why = "The preference cell, its basis cell and the cited market pages state the ordering of the single instrument and its provisional status."
         elif case == "positive" and cid == "T3.1.i01":
-            refs = ["T3.1.i01.fundamental_view", "T3.1.i01.market_observation", "T3.3.m01.quote", *cite_refs(cid, len(cites))]
+            refs = [
+                "T3.1.i01.fundamental_view",
+                "T3.1.i01.market_observation",
+                "T3.3.m01.quote",
+                *cite_refs(cid, len(cites)),
+            ]
             why = "The instrument cells and the cited market pages state the single dealer quotation and the indicative talk, and the claim keeps talk apart from a quotation."
         else:
             assert case == "gap" and cid == "T3.4.preference"
@@ -417,7 +447,12 @@ def claim_label(m, k):
 def trace(m, claim):
     if claim["cites"] is None:
         return "{{TRACE:" + claim_label(m, claim["claim_id"]) + "}}"
-    return "; ".join(f"{claim['claim_id']}#c{n} {s} {loc}" for n, (s, loc) in enumerate(claim["cites"], 1)) or "No citation"
+    return (
+        "; ".join(
+            f"{claim['claim_id']}#c{n} {s} {loc}" for n, (s, loc) in enumerate(claim["cites"], 1)
+        )
+        or "No citation"
+    )
 
 
 def has_citation(claim):
@@ -430,7 +465,10 @@ def inherited_segments(case):
     position. Every head's inherited list is made of earlier heads' entries, so only each head's own
     settled limitations open a new position (derivation in `derivation`)."""
     cp0 = C3E[case]["upstream"]["CP-0"]["R6"]["limitations"]
-    segments = [{"literal": cp0}, {"bind": "CP-1 head: its limitations then its inherited_limitations, in head order"}]
+    segments = [
+        {"literal": cp0},
+        {"bind": "CP-1 head: its limitations then its inherited_limitations, in head order"},
+    ]
     literal = []
     literal += S1P["CP-1A"]["settled_limitations"]
     literal += S1P["CP-2"]["settled_limitations_own"]
@@ -467,11 +505,27 @@ def compose(case, submission):
     def sha(i):
         return "{{PACK_SHA256}}" if i == "prepared-pack" else "{{SHA256:" + i + "}}"
 
-    out["T5.1"] = table("T5.1", numbered((i, [cell("accepted" if i == "prepared-pack" else "{{STATUS:" + i + "}}"), cell(sha(i)), cell(evaluation(i))]) for i in inputs_sorted))
+    out["T5.1"] = table(
+        "T5.1",
+        numbered(
+            (
+                i,
+                [
+                    cell("accepted" if i == "prepared-pack" else "{{STATUS:" + i + "}}"),
+                    cell(sha(i)),
+                    cell(evaluation(i)),
+                ],
+            )
+            for i in inputs_sorted
+        ),
+    )
     out["T5.2"] = table(
         "T5.2",
         numbered(
-            (claim_label(m, c["claim_id"]), [cell(m), cell(trace(m, c)), cell(c["limitation"] or NONE_STATED)])
+            (
+                claim_label(m, c["claim_id"]),
+                [cell(m), cell(trace(m, c)), cell(c["limitation"] or NONE_STATED)],
+            )
             for m, c in keys
         ),
     )
@@ -485,10 +539,16 @@ def compose(case, submission):
         ),
     )
     resolves = "Every figure reference resolves to the module's own facts"
-    out["T5.4"] = table("T5.4", numbered((claim_label(m, c["claim_id"]), [cell(m), cell(resolves)]) for m, c in keys))
+    out["T5.4"] = table(
+        "T5.4",
+        numbered((claim_label(m, c["claim_id"]), [cell(m), cell(resolves)]) for m, c in keys),
+    )
 
     # identity groups: a CP-1 fact copied verbatim into other modules' cp1_references (same fact_id)
-    copies = {"CP-2": list(CP2_FIGURE_NAMES), "CP-3": list(C3E[case]["CP-3"]["cp1_references_order"])}
+    copies = {
+        "CP-2": list(CP2_FIGURE_NAMES),
+        "CP-3": list(C3E[case]["CP-3"]["cp1_references_order"]),
+    }
     assert "CP-1A references none" in S1P["rails"]["evidence"]["note"]
     members = []
     for name in FIGURES:
@@ -505,7 +565,11 @@ def compose(case, submission):
         bound_rows={
             "rule": "one row per figure, rows ordered ascending by the bound CP-1 fact_id string (cp5_integrity.identity_groups sorts by subject 'fact_id <id>'), row_id r001.. in that order, label = the bound fact_id",
             "members": [
-                {"figure": g["figure"], "label": fig(g["figure"]), "cells": [", ".join(g["modules"]), same_fid]}
+                {
+                    "figure": g["figure"],
+                    "label": fig(g["figure"]),
+                    "cells": [", ".join(g["modules"]), same_fid],
+                }
                 for g in members
             ],
         },
@@ -521,7 +585,21 @@ def compose(case, submission):
             "cells": ["Bound inputs", "<the entry text>"],
         },
     )
-    out["T5.7"] = table("T5.7", numbered((i, [cell("accepted" if i == "prepared-pack" else "{{STATUS:" + i + "}}"), cell("Bound as listed; a stale bound input refuses the review, and none is recorded")]) for i in inputs_sorted))
+    out["T5.7"] = table(
+        "T5.7",
+        numbered(
+            (
+                i,
+                [
+                    cell("accepted" if i == "prepared-pack" else "{{STATUS:" + i + "}}"),
+                    cell(
+                        "Bound as listed; a stale bound input refuses the review, and none is recorded"
+                    ),
+                ],
+            )
+            for i in inputs_sorted
+        ),
+    )
     out["T5.9"] = table("T5.9", [])
 
     reviews = {(r["producer_module"], r["claim_ref"]): r for r in submission["claim_reviews"]}
@@ -531,7 +609,12 @@ def compose(case, submission):
         numbered(
             (
                 claim_label(m, c["claim_id"]),
-                [cell(m), cell("Supported"), cell(", ".join(reviews[(m, c["claim_id"])]["upstream_refs"])), cell(reviews[(m, c["claim_id"])]["rationale"], True)],
+                [
+                    cell(m),
+                    cell("Supported"),
+                    cell(", ".join(reviews[(m, c["claim_id"])]["upstream_refs"])),
+                    cell(reviews[(m, c["claim_id"])]["rationale"], True),
+                ],
             )
             for m, c in keys
         ),
@@ -541,7 +624,15 @@ def compose(case, submission):
     out["T5B.4"] = table(
         "T5B.4",
         numbered(
-            (claim_label(m, c["claim_id"]), [cell(m), cell("None"), cell("Supported"), cell("Consistent: no Python finding touches the claim")])
+            (
+                claim_label(m, c["claim_id"]),
+                [
+                    cell(m),
+                    cell("None"),
+                    cell("Supported"),
+                    cell("Consistent: no Python finding touches the claim"),
+                ],
+            )
             for m, c in keys
         ),
     )
@@ -551,14 +642,23 @@ def compose(case, submission):
             (
                 f"g{i:03d}",
                 f"CP-5-GAP-{i:03d}",
-                [cell(g["gap"], True), cell(g["why_it_matters"], True), cell(", ".join(g["affected_modules"]) or "Report level"), cell(g["severity"]), cell(g["action"], True)],
+                [
+                    cell(g["gap"], True),
+                    cell(g["why_it_matters"], True),
+                    cell(", ".join(g["affected_modules"]) or "Report level"),
+                    cell(g["severity"]),
+                    cell(g["action"], True),
+                ],
             )
             for i, g in enumerate(submission["gaps"], 1)
         ],
     )
     out["T5B.6"] = table(
         "T5B.6",
-        numbered((m, [cell("{{STATUS:" + m + "}}"), cell("None"), cell("Evaluated: no finding")]) for m in EVALUATED),
+        numbered(
+            (m, [cell("{{STATUS:" + m + "}}"), cell("None"), cell("Evaluated: no finding")])
+            for m in EVALUATED
+        ),
     )
     own = [f"Gap ({g['severity']}): {g['gap']}" for g in submission["gaps"]]
     out["T5B.7"] = table(
@@ -616,8 +716,10 @@ def blocked_note():
 
 # --- refusal mutations (applied to the positive literal) -------------------------------------------
 def mutations(sub_pos):
-    claims = claims_of("positive")
-    idx = {(r["producer_module"], r["claim_ref"]): i for i, r in enumerate(sub_pos["claim_reviews"])}
+    claims_of("positive")
+    idx = {
+        (r["producer_module"], r["claim_ref"]): i for i, r in enumerate(sub_pos["claim_reviews"])
+    }
     i_kf01 = idx[("CP-2", "T2.10.kf01")]
     i_kf02 = idx[("CP-2", "T2.10.kf02")]
     listed = ", ".join(EVALUATED)
@@ -666,13 +768,23 @@ def mutations(sub_pos):
         },
         {
             "id": "cp5-figure-in-rationale",
-            "op": {"set": [["claim_reviews", i_kf01, "rationale"], "The reading of 5 in the cell is the claim."]},
+            "op": {
+                "set": [
+                    ["claim_reviews", i_kf01, "rationale"],
+                    "The reading of 5 in the cell is the claim.",
+                ]
+            },
             "issues": [f"claim_reviews[{i_kf01}].rationale: Bare figure: 5"],
             "rule_source": "cp5_integrity._text_issues (prose.issues against no facts)",
         },
         {
             "id": "cp5-claim-id-in-rationale",
-            "op": {"set": [["claim_reviews", i_kf01, "rationale"], "The cell T2.10.kf01 states the claim."]},
+            "op": {
+                "set": [
+                    ["claim_reviews", i_kf01, "rationale"],
+                    "The cell T2.10.kf01 states the claim.",
+                ]
+            },
             "issues": [f"claim_reviews[{i_kf01}].rationale: Bare figure: T2.10.kf01"],
             "rule_source": "cp5_integrity._text_issues (a claim id is not a label)",
         },
@@ -723,10 +835,14 @@ def apply_op(sub, op):
     sub = copy.deepcopy(sub)
     if "remove_review" in op:
         m, c = op["remove_review"]
-        sub["claim_reviews"] = [r for r in sub["claim_reviews"] if (r["producer_module"], r["claim_ref"]) != (m, c)]
+        sub["claim_reviews"] = [
+            r for r in sub["claim_reviews"] if (r["producer_module"], r["claim_ref"]) != (m, c)
+        ]
     elif "duplicate_review" in op:
         m, c = op["duplicate_review"]
-        r = next(r for r in sub["claim_reviews"] if (r["producer_module"], r["claim_ref"]) == (m, c))
+        r = next(
+            r for r in sub["claim_reviews"] if (r["producer_module"], r["claim_ref"]) == (m, c)
+        )
         sub["claim_reviews"].append(copy.deepcopy(r))
     elif "set" in op or "append" in op:
         path, value = op.get("set") or op["append"]
@@ -743,7 +859,10 @@ def apply_op(sub, op):
 # --- build -------------------------------------------------------------------------------------
 def build():
     sub = {c: submission_for(c) for c in ("positive", "gap")}
-    assert (len(sub["positive"]["claim_reviews"]), len(sub["gap"]["claim_reviews"])) == (19, 18)  # ruling 7: 37 judgments
+    assert (len(sub["positive"]["claim_reviews"]), len(sub["gap"]["claim_reviews"])) == (
+        19,
+        18,
+    )  # ruling 7: 37 judgments
     comp = {c: compose(c, sub[c]) for c in ("positive", "gap")}
     muts = mutations(sub["positive"])
     for m in muts:
@@ -781,7 +900,9 @@ def build():
             "note": "Assertions the owner test makes against the actual run (the CP-1 head is a genuine promotion; none of these is derivable here). A failure of any is reported to LEAD, not absorbed into the oracle.",
             "RT-1": {
                 "ruling": 5,
-                "assert": "the bound CP-1 head's claim ids equal, as a set and in count, exactly " + ", ".join(sorted(CP1_DIMENSIONS)) + " (seven narrative claims; the frozen id list), each with the shared limitation text CP1_CLAIM_LIMITATION; no other CP-1 claim exists",
+                "assert": "the bound CP-1 head's claim ids equal, as a set and in count, exactly "
+                + ", ".join(sorted(CP1_DIMENSIONS))
+                + " (seven narrative claims; the frozen id list), each with the shared limitation text CP1_CLAIM_LIMITATION; no other CP-1 claim exists",
             },
             "RT-2": {
                 "ruling": 5,
@@ -789,7 +910,8 @@ def build():
             },
             "RT-3": {
                 "ruling": 6,
-                "assert": "each of the seven CP-1 claims carries at least one citation (len(claim.citations) >= 1), so the `<claim>#c1` upstream_ref and the T5.3 trace row exist; a claim with none fails the run and the oracle must switch that claim to a fact ref. Also (revision 2, L1) the first citation's (source_id, locator) equals the one observed on S1: " + ", ".join(f"{k} {a} {b}" for k, (a, b) in CP1_C1.items()),
+                "assert": "each of the seven CP-1 claims carries at least one citation (len(claim.citations) >= 1), so the `<claim>#c1` upstream_ref and the T5.3 trace row exist; a claim with none fails the run and the oracle must switch that claim to a fact ref. Also (revision 2, L1) the first citation's (source_id, locator) equals the one observed on S1: "
+                + ", ".join(f"{k} {a} {b}" for k, (a, b) in CP1_C1.items()),
                 "c1_source_locator": {k: list(v) for k, v in CP1_C1.items()},
             },
         },
@@ -803,13 +925,19 @@ def build():
             {
                 "case_id": "cp5-positive",
                 "pack_sources": cp3_cases["cp3-cp6-positive"]["pack_sources"],
-                "run": {**cp3_cases["cp3-cp6-positive"]["runs"]["R6"]["run"], "requested_modules": REQUESTED},
+                "run": {
+                    **cp3_cases["cp3-cp6-positive"]["runs"]["R6"]["run"],
+                    "requested_modules": REQUESTED,
+                },
                 "submissions": "cases/cp5-owner/submissions.json#positive",
             },
             {
                 "case_id": "cp5-gap",
                 "pack_sources": cp3_cases["cp3-cp6-gap"]["pack_sources"],
-                "run": {**cp3_cases["cp3-cp6-gap"]["runs"]["R6"]["run"], "requested_modules": REQUESTED},
+                "run": {
+                    **cp3_cases["cp3-cp6-gap"]["runs"]["R6"]["run"],
+                    "requested_modules": REQUESTED,
+                },
                 "change_from_positive": "no market source: CP-0 records the gap, CP-3 settles Insufficient Information (cp3-cp6 oracle gap case)",
                 "submissions": "cases/cp5-owner/submissions.json#gap",
             },
@@ -820,7 +948,11 @@ def build():
         "note": "Literal analyst judgment only: reviews, contradictions and gaps. Python writes every finding, id and status. A {{FIG:name}} reference is a CP-2 fact_id (the CP-1 fact_id of a verbatim cp1_references copy), replaced at run time as in cases/snapshot/submissions.json. Support judgments are the oracle author's; they need independent semantic review (mechanical cleanliness is not support).",
         "positive": submission_for("positive"),
         "gap": submission_for("gap"),
-        "refusal_mutations": [{k: v for k, v in m.items() if k not in ("issues", "issues_contains", "rule_source")} | {"id": m["id"]} for m in muts],
+        "refusal_mutations": [
+            {k: v for k, v in m.items() if k not in ("issues", "issues_contains", "rule_source")}
+            | {"id": m["id"]}
+            for m in muts
+        ],
     }
     expected = {
         "schema_version": "cp5-owner-expected/1",
@@ -859,7 +991,9 @@ def build():
             "{{STATUS:<module>}}": "the bound head status: restricted for every head (synthetic case; S1 oracle). CP-1 is restricted (financial precedent)",
             "{{FIG:name}}": "as cases/snapshot/submissions.json: the unique T4.10 twelve-month (LTM) Q4 2025 fact of that metric in the CP-1 head; its fact_id is also the fact_id of the verbatim copy in the cp1_references of CP-2 (and CP-3 for the first three); zero or several candidates fail",
             "{{TRACE:CP-1 <claim_id>}}": "'; '.join('<claim_id>#c<n> <source_id> <locator>') over the bound CP-1 claim's citations, 1-based; each of the seven CP-1 claims must carry at least one citation (asserted), else T5.3 and the 'c1' reference are wrong and the run fails",
-            "CP-1 claim ids": "exactly " + ", ".join(sorted(CP1_DIMENSIONS)) + " (asserted against the bound CP-1 head: manifest run_time_bindings RT-1; RT-2 zero Python findings; RT-3 at least one citation per CP-1 claim)",
+            "CP-1 claim ids": "exactly "
+            + ", ".join(sorted(CP1_DIMENSIONS))
+            + " (asserted against the bound CP-1 head: manifest run_time_bindings RT-1; RT-2 zero Python findings; RT-3 at least one citation per CP-1 claim)",
             "CP-1 limitation entries": "CP-1's own and inherited limitation texts, bound from the CP-1 head at the bind marker of inherited_limitations.sequence",
             "T5.5 and T5.8 and T5B.7 rows": "T5.5 rows ascending by bound fact_id; T5.8 and T5B.7 inherited rows follow the flattened sequence",
             "ticket and call ids": "compared structurally only",
@@ -891,20 +1025,56 @@ def build():
                 "facts_per_module": {"CP-1": 11, "CP-1A": 410, "CP-2": 106},
                 "live_projection_with_quotes_bytes": 26989,
                 "cp3_not_measured": "the CP-3 head adds 39 facts and 2 claims in the positive case (28 facts and 1 claim in the gap case) by the CP-3 oracle count; at the CP-2 density (about 290 bytes per fact) that is about 11 KB, an estimate, not a measurement",
-                "citation_check": "of the 24,884 citations of the three heads (mostly CP-1 facts, which the projection omits), none of the quote strings occurs verbatim in the body, and the string \"quote\" does not occur as a key (S1 has no CP-3 head; on a CP-3 positive head the T3.3.m01.quote and T3.3.m02.quote facts equal the citation quotes of T3.1.i01 and T3.4.preference, the exempt case of view.binding.no_quote)",
+                "citation_check": 'of the 24,884 citations of the three heads (mostly CP-1 facts, which the projection omits), none of the quote strings occurs verbatim in the body, and the string "quote" does not occur as a key (S1 has no CP-3 head; on a CP-3 positive head the T3.3.m01.quote and T3.3.m02.quote facts equal the citation quotes of T3.1.i01 and T3.4.preference, the exempt case of view.binding.no_quote)',
                 "status": "informational. The run recomputes the size; no size bound is asserted (none was ruled).",
             },
             "key_tree": {
-                "top": ["note", "sources", "modules", "claims_to_review", "python_findings", "blocked_upstream", "inherited_limitations"],
+                "top": [
+                    "note",
+                    "sources",
+                    "modules",
+                    "claims_to_review",
+                    "python_findings",
+                    "blocked_upstream",
+                    "inherited_limitations",
+                ],
                 "sources[*]": ["source_id", "name", "status"],
-                "modules[*]": ["module_id", "status", "evaluated", "facts", "claims", "limitations", "inherited_limitations"],
-                "modules[*].facts[*]": ["ref", "label", "table_id", "row_id", "field", "period", "status", "shown", "limitation"],
-                "modules[*].claims[*]": ["claim_id", "text", "limitation", "citations", "python_findings"],
+                "modules[*]": [
+                    "module_id",
+                    "status",
+                    "evaluated",
+                    "facts",
+                    "claims",
+                    "limitations",
+                    "inherited_limitations",
+                ],
+                "modules[*].facts[*]": [
+                    "ref",
+                    "label",
+                    "table_id",
+                    "row_id",
+                    "field",
+                    "period",
+                    "status",
+                    "shown",
+                    "limitation",
+                ],
+                "modules[*].claims[*]": [
+                    "claim_id",
+                    "text",
+                    "limitation",
+                    "citations",
+                    "python_findings",
+                ],
                 "modules[*].claims[*].citations[*]": ["ref", "source_id", "locator"],
             },
             "counts": {
                 case: {
-                    "sources": len(cp3_cases["cp3-cp6-positive" if case == "positive" else "cp3-cp6-gap"]["pack_sources"]),
+                    "sources": len(
+                        cp3_cases["cp3-cp6-positive" if case == "positive" else "cp3-cp6-gap"][
+                            "pack_sources"
+                        ]
+                    ),
                     "modules": len(EVALUATED),
                     "module_order": EVALUATED,
                     "claims_to_review": comp[case]["claims_to_review"],
@@ -924,18 +1094,56 @@ def build():
             ],
         },
         "refusals": {
-            "validator_refusals": [{k: v for k, v in m.items() if k != "op"} | {"case": "positive", "owner": "CP-5"} for m in muts],
+            "validator_refusals": [
+                {k: v for k, v in m.items() if k != "op"} | {"case": "positive", "owner": "CP-5"}
+                for m in muts
+            ],
             "tool_use_refusals": [
-                {"id": "cp5-read-before-submit", "case": "positive", "setup": "submit with no read_inputs on the attempt", "expect": "refused not_permitted (a session-less step with inputs != none needs a read on its own binding)"},
-                {"id": "cp5-pack-tool", "case": "positive", "setup": "invoke read_pages or search_pack", "expect": "refused receipt not_permitted (submit-only step: registry.tool_set('integrity_review') == 'submit-only')"},
-                {"id": "cp5-upstream-tool", "case": "positive", "setup": "invoke lookup_upstream or read_integrity_scope", "expect": "refused receipt not_permitted (upstream_grant is None; G1 cannot verify grant calls, owner_workflow create refuses a spec with a grant)"},
-                {"id": "cp5-stale-snapshot", "case": "positive", "setup": "change the snapshot between the last read and the submit", "expect": "refused stale_binding"},
+                {
+                    "id": "cp5-read-before-submit",
+                    "case": "positive",
+                    "setup": "submit with no read_inputs on the attempt",
+                    "expect": "refused not_permitted (a session-less step with inputs != none needs a read on its own binding)",
+                },
+                {
+                    "id": "cp5-pack-tool",
+                    "case": "positive",
+                    "setup": "invoke read_pages or search_pack",
+                    "expect": "refused receipt not_permitted (submit-only step: registry.tool_set('integrity_review') == 'submit-only')",
+                },
+                {
+                    "id": "cp5-upstream-tool",
+                    "case": "positive",
+                    "setup": "invoke lookup_upstream or read_integrity_scope",
+                    "expect": "refused receipt not_permitted (upstream_grant is None; G1 cannot verify grant calls, owner_workflow create refuses a spec with a grant)",
+                },
+                {
+                    "id": "cp5-stale-snapshot",
+                    "case": "positive",
+                    "setup": "change the snapshot between the last read and the submit",
+                    "expect": "refused stale_binding",
+                },
             ],
             "blocked_case": blocked_note(),
             "tamper_refusals": [
-                {"id": "cp5-tamper-read-body", "case": "positive", "edit": "forge a consistent read: receipt copy whose CP-5 read_inputs record has an edited `body` (and its inputs_sha256 recomputed), the audit input_reads file rewritten under the new content hash, receipt.sha256 rewritten", "expect": "_verify_audit passes on the forged copy; _verify_calls_reads refuses identity_mismatch because the view is recomputed from the historical snapshot (owner_workflow.py:1278-1291); verify_owner_run_receipt refuses identity_mismatch"},
-                {"id": "cp5-tamper-step-output", "case": "positive", "edit": "edit the output of the CP-5 integrity_review step in the store", "expect": "verify_owner_run_receipt refuses identity_mismatch (the store's blob hash check, not the probe's output comparison: recorded limitation S1a R3-5)"},
-                {"id": "cp5-tamper-settled-head", "case": "positive", "edit": "a receipt copy with the CP-5 head's `status` changed, and one with `result_sha256` set to '0'*64", "expect": "both refused (head check before the seal check)"},
+                {
+                    "id": "cp5-tamper-read-body",
+                    "case": "positive",
+                    "edit": "forge a consistent read: receipt copy whose CP-5 read_inputs record has an edited `body` (and its inputs_sha256 recomputed), the audit input_reads file rewritten under the new content hash, receipt.sha256 rewritten",
+                    "expect": "_verify_audit passes on the forged copy; _verify_calls_reads refuses identity_mismatch because the view is recomputed from the historical snapshot (owner_workflow.py:1278-1291); verify_owner_run_receipt refuses identity_mismatch",
+                },
+                {
+                    "id": "cp5-tamper-step-output",
+                    "case": "positive",
+                    "edit": "edit the output of the CP-5 integrity_review step in the store",
+                    "expect": "verify_owner_run_receipt refuses identity_mismatch (the store's blob hash check, not the probe's output comparison: recorded limitation S1a R3-5)",
+                },
+                {
+                    "id": "cp5-tamper-settled-head",
+                    "case": "positive",
+                    "edit": "a receipt copy with the CP-5 head's `status` changed, and one with `result_sha256` set to '0'*64",
+                    "expect": "both refused (head check before the seal check)",
+                },
             ],
             "note": "issues is the exact validate_integrity result for the mutated literal (a tuple in this order, de-duplicated); issues_contains is a prefix of one issue. The whole submission is refused as an invalid step: nothing settles accepted.",
         },
@@ -951,7 +1159,9 @@ def build():
             },
             "consumption": {
                 "CP-5_of_CP-1_CP-1A_CP-2_CP-3": "D3 scope extension by this lease: the CP-5 attempt inputs bind each head's settled hash (T5.1 rows) and the settled review cites each head's facts (T5B.1 refs): CP-1 citation refs, CP-1A evidence cells and citations, CP-2 key finding cells and copied reference figures, CP-3 preference, instrument and market cells. The verifier probe re-runs cp5_integrity._validate_step on the frozen snapshot, which reads exactly those heads.",
-                "CP-6_of_CP-5": "CP-6 reads the CP-5 head through cp5_catalogue (T5.9, T5B.6, T5B.7, T5B.8 rows), cp5_review (T5.9 findings, T5B.4 flagged claims, T5B.2 and T5B.3 counts, T5B.6/T5B.8 verdict) and the status. Expected reads: findings (), flagged claims (), unsupported 0, contradictions 0, cp4_rows (), verdict {status: 'Restricted over the evaluated set', evaluated: '" + ", ".join(EVALUATED) + "', not_evaluated: 'CP-0', scope: the scope note}, status restricted, so the CP-6 cap 'CP-5 is restricted' is the only CP-5 cap and {{CP5_FINDINGS_SUFFIX}} is ''. Proof: the CP-6 attempt inputs bind the CP-5 hash and the CP-6 own limitation 'CP-5 handoff caps the confidence below High: CP-5 is restricted' exists; CP-6 begin is refused when CP-5 is blocked.",
+                "CP-6_of_CP-5": "CP-6 reads the CP-5 head through cp5_catalogue (T5.9, T5B.6, T5B.7, T5B.8 rows), cp5_review (T5.9 findings, T5B.4 flagged claims, T5B.2 and T5B.3 counts, T5B.6/T5B.8 verdict) and the status. Expected reads: findings (), flagged claims (), unsupported 0, contradictions 0, cp4_rows (), verdict {status: 'Restricted over the evaluated set', evaluated: '"
+                + ", ".join(EVALUATED)
+                + "', not_evaluated: 'CP-0', scope: the scope note}, status restricted, so the CP-6 cap 'CP-5 is restricted' is the only CP-5 cap and {{CP5_FINDINGS_SUFFIX}} is ''. Proof: the CP-6 attempt inputs bind the CP-5 hash and the CP-6 own limitation 'CP-5 handoff caps the confidence below High: CP-5 is restricted' exists; CP-6 begin is refused when CP-5 is blocked.",
                 "CP-5_consumers_inside_the_product": "CP-6 only; the Evidence and Limitations rails render the tables (no Front Page block).",
             },
         },
@@ -959,7 +1169,10 @@ def build():
             "block": "none: bindings/cp5.py binds the 17 tables to the Evidence and Limitations rails only; no FP01 block, no D7 block",
             "rails": {
                 "evidence": {"CP-5": EVIDENCE_RAIL},
-                "limitations": {"CP-5": LIMITATIONS_RAIL, "module_limitations": {"own_settled": comp["positive"]["settled_limitations"]}},
+                "limitations": {
+                    "CP-5": LIMITATIONS_RAIL,
+                    "module_limitations": {"own_settled": comp["positive"]["settled_limitations"]},
+                },
             },
             "slots": {t: "cp5-" + t.lower().replace(".", "-") for t in TABLE_IDS},
             "gap_module_limitations_own_settled": comp["gap"]["settled_limitations"],
@@ -975,7 +1188,11 @@ def dump(obj):
 def main():
     manifest, submissions, expected = build()
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, obj in (("manifest.json", manifest), ("submissions.json", submissions), ("expected.json", expected)):
+    for name, obj in (
+        ("manifest.json", manifest),
+        ("submissions.json", submissions),
+        ("expected.json", expected),
+    ):
         (OUT / name).write_text(dump(obj), encoding="utf-8")
         print(name, hashlib.sha256(dump(obj).encode()).hexdigest())
     if problems:

@@ -33,7 +33,9 @@ for rel, digest in PINS.items():
     RAW[rel] = (ROOT / rel).read_bytes()
     if digest is not None:
         assert hashlib.sha256(RAW[rel]).hexdigest() == digest, f"input drift: {rel}"
-PINS["cases/cp3d-owner/expected.json"] = hashlib.sha256(RAW["cases/cp3d-owner/expected.json"]).hexdigest()
+PINS["cases/cp3d-owner/expected.json"] = hashlib.sha256(
+    RAW["cases/cp3d-owner/expected.json"]
+).hexdigest()
 R3_M = json.loads(RAW["cases/cp3-cp6-owner/manifest.json"])
 R3_S = json.loads(RAW["cases/cp3-cp6-owner/submissions.json"])
 R3_E = json.loads(RAW["cases/cp3-cp6-owner/expected.json"])
@@ -72,7 +74,12 @@ SRC_SHA = {s["source_id"]: s["sha256"] for s in FIN["sources"]}
 SRC_SHA["business"] = SNAP["business_source"]["positive"]["sha256"]
 SRC_SHA["market"] = R3_M["market_source"]["sha256"]
 PACK_SOURCES_R3 = [
-    {"source_id": s["source_id"], "name": s["name"], "status": s["status"], "sha256": SRC_SHA[s["source_id"]]}
+    {
+        "source_id": s["source_id"],
+        "name": s["name"],
+        "status": s["status"],
+        "sha256": SRC_SHA[s["source_id"]],
+    }
     for s in R3_M["cases"][0]["pack_sources"]
 ]
 assert [s["source_id"] for s in PACK_SOURCES_R3] == ["identity", "financial", "business", "market"]
@@ -167,8 +174,12 @@ def context(run_type, quotes=(), deals=(), issuer_id=ISSUER_ID):
     }
 
 
-Q1 = quote("term-loan", "observed", "2026-01-09", "Dealer A", "98.50", "99.00", "98.75", "8.25", "340")
-Q2 = quote("term-loan", "indicative_talk", "2026-01-10", "Dealer B", price="99.25", spread_bps="335")
+Q1 = quote(
+    "term-loan", "observed", "2026-01-09", "Dealer A", "98.50", "99.00", "98.75", "8.25", "340"
+)
+Q2 = quote(
+    "term-loan", "indicative_talk", "2026-01-10", "Dealer B", price="99.25", spread_bps="335"
+)
 QS1 = quote("term-loan", "observed", "2025-12-11", "Dealer A", "98.25", "98.75", "98.50")
 QS2 = quote("term-loan", "observed", "2025-12-10", "Dealer B", "98.00", "98.50", "98.25")
 QX = quote("revolver-x", "observed", "2026-01-09", "Dealer C", "99.10", "99.60")
@@ -176,7 +187,9 @@ QE = quote("term-loan", "observed", "2026-01-09", "Dealer D")  # every figure em
 BAD_Q = quote("term-loan", "observed", "2026-02-01", "Dealer A", "98.50", "99.00", "98,75")
 DEAL = deal("term-loan", "2026-01-08", "Lead arranger", "325", "350", "99.0", "99.5")
 QU1 = quote("term-loan", "observed", "2026-01-09", "Dealer A", "98.50", "99.00")
-QU2 = quote("term-loan", "observed", "2026-01-10", "Dealer B", "98.50", "99.00")  # same prefix, later fields differ
+QU2 = quote(
+    "term-loan", "observed", "2026-01-10", "Dealer B", "98.50", "99.00"
+)  # same prefix, later fields differ
 DU1 = deal("term-loan", "2026-01-08", "Lead arranger", "325", "350", "99.0", "99.5")
 DU2 = deal("term-loan", "2026-01-09", "Co-arranger", "325", "350", "99.0", "99.5")
 DEAL_LONE = deal("term-loan", "2026-01-08", "Lead arranger", sl="325", ol="99.0", oh="99.5")
@@ -199,13 +212,16 @@ CONTEXTS = {  # id: (layout, object)
 def render(layout, obj):
     if layout == "indent":
         return dumps(obj).encode("utf-8")
-    return json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")  # one line, no LF
+    return json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )  # one line, no LF
 
 
 CTX_BYTES = {cid: render(*spec) for cid, spec in CONTEXTS.items()}
 CTX_PATH = {cid: f"{CASE_DIR}/contexts/{cid}.json" for cid in CONTEXTS}
 assert all(
-    (len(CTX_BYTES[c].decode("utf-8").splitlines()) == 1) == (CONTEXTS[c][0] == "minified") for c in CONTEXTS
+    (len(CTX_BYTES[c].decode("utf-8").splitlines()) == 1) == (CONTEXTS[c][0] == "minified")
+    for c in CONTEXTS
 )
 
 # --- 3. citations: Design 3 (hand-derived; Python builds them in the phase) -------------------------
@@ -250,7 +266,8 @@ def cites_minified(cid):
             assert text.count(row_text) == 1, (cid, section, idx)
             start = text.index(row_text)
             later_rows = [
-                json.dumps(r, separators=(",", ":"), ensure_ascii=False) for r in obj[section][idx + 1 :]
+                json.dumps(r, separators=(",", ":"), ensure_ascii=False)
+                for r in obj[section][idx + 1 :]
             ]
             prev_rows = [
                 json.dumps(r, separators=(",", ":"), ensure_ascii=False) for r in obj[section][:idx]
@@ -264,9 +281,14 @@ def cites_minified(cid):
                 if text.count(anchored) != 1:
                     # a residual collision (B20a): another row of this section opens with the same text, so the
                     # quote matches two objects (a guessed span): every colliding row is dropped into a gap.
-                    assert any(r.startswith(anchored) for r in prev_rows + later_rows), "repeat is not a row prefix"
+                    assert any(r.startswith(anchored) for r in prev_rows + later_rows), (
+                        "repeat is not a row prefix"
+                    )
                     COLLIDES[(cid, section, idx)] = True
-                assert text[start : start + len(anchored)] == anchored or (cid, section, idx) in COLLIDES
+                assert (
+                    text[start : start + len(anchored)] == anchored
+                    or (cid, section, idx) in COLLIDES
+                )
                 out[(section, idx, key)] = (1, anchored)
     return out
 
@@ -302,21 +324,32 @@ def python_evidence(cid):
     for i, q in enumerate(obj["quotes"]):
         fid = q["facility_id"]
         if fid not in FACILITIES:
-            own.append(f"Gap (Medium): context quote for facility {fid} matches no CP-1 facility (T4.18); not used")
+            own.append(
+                f"Gap (Medium): context quote for facility {fid} matches no CP-1 facility (T4.18); not used"
+            )
             continue
         supplied = [k for k in QFIELDS if q[k]]
         if (cid, "quotes", i) in COLLIDES and supplied:
-            own.append(f"Gap (Medium): context quote row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
+            own.append(
+                f"Gap (Medium): context quote row {i + 1} for facility {fid} cannot be cited as one unique span; not used"
+            )
             continue
         if not supplied:
-            own.append(f"Gap (Medium): context quote for facility {fid} carries no figure; not used")
+            own.append(
+                f"Gap (Medium): context quote for facility {fid} carries no figure; not used"
+            )
             continue
         parts = []
         for k in supplied:
             v = q[k]
             parts.append(
-                {"bid": f"bid {v}", "ask": f"ask {v}", "price": f"price {v}", "yield_pct": f"yield {v}%",
-                 "spread_bps": f"spread {v} bps"}[k]
+                {
+                    "bid": f"bid {v}",
+                    "ask": f"ask {v}",
+                    "price": f"price {v}",
+                    "yield_pct": f"yield {v}%",
+                    "spread_bps": f"spread {v} bps",
+                }[k]
             )
         rows.append(
             {
@@ -334,7 +367,9 @@ def python_evidence(cid):
     for i, d in enumerate(obj["deal_terms"]):
         fid = d["facility_id"]
         if fid not in FACILITIES:
-            own.append(f"Gap (Medium): context deal term for facility {fid} matches no CP-1 facility (T4.18); not used")
+            own.append(
+                f"Gap (Medium): context deal term for facility {fid} matches no CP-1 facility (T4.18); not used"
+            )
             continue
         pieces, keys, lone = [], [], []
         for label, lo, hi, unit in (
@@ -347,7 +382,9 @@ def python_evidence(cid):
             elif d[lo] or d[hi]:
                 lone.append((label, lo if d[lo] else hi, d[lo] or d[hi]))
         if (cid, "deal_terms", i) in COLLIDES and pieces:
-            own.append(f"Gap (Medium): context deal terms row {i + 1} for facility {fid} cannot be cited as one unique span; not used")
+            own.append(
+                f"Gap (Medium): context deal terms row {i + 1} for facility {fid} cannot be cited as one unique span; not used"
+            )
             continue
         if not pieces:
             continue
@@ -369,7 +406,12 @@ def python_evidence(cid):
         row["row_id"] = f"c{n:02d}"
         row["label"] = f"Context market evidence {n}"
         row["citations"] = [
-            {"source_id": "context", "locator": f"line:{cites[k][0]}", "quote": cites[k][1], "field": k[2]}
+            {
+                "source_id": "context",
+                "locator": f"line:{cites[k][0]}",
+                "quote": cites[k][1],
+                "field": k[2],
+            }
             for k in row["cite_keys"]
         ]
         del row["cite_keys"]
@@ -401,17 +443,52 @@ def row_facts(row):
         "row_id": row["row_id"],
         "label": row["label"],
         "facts": [
-            {"fact_id": f"{base}.source", "column": "Source", "text": "context", "status": "known",
-             "cites": [], "value_class": None, "limitation": None},
-            {"fact_id": f"{base}.kind", "column": "Kind", "text": KIND_LABEL[row["kind"]], "status": "known",
-             "cites": [], "value_class": None, "limitation": None},
-            {"fact_id": f"{base}.quote", "column": "Quote", "text": row["quote_cell"], "status": "known",
-             "cites": cites, "cite_quotes": [c["quote"] for c in row["citations"]],
-             "value_class": "source", "limitation": None},
-            {"fact_id": f"{base}.as_of", "column": "As of", "text": row["as_of"], "status": "known",
-             "cites": [], "value_class": "source", "limitation": None},
-            {"fact_id": f"{base}.limitation", "column": "Limitation", "text": row["limitation"],
-             "status": "known", "cites": [], "value_class": None, "limitation": None},
+            {
+                "fact_id": f"{base}.source",
+                "column": "Source",
+                "text": "context",
+                "status": "known",
+                "cites": [],
+                "value_class": None,
+                "limitation": None,
+            },
+            {
+                "fact_id": f"{base}.kind",
+                "column": "Kind",
+                "text": KIND_LABEL[row["kind"]],
+                "status": "known",
+                "cites": [],
+                "value_class": None,
+                "limitation": None,
+            },
+            {
+                "fact_id": f"{base}.quote",
+                "column": "Quote",
+                "text": row["quote_cell"],
+                "status": "known",
+                "cites": cites,
+                "cite_quotes": [c["quote"] for c in row["citations"]],
+                "value_class": "source",
+                "limitation": None,
+            },
+            {
+                "fact_id": f"{base}.as_of",
+                "column": "As of",
+                "text": row["as_of"],
+                "status": "known",
+                "cites": [],
+                "value_class": "source",
+                "limitation": None,
+            },
+            {
+                "fact_id": f"{base}.limitation",
+                "column": "Limitation",
+                "text": row["limitation"],
+                "status": "known",
+                "cites": [],
+                "value_class": None,
+                "limitation": None,
+            },
         ],
     }
 
@@ -419,13 +496,22 @@ def row_facts(row):
 # Literal cross-checks against the values the Task 0 brief and Design pin verbatim.
 _oat = EVIDENCE["observed-and-talk"][0]
 assert [r["row_id"] for r in _oat] == ["c01", "c02"]
-assert _oat[0]["quote_cell"] == "term-loan: bid 98.50, ask 99.00, price 98.75, yield 8.25%, spread 340 bps"
+assert (
+    _oat[0]["quote_cell"]
+    == "term-loan: bid 98.50, ask 99.00, price 98.75, yield 8.25%, spread 340 bps"
+)
 assert len(_oat[0]["citations"]) == 5 and len(_oat[1]["citations"]) == 2
 assert _oat[1]["quote_cell"] == "term-loan: price 99.25, spread 335 bps"
-assert EVIDENCE["deal-talk"][0][0]["quote_cell"] == "term-loan: spread talk 325-350 bps; OID talk 99.0-99.5"
+assert (
+    EVIDENCE["deal-talk"][0][0]["quote_cell"]
+    == "term-loan: spread talk 325-350 bps; OID talk 99.0-99.5"
+)
 assert len(EVIDENCE["deal-talk"][0][0]["citations"]) == 4
 _st = EVIDENCE["stale"][0]
-assert [r["stale"] for r in _st] == [False, True] and [r["days_before_run"] for r in _st] == [30, 31]
+assert [r["stale"] for r in _st] == [False, True] and [r["days_before_run"] for r in _st] == [
+    30,
+    31,
+]
 assert EVIDENCE["stale"][1][0] == (
     "Stale quote: term-loan quote dated 2025-12-10 is 31 days before the run as-of 2026-01-10 (limit 30)"
 )
@@ -442,8 +528,18 @@ R3_ROWS = RV["market_evidence"]
 assert len(R3_BASIS_QUOTES) == 2 and len(R3_ROWS) == 2
 
 
-def submission(rows, *, obs=None, rationale=None, conf="Medium", instr_limit=None, pref_limit=None,
-               gap=None, risk=None, keep_market=False):
+def submission(
+    rows,
+    *,
+    obs=None,
+    rationale=None,
+    conf="Medium",
+    instr_limit=None,
+    pref_limit=None,
+    gap=None,
+    risk=None,
+    keep_market=False,
+):
     s = deepcopy(RV)
     inst, pref = s["instruments"][0], s["preference"]
     if not keep_market:
@@ -469,43 +565,45 @@ def submission(rows, *, obs=None, rationale=None, conf="Medium", instr_limit=Non
 
 
 TXT = {
-    "talk-only": dict(
-        obs="Dealer talk is the only market evidence for the loan and is talk, not a quotation or a trade.",
-        rationale="With one instrument the ordering is trivial; the dealer talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
-        conf="Low",
-        instr_limit="Indicative dealer talk only, no quotation and no reported trade, so there is no observed level",
-        pref_limit="Dealer talk only and one instrument, so the preference is provisional",
-        gap="Only dealer talk and no observed quotation or traded price",
-        risk="Dealer talk is the only market evidence, so the level it describes can move without a trade",
-    ),
-    "stale": dict(
-        obs="Two user-supplied dealer quotations are the only observed levels and the older one is stale, so neither is treated as a current market level.",
-        rationale="With one instrument the ordering is trivial; the observed quotations and the CP-2 low-leverage view are consistent with fair compensation, but one quotation is stale, so the preference is provisional.",
-        instr_limit="User-supplied dealer quotations, one of them stale, and no reported trade, so the level is not a market consensus",
-        pref_limit="Two user-supplied quotations, one stale, and one instrument, so the preference is provisional",
-        gap="Only two user-supplied dealer quotations, one of them stale, and no traded price",
-    ),
-    "unmatched": dict(
-        obs="One user-supplied dealer quotation sits just below par and is the only observed level that matches the loan.",
-        rationale="With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
-        instr_limit="A single user-supplied dealer quotation, no reported trade and one instrument, so the level is not a market consensus",
-        pref_limit="One user-supplied dealer quotation and one instrument, so the preference is provisional",
-        gap="Only one usable dealer quotation and no traded price",
-    ),
-    "deal-talk": dict(
-        obs="Arranger price talk is the only market evidence and is talk, not a quotation or a trade.",
-        rationale="With one instrument the ordering is trivial; the arranger price talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
-        conf="Low",
-        instr_limit="Arranger price talk only, no quotation and no reported trade, so there is no observed level",
-        pref_limit="Price talk only and one instrument, so the preference is provisional",
-        gap="Only arranger price talk and no observed quotation or traded price",
-        risk="Arranger price talk is the only market evidence, so the pricing it describes can move before the loan is placed",
-    ),
+    "talk-only": {
+        "obs": "Dealer talk is the only market evidence for the loan and is talk, not a quotation or a trade.",
+        "rationale": "With one instrument the ordering is trivial; the dealer talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
+        "conf": "Low",
+        "instr_limit": "Indicative dealer talk only, no quotation and no reported trade, so there is no observed level",
+        "pref_limit": "Dealer talk only and one instrument, so the preference is provisional",
+        "gap": "Only dealer talk and no observed quotation or traded price",
+        "risk": "Dealer talk is the only market evidence, so the level it describes can move without a trade",
+    },
+    "stale": {
+        "obs": "Two user-supplied dealer quotations are the only observed levels and the older one is stale, so neither is treated as a current market level.",
+        "rationale": "With one instrument the ordering is trivial; the observed quotations and the CP-2 low-leverage view are consistent with fair compensation, but one quotation is stale, so the preference is provisional.",
+        "instr_limit": "User-supplied dealer quotations, one of them stale, and no reported trade, so the level is not a market consensus",
+        "pref_limit": "Two user-supplied quotations, one stale, and one instrument, so the preference is provisional",
+        "gap": "Only two user-supplied dealer quotations, one of them stale, and no traded price",
+    },
+    "unmatched": {
+        "obs": "One user-supplied dealer quotation sits just below par and is the only observed level that matches the loan.",
+        "rationale": "With one instrument the ordering is trivial; the observed quotation just below par and the CP-2 low-leverage view are consistent with fair compensation, and nothing here suggests the loan is mispriced.",
+        "instr_limit": "A single user-supplied dealer quotation, no reported trade and one instrument, so the level is not a market consensus",
+        "pref_limit": "One user-supplied dealer quotation and one instrument, so the preference is provisional",
+        "gap": "Only one usable dealer quotation and no traded price",
+    },
+    "deal-talk": {
+        "obs": "Arranger price talk is the only market evidence and is talk, not a quotation or a trade.",
+        "rationale": "With one instrument the ordering is trivial; the arranger price talk is the only market evidence and the CP-2 low-leverage view is consistent with fair compensation, so the preference is provisional.",
+        "conf": "Low",
+        "instr_limit": "Arranger price talk only, no quotation and no reported trade, so there is no observed level",
+        "pref_limit": "Price talk only and one instrument, so the preference is provisional",
+        "gap": "Only arranger price talk and no observed quotation or traded price",
+        "risk": "Arranger price talk is the only market evidence, so the pricing it describes can move before the loan is placed",
+    },
     "deal-lone-bound": None,  # as deal-talk
 }
 TXT["deal-lone-bound"] = TXT["deal-talk"]
-OAT_TXT = dict(  # observed-and-talk keeps the R3 positive wording (one observed quotation plus talk)
-    obs=None, rationale=None)
+OAT_TXT = {  # observed-and-talk keeps the R3 positive wording (one observed quotation plus talk)
+    "obs": None,
+    "rationale": None,
+}
 
 SUBS = {
     "observed-and-talk": submission(["c01", "c02"]),
@@ -541,8 +639,10 @@ MUTATIONS = [
         "case": "talk-only",
         "edits": [["set", "preference.confidence", "High"]],
         "issues": [
-            "preference.confidence: capped below High because CP-2 is restricted; "
-            "the market evidence is indicative talk only"
+            (
+                "preference.confidence: capped below High because CP-2 is restricted; "
+                "the market evidence is indicative talk only"
+            )
         ],
     },
     {
@@ -550,8 +650,10 @@ MUTATIONS = [
         "case": "deal-talk",
         "edits": [["set", "preference.confidence", "High"]],
         "issues": [
-            "preference.confidence: capped below High because CP-2 is restricted; "
-            "the market evidence is indicative talk only"
+            (
+                "preference.confidence: capped below High because CP-2 is restricted; "
+                "the market evidence is indicative talk only"
+            )
         ],
     },
     {
@@ -559,8 +661,10 @@ MUTATIONS = [
         "case": "stale",
         "edits": [["set", "preference.confidence", "High"]],
         "issues": [
-            "preference.confidence: capped below High because CP-2 is restricted; "
-            "a context quote is more than 30 days old"
+            (
+                "preference.confidence: capped below High because CP-2 is restricted; "
+                "a context quote is more than 30 days old"
+            )
         ],
     },
     {
@@ -570,11 +674,20 @@ MUTATIONS = [
             [
                 "set",
                 "market_evidence",
-                [{"source_id": "context", "kind": "none", "quote": None, "as_of": "Not stated",
-                  "limitation": "Entered by the model"}],
+                [
+                    {
+                        "source_id": "context",
+                        "kind": "none",
+                        "quote": None,
+                        "as_of": "Not stated",
+                        "limitation": "Entered by the model",
+                    }
+                ],
             ]
         ],
-        "issues": ["market_evidence[0]: context market evidence is built by Python; cite it by row id in a basis"],
+        "issues": [
+            "market_evidence[0]: context market evidence is built by Python; cite it by row id in a basis"
+        ],
     },
     {
         "id": "context-quote-cited",
@@ -583,7 +696,13 @@ MUTATIONS = [
             [
                 "set",
                 "instruments[0].basis.quotes",
-                [{"source_id": "context", "locator": f"line:{_price_line[0]}", "quote": _price_line[1]}],
+                [
+                    {
+                        "source_id": "context",
+                        "locator": f"line:{_price_line[0]}",
+                        "quote": _price_line[1],
+                    }
+                ],
             ]
         ],
         "issues": [
@@ -615,14 +734,19 @@ T34 = {f["fact_id"]: f for f in T["T3.4"]["rows"][0]["facts"]}
 T33_M = T["T3.3"]["rows"]
 R3_BASIS_I = T31["T3.1.i01.basis"]["text"]
 R3_BASIS_P = T34["T3.4.preference.basis"]["text"]
-MKT_PARTS = ["Market evidence market page:1 (observed)", "Market evidence market page:2 (indicative talk)"]
+MKT_PARTS = [
+    "Market evidence market page:1 (observed)",
+    "Market evidence market page:2 (indicative talk)",
+]
 assert all(p in R3_BASIS_I and p in R3_BASIS_P for p in MKT_PARTS)
 
 
 def basis_text(r3_text, rows, keep_market):
     parts = r3_text.split("; ")
     out, injected = [], False
-    ctx_parts = [f"Market evidence context {r['row_id']} ({KIND_LABEL[r['kind']].lower()})" for r in rows]
+    ctx_parts = [
+        f"Market evidence context {r['row_id']} ({KIND_LABEL[r['kind']].lower()})" for r in rows
+    ]
     for p in parts:
         if p in MKT_PARTS:
             if keep_market:
@@ -668,10 +792,16 @@ def pack_for(case_id):
 
 def context_block(case_id, rows, ctx_name, stale_any):
     sources = PACK_SOURCES_S1 if case_id == "context-only" else PACK_SOURCES_R3
-    authority = {s["source_id"]: R3_CP3["context_block_checks"]["pack_source_authority"][s["source_id"]]
-                 for s in sources}
+    authority = {
+        s["source_id"]: R3_CP3["context_block_checks"]["pack_source_authority"][s["source_id"]]
+        for s in sources
+    }
     authority["context"] = "unknown"
-    market = [] if case_id == "context-only" else deepcopy(R3_CP3["context_block_checks"]["market_evidence_sources"])
+    market = (
+        []
+        if case_id == "context-only"
+        else deepcopy(R3_CP3["context_block_checks"]["market_evidence_sources"])
+    )
     note_r3 = R3_CP3["context_block_checks"]["market_evidence_note"]
     note = (
         "Market evidence is the rows in context_market_evidence; cite one only by its row id in "
@@ -682,12 +812,23 @@ def context_block(case_id, rows, ctx_name, stale_any):
     block = {
         "pack_source_authority": authority,
         "pack_sources_context_entry": {
-            "source_id": "context", "name": ctx_name, "status": "ready", "authority": "unknown"},
+            "source_id": "context",
+            "name": ctx_name,
+            "status": "ready",
+            "authority": "unknown",
+        },
         "market_evidence_sources": market,
         "market_evidence_note": note,
         "context_market_evidence": [
-            {"row": r["row_id"], "facility_id": r["facility_id"], "kind": r["kind"], "as_of": r["as_of"],
-             "provider": r["provider"], "stale": r["stale"], "figures": r["quote_cell"]}
+            {
+                "row": r["row_id"],
+                "facility_id": r["facility_id"],
+                "kind": r["kind"],
+                "as_of": r["as_of"],
+                "provider": r["provider"],
+                "stale": r["stale"],
+                "figures": r["quote_cell"],
+            }
             for r in rows
         ],
         "confidence_caps": [CAP_CP2] + ([CAP_STALE] if stale_any else []),
@@ -701,7 +842,9 @@ def context_block(case_id, rows, ctx_name, stale_any):
 
 
 def cp3_expected(case_id):
-    cid = {"with-market-row": "observed-and-talk", "context-only": "observed-and-talk"}.get(case_id, case_id)
+    cid = {"with-market-row": "observed-and-talk", "context-only": "observed-and-talk"}.get(
+        case_id, case_id
+    )
     rows, ctx_own = EVIDENCE[cid] if cid != "bad-bytes" else ([], [])
     sub = SUBS[case_id]
     keep_market = case_id == "with-market-row"
@@ -738,10 +881,21 @@ def cp3_expected(case_id):
                     "prefix": "context source unreadable: ",
                     "exact": ["context source unreadable: quotes[0].price is not a plain number"],
                     "fragments": [
-                        {"must_contain": ["context source unreadable: ", "quotes[0].as_of", "after the run as-of"],
-                         "proposed_exact": "context source unreadable: quotes[0].as_of 2026-02-01 is after the run as-of 2026-01-10"},
-                        {"must_contain": ["context source unreadable: ", "issuer_id differs from the run"],
-                         "proposed_exact": "context source unreadable: identity.issuer_id differs from the run"},
+                        {
+                            "must_contain": [
+                                "context source unreadable: ",
+                                "quotes[0].as_of",
+                                "after the run as-of",
+                            ],
+                            "proposed_exact": "context source unreadable: quotes[0].as_of 2026-02-01 is after the run as-of 2026-01-10",
+                        },
+                        {
+                            "must_contain": [
+                                "context source unreadable: ",
+                                "issuer_id differs from the run",
+                            ],
+                            "proposed_exact": "context source unreadable: identity.issuer_id differs from the run",
+                        },
                     ],
                     "count": 3,
                     "order": "not pinned (set equality)",
@@ -758,10 +912,15 @@ def cp3_expected(case_id):
     out["t33_row_order"] = [r["row_id"] for r in t33]
     out["t33_rows"] = t33
     if keep_market:
-        out["t33_m_rows_equal"] = f"{R3E}#positive.CP-3.tables[T3.3].rows (m01, m02) at :{line_of(R3E, 'T3.3.m01.source')} to :{line_of(R3E, 'T3.3.m02.limitation')}"
+        out["t33_m_rows_equal"] = (
+            f"{R3E}#positive.CP-3.tables[T3.3].rows (m01, m02) at :{line_of(R3E, 'T3.3.m01.source')} to :{line_of(R3E, 'T3.3.m02.limitation')}"
+        )
     stale_any = any(r["stale"] for r in rows)
     own = own_limitations(case_id, sub, rows, ctx_own, strength)
-    out["own_limitations"] = {"members": own, "order": "gaps, evidence label, then context items; the order of the context items is not pinned"}
+    out["own_limitations"] = {
+        "members": own,
+        "order": "gaps, evidence label, then context items; the order of the context items is not pinned",
+    }
     out["own_limitations_count"] = len(own)
     out["user_supplied_limitation_present"] = USER_LABEL in own
     inst = sub["instruments"][0]
@@ -783,20 +942,52 @@ def cp3_expected(case_id):
     if keep_market:
         cl = [["market", "page:1"], ["market", "page:2"]] + cl
     out["claims"] = [
-        {"claim_id": "T3.4.preference", "text": pref["rationale"], "limitation": pref["limitation"], "cites": cl},
-        {"claim_id": "T3.1.i01", "text": inst["market_observation"], "limitation": inst["limitation"], "cites": cl},
+        {
+            "claim_id": "T3.4.preference",
+            "text": pref["rationale"],
+            "limitation": pref["limitation"],
+            "cites": cl,
+        },
+        {
+            "claim_id": "T3.1.i01",
+            "text": inst["market_observation"],
+            "limitation": inst["limitation"],
+            "cites": cl,
+        },
     ]
-    out["claims_cite_note"] = "each claim cites every cited row's citations in basis order (Design 4: out.cited counts context rows); the market-row citations come first where the basis quotes them"
-    out["unchanged_from_r3_positive"] = ["T3.9 risks (r01, mechanic edited only where noted in submissions.json)", "T3.10 gaps", "cp1_references", "cp3.relative_value front-page table follows the changed text"]
+    out["claims_cite_note"] = (
+        "each claim cites every cited row's citations in basis order (Design 4: out.cited counts context rows); the market-row citations come first where the basis quotes them"
+    )
+    out["unchanged_from_r3_positive"] = [
+        "T3.9 risks (r01, mechanic edited only where noted in submissions.json)",
+        "T3.10 gaps",
+        "cp1_references",
+        "cp3.relative_value front-page table follows the changed text",
+    ]
     out["cp6_catalogue_t33"] = {f"T3.3.{r['row_id']}": r["label"] for r in t33}
-    out["cp6_reads"] = "T3.3 `kind` facts only (cp6_committee.py:575); Python rows carry the same fact fields as model rows"
-    out["context_block"] = context_block(case_id, rows, f"{CASE_DIR}/contexts/{cid}.json", stale_any)
+    out["cp6_reads"] = (
+        "T3.3 `kind` facts only (cp6_committee.py:575); Python rows carry the same fact fields as model rows"
+    )
+    out["context_block"] = context_block(
+        case_id, rows, f"{CASE_DIR}/contexts/{cid}.json", stale_any
+    )
     return out
 
 
 CP3_CASES = [
-    "observed-and-talk", "talk-only", "stale", "unmatched", "deal-talk", "deal-lone-bound",
-    "with-market-row", "no-quotes", "minified", "context-only", "unciteable", "unciteable-deal", "bad-bytes",
+    "observed-and-talk",
+    "talk-only",
+    "stale",
+    "unmatched",
+    "deal-talk",
+    "deal-lone-bound",
+    "with-market-row",
+    "no-quotes",
+    "minified",
+    "context-only",
+    "unciteable",
+    "unciteable-deal",
+    "bad-bytes",
 ]
 CASES_EXPECTED = {c: cp3_expected(c) for c in CP3_CASES}
 
@@ -817,7 +1008,10 @@ assert _lone["quote_cell"] == "term-loan: OID talk 99.0-99.5" and len(_lone["cit
 _lim = CASES_EXPECTED["deal-lone-bound"]["t33_rows"][0]["facts"][4]
 _lim["text"] = LONE_LIMITATION
 
-for _c, _sec, _what in (("unciteable", "quotes", "quote"), ("unciteable-deal", "deal_terms", "deal terms")):
+for _c, _sec, _what in (
+    ("unciteable", "quotes", "quote"),
+    ("unciteable-deal", "deal_terms", "deal terms"),
+):
     # fix 3: the no-quotes pattern (plan :165) on a pack that keeps the ready third_party `market` source.
     _gaps = [
         f"Gap (Medium): context {_what} row {n} for facility term-loan cannot be cited as one unique span; not used"
@@ -825,7 +1019,9 @@ for _c, _sec, _what in (("unciteable", "quotes", "quote"), ("unciteable-deal", "
     ]
     assert EVIDENCE[_c] == ([], _gaps)
     assert SUBS[_c] == RV and strength_of(_c, []) == {"observed", "indicative_talk"}
-    _own = list(R3_CP3["own_limitations"]) + _gaps  # B20b: same `Gap (<severity>): ` form as the Design 5 named gaps
+    _own = (
+        list(R3_CP3["own_limitations"]) + _gaps
+    )  # B20b: same `Gap (<severity>): ` form as the Design 5 named gaps
     CASES_EXPECTED[_c] = {
         "context": f"contexts/{_c}.json",
         "pack": "R3+context",
@@ -839,12 +1035,18 @@ for _c, _sec, _what in (("unciteable", "quotes", "quote"), ("unciteable-deal", "
         "gap_limitations": _gaps,
         "report_equals_r3_positive": {
             "source": f"{R3E}#positive.CP-3 (tables, claims, own_limitations) at :{line_of(R3E, 'T3.3.m01.source')} (T3.3) and :3432-3433 (own_limitations)",
-            "submission_source": f"{R3S}:{line_of(R3S, '\"relative_value\"')} (positive.relative_value, verbatim)",
+            "submission_source": f"{R3S}:{line_of(R3S, '"relative_value"')} (positive.relative_value, verbatim)",
             "sha256_of_canonical_json_sorted_keys": R3_HEAD_SHA,
-            "differs": ["pack_sha256 (the pack gained a source)", "own_limitations: the R3 positive's two plus gap_limitations (B20b)"],
+            "differs": [
+                "pack_sha256 (the pack gained a source)",
+                "own_limitations: the R3 positive's two plus gap_limitations (B20b)",
+            ],
             "r3_own_limitations": R3_CP3["own_limitations"],
         },
-        "own_limitations": {"members": _own, "order": "R3 positive's two first, then the two gap_limitations (membership and count pinned)"},
+        "own_limitations": {
+            "members": _own,
+            "order": "R3 positive's two first, then the two gap_limitations (membership and count pinned)",
+        },
         "own_limitations_count": len(_own),
         "user_supplied_limitation_present": False,
         "no_user_supplied_limitation": "Design 7 (:96) adds the user-supplied label only when a Python row exists; none does",
@@ -860,8 +1062,20 @@ assert CASES_EXPECTED["stale"]["t33_rows"][1]["facts"][4]["text"] == (
 )
 
 # --- 7. expected: CP-3D (Design 9) -------------------------------------------------------------------
-MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-          "November", "December"]
+MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
 
 
 def long_date(iso):
@@ -875,7 +1089,9 @@ def offered(cid):
     out = []
     for i, q in enumerate(obj["quotes"]):
         items = (
-            [("bid", "bid"), ("offer", "ask")] if q["kind"] == "observed" else [("indicative_talk", "price")]
+            [("bid", "bid"), ("offer", "ask")]
+            if q["kind"] == "observed"
+            else [("indicative_talk", "price")]
         )
         for kind, field in items:
             if not q[field]:
@@ -904,13 +1120,24 @@ assert [(x["row"], x["kind"], x["level_text"], x["as_of_text"]) for x in _o] == 
     ("o02", "offer", "99.00", "January 9, 2026"),
     ("o03", "indicative_talk", "99.25", "January 10, 2026"),
 ]
-SINGLE_DEALER_R3 = "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
-SINGLE_DEALER_CTX = "Single dealer quotation from the context file (user-supplied); trading activity is not read"
+SINGLE_DEALER_R3 = (
+    "Single dealer quotation; the sheet reports no trade in the period to the quotation date"
+)
+SINGLE_DEALER_CTX = (
+    "Single dealer quotation from the context file (user-supplied); trading activity is not read"
+)
 
 
 def stand_alone(kind, row, **filled):
-    base = {"kind": kind, "source_id": "", "locator": "", "quote": "", "level_text": "", "as_of_text": None,
-            "context_row": row}
+    base = {
+        "kind": kind,
+        "source_id": "",
+        "locator": "",
+        "quote": "",
+        "level_text": "",
+        "as_of_text": None,
+        "context_row": row,
+    }
     base.update(filled)
     return base
 
@@ -919,7 +1146,11 @@ CP3D = {
     "scope": "Quotes only (ruling Q1); deal talk is a range and is never offered. The rest of each CP-3D submission is the frozen cases/cp3d-owner positive; only `observations` is replaced.",
     "base_submission": "cases/cp3d-owner/submissions.json#positive (observations replaced)",
     "offered_observations": {
-        cid: [{k: v for k, v in x.items() if k not in ("facility_id", "quote_as_of")} | {"facility_id": x["facility_id"], "quote_as_of": x["quote_as_of"]} for x in rows]
+        cid: [
+            {k: v for k, v in x.items() if k not in ("facility_id", "quote_as_of")}
+            | {"facility_id": x["facility_id"], "quote_as_of": x["quote_as_of"]}
+            for x in rows
+        ]
         for cid, rows in O.items()
     },
     "expansion": "The model submits {kind, context_row} with every other field empty; Python expands it to the offered row (context_row kept) before submission_issues. An expanded observation skips only the third_party, _labelled and as_of_text-in-quote checks; on_page, occurs, shape, range (0, 200] and bid <= offer still run.",
@@ -961,8 +1192,15 @@ CP3D = {
             "id": "cp3d-filled-context-row",
             "context": "contexts/observed-and-talk.json",
             "observations": [
-                stand_alone("bid", "o01", source_id="context", locator=_o[0]["locator"], quote=_o[0]["quote"],
-                            level_text="98.50", as_of_text="January 9, 2026"),
+                stand_alone(
+                    "bid",
+                    "o01",
+                    source_id="context",
+                    locator=_o[0]["locator"],
+                    quote=_o[0]["quote"],
+                    level_text="98.50",
+                    as_of_text="January 9, 2026",
+                ),
                 stand_alone("offer", "o02"),
                 stand_alone("indicative_talk", "o03"),
             ],
@@ -1021,19 +1259,25 @@ EXPECTED = {
         "builder/build.py (stdlib only; no code of the phase is run)."
     ),
     "run": {
-        "issuer_id": ISSUER_ID, "issuer_name": ISSUER_NAME, "as_of": AS_OF, "case_kind": "synthetic",
-        "pathway": "credit_snapshot", "cp1_facility": "term-loan", "cp1_facility_name": FACILITY_NAME,
+        "issuer_id": ISSUER_ID,
+        "issuer_name": ISSUER_NAME,
+        "as_of": AS_OF,
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
+        "cp1_facility": "term-loan",
+        "cp1_facility_name": FACILITY_NAME,
         "cp1_facility_source": "cases/cp3-cp6-owner/builder/build.py:788",
     },
     "interpretation": {
         "locator": "line:<n> of the span holding the figure in the rebuilt text; the context span ids are line:1..N (preparation.py:79)",
-        "citation_quote": "indented file: the member's own JSON text alone on its line (`\"price\": \"98.75\"`). One-line (minified) file: the member does not sit alone on its line, so the quote is anchored on the quote object (`{` through the figure's closing quote), unique in the line (Design 3).",
+        "citation_quote": 'indented file: the member\'s own JSON text alone on its line (`"price": "98.75"`). One-line (minified) file: the member does not sit alone on its line, so the quote is anchored on the quote object (`{` through the figure\'s closing quote), unique in the line (Design 3).',
         "value_class": "Python's Quote and As of cells carry value_class `source` (Q-X); Source, Kind and Limitation cells carry none; model-written cells keep analyst_judgment.",
         "cell_text": "Quote cell and As of cell are the context's own strings; no arithmetic (only whole calendar days for staleness).",
         "row_order": "model market_evidence rows (m01..) first, then Python rows c01.. in context order, quotes before deal_terms (Design 2).",
         "unpinned": "The order of the context items within own_limitations, the Basis-cell wording for a context row and the c-row labels are not fixed by the plan; the oracle pins them as stated here (see the report).",
     },
-    "cell_notation": R3_E["cell_notation"] | {"cite_quotes": "the quote of each citation, in order, parallel to cites (Python rows only)"},
+    "cell_notation": R3_E["cell_notation"]
+    | {"cite_quotes": "the quote of each citation, in order, parallel to cites (Python rows only)"},
     "r3_cites": {
         "T3.3.m01": f"{R3E}:{line_of(R3E, 'T3.3.m01.source')}",
         "T3.1.basis_text": f"{R3E}:{line_of(R3E, 'T3.1.i01.basis')}",
@@ -1069,9 +1313,7 @@ SUBMISSIONS = {
     "cases": SUBS,
     "refusal_mutations": {
         "note": "Each entry edits a deep copy of cases.<case> (paths use dots and [i]; 'set' replaces the value)",
-        "entries": [
-            {"id": m["id"], "case": m["case"], "edits": m["edits"]} for m in MUTATIONS
-        ],
+        "entries": [{"id": m["id"], "case": m["case"], "edits": m["edits"]} for m in MUTATIONS],
     },
 }
 
@@ -1107,17 +1349,39 @@ MANIFEST = {
     "pins": PINS,
     "run": {
         "run_id": "ctx3-<case>-v1",
-        "issuer_id": ISSUER_ID, "issuer_name": ISSUER_NAME, "as_of": AS_OF,
-        "method_version": R3_RUN["method_version"], "case_kind": "synthetic", "pathway": "credit_snapshot",
+        "issuer_id": ISSUER_ID,
+        "issuer_name": ISSUER_NAME,
+        "as_of": AS_OF,
+        "method_version": R3_RUN["method_version"],
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
         "requested_modules": R3_RUN["requested_modules"],
         "set": "explicit Run set after preparation_request, as the R3 positive run",
     },
     "packs": {
-        "R3+context": {"sources": PACK_SOURCES_R3 + [{"source_id": "context", "media_type": "text/plain",
-                       "extractor": "utf8-lines/1", "authority": "unknown"}]},
-        "S1+context": {"sources": PACK_SOURCES_S1 + [{"source_id": "context", "media_type": "text/plain",
-                       "extractor": "utf8-lines/1", "authority": "unknown"}],
-                       "note": "the R3 pack without the third_party market source (the context-only case)"},
+        "R3+context": {
+            "sources": PACK_SOURCES_R3
+            + [
+                {
+                    "source_id": "context",
+                    "media_type": "text/plain",
+                    "extractor": "utf8-lines/1",
+                    "authority": "unknown",
+                }
+            ]
+        },
+        "S1+context": {
+            "sources": PACK_SOURCES_S1
+            + [
+                {
+                    "source_id": "context",
+                    "media_type": "text/plain",
+                    "extractor": "utf8-lines/1",
+                    "authority": "unknown",
+                }
+            ],
+            "note": "the R3 pack without the third_party market source (the context-only case)",
+        },
     },
     "contexts": {
         cid: {
@@ -1131,9 +1395,15 @@ MANIFEST = {
         for cid in CONTEXTS
     },
     "cases": [
-        {"case_id": c, "pack": pack_for(c),
-         "context": ("observed-and-talk" if c in ("with-market-row", "context-only") else c),
-         "run_id": f"ctx3-{c}-v1", "run_type": CONTEXTS[("observed-and-talk" if c in ("with-market-row", "context-only") else c)][1]["run"]["run_type"]}
+        {
+            "case_id": c,
+            "pack": pack_for(c),
+            "context": ("observed-and-talk" if c in ("with-market-row", "context-only") else c),
+            "run_id": f"ctx3-{c}-v1",
+            "run_type": CONTEXTS[
+                ("observed-and-talk" if c in ("with-market-row", "context-only") else c)
+            ][1]["run"]["run_type"],
+        }
         for c in CP3_CASES
     ],
     "outputs": {name: sha(data) for name, data in sorted(files.items())},

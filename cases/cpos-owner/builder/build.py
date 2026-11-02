@@ -75,25 +75,52 @@ for text in (
     "preset = dependencies(PATHWAY_MODULES[view.run.pathway])",
     'not_requested = module.status == "not_in_pathway" and module.module_id in preset',
     'return status_display("unrun" if not_requested else module.status)',
-    '        in_pathway = module.status != "not_in_pathway"\n        if in_pathway:\n            number += 1\n'
-    "        glyph, word = display(module)",
+    (
+        '        in_pathway = module.status != "not_in_pathway"\n        if in_pathway:\n            number += 1\n'
+        "        glyph, word = display(module)"
+    ),
     "number=number if in_pathway else None,",
 ):
     assert text in RV, text
 assert "module_status = module_display(view)" in RENDER
-assert 'module_payload["status_glyph"], module_payload["status_word"] = module_status(module)' in RENDER
+assert (
+    'module_payload["status_glyph"], module_payload["status_word"] = module_status(module)'
+    in RENDER
+)
 
 FAMILY_COLORS = {
-    "sources": "#9AA0B4", "financials": "#0017E5", "business": "#2B8FD6", "earnings": "#C4410C",
-    "synthesis": "#000533", "liquidity": "#0E7A46", "covenants": "#8A5300", "market": "#7A3DB8",
-    "recovery": "#B3261E", "evidence": "#9AA0B4", "portfolio": "#000533",
+    "sources": "#9AA0B4",
+    "financials": "#0017E5",
+    "business": "#2B8FD6",
+    "earnings": "#C4410C",
+    "synthesis": "#000533",
+    "liquidity": "#0E7A46",
+    "covenants": "#8A5300",
+    "market": "#7A3DB8",
+    "recovery": "#B3261E",
+    "evidence": "#9AA0B4",
+    "portfolio": "#000533",
 }
 MODULE_FAMILY = {
-    "CP-0": "sources", "CP-1": "financials", "CP-1A": "business", "CP-1B": "earnings",
-    "CP-1C": "market", "CP-1D": "earnings", "CP-2": "synthesis", "CP-2A": "synthesis",
-    "CP-2D": "liquidity", "CP-2E": "synthesis", "CP-2G": "liquidity", "CP-2H": "market",
-    "CP-3": "market", "CP-3C": "liquidity", "CP-3D": "market", "CP-4": "covenants",
-    "CP-4C": "recovery", "CP-5": "evidence", "CP-6": "portfolio",
+    "CP-0": "sources",
+    "CP-1": "financials",
+    "CP-1A": "business",
+    "CP-1B": "earnings",
+    "CP-1C": "market",
+    "CP-1D": "earnings",
+    "CP-2": "synthesis",
+    "CP-2A": "synthesis",
+    "CP-2D": "liquidity",
+    "CP-2E": "synthesis",
+    "CP-2G": "liquidity",
+    "CP-2H": "market",
+    "CP-3": "market",
+    "CP-3C": "liquidity",
+    "CP-3D": "market",
+    "CP-4": "covenants",
+    "CP-4C": "recovery",
+    "CP-5": "evidence",
+    "CP-6": "portfolio",
 }
 NEUTRAL = "#9AA0B4"
 for family, color in FAMILY_COLORS.items():
@@ -104,8 +131,8 @@ assert '_NEUTRAL_FAMILY_COLOR = "#9AA0B4"' in RV
 
 # Shell facts the navigation proof relies on (app.js / render.py), asserted present.
 for text in (
-    'link.href = "#" + row.module_id',                     # module row link
-    "report.nav.filter(row => row.in_pathway)",            # numbered list vs footer
+    'link.href = "#" + row.module_id',  # module row link
+    "report.nav.filter(row => row.in_pathway)",  # numbered list vs footer
     # 0d(c): the navigator footer groups outside rows by word (app.js renderNavigation).
     "[...new Set(outside.map(row => row.word))].forEach(word => {",
     "const group = outside.filter(row => row.word === word);",
@@ -114,30 +141,35 @@ for text in (
     # 0d: the skip link focuses #workbench without routing; routeOf maps #workbench to front.
     'const route = location.hash.slice(1) || "front"; return route === "overview" || route === "workbench" ? "front" : route;',
     'document.querySelector("a.skip")?.addEventListener("click", event => {',
-    "    event.preventDefault();\n    $(\"workbench\").focus();",
-    'moduleFor = (route) => report.modules.find(item => item.module_id === route',
-    '["front", "Front Page", "#front"]', '["analysis", "Analysis", "#analysis"]',
-    '["model", "Model", "#CP-1"]', '["fit", "Portfolio Fit", "#FIT"]',
-    '["evidence", "Evidence", "#evidence"]', '["limits", "Limitations", "#limitations"]',
+    '    event.preventDefault();\n    $("workbench").focus();',
+    "moduleFor = (route) => report.modules.find(item => item.module_id === route",
+    '["front", "Front Page", "#front"]',
+    '["analysis", "Analysis", "#analysis"]',
+    '["model", "Model", "#CP-1"]',
+    '["fit", "Portfolio Fit", "#FIT"]',
+    '["evidence", "Evidence", "#evidence"]',
+    '["limits", "Limitations", "#limitations"]',
     'module.status_glyph === "na"',
     "is not part of the ${front.pathway.title} Pathway, so it is not run.",
     "No validated output is available for this module.",
     '"Analysis · " + inPathway.length',
     "if (module.limitations.length)",
-    'link = node("a", path); link.href = path',            # the one non-hash link: calculation.json
+    'link = node("a", path); link.href = path',  # the one non-hash link: calculation.json
     # Every other hash href on the page (L5): Front Page block link, coverage table, CP-MODEL links.
     'link.href = "#" + block.full_analysis_route',
-    'link.href = "#" + module.module_id;',                 # coverage table
+    'link.href = "#" + module.module_id;',  # coverage table
     'anchor.href = "#CP-MODEL"',
     'link.href = "#CP-MODEL"',
     'const path = fact("model-destination", "calculation-json", "path")',
-    'model.artifact_sha256 && path && /^[A-Za-z0-9._-]+$/.test(path) && cp1 && pack',
-    "front.unplaced.length > 0",                           # the rail Limitations dot also reads this
+    "model.artifact_sha256 && path && /^[A-Za-z0-9._-]+$/.test(path) && cp1 && pack",
+    "front.unplaced.length > 0",  # the rail Limitations dot also reads this
 ):
     assert text in APP, text
 assert 'payload["nav"] = [row.model_dump(mode="json") for row in navigator(view)]' in RENDER
-assert "if module.status == \"rejected\":\n            continue" in RENDER
-assert '_NOT_CP5_FAN_IN = frozenset({"CP-5", "CP-6", "CP-8", "CP-MEMO", "CP-MODEL", "CP-OS"})' in REG
+assert 'if module.status == "rejected":\n            continue' in RENDER
+assert (
+    '_NOT_CP5_FAN_IN = frozenset({"CP-5", "CP-6", "CP-8", "CP-MEMO", "CP-MODEL", "CP-OS"})' in REG
+)
 assert 'else "not_in_pathway" for m in modules()' in REG
 
 SHELL = read_pinned("src/deploy_vii/assets/shell.html")
@@ -146,47 +178,78 @@ assert '<script id="report-data" type="application/json">' in SHELL
 # #workbench to the front route, so it resolves (it was the recorded exception shell_skip_link before 0d).
 assert '<a class="skip" href="#workbench">Skip to analysis</a>' in SHELL
 assert '<main id="workbench" class="workbench" tabindex="-1">' in SHELL
-assert '|| "Unknown destination"' in APP  # app.js render: an unresolved route still draws "Unknown destination"
-assert '.replace(\n        "<", "\\\\u003c"\n    )' in RENDER  # report-data escapes "<" as \u003c (render.py:191-193)
-assert 'route = spec.producers[0] if spec.producers else None' in RV
+assert (
+    '|| "Unknown destination"' in APP
+)  # app.js render: an unresolved route still draws "Unknown destination"
+assert (
+    '.replace(\n        "<", "\\\\u003c"\n    )' in RENDER
+)  # report-data escapes "<" as \u003c (render.py:191-193)
+assert "route = spec.producers[0] if spec.producers else None" in RV
 assert '"full_analysis_route": route' in RV
 # The honest-state Block (no binding filled the block, report_view.py:1712) sets no route and no label: only
 # a populated block carries the link. Asserted so the oracle states the superset truthfully.
-assert "state=words_state,\n        kind=kind,\n        note=note,\n        width=spec.width,\n    )" in RV
+assert (
+    "state=words_state,\n        kind=kind,\n        note=note,\n        width=spec.width,\n    )"
+    in RV
+)
 
 # Front Page blocks of the credit_snapshot Pathway (the pathway of every S1a run): block id ->
 # (producers[0], route_label). report_view._CREDIT_SNAPSHOT / _PRESETS, transcribed and text-checked
 # below; app.js:428 draws "<route_label or 'Full analysis'> ->" linking "#" + producers[0].
 BLOCK_ROUTES = [
-    ("key-findings", "CP-2", None), ("company-operating-model", "CP-1A", None),
-    ("model-chart-strip", "CP-1", "Open in Model"), ("capital-structure", "CP-1", None),
-    ("financials-credit-metrics", "CP-1", "Open in Model"), ("strengths-weaknesses", "CP-2", None),
-    ("relative-value", "CP-3", None), ("company-profile", "CP-1A", None),
-    ("transaction-summary", None, None), ("portfolio-fit", None, None),
-    ("committee-challenge", "CP-6", None), ("what-changed", "CP-8", None),
+    ("key-findings", "CP-2", None),
+    ("company-operating-model", "CP-1A", None),
+    ("model-chart-strip", "CP-1", "Open in Model"),
+    ("capital-structure", "CP-1", None),
+    ("financials-credit-metrics", "CP-1", "Open in Model"),
+    ("strengths-weaknesses", "CP-2", None),
+    ("relative-value", "CP-3", None),
+    ("company-profile", "CP-1A", None),
+    ("transaction-summary", None, None),
+    ("portfolio-fit", None, None),
+    ("committee-challenge", "CP-6", None),
+    ("what-changed", "CP-8", None),
 ]
 _CS_PRESET = re.search(r'"credit_snapshot": \(\s*\*\(([^)]*)\),\s*\)', CONTRACTS)
 assert _CS_PRESET, "credit_snapshot preset not found in contracts.py"
 CREDIT_SNAPSHOT_PRESET = re.findall(r'"(CP-[0-9A-Z]+)"', _CS_PRESET.group(1))
-assert CREDIT_SNAPSHOT_PRESET == ["CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-2", "CP-4", "CP-3", "CP-5", "CP-6"]
-_PRESET = RV[RV.index('"credit_snapshot",\n        "Credit Snapshot"'):RV.index('"earnings_update",\n        "Earnings Update"')]
+assert CREDIT_SNAPSHOT_PRESET == [
+    "CP-0",
+    "CP-1",
+    "CP-MODEL",
+    "CP-1A",
+    "CP-2",
+    "CP-4",
+    "CP-3",
+    "CP-5",
+    "CP-6",
+]
+_PRESET = RV[
+    RV.index('"credit_snapshot",\n        "Credit Snapshot"') : RV.index(
+        '"earnings_update",\n        "Earnings Update"'
+    )
+]
 assert re.findall(r'"([a-z-]+)",', _PRESET.split("(\n", 1)[1])[:12] == [b[0] for b in BLOCK_ROUTES]
 for _bid, _route, _label in BLOCK_ROUTES:
     _start = RV.index(f'"{_bid}": _Spec(')
-    _chunk = re.split(r'\n        "[a-z-]+": _Spec\(|\n    \}\n\)', RV[_start + 1:])[0]
+    _chunk = re.split(r'\n        "[a-z-]+": _Spec\(|\n    \}\n\)', RV[_start + 1 :])[0]
     assert (f'("{_route}"' if _route else " (),") in _chunk, _bid
     assert (f'route_label="{_label}"' in _chunk) == bool(_label), _bid
 
 # --- Registry (methodology.json file order is registry order) ---------------------------------------
 REGISTRY = [
-    {"module_id": m["module_id"], "title": m["title"], "aliases": list(m["aliases"])} for m in METHOD
+    {"module_id": m["module_id"], "title": m["title"], "aliases": list(m["aliases"])}
+    for m in METHOD
 ]
 REQUIRED = {m["module_id"]: list(m["required"]) for m in METHOD}
 assert len(REGISTRY) == 25 and len({r["module_id"] for r in REGISTRY}) == 25
 CPOS = next(m for m in METHOD if m["module_id"] == "CP-OS")
 assert CPOS["required"] == [] and CPOS["optional"] == [] and CPOS["table_ids"] == []
 assert CPOS["title"] == "Report navigation"
-assert CPOS["purpose"] == "Read-only navigation and routing across analytical artifacts; no new analytical handoff."
+assert (
+    CPOS["purpose"]
+    == "Read-only navigation and routing across analytical artifacts; no new analytical handoff."
+)
 
 
 def scope_of(requested):
@@ -201,7 +264,9 @@ def scope_of(requested):
     return selected
 
 
-PRESET_CLOSURE = scope_of(CREDIT_SNAPSHOT_PRESET)  # registry.dependencies(PATHWAY_MODULES["credit_snapshot"])
+PRESET_CLOSURE = scope_of(
+    CREDIT_SNAPSHOT_PRESET
+)  # registry.dependencies(PATHWAY_MODULES["credit_snapshot"])
 
 
 def run_of(case_id):
@@ -210,7 +275,11 @@ def run_of(case_id):
 
 POS_RUN = run_of("snapshot-positive")
 GAP_RUN = run_of("snapshot-gap-business-without-ownership-transaction")
-assert POS_RUN["requested_modules"] == ["CP-1", "CP-MODEL", "CP-1A", "CP-2"] == GAP_RUN["requested_modules"]
+assert (
+    POS_RUN["requested_modules"]
+    == ["CP-1", "CP-MODEL", "CP-1A", "CP-2"]
+    == GAP_RUN["requested_modules"]
+)
 assert S1E["execution"]["plan_order"] == ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"]
 assert scope_of(POS_RUN["requested_modules"]) == set(S1E["execution"]["plan_order"])
 assert POS_RUN["pathway"] == GAP_RUN["pathway"] == "credit_snapshot"
@@ -265,20 +334,36 @@ def target_for(entry, status):
 def search_probes(rows):
     probes = []
     for needle in ("business", "limitations", "cp-parse", "not in this pathway", "not run", "zzz"):
-        haystack = lambda r: " ".join([r["module_id"], r["title"], r["word"], *r["aliases"]]).lower()
+        haystack = lambda r: " ".join(
+            [r["module_id"], r["title"], r["word"], *r["aliases"]]
+        ).lower()
         hits = [r["module_id"] for r in rows if needle in haystack(r)]
-        probes.append({
-            "filter": needle,
-            "numbered_matches": [m for m in hits if next(r for r in rows if r["module_id"] == m)["in_pathway"]],
-            "footer_matches": [m for m in hits if not next(r for r in rows if r["module_id"] == m)["in_pathway"]],
-        })
+        probes.append(
+            {
+                "filter": needle,
+                "numbered_matches": [
+                    m for m in hits if next(r for r in rows if r["module_id"] == m)["in_pathway"]
+                ],
+                "footer_matches": [
+                    m
+                    for m in hits
+                    if not next(r for r in rows if r["module_id"] == m)["in_pathway"]
+                ],
+            }
+        )
     return probes
 
 
 def footer_groups(footer):
     words = list(dict.fromkeys(r["word"] for r in footer))
-    return [{"summary": f"{w} \u00b7 {sum(1 for r in footer if r['word'] == w)}",
-             "word": w, "module_ids": [r["module_id"] for r in footer if r["word"] == w]} for w in words]
+    return [
+        {
+            "summary": f"{w} \u00b7 {sum(1 for r in footer if r['word'] == w)}",
+            "word": w,
+            "module_ids": [r["module_id"] for r in footer if r["word"] == w],
+        }
+        for w in words
+    ]
 
 
 def build_case(run, heads, description, oracle_status):
@@ -337,7 +422,9 @@ FIXED_ROUTES = {"front", "analysis", "FIT", "evidence", "limitations"}
 def resolves(route, rows):
     """app.js routeOf, then moduleFor / render: a route is a module id or alias of report.modules, or a fixed route."""
     route = ROUTE_OF.get(route, route)
-    return route in FIXED_ROUTES or any(route == r["module_id"] or route in r["aliases"] for r in rows)
+    return route in FIXED_ROUTES or any(
+        route == r["module_id"] or route in r["aliases"] for r in rows
+    )
 
 
 def block_links(rows):
@@ -352,12 +439,18 @@ def block_links(rows):
             continue
         row = next(r for r in rows if r["module_id"] == route)
         assert resolves(route, rows), (block_id, route)
-        out.append({
-            "block_id": block_id,
-            "full_analysis_route": route,
-            "link": {"text": (label or "Full analysis") + " \u2192", "href": "#" + route,
-                     "page_title": row["target"]["page_title"], "status_chip_word": row["word"]},
-        })
+        out.append(
+            {
+                "block_id": block_id,
+                "full_analysis_route": route,
+                "link": {
+                    "text": (label or "Full analysis") + " \u2192",
+                    "href": "#" + route,
+                    "page_title": row["target"]["page_title"],
+                    "status_chip_word": row["word"],
+                },
+            }
+        )
     return out
 
 
@@ -385,13 +478,26 @@ def destinations(run, has_limitations):
     return [
         {"key": "front", "label": "Front Page", "href": "#front", "page_title": run["issuer_name"]},
         {"key": "analysis", "label": "Analysis", "href": "#analysis", "page_title": "Analysis"},
-        {"key": "model", "label": "Model", "href": "#CP-1", "page_title": "CP-1 · Canonical data foundation"},
-        {"key": "fit", "label": "Portfolio Fit", "href": "#FIT", "page_title": "Portfolio Fit",
-         "page_text": "Portfolio Fit · not run: No portfolio constraints or exposures have been evaluated."},
+        {
+            "key": "model",
+            "label": "Model",
+            "href": "#CP-1",
+            "page_title": "CP-1 · Canonical data foundation",
+        },
+        {
+            "key": "fit",
+            "label": "Portfolio Fit",
+            "href": "#FIT",
+            "page_title": "Portfolio Fit",
+            "page_text": "Portfolio Fit · not run: No portfolio constraints or exposures have been evaluated.",
+        },
         {"key": "evidence", "label": "Evidence", "href": "#evidence", "page_title": "Evidence"},
-        {"key": "limits",
-         "label": "Limitations" + (" · with limitations" if has_limitations else ""),
-         "href": "#limitations", "page_title": "Limitations"},
+        {
+            "key": "limits",
+            "label": "Limitations" + (" · with limitations" if has_limitations else ""),
+            "href": "#limitations",
+            "page_title": "Limitations",
+        },
     ]
 
 
@@ -427,8 +533,13 @@ CASES = {
     ),
     "s1a_blocked_cp1a": build_case(
         POS_RUN,
-        {"CP-0": "restricted", "CP-1": "restricted", "CP-1A": "blocked", "CP-2": "restricted",
-         "CP-MODEL": "restricted"},
+        {
+            "CP-0": "restricted",
+            "CP-1": "restricted",
+            "CP-1A": "blocked",
+            "CP-2": "restricted",
+            "CP-MODEL": "restricted",
+        },
         "S1a acceptance A3b receipt: CP-1A attempts 0 and 1 invalid, CP-1A head blocked; CP-2 begins over "
         "the blocked CP-1A (restricted edge) and settles restricted; CP-MODEL publishes.",
         "derived from docs/S1A-OWNER-RUN-LEASE.md rev 1 H1 and execution.current_inputs (restricted edge "
@@ -448,7 +559,11 @@ CASES = {
 }
 
 assert [r["module_id"] for r in CASES["s1a_positive"]["rows"] if r["in_pathway"]] == [
-    "CP-0", "CP-1", "CP-1A", "CP-2", "CP-MODEL"
+    "CP-0",
+    "CP-1",
+    "CP-1A",
+    "CP-2",
+    "CP-MODEL",
 ]
 
 EXPECTED = {
@@ -498,8 +613,8 @@ EXPECTED = {
             "cases[*].block_links and cases[*].hash_links list them per case."
         ),
         "shell_skip_link": (
-            "Resolves since 0d (41a8fdb), text-checked: every page carries <a class=\"skip\" href=\"#workbench\">Skip to "
-            "analysis</a> and <main id=\"workbench\" tabindex=\"-1\"> (shell.html); app.js attaches a click handler that calls "
+            'Resolves since 0d (41a8fdb), text-checked: every page carries <a class="skip" href="#workbench">Skip to '
+            'analysis</a> and <main id="workbench" tabindex="-1"> (shell.html); app.js attaches a click handler that calls '
             "preventDefault and focuses #workbench without routing, and routeOf maps the hash 'workbench' to the front "
             "route, so a page loaded at #workbench shows the Front Page. It is listed in cases[*].hash_links.shell_skip_link "
             "and is inside the dead-link refusal like every other hash link. The CP-OS rendering criterion ('visible "
@@ -526,7 +641,7 @@ EXPECTED = {
             "label overstates it (LEAD to note)."
         ),
         "report_data_extraction": (
-            "The page embeds <script id=\"report-data\" type=\"application/json\">DATA</script> (shell.html); DATA is "
+            'The page embeds <script id="report-data" type="application/json">DATA</script> (shell.html); DATA is '
             "json.dumps(ensure_ascii=True, separators=(',',':')) with every '<' replaced by \\u003c "
             "(render.py:191-193), so the first '</script>' after the opening tag ends it and json.loads of the "
             "text between is exact. No tag, no closing tag or invalid JSON: cpos_target_missing (never a bare "
@@ -573,7 +688,8 @@ SUBMISSIONS = {
             "on": "s1a_positive",
             "recipe": "receipt copy with only 'participant' changed to a different string; store and audit unchanged",
             "targets": "owner_workflow._verify sealed check: audit/receipt.sha256 != receipt.content_hash()",
-            "raises": "WorkflowError", "code": "identity_mismatch",
+            "raises": "WorkflowError",
+            "code": "identity_mismatch",
         },
         {
             "id": "head_status_forged",
@@ -583,14 +699,16 @@ SUBMISSIONS = {
                 "rewritten to the forged receipt's content hash so the seal agrees"
             ),
             "targets": "owner_workflow._verify head check: _settled(store, module) not in receipt.heads",
-            "raises": "WorkflowError", "code": "identity_mismatch",
+            "raises": "WorkflowError",
+            "code": "identity_mismatch",
         },
         {
             "id": "foreign_store",
             "on": "s1a_positive receipt, s1a_gap store",
             "recipe": "present the positive receipt with the gap run's store",
             "targets": "owner_workflow._verify first check: run, pack and snapshot hash differ",
-            "raises": "WorkflowError", "code": "stale_binding",
+            "raises": "WorkflowError",
+            "code": "stale_binding",
         },
     ],
     "cpos_refusals": [
@@ -601,7 +719,8 @@ SUBMISSIONS = {
                 "verify_navigation with a proof built for the positive receipt against the gap receipt (both verify). "
                 "Differs in run, pack, snapshot, heads and receipt hash at once, on purpose; receipt_hash_only isolates the hash"
             ),
-            "raises": "ValueError", "prefix": "cpos_binding",
+            "raises": "ValueError",
+            "prefix": "cpos_binding",
         },
         {
             "id": "dangling_target",
@@ -610,7 +729,8 @@ SUBMISSIONS = {
                 "page with the CP-2 entry removed from report-data modules (nav untouched), page_sha256 in the "
                 "proof rewritten to the forged page's hash"
             ),
-            "raises": "ValueError", "prefix": "cpos_target_missing",
+            "raises": "ValueError",
+            "prefix": "cpos_target_missing",
         },
         {
             "id": "forged_row",
@@ -619,13 +739,15 @@ SUBMISSIONS = {
                 "page whose report-data nav CP-1A row reads glyph 'pass', word 'Pass' (modules untouched), "
                 "page_sha256 rewritten consistently"
             ),
-            "raises": "ValueError", "prefix": "cpos_rows",
+            "raises": "ValueError",
+            "prefix": "cpos_rows",
         },
         {
             "id": "page_bytes_edited",
             "on": "s1a_positive",
             "recipe": "page with a trailing newline appended (rows and targets intact), page_sha256 rewritten",
-            "raises": "ValueError", "prefix": "cpos_page",
+            "raises": "ValueError",
+            "prefix": "cpos_page",
         },
         {
             "id": "receipt_hash_only",
@@ -634,7 +756,8 @@ SUBMISSIONS = {
                 "the valid s1a_positive proof with only proof.receipt_content_sha256 replaced by "
                 "content_hash() of the seal_edit receipt copy; page, store and the verified receipt unchanged"
             ),
-            "raises": "ValueError", "prefix": "cpos_binding",
+            "raises": "ValueError",
+            "prefix": "cpos_binding",
         },
         {
             "id": "forged_proof_row",
@@ -643,7 +766,8 @@ SUBMISSIONS = {
                 "the valid s1a_blocked_cp1a proof with only the CP-1A NavigationRow has_output changed false -> true; "
                 "page unmodified, page_sha256 genuine"
             ),
-            "raises": "ValueError", "prefix": "cpos_rows",
+            "raises": "ValueError",
+            "prefix": "cpos_rows",
         },
         {
             "id": "forged_proof_destination",
@@ -652,7 +776,8 @@ SUBMISSIONS = {
                 "the valid s1a_positive proof with only the Model destination href '#CP-1' changed to '#CP-MODEL' "
                 "(a route that exists, so no dead link); page unmodified, page_sha256 genuine"
             ),
-            "raises": "ValueError", "prefix": "cpos_rows",
+            "raises": "ValueError",
+            "prefix": "cpos_rows",
         },
         {
             "id": "forged_external_link",
@@ -661,16 +786,24 @@ SUBMISSIONS = {
                 "the valid s1a_positive proof with only proof.external_links changed from ('calculation.json',) "
                 "to ('evil.json',); page unmodified, page_sha256 genuine. Replayed variant: external_links = ()"
             ),
-            "raises": "ValueError", "prefix": "cpos_proof",
+            "raises": "ValueError",
+            "prefix": "cpos_proof",
         },
         {
             "id": "unverifiable_page_hash",
             "on": "s1a_positive",
             "recipe": "unmodified page, proof.page_sha256 replaced by 64 zeros",
-            "raises": "ValueError", "prefix": "cpos_binding",
+            "raises": "ValueError",
+            "prefix": "cpos_binding",
         },
     ],
-    "order_of_cpos_checks": ["cpos_binding", "cpos_target_missing", "cpos_rows", "cpos_page", "cpos_proof"],
+    "order_of_cpos_checks": [
+        "cpos_binding",
+        "cpos_target_missing",
+        "cpos_rows",
+        "cpos_page",
+        "cpos_proof",
+    ],
     "full_proof_equality": (
         "After the four prefixed diagnostics, verify_navigation requires proof == derived_proof in full (every "
         "field); any remaining difference raises cpos_proof. Proof forgeries below leave the page unmodified "
@@ -700,7 +833,9 @@ MANIFEST = {
 
 
 def write(name, value):
-    (OUT / name).write_text(json.dumps(value, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (OUT / name).write_text(
+        json.dumps(value, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":

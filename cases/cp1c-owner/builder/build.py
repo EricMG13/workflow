@@ -948,8 +948,8 @@ def build_case(name, peer_state="absent"):
     for n, p in enumerate(peers, 1):
         a = amap[p["label"]]
         pr.append(dict(p, row=f"p{n:02d}", a=a, included=a["comparability"] != "Not comparable"))
-    ids_cite = lambda p: [{"source_id": "peers", "locator": "page:1", "quote": p["page1"]}]  # noqa: E731
-    pend = lambda r: f"Twelve months to {r['period_end']}"  # noqa: E731
+    ids_cite = lambda p: [{"source_id": "peers", "locator": "page:1", "quote": p["page1"]}]
+    pend = lambda r: f"Twelve months to {r['period_end']}"
     FIELDS = (
         ("revenue", "Revenue"),
         ("ebitda", "Adjusted EBITDA"),
@@ -1090,7 +1090,7 @@ def build_case(name, peer_state="absent"):
     val = {}  # (row, metric) -> Decimal | None | "na"
     for k, lab, uc, direction, nm, dn in METRICS:
         v, cls = CP1_FIGS[k]
-        fid = fact(
+        fact(
             "T1C.3",
             "issuer",
             k,
@@ -1307,7 +1307,6 @@ def build_case(name, peer_state="absent"):
     if sheet:
         flag_rows = [("issuer", ISSUER, None)] + [(p["row"], p["label"], p) for p in pr]
         for r, label, p in flag_rows:
-            cnt_der = []
             for k, lab, uc, *_ in METRICS:
                 st = stats[k]
                 v = val[(r, k)]
@@ -2493,7 +2492,7 @@ def main():
         ],
     }
     # sanity on analyst prose: digits only inside references
-    for case, sub in SUBMISSION.items():
+    for sub in SUBMISSION.values():
         texts = (
             [a["rationale"] for a in sub["assessments"]]
             + [sub["overall"]["rationale"]]

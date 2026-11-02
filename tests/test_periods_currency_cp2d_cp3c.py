@@ -374,3 +374,39 @@ def test_unsourced_currency_names_the_run_money_unit() -> None:
         cp3c.compute(replace(inputs, basis=_basis("EUR")))
     with pytest.raises(ValueError, match="no known US[$] m fact states a currency"):
         cp3c.reporting_currency(cp1=inputs.cp1, cp2d=inputs.cp2d)
+
+
+def test_cp3c_select_names_the_run_unit_in_the_unsourced_currency_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from dataclasses import replace
+
+    import test_connect_cp3c as tc3
+    import test_method_cp3c as tm3
+
+    from deploy_workflow.owners import cp3c
+    from deploy_workflow.owners.period_basis import DEFAULT_BASIS
+
+    store, _, attempt = tc3.seed(tmp_path)
+    upstream = tc3.upstream_of(store, attempt)
+    real_cp1, real_cp2d = cp3c.select_cp1, cp3c.select_cp2d
+    shell = tm3._inputs("positive")
+
+    def unknown(cp1: Any, cp2d: Any) -> tuple[Any, Any]:
+        carrier = replace(shell, cp1=cp1, cp2d=cp2d)
+        carrier = tc3._every_millions_fact(tc3._without_cash(carrier), tc3._missing)
+        return carrier.cp1, carrier.cp2d
+
+    def select_cp1(module: Any, basis: Any) -> Any:
+        sel = real_cp1(module, basis)
+        return replace(sel, operands=unknown(sel.operands, shell.cp2d)[0])
+
+    def select_cp2d(*args: Any) -> tuple[Any, Any]:
+        ops, offered = real_cp2d(*args)
+        return unknown(shell.cp1, ops)[1], offered
+
+    monkeypatch.setattr(cp3c, "select_cp1", select_cp1)
+    monkeypatch.setattr(cp3c, "select_cp2d", select_cp2d)
+    eur = replace(DEFAULT_BASIS, currency="EUR", money_unit="EUR m")
+    with pytest.raises(ValueError, match="no known EUR m fact states a currency"):
+        cp3c.select(upstream, eur)

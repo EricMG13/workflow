@@ -12,8 +12,8 @@ import json
 import os
 import stat
 import time
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -172,8 +172,9 @@ class StagedFile:
 @dataclass(frozen=True)
 class ResearchStaging:
     """What intake decided, held until ``stage_sources`` writes it: the manifest file's sha256, the
-    accepted items (each yields its ``EvidenceItem``) with the one retrieval time they share (O7-R13),
-    and the refused items. A run that fetched (O7b-2) also holds the record of each attempted fetch
+    accepted items (each yields its ``EvidenceItem``) with the one retrieval time they share (O7-R13)
+    except the items a rerun keeps the earlier instant for (``kept``, by ``item_id``; O7-R67), and
+    the refused items. A run that fetched (O7b-2) also holds the record of each attempted fetch
     and the ``research_ruling`` that lifted the web pause (``ruling`` is set exactly then)."""
 
     manifest_sha256: str
@@ -182,6 +183,7 @@ class ResearchStaging:
     refused: tuple[RefusedItem, ...]
     fetches: tuple[webfetch.FetchRecord, ...] = ()
     ruling: GateResult | None = None
+    kept: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -344,10 +346,15 @@ def _web_access(
 
 
 def _research_staging(
-    manifest: Path, context: RunContext, research_ruling: Path | None = None
+    manifest: Path,
+    context: RunContext,
+    research_ruling: Path | None = None,
+    earlier: Mapping[str, str] | None = None,
 ) -> ResearchStaging:
     """Read the research manifest and assess every row; writes nothing. Item refusals are listed on
-    the result; a malformed manifest or a wrong row raises (``IntakeError`` and its kin)."""
+    the result; a malformed manifest or a wrong row raises (``IntakeError`` and its kin).
+    ``earlier`` maps a sha256 to the ``retrieved`` of an earlier run's evidence record (a rerun,
+    O7-R67): an accepted item with such a sha256 keeps that instant, any other takes the clock."""
     raw = read_capped(manifest)
     try:
         rows = json.loads(raw)
@@ -358,6 +365,7 @@ def _research_staging(
     parsed = parse_rows(rows)
     ruling, fetcher = _web_access(parsed, research_ruling)
     as_of = date.fromisoformat(context.run.as_of)
+    held = earlier or {}
     moment = evidence.research_clock()  # read once: the retrieval time and 'today' agree
     retrieved = evidence.retrieved_text(moment)
     result = intake(
@@ -378,6 +386,7 @@ def _research_staging(
         result.refused,
         result.fetches if ruling is not None else (),
         ruling,
+        {i.item_id: held[i.sha256] for i in result.accepted if i.sha256 in held},
     )
 
 
@@ -431,12 +440,15 @@ def check_arguments(
     research_manifest: Path | None = None,
     research_ruling: Path | None = None,
     resume: bool = False,
+    replay_from: Path | None = None,
 ) -> CheckedRun:
     """Every call-shape check, in order, before any write. Raises a ``RunInputError``
     subclass, ``ContextRefused``, ``UndecodableHtml`` or a CP-DR ``ResearchError``; never writes.
     A ``research_ruling`` is read only when the research manifest has a url row.
     ``resume`` skips the check that ``run_dir`` is new: ``run_pathway`` checks a run directory it
-    resumes itself."""
+    resumes itself. ``replay_from`` (the earlier run of a rerun) lets the research staging keep that
+    run's ``retrieved`` for unchanged evidence (O7-R67); ``check_replay`` still decides whether the
+    rerun is accepted, and a refused rerun writes nothing."""
     _research_arguments(cp_dr, research_manifest, research_ruling)
     if not resume:
         _check_run_dir(run_dir)
@@ -452,7 +464,8 @@ def check_arguments(
     files, requests = _case_files(sources, source_raw)
     staging = None
     if research_manifest is not None:
-        staging = _research_staging(research_manifest, run_context, research_ruling)
+        earlier = None if replay_from is None else evidence.earlier_retrieved(replay_from)
+        staging = _research_staging(research_manifest, run_context, research_ruling, earlier)
         research_files, research_requests = _research_files(staging)
         files.extend(research_files)
         requests.extend(research_requests)
@@ -509,7 +522,10 @@ def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
         research = run_dir / evidence.RESEARCH_DIR
         os.mkdir(research)
         evidence.write_evidence(
-            research / evidence.EVIDENCE_FILE, checked.research.accepted, checked.research.retrieved
+            research / evidence.EVIDENCE_FILE,
+            checked.research.accepted,
+            checked.research.retrieved,
+            checked.research.kept,
         )
         write_rejected(research / evidence.REJECTED_FILE, checked.research.refused)
         evidence.write_manifest_sha(

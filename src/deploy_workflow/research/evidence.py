@@ -52,10 +52,14 @@ def retrieved_text(moment: datetime) -> str:
     return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def evidence_rows(accepted: Sequence[AcceptedItem], retrieved: str) -> list[dict[str, Any]]:
+def evidence_rows(
+    accepted: Sequence[AcceptedItem], retrieved: str, kept: Mapping[str, str] | None = None
+) -> list[dict[str, Any]]:
     """The records, sorted by ``item_id``: ``{item_id, family, published, locator, sha256,
     retrieved, path, origin, url}`` (a supplied item has a ``path`` and no ``url``; a web item the
-    reverse)."""
+    reverse). ``retrieved`` is the intake instant; ``kept`` maps an ``item_id`` to the earlier
+    instant a rerun keeps for it (O7-R67), so an item it names takes that one."""
+    kept = kept or {}
     return [
         {
             "item_id": item.item_id,
@@ -63,7 +67,7 @@ def evidence_rows(accepted: Sequence[AcceptedItem], retrieved: str) -> list[dict
             "published": None if item.published is None else item.published.isoformat(),
             "locator": item.locator,
             "sha256": item.sha256,
-            "retrieved": retrieved,
+            "retrieved": kept.get(item.item_id, retrieved),
             "path": item.path,
             "origin": item.origin,
             "url": item.url,
@@ -72,14 +76,21 @@ def evidence_rows(accepted: Sequence[AcceptedItem], retrieved: str) -> list[dict
     ]
 
 
-def evidence_bytes(accepted: Sequence[AcceptedItem], retrieved: str) -> bytes:
-    rows = evidence_rows(accepted, retrieved)
+def evidence_bytes(
+    accepted: Sequence[AcceptedItem], retrieved: str, kept: Mapping[str, str] | None = None
+) -> bytes:
+    rows = evidence_rows(accepted, retrieved, kept)
     return (json.dumps(rows, indent=1, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def write_evidence(path: Path, accepted: Sequence[AcceptedItem], retrieved: str) -> bytes:
+def write_evidence(
+    path: Path,
+    accepted: Sequence[AcceptedItem],
+    retrieved: str,
+    kept: Mapping[str, str] | None = None,
+) -> bytes:
     """Write ``evidence.json`` (the directory exists) and return its bytes."""
-    data = evidence_bytes(accepted, retrieved)
+    data = evidence_bytes(accepted, retrieved, kept)
     path.write_bytes(data)
     return data
 
@@ -128,6 +139,17 @@ def read_evidence(path: Path) -> tuple[Mapping[str, Any], ...]:
     if len({row["item_id"] for row in rows}) != len(rows):
         raise EvidenceRecordInvalid(f"{path.name} repeats an item_id")
     return tuple(rows)
+
+
+def earlier_retrieved(run_dir: Path) -> dict[str, str]:
+    """``{sha256: retrieved}`` of an earlier run's ``research/evidence.json`` (O7-R67): what a rerun
+    keeps for evidence whose bytes are unchanged. ``{}`` when the run has no such record (a run
+    without CP-DR keeps nothing); a record that is there and unreadable raises
+    ``EvidenceRecordInvalid`` rather than falling back to the clock."""
+    path = run_dir / RESEARCH_DIR / EVIDENCE_FILE
+    if not path.is_file():
+        return {}
+    return {str(row["sha256"]): str(row["retrieved"]) for row in read_evidence(path)}
 
 
 def fetches_bytes(records: Sequence[FetchRecord]) -> bytes:

@@ -1036,6 +1036,7 @@ def run_pathway(
             research_manifest=research_manifest,
             research_ruling=research_ruling,
             resume=resume,
+            replay_from=replay_from,
         )
         entries = _source_entries(checked, sources, context)
         replay = _checked_replay(checked, run_dir, resume, replay_from, repaired)

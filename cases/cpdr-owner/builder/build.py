@@ -89,7 +89,9 @@ cp1a = next(c for c in base["consumers"] if c["module_id"] == "CP-1A")
 review = copy.deepcopy(base)
 consumer = copy.deepcopy(cp1a)
 consumer["module_id"] = "CP-DR"
-consumer["evidence_demand"] = "Located spans in the prepared sources that answer the open readiness gaps"
+consumer["evidence_demand"] = (
+    "Located spans in the prepared sources that answer the open readiness gaps"
+)
 consumer["rationale"] = (
     "Research can run on the located sources; questions the sources cannot answer stay unresolved."
 )
@@ -109,10 +111,14 @@ review["gaps"] = [
 ]
 review["analysis"] = copy.deepcopy(base["analysis"])
 CP0_DELTA = [
-    "consumers: the single CP-1A..CP-2 entries are replaced by one CP-DR entry copied from the CP-1A entry "
-    "(sources, citations, limitations unchanged; demand and rationale reworded)",
-    "gaps: gap_id, kind, severity and remediation unchanged; description drops the clause naming CP-1A rows; "
-    "affected_modules = [CP-DR] (a gap may only name selected modules, readiness.py validate_review)",
+    (
+        "consumers: the single CP-1A..CP-2 entries are replaced by one CP-DR entry copied from the CP-1A entry "
+        "(sources, citations, limitations unchanged; demand and rationale reworded)"
+    ),
+    (
+        "gaps: gap_id, kind, severity and remediation unchanged; description drops the clause naming CP-1A rows; "
+        "affected_modules = [CP-DR] (a gap may only name selected modules, readiness.py validate_review)"
+    ),
     "sources, objective, reporting_period, analysis: unchanged from the snapshot gap literal",
 ]
 
@@ -174,7 +180,9 @@ A_DIST = (
 Q_OWN = "Who owns the issuer and in what proportions?"
 L_OWN = "No prepared source names the owners of the issuer or their holdings."
 Q_POL = "Which policy governs distributions to the owners of the issuer?"
-L_POL = "No prepared source describes a distribution policy; the statements show only the amounts paid."
+L_POL = (
+    "No prepared source describes a distribution policy; the statements show only the amounts paid."
+)
 
 CIT_TRANS = [
     find_quote(
@@ -202,7 +210,9 @@ CIT_DIST = [
 ]
 
 
-def question(qid, text, outcome, *, answer=None, category=None, citations=(), searched, limitation=None):
+def question(
+    qid, text, outcome, *, answer=None, category=None, citations=(), searched, limitation=None
+):
     return {
         "question_id": qid,
         "text": text,
@@ -219,10 +229,24 @@ def research(*qs):
     return {"gaps": [{"gap_id": GAP_ID, "questions": list(qs)}]}
 
 
-Q1 = question("transactions", Q_TRANS, "answered", answer=A_TRANS, category="Documentary Fact",
-              citations=CIT_TRANS, searched=["financial"])
-Q2 = question("distributions", Q_DIST, "answered", answer=A_DIST, category="Documentary Fact",
-              citations=CIT_DIST, searched=["financial"])
+Q1 = question(
+    "transactions",
+    Q_TRANS,
+    "answered",
+    answer=A_TRANS,
+    category="Documentary Fact",
+    citations=CIT_TRANS,
+    searched=["financial"],
+)
+Q2 = question(
+    "distributions",
+    Q_DIST,
+    "answered",
+    answer=A_DIST,
+    category="Documentary Fact",
+    citations=CIT_DIST,
+    searched=["financial"],
+)
 Q3 = question("owner-identity", Q_OWN, "not_found", searched=list(ORDER), limitation=L_OWN)
 Q4 = question("distribution-policy", Q_POL, "not_found", searched=list(ORDER), limitation=L_POL)
 
@@ -275,7 +299,9 @@ def read(source, first, last=None):
     return {
         "tool": "read_pages",
         "arguments": {"source_id": source, "first_page": first, "last_page": last},
-        "expect_spans": [{"source_id": source, "locator": f"page:{n}"} for n in range(first, last + 1)],
+        "expect_spans": [
+            {"source_id": source, "locator": f"page:{n}"} for n in range(first, last + 1)
+        ],
     }
 
 
@@ -326,7 +352,9 @@ def calls_seen(calls):
             searched |= set(ORDER) if scope is None else {scope}
         elif c["tool"] == "read_pages":
             a = c["arguments"]
-            pages |= {(a["source_id"], f"page:{n}") for n in range(a["first_page"], a["last_page"] + 1)}
+            pages |= {
+                (a["source_id"], f"page:{n}") for n in range(a["first_page"], a["last_page"] + 1)
+            }
     return searched, pages
 
 
@@ -334,7 +362,9 @@ def citation_issue(c):
     if c["source_id"] not in SRC:
         return f"Unavailable or changed source: {c['source_id']}"
     if c["quote"] not in TEXT.get((c["source_id"], c["locator"]), ""):
-        assert len(c["quote"]) <= 200  # readiness.citation_issues shows a quote whole up to 200 characters
+        assert (
+            len(c["quote"]) <= 200
+        )  # readiness.citation_issues shows a quote whole up to 200 characters
         return (
             f"Quote/locator mismatch: quote not found under {c['source_id']} {c['locator']} "
             f'(normalised whitespace, quote marks and dashes): "{c["quote"]}"'
@@ -366,12 +396,16 @@ def oracle_issues(payload, calls, agenda):
             seen_q.add(qid)
             if x["outcome"] == "answered":
                 if not (x["answer"] and x["category"] and x["citations"]):
-                    issues.append(f"an answered question needs an answer, a category and at least one citation: {qid}")
+                    issues.append(
+                        f"an answered question needs an answer, a category and at least one citation: {qid}"
+                    )
                 if x["limitation"]:
                     issues.append(f"an answered question carries no limitation: {qid}")
             else:
                 if x["answer"] or x["category"] or x["citations"]:
-                    issues.append(f"a not_found question carries no answer, category or citation: {qid}")
+                    issues.append(
+                        f"a not_found question carries no answer, category or citation: {qid}"
+                    )
                 if not x["limitation"]:
                     issues.append(f"a not_found question states its limitation: {qid}")
             if not x["searched_sources"]:
@@ -379,7 +413,9 @@ def oracle_issues(payload, calls, agenda):
             for sid in x["searched_sources"]:
                 if sid not in SRC:
                     issues.append(f"searched source is not a ready prepared source: {qid} {sid}")
-                if x["outcome"] == "not_found" and sid not in searched:  # RULES: absence backed by a search
+                if (
+                    x["outcome"] == "not_found" and sid not in searched
+                ):  # RULES: absence backed by a search
                     unbacked.append(
                         f"{UNBACKED_ABSENCE}: {qid} not_found for {sid}; search_pack that source before claiming it is not found"
                     )
@@ -387,8 +423,13 @@ def oracle_issues(payload, calls, agenda):
                 found = citation_issue(c)
                 if found:
                     issues.append(found)
-                if re.fullmatch(r"page:[0-9]+", c["locator"]) and (c["source_id"], c["locator"]) not in pages:
-                    unread.add((c["source_id"], c["locator"]))  # RULES: cited page:N read (tools.py _PAGE)
+                if (
+                    re.fullmatch(r"page:[0-9]+", c["locator"])
+                    and (c["source_id"], c["locator"]) not in pages
+                ):
+                    unread.add(
+                        (c["source_id"], c["locator"])
+                    )  # RULES: cited page:N read (tools.py _PAGE)
             texts = [t for t in (x["text"], x["answer"], x["limitation"]) if t]
             if any(ch.isdigit() for t in texts for ch in t):  # str.isdigit(), any character
                 issues.append(f"text must not contain a figure: {qid}")
@@ -421,7 +462,11 @@ def drop_search(source):
     return [
         c
         for c in CALLS["partial"]
-        if not (c["tool"] == "search_pack" and c["arguments"]["source_id"] == source and c["arguments"]["query"] == QUERY_OWN)
+        if not (
+            c["tool"] == "search_pack"
+            and c["arguments"]["source_id"] == source
+            and c["arguments"]["query"] == QUERY_OWN
+        )
     ]
 
 
@@ -463,7 +508,11 @@ def repeated_qid(p):
     q(p, 1)["question_id"] = "transactions"
 
 
-NO_READ_P3 = [c for c in CALLS["partial"] if not (c["tool"] == "read_pages" and c["arguments"]["first_page"] == 3)]
+NO_READ_P3 = [
+    c
+    for c in CALLS["partial"]
+    if not (c["tool"] == "read_pages" and c["arguments"]["first_page"] == 3)
+]
 REFUSAL_SPECS = {
     "gap_unaddressed": variant(lambda p: p.update(gaps=[])),
     "gap_with_five_questions": variant(five),
@@ -471,7 +520,9 @@ REFUSAL_SPECS = {
     "gap_repeated": variant(repeated_gap),
     "question_id_repeated": variant(repeated_qid),
     "answered_without_citation": variant(lambda p: q(p, 0).update(citations=[])),
-    "not_found_with_answer": variant(lambda p: q(p, 2).update(answer="Held by investors.", category="Analyst Interpretation")),
+    "not_found_with_answer": variant(
+        lambda p: q(p, 2).update(answer="Held by investors.", category="Analyst Interpretation")
+    ),
     "not_found_without_limitation": variant(lambda p: q(p, 2).update(limitation=None)),
     "answered_with_limitation": variant(lambda p: q(p, 0).update(limitation="Partly covered.")),
     "no_searched_source": variant(lambda p: q(p, 2).update(searched_sources=[])),
@@ -481,7 +532,9 @@ REFUSAL_SPECS = {
     "quote_not_verbatim": variant(forged),
     "citation_outside_pack": variant(bad_source),
     "digit_in_text": variant(lambda p: q(p, 0).update(answer="Nothing happened in 2025.")),
-    "prohibited_conclusion": variant(lambda p: q(p, 2).update(limitation="We recommend asking the sponsor.")),
+    "prohibited_conclusion": variant(
+        lambda p: q(p, 2).update(limitation="We recommend asking the sponsor.")
+    ),
     "submission_against_empty_agenda": variant(lambda p: None, agenda="empty_agenda"),
 }
 QUOTE_ISSUE = (
@@ -496,11 +549,17 @@ PINNED = {
     "unknown_gap": ["gap_id is not in the CP-0 agenda: invented-gap"],
     "gap_repeated": [f"gap_id appears twice: {GAP_ID}"],
     "question_id_repeated": ["question_id appears twice: transactions"],
-    "answered_without_citation": ["an answered question needs an answer, a category and at least one citation: transactions"],
-    "not_found_with_answer": ["a not_found question carries no answer, category or citation: owner-identity"],
+    "answered_without_citation": [
+        "an answered question needs an answer, a category and at least one citation: transactions"
+    ],
+    "not_found_with_answer": [
+        "a not_found question carries no answer, category or citation: owner-identity"
+    ],
     "not_found_without_limitation": ["a not_found question states its limitation: owner-identity"],
     "answered_with_limitation": ["an answered question carries no limitation: transactions"],
-    "no_searched_source": ["searched_sources must name at least one prepared source: owner-identity"],
+    "no_searched_source": [
+        "searched_sources must name at least one prepared source: owner-identity"
+    ],
     "searched_source_not_in_pack": [
         "searched source is not a ready prepared source: owner-identity web",
         f"{UNBACKED_ABSENCE}: owner-identity not_found for web; search_pack that source before claiming it is not found",
@@ -525,7 +584,9 @@ for name, spec in REFUSAL_SPECS.items():
     refusal_inputs[name] = {
         "payload": spec["payload"],
         "calls": spec["calls"],
-        "cp0": "cp0_readiness_review" if spec["cp0"] == "partial" else "cp0_readiness_review_empty_agenda",
+        "cp0": "cp0_readiness_review"
+        if spec["cp0"] == "partial"
+        else "cp0_readiness_review_empty_agenda",
     }
     refusal_expected[name] = {
         "disposition": "invalid",
@@ -536,9 +597,14 @@ for name, spec in REFUSAL_SPECS.items():
     }
 
 # blocked: attempt 0 and attempt 1 both invalid (a forged quote, then a figure in text)
-BLOCKED = {"attempt_0": variant(forged)["payload"], "attempt_1": variant(lambda p: q(p, 0).update(answer="Nothing happened in 2025."))["payload"]}
+BLOCKED = {
+    "attempt_0": variant(forged)["payload"],
+    "attempt_1": variant(lambda p: q(p, 0).update(answer="Nothing happened in 2025."))["payload"],
+}
 assert oracle_issues(BLOCKED["attempt_0"], CALLS["blocked"], [GAP_ID]) == (QUOTE_ISSUE,)
-assert oracle_issues(BLOCKED["attempt_1"], CALLS["blocked"], [GAP_ID]) == ("text must not contain a figure: transactions",)
+assert oracle_issues(BLOCKED["attempt_1"], CALLS["blocked"], [GAP_ID]) == (
+    "text must not contain a figure: transactions",
+)
 
 # --- Python bookkeeping (the oracle's own composer) ---------------------------------------------
 D = Decimal
@@ -564,8 +630,14 @@ def bookkeeping(payload):
         n = len(g["questions"])
         a = sum(1 for x in g["questions"] if x["outcome"] == "answered")
         gaps.append(
-            {"gap_id": g["gap_id"], "questions": n, "answered": a, "unresolved": n - a,
-             "answered_share": share(a, n), "status": gap_status(a, n)}
+            {
+                "gap_id": g["gap_id"],
+                "questions": n,
+                "answered": a,
+                "unresolved": n - a,
+                "answered_share": share(a, n),
+                "status": gap_status(a, n),
+            }
         )
         total_q, total_a = total_q + n, total_a + a
     statuses = [x["status"] for x in gaps]
@@ -584,12 +656,18 @@ def bookkeeping(payload):
 
 
 GAP_NOTE = "G# is the report-wide gap number, bound at run time (A7 exception)"
-FORMULA_COUNT = "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
-FORMULA_STATUS = "Resolved if every question is answered, Unresolved if none is, else Partially resolved"
+FORMULA_COUNT = (
+    "counts of the submitted questions by outcome; share = answered / total, 4 dp half-up"
+)
+FORMULA_STATUS = (
+    "Resolved if every question is answered, Unresolved if none is, else Partially resolved"
+)
 FORMULA_OUTCOME = "the submitted outcome of the question, accepted only when Python's checks pass (answered needs a cited answer)"
 NA_LIMITATION = "No research question was submitted, so an answered share has no denominator."
 EMPTY_LIMITATION = "No gaps identified by this supplied review; no research question was submitted."
-BASE_LIMITATION = "Research used the prepared local sources only; nothing outside the pack was searched."
+BASE_LIMITATION = (
+    "Research used the prepared local sources only; nothing outside the pack was searched."
+)
 
 
 def evidence_text(cites):
@@ -604,7 +682,9 @@ def build_case(case_id, payload):
 
     def add(table, row, field, label, **kw):
         fid = f"{table}.{row}.{field}"
-        facts.append({"fact_id": fid, "table_id": table, "row_id": row, "field": field, "label": label, **kw})
+        facts.append(
+            {"fact_id": fid, "table_id": table, "row_id": row, "field": field, "label": label, **kw}
+        )
         return fid
 
     def text_cell(table, row, field, text, klass=None, calc=None, formula=None, citations=()):
@@ -616,70 +696,207 @@ def build_case(case_id, payload):
         if citations:
             kw["citations"] = list(citations)
         fid = add(table, row, field, field.replace("_", " "), **kw)
-        return {"fact": fid, "shown": text, "state": "known", "text": text, "unit": None, "value_class": klass}
+        return {
+            "fact": fid,
+            "shown": text,
+            "state": "known",
+            "text": text,
+            "unit": None,
+            "value_class": klass,
+        }
 
     def num_cell(table, row, field, amount, unit, shown):
-        fid = add(table, row, field, field.replace("_", " "), amount=str(amount), unit=unit, period=AS_OF,
-                  value_class="calculated", status="known", calculation_id=f"cpdr-{row}-{field}"
-                  if table == "TDR.1" else f"cpdr-total-{field}", formula=FORMULA_COUNT)
-        return {"fact": fid, "shown": shown, "state": "known", "amount": str(amount), "unit": unit, "value_class": "calculated"}
+        fid = add(
+            table,
+            row,
+            field,
+            field.replace("_", " "),
+            amount=str(amount),
+            unit=unit,
+            period=AS_OF,
+            value_class="calculated",
+            status="known",
+            calculation_id=f"cpdr-{row}-{field}" if table == "TDR.1" else f"cpdr-total-{field}",
+            formula=FORMULA_COUNT,
+        )
+        return {
+            "fact": fid,
+            "shown": shown,
+            "state": "known",
+            "amount": str(amount),
+            "unit": unit,
+            "value_class": "calculated",
+        }
 
     def missing_cell(table, row, field, limitation):
-        fid = add(table, row, field, field.replace("_", " "), status="missing", limitation=limitation,
-                  value_class="analyst_judgment")
+        fid = add(
+            table,
+            row,
+            field,
+            field.replace("_", " "),
+            status="missing",
+            limitation=limitation,
+            value_class="analyst_judgment",
+        )
         return {"fact": fid, "shown": "∅ G#", "state": "gap", "note": GAP_NOTE}
 
     def na_cell(table, row, field, unit, calc):
-        fid = add(table, row, field, field.replace("_", " "), unit=unit, period=AS_OF, value_class="calculated",
-                  status="not_applicable", calculation_id=calc, formula=FORMULA_COUNT, limitation=NA_LIMITATION)
+        fid = add(
+            table,
+            row,
+            field,
+            field.replace("_", " "),
+            unit=unit,
+            period=AS_OF,
+            value_class="calculated",
+            status="not_applicable",
+            calculation_id=calc,
+            formula=FORMULA_COUNT,
+            limitation=NA_LIMITATION,
+        )
         return {"fact": fid, "shown": "∅ G# n.m.", "state": "not_meaningful", "note": GAP_NOTE}
 
     if not empty:
         t1 = []
         for g, b in zip(payload["gaps"], bk["gaps"]):
             gid = g["gap_id"]
-            t1.append([gid, {
-                "description": text_cell("TDR.1", gid, "description", GAP_DESC),
-                "kind_severity": text_cell("TDR.1", gid, "kind_severity", "scope/material"),
-                "named_consumers": text_cell("TDR.1", gid, "named_consumers", "CP-DR"),
-                "questions": num_cell("TDR.1", gid, "questions", b["questions"], "questions", f"{b['questions']} questions"),
-                "answered": num_cell("TDR.1", gid, "answered", b["answered"], "questions", f"{b['answered']} questions"),
-                "unresolved": num_cell("TDR.1", gid, "unresolved", b["unresolved"], "questions", f"{b['unresolved']} questions"),
-                "answered_share": num_cell("TDR.1", gid, "answered_share", b["answered_share"], "decimal_fraction",
-                                           shown_pct(b["answered_share"])),
-                "status": text_cell("TDR.1", gid, "status", b["status"], "calculated", f"cpdr-{gid}-status", FORMULA_STATUS),
-            }])
-        tables["TDR.1"] = {"title": "Research agenda and gap status", "row_header": "Gap", "rows": t1}
+            t1.append(
+                [
+                    gid,
+                    {
+                        "description": text_cell("TDR.1", gid, "description", GAP_DESC),
+                        "kind_severity": text_cell("TDR.1", gid, "kind_severity", "scope/material"),
+                        "named_consumers": text_cell("TDR.1", gid, "named_consumers", "CP-DR"),
+                        "questions": num_cell(
+                            "TDR.1",
+                            gid,
+                            "questions",
+                            b["questions"],
+                            "questions",
+                            f"{b['questions']} questions",
+                        ),
+                        "answered": num_cell(
+                            "TDR.1",
+                            gid,
+                            "answered",
+                            b["answered"],
+                            "questions",
+                            f"{b['answered']} questions",
+                        ),
+                        "unresolved": num_cell(
+                            "TDR.1",
+                            gid,
+                            "unresolved",
+                            b["unresolved"],
+                            "questions",
+                            f"{b['unresolved']} questions",
+                        ),
+                        "answered_share": num_cell(
+                            "TDR.1",
+                            gid,
+                            "answered_share",
+                            b["answered_share"],
+                            "decimal_fraction",
+                            shown_pct(b["answered_share"]),
+                        ),
+                        "status": text_cell(
+                            "TDR.1",
+                            gid,
+                            "status",
+                            b["status"],
+                            "calculated",
+                            f"cpdr-{gid}-status",
+                            FORMULA_STATUS,
+                        ),
+                    },
+                ]
+            )
+        tables["TDR.1"] = {
+            "title": "Research agenda and gap status",
+            "row_header": "Gap",
+            "rows": t1,
+        }
 
         t2 = []
         for g in payload["gaps"]:
             for x in g["questions"]:
                 qid, ans = x["question_id"], x["outcome"] == "answered"
-                t2.append([qid, {
-                    "gap": text_cell("TDR.2", qid, "gap", g["gap_id"]),
-                    "question": text_cell("TDR.2", qid, "question", x["text"], "analyst_judgment"),
-                    "outcome": text_cell("TDR.2", qid, "outcome", "Answered" if ans else "Not found", "calculated",
-                                         f"cpdr-{qid}-outcome", FORMULA_OUTCOME),
-                    "answer": (text_cell("TDR.2", qid, "answer", x["answer"], "analyst_judgment", citations=x["citations"])
-                               if ans else missing_cell("TDR.2", qid, "answer", x["limitation"])),
-                    "evidence": (text_cell("TDR.2", qid, "evidence", evidence_text(x["citations"]), citations=x["citations"])
-                                 if ans else missing_cell("TDR.2", qid, "evidence", x["limitation"])),
-                    "searched": text_cell("TDR.2", qid, "searched", ", ".join(x["searched_sources"])),
-                }])
-        tables["TDR.2"] = {"title": "Research questions and cited answers", "row_header": "Question", "rows": t2}
+                t2.append(
+                    [
+                        qid,
+                        {
+                            "gap": text_cell("TDR.2", qid, "gap", g["gap_id"]),
+                            "question": text_cell(
+                                "TDR.2", qid, "question", x["text"], "analyst_judgment"
+                            ),
+                            "outcome": text_cell(
+                                "TDR.2",
+                                qid,
+                                "outcome",
+                                "Answered" if ans else "Not found",
+                                "calculated",
+                                f"cpdr-{qid}-outcome",
+                                FORMULA_OUTCOME,
+                            ),
+                            "answer": (
+                                text_cell(
+                                    "TDR.2",
+                                    qid,
+                                    "answer",
+                                    x["answer"],
+                                    "analyst_judgment",
+                                    citations=x["citations"],
+                                )
+                                if ans
+                                else missing_cell("TDR.2", qid, "answer", x["limitation"])
+                            ),
+                            "evidence": (
+                                text_cell(
+                                    "TDR.2",
+                                    qid,
+                                    "evidence",
+                                    evidence_text(x["citations"]),
+                                    citations=x["citations"],
+                                )
+                                if ans
+                                else missing_cell("TDR.2", qid, "evidence", x["limitation"])
+                            ),
+                            "searched": text_cell(
+                                "TDR.2", qid, "searched", ", ".join(x["searched_sources"])
+                            ),
+                        },
+                    ]
+                )
+        tables["TDR.2"] = {
+            "title": "Research questions and cited answers",
+            "row_header": "Question",
+            "rows": t2,
+        }
 
-    total_keys = ("gaps_total", "gaps_resolved", "gaps_partial", "gaps_unresolved",
-                  "questions_total", "answered_total", "unresolved_total", "answered_share")
+    total_keys = (
+        "gaps_total",
+        "gaps_resolved",
+        "gaps_partial",
+        "gaps_unresolved",
+        "questions_total",
+        "answered_total",
+        "unresolved_total",
+        "answered_share",
+    )
     total_cells = {}
     for k in total_keys:
         if k == "answered_share":
-            total_cells[k] = (na_cell("TDR.3", "total", k, "decimal_fraction", "cpdr-total-answered_share")
-                              if bk[k] is None else
-                              num_cell("TDR.3", "total", k, bk[k], "decimal_fraction", shown_pct(bk[k])))
+            total_cells[k] = (
+                na_cell("TDR.3", "total", k, "decimal_fraction", "cpdr-total-answered_share")
+                if bk[k] is None
+                else num_cell("TDR.3", "total", k, bk[k], "decimal_fraction", shown_pct(bk[k]))
+            )
         else:
             word = "gaps" if k.startswith("gaps") else "questions"
             total_cells[k] = num_cell("TDR.3", "total", k, bk[k], word, f"{bk[k]} {word}")
-    t3 = [["total", total_cells]]  # the total row only: a declared ReportTable needs one fact per column in every row
+    t3 = [
+        ["total", total_cells]
+    ]  # the total row only: a declared ReportTable needs one fact per column in every row
     own_limits = [BASE_LIMITATION]
     if empty:
         own_limits.append(EMPTY_LIMITATION)
@@ -690,34 +907,55 @@ def build_case(case_id, payload):
                 own_limits.append(f"Unresolved: {x['text']} {x['limitation']}")
     tables["TDR.3"] = {"title": "Research coverage totals", "row_header": "Total", "rows": t3}
 
-    ref = lambda k, u: "{TDR.3.total." + k + "|" + u + "}"  # noqa: E731
+    ref = lambda k, u: "{TDR.3.total." + k + "|" + u + "}"
     if empty:
-        summary = (f"Research covered {ref('questions_total', 'questions')} because the supplied readiness "
-                   f"review identified {ref('gaps_total', 'gaps')}.")
-        spelled = (f"Research covered {bk['questions_total']} questions because the supplied readiness "
-                   f"review identified {bk['gaps_total']} gaps.")
+        summary = (
+            f"Research covered {ref('questions_total', 'questions')} because the supplied readiness "
+            f"review identified {ref('gaps_total', 'gaps')}."
+        )
+        spelled = (
+            f"Research covered {bk['questions_total']} questions because the supplied readiness "
+            f"review identified {bk['gaps_total']} gaps."
+        )
     else:
         summary = (
             f"Research covered {ref('questions_total', 'questions')}; local sources answered "
             f"{ref('answered_total', 'questions')} ({ref('answered_share', '%')}) and "
             f"{ref('unresolved_total', 'questions')} remain unresolved."
         )
-        spelled = (f"Research covered {bk['questions_total']} questions; local sources answered "
-                   f"{bk['answered_total']} questions ({shown_pct(bk['answered_share'])}) and "
-                   f"{bk['unresolved_total']} questions remain unresolved.")
+        spelled = (
+            f"Research covered {bk['questions_total']} questions; local sources answered "
+            f"{bk['answered_total']} questions ({shown_pct(bk['answered_share'])}) and "
+            f"{bk['unresolved_total']} questions remain unresolved."
+        )
     claims = [{"claim_id": "CPDR-SUM-01", "text": summary, "citations": [], "spelled": spelled}]
     for g in payload["gaps"]:
         for x in g["questions"]:
             if x["outcome"] == "answered":
-                claims.append({"claim_id": f"CPDR-ANS-{x['question_id']}", "text": x["answer"],
-                               "citations": x["citations"], "spelled": x["answer"]})
-    settled = list(dict.fromkeys([*own_limits, SYNTH]))  # execution.py:444-447 appends the synthetic line
+                claims.append(
+                    {
+                        "claim_id": f"CPDR-ANS-{x['question_id']}",
+                        "text": x["answer"],
+                        "citations": x["citations"],
+                        "spelled": x["answer"],
+                    }
+                )
+    settled = list(
+        dict.fromkeys([*own_limits, SYNTH])
+    )  # execution.py:444-447 appends the synthetic line
     inherited = [t for t in cp0_limits if t not in settled]  # execution.py:345-366
-    unresolved_ids = [x["question_id"] for g in payload["gaps"] for x in g["questions"] if x["outcome"] == "not_found"]
+    unresolved_ids = [
+        x["question_id"]
+        for g in payload["gaps"]
+        for x in g["questions"]
+        if x["outcome"] == "not_found"
+    ]
     return {
         "case_id": case_id,
-        "bookkeeping": {**{k: (str(v) if isinstance(v, Decimal) else v) for k, v in bk.items() if k != "gaps"},
-                        "gaps": [{**g, "answered_share": str(g["answered_share"])} for g in bk["gaps"]]},
+        "bookkeeping": {
+            **{k: (str(v) if isinstance(v, Decimal) else v) for k, v in bk.items() if k != "gaps"},
+            "gaps": [{**g, "answered_share": str(g["answered_share"])} for g in bk["gaps"]],
+        },
         "tables": tables,
         "facts": facts,
         "claims": claims,
@@ -727,8 +965,11 @@ def build_case(case_id, payload):
         "module_status": "restricted",
         "module_status_why": "synthetic case_kind and non-empty own limitations (execution.py:441-457)",
         "consumption_facts": {
-            "per_gap": [f"TDR.1.{g['gap_id']}.{f}" for g in bk["gaps"]
-                        for f in ("questions", "answered", "unresolved", "answered_share", "status")],
+            "per_gap": [
+                f"TDR.1.{g['gap_id']}.{f}"
+                for g in bk["gaps"]
+                for f in ("questions", "answered", "unresolved", "answered_share", "status")
+            ],
             "totals": [f"TDR.3.total.{k}" for k in total_keys],
             "missing_for_unresolved": [f"TDR.2.{qid}.answer" for qid in unresolved_ids],
         },
@@ -739,15 +980,25 @@ CASES = {k: build_case(k, v) for k, v in SUB.items()}
 FIXTURES = {}
 for name, pay in {
     "fixture_resolved": research(Q1, Q2),
-    "fixture_two_gaps": {"gaps": [research(Q1, Q2)["gaps"][0], {"gap_id": "second-gap", "questions": [Q3]}]},
+    "fixture_two_gaps": {
+        "gaps": [research(Q1, Q2)["gaps"][0], {"gap_id": "second-gap", "questions": [Q3]}]
+    },
 }.items():
     bk = bookkeeping(pay)
     FIXTURES[name] = {
         "note": "composer-only derivation: no run, no tables",
-        "derived": {**{k: (str(v) if isinstance(v, Decimal) else v) for k, v in bk.items() if k != "gaps"},
-                    "answered_share_shown": shown_pct(bk["answered_share"]),
-                    "gaps": [{**g, "answered_share": str(g["answered_share"]), "shown": shown_pct(g["answered_share"])}
-                             for g in bk["gaps"]]},
+        "derived": {
+            **{k: (str(v) if isinstance(v, Decimal) else v) for k, v in bk.items() if k != "gaps"},
+            "answered_share_shown": shown_pct(bk["answered_share"]),
+            "gaps": [
+                {
+                    **g,
+                    "answered_share": str(g["answered_share"]),
+                    "shown": shown_pct(g["answered_share"]),
+                }
+                for g in bk["gaps"]
+            ],
+        },
     }
 
 # --- rendering pin (lease M6, acceptance 7): re-pinned 2026-10-28 to the landed 0d render fixes (41a8fdb, b4ae187) ---
@@ -756,14 +1007,29 @@ for name, pay in {
 # "Not run: <codes> was not requested in this run."; a module outside those dependencies keeps "Not in this Pathway".
 RENDER = {
     "observed_with": "report_view.build(Execution.create(pack).view(), credit_snapshot pathway, SHIPPED_MAPS); modules CP-0 and CP-DR unrun; "
-                     "report_view.py sha256 51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12 (after 0d 41a8fdb and 0d(c) b4ae187)",
+    "report_view.py sha256 51a6853ec0e80393a50cdf8ed577cddaf2eee8e26246609b85dea01712560e12 (after 0d 41a8fdb and 0d(c) b4ae187)",
     "call_withheld": "not_requested",
     "call_band": {"state": "not-requested", "words": "Not run"},
     "navigator_words_scope": "modules outside the run's plan only; CP-0 and CP-DR follow their head status",
     "navigator_words": {
         "Not run": ["CP-1", "CP-1A", "CP-2", "CP-3", "CP-4", "CP-5", "CP-6", "CP-MODEL"],
-        "Not in this Pathway": ["CP-1B", "CP-1C", "CP-1D", "CP-2A", "CP-2E", "CP-2G", "CP-2H", "CP-4C", "CP-8", "CP-L10",
-                                "CP-MEMO", "CP-OS", "CP-2D", "CP-3D", "CP-3C"],
+        "Not in this Pathway": [
+            "CP-1B",
+            "CP-1C",
+            "CP-1D",
+            "CP-2A",
+            "CP-2E",
+            "CP-2G",
+            "CP-2H",
+            "CP-4C",
+            "CP-8",
+            "CP-L10",
+            "CP-MEMO",
+            "CP-OS",
+            "CP-2D",
+            "CP-3D",
+            "CP-3C",
+        ],
     },
     "blocks": [
         {"block_id": b, "state": st, "note": note}
@@ -772,18 +1038,30 @@ RENDER = {
             ("company-operating-model", "not_run", "Not run: CP-1A was not requested in this run."),
             ("model-chart-strip", "not_run", "Not run: CP-1 was not requested in this run."),
             ("capital-structure", "not_run", "Not run: CP-1 was not requested in this run."),
-            ("financials-credit-metrics", "not_run", "Not run: CP-1 was not requested in this run."),
-            ("strengths-weaknesses", "not_run", "Not run: CP-2 · CP-6 was not requested in this run."),
+            (
+                "financials-credit-metrics",
+                "not_run",
+                "Not run: CP-1 was not requested in this run.",
+            ),
+            (
+                "strengths-weaknesses",
+                "not_run",
+                "Not run: CP-2 · CP-6 was not requested in this run.",
+            ),
             ("relative-value", "not_run", "Not run: CP-3 was not requested in this run."),
             ("company-profile", "not_run", "Not run: CP-1A was not requested in this run."),
             ("transaction-summary", "absent", "Absent: No module produces this block yet."),
             ("portfolio-fit", "absent", "Absent: No module produces this block yet."),
             ("committee-challenge", "not_run", "Not run: CP-6 was not requested in this run."),
-            ("what-changed", "not_in_pathway", "Not in this Pathway: CP-8 is not part of Credit Snapshot."),
+            (
+                "what-changed",
+                "not_in_pathway",
+                "Not in this Pathway: CP-8 is not part of Credit Snapshot.",
+            ),
         )
     ],
     "note": "the override-slice wording defect of the first pin is fixed by 0d (docs/reviews/0d-product-defects.md); "
-            "CP-8 is outside registry.dependencies of the Credit Snapshot preset, so it keeps 'Not in this Pathway'",
+    "CP-8 is outside registry.dependencies of the Credit Snapshot preset, so it keeps 'Not in this Pathway'",
     "pin": "product output at the report_view.py sha256 above; the pin changes only with a change to that render",
 }
 assert len(RENDER["blocks"]) == 12
@@ -795,30 +1073,36 @@ TAMPER = {
     "from": "Partially resolved",
     "to": "Resolved",
     "why_this_fact": "the table cell holds the fact id and the step output holds the submission references, so the status lives only in the "
-                     "result Module; it is the one fact the probe's rebuild (bookkeeping over the journaled payload) contradicts",
+    "result Module; it is the one fact the probe's rebuild (bookkeeping over the journaled payload) contradicts",
     "recipe": [
         "1. Copy the closed partial store directory (blobs, snapshots, current, audit) to a scratch path.",
-        "2. Load the CP-DR head's result Module; replace only the text of fact TDR.1.missing-ownership-transaction.status; leave every other "
-        "fact (TDR.1 questions 3, answered 2, unresolved 1, share 0.6667; every TDR.3.total.* fact), table, claim and limitation unchanged.",
+        (
+            "2. Load the CP-DR head's result Module; replace only the text of fact TDR.1.missing-ownership-transaction.status; leave every other "
+            "fact (TDR.1 questions 3, answered 2, unresolved 1, share 0.6667; every TDR.3.total.* fact), table, claim and limitation unchanged."
+        ),
         "3. Serialise the forged Module as Execution._store does (model_dump_json); its sha256 R2 must equal Module.content_hash(); write blobs/R2.",
-        "4. Build a new ExecutionSnapshot equal to the current one with the CP-DR Attempt.result_sha256 and Head.result_sha256 set to R2 "
-        "(status, inputs and commands unchanged, so head_of(forged Module) equals the Head) and the same parent; write snapshots/<its sha256>.json "
-        "and rewrite current to that digest.",
-        "5. In the retained receipt: set the CP-DR SettledHead.result_sha256 to R2; set receipt.snapshot_sha256 and every coordinate that named "
-        "the old final snapshot (the CP-DR settling OwnerSubmission.snapshot_after_sha256: owner_workflow.py _advance -> _finish_walk; its "
-        "record is retained as audit/submissions/<content_hash> by _retain) to the new digest; delete audit/submissions/<old record hash> and "
-        "write the edited OwnerSubmission as audit/submissions/<its content_hash> (model_dump_json bytes); rewrite audit/receipt.sha256 with "
-        "the forged receipt's content_hash (S1a R3-5 and CP-3 A4 pattern: the audit file travels under its new hash).",
+        (
+            "4. Build a new ExecutionSnapshot equal to the current one with the CP-DR Attempt.result_sha256 and Head.result_sha256 set to R2 "
+            "(status, inputs and commands unchanged, so head_of(forged Module) equals the Head) and the same parent; write snapshots/<its sha256>.json "
+            "and rewrite current to that digest."
+        ),
+        (
+            "5. In the retained receipt: set the CP-DR SettledHead.result_sha256 to R2; set receipt.snapshot_sha256 and every coordinate that named "
+            "the old final snapshot (the CP-DR settling OwnerSubmission.snapshot_after_sha256: owner_workflow.py _advance -> _finish_walk; its "
+            "record is retained as audit/submissions/<content_hash> by _retain) to the new digest; delete audit/submissions/<old record hash> and "
+            "write the edited OwnerSubmission as audit/submissions/<its content_hash> (model_dump_json bytes); rewrite audit/receipt.sha256 with "
+            "the forged receipt's content_hash (S1a R3-5 and CP-3 A4 pattern: the audit file travels under its new hash)."
+        ),
     ],
     "expect": {
         "passes": "everything upstream of the probe: audit inventory, blob and snapshot hashes, ancestor walk, head_of equality, begin and "
-                  "publication records, call and read replay, journaled-step replay (the payload and step are untouched)",
+        "publication records, call and read replay, journaled-step replay (the payload and step are untouched)",
         "refuses": "cpdr.probe raises WorkflowError('identity_mismatch'); verify_owner_run_receipt raises identity_mismatch",
         "test_asserts": "on the forged copy, _verify_audit and every check before _PROBES pass (as CP-3 A4 (a)); then cpdr.probe raises "
-                        "identity_mismatch. A test asserting identity_mismatch alone would never show that the probe was reached.",
+        "identity_mismatch. A test asserting identity_mismatch alone would never show that the probe was reached.",
     },
     "step_output_edit": "an edited CP-DR step output is caught by the store's own blob hash check, not by the probe's output comparison "
-                        "(recorded limitation, S1a R3-5)",
+    "(recorded limitation, S1a R3-5)",
 }
 
 # --- manifest ------------------------------------------------------------------------------------
@@ -829,30 +1113,56 @@ manifest = {
     "raw_rule": "Literal UTF-8 LF, no terminal LF per page; U+000C joins ordered pages for the source SHA256",
     "frozen_inputs": [{"path": p, "sha256": h} for p, h in PINS.items()],
     "sources": [
-        {"source_id": "identity", "ref": "cases/financial/manifest.json#sources[identity]", "sha256": SHA["identity"]},
-        {"source_id": "financial", "ref": "cases/financial/manifest.json#sources[financial]", "sha256": SHA["financial"],
-         "limitation": LIMIT_FIN},
-        {"source_id": "business", "ref": "cases/snapshot/manifest.json#business_source.gap", "sha256": SHA["business"],
-         "limitation": BUS_LIMIT},
+        {
+            "source_id": "identity",
+            "ref": "cases/financial/manifest.json#sources[identity]",
+            "sha256": SHA["identity"],
+        },
+        {
+            "source_id": "financial",
+            "ref": "cases/financial/manifest.json#sources[financial]",
+            "sha256": SHA["financial"],
+            "limitation": LIMIT_FIN,
+        },
+        {
+            "source_id": "business",
+            "ref": "cases/snapshot/manifest.json#business_source.gap",
+            "sha256": SHA["business"],
+            "limitation": BUS_LIMIT,
+        },
     ],
     "run": {
-        "run_id": RUN_ID, "issuer_id": "northbridge-synthetic", "issuer_name": ISSUER, "as_of": AS_OF,
-        "method_version": "deploy-v-r14", "case_kind": "synthetic", "pathway": "credit_snapshot",
+        "run_id": RUN_ID,
+        "issuer_id": "northbridge-synthetic",
+        "issuer_name": ISSUER,
+        "as_of": AS_OF,
+        "method_version": "deploy-v-r14",
+        "case_kind": "synthetic",
+        "pathway": "credit_snapshot",
         "requested_modules": ["CP-DR"],
     },
     "run_note": "requested_modules overrides the pathway preset (contracts.Run); plan = CP-0, CP-DR; no CP-1 promotion. "
-                "One CP-0 settlement is cloned for the partial, unresolved and blocked attempts and for each refusal "
-                "(attempt 0, own clone); the empty-agenda case has its own CP-0 settlement.",
+    "One CP-0 settlement is cloned for the partial, unresolved and blocked attempts and for each refusal "
+    "(attempt 0, own clone); the empty-agenda case has its own CP-0 settlement.",
     "plan_order_expected": ["CP-0", "CP-DR"],
-    "cp0_delta": CP0_DELTA + [
-        "empty agenda variant (submissions.json#cp0_readiness_review_empty_agenda): the same review with gaps = []; "
-        "validate_review accepts it and build_readiness emits only T5.review.gaps",
+    "cp0_delta": CP0_DELTA
+    + [
+        (
+            "empty agenda variant (submissions.json#cp0_readiness_review_empty_agenda): the same review with gaps = []; "
+            "validate_review accepts it and build_readiness emits only T5.review.gaps"
+        ),
     ],
     "upstream_facts_read": {
-        "gap_fact": {"fact_id": T5_FACT_ID, "text": T5_TEXT,
-                     "parse": "kind/severity = text before ': '; affects = between the last '; affects ' and the next '; '; remediation = rest"},
-        "empty_agenda_fact": {"fact_id": EMPTY_FACT_ID, "text": EMPTY_FACT_TEXT,
-                              "rule": "the only T5 fact of a review with no gap; no T5.<gap_id>.gap fact exists, so the agenda is empty"},
+        "gap_fact": {
+            "fact_id": T5_FACT_ID,
+            "text": T5_TEXT,
+            "parse": "kind/severity = text before ': '; affects = between the last '; affects ' and the next '; '; remediation = rest",
+        },
+        "empty_agenda_fact": {
+            "fact_id": EMPTY_FACT_ID,
+            "text": EMPTY_FACT_TEXT,
+            "rule": "the only T5 fact of a review with no gap; no T5.<gap_id>.gap fact exists, so the agenda is empty",
+        },
         "cp0_limitations": CP0_LIMITATIONS,
         "cp0_limitations_empty_agenda": CP0_LIMITATIONS_EMPTY,
         "T8.CP-DR.limits": T8_LIMITS,
@@ -861,8 +1171,16 @@ manifest = {
     "view_tree_draft": {
         "note": "draft proposal, not an observation; no quote, citation or record_json at any depth",
         "keys": {
-            "gaps": [{"gap_id": GAP_ID, "kind": "scope", "severity": "material", "description": GAP_DESC,
-                      "named_consumers": ["CP-DR"], "remediation": "Supply the ownership and transaction documents"}],
+            "gaps": [
+                {
+                    "gap_id": GAP_ID,
+                    "kind": "scope",
+                    "severity": "material",
+                    "description": GAP_DESC,
+                    "named_consumers": ["CP-DR"],
+                    "remediation": "Supply the ownership and transaction documents",
+                }
+            ],
             "sources": [{"source_id": s, "status": "ready"} for s in ORDER],
             "question_limits": {"min_per_gap": 1, "max_per_gap": 4},
             "upstream": {"CP-0": "restricted"},
@@ -872,8 +1190,12 @@ manifest = {
     "cases": [
         {"case_id": "partial", "submission": "submissions.json#cpdr.partial", "kind": "positive"},
         {"case_id": "unresolved", "submission": "submissions.json#cpdr.unresolved", "kind": "gap"},
-        {"case_id": "empty_agenda", "submission": "submissions.json#cpdr.empty_agenda", "kind": "empty_agenda",
-         "cp0": "submissions.json#cp0_readiness_review_empty_agenda"},
+        {
+            "case_id": "empty_agenda",
+            "submission": "submissions.json#cpdr.empty_agenda",
+            "kind": "empty_agenda",
+            "cp0": "submissions.json#cp0_readiness_review_empty_agenda",
+        },
         {"case_id": "blocked", "submission": "submissions.json#cpdr.blocked", "kind": "blocked"},
     ],
     "fixtures": list(FIXTURES),
@@ -887,11 +1209,15 @@ manifest = {
 submissions = {
     "schema_version": "cpdr-owner-submissions/1",
     "note": "Literal reference-and-judgment payloads. Figures never appear in analyst text; counts and shares are Python's. "
-            "pack_sha256 token is bound at run time.",
+    "pack_sha256 token is bound at run time.",
     "cp0_readiness_review": review,
     "cp0_readiness_review_empty_agenda": EMPTY_REVIEW,
-    "cpdr": {"partial": SUB["partial"], "unresolved": SUB["unresolved"], "empty_agenda": SUB["empty_agenda"],
-             "blocked": BLOCKED},
+    "cpdr": {
+        "partial": SUB["partial"],
+        "unresolved": SUB["unresolved"],
+        "empty_agenda": SUB["empty_agenda"],
+        "blocked": BLOCKED,
+    },
     "tool_calls": CALLS,
     "refusal_inputs": refusal_inputs,
 }
@@ -899,8 +1225,8 @@ submissions = {
 expected = {
     "schema_version": "cpdr-owner-expected/1",
     "derivation_note": "Python's bookkeeping rules applied by cases/cpdr-owner/builder/build.py to submissions.json; "
-                       "no product code consulted. share = answered / total quantised to 4 dp ROUND_HALF_UP, displayed x100 at 1 dp. "
-                       "Every issue tuple below is also derived by the builder's reference validator and asserted equal to the pinned text.",
+    "no product code consulted. share = answered / total quantised to 4 dp ROUND_HALF_UP, displayed x100 at 1 dp. "
+    "Every issue tuple below is also derived by the builder's reference validator and asserted equal to the pinned text.",
     "method_rules": {
         "gap_status": "Resolved if every question answered; Unresolved if none; else Partially resolved",
         "counts": "questions, answered, unresolved per gap and in total (integers, unit questions); gaps by status (unit gaps)",
@@ -908,15 +1234,23 @@ expected = {
         "never": "a not_found question is never filled: its TDR.2 answer and evidence facts are status missing (analyst's limitation), cells spelled '∅ G#', never 0 or N/A",
         "facts_behind_cells": "every cell of TDR.1-TDR.3 has a fact (cell.fact); formula and calculation_id only on calculated facts",
     },
-    "cp0_upstream": {"gap_fact_id": T5_FACT_ID, "gap_fact_text": T5_TEXT, "module_limitations": CP0_LIMITATIONS,
-                     "status": "restricted"},
-    "cp0_upstream_empty_agenda": {"gap_facts": [], "review_gaps_fact_id": EMPTY_FACT_ID,
-                                  "review_gaps_fact_text": EMPTY_FACT_TEXT, "module_limitations": CP0_LIMITATIONS_EMPTY,
-                                  "status": "restricted (synthetic case_kind; not run)"},
+    "cp0_upstream": {
+        "gap_fact_id": T5_FACT_ID,
+        "gap_fact_text": T5_TEXT,
+        "module_limitations": CP0_LIMITATIONS,
+        "status": "restricted",
+    },
+    "cp0_upstream_empty_agenda": {
+        "gap_facts": [],
+        "review_gaps_fact_id": EMPTY_FACT_ID,
+        "review_gaps_fact_text": EMPTY_FACT_TEXT,
+        "module_limitations": CP0_LIMITATIONS_EMPTY,
+        "status": "restricted (synthetic case_kind; not run)",
+    },
     "cases": CASES,
     "fixtures": FIXTURES,
     "empty_agenda": {
-        "state": "a valid settled state, not a refusal: the only valid submission is {\"gaps\": []}",
+        "state": 'a valid settled state, not a refusal: the only valid submission is {"gaps": []}',
         "submission": "submissions.json#cpdr.empty_agenda (one read_inputs, no search, no read)",
         "case": "cases.empty_agenda: TDR.1 and TDR.2 have no rows and are not emitted; TDR.3 holds the total row with counts known 0 and answered_share not_applicable",
         "limitation": EMPTY_LIMITATION,
@@ -926,28 +1260,32 @@ expected = {
     },
     "blocked": {
         "attempt_0": {"step": "invalid", "issues": [QUOTE_ISSUE]},
-        "attempt_1": {"step": "invalid", "issues": ["text must not contain a figure: transactions"], "repair_of": "attempt 0"},
+        "attempt_1": {
+            "step": "invalid",
+            "issues": ["text must not contain a figure: transactions"],
+            "repair_of": "attempt 0",
+        },
         "module_status": "blocked",
         "tables": "none; a blocked head carries no TDR table and no claims",
         "head": "published; cpdr_reader exposes the status and no counts",
     },
     "refusals": refusal_expected,
     "refusal_note": "No precheck (LEAD ruling): every refusal is one journaled invalid CP-DR step on attempt 0 of its own clone of the settled "
-                    "CP-0 store (the 'submission_against_empty_agenda' clone is the empty-agenda CP-0 store). The attempt is consumed, the "
-                    "result is rejected with limitations = the issues, and step_issues is the complete tuple that "
-                    "_verify_submissions replays exactly (S1a R3-2). The tool-use items (cited page read, absence backed by a "
-                    "search) are the core's RULES(text, seen) (G1-X protocol section 2; live/tools.py unread_citation_issues and "
-                    "UNBACKED_ABSENCE, product sorted order), called by G1-X at submit and in the verifier with rules='journaled'; "
-                    "RULES is pure over text and Seen and does not know pack membership: the two out-of-pack classes are one defect with both consequences, "
-                    "the membership issue then the RULES issue, in that order.",
+    "CP-0 store (the 'submission_against_empty_agenda' clone is the empty-agenda CP-0 store). The attempt is consumed, the "
+    "result is rejected with limitations = the issues, and step_issues is the complete tuple that "
+    "_verify_submissions replays exactly (S1a R3-2). The tool-use items (cited page read, absence backed by a "
+    "search) are the core's RULES(text, seen) (G1-X protocol section 2; live/tools.py unread_citation_issues and "
+    "UNBACKED_ABSENCE, product sorted order), called by G1-X at submit and in the verifier with rules='journaled'; "
+    "RULES is pure over text and Seen and does not know pack membership: the two out-of-pack classes are one defect with both consequences, "
+    "the membership issue then the RULES issue, in that order.",
     "rendering": RENDER,
     "tamper": TAMPER,
     "tool_use": {
         "CP-DR": "exactly one ok read_inputs per attempt before submit; ok search_pack covering every searched source of every "
-                 "question; ok read_pages for every cited locator; zero web or provider calls (no such tool exists); "
-                 "an invoke of any other tool is a refused not_permitted receipt",
+        "question; ok read_pages for every cited locator; zero web or provider calls (no such tool exists); "
+        "an invoke of any other tool is a refused not_permitted receipt",
         "search_rule": "a span matches when it contains any query term (case-insensitive substring); header "
-                       "'<n> spans match <query!r>; showing <min(10,n)>.' (live/tools.py search_pack)",
+        "'<n> spans match <query!r>; showing <min(10,n)>.' (live/tools.py search_pack)",
     },
     "attempt_inputs": ["prepared-pack", "CP-0"],
     "settled_module_adds_input": "research-submission",
@@ -960,8 +1298,8 @@ expected = {
         "consumer": "none today; CP-5 is the only registry edge (restricted); status OPEN",
         "future_cp5_binding": "the CP-5 attempt binds the CP-DR head result_sha256 as an Input and its review cites the facts listed in cases.<case>.consumption_facts",
         "facts_to_cite": "TDR.1.<gap>.{questions,answered,unresolved,answered_share,status}; TDR.3.total.* (gaps_total, gaps_resolved, gaps_partial, "
-                         "gaps_unresolved, questions_total, answered_total, unresolved_total, answered_share); and, for each unresolved item, the "
-                         "missing fact TDR.2.<qid>.answer (its limitation is the unresolved reason)",
+        "gaps_unresolved, questions_total, answered_total, unresolved_total, answered_share); and, for each unresolved item, the "
+        "missing fact TDR.2.<qid>.answer (its limitation is the unresolved reason)",
     },
     "not_verified": [
         "whether an answering quote actually answers its question is analyst judgment; only verbatim location and tool use are checked",

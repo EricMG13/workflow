@@ -2220,6 +2220,15 @@
       "sha256": "e9fb112034d6e35647210c305b0d5396b7836c77ac8904b9855daecbea79125e",
       "reason": "Phase 7 Task 1: first record (Ruled Q6; the file was project-authored, no import baseline). Binds T1C.9-T1C.11 to the evidence rail as text (slots cp1c-t1c-9..11). Pre-change sha256 229c5d0f129b3ef79a8266a843990e8f7ce03edbbfc37d4abc901d9a6889531c.",
       "review": ".superpowers/sdd/2026-10-31-phase-7-valuation/task-1-report.md"
+    },
+    {
+      "destination": "src/deploy_vii/report_view.py",
+      "imported_sha256": "c934d50152c06d52d2646031ce76bf961d7e19fbb460f4880ca4bde69392fa98",
+      "prior_project_sha256": "abf7398518fa989f2fed3c9a7164bb381af37304b6a3d7bb7d1748a7c5be9694",
+      "project_commit": "8a1f8ba22ea9f7be1f3fafb7de8a808cc600461a",
+      "sha256": "920e57d2f5836c79b0aa27c8e840e4b8673a12ac2e1ac378e0f85ee5d5579790",
+      "reason": "Rulings P8T7-R* and P8-R2 (B31a), Phase 8 Task 7: _chart_fact_cell takes the run currency for a CP-1 amount chart point (a three-capital-letter money currency, re.fullmatch, in place of USD only); the unit and scale checks are unchanged and USD output is byte-identical.",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/task-7-review-adversary.md; .superpowers/sdd/2026-10-31-phase-8-periods-currency/task-7-review-precise.md"
     }
   ],
   "local_patch_lineage": [

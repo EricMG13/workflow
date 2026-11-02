@@ -29,6 +29,7 @@ import cpdr_runs as runs
 import pytest
 from cpdr_s1_support import ResearchCase
 
+from deploy_vii import registry
 from deploy_vii.contracts import validate_tables
 from deploy_vii.execution import Execution, Head
 from deploy_workflow import owner_workflow
@@ -115,6 +116,20 @@ def test_closed_run_positive(closed: Closed, key: dict[str, Any]) -> None:
         assert fact.limitation == wanted.get("limitation"), fact.fact_id
     receipt = OwnerRunReceipt.model_validate_json(closed.receipt.read_bytes())
     verify_owner_run_receipt(closed.execution(), receipt)
+
+
+def test_the_receipt_plan_is_the_registry_plan_and_the_cpdr_attempt_binds_cp1(
+    closed: Closed, key: dict[str, Any]
+) -> None:
+    """Plan 4 rows 17 and 21: the sealed receipt's plan is the key's registry order, and CP-DR's
+    attempt bound CP-1 (lineage) at the CP-1 head's hash."""
+    receipt = OwnerRunReceipt.model_validate_json(closed.receipt.read_bytes())
+    want = key["registry_after_o7b1"]["plan_order_for_requested_CP-1_CP-DR"]
+    assert list(receipt.plan) == want == list(registry.plan(("CP-1", "CP-DR")))
+    attempt = next(a for a in closed.execution().read().attempts if a.module_id == "CP-DR")
+    bound = {item.input_id: item for item in attempt.inputs}
+    assert bound["CP-1"].sha256 == closed.head("CP-1").result_sha256
+    assert bound["CP-0"].sha256 == closed.head("CP-0").result_sha256
 
 
 def test_the_brief_file_is_the_key_template(closed: Closed, key: dict[str, Any]) -> None:

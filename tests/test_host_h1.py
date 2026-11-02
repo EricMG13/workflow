@@ -573,6 +573,7 @@ def test_cpdr_session_reads_every_held_source(
     runs.drive_cp1(workflow, pack, "positive")
     assert type(workflow._session) is SourceSession
     assert workflow._binding.module_id == "CP-DR"
+    assert {item.input_id for item in workflow._binding.inputs} >= {"CP-0", "CP-1"}
     for source in ("identity", "financial", "business"):
         assert _read(workflow, source, 1)["status"] == "ok", source
     outcome = workflow.submit_review(_note(("business", "page:1")))

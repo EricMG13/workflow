@@ -10,6 +10,7 @@ from hypothesis import strategies as st
 
 from deploy_workflow.research import contracts as c
 from deploy_workflow.research import review as r
+from deploy_workflow.research import tables
 
 
 def check(
@@ -308,3 +309,28 @@ def test_none_found_limitation_is_not_blank(
         entry = [{"kind": "none_found", "searched": ["ev-1"], "limitation": blank}]
         sub = edit_answer(submissions["research_v1"], "regulation", contrary=entry)
         assert texts(sub, manifest, expected) == ["a none_found contrary states its limitation"]
+
+
+def test_claim_id_bound_is_derived_from_the_tdr2_columns() -> None:
+    assert r._TDR2_FIELDS == tables.TDR2_COLUMNS
+    longest = "TDR.2." + "c" * r.CLAIM_ID_MAX + ".evidence_id"
+    assert len(longest) == r.IDENTIFIER_MAX
+
+
+def test_claim_id_at_the_bound_holds_and_one_past_is_a_research_issue(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    claim = answer(sub, "competition")["claims"][0]
+    claim["claim_id"] = "c" * r.CLAIM_ID_MAX
+    assert texts(sub, manifest, expected) == []
+    assert all(
+        len(f"TDR.2.{claim['claim_id']}.{f}") <= r.IDENTIFIER_MAX for f in tables.TDR2_COLUMNS
+    )
+    claim["claim_id"] = "c" * (r.CLAIM_ID_MAX + 1)
+    assert texts(sub, manifest, expected) == [
+        f"claim_id {claim['claim_id']} is longer than {r.CLAIM_ID_MAX}"
+    ]
+    assert any(
+        len(f"TDR.2.{claim['claim_id']}.{f}") > r.IDENTIFIER_MAX for f in tables.TDR2_COLUMNS
+    )

@@ -26,6 +26,11 @@ AnswerState = Literal["answered", "partly", "not_found"]
 # OD11/L3: the owners/cpdr.py PROHIBITED list minus covenant, recovery and refinanc; nothing added.
 BANNED_WORDS: Final = ("recommend",)
 FIGURE_ISSUE: Final = "text must not contain a figure"
+IDENTIFIER_MAX: Final = 160  # `contracts.Identifier` max_length
+# The TDR.2 columns (tables.py `TDR2_COLUMNS`, compared with it by a test; tables imports this
+# module). A claim id sits in the fact ids `TDR.2.<claim_id>.<field>`; the longest field decides.
+_TDR2_FIELDS: Final = ("question_id", "claim", "evidence_id", "locator", "published", "family")
+CLAIM_ID_MAX: Final = IDENTIFIER_MAX - max(len("TDR.2.") + len(f".{f}") for f in _TDR2_FIELDS)
 
 
 class Claim(Contract):
@@ -145,6 +150,13 @@ def _language_issues(answer: Answer) -> list[ReviewIssue]:
     return issues
 
 
+def _claim_id_issues(qid: str, claim: Claim) -> list[ReviewIssue]:
+    """A claim id too long for its TDR.2 fact ids is repaired here, not raised at the build."""
+    if len(claim.claim_id) <= CLAIM_ID_MAX:
+        return []
+    return [ReviewIssue(qid, f"claim_id {claim.claim_id} is longer than {CLAIM_ID_MAX}")]
+
+
 def _independent_list_issues(qid: str, claim: Claim) -> list[ReviewIssue]:
     """O7-R7: the list is distinct and names ``ev-*`` items only (pack sources have no family)."""
     issues = []
@@ -178,6 +190,7 @@ def _family_issues(
 def _independence_issues(answer: Answer, family_of: Mapping[str, str]) -> list[ReviewIssue]:
     issues: list[ReviewIssue] = []
     for claim in answer.claims:
+        issues += _claim_id_issues(answer.question_id, claim)
         cited = {citation.source_id for citation in claim.citations}
         issues += [
             ReviewIssue(

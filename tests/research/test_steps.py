@@ -54,6 +54,11 @@ def test_forty_tailored_lock_to_the_keyed_thirty_two(
     assert ids == key["locked_ids"]
     assert not set(key["dropped_from_tail"]) & set(ids)
     assert [i for i in ids if i.startswith(b.CONTEXT_PREFIX)] == key["context_kept"]
+    submitted = [q.question_id for q in sub.questions]
+    assert [i for i in submitted if i not in ids] == key["dropped_from_tail"]
+    kept_tailored = [i for i in ids if not i.startswith(b.CONTEXT_PREFIX)]
+    assert len(kept_tailored) + len(manifest["context"]["research_questions"]) == key["locked_out"]
+    assert len(submitted) + len(manifest["context"]["research_questions"]) == key["tailored_in"]
     assert ids[: len(key["context_kept"])] == key["context_kept"]
 
 
@@ -148,8 +153,22 @@ def test_the_id_bound_keeps_every_derived_fact_id_inside_identifier() -> None:
     assert len(longest) == 160
 
 
-def test_defaults_only_and_forty_have_no_issue_when_clean(submissions: dict[str, Any]) -> None:
+def test_the_frozen_defaults_only_submission_has_no_issue(submissions: dict[str, Any]) -> None:
     assert s.brief_issues(submission(submissions, DEFAULTS_ONLY)) == ()
+
+
+def test_an_id_of_exactly_the_bound_is_accepted(submissions: dict[str, Any]) -> None:
+    body = rows(submissions)
+    body.append({"question_id": "q" * s.QUESTION_ID_MAX, "text": "Fits.", "kind": "custom"})
+    assert s.brief_issues(edited(submissions, body)) == ()
+
+
+def test_a_question_id_total_is_an_issue(submissions: dict[str, Any]) -> None:
+    body = rows(submissions)
+    body.append({"question_id": "total", "text": "Sum row.", "kind": "custom"})
+    assert s.brief_issues(edited(submissions, body)) == (
+        "total: a tailored question id cannot be total",
+    )
 
 
 def seen_from(calls: list[dict[str, Any]]) -> Seen:

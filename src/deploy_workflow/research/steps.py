@@ -23,16 +23,17 @@ from deploy_workflow.research.contracts import (
     QuestionKind,
     ResearchBrief,
 )
-from deploy_workflow.research.review import Answer, _language_issues
+from deploy_workflow.research.review import IDENTIFIER_MAX, Answer, _language_issues
 from deploy_workflow.research.tables import TDR1_COLUMNS, TDR3_COLUMNS
 
-IDENTIFIER_MAX: Final = 160  # `contracts.Identifier` max_length
 # A question id sits in the fact ids `TDR.1.<id>.<field>` and `TDR.3.<id>.<field>` (tables.py): the
 # longest field decides, and one id past this makes `Fact` raise after the binding write.
 QUESTION_ID_MAX: Final = IDENTIFIER_MAX - max(
     *(len("TDR.1.") + len(f".{field}") for field in TDR1_COLUMNS),
     *(len("TDR.3.") + len(f".{field}") for field in TDR3_COLUMNS),
 )
+# `TDR.3` reserves this row id for its sum row (tables.py `TOTAL_ROW`).
+RESERVED_ROW_ID: Final = "total"
 RESEARCH_BRIEF_INPUT: Final = "research-brief"
 RESEARCH_SUBMISSION_INPUT: Final = "research-submission"
 DEFAULTS_FIRST: Final = "the six default questions come first, in their fixed order"
@@ -105,6 +106,8 @@ def _id_issues(question: BriefQuestion, seen: set[str]) -> list[str]:
     issues = []
     if qid.startswith(CONTEXT_PREFIX):
         issues.append(f"{qid}: a tailored question id cannot start with {CONTEXT_PREFIX}")
+    if qid == RESERVED_ROW_ID:
+        issues.append(f"{qid}: a tailored question id cannot be {RESERVED_ROW_ID}")
     if qid in seen:
         issues.append(f"{qid}: question_id appears twice")
     if len(qid) > QUESTION_ID_MAX:

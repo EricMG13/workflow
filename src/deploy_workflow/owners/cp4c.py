@@ -3086,7 +3086,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     allowed = frozenset(f.fact_id for f in referencable(cp1.values()))
     ebitda = tuple(e.fact for e in cp2g_head.ebitda)
     figures = frozenset(f.fact_id for f in referencable(ebitda))
-    block: dict[str, object] = {
+    return {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
@@ -3134,16 +3134,24 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         "cp1_facts": [_figure(f) for f in cp1.values() if f.fact_id in allowed],
         "cp2g_facts": [_figure(f) for f in ebitda if f.fact_id in figures],
         "inherited_limitations": list(upstream.inherited),
+        **_selection_view(upstream.cp1c),
     }
-    selected = selected_multiple(upstream.cp1c)
-    if selected is not None:  # offered only when a bound CP-1C head selected one (Phase 7)
-        block["selected_multiple"] = {
+
+
+def _selection_view(head: Cp1cHead | None) -> dict[str, object]:
+    """The `selected_multiple` key of the view: offered only when a bound CP-1C head selected one
+    (Phase 7), under a context pin too (the rule then says the pin governs); else no key."""
+    selected = selected_multiple(head)
+    if selected is None:
+        return {}
+    return {
+        "selected_multiple": {
             "shown": selected.shown,
             "basis": selected.basis,
             "ebitda_basis": selected.ebitda_basis,
             "head_sha256": selected.head_sha256,
         }
-    return block
+    }
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:

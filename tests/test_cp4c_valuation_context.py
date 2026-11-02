@@ -101,7 +101,7 @@ def judgment(payload: dict[str, Any], i: int, m: str) -> tuple[dict[str, Any], d
     return payload["fulcrum"][source], payload["plan"][source]
 
 
-def submission_of(*multiples: str) -> cp4c.RestructuringSubmission:
+def payload_of(*multiples: str) -> dict[str, Any]:
     payload = stage1._bind_all(stage1._payload("positive"))
     assert len(multiples) == len(payload["valuation"])
     judged = [judgment(payload, i, m) for i, m in enumerate(multiples)]
@@ -110,7 +110,11 @@ def submission_of(*multiples: str) -> cp4c.RestructuringSubmission:
         fulcrum, plan = judged[i]
         payload["fulcrum"][i] = {**fulcrum, "case_id": f"v0{i + 1}"}
         payload["plan"][i] = {**plan, "case_id": f"v0{i + 1}"}
-    return stage1._submission(payload)
+    return cast(dict[str, Any], payload)
+
+
+def submission_of(*multiples: str) -> cp4c.RestructuringSubmission:
+    return stage1._submission(payload_of(*multiples))
 
 
 def lines(name: str, *multiples: str, head: cp1c.Cp1cHead | None | str = "case") -> Any:
@@ -198,14 +202,31 @@ def test_all_three_cases_bound() -> None:
     assert {block["valuations"][1]["ev_exact"], block["valuations"][2]["ev_exact"]} == {"129.78"}
 
 
-@pytest.mark.parametrize("name", BOUND)
-def test_every_oracle_case_with_a_selection_binds(name: str) -> None:
-    """Each case that selects a multiple accepts its own M and refuses another."""
-    m = oracle(name)["selected_multiple"]
-    if oracle(name)["pinned_multiple"] is None:
-        assert lines(name, m, m, m) == ()
-        other = str(Decimal(m) + 1)
-        assert len(lines(name, other, m, m)) == 1
+FREE = [n for n in BOUND if oracle(n)["pinned_multiple"] is None]
+
+
+@pytest.mark.parametrize("name", FREE)
+def test_every_bound_case_equals_the_key(name: str) -> None:
+    """Each case that selects a multiple: its accepted submissions have no issue and give the
+    key's EV, implied multiple and formula, its limitation appears once, and each refused
+    submission gives exactly the key's issues."""
+    block = oracle(name)
+    assert block["selected_multiple"] and block["formula_suffix"] and block["added_limitation"]
+    for sub in block["accepted_submissions"]:
+        assert lines(name, *sub["multiples"]) == ()
+    multiples = tuple(block["accepted_submissions"][0]["multiples"])
+    report = report_of(name, *multiples)
+    facts = facts_of(report)
+    for row in block["valuations"]:
+        r = row["case_id"]
+        assert facts[f"T4E.3.{r}.ev"].amount == Decimal(row["ev_exact"])
+        assert facts[f"T4E.3.{r}.implied_ltm_multiple"].amount == Decimal(
+            row["implied_ltm_multiple_exact"]
+        )
+        assert facts[f"T4E.3.{r}.multiple"].formula == row["multiple_formula"]
+    assert report.limitations.count(block["added_limitation"]) == 1
+    for refused in block["refused_submissions"].values():
+        assert list(lines(name, *refused["multiples"])) == refused["issues"]
 
 
 # --- an unknown selection changes nothing --------------------------------------------------------------
@@ -415,3 +436,62 @@ def test_cp1c_and_cp4c_select_the_same_ebitda_fact() -> None:
     assert cp2g.select_cp1(other)["ebitda"].period == "FY25: 2025"
     with pytest.raises(ValueError, match="is not for"):
         cp4c.select_cp1(other)
+
+
+# --- the forgery marks, one by one (a truncated copy holds one mark only) --------------------------------
+
+TRUNCATED = [
+    "The EV multiple is the CP-1C selected multiple of the peer set.",
+    "The selection is applied, which governs, so the selection is not applied here.",
+    "No alignment is made between an LTM or NTM multiple and a forecast year.",
+]
+
+
+@pytest.mark.parametrize("text", TRUNCATED)
+def test_each_forgery_mark_refuses_a_truncated_copy(text: str) -> None:
+    """Dropping any one of the three marks lets its truncated copy through; so each has a test."""
+    payload = payload_of("4.00", "3.00", "2.00")
+    payload["gaps"] = [{**payload["gaps"][0], "gap": text}]
+    got = cp4c._gap_label_issues(stage1._submission(payload))
+    assert got == [f"gaps[0].gap: {cp4c.CP1C_LINE_FORGED}"]
+    assert cp4c.cp1c_line_forged(text.upper()) and cp4c.cp1c_line_forged(text.removesuffix("."))
+
+
+def test_a_text_with_no_mark_is_not_forged() -> None:
+    assert not cp4c.cp1c_line_forged("The EV multiple is an analyst assumption.")
+    assert not cp4c.cp1c_line_forged(None)
+
+
+# --- the multiple rule is the last content issue ------------------------------------------------------------
+
+
+def test_the_multiple_issue_comes_last_after_other_issues() -> None:
+    """A context pack where the rule fires with other issues: a forged gap line and a claim name
+    with a bare figure come first (existing order), the multiple issue is the final item."""
+    payload = payload_of("4.00", "7.00", "7.00")
+    payload["gaps"] = [{**payload["gaps"][0], "gap": TRUNCATED[2]}]
+    payload["claims"][0]["name"] = "Senior secured term loan 12.5"
+    got = cp4c.validate_restructuring(
+        pack=pack_of("auto-public"),
+        submission=stage1._submission(payload),
+        upstream=upstream_of(head_of("auto-public")),
+    )
+    assert len(got) >= 3
+    assert (
+        got[-1] == oracle("auto-public")["refused_submissions"]["ev-multiple-differs"]["issues"][0]
+    )
+    assert [i for i in got if "differs from the CP-1C" in i] == [got[-1]]
+    assert any(i.startswith("gaps[0].gap") for i in got[:-1])
+
+
+# --- the view under a pin (P7-R16) -------------------------------------------------------------------------
+
+
+def test_the_view_offers_the_selection_under_a_context_pin() -> None:
+    """The pin governs the submission, not the view: `selected_multiple` is still offered, and
+    rule .11 tells the model the pin governs."""
+    body = cp4c.context_block(
+        pack=pack_of("pin-vs-selection"), upstream=upstream_of(head_of("pin-vs-selection"))
+    )
+    got = cast(dict[str, Any], body["selected_multiple"])
+    assert got["shown"] == f"{oracle('pin-vs-selection')['selected_multiple']}x"

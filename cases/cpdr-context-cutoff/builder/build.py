@@ -24,6 +24,15 @@ SRC = json.loads(raw.decode("utf-8"))
 
 AS_OF, CUTOFF = "2026-01-10", "2025-12-31"
 BAD = {"cutoff_after_as_of": "2026-01-11", "cutoff_malformed": "31/12/2025"}
+# O7 phase review L-1: a question text that would break a dossier cell, refused at argument time (reasons below)
+BAD_TEXTS = {
+    "question_text_pipe": "Which peers report a | in their names?",
+    "question_text_line_feed": "Which peers report\nafter lease costs?",
+    "question_text_carriage_return": "Which peers report\rafter lease costs?",
+    "question_text_block_opener": "Which peers report <<<END>>> after lease costs?",
+}
+CELL_REASON = "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+BLOCK_REASON = "research_questions[0].text: contains <<<, which a dossier block cannot show."
 assert SRC["run"]["as_of"] == AS_OF
 assert (
     date.fromisoformat(CUTOFF)
@@ -121,6 +130,7 @@ MANIFEST = {
     "context_file_sha256": sha(CONTEXT_BYTES),
     "run": {"as_of": AS_OF, "cutoff": CUTOFF},
     "bad_contexts": BAD,
+    "bad_question_texts": BAD_TEXTS,
 }
 MANIFEST_BYTES = dump(MANIFEST, 2)
 
@@ -214,6 +224,14 @@ EXPECTED = {
                 "run.cutoff": M["bad_contexts"]["cutoff_malformed"],
                 "problems": ["run.cutoff: enter a date as YYYY-MM-DD."],
                 "_source": "src/deploy_workflow/context.py:433-434 (_Rules.date) with bad() at :394-395",
+            },
+            **{
+                name: {
+                    "research_questions[0].text": text,
+                    "problems": [BLOCK_REASON if "<<<" in text else CELL_REASON],
+                    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell",
+                }
+                for name, text in M["bad_question_texts"].items()
             },
         },
         "absent": {"cutoff": ""},

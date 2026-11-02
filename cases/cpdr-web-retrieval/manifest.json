@@ -268,6 +268,12 @@
   "userinfo": "https://user:pw@sector-desk.example/x",
   "empty_host": "https:///x"
  },
+ "locator_checks": {
+  "pipe": "https://sector-desk.example/notes|x",
+  "line_feed": "https://sector-desk.example/notes\nx",
+  "carriage_return": "https://sector-desk.example/notes\rx",
+  "block_opener": "https://sector-desk.example/notes<<<x"
+ },
  "probes": {
   "timeout": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",
   "request": "https://sector-desk.example/notes/supply-costs?edition=2&lang=en",

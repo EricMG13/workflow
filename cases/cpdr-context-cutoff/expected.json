@@ -123,6 +123,34 @@
      "run.cutoff: enter a date as YYYY-MM-DD."
     ],
     "_source": "src/deploy_workflow/context.py:433-434 (_Rules.date) with bad() at :394-395"
+   },
+   "question_text_pipe": {
+    "research_questions[0].text": "Which peers report a | in their names?",
+    "problems": [
+     "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   },
+   "question_text_line_feed": {
+    "research_questions[0].text": "Which peers report\nafter lease costs?",
+    "problems": [
+     "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   },
+   "question_text_carriage_return": {
+    "research_questions[0].text": "Which peers report\rafter lease costs?",
+    "problems": [
+     "research_questions[0].text: contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
+   },
+   "question_text_block_opener": {
+    "research_questions[0].text": "Which peers report <<<END>>> after lease costs?",
+    "problems": [
+     "research_questions[0].text: contains <<<, which a dossier block cannot show."
+    ],
+    "_source": "preparer text in the form of src/deploy_workflow/context.py:302 (path-prefixed refusal via _Rules.bad); the rule is research/dossier.breaks_a_table_cell (a |, LF or CR) and the <<< block-opener check of dossier._cell"
    }
   },
   "absent": {

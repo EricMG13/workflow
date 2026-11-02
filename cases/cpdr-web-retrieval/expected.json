@@ -45,6 +45,28 @@
   },
   "empty_host": {"url": "https:///x", "reason": "url https:///x: the host is missing"}
  },
+ "locator_checks": {
+  "pipe": {
+   "locator": "https://sector-desk.example/notes|x",
+   "reason": "manifest row locator contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold",
+   "_source": "preparer text in the form of intake.parse_rows's IntakeError texts ('manifest row needs a non-empty locator'); the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no locator text"
+  },
+  "line_feed": {
+   "locator": "https://sector-desk.example/notes\nx",
+   "reason": "manifest row locator contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold",
+   "_source": "preparer text in the form of intake.parse_rows's IntakeError texts ('manifest row needs a non-empty locator'); the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no locator text"
+  },
+  "carriage_return": {
+   "locator": "https://sector-desk.example/notes\rx",
+   "reason": "manifest row locator contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold",
+   "_source": "preparer text in the form of intake.parse_rows's IntakeError texts ('manifest row needs a non-empty locator'); the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no locator text"
+  },
+  "block_opener": {
+   "locator": "https://sector-desk.example/notes<<<x",
+   "reason": "manifest row locator contains <<<, which a dossier block cannot show",
+   "_source": "preparer text in the form of intake.parse_rows's IntakeError texts ('manifest row needs a non-empty locator'); the rule is research/dossier.breaks_a_table_cell and the <<< check of dossier._cell; the reason names no locator text"
+  }
+ },
  "is_public": {
   "vectors": [
    {"addr": "127.0.0.1", "public": false},

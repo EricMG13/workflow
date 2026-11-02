@@ -59,5 +59,11 @@
   "bad_contexts": {
     "cutoff_after_as_of": "2026-01-11",
     "cutoff_malformed": "31/12/2025"
+  },
+  "bad_question_texts": {
+    "question_text_pipe": "Which peers report a | in their names?",
+    "question_text_line_feed": "Which peers report\nafter lease costs?",
+    "question_text_carriage_return": "Which peers report\rafter lease costs?",
+    "question_text_block_opener": "Which peers report <<<END>>> after lease costs?"
   }
 }

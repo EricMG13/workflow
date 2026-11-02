@@ -85,7 +85,7 @@ class Rule:
     statement: str
     checks: tuple[str, ...]
     from_code: str | None = None
-    when: str | None = None  # compose rules: "inputs", "line_source" or "pins"
+    when: str | None = None  # compose rules: "inputs", "line_source", "pins" or "pack_tools"
 
 
 def rule_from(raw: Mapping[str, object]) -> Rule:

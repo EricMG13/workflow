@@ -57,6 +57,15 @@
    "when": "pins"
   },
   {
+   "id": "compose.O7",
+   "statement": "O7. Read the pack in a bounded way: call search_pack first, then call read_pages only for pages a search result names, and do not read a page again once it has been returned. Submit as soon as every item the step requires cites a page you have read; the Limits line caps the pack tool calls in one step.",
+   "checks": [
+    "fn:deploy_workflow.financial_workflow:FinancialWorkflow.invoke",
+    "fn:deploy_vii.live.tools:unread_citation_issues"
+   ],
+   "when": "pack_tools"
+  },
+  {
    "id": "compose.1",
    "statement": "1. Return exactly one JSON object that conforms to the JSON Schema below. No prose and no code fences.",
    "checks": [

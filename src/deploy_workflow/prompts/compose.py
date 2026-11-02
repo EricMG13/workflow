@@ -120,6 +120,13 @@ O6_PINS = (
     "one exception to O3); the block is not a source, is never cited, quoted in prose or "
     "computed from."
 )
+# PF1 (PF-R4): the bounded-reading rule, added when the step offers both pack tools.
+O7_PACK_READING = (
+    "O7. Read the pack in a bounded way: call search_pack first, then call read_pages only for "
+    "pages a search result names, and do not read a page again once it has been returned. Submit "
+    "as soon as every item the step requires cites a page you have read; the Limits line caps "
+    "the pack tool calls in one step."
+)
 
 # Phase 6 enables a module here when the owner's pin check for it lands; empty until then, so
 # no pin reaches a prompt that the owner would not yet check (H4).
@@ -311,6 +318,9 @@ def _system(request: PromptRequest, contract: str, pins_present: bool) -> str:
         orchestrator.append(_tag("O5", O5_LINE_LOCATORS))
     if pins_present:
         orchestrator.append(_tag("O6", O6_PINS))
+    names = tool_names(spec)
+    if SEARCH in names and READ in names:
+        orchestrator.append(_tag("O7", O7_PACK_READING))
     # G8 and P5: only CP-0 judges the run's planned modules and assigns source authority.
     g8 = (
         [

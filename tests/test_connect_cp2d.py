@@ -512,13 +512,13 @@ def with_chart_identity(module: Module) -> Module:
                 )
             )
     rows = {(f.row_id, f.period) for f in module.facts if f.table_id == "T4.18"}
-    for row, pid in sorted(rows, key=lambda item: str(item)):
+    for row, period in sorted(rows, key=lambda item: str(item)):
         for field, value in (
-            ("period_id", str(pid)),
+            ("period_id", str(period)),
             ("facility_type", "TERM_LOAN"),
             ("lease_classification", "NOT_LEASE"),
         ):
-            facts.append(text("T4.18", row, field, value, str(pid)))
+            facts.append(text("T4.18", row, field, value, str(period)))
     # The KPI register keys every T4.10 row by its field_1 identity; the fixture's own T4.10 rows
     # (one stand-in fact each) get theirs, then the chart metrics follow.
     for row in sorted({f.row_id for f in module.facts if f.table_id == "T4.10"}):

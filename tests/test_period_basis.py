@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from deploy_vii.contracts import Fact, Module
+from deploy_vii.contracts import Fact
 from deploy_workflow.context import RunContext, RunSettings
 from deploy_workflow.owners.period_basis import (
     DEFAULT_BASIS,
@@ -420,22 +420,3 @@ def test_run_basis_otherwise_is_period_basis() -> None:
     assert run_basis(context, facts) == period_basis(context, facts)
     with pytest.raises(PeriodRefused, match=r"run\.current_period"):
         run_basis(_context("q2-2026"), facts)
-
-
-def test_blank_usd_base_with_a_2026_cp1_is_refused_at_selection() -> None:
-    import test_connect_cp2d as tc2d
-
-    from deploy_workflow.owners import cp2d
-
-    facts = _calendar(2026, q4_id="q4-2026", fy_id="fy-2026")
-    basis = run_basis(_context(""), facts)
-    run = tc2d.PACK.run
-    module = Module(
-        run_id=run.run_id,
-        issuer_id=run.issuer_id,
-        as_of=run.as_of,
-        module_id="CP-1",
-        facts=tuple(facts),
-    )
-    with pytest.raises(ValueError, match="CP-1 offers 0 facts"):
-        cp2d.select_cp1(module, basis)

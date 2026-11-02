@@ -28,6 +28,7 @@ from deploy_workflow.owners.period_basis import (
     PeriodBasis,
     PeriodRefused,
     period_basis,
+    run_basis,
 )
 
 _CASE = Path(__file__).resolve().parents[1] / "cases" / "periods-currency-owner"
@@ -217,6 +218,15 @@ def test_cp2d_prints_the_run_money_unit(currency: str) -> None:
     assert f"{unit}" in claims
 
 
+_MAT_EUR = (
+    "The cash outflow from debt maturing inside the horizon is not calculated: [T2E.3.r07] needs "
+    "every facility in EUR, and one is not; no FX conversion is applied."
+)
+_GAP_EUR = (
+    "The funding gap is not calculated: [T2E.5.r07] needs every facility in EUR, and one is not."
+)
+
+
 def test_cp2d_foreign_facility_claim_and_limitation_name_the_run_currency() -> None:
     basis = _basis("EUR")
     inputs = _eur_2d(basis)
@@ -224,7 +234,9 @@ def test_cp2d_foreign_facility_claim_and_limitation_name_the_run_currency() -> N
     result = cp2d.compute(replace(inputs, operands=replace(inputs.operands, facilities=facilities)))
     text = repr(result)
     assert "is in USD, not EUR; no FX conversion is applied" in text
-    assert "every facility in EUR, and one is not" in " ".join(c.text for c in result.claims)
+    texts = [c.text for c in result.claims]
+    assert _MAT_EUR in texts
+    assert _GAP_EUR in texts
     assert "not USD" not in text and "US$" not in text
 
 
@@ -295,3 +307,70 @@ def test_cp3c_currency_mismatch_is_an_issue_line(tmp_path: Path) -> None:
     issues = cp3c.validate_refinancing(submission=submission, upstream=upstream, basis=eur)
     assert issues == ("Period basis refused: run.reporting_currency EUR, but CP-1 reports USD",)
     assert cp3c.validate_refinancing(submission=submission, upstream=upstream) == ()
+
+
+def test_cp2d_difference_limitations_are_spelled_in_the_run_unit() -> None:
+    inputs = _eur_2d(_basis("EUR"))
+    ops = inputs.operands
+    assert ops.closing_cash is not None and ops.closing_cash.amount is not None
+    assert ops.financing is not None and ops.financing.amount is not None
+    closing = replace(ops.closing_cash, amount=ops.closing_cash.amount + Decimal("1.5"))
+    financing = replace(ops.financing, amount=ops.financing.amount + Decimal("2.5"))
+    result = cp2d.compute(
+        replace(inputs, operands=replace(ops, closing_cash=closing, financing=financing))
+    )
+    uses = [t for t in result.own_limitations if t.startswith("Sources and uses differ")]
+    lines = [t for t in result.own_limitations if t.startswith("Financing lines differ")]
+    assert uses and uses[0].endswith(" EUR m.")
+    assert lines and "by (2.5) EUR m;" in lines[0]
+
+
+# --- the P8-R3 guard: a 2026 CP-1 under a blank-USD context is refused, not mislabelled ----------
+
+
+def _shifted_one_year(text: str | None) -> str | None:
+    if text is None:
+        return None
+    import re
+
+    text = re.sub(r"(?<!\d)(20\d\d)(?!\d)", lambda m: str(int(m.group(1)) + 1), text)
+    return re.sub(r"Q([1-4]) 25\b", r"Q\1 26", text)
+
+
+def _cp1_2026() -> Module:
+    base = tc2d.cp1_module(tm2d._operands("positive"))
+    facts = tuple(
+        f.model_copy(
+            update={
+                "period": _shifted_one_year(f.period),
+                "label": _shifted_one_year(f.label),
+                "text": _shifted_one_year(f.text),
+            }
+        )
+        for f in base.facts
+    )
+    return base.model_copy(update={"facts": facts})
+
+
+def test_blank_usd_base_with_a_2026_cp1_is_refused_not_mislabelled() -> None:
+    module = _cp1_2026()
+    blank = run_basis(tpb._context(""), module.facts)
+    assert blank is DEFAULT_BASIS
+    with pytest.raises(ValueError, match="CP-1 offers 0 facts"):
+        cp2d.select_cp1(module, blank)
+    selected = cp2d.select_cp1(module, _basis("USD"))  # the same CP-1 reads under its own basis
+    assert selected.balance_date == date.fromisoformat(KEY["USD"]["ltm_end"])
+    assert {o.fact.period for o in selected.offered if o.name == "cash_bs"} == {
+        KEY["USD"]["t46_period"]
+    }
+
+
+def test_unsourced_currency_names_the_run_money_unit() -> None:
+    inputs = tc3._without_cash(tm3._inputs("positive"))
+    inputs = tc3._every_millions_fact(inputs, tc3._missing)
+    with pytest.raises(ValueError, match="no known EUR m fact states a currency"):
+        cp3c.reporting_currency(cp1=inputs.cp1, cp2d=inputs.cp2d, unit="EUR m")
+    with pytest.raises(ValueError, match="no known EUR m fact states a currency"):
+        cp3c.compute(replace(inputs, basis=_basis("EUR")))
+    with pytest.raises(ValueError, match="no known US[$] m fact states a currency"):
+        cp3c.reporting_currency(cp1=inputs.cp1, cp2d=inputs.cp2d)

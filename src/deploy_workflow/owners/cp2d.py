@@ -2012,7 +2012,7 @@ class Selection:
 
 
 def _currency_words(code: str) -> str:
-    return "US dollars" if code == "USD" else code
+    return "US dollars" if code == DEFAULT_BASIS.currency else code
 
 
 def _usd_millions(name: str, fact: Fact, basis: PeriodBasis = DEFAULT_BASIS) -> None:
@@ -2317,6 +2317,14 @@ def _amount_text(amount: Decimal) -> str:
     return format(amount, "f")
 
 
+def _period_issue(error: PeriodRefused) -> str:
+    return f"Period basis refused: {error}"
+
+
+def _context_issue(error: ContextRefused) -> str:
+    return clipped(("Context refused: ", str(error)))
+
+
 def _pin_lines(pack: PreparedPack, submission: LiquidityBridgeSubmission) -> tuple[str, ...]:
     """The lines where the submitted horizon or minimum cash differ from the context pins, as
     typed: the integer horizon through `str` (`format(25, "f")` is `25.000000`), the Decimal amount
@@ -2332,7 +2340,7 @@ def _pin_lines(pack: PreparedPack, submission: LiquidityBridgeSubmission) -> tup
         }
         return pin_issues(MODULE_ID, pack, submitted)
     except ContextRefused as error:
-        return (clipped(("Context refused: ", str(error))),)
+        return (_context_issue(error),)
 
 
 def validate_liquidity_bridge(
@@ -2349,7 +2357,7 @@ def validate_liquidity_bridge(
         # this default basis.
         basis = DEFAULT_BASIS
     except PeriodRefused as error:
-        return tuple(dict.fromkeys([*issues, f"Period basis refused: {error}"]))
+        return tuple(dict.fromkeys([*issues, _period_issue(error)]))
     selection = select_cp1(upstream.cp1, basis)
     issues += submission_issues(
         submission=submission,
@@ -2696,6 +2704,18 @@ VIEW_NOTE = (
 )
 
 
+def _view_basis(pack: PreparedPack, cp1: Module) -> tuple[PeriodBasis | None, str | None]:
+    """The run's basis for the view and the issue line the entry validator returns for the same
+    refusal (P8-R5: `read_inputs` never raises on a context or period refusal). A refused
+    context keeps the default basis, as before; a refused period offers nothing."""
+    try:
+        return run_basis(pack, cp1), None
+    except ContextRefused as error:
+        return DEFAULT_BASIS, _context_issue(error)
+    except PeriodRefused as error:
+        return None, _period_issue(error)
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The exact `read_inputs` view of the step, all Python's: the upstream statuses, one entry
     per fact the bindings select (a missing one included, with its status and CP-1's limitation),
@@ -2703,9 +2723,10 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     record at any depth (manifest `view_tree_draft`)."""
     if upstream.cp1.run_id != pack.run.run_id:
         raise ValueError("CP-2D: the bound CP-1 module belongs to another run")
-    basis = run_basis(pack, upstream.cp1)
-    selection = select_cp1(upstream.cp1, basis)
-    return {
+    basis, issue = _view_basis(pack, upstream.cp1)
+    offered = () if basis is None else select_cp1(upstream.cp1, basis).offered
+    minimum = "decimal >= 0" if basis is None else f"decimal >= 0 in {basis.money_unit}"
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": item.input_id, "status": item.status}
             for item in upstream.bound
@@ -2722,15 +2743,18 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
                 "status": o.fact.status,
                 "limitation": o.fact.limitation,
             }
-            for o in selection.offered
+            for o in offered
         ],
         "cp1_facts_note": VIEW_NOTE,
         "bounds": {
             "horizon_months": list(HORIZON_BOUNDS),
-            "minimum_cash": f"decimal >= 0 in {basis.money_unit}, or null with minimum_cash_absence",
+            "minimum_cash": f"{minimum}, or null with minimum_cash_absence",
         },
         "inherited_limitations": list(upstream.inherited),
     }
+    if issue is not None:
+        block["context_issue"] = issue
+    return block
 
 
 def view(store: Execution, attempt: Attempt) -> tuple[str, str]:

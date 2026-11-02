@@ -905,7 +905,7 @@ def _flag(fact: Cp2dFact) -> bool | None:
 
 UNSOURCED_CURRENCY = (
     "CP-3C: the reporting currency is not sourced: cash_closing is not known and no known "
-    "US$ m fact states a currency"
+    "{unit} fact states a currency"
 )
 
 
@@ -927,7 +927,9 @@ def _cash_currency(cash: Cp1Fact) -> str:
     return cash.currency
 
 
-def reporting_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands) -> str:
+def reporting_currency(
+    *, cp1: Cp1Operands, cp2d: Cp2dOperands, unit: str = DEFAULT_BASIS.money_unit
+) -> str:
     """The currency every summed amount is in (round 13 item 5; Stage 2 round 5 item 7, Info 1):
     CP-1 T4.10 ``cash_closing``'s own currency when that fact is known (it must be set);
     otherwise the currency the first known US$ m fact read states (``check_currency`` then holds
@@ -940,10 +942,16 @@ def reporting_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands) -> str:
         stated = fact.currency
         if fact.status == "known" and fact.unit == _MILLIONS and stated and not is_blank(stated):
             return stated
-    raise ValueError(UNSOURCED_CURRENCY)
+    raise ValueError(UNSOURCED_CURRENCY.format(unit=unit))
 
 
-def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> None:
+def check_currency(
+    *,
+    cp1: Cp1Operands,
+    cp2d: Cp2dOperands,
+    currency: str,
+    unit: str = DEFAULT_BASIS.money_unit,
+) -> None:
     """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
     currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
     A cash_closing that is not known states none: the currency is then the one the known
@@ -955,7 +963,7 @@ def check_currency(*, cp1: Cp1Operands, cp2d: Cp2dOperands, currency: str) -> No
                 f"CP-3C: reporting currency {currency!r} is not cash_closing's {cash.currency!r}"
             )
     else:
-        reporting_currency(cp1=cp1, cp2d=cp2d)
+        reporting_currency(cp1=cp1, cp2d=cp2d, unit=unit)
     for name, fact in _millions_read(cp1, cp2d):
         if fact.status == "known" and fact.unit == _MILLIONS and fact.currency != currency:
             raise ValueError(f"CP-3C {name}: currency {fact.currency!r} is not {currency!r}")
@@ -2022,7 +2030,12 @@ def compute(inputs: Cp3cInputs) -> Cp3cResult:
     issues = submission_issues(submission=inputs.submission, offered=inputs.offered)
     if issues:
         raise ValueError("CP-3C submission is invalid: " + "; ".join(bounded_issues(issues)))
-    check_currency(cp1=inputs.cp1, cp2d=inputs.cp2d, currency=inputs.currency)
+    check_currency(
+        cp1=inputs.cp1,
+        cp2d=inputs.cp2d,
+        currency=inputs.currency,
+        unit=inputs.basis.money_unit,
+    )
     operands = compose_operands(
         cp1=inputs.cp1, cp2d=inputs.cp2d, balance_date=inputs.balance_date, currency=inputs.currency
     )
@@ -2473,7 +2486,7 @@ def select(upstream: Upstream, basis: PeriodBasis = DEFAULT_BASIS) -> Selection:
     one the facts state; it must be the run's (no FX, ruling Q8.1)."""
     cp1 = select_cp1(upstream.cp1, basis)
     ops, cp2d_offered = select_cp2d(upstream.cp2d, upstream.cp2d_read)
-    currency = reporting_currency(cp1=cp1.operands, cp2d=ops)
+    currency = reporting_currency(cp1=cp1.operands, cp2d=ops, unit=basis.money_unit)
     if currency != basis.currency:
         raise PeriodRefused(f"run.reporting_currency {basis.currency}, but CP-1 reports {currency}")
     return Selection(
@@ -2539,16 +2552,13 @@ def validate_refinancing(
 ) -> tuple[str, ...]:
     """Staleness alone when a bound upstream changed (no content check runs on it), then
     provenance alone, else the calculation-level issues over the refs the view offers."""
-    stale = stale_issues(bound=upstream.bound, current=upstream.current)
-    if stale:
-        return stale
-    provenance = _provenance_issues(upstream)
-    if provenance:
-        return provenance
+    early = _upstream_issues(upstream)
+    if early:
+        return early
     try:
         offered = {ref: name for name, ref in select(upstream, basis).refs}
     except PeriodRefused as error:
-        return (clipped(("Period basis refused: ", str(error))),)
+        return (_period_issue(error),)
     return submission_issues(submission=submission, offered=offered)
 
 
@@ -2565,14 +2575,29 @@ def _pin_lines(pack: PreparedPack, submission: RefinancingRiskSubmission) -> tup
         submitted = {"repricing.bps": None if repricing is None else str(repricing.bps)}
         return pin_issues(MODULE_ID, pack, submitted)
     except ContextRefused as error:
-        return (clipped(("Context refused: ", str(error))),)
+        return (_context_issue(error),)
+
+
+def _upstream_issues(upstream: Upstream) -> tuple[str, ...]:
+    """Staleness alone when a bound upstream changed, then provenance alone, else nothing."""
+    stale = stale_issues(bound=upstream.bound, current=upstream.current)
+    return stale or _provenance_issues(upstream)
+
+
+def _period_issue(error: PeriodRefused) -> str:
+    return clipped(("Period basis refused: ", str(error)))
+
+
+def _context_issue(error: ContextRefused) -> str:
+    return clipped(("Context refused: ", str(error)))
 
 
 def _lines(
     pack: PreparedPack, submission: RefinancingRiskSubmission, upstream: Upstream
 ) -> tuple[str, ...]:
     """The content issues, then the pin lines (also after the stale-only and provenance-only
-    returns): the one issue set of the step validator and the composer gate."""
+    returns): the one issue set of the step validator and the composer gate. A basis that
+    refuses keeps the staleness or provenance line and adds its own issue."""
     try:
         basis = cp2d.run_basis(pack, upstream.cp1)
     except ContextRefused:
@@ -2580,7 +2605,7 @@ def _lines(
         # default basis.
         basis = DEFAULT_BASIS
     except PeriodRefused as error:
-        return (clipped(("Period basis refused: ", str(error))),)
+        return tuple(dict.fromkeys((*_upstream_issues(upstream), _period_issue(error))))
     content = validate_refinancing(submission=submission, upstream=upstream, basis=basis)
     return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
 
@@ -2767,6 +2792,23 @@ def cp3c_module(*, report: RefinancingRiskReport, inputs: Sequence[Input], attem
 # --- the exact `read_inputs` view (manifest.json view_tree_draft) -----------------------------
 
 
+def _view_selection(pack: PreparedPack, upstream: Upstream) -> tuple[Selection | None, str | None]:
+    """The view's selection and the issue line the entry validator returns for the same refusal
+    (P8-R5: `read_inputs` never raises on a context, period or currency refusal). A refused
+    context keeps the default basis, as before; a refused period or currency offers nothing."""
+    issue = None
+    try:
+        basis = cp2d.run_basis(pack, upstream.cp1)
+    except ContextRefused as error:
+        basis, issue = DEFAULT_BASIS, _context_issue(error)
+    except PeriodRefused as error:
+        return None, _period_issue(error)
+    try:
+        return select(upstream, basis), issue
+    except PeriodRefused as error:
+        return None, _period_issue(error)
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """The step's one read, all Python's: the required edges' statuses, one entry per bound name
     (a missing fact included, with its status and its limitation, never a number), the facility
@@ -2775,8 +2817,8 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     for module in (upstream.cp1, upstream.cp2d):
         if module.run_id != pack.run.run_id:
             raise ValueError(f"CP-3C: the bound {module.module_id} module belongs to another run")
-    selection = select(upstream, cp2d.run_basis(pack, upstream.cp1))
-    return {
+    selection, issue = _view_selection(pack, upstream)
+    block: dict[str, object] = {
         "upstream": [
             {"module_id": i.input_id, "status": i.status}
             for i in upstream.bound
@@ -2796,9 +2838,9 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
                 "status": o.fact.status,
                 "limitation": o.fact.limitation,
             }
-            for o in selection.offered
+            for o in (() if selection is None else selection.offered)
         ],
-        "facilities": [dict(f) for f in selection.facilities],
+        "facilities": [dict(f) for f in (() if selection is None else selection.facilities)],
         "unread_optional_edges": list(UNREAD_OPTIONAL_EDGES),
         "bounds": {
             "repricing_bps": list(BPS_BOUNDS),
@@ -2807,6 +2849,9 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         },
         "inherited_limitations": list(upstream.inherited),
     }
+    if issue is not None:
+        block["context_issue"] = issue
+    return block
 
 
 def view(historical: Execution, attempt: Attempt) -> tuple[str, str]:

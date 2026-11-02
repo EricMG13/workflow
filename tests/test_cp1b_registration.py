@@ -98,6 +98,7 @@ def test_fresh_public_source_upstream_import_orders(reverse):
     script = "import importlib; " + "; ".join(f"importlib.import_module({n!r})" for n in names)
     child = subprocess.run(
         [sys.executable, "-c", script],
+        check=False,
         capture_output=True,
         text=True,
         env={**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)},

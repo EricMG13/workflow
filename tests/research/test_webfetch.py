@@ -759,3 +759,15 @@ def test_the_wire_carries_exactly_the_key_headers() -> None:
     lines = capture.sent.decode("ascii").split("\r\n")
     assert lines[0] == f"{req['method']} {req['path']} HTTP/1.1"
     assert [line for line in lines[1:] if line] == [f"{k}: {v}" for k, v in req["headers"].items()]
+
+
+def test_the_production_connector_carries_the_targets_deadline() -> None:
+    conn = KEY["connection"]
+    world = World()
+    target = webfetch.ConnectionTarget(
+        conn["host"], conn["ip"], conn["port"], CONNECT_S, deadline=world.now, clock=world.clock
+    )
+    pinned = webfetch.pinned_connection(target)
+    assert isinstance(pinned, webfetch.PinnedHTTPSConnection)
+    with pytest.raises(TimeoutError):
+        pinned.connect()

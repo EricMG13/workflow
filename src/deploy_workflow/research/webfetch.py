@@ -254,6 +254,11 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
         self._deadline = deadline
         self._clock = clock
 
+    def bound_by(self, deadline: float, clock: Callable[[], float]) -> None:
+        """Bound every later socket operation by what is left until ``deadline`` on ``clock``."""
+        self._deadline = deadline
+        self._clock = clock
+
     def connect(self) -> None:
         remaining = self._deadline - self._clock()
         if remaining <= 0:
@@ -294,15 +299,11 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
 
 
 def pinned_connection(target: ConnectionTarget) -> ConnectionLike:
-    return PinnedHTTPSConnection(
-        target.host,
-        target.ip,
-        port=target.port,
-        timeout=target.timeout,
-        context=tls_context(),
-        deadline=target.deadline,
-        clock=target.clock,
+    connection = PinnedHTTPSConnection(
+        target.host, target.ip, port=target.port, timeout=target.timeout, context=tls_context()
     )
+    connection.bound_by(target.deadline, target.clock)
+    return connection
 
 
 def locate_published(headers: Mapping[str, str], body: bytes) -> tuple[date | None, str | None]:

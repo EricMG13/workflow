@@ -192,7 +192,7 @@ def test_the_closed_run_renders_and_verifies(closed: Closed, key: dict[str, Any]
         (delivery / "render-receipt.json").read_bytes()
     )
     assert receipt.scope_id == key["delivery"]["scope"]["scope_id"]
-    assert receipt.sections == ()
+    assert receipt.sections == tuple(key["delivery"]["scope"]["sections"])
     tables = {
         proof.destination: sorted({fact.table_id for fact in proof.facts})
         for proof in receipt.rails

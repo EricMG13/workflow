@@ -788,7 +788,7 @@ def test_the_cp1_readiness_rebound_names_equal_the_key() -> None:
     rerun = _ledger_gaps("book", ARTIFACTS, "v2")
     _, rebound = replay._rebind_gap_ids(_readiness_text(earlier), earlier, rerun)
     assert [r.path.rsplit(".", 1)[-1] for r in rebound] == key
-    assert ("CP-1", "readiness") in replay.REBOUND_GAP_IDS
+    assert replay.REBOUND_GAP_IDS == frozenset({("CP-1", "readiness")})
 
 
 def test_a_pair_that_differs_beyond_the_artifact_hash_leaves_the_text_unchanged() -> None:

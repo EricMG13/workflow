@@ -3,6 +3,7 @@
 import http.client
 import json
 import socket
+from pathlib import Path
 from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any, cast
@@ -38,6 +39,7 @@ from deploy_workflow.model.turn import (
     Usage,
 )
 
+KEY_FILE = Path(__file__).parents[2] / "cases" / "pricing" / "openai-sol-cache-write.json"
 KEY = "sk-or-v1-TESTONLYabcdef0123456789"
 SOL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
 OPUS = ModelSpec("opus-medium", "anthropic", "claude-opus-5-5", "medium")
@@ -1073,3 +1075,12 @@ def test_decoded_tool_arguments_are_guarded_when_a_later_item_exits_early(provid
         ).encode()
     result = parse(cast(Provider, provider), 200, body, {}, Redactor())
     assert isinstance(result, ProviderError) and result.error_class == "KeyReflected"
+
+
+def test_openai_body_omits_prompt_cache_options_so_the_default_30m_tier_prices_writes() -> None:
+    """cases/pricing/openai-sol-cache-write.json#sol/default_ttl_when_prompt_cache_options_omitted
+    holds only while the request omits the key; the table prices the 30m write rate."""
+    key = json.loads(KEY_FILE.read_text(encoding="utf-8"))["sol"]
+    assert key["default_ttl_when_prompt_cache_options_omitted"] == key["write_tier_priced"]
+    body = _body(build(SOL, _request(), KEY))
+    assert "prompt_cache_options" not in body

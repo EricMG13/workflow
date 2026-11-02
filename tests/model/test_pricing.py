@@ -2,8 +2,11 @@
 
 import ast
 import inspect
+import json
 from decimal import Decimal
 from fractions import Fraction
+from pathlib import Path
+from typing import Any
 
 import pytest
 from hypothesis import given
@@ -25,9 +28,34 @@ from deploy_workflow.model.pricing import (
     refusal_values,
     reservation_usd,
 )
-from deploy_workflow.model.turn import CONFIG_PROVIDERS, Usage
+from deploy_workflow.model.providers import parse
+from deploy_workflow.model.redact import Redactor
+from deploy_workflow.model.turn import CONFIG_PROVIDERS, Turn, Usage
 
 D = Decimal
+
+KEY_FILE = Path(__file__).parents[2] / "cases" / "pricing" / "openai-sol-cache-write.json"
+
+
+def _key() -> dict[str, Any]:
+    loaded: dict[str, Any] = json.loads(KEY_FILE.read_text(encoding="utf-8"))
+    return loaded
+
+
+def _live_usage(raw_usage: dict[str, Any]) -> Usage:
+    """The usage the live OpenAI adapter parses from a reply carrying ``raw_usage``."""
+    reply = {
+        "id": "resp_key",
+        "model": "gpt-6.1-sol",
+        "status": "completed",
+        "output": [
+            {"type": "function_call", "call_id": "c1", "name": "submit_x", "arguments": "{}"}
+        ],
+        "usage": raw_usage,
+    }
+    turn = parse("openai", 200, json.dumps(reply).encode(), {}, Redactor())
+    assert isinstance(turn, Turn)
+    return turn.usage
 
 
 def test_reservation_uses_the_cache_write_rate_when_dearer() -> None:
@@ -57,8 +85,15 @@ def test_table_is_the_four_configs_dated() -> None:
     assert set(PRICES) == set(CONFIG_PROVIDERS)
     assert pricing_module.PRICES_AS_OF.isoformat() == "2026-10-31"
     sol = PRICES["sol-medium"]
-    assert (sol.input, sol.cached_read, sol.output) == (D(2), D("0.1"), D(10))
-    assert sol.cache_write == D(2)
+    key = _key()["sol"]
+    rates = key["usd_per_million"]
+    assert (sol.input, sol.cached_read, sol.cache_write, sol.output) == (
+        D(rates["input"]),
+        D(rates["cached_read"]),
+        D(rates["cache_write_30m"]),
+        D(rates["output"]),
+    )
+    assert sol.max_input_tokens == key["max_input_tokens"]
     assert PRICES["sol-high"] == sol
     opus = PRICES["opus-medium"]
     assert (opus.input, opus.cached_read, opus.output) == (D(4), D("0.2"), D(20))
@@ -76,7 +111,8 @@ def test_unlisted_config_has_no_price() -> None:
 
 def test_sol_over_272k_input_is_refused() -> None:
     sol = PRICES["sol-medium"]
-    assert reservation_usd(sol, 272_000, 0) == D("0.544")
+    k = _key()["reservation_at_max_input"]
+    assert reservation_usd(sol, k["input_tokens"], k["max_output"]) == D(k["usd"])
     with pytest.raises(ContextTooLong):
         reservation_usd(sol, 272_001, 0)
 
@@ -106,7 +142,6 @@ def test_openai_counts_cache_write_once() -> None:
         reasoning_tokens=60,
     )
     price = ModelPrice(input=D(2), cached_read=D("0.1"), cache_write=D(3), output=D(10))
-    # the real sol write rate is not supplied (table: input); 3 is a test value
     got = computed_usd("openai", price, usage)
     assert got == (500 * D(2) + 400 * D("0.1") + 100 * D(3) + 100 * D(10)) / 10**6
 
@@ -216,11 +251,29 @@ def test_offline_openrouter_cache_write_is_unknown() -> None:
     assert price_usage("deepseek-max", clean, offline=True).cost_status == "computed"
 
 
-def test_sol_cache_write_charge_is_unknown_not_priced_at_input() -> None:
-    """Ledger :2: the sol cache-write rate is unsupplied, so a charge needing it is unknown."""
+def test_an_unlisted_cache_write_rate_still_makes_the_charge_unknown() -> None:
+    """The fail-closed branch: a price with ``cache_write_listed=False`` never charges a write."""
+    unlisted = ModelPrice(
+        input=D(2), cached_read=D("0.1"), cache_write=D(2), output=D(10), cache_write_listed=False
+    )
     written = Usage(input_tokens=10_000, cache_write_tokens=8_000, output_tokens=100)
-    assert price_usage("sol-medium", written).cost_status == "unknown"
-    assert price_usage("sol-high", written, offline=True).cost_status == "unknown"
+    assert computed_usd("openai", unlisted, written) is None
     none_written = Usage(input_tokens=10_000, cache_write_tokens=0, output_tokens=100)
-    assert price_usage("sol-medium", none_written).cost_status == "computed"
-    assert reservation_usd(PRICES["sol-medium"], 1000, 0) == D(2000) / 10**6
+    assert computed_usd("openai", unlisted, none_written) is not None
+
+
+def test_sol_reservation_uses_the_listed_write_rate_when_dearer_than_input() -> None:
+    rates = _key()["sol"]["usd_per_million"]
+    write = D(rates["cache_write_30m"])
+    assert reservation_usd(PRICES["sol-medium"], 1000, 0) == write * 1000 / 10**6
+
+
+@pytest.mark.parametrize("config", ["sol-medium", "sol-high"])
+def test_pilot_sol_replies_that_write_cache_are_priced_at_the_documented_rates(
+    config: str,
+) -> None:
+    charges = _key()["pilot_charges"]
+    assert charges
+    for entry in charges:
+        got = price_usage(config, _live_usage(entry["raw_usage"]))
+        assert (got.usd, got.cost_status) == (D(entry["usd"]), entry["cost_status"])

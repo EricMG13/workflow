@@ -8199,7 +8199,7 @@
  "tool_use": {
   "research": "read_inputs once; read_pages over line:<n> for every cited line (ranges in tool_calls.research); search_pack over each searched item backs the not_found claim; headers follow the documented rule (a span matches when it holds any query term, case-insensitive substring)",
   "calls": "submissions.json tool_calls.research",
-  "CP-DR": "brief: read_inputs once, read_pages over identity and financial only, zero ev-* reads; research: read_inputs once, ok read_pages over line:<n> for every cited line, search_pack over each searched item (calls in tool_use.calls)"
+  "CP-DR": "brief: read_inputs once; source scope every held non-ev source (identity and financial in this pack), zero ev-* reads; research: read_inputs once, ok read_pages over line:<n> for every cited line, search_pack over each searched item (calls in tool_use.calls)"
  },
  "consumers": {
   "context_producers": {
@@ -8237,13 +8237,18 @@
   "stale_note": "Input changed: CP-DR; rerun required",
   "stale_source": "src/deploy_vii/execution.py:320 (invalidate: f'Input changed: {changed}; rerun required')",
   "inherited": {
-   "positive": [
+   "cpdr_own": [
     "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run.",
     "valuation-context: The searched items state no trading level or spread figure for the sector; the desk note only remarks, without a level, that the sector trades at a discount to its own history.",
     "Synthetic case; not real issuer qualification"
    ],
-   "order": "execution.settle keeps own = dedupe(candidate.limitations, synthetic line); candidate.limitations = [LOCAL_LIMITATION, 'question_id: limitation' per answer]; inherited_limitations lists them for a bound input",
-   "_source": "src/deploy_workflow/research/tables.py:38-40 and :440-442; src/deploy_vii/execution.py:459-463",
+   "positive": [
+    "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run.",
+    "valuation-context: The searched items state no trading level or spread figure for the sector; the desk note only remarks, without a level, that the sector trades at a discount to its own history."
+   ],
+   "order": "execution.settle keeps own = dedupe(candidate.limitations, synthetic line); candidate.limitations = [LOCAL_LIMITATION, 'question_id: limitation' per answer]. Compare (a) the CP-DR head's limitations == cpdr_own; (b) [t for t in consumer.inherited_limitations if t in head.limitations] == positive",
+   "note": "positive omits the synthetic line: on a synthetic run settle puts it in the consumer's own limitations (execution.py:477-482) and inherited_limitations filters own lines (:367), so it can never be inherited",
+   "_source": "src/deploy_workflow/research/tables.py:38-40 and :440-442; src/deploy_vii/execution.py:367 and :477-482",
    "pack_source_line": "PACK_LIMITATION (tables.py:36) sits on TDR.2 cells of a pack-source claim, not in module.limitations; this run has no pack-source claim, so it is not listed"
   },
   "cp1c_scope": {
@@ -8350,6 +8355,7 @@
    ]
   },
   "plan_with_consumers": {
+   "earlier": "the v1 closed run (CP-0, CP-1, CP-DR settled)",
    "requested": [
     "CP-1C",
     "CP-2",
@@ -8358,11 +8364,21 @@
    "repaired": [
     "CP-DR"
    ],
+   "replayed": [
+    "CP-0",
+    "CP-1"
+   ],
    "live": [
+    "CP-1A",
     "CP-DR",
     "CP-1C",
     "CP-2"
-   ]
+   ],
+   "unreplayable": {
+    "CP-1A": "the earlier run holds no settled, valid attempt of it"
+   },
+   "_source": "src/deploy_workflow/replay.py:267 (_Earlier.unusable)",
+   "note": "over v1 CP-1A has no settled attempt, so it is live; CP-1C and CP-2 are live through CP-1A as well as CP-DR"
   },
   "rebound": {
    "CP-0 source_readiness": [

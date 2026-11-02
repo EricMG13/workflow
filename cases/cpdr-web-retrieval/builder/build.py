@@ -468,7 +468,7 @@ EXPECTED = {
                 "fetches_json": {
             "file_bytes": FETCHES_BYTES,
             "file_sha256": sha(FETCHES_BYTES),
-            "shape": "one record per url row in manifest order: url, resolved_ip (last connection made), status (last response read), bytes and sha256 (raw body, set exactly when a 200 body was read within the cap), published_located, published_source, hops (redirects followed), item_id (set iff accepted), reason (set iff the item was refused, at any stage); json.dumps indent 1 plus a newline",
+            "shape": "one record per attempted fetch (every url row not refused by its own row date), in manifest order: url, resolved_ip (last connection made), status (last response read), bytes and sha256 (raw body, set exactly when a 200 body was read within the cap), published_located, published_source, hops (redirects that passed the scheme, manifest-host and hop-limit checks), item_id (set iff accepted), reason (set iff the item was refused after a fetch was attempted); json.dumps indent 1 plus a newline",
         },
         "evidence_json": {"rows": evidence},
         "rejected_json": {"entries": entries, "file_bytes": REJECTED_BYTES, "file_sha256": sha(REJECTED_BYTES)},

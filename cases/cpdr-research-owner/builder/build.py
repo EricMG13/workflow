@@ -1891,9 +1891,11 @@ CONSUMERS = {
     "stale_note": "Input changed: CP-DR; rerun required",
     "stale_source": "src/deploy_vii/execution.py:320 (invalidate: f'Input changed: {changed}; rerun required')",
     "inherited": {
-        "positive": [_LOCAL, f"valuation-context: {_VAL}", _SYNTH],
-        "order": "execution.settle keeps own = dedupe(candidate.limitations, synthetic line); candidate.limitations = [LOCAL_LIMITATION, 'question_id: limitation' per answer]; inherited_limitations lists them for a bound input",
-        "_source": "src/deploy_workflow/research/tables.py:38-40 and :440-442; src/deploy_vii/execution.py:459-463",
+        "cpdr_own": [_LOCAL, f"valuation-context: {_VAL}", _SYNTH],
+        "positive": [_LOCAL, f"valuation-context: {_VAL}"],
+        "order": "execution.settle keeps own = dedupe(candidate.limitations, synthetic line); candidate.limitations = [LOCAL_LIMITATION, 'question_id: limitation' per answer]. Compare (a) the CP-DR head's limitations == cpdr_own; (b) [t for t in consumer.inherited_limitations if t in head.limitations] == positive",
+        "note": "positive omits the synthetic line: on a synthetic run settle puts it in the consumer's own limitations (execution.py:477-482) and inherited_limitations filters own lines (:367), so it can never be inherited",
+        "_source": "src/deploy_workflow/research/tables.py:38-40 and :440-442; src/deploy_vii/execution.py:367 and :477-482",
         "pack_source_line": "PACK_LIMITATION (tables.py:36) sits on TDR.2 cells of a pack-source claim, not in module.limitations; this run has no pack-source claim, so it is not listed",
     },
     "cp1c_scope": {
@@ -1949,7 +1951,16 @@ DELIVERY = {
 }
 REPLACEMENT = {
     "plan": {"requested": ["CP-1", "CP-DR"], "repaired": ["CP-DR"], "replayed": ["CP-0", "CP-1"], "live": ["CP-DR"]},
-    "plan_with_consumers": {"requested": ["CP-1C", "CP-2", "CP-DR"], "repaired": ["CP-DR"], "live": ["CP-DR", "CP-1C", "CP-2"]},
+    "plan_with_consumers": {
+        "earlier": "the v1 closed run (CP-0, CP-1, CP-DR settled)",
+        "requested": ["CP-1C", "CP-2", "CP-DR"],
+        "repaired": ["CP-DR"],
+        "replayed": ["CP-0", "CP-1"],
+        "live": ["CP-1A", "CP-DR", "CP-1C", "CP-2"],
+        "unreplayable": {"CP-1A": "the earlier run holds no settled, valid attempt of it"},
+        "_source": "src/deploy_workflow/replay.py:267 (_Earlier.unusable)",
+        "note": "over v1 CP-1A has no settled attempt, so it is live; CP-1C and CP-2 are live through CP-1A as well as CP-DR",
+    },
     "rebound": {"CP-0 source_readiness": ["pack_sha256"], "CP-1 financials": ["run_id"]},
     "rebound_source": "src/deploy_workflow/replay.py:55-60 (REBOUND_FIELDS)",
     "supersedes": RUN_V1,
@@ -1958,7 +1969,7 @@ REPLACEMENT = {
     "pack_changed_source": "src/deploy_workflow/replay.py:343-345 (check_same_pack)",
 }
 TOOL_USE_CPDR = (
-    "brief: read_inputs once, read_pages over identity and financial only, zero ev-* reads; research: read_inputs once, "
+    "brief: read_inputs once; source scope every held non-ev source (identity and financial in this pack), zero ev-* reads; research: read_inputs once, "
     "ok read_pages over line:<n> for every cited line, search_pack over each searched item (calls in tool_use.calls)"
 )
 

@@ -281,6 +281,18 @@ def test_a_stop_caused_by_a_brief_fault_keeps_the_faults_own_form() -> None:
     assert rp._fault_reason(stop, Redactor()) == "BriefInvalid: x"
 
 
+@pytest.mark.parametrize("fault", [CpDrNotAnchored, BriefInvalid])
+def test_the_cause_of_an_own_form_stop_is_redacted(fault: type[Exception]) -> None:
+    """O7b-1c S6 (S2b re-review I-2): the cause the stop carries is raw; the recorded reason keeps
+    the bare `<Type>: ` form and redacts a key-shaped token and a value the redactor knows."""
+    token, exact = "sk-ant-" + "Q" * 18, "exact-" + "z" * 10
+    cause = fault(f"blocked {token} and {exact}")
+    stop = StepStopped("WorkflowError", "ignored", cause=cause)
+    reason = rp._fault_reason(stop, Redactor([exact]))
+    assert reason == f"{fault.__name__}: blocked [redacted] and [redacted]"
+    assert token not in reason and exact not in reason
+
+
 def test_an_ordinary_workflow_failure_keeps_the_loops_text() -> None:
     cause = WorkflowError("not_permitted")
     stop = StepStopped("WorkflowError", "WorkflowError: not_permitted", cause=cause)

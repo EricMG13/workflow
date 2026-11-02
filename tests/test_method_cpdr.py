@@ -156,16 +156,6 @@ def _git_sha(commit: str, destination: str) -> str:
     return hashlib.sha256(shown).hexdigest()
 
 
-def _commit_exists(commit: str) -> bool:
-    found = subprocess.run(
-        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
-    )
-    return found.returncode == 0
-
-
 def _records(destination: str) -> list[dict[str, Any]]:
     patches = json.loads(MANIFEST.read_text(encoding="utf-8"))["post_import_patches"]
     return [r for r in patches if r["destination"] == destination]
@@ -192,8 +182,7 @@ def test_d12_record_carries_the_file_sha256(destination: str, path: Path) -> Non
     for record in chain:
         assert re.fullmatch(r"[0-9a-f]{40}", record["project_commit"])
         assert record["reason"].strip()
-        if _commit_exists(record["project_commit"]):
-            assert _git_sha(record["project_commit"], destination) == record["sha256"]
+        assert _git_sha(record["project_commit"], destination) == record["sha256"]
 
 
 def test_methodology_chain_runs_7d164d11_to_the_current_file() -> None:

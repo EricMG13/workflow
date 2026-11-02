@@ -14,9 +14,9 @@ from deploy_vii import registry
 from deploy_vii.contracts import PATHWAY_MODULES, PathwayId
 
 ROOT = Path(__file__).resolve().parents[1]
-KEY: dict[str, Any] = json.loads((ROOT / "cases/cpdr-research-owner/expected.json").read_text())[
-    "registry_after_o7b1"
-]
+KEY: dict[str, Any] = json.loads(
+    (ROOT / "cases/cpdr-research-owner/expected.json").read_text(encoding="utf-8")
+)["registry_after_o7b1"]
 ROW: dict[str, Any] = KEY["CP-DR"]
 PRESETS = sorted(PATHWAY_MODULES)
 

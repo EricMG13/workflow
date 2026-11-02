@@ -537,8 +537,9 @@ def closed_run(case: str, factory: pytest.TempPathFactory) -> ClosedRun:
     sockets = _Sockets()
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(socket, "socket", sockets)
-        # The owner-slice render needs CP-DR's registry row (`owner_render_scope`), which S3 adds and
-        # S4 tests; every other stage of `_finish_run` (receipt, its verify, dossier, run.json) runs.
+        # `owner_rendering._scope_of` has no `DELIVERY_SCOPES` entry for a CP-DR run, so the render
+        # refuses `owner_render_scope`; O7c registers the scope and removes this seam. Every other
+        # stage of `_finish_run` (receipt, its verify, dossier, run.json) runs.
         patch.setattr(rp, "_render", lambda *_: None)
         patch.setattr(record, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
         workflow = closed_walk(case, root, "execution", between)

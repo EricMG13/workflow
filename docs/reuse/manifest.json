@@ -2481,8 +2481,8 @@
     {
       "destination": "src/deploy_vii/methods/cp1c.md",
       "prior_project_sha256": "838878d0cffb6513d6464064d4ee7940659c3972a03e73704de8bc81b4a055ad",
-      "project_commit": "bf5e34d29bff0d821af0cde10d484e6f9c9be9bb",
-      "sha256": "b6b6ae07f203dd8ab1875c46dea0adbe9f89a94f34d36d17d1d630a5c1f9d6f6",
+      "project_commit": "7fdb258dd3497477831cb2c320e0c4b348db1051",
+      "sha256": "bf786ddbf10ccbff2d6a6179337b7f4f9c676236614154a89e0bed7230af1600",
       "reason": "repo-authored (not in files[]): B9 (O7d D2 fix 2, O7-R65, B31a): wording only; the universe sentence (line 20), the definitions clause (line 21) and the one-adapter scope list (line 29) are true on the CP-DR peer-sheet path as well: Python admits the TDR.4 candidates first (currency, unit, period ends, the issuer's name) and lists the rest in T1C.7, the operands are the TDR.6 figures, and the ev-* items the figures cite are in scope. Chained after the O7d D2 fix 1 record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
     }

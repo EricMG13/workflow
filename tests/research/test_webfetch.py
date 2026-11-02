@@ -7,6 +7,8 @@ guard fails any real socket creation or name lookup.
 
 import ast
 import hashlib
+import http.client
+import io
 import ipaddress
 import json
 import socket
@@ -53,6 +55,7 @@ class FakeResponse:
     body: bytes
     asked: list[int] = field(default_factory=list)
     pos: int = 0
+    limit: int | None = None
 
     def getheader(self, name: str, default: str | None = None) -> str | None:
         for key, value in self.headers.items():
@@ -62,7 +65,8 @@ class FakeResponse:
 
     def read(self, amt: int) -> bytes:
         self.asked.append(amt)
-        chunk = self.body[self.pos : self.pos + amt]
+        size = amt if self.limit is None else min(amt, self.limit)
+        chunk = self.body[self.pos : self.pos + size]
         self.pos += len(chunk)
         return chunk
 
@@ -81,6 +85,8 @@ class FakeConnection:
         assert self.sent is not None
         spec = RESPONSES[f"https://{self.target.host}{self.sent[1]}"]
         response = FakeResponse(spec["status"], spec["headers"], spec["body"].encode("utf-8"))
+        response.limit = self.world.short_read
+        self.world.now += self.world.advance_on_response
         self.world.responses.append(response)
         return response
 
@@ -91,7 +97,7 @@ class FakeConnection:
 class World:
     """Injected resolver, connector and clock over the case's hosts and responses."""
 
-    def __init__(self, advance_on_connect: float = 0.0) -> None:
+    def __init__(self, advance_on_connect: float = 0.0, advance_on_response: float = 0.0) -> None:
         self.resolved: list[str] = []
         self.targets: list[webfetch.ConnectionTarget] = []
         self.requests: list[tuple[str, str, dict[str, str]]] = []
@@ -99,6 +105,8 @@ class World:
         self.closed = 0
         self.now = 0.0
         self.advance = advance_on_connect
+        self.advance_on_response = advance_on_response
+        self.short_read: int | None = None
 
     def resolver(self, host: str) -> list[str]:
         assert self.resolved[-1:] != [host], f"{host} was resolved twice for one hop"
@@ -152,11 +160,22 @@ def test_check_url_splits_a_good_url() -> None:
 
 
 @pytest.mark.parametrize(
-    "url", ["https://a.example/x\r\nHost: evil", "https://a.example/x y", "https://a.example/\x00"]
+    "url",
+    [
+        "https://a.example/x\r\nHost: evil",
+        "https://a.example/x y",
+        "https://a.example/\x00",
+        "https://a.example/x|y",
+        "https://a.example/<<<END",
+        "https://a.example/caf\u00e9",
+        "https://[x/",
+        "https://a.example]/x",
+    ],
 )
-def test_check_url_refuses_control_characters_and_spaces(url: str) -> None:
-    with pytest.raises(webfetch.UrlRefused):
+def test_check_url_has_one_character_rule(url: str) -> None:
+    with pytest.raises(webfetch.UrlRefused) as raised:
         webfetch.check_url(url)
+    assert str(raised.value) == f"url {url}: the url is not valid"
 
 
 @pytest.mark.parametrize("vector", KEY["is_public"]["vectors"], ids=lambda v: v["addr"])
@@ -277,7 +296,7 @@ def test_pinned_connection_wraps_with_default_context(monkeypatch: pytest.Monkey
     assert seen["timeout"] == CONNECT_S
     assert seen["sock"] is raw
     assert seen["server_hostname"] == conn["server_hostname"]
-    assert pinned.sock is wrapped
+    assert pinned.sock is not None
 
 
 def test_tls_context_is_the_verifying_default() -> None:
@@ -451,3 +470,292 @@ def test_a_connection_failure_is_a_recorded_refusal() -> None:
     )
     assert body is None and record.reason is not None
     assert record.reason.startswith(KEY["request"]["verbatim_url"])
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "https://[redirect-b.example/y",
+        "/café",
+        "http://redirect-b.example/a|b<<<END",
+        "https://redirect-b.example/x\r\nSet-Cookie: a",
+    ],
+)
+def test_an_invalid_location_is_refused_without_repeating_it(
+    monkeypatch: pytest.MonkeyPatch, location: str
+) -> None:
+    current = "https://redirect-a.example/evil"
+    spec = {"status": 302, "headers": {"Location": location}, "body": ""}
+    monkeypatch.setitem(RESPONSES, current, spec)
+    world = World()
+    record, body, _media = world.fetch(current)
+    assert body is None
+    assert record.reason == f"redirect from {current} refused: the location is not a valid url"
+    assert world.resolved == ["redirect-a.example"]
+
+
+def test_an_unparsable_last_modified_is_not_located() -> None:
+    neither = KEY["published"]["neither"]
+    huge = {"Last-Modified": "Mon, 15 Dec 99999999999 08:00:00 GMT"}
+    assert webfetch.locate_published(huge, b"") == (
+        neither["published_located"],
+        neither["published_source"],
+    )
+
+
+def test_constants_equal_the_key() -> None:
+    assert webfetch.CONNECT_TIMEOUT_S == CASES["timeouts"]["connect_seconds"]
+    assert webfetch.TOTAL_TIMEOUT_S == KEY["timeout"]["total_seconds"]
+
+
+def test_a_host_with_two_public_addresses_uses_the_first() -> None:
+    first, second = HOSTS["sector-desk.example"][0], HOSTS["redirect-a.example"][0]
+    assert webfetch.resolve_public("two.example", lambda _h: [first, second]) == first
+
+
+def test_a_short_read_fake_is_never_asked_for_more_than_cap_plus_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    url = "https://sector-desk.example/notes/huge"
+    spec = {"status": 200, "headers": {"Content-Type": "text/plain"}, "body": "x" * (CAP * 8)}
+    monkeypatch.setitem(RESPONSES, url, spec)
+    world = World()
+    world.short_read = KEY["cap"]["cap"] // 6
+    record, body, _media = world.fetch(url)
+    assert body is None and record.reason == f"{url} body is larger than the {CAP}-byte cap"
+    assert world.responses[0].pos == KEY["cap"]["max_read_request"]
+
+
+class SimSock:
+    """A kernel socket that never blocks: each receive or send costs ``step`` on the clock, or the
+    socket timeout (and raises TimeoutError) when that is shorter."""
+
+    def __init__(self, clock: World, step: float, data: bytes = b"") -> None:
+        self.clock = clock
+        self.step = step
+        self.data = data
+        self.timeout: float | None = None
+        self.set_at: list[tuple[float, float | None]] = []
+        self.calls = 0
+
+    def settimeout(self, value: float | None) -> None:
+        self.timeout = value
+        self.set_at.append((self.clock.now, value))
+
+    def gettimeout(self) -> float | None:
+        return self.timeout
+
+    def _spend(self) -> None:
+        self.calls += 1
+        if self.timeout is not None and self.step > self.timeout:
+            self.clock.now += self.timeout
+            raise TimeoutError("timed out")
+        self.clock.now += self.step
+
+    def recv_into(self, buffer: bytearray, nbytes: int = 0) -> int:
+        self._spend()
+        size = min(len(buffer), len(self.data)) if self.data else 1
+        buffer[:size] = self.data[:size] or b"x"
+        self.data = self.data[size:]
+        return size
+
+    def recv(self, count: int) -> bytes:
+        buffer = bytearray(count)
+        return bytes(buffer[: self.recv_into(buffer)])
+
+    def sendall(self, data: bytes) -> None:
+        self._spend()
+
+    def _decref_socketios(self) -> None:
+        return None
+
+    def close(self) -> None:
+        return None
+
+
+def _budgeted(
+    monkeypatch: pytest.MonkeyPatch, sim: SimSock, world: World
+) -> webfetch.PinnedHTTPSConnection:
+    conn = KEY["connection"]
+    monkeypatch.setattr(socket, "create_connection", lambda address, timeout: sim)
+
+    class Context:
+        def wrap_socket(self, sock: object, *, server_hostname: str) -> object:
+            return sock
+
+    return webfetch.PinnedHTTPSConnection(
+        conn["host"],
+        conn["ip"],
+        port=conn["port"],
+        timeout=CONNECT_S,
+        context=cast(ssl.SSLContext, Context()),
+        deadline=world.now + TOTAL_S,
+        clock=world.clock,
+    )
+
+
+def test_every_receive_is_bounded_by_the_remaining_total(monkeypatch: pytest.MonkeyPatch) -> None:
+    world = World()
+    sim = SimSock(world, step=9.0)
+    pinned = _budgeted(monkeypatch, sim, world)
+    pinned.connect()
+    assert pinned.sock is not None
+    for _ in range(20):
+        try:
+            pinned.sock.recv(1)
+        except TimeoutError:
+            break
+    assert world.now <= KEY["timeout"]["total_seconds"]
+    assert sim.set_at
+    for at, value in sim.set_at:
+        assert value == min(CONNECT_S, TOTAL_S - at)
+    calls = sim.calls
+    with pytest.raises(TimeoutError):
+        pinned.sock.recv(1)
+    with pytest.raises(TimeoutError):
+        pinned.sock.sendall(b"x")
+    assert sim.calls == calls
+
+
+def test_a_response_is_read_through_the_bounded_socket(monkeypatch: pytest.MonkeyPatch) -> None:
+    world = World()
+    reply = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\n\r\nhi"
+    sim = SimSock(world, step=1.0, data=reply)
+    pinned = _budgeted(monkeypatch, sim, world)
+    pinned.connect()
+    pinned.request("GET", "/x", headers={"Host": "h"})
+    response = pinned.getresponse()
+    assert response.read(10) == b"hi"
+    assert sim.set_at and all(value == min(CONNECT_S, TOTAL_S - at) for at, value in sim.set_at)
+
+
+def test_a_response_that_arrives_after_the_total_is_refused() -> None:
+    world = World(advance_on_response=CASES["slow_connector_seconds"])
+    record, body, _media = world.fetch(KEY["timeout"]["url"])
+    assert body is None
+    assert record.reason == KEY["timeout"]["reason"]
+
+
+def test_a_per_operation_timeout_inside_the_total_is_not_called_a_total_timeout() -> None:
+    world = World()
+
+    class Stalled(FakeConnection):
+        def request(self, method: str, url: str, *, headers: Mapping[str, str]) -> None:
+            raise TimeoutError("timed out")
+
+    url = KEY["timeout"]["url"]
+    record, body, _media = webfetch.fetch(
+        url,
+        manifest_hosts=MANIFEST_HOSTS,
+        resolver=world.resolver,
+        connect=lambda target: Stalled(world, target),
+        cap=CAP,
+        connect_timeout=CONNECT_S,
+        total_timeout=TOTAL_S,
+        clock=world.clock,
+    )
+    assert body is None
+    assert record.reason == f"{url} could not be fetched: TimeoutError"
+
+
+class _BytesSock:
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    def makefile(self, mode: str) -> io.BufferedReader:
+        return io.BufferedReader(io.BytesIO(self.data))
+
+
+class _RealResponseConnection:
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    def request(self, method: str, url: str, *, headers: Mapping[str, str]) -> None:
+        return None
+
+    def getresponse(self) -> http.client.HTTPResponse:
+        response = http.client.HTTPResponse(
+            cast(socket.socket, _BytesSock(self.data)), method="GET"
+        )
+        response.begin()
+        return response
+
+    def close(self) -> None:
+        return None
+
+
+def test_a_body_shorter_than_its_content_length_is_refused() -> None:
+    world = World()
+    head = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 500\r\n\r\n"
+    data = head + b"only forty bytes of a five-hundred body."
+    url = KEY["request"]["verbatim_url"]
+    record, body, _media = webfetch.fetch(
+        url,
+        manifest_hosts=MANIFEST_HOSTS,
+        resolver=world.resolver,
+        connect=lambda _target: _RealResponseConnection(data),
+        cap=CAP,
+        connect_timeout=CONNECT_S,
+        total_timeout=TOTAL_S,
+        clock=world.clock,
+    )
+    assert body is None
+    assert record.reason == f"{url} body ended after 40 of 500 bytes"
+    assert (record.bytes, record.sha256) == (None, None)
+
+
+def test_the_production_connector_pins_the_checked_address_and_verifies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    conn = KEY["connection"]
+    seen: dict[str, Any] = {}
+
+    def create_connection(address: tuple[str, int], timeout: float) -> object:
+        seen["address"] = address
+        return object()
+
+    def wrap_socket(self: ssl.SSLContext, sock: object, *, server_hostname: str) -> object:
+        seen["server_hostname"] = server_hostname
+        seen["check_hostname"] = self.check_hostname
+        seen["verify_mode"] = self.verify_mode
+        return sock
+
+    monkeypatch.setattr(socket, "create_connection", create_connection)
+    monkeypatch.setattr(ssl.SSLContext, "wrap_socket", wrap_socket)
+    target = webfetch.ConnectionTarget(conn["host"], conn["ip"], conn["port"], CONNECT_S)
+    pinned = webfetch.pinned_connection(target)
+    assert isinstance(pinned, webfetch.PinnedHTTPSConnection)
+    pinned.connect()
+    assert seen["address"] == (conn["ip"], conn["port"])
+    assert seen["server_hostname"] == conn["server_hostname"]
+    assert seen["check_hostname"] is conn["check_hostname"]
+    assert seen["verify_mode"] is getattr(ssl, conn["verify_mode"])
+
+
+class _CaptureSock:
+    def __init__(self) -> None:
+        self.sent = b""
+
+    def sendall(self, data: bytes) -> None:
+        self.sent += bytes(data)
+
+    def close(self) -> None:
+        return None
+
+
+def test_the_wire_carries_exactly_the_key_headers() -> None:
+    req = KEY["request"]
+    conn = KEY["connection"]
+    pinned = webfetch.PinnedHTTPSConnection(
+        conn["host"],
+        conn["ip"],
+        port=conn["port"],
+        timeout=CONNECT_S,
+        context=webfetch.tls_context(),
+    )
+    capture = _CaptureSock()
+    pinned.sock = cast(socket.socket, capture)
+    pinned.request("GET", req["path"], headers=req["headers"])
+    lines = capture.sent.decode("ascii").split("\r\n")
+    assert lines[0] == f"{req['method']} {req['path']} HTTP/1.1"
+    assert [line for line in lines[1:] if line] == [f"{k}: {v}" for k, v in req["headers"].items()]

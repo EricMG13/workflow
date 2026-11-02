@@ -1,0 +1,457 @@
+{
+  "schema_version": "golden-mapping/1",
+  "case_id": "bgs-relative-value",
+  "preparer": "mx-feature (Task 6 preparer)",
+  "reviewer": "mx-precise (Task 6 review)",
+  "module_commits": {
+    "CP-0": "9abad5b6d071e6d297366d0d1777689bfa2ec82e",
+    "CP-2": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+    "CP-3": "68ebc369347121ce505488a8808661e643751d52",
+    "CP-3C": "0898948fe3e709c91d1137d7e232bffb4bd410cb",
+    "CP-3D": "5e859cd137c662462c898c1b8311b2766e0d9fd2"
+  },
+  "entries": [
+    {
+      "fact_id": "CP-0.identity.Registrant.legal_name",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "issuer",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    }
+  ],
+  "unmapped": [
+    {
+      "fact_id": "CP-0.identity.Registrant.ticker_exchange",
+      "reason": "CP-0 readiness result (readiness.build_readiness) writes only T1/run objective, issuer, reporting_period, identity_gate and per-source P3/P5/T2 rows; no exchange or ticker field, so no output can hold this text."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.principal_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.principal_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.principal_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.principal_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Unamortized_deferred_debt_financing_costs.amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Unamortized_discount.amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Total_long-term_debt_net_of_costs_and_discount.carrying_amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Current_portion_of_long-term_debt.amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Total_contractual_maturities_aggregate_principal_.principal_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Sum_of_four_instrument_principal_balances.principal_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Total_principal_less_unamortized_costs_and_discount.carrying_amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.carrying_amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.carrying_amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.carrying_amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.carrying_amount.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.maturity_date.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.maturity_date.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.maturity_date.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.maturity_date.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.coupon_fixed.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.coupon_fixed.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.margin_sofr.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.margin_base_rate.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.weighted_average_interest_rate.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.amortization_per_calendar_quarter_of_original_principal.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_sofr_low.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_sofr_high.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_base_rate_low.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_base_rate_high.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.weighted_average_interest_rate.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.commitment_fee_on_unused.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.sofr_floor.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.sofr_floor.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.ranking.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.ranking.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.ranking.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.ranking.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.commitment.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.commitment_after_2025-07-01_amendment.2025-07-01",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.drawn_balance.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.letters_of_credit_outstanding.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.available_borrowing_capacity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.revolver.Revolving_credit_facility.letter_of_credit_sublimit.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2025_remaining.aggregate_contractual_maturity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2026.aggregate_contractual_maturity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2027.aggregate_contractual_maturity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2028.aggregate_contractual_maturity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2029.aggregate_contractual_maturity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.maturity_schedule.Fiscal_2030_and_thereafter.aggregate_contractual_maturity.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarter_ending_2025-06-28_through_quarter_ending_2026-10-03_.maximum_ratio.2025-07-01",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarter_ending_2027-01-02.maximum_ratio.2027-01-02",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarters_ending_2027-04-03_and_thereafter.maximum_ratio.2027-04-03",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.covenants.Minimum_consolidated_interest_coverage_ratio.minimum_ratio.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-2.covenants.Maximum_senior_secured_leverage_ratio_for_incremental_facility.maximum_ratio.2025-06-28",
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+    },
+    {
+      "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_principal_repurchased_open_market.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_cash_paid_for_repurchase.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_average_repurchase_price_pct_of_principal.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.hierarchy_level.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.hierarchy_level.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.valuation_basis_as_disclosed.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.hierarchy_level.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.valuation_basis_as_disclosed.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.hierarchy_level.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.valuation_basis_as_disclosed.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.hierarchy_level.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.valuation_basis_as_disclosed.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.hierarchy_level.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.valuation_basis_as_disclosed.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.hierarchy_level.2025-06-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.valuation_basis_as_disclosed.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.hierarchy_level.2024-12-28",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3.observed_quotes.All_instruments.observed_bid_ask_or_price",
+      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.5.25_senior_notes_due_2027.optional_redemption_price_pct_of_principal.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.5.25_senior_notes_due_2027.change_of_control_or_asset_sale_repurchase.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2025-09-15.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2026-09-15.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2027-09-15.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.equity_clawback_redemption_price_pct_before_2025-09-15.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.equity_clawback_max_share_of_principal.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.make_whole_before_2025-09-15.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.change_of_control_repurchase_price_pct.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.asset_disposition_offer_price_pct.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.Tranche_B_term_loans_due_2029.voluntary_prepayment_premium.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.Revolving_credit_loans_due_2028.voluntary_prepayment_premium.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3C.call_terms.Senior_secured_credit_agreement.mandatory_prepayment_triggers.2025-06-28",
+      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.guarantors.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.collateral.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.priority.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.guarantors.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.collateral.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.priority.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.guarantors.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.collateral.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.priority.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.guarantors.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.collateral.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    },
+    {
+      "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.priority.2025-06-28",
+      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+    }
+  ]
+}

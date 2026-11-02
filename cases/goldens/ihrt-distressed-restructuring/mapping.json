@@ -1,0 +1,694 @@
+{
+  "schema_version": "golden-mapping/1",
+  "case_id": "ihrt-distressed-restructuring",
+  "preparer": "mx-feature (Task 6 preparer)",
+  "reviewer": "mx-precise (Task 6 review)",
+  "module_commits": {
+    "CP-0": "0c39637aeb31cdc31892c61878e29264411e79a7",
+    "CP-1A": "0daac2cc5ba33d477b8143d3373bc75f622de5a4",
+    "CP-2": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+    "CP-2H": "5149ddadf64d5b9be4f327750db39a928ff66a23",
+    "CP-4": "a2243308037a6bc6b86536ce5c801b0c73f01271",
+    "CP-4C": "e995c5ddc57ac3e7840855a6ccaaa175a189ccd8"
+  },
+  "entries": [
+    {
+      "fact_id": "CP-0.identity.Registrant.legal_name",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "issuer",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1A.business.iHeartMedia,_Inc..business_description",
+      "module": "CP-1A",
+      "locator": {
+        "table_id": "company_description",
+        "row_id": "company",
+        "field": "business_description",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    }
+  ],
+  "unmapped": [
+    {
+      "fact_id": "CP-0.identity.Registrant.ticker",
+      "reason": "CP-0 (build_readiness) writes only the T1 run, P3/P5/T2/T3/T6 per-source, T4/T8 per-consumer facts; none holds this identity field"
+    },
+    {
+      "fact_id": "CP-0.identity.Borrower.legal_name",
+      "reason": "CP-0 (build_readiness) writes only the T1 run, P3/P5/T2/T3/T6 per-source, T4/T8 per-consumer facts; none holds this identity field"
+    },
+    {
+      "fact_id": "CP-0.identity.Parent_guarantor_(Holdings).legal_name",
+      "reason": "CP-0 (build_readiness) writes only the T1 run, P3/P5/T2/T3/T6 per-source, T4/T8 per-consumer facts; none holds this identity field"
+    },
+    {
+      "fact_id": "CP-0.identity.Capital_I.relationship_to_borrower",
+      "reason": "CP-0 (build_readiness) writes only the T1 run, P3/P5/T2/T3/T6 per-source, T4/T8 per-consumer facts; none holds this identity field"
+    },
+    {
+      "fact_id": "CP-0.identity.Fiscal_year.fiscal_year_end",
+      "reason": "CP-0 (build_readiness) writes only the T1 run, P3/P5/T2/T3/T6 per-source, T4/T8 per-consumer facts; none holds this identity field"
+    },
+    {
+      "fact_id": "CP-1A.transaction.Comprehensive_Transactions.description",
+      "reason": "CP-1A transaction rows are numbered r01.. in the order the model submits them; no fixed row id holds this fact (only the company_description/company row is fixed)"
+    },
+    {
+      "fact_id": "CP-1A.transaction.Exchange.stated_effect_on_maturities",
+      "reason": "CP-1A transaction rows are numbered r01.. in the order the model submits them; no fixed row id holds this fact (only the company_description/company row is fixed)"
+    },
+    {
+      "fact_id": "CP-1A.transaction.Exchange.stated_debt_reduction_text",
+      "reason": "CP-1A transaction rows are numbered r01.. in the order the model submits them; no fixed row id holds this fact (only the company_description/company row is fixed)"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.drawn_balance.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.OtherSecuredSub.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.OtherUnsecuredSub.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.TotalSecured.principal_total.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.OID.amount.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.DebtFees.amount.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.TotalDebtCarrying.carrying_amount.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.GrossPrincipal.principal_total.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.WAIR.rate.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.DebtMarketValue.market_value.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ExistingTLTotal.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.maturity_date",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.maturity_date",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.maturity_date",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.maturity_date",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.maturity_date",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.maturity_date",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.maturity_year",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.fixed_coupon",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.fixed_coupon",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.fixed_coupon",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.fixed_coupon",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.margin_over_term_sofr",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.margin_over_term_sofr",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.term_sofr_floor",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.margin_over_term_sofr_low",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.margin_over_term_sofr_high",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.post_exchange_rate_increase",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N6375_2026.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N525_2027.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N475_2028.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.TLF2026.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ITLF2026.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.N8375_2027.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.ABL2027.ranking",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.Cash.amount.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.NetDebt.amount.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.facility_size_commitment.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.letters_of_credit_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.borrowing_base_availability.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.drawn_balance.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.Liquidity.amount.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.springing_fixed_charge_coverage_min",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_fixed_component",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_pct_of_commitments_component",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.springing_trigger_availability_rule",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.liquidity.ABL.trigger_event_occurred_at_period_end.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2026_Secured_Notes.principal_exchanged.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2026_Secured_Notes.participation_pct_of_principal.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2026_Secured_Notes.participation_pct_recomputed.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_new_issued.2029_First_Lien_Notes.principal_issued.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2027_Secured_Notes.principal_exchanged.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2027_Secured_Notes.participation_pct_of_principal.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2027_Secured_Notes.participation_pct_recomputed.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_new_issued.2030_First_Lien_Notes.principal_issued.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2028_Secured_Notes.principal_exchanged.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2028_Secured_Notes.participation_pct_of_principal.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.2028_Secured_Notes.participation_pct_recomputed.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_new_issued.2031_First_Lien_Notes.principal_issued.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.Unsecured_Notes.principal_exchanged.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.Unsecured_Notes.participation_pct_of_principal.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.Unsecured_Notes.participation_pct_recomputed.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_new_issued.Second_Lien_Notes.principal_issued.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.Existing_Term_Loans.principal_exchanged.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.Existing_Term_Loans.participation_pct_of_principal.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_tendered.Existing_Term_Loans.participation_pct_recomputed.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_new_issued.New_Term_Loans.principal_issued.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_cash.2026SecuredNotes.cash_consideration.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_cash.ExistingTermLoans.cash_consideration.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.Participation.aggregate_principal_participating_text.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.Participation.participation_pct_of_principal.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.Participation.participation_pct_recomputed.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_dates.Exchange_Offers.expiration_time",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_dates.Exchange.settlement_date",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_dates.Exchange.8k_filing_date",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_dates.Exchange.press_release_date",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_dates.Transaction_Support_Agreement.date",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.tsa_support.6.375%.supporting_holders_pct.2024-11-06",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.tsa_support.5.25%.supporting_holders_pct.2024-11-06",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.tsa_support.4.75%.supporting_holders_pct.2024-11-06",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.tsa_support.8.375%.supporting_holders_pct.2024-11-06",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.tsa_support.term.supporting_holders_pct.2024-11-06",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.2029_First_Lien_Notes.initial_fixed_coupon.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.2029_First_Lien_Notes.maturity_date.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.2030_First_Lien_Notes.initial_fixed_coupon.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.2030_First_Lien_Notes.maturity_date.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.2031_First_Lien_Notes.initial_fixed_coupon.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.2031_First_Lien_Notes.maturity_date.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.Second_Lien_Notes.initial_fixed_coupon.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.Second_Lien_Notes.maturity_date.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.maturity_date.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.margin_over_term_sofr_initial.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.term_sofr_floor.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-2.post_exchange_new_instruments.New_Term_Loans.quarterly_amortization_pct_of_original_principal.2024-12-20",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.borrower",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.holdings_parent_guarantor",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.guarantors",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.administrative_and_collateral_agent",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.New_Term_Loan_Credit_Agreement.closing_date",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Initial_Term_Commitments.aggregate_commitment_amount",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Initial_Term_Loans.maturity_date",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Initial_Term_Loans.amortization",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Applicable_Rate_level_1_(no_rating,_or_below_level_2).term_sofr_margin",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Applicable_Rate_level_1_(no_rating,_or_below_level_2).base_rate_margin",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Applicable_Rate_level_2_(both_Moody's_B2_and_S&P_B).term_sofr_margin",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Applicable_Rate_level_3_(either_Moody's_Ba3_or_S&P_BB-).term_sofr_margin",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Applicable_Rate.level_if_no_index_debt_rating",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Base_Rate.floor",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Term_SOFR.sofr_adjustment_1m",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Term_SOFR.sofr_adjustment_3m",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Term_SOFR.sofr_adjustment_6m",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Financial_covenant.type",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Section_7.11(a)_Existing_Unsecured_Notes_test.max_consolidated_total_net_leverage_ratio",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Section_7.11(b)_Existing_Secured_Notes_(5.250%)_test.max_consolidated_total_net_leverage_ratio",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Section_7.11(c)_Existing_Secured_Notes_(4.750%)_test.max_consolidated_total_net_leverage_ratio",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Section_7.11.aggregate_outstanding_principal_trigger",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.new_credit_agreement.Repurchase_Trigger_(covenant_fall-away).definition",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_remaining_existing.2028N.principal_outstanding_at_closing.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_remaining_existing.2027N.principal_outstanding_at_closing.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_remaining_existing.2026N.principal_outstanding_at_closing.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_remaining_existing.UnsN.principal_outstanding_at_closing.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.TotalTendered.principal_exchanged.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.TotalNew.principal_issued.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.Reduction.principal_reduction_before_cash.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_total.ProForma.principal_total_rolled_forward.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_cash.CashTotal.cash_consideration_total.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_ratio.2026_Secured_Notes.new_principal_per_1_old_principal_excl_cash.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_ratio.2027_Secured_Notes.new_principal_per_1_old_principal_excl_cash.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_ratio.2028_Secured_Notes.new_principal_per_1_old_principal_excl_cash.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_ratio.Unsecured_Notes.new_principal_per_1_old_principal_excl_cash.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-4.exchange_ratio.Existing_Term_Loans.new_principal_per_1_old_principal_excl_cash.2024-12-20",
+      "reason": "CP-4 writes covenant registers (T4.x/T4C.x/T4D.x/T4F.x) with rows numbered r01.. in model-submitted order; exchange offer amounts, dates, TSA support and credit-agreement terms have no fixed table, row id or field"
+    },
+    {
+      "fact_id": "CP-2.debt_stack_pre_exchange.FiveInstrumentsPre.principal_outstanding.2024-09-30",
+      "reason": "CP-2 writes model judgments (T2.1/T2.7/T2.10/T2.11/T2.12, cp2.* front tables) and CP-1/CP-1A references numbered ref01..; it holds no debt-stack, liquidity or new-instrument term fact with a fixed row id"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.FirstLienNew.principal_issued.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.ABLclass.lien_rank.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.FirstLienClass.lien_rank.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.SecondLienClass.lien_rank.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.TLremainClass.lien_rank.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.Rem2026_2027Class.lien_status.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.RemUnsecClass.guarantee_status.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.Rem2028Class.lien_rank.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.TLremainDisclosed.principal_outstanding_disclosed.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_remaining_existing.TLN.principal_outstanding_derived.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_remaining_existing.AllFive.principal_outstanding_derived.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.Rem2028Junior.new_credit_agreement_definition.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.Intercreditor_arrangements.multi_lien_intercreditor_parties.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-4C.post_exchange_classes.Existing_Term_Loan_representative.intercreditor_position.2024-12-20",
+      "reason": "CP-4C writes T4E.x waterfall tables with model-chosen class rows (r01..), period at the balance date; no table holds post-exchange lien rank, guarantee status or remaining principal at 2024-12-20"
+    },
+    {
+      "fact_id": "CP-2H.ratings.Moody.rating",
+      "reason": "CP-2H T2R.2 rating rows come from context ratings (empty here) numbered r01..; a missing agency rating or a coupon step-down term has no fixed row or field"
+    },
+    {
+      "fact_id": "CP-2H.ratings.S&P.rating",
+      "reason": "CP-2H T2R.2 rating rows come from context ratings (empty here) numbered r01..; a missing agency rating or a coupon step-down term has no fixed row or field"
+    },
+    {
+      "fact_id": "CP-2H.ratings.New_notes_and_New_Term_Loans.rating_linked_coupon_stepdown.2024-12-20",
+      "reason": "CP-2H T2R.2 rating rows come from context ratings (empty here) numbered r01..; a missing agency rating or a coupon step-down term has no fixed row or field"
+    }
+  ]
+}

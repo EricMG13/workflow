@@ -1,0 +1,798 @@
+{
+  "schema_version": "golden-mapping/1",
+  "case_id": "lth-covenant-refinancing",
+  "preparer": "mx-feature (Task 6 preparer)",
+  "reviewer": "mx-precise (Task 6 review)",
+  "module_commits": {
+    "CP-0": "0c39637aeb31cdc31892c61878e29264411e79a7",
+    "CP-1A": "0daac2cc5ba33d477b8143d3373bc75f622de5a4",
+    "CP-2": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
+    "CP-2D": "0898948fe3e709c91d1137d7e232bffb4bd410cb",
+    "CP-3C": "0898948fe3e709c91d1137d7e232bffb4bd410cb",
+    "CP-4": "a2243308037a6bc6b86536ce5c801b0c73f01271"
+  },
+  "entries": [
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.legal_name",
+      "module": "CP-0",
+      "locator": {
+        "table_id": "T1",
+        "row_id": "run",
+        "field": "issuer",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1A.profile.life_time_group_holdings_inc.business_sector",
+      "module": "CP-1A",
+      "locator": {
+        "table_id": "company_description",
+        "row_id": "company",
+        "field": "sector",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-1A.profile.geography_of_centers.countries",
+      "module": "CP-1A",
+      "locator": {
+        "table_id": "company_description",
+        "row_id": "company",
+        "field": "country",
+        "period": null
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    },
+    {
+      "fact_id": "CP-2D.user_input.minimum_cash.minimum_cash_m",
+      "module": "CP-2D",
+      "locator": {
+        "table_id": "T2E.5",
+        "row_id": "r04",
+        "field": "value",
+        "period": "2025-06-30"
+      },
+      "subject_aliases": [],
+      "depends_on": []
+    }
+  ],
+  "unmapped": [
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.effective_date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.what_changed",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.existing_revolving_commitments",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.incremental_commitments_per_recital",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.new_total_revolving_commitments",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.recital_existing_plus_incremental",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.schedule_a_refinancing_total",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.schedule_a_incremental_total",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.schedule_a_sum",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.incremental_commitments_split",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_maturity_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_maturity_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_springing_maturity",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_sofr_corra_lc",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_base",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_commitment_fee_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_margin_grid_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.lc_sublimit_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.lc_sublimit_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.first_lien_net_leverage_max_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.first_lien_net_leverage_max_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.lc_carveout_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.lc_carveout_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_financial_covenant_changes_section_7_12.liquidity_covenant_removed",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.type",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.level_max_first_lien_net_leverage_ratio",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.springing_threshold_pct_of_revolving_commitments",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.springing_lc_carveout",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.springing_test_condition",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.test_period",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.defined_term_first_lien_net_leverage_ratio",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.defined_term_run_rate_adjusted_ebitda",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.defined_term_consolidated_total_debt",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_mechanism",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_deadline",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_max_quarters_in_any_four",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.cure_max_quarters_over_term",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.term_loan_cross_default",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.amendment_waiver_threshold",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.section_7_12_1_a_first_lien_net_leverage_covenant.confirmed_in_15th_annex_ii",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.effective_date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.what_changed",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.new_term_loans_principal",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_sofr_level1_otherwise",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_base_level1_otherwise",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_sofr_level2_ratings",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_margin_base_level2_ratings",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_floor_after",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_floor_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_maturity_rule",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.term_loan_amortization",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.revolver_and_covenant_effect",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_14.14th_amendment.related_secured_notes",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.effective_date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.what_changed",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.existing_term_loans_refinanced",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.refinancing_term_loans_principal",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.new_money_commitment_non_converting_lenders",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.cashless_converted_principal",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_margin_sofr",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_margin_base",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_floor",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_amortization",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_maturity_rule",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.term_loan_maturity_confirmed_in_annex_ii",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.revolver_commitments_and_maturity_confirmed_in_annex_ii",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.initial_interest_period",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.collateral_and_guarantee",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_15.15th_amendment.engagement_and_fee_letter_terms",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.operative_terms.operative_terms_at_2025_08_18.term_loan_principal_at_effective_date",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.operative_terms.operative_terms_at_2025_08_18.chain_completeness",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_premium_prepayment",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_payment_on_amendment",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.soft_call_period",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.repricing_transaction_definition",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.all_in_yield_definition",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_bps",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2025_refinancing_term_loans_15th.incremental_mfn_sunset",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_premium",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.repricing_protection.2024_new_term_loans_14th_prior_soft_call.soft_call_period",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_at_2025_06_30.2025-06-30",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_after_15th",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.term_loan_margin_step_downs.term_loan_margin_initial_14th.2024-12-31",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_2025_06_30",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.term_loan_margin_step_downs.margin_cut_by_15th_vs_initial_14th",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.term_loan_margin_step_downs.ratings_step_down_event.2025-06-30",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_sofr_at_2025_06_30.2025-06-30",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.margin.revolving_credit_facility_margin.revolver_margin_base_at_2025_06_30.2025-06-30",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.make_whole",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.annual_10pct_redemption_price",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.equity_clawback_price_40pct",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.notes_call_protection.6_000_senior_secured_notes_due_2031.redemption_prices_from_2027_11_15",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-3C.notes_call_protection.market_pricing_quotes_for_the_term_loan_and_notes.market_price",
+      "reason": "CP-3C T3D.1-T3D.9 hold refinancing need by facility maturity, resources, refinancing burden, an analyst margin step-up cost, creditor position, LME capacity and paths; no CP-3C field holds contract call-protection, repricing, MFN, margin-grid or notes redemption terms, or market quotes"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.principal_outstanding.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_principal.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.principal_outstanding.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.mortgage_notes.principal_outstanding.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.other_debt.principal_outstanding.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.fair_value_adjustment.carrying_adjustment.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt_before_discounts.carrying_total_incl_fair_value_adjustment.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.unamortized_debt_discounts_and_issuance_costs.amount.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt_less_unamortized_discounts_and_issuance_costs.carrying_amount.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.current_maturities_of_debt.amount.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.long_term_debt_less_current_maturities.carrying_amount.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_debt_principal_sum_of_components_excluding_fair_value_adjustment.principal_total.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.total_future_maturities_of_long_term_debt.principal_total_per_maturity_table.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.maturity_per_10q.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.maturity_per_10q.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.maturity",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.coupon",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.6_000_senior_secured_notes.guarantee",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.mortgage_notes.maturity_per_10q.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.commitments_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.drawn_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.letters_of_credit_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_usd_millions_printed.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.revolving_credit_facility.availability_recomputed_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.cash_and_cash_equivalents.amount_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.cash_plus_revolver_availability.amount_usd_millions_printed.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.cash_plus_revolver_availability.recomputed_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.cash_and_cash_equivalents.balance_sheet_amount.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.restricted_cash_and_cash_equivalents.balance_sheet_amount.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.future_maturities_july_2025_through_june_2026.principal_due.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.future_maturities_july_2026_through_june_2027.principal_due.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.future_maturities_july_2027_through_june_2028.principal_due.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.future_maturities_july_2028_through_june_2029.principal_due.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.future_maturities_july_2029_through_june_2030.principal_due.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.future_maturities_thereafter.principal_due.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.notional_usd_millions.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.interest_rate_swaps_on_term_loan_facility.fixed_rate_paid.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.debt_stack.term_loan_facility_2024_new_term_loans.effective_fixed_rate_after_swaps.2025-06-30",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.borrower.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.holdings.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.administrative_agent.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_club_operations_company_inc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_operations_holdings_inc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_management_services_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_construction_company_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_restaurant_company_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_club_management_company_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_triathlon_series_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_athlinks_inc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_architecture_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_lease_company_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_holdings_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_real_estate_company_inc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_educational_programs_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2.obligors.subsidiary_guarantor_ltf_ground_lease_company_llc.name",
+      "reason": "CP-2 (credit synthesis, deploy_vii.cp2_synthesis) writes only model-judgment text in T2.1, T2.7, T2.10, T2.11, T2.12 and the cp2.* front tables (rows assessment, thesis, sNN, wNN, kfNN, rNN, gNN) plus verbatim CP-1 copies in cp1_references/refNN numbered by order of reference in the model text; it computes and holds no debt-stack, liquidity, swap or obligor field, so no fixed (table, row, field, period) can hold this fact"
+    },
+    {
+      "fact_id": "CP-2D.near_term_debt_service.principal_due_july_2025_through_june_2026.principal_due.2025-06-30",
+      "reason": "CP-2D T2E.4 maturity wall is one row per facility (principal, maturity date, months, inside horizon, shares), not the 10-Q maturity-ladder bucket; no CP-2D field holds a ladder-bucket principal"
+    },
+    {
+      "fact_id": "CP-1A.profile.life_time_group_holdings_inc.legal_form_and_role",
+      "reason": "CP-1A has no fixed slot for this fact: company_description holds only issuer, business_description, country and sector; any other profile detail (legal form, centers count, offices, listing, borrower vs parent) would sit in model-chosen rows numbered rNN or in prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.centers_operated.count.2025-06-30",
+      "reason": "CP-1A has no fixed slot for this fact: company_description holds only issuer, business_description, country and sector; any other profile detail (legal form, centers count, offices, listing, borrower vs parent) would sit in model-chosen rows numbered rNN or in prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.principal_executive_offices.location",
+      "reason": "CP-1A has no fixed slot for this fact: company_description holds only issuer, business_description, country and sector; any other profile detail (legal form, centers count, offices, listing, borrower vs parent) would sit in model-chosen rows numbered rNN or in prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.life_time_group_holdings_inc.listing",
+      "reason": "CP-1A has no fixed slot for this fact: company_description holds only issuer, business_description, country and sector; any other profile detail (legal form, centers count, offices, listing, borrower vs parent) would sit in model-chosen rows numbered rNN or in prose"
+    },
+    {
+      "fact_id": "CP-1A.profile.voting_group.share_of_common_stock.2024-12-31",
+      "reason": "CP-1A holds ownership only in ownership_register and T2D.2 rows numbered rNN in the order the model lists them (and the owner text is model-written), so no fixed row id exists for this owner or holding"
+    },
+    {
+      "fact_id": "CP-1A.profile.leonard_green_partners_and_tpg_funds.share_of_common_stock.2024-12-31",
+      "reason": "CP-1A holds ownership only in ownership_register and T2D.2 rows numbered rNN in the order the model lists them (and the owner text is model-written), so no fixed row id exists for this owner or holding"
+    },
+    {
+      "fact_id": "CP-1A.profile.ownership_sponsor.sponsor_and_control",
+      "reason": "CP-1A holds ownership only in ownership_register and T2D.2 rows numbered rNN in the order the model lists them (and the owner text is model-written), so no fixed row id exists for this owner or holding"
+    },
+    {
+      "fact_id": "CP-1A.profile.borrower_vs_listed_parent.borrower_is_subsidiary",
+      "reason": "CP-1A has no fixed slot for this fact: company_description holds only issuer, business_description, country and sector; any other profile detail (legal form, centers count, offices, listing, borrower vs parent) would sit in model-chosen rows numbered rNN or in prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.ticker",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.exchange",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.state_of_incorporation",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.principal_executive_offices",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.commission_file_number",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.filer_status",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.fiscal_year_end",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.business_description",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.identity.Life_Time_Group_Holdings.borrower_entity",
+      "reason": "CP-0 (source readiness) writes no registrant-identity field for this fact: its tables are T1 run, P3 source classification, P5, T2, T3, T4 consumer readiness, T6 evidence and T8 commands; the value would appear only inside model-written evidence quotes or rationale prose"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_Q_2025_06_30.period_covered",
+      "reason": "CP-0 writes a document's period or date only as the model-assessed P3/<source_id>/period text (a free-form string the model chooses, row id is the pack source id); no CP-0 field holds an amendment agreement date or a filing period_covered as a fixed slot"
+    },
+    {
+      "fact_id": "CP-0.documents.Form_10_K_2024_12_31.period_covered",
+      "reason": "CP-0 writes a document's period or date only as the model-assessed P3/<source_id>/period text (a free-form string the model chooses, row id is the pack source id); no CP-0 field holds an amendment agreement date or a filing period_covered as a fixed slot"
+    },
+    {
+      "fact_id": "CP-0.documents.13th_Amendment.agreement_date",
+      "reason": "CP-0 writes a document's period or date only as the model-assessed P3/<source_id>/period text (a free-form string the model chooses, row id is the pack source id); no CP-0 field holds an amendment agreement date or a filing period_covered as a fixed slot"
+    },
+    {
+      "fact_id": "CP-0.documents.14th_Amendment.agreement_date",
+      "reason": "CP-0 writes a document's period or date only as the model-assessed P3/<source_id>/period text (a free-form string the model chooses, row id is the pack source id); no CP-0 field holds an amendment agreement date or a filing period_covered as a fixed slot"
+    },
+    {
+      "fact_id": "CP-0.documents.15th_Amendment.agreement_date",
+      "reason": "CP-0 writes a document's period or date only as the model-assessed P3/<source_id>/period text (a free-form string the model chooses, row id is the pack source id); no CP-0 field holds an amendment agreement date or a filing period_covered as a fixed slot"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.first_lien_net_leverage_ratio_numerator_addback_struck",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.test_period_definition_change",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.covenant_modification_period_carveout_deleted",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.financial_covenant.13th_amendment_covenant_definition_changes.run_rate_adjusted_ebitda_annualisation_proviso_deleted",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_initial_margin_base_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_commitment_fee_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-4.amendment_13.13th_amendment.revolver_margin_grid_before",
+      "reason": "CP-4 composes model-judgment cells in registers T4.2, T4.3, T4.9-T4.13, T4C.x and T4D.x whose row ids are rNN assigned by the order of the model's documents, covenants, baskets and flags lists (run-time model choice), and it has no per-amendment or operative-terms table; no fixed row id exists for this fact"
+    },
+    {
+      "fact_id": "CP-2D.user_input.projection_horizon.horizon_months",
+      "reason": "CP-2D always writes horizon_months (required 1-60, cp2d.py:121); golden status missing cannot be met — golden ruling (step 4)"
+    }
+  ]
+}

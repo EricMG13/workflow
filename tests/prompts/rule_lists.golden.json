@@ -583,6 +583,13 @@
     "checks": [
      "fn:deploy_workflow.owners.cp2a:_gap_label_issues"
     ]
+   },
+   {
+    "id": "downside_pathway.8",
+    "statement": "When the run context states a current period and its reporting currency is not the single currency the CP-1 period register reports, or that register is unusable (including a unit that is not millions), or when the context's current period is blank and its currency is not USD, the submission is refused alone, before the rest of it is read; a different submission does not cure it, only a corrected context or pack.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp2a:validate_downside"
+    ]
    }
   ],
   "earnings_delta": [
@@ -853,6 +860,13 @@
     "checks": [
      "oracle:cp2g:v13"
     ]
+   },
+   {
+    "id": "forward_credit_model.8",
+    "statement": "When the run context states a current period that is not a fiscal-year or fourth-quarter one, or one whose base year the CP-1 period register does not hold, or one whose register rows do not match the run (row currency, fiscal year, fourth-quarter end, year length or dates), or whose reporting currency is not the single currency the register reports, or whose fiscal year does not run 1 January to 31 December, or whose register is unusable, or when the current period is blank and its currency is not USD, or when the context file itself is refused, the submission is refused alone, before the rest of it is read; a different submission does not cure it, only a corrected context or pack.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp2g:validate_forward"
+    ]
    }
   ],
   "integrity_review": [
@@ -1110,6 +1124,13 @@
      "oracle:cp2e:unread_financial_page_3",
      "oracle:cp2e:unread_financial_page_5",
      "oracle:cp2e:absence_without_search"
+    ]
+   },
+   {
+    "id": "macro_fx.10",
+    "statement": "When the run context states a reporting currency, `reporting_currency.code_text` is that currency. When the run context's current period is not a fiscal-year or fourth-quarter one, or is blank with a currency other than USD, the submission is refused alone, before the rest of it is read; a different submission does not cure that, only a corrected context.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp2e:_validate_step"
     ]
    }
   ],
@@ -1419,6 +1440,13 @@
     "checks": [
      "oracle:cp2h:v16"
     ]
+   },
+   {
+    "id": "rating_triggers.6",
+    "statement": "When the run context states a current period that is not a fiscal-year or fourth-quarter one, or one whose base year the CP-1 period register does not hold, or one whose register rows do not match the run (row currency, fiscal year, fourth-quarter end, year length or dates), or whose reporting currency is not the single currency the register reports, or whose fiscal year does not run 1 January to 31 December, or whose register is unusable, or when the current period is blank and its currency is not USD, or when the context file itself is refused, the submission is refused alone, before the rest of it is read; a different submission does not cure it, only a corrected context or pack.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp2h:validate_triggers"
+    ]
    }
   ],
   "readiness": [
@@ -1653,7 +1681,7 @@
   "restructuring_fulcrum": [
    {
     "id": "restructuring_fulcrum.1",
-    "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries.",
+    "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries. `ebitda_year` is one of the three forecast years `read_inputs` offers as `ebitda_offered[].year` (the three fiscal years after the run's base year, written `FY` and four digits); any other year, the base year included, is refused.",
     "checks": [
      "oracle:cp4c:r01",
      "oracle:cp4c:r02",
@@ -1667,7 +1695,8 @@
      "oracle:cp4c:r10",
      "oracle:cp4c:r11",
      "oracle:cp4c:r12",
-     "oracle:cp4c:r13"
+     "oracle:cp4c:r13",
+     "fn:deploy_workflow.owners.cp4c:_year_issues"
     ]
    },
    {
@@ -1677,7 +1706,8 @@
      "oracle:cp4c:v01",
      "oracle:cp4c:v02",
      "oracle:cp4c:v06",
-     "fn:deploy_workflow.owners.cp4c:_claim_issues"
+     "fn:deploy_workflow.owners.cp4c:_claim_issues",
+     "fn:deploy_workflow.owners.cp4c:_secured_issues"
     ]
    },
    {
@@ -1751,9 +1781,16 @@
    },
    {
     "id": "restructuring_fulcrum.10",
-    "statement": "Do not write Python's pinned-multiple line in a gap, a claim name or a valuation label, in any case or spacing; Python adds that line when a multiple is pinned.",
+    "statement": "Do not write Python's pinned-multiple line or Python's CP-1C selected-multiple line in a gap, a claim name or a valuation label, in any case or spacing: a text that holds `The EV multiple is the CP-1C selected multiple`, `which governs, so the selection is not applied` or `No alignment is made between an LTM or NTM multiple and a forecast year` is refused; Python adds those lines when a multiple is pinned or selected.",
     "checks": [
      "fn:deploy_workflow.owners.cp4c:_gap_label_issues"
+    ]
+   },
+   {
+    "id": "restructuring_fulcrum.11",
+    "statement": "When `read_inputs` offers `selected_multiple`, every valuation `multiple` equals it at two decimals (`7` equals `7.00`) and none is `not assessed`; when the context pins the EV multiple, the pin governs and the selected multiple is not applied; Python adds the selection line to the limitations.",
+    "checks": [
+     "fn:deploy_workflow.owners.cp4c:_multiple_issues"
     ]
    }
   ],

@@ -413,11 +413,8 @@ class BadCp0:
         )
 
 
-def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
-    """Row 5, `refusals/anchors/blocked_cp0`: the blocked CP-0 head stops the run at CP-DR's begin;
-    `run.json.stopped_reason` is the key's `fault_record`, no `brief.json`, and the refusal adds no
-    line to `calls.jsonl` (one line per model call, none for CP-DR)."""
-    want = key_file("expected.json")["refusals"]["anchors"]["blocked_cp0"]
+def blocked_cp0_run(tmp_path: Path) -> tuple[Any, Any, Any]:
+    """Drive the blocked-CP-0 recipe through the real loop; the fault, the adapter and the meta."""
     pack = runs.make_pack("positive")
     runs.stage(tmp_path)
     review = json.loads(runs.cp0_text(pack, "positive"))
@@ -447,6 +444,15 @@ def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
         Budget(Decimal(100), execution),
         False,
     )
+    return result, adapter, meta
+
+
+def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
+    """Row 5, `refusals/anchors/blocked_cp0`: the blocked CP-0 head stops the run at CP-DR's begin;
+    `run.json.stopped_reason` is the key's `fault_record`, no `brief.json`, and the refusal adds no
+    line to `calls.jsonl` (one line per model call, none for CP-DR)."""
+    want = key_file("expected.json")["refusals"]["anchors"]["blocked_cp0"]
+    result, adapter, meta = blocked_cp0_run(tmp_path)
     assert isinstance(result, rp._Fault)
     outcome = rp._stop(tmp_path, meta, result.reason, result.spent)
     assert outcome.outcome == "stopped"
@@ -455,6 +461,18 @@ def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
     lines = (tmp_path / "calls.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(lines) - adapter.calls == want["calls_jsonl_lines_added"]
     assert all("CP-DR" not in line for line in lines)
+
+
+def test_a_resumed_run_records_the_bare_anchor_fault(tmp_path: Path) -> None:
+    """O7b-1c S6 (S2b re-review I-1): a run killed after the CP-0 call record and before
+    `run.json`, on resume, records the key's bare `fault_record`, as a fresh run does (O7-R32)."""
+    want = key_file("expected.json")["refusals"]["anchors"]["blocked_cp0"]
+    _, _, meta = blocked_cp0_run(tmp_path)
+    assert not (tmp_path / "run.json").exists()
+    resumed = rp._resume_stop(Budget(Decimal(100), tmp_path / "execution"), tmp_path, meta.redactor)
+    assert isinstance(resumed, rp._Fault)
+    rp._stop(tmp_path, meta, resumed.reason, resumed.spent)
+    assert run_json(tmp_path)["stopped_reason"] == want["fault_record"]
 
 
 def test_terminator_body_refused_at_intake(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

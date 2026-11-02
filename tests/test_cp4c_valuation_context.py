@@ -227,6 +227,12 @@ def test_every_bound_case_equals_the_key(name: str) -> None:
     assert report.limitations.count(block["added_limitation"]) == 1
     for refused in block["refused_submissions"].values():
         assert list(lines(name, *refused["multiples"])) == refused["issues"]
+    m = block["selected_multiple"]
+    above = str(Decimal(m) + 1)  # a higher multiple is refused too, not only a lower one
+    assert (
+        len(lines(name, above, m, m)) == 1
+        and f"multiple {above} differs" in lines(name, above, m, m)[0]
+    )
 
 
 # --- an unknown selection changes nothing --------------------------------------------------------------

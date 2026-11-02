@@ -170,13 +170,30 @@ def _valid_fetch(entry: object) -> bool:
     )
 
 
+def _consistent_fetches(entries: Sequence[dict[str, Any]]) -> bool:
+    """D5's record invariants, as ``read_evidence`` holds its own: an accepted record (``item_id``)
+    or a refused one (``reason``), never both or neither; accepted ids unique; no negative hops; an
+    accepted record keeps the hash of what it retained."""
+    accepted = [entry["item_id"] for entry in entries if entry["item_id"] is not None]
+    return len(set(accepted)) == len(accepted) and all(
+        (entry["item_id"] is None) != (entry["reason"] is None)
+        and entry["hops"] >= 0
+        and (entry["item_id"] is None or isinstance(entry["sha256"], str))
+        for entry in entries
+    )
+
+
 def read_fetches(path: Path) -> tuple[FetchRecord, ...]:
     """The records of ``fetches.json``; any other shape raises ``EvidenceRecordInvalid``."""
     try:
         entries = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, RecursionError) as error:
         raise EvidenceRecordInvalid(f"{path.name} cannot be read") from error
-    if not isinstance(entries, list) or not all(_valid_fetch(entry) for entry in entries):
+    if (
+        not isinstance(entries, list)
+        or not all(_valid_fetch(entry) for entry in entries)
+        or not _consistent_fetches(entries)
+    ):
         raise EvidenceRecordInvalid(f"{path.name} is not a list of fetch records")
     return tuple(FetchRecord(**entry) for entry in entries)
 

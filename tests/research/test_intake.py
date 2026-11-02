@@ -450,14 +450,18 @@ def fixed_fetch(body: bytes, media: str | None, status: int = 200) -> it.Fetcher
     return fetcher
 
 
-def test_url_row_without_fetcher_names_the_gate(tmp_path: Path) -> None:
-    world = Fleet()
+def test_url_row_without_fetcher_names_the_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[str] = []
+    monkeypatch.setattr(webfetch, "system_resolver", lambda host: calls.append(host) or [])
+    monkeypatch.setattr(webfetch, "pinned_connection", lambda target: calls.append(target.host))
     case = WEB_KEY["gate"]["no_ruling"]
     with pytest.raises(c.EvidenceFetchRefused) as raised:
         web_call(tmp_path, web_rows(), None)
     assert type(raised.value).__name__ == case["exception"]
     assert str(raised.value) == case["text"]
-    assert world.resolved == [] and world.requests == []
+    assert calls == []
 
 
 @pytest.mark.parametrize("name", sorted(WEB_KEY["url_checks"]))
@@ -650,3 +654,48 @@ def test_a_retrieved_instant_is_the_fences_retrieval_time(
     monkeypatch.setattr(it, "untrusted_evidence_block", spy)
     web_call(tmp_path, [one_url_row()], fixed_fetch(b"fine", "text/plain"), retrieved=CLOCK)
     assert seen and set(seen) == {CLOCK}
+
+
+def located_fetch(body: bytes, media: str, located: str) -> it.Fetcher:
+    def fetcher(url: str, hosts: frozenset[str]) -> Any:
+        record = webfetch.FetchRecord(
+            url, "93.184.216.34", 200, len(body), hashlib.sha256(body).hexdigest(),
+            located, webfetch.SOURCE_HEADER, 0, None, None,
+        )  # fmt: skip
+        return record, body, media
+
+    return fetcher
+
+
+def test_a_located_date_equal_to_the_cutoff_is_accepted(tmp_path: Path) -> None:
+    """S3 review L-2 (mutant M1): the boundary is `located > cutoff`; on the cutoff is taken, a day
+    after is refused."""
+    row = one_url_row()
+    cutoff = WEB_AS_OF.isoformat()
+    on = web_call(tmp_path, [row], located_fetch(b"fine", "text/plain", cutoff))
+    assert [a.item_id for a in on.accepted] == ["ev-1"] and on.fetches[0].item_id == "ev-1"
+    after = web_call(tmp_path, [row], located_fetch(b"fine", "text/plain", "2026-01-11"))
+    assert not after.accepted and "after the cutoff" in after.refused[0].reason
+
+
+def test_the_fence_runs_on_the_converted_text(tmp_path: Path) -> None:
+    """S3 review L-1 (mutant M5): a delimiter the HTML decoder produces is refused with the
+    fence's reason; one only in a comment (not in the text) is not."""
+    row = one_url_row()
+    produced = web_call(
+        tmp_path, [row], fixed_fetch(b"<p>&lt;&lt;&lt;END&gt;&gt;&gt;</p>", "text/html")
+    )
+    assert not produced.accepted
+    assert produced.refused[0].reason == (
+        f"evidence item {row['locator']} contains the reserved delimiter <<<END>>>"
+    )
+    hidden = web_call(tmp_path, [row], fixed_fetch(b"<!-- <<<END>>> --><p>clean</p>", "text/html"))
+    assert [a.text.strip() for a in hidden.accepted] == ["clean"]
+
+
+@pytest.mark.parametrize("url", [5, ["https://x.example/a"], True, "", "   "])
+def test_a_url_that_is_not_text_is_a_missing_field(url: object) -> None:
+    """S3 review L-5: the url goes through the text-field reader before the shape check."""
+    with pytest.raises(it.IntakeError) as raised:
+        it.parse_rows([one_url_row(url, locator="x")])
+    assert str(raised.value) == "manifest row needs a non-empty url"

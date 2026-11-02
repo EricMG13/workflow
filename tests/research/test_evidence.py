@@ -230,3 +230,25 @@ def test_read_fetches_is_strict(tmp_path: Path, mutate: Any) -> None:
             ev.read_fetches(target)
     with pytest.raises(ev.EvidenceRecordInvalid):
         ev.read_fetches(tmp_path / "absent.json")
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda e: e[1].update(item_id=e[0]["item_id"]),  # a repeated item_id
+        lambda e: e[0].update(reason="x"),  # item_id and reason both set
+        lambda e: e[3].update(reason=None),  # neither item_id nor reason
+        lambda e: e[0].update(hops=-1),
+        lambda e: e[0].update(sha256=None),  # an accepted record keeps its hash
+        lambda e: e[0].update(sha256=7),
+    ],
+    ids=["repeat", "both", "neither", "hops", "null-sha", "int-sha"],
+)
+def test_read_fetches_holds_the_record_invariants(tmp_path: Path, mutate: Any) -> None:
+    """S3 review L-3: the strictness of `read_evidence` (unique ids) and D5's record shape."""
+    entries = json.loads(KEY["fetches_json"]["file_bytes"])
+    mutate(entries)
+    target = tmp_path / ev.FETCHES_FILE
+    target.write_text(json.dumps(entries), encoding="utf-8")
+    with pytest.raises(ev.EvidenceRecordInvalid):
+        ev.read_fetches(target)

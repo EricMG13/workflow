@@ -112,10 +112,10 @@ def _published(value: object) -> date | None:
         raise IntakeError(f"manifest row published {value!r} is not an ISO date") from error
 
 
-def _check_url(url: object) -> None:
+def _check_url(url: str) -> None:
     """A url row's static shape; a wrong one is the user's file being wrong (O7b-2 D4)."""
     try:
-        check_url(url if isinstance(url, str) else "")
+        check_url(url)
     except UrlRefused as refusal:
         raise IntakeError(str(refusal)) from None
 
@@ -131,12 +131,13 @@ def parse_rows(rows: Sequence[Mapping[str, Any]]) -> tuple[ManifestRow, ...]:
         path, url = row.get("path"), row.get("url")
         if (path is None) == (url is None):
             raise IntakeError("manifest row names exactly one of path or url")
-        if url is not None:
-            _check_url(url)
+        url_text = None if url is None else _text_field(row, "url")
+        if url_text is not None:
+            _check_url(url_text)
         parsed.append(
             ManifestRow(
                 path=None if path is None else _text_field(row, "path"),
-                url=None if url is None else _text_field(row, "url"),
+                url=url_text,
                 family=_text_field(row, "family"),
                 published=_published(row.get("published")),
                 locator=_text_field(row, "locator"),
@@ -312,9 +313,9 @@ def _assess_web(
     hosts: frozenset[str],
 ) -> tuple[AcceptedItem | RefusedItem, FetchRecord | None]:
     """A url row: its own manifest-date refusals first, with no fetch and no record (O7-R48 L3);
-    then the locator against the fence header rule (same, no fetch); then the fetch, the media type, a located date that can only refuse (D6), and the same text
-    checks as a supplied item. The result and the record of the attempt (``item_id`` or
-    ``reason`` set on it)."""
+    then the locator against the fence header rule (same, no fetch); then the fetch, the media
+    type, a located date that can only refuse (D6), and the same text checks as a supplied item.
+    The result and the record of the attempt (``item_id`` or ``reason`` set on it)."""
     as_of, cutoff, today = dates
     max_bytes, retrieved = limits
     if refusal := _date_refusal(row, as_of, cutoff, today):
@@ -339,7 +340,8 @@ def _assess_web(
         return _refused_after_fetch(
             row,
             record,
-            f"evidence item {row.locator} has a located publication date {located} after the cutoff {cutoff}",
+            f"evidence item {row.locator} has a located publication date {located} "
+            f"after the cutoff {cutoff}",
         )
     try:
         if len(body) > max_bytes:

@@ -338,7 +338,7 @@ def _driver_runs() -> Iterator[tuple[str, str, Callable[[], Run]]]:
         yield f"cp8-{case}", "cp8-fp01-what-changed", pack_run("cp8_runs", case)
     for case in ("positive", "gap_no_facility_schedule"):
         yield f"cp2e-{case}", "slice-cp2e-sensitivity", pack_run("cp2e_runs", case)
-    yield "cpdr", "slice-cpdr-research", pack_run("cpdr_runs")
+    yield "cpdr", "slice-cpdr-research", pack_run("cpdr_runs", "positive")
     yield "cpl10", "slice-cpl10-screen", pack_run("cpl10_runs")
 
 
@@ -3327,7 +3327,7 @@ DEFERRED: dict[str, tuple[Adapter, tuple[str, ...], str | None, tuple[str, ...]]
     ),
     "slice-cpdr-research": (
         _wrap("cpdr_runs", "cpdr_closed"),
-        ("partial", "unresolved", "empty_agenda"),
+        ("positive",),
         None,
         (),
     ),

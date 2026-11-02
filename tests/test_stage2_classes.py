@@ -31,20 +31,20 @@ from typing import Any
 
 import cp3d_runs
 import cp8_runs
+import cpdr_runs
 import defect_classes as dc
 import pytest
 import test_connect_cp2a as tc_cp2a
 import test_connect_cp2d as tc_cp2d
 import test_connect_cp2e as tc_cp2e
 import test_connect_cp3d as tc_cp3d
-import test_connect_cpdr as tc_cpdr
 import test_connect_cpl10 as tc_cpl10
 import test_method_cp2e
-import test_method_cpdr
 from pydantic import ValidationError
 
 from deploy_vii.execution import Execution
 from deploy_workflow import owner_workflow as ow
+from deploy_workflow.owners import cpdr
 
 Built = tuple[Path, str]
 """The store directory with the module at its step, and the positive payload."""
@@ -58,6 +58,9 @@ class Case:
 
     build: Callable[[Path], Built]
     verbatim: Mapping[dc.TextPath, str]
+    step: str | None = None  # the step the payload is for; the core's first when None
+    # run on the ticket of a repair attempt before the payload: the steps that come first
+    before: Callable[[Execution, str], None] | None = None
 
 
 class _CoreRun:
@@ -65,9 +68,10 @@ class _CoreRun:
     attempt first begins the next one (the repair); the outcome is `valid` only when the attempt
     finished with no issue."""
 
-    def __init__(self, store: Execution, module_id: str) -> None:
+    def __init__(self, store: Execution, module_id: str, case: "Case") -> None:
         self._store = store
         self._module_id = module_id
+        self._case = case
 
     def submit_review(self, payload: str) -> Mapping[str, Any]:
         core = ow._CORES[self._module_id]
@@ -76,8 +80,14 @@ class _CoreRun:
             for a in self._store.read().attempts
             if a.module_id == self._module_id and a.status == "pending"
         ]
-        ticket = open_tickets[-1] if open_tickets else self._store.begin(self._module_id).ticket_id
-        journal = core.submit(self._store, ticket, core.STEP_IDS[0], payload, None).journal
+        if open_tickets:
+            ticket = open_tickets[-1]
+        else:
+            ticket = self._store.begin(self._module_id).ticket_id
+            if self._case.before is not None:
+                self._case.before(self._store, ticket)
+        step_id = core.STEP_IDS[0] if self._case.step is None else self._case.step
+        journal = core.submit(self._store, ticket, step_id, payload, None).journal
         settled = journal.status == "finished" and not journal.issues
         return {"status": "valid" if settled else "invalid", "issues": list(journal.issues)}
 
@@ -92,9 +102,13 @@ def model_text_case(module_id: str, case: Case, tmp_path: Path) -> list[str]:
     def fresh() -> dc.ReviewRun:
         target = tmp_path / f"run{next(copies)}"
         shutil.copytree(template, target)
-        return _CoreRun(Execution(target), module_id)
+        # CP-DR's lock and evidence record live beside the store, not in it
+        staged = template.parent / "research"
+        if staged.is_dir():
+            shutil.copytree(staged, target.parent / "research", dirs_exist_ok=True)
+        return _CoreRun(Execution(target), module_id, case)
 
-    schema = core.SCHEMAS[core.STEP_IDS[0]]
+    schema = core.SCHEMAS[core.STEP_IDS[0] if case.step is None else case.step]
     assert dc.free_text_paths(positive, schema), f"{module_id} has free-text fields"
     return dc.model_text_failures(schema, positive, fresh, verbatim=frozenset(case.verbatim))
 
@@ -115,9 +129,15 @@ def test_hostile_stored_text_raises_only_value_errors(module_id: str, step_id: s
 
 
 def _cpdr(root: Path) -> Built:
-    """CP-0 settled through `submit_cp0_review`; the `partial` literal (answered and not found)."""
-    store = tc_cpdr.settled_cp0(root)
-    return store.directory, json.dumps(test_method_cpdr.SUBMISSIONS["cpdr"]["partial"])
+    """CP-0 and CP-1 seeded, the defaults-only brief locked through the core (`cpdr_runs.locked`);
+    the positive research literal (`submissions.json#research_v1`) is the research step's."""
+    store, _ = cpdr_runs.locked("positive", root)
+    return store.directory, cpdr_runs.research_payload("positive")
+
+
+def _cpdr_brief(store: Execution, ticket: str) -> None:
+    """A CP-DR repair attempt starts at its brief step: the same questions as the locked brief."""
+    cpdr.submit(store, ticket, cpdr.BRIEF_STEP, cpdr_runs.defaults_only("positive"), None)
 
 
 def _cp3d(root: Path) -> Built:
@@ -161,17 +181,19 @@ def _cpl10(root: Path) -> Built:
 
 # Every other free-text path of each positive payload journals an issue.
 STORE_CASES: Mapping[str, Case] = {
-    # `answer` is left out: it is `Claim.text` (the finding below).
+    # The research step; the claim, contrary and uncertainty texts are analyst judgments on Fact.text
+    # (`research/tables.py`); the Module's own claims are Python's count sentences, never model text.
     "CP-DR": Case(
         _cpdr,
         {
-            ("gaps", "*", "questions", "*", "text"): (
-                "TDR.2 question Fact.text; Module.limitations 'Unresolved: <text> <limitation>'"
-            ),
-            ("gaps", "*", "questions", "*", "limitation"): (
-                "TDR.2 answer and evidence Fact.limitation; Module.limitations 'Unresolved: ...'"
-            ),
+            ("answers", "*", "claims", "*", "text"): "TDR.2 claim and TDR.3 answer Fact.text",
+            ("answers", "*", "contrary", "*", "text"): "TDR.3 contrary Fact.text",
+            ("answers", "*", "contrary", "*", "limitation"): "TDR.3 contrary Fact.limitation",
+            ("answers", "*", "uncertainty"): "TDR.3 uncertainty Fact.text (analyst_judgment)",
+            ("answers", "*", "limitation"): "TDR.3 Fact.limitation; Module.limitations",
         },
+        step="research",
+        before=_cpdr_brief,
     ),
     # `summary.text` is left out: it is `Claim.text` (the finding below).
     "CP-3D": Case(

@@ -1,229 +1,260 @@
-"""CP-DR store runs through `OwnerWorkflow` (Stage 5; deferred from Stage 2).
+"""O7b-1c S2b: the CP-DR LOCAL closed run, through the public `OwnerWorkflow` API.
 
-Slow: one CP-0 settlement per run, tool sessions and receipts. Expected values come from
-`cases/cpdr-owner/expected.json` through `tests/cpdr_runs.py`; nothing is derived here. The fast
-parts of the module (adapter, RULES, view, reader, registrations, a real-store submit and probe)
-are `tests/test_connect_cpdr.py`.
+Answer key: `cases/cpdr-research-owner/expected.json` (frozen; read at test time, never edited).
+One genuine run (CP-0 and CP-1 promoted, then the `brief` and `research` steps) is built once; the
+tests compare what it left with the key:
+
+- `#cases/positive/{cp_dr_head_status_expected,facts}` and the table order TDR.1-3 (the head);
+- `#cases/positive/brief/template_file` and `#brief/{question_ids,kinds,receivers,focus_modules}`
+  (`research/brief.json`, a defaults-only brief);
+- `#cases/positive/dossier/{template_text,dossier_sha256_rule,head_hash_rule}` (`research/dossier.md`
+  and the hashes `run.json` records);
+- `#refusals/anchors/blocked_cp0` (a blocked CP-0 head), `#refusals/research/fence_terminator`.
+
+S2c adds the remaining owner-level cases. The first fixture is slow (about two minutes); the tests
+that follow it reuse its store.
 """
 
+import ast
+import hashlib
 import json
 import shutil
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import cpdr_runs as runs
 import pytest
+from cpdr_s1_support import ResearchCase
 
-from deploy_vii.execution import Attempt, Execution, ExecutionSnapshot, Head, head_of
-from deploy_workflow import owner_workflow as owner
+from deploy_vii.contracts import validate_tables
+from deploy_vii.execution import Execution, Head
+from deploy_workflow import run_pathway as rp
 from deploy_workflow.owner_workflow import OwnerRunReceipt, verify_owner_run_receipt
 from deploy_workflow.owners import cpdr
+from deploy_workflow.prompts import rules
+from deploy_workflow.research import evidence
+from deploy_workflow.research.contracts import CpDrNotAnchored
+from deploy_workflow.research.intake import RefusedItem, write_rejected
+from deploy_workflow.run_inputs import check_arguments
 from deploy_workflow.workflow import WorkflowError
 
-EXPECTED = runs.oracle()["expected"]
+ROOT = Path(__file__).resolve().parents[1]
+BRIEF_MARKER = "{{BRIEF_SHA256}}"
+FACT_FIELDS = (
+    "fact_id",
+    "table_id",
+    "row_id",
+    "field",
+    "label",
+    "text",
+    "amount",
+    "status",
+    "unit",
+    "period",
+)
 
 
-def _verify(store: Path, receipt: Path) -> None:
-    sealed = OwnerRunReceipt.model_validate_json(receipt.read_bytes())
-    verify_owner_run_receipt(Execution(store), sealed)
+@dataclass(frozen=True)
+class Closed:
+    root: Path
+    store: Path
+    receipt: Path
+
+    def execution(self) -> Execution:
+        return Execution(self.store)
+
+    def head(self, module_id: str) -> Head:
+        return next(h for h in self.execution().read().heads if h.module_id == module_id)
 
 
-@pytest.mark.parametrize("case", runs.CASES)
-def test_closed_run_settles_the_oracle_module_and_the_receipt_verifies(
-    case: str, tmp_path: Path
+@pytest.fixture(scope="module")
+def key() -> dict[str, Any]:
+    expected: dict[str, Any] = runs.oracle()["expected"]
+    return expected
+
+
+@pytest.fixture(scope="module")
+def closed(tmp_path_factory: pytest.TempPathFactory) -> Closed:
+    """The positive case, closed: CP-0, CP-1 and CP-DR settled, the receipt sealed."""
+    root = tmp_path_factory.mktemp("cpdr-positive")
+    store, receipt, _ = runs.cpdr_closed("positive", root)
+    return Closed(root, store, receipt)
+
+
+def sha(data: bytes | str) -> str:
+    return hashlib.sha256(data if isinstance(data, bytes) else data.encode("utf-8")).hexdigest()
+
+
+def brief_file(template: str, cp0: str, cp1: str) -> tuple[str, str]:
+    """The key's brief file with the run-time markers substituted, and its brief_sha256, by the
+    key's own rule (`brief/brief_sha256_rule`): the body without `brief_sha256`, sorted keys,
+    compact separators, UTF-8, after the two result hashes are substituted."""
+    text = template.replace("{{CP0_RESULT_SHA256}}", cp0).replace("{{CP1_RESULT_SHA256}}", cp1)
+    body = json.loads(text)
+    body.pop("brief_sha256")
+    digest = sha(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False))
+    return text.replace(BRIEF_MARKER, digest), digest
+
+
+# --- the positive closed run --------------------------------------------------------------------
+
+
+def test_closed_run_positive(closed: Closed, key: dict[str, Any]) -> None:
+    """The head settles at the key's status with TDR.1-3 in order, its facts are the key's, the
+    tables lay out over them, and the sealed receipt verifies from the store and the record."""
+    want = key["cases"]["positive"]
+    head = closed.head("CP-DR")
+    assert head.status == want["cp_dr_head_status_expected"] == "restricted"
+    module = closed.execution().head_module(head)
+    assert [table.table_id for table in module.tables] == ["TDR.1", "TDR.2", "TDR.3"]
+    validate_tables(module.tables, module.facts)
+    by_id = {fact.fact_id: fact for fact in module.facts}
+    assert sorted(by_id) == sorted(f["fact_id"] for f in want["facts"])
+    for wanted in want["facts"]:
+        fact = by_id[wanted["fact_id"]]
+        got = {n: None if (v := getattr(fact, n)) is None else str(v) for n in FACT_FIELDS}
+        assert got == {n: wanted.get(n) for n in FACT_FIELDS}, fact.fact_id
+        assert fact.limitation == wanted.get("limitation"), fact.fact_id
+    receipt = OwnerRunReceipt.model_validate_json(closed.receipt.read_bytes())
+    verify_owner_run_receipt(closed.execution(), receipt)
+
+
+def test_the_brief_file_is_the_key_template(closed: Closed, key: dict[str, Any]) -> None:
+    template = key["cases"]["positive"]["brief"]["template_file"]
+    want, digest = brief_file(
+        template, closed.head("CP-0").result_sha256, closed.head("CP-1").result_sha256
+    )
+    written = (closed.root / "research" / "brief.json").read_bytes()
+    assert written == want.encode("utf-8")
+    assert json.loads(written)["brief_sha256"] == digest
+
+
+def test_a_defaults_only_brief_gives_the_keys_eight_questions(
+    closed: Closed, key: dict[str, Any]
 ) -> None:
-    want = EXPECTED["cases"][case]
-    store_path, receipt_path = runs.cpdr_closed(case, tmp_path)
-    store = Execution(store_path)
-    snapshot = store.read()
-    plan = runs.oracle()["manifest"]["plan_order_expected"]
-    assert [a.module_id for a in snapshot.attempts] == plan
-    head = next(h for h in snapshot.heads if h.module_id == "CP-DR")
-    module = store.head_module(head)
-    assert head.status == want["module_status"]
-    assert list(module.limitations) == want["settled_limitations"]
-    assert list(module.inherited_limitations) == want["inherited_limitations"]
-    assert [t.table_id for t in module.tables] == list(want["tables"])
-    _verify(store_path, receipt_path)
+    brief = json.loads((closed.root / "research" / "brief.json").read_text(encoding="utf-8"))
+    questions = brief["questions"]
+    wanted = key["brief"]
+    assert [q["question_id"] for q in questions] == wanted["question_ids"]
+    assert [q["kind"] for q in questions] == wanted["kinds"]
+    assert {q["question_id"]: q["receivers"] for q in questions} == wanted["receivers"]
+    assert {q["question_id"]: q["focus_module"] for q in questions} == wanted["focus_modules"]
 
 
-@pytest.mark.parametrize("name", list(EXPECTED["refusals"]))
-def test_each_refusal_is_a_journaled_invalid_step(name: str, tmp_path: Path) -> None:
-    item = runs.oracle()["submissions"]["refusal_inputs"][name]
-    workflow, _ = runs.start(tmp_path, empty=item["cp0"] == "cp0_readiness_review_empty_agenda")
-    outcome = runs.drive(workflow, json.dumps(item["payload"]), runs.calls_of(item["calls"]))
-    assert outcome["status"] == "invalid"
-    assert tuple(outcome["issues"]) == tuple(EXPECTED["refusals"][name]["step_issues"])
-
-
-# --- the closed run: store bytes, the D3 reader, the receipt -------------------------------------
-
-
-def _bytes(root: Path) -> dict[str, bytes]:
-    return {str(p): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}
-
-
-def _head(store: Execution, module_id: str = "CP-DR") -> Head:
-    return next(h for h in store.read().heads if h.module_id == module_id)
-
-
-@pytest.mark.parametrize("case", runs.CASES)
-def test_verifying_the_receipt_leaves_the_store_unchanged_and_the_reader_reads_the_head(
-    case: str, tmp_path: Path
+def test_the_dossier_is_the_key_template_and_its_hashes_are_recorded(
+    closed: Closed, key: dict[str, Any]
 ) -> None:
-    """Acceptance 1 (store bytes unchanged) and the D3 reader on the closed-run head (D3 OPEN)."""
-    store_path, receipt_path = runs.cpdr_closed(case, tmp_path)
-    before = _bytes(store_path)
-    _verify(store_path, receipt_path)
-    assert _bytes(store_path) == before
-    store = Execution(store_path)
-    got = cpdr.cpdr_reader(store, _head(store))
-    book = EXPECTED["cases"][case]["bookkeeping"]
-    assert got.status == EXPECTED["cases"][case]["module_status"]
-    assert [(g.gap_id, g.status, g.questions, g.answered) for g in got.gaps] == [
-        (g["gap_id"], g["status"], g["questions"], g["answered"]) for g in book["gaps"]
-    ]
-    assert got.totals is not None
-    assert got.totals.questions_total == book["questions_total"]
-    assert got.unresolved == tuple(
-        f.removeprefix("TDR.2.").removesuffix(".answer")
-        for f in EXPECTED["cases"][case]["consumption_facts"]["missing_for_unresolved"]
+    """`dossier_sha256_rule` and `head_hash_rule`: the file is the template with the brief hash;
+    the record holds the file's hash, the brief's hash and the head's own `result_sha256`, which is
+    not the dossier's."""
+    research = closed.root / "research"
+    record = rp.write_dossier(closed.execution(), research)
+    dossier = key["cases"]["positive"]["dossier"]
+    template = key["cases"]["positive"]["brief"]["template_file"]
+    _, digest = brief_file(
+        template, closed.head("CP-0").result_sha256, closed.head("CP-1").result_sha256
     )
+    text = dossier["template_text"].replace(BRIEF_MARKER, digest)
+    written = (research / "dossier.md").read_bytes()
+    assert written == text.encode("utf-8")
+    assert record.dossier_sha256 == sha(text) == sha(written)
+    assert record.brief_sha256 == digest
+    assert record.head_sha256 == closed.head("CP-DR").result_sha256
+    assert record.head_sha256 != record.dossier_sha256
 
 
-def test_a_receipt_of_the_closed_run_names_the_plan_and_both_heads(tmp_path: Path) -> None:
-    _, receipt_path = runs.cpdr_closed("partial", tmp_path)
-    receipt = OwnerRunReceipt.model_validate_json(receipt_path.read_bytes())
-    assert list(receipt.plan) == runs.oracle()["manifest"]["plan_order_expected"]
-    assert [h.module_id for h in receipt.heads] == ["CP-0", "CP-DR"]
-
-
-# --- acceptance 6: the blocked case through OwnerWorkflow ----------------------------------------
-
-
-def test_the_blocked_case_settles_blocked_and_its_receipt_verifies(tmp_path: Path) -> None:
-    subs = runs.oracle()["submissions"]
-    workflow, _ = runs.start(tmp_path)
-    calls = runs.calls_of("blocked")
-    zero = runs.drive(workflow, json.dumps(subs["cpdr"]["blocked"]["attempt_0"]), calls)
-    one = runs.drive(workflow, json.dumps(subs["cpdr"]["blocked"]["attempt_1"]), calls)
-    assert tuple(zero["issues"]) == tuple(EXPECTED["blocked"]["attempt_0"]["issues"])
-    assert tuple(one["issues"]) == tuple(EXPECTED["blocked"]["attempt_1"]["issues"])
-    workflow.write_receipt(tmp_path / "owner-receipt.json")
-    _verify(tmp_path / "store", tmp_path / "owner-receipt.json")
-    store = Execution(tmp_path / "store")
-    head = _head(store)
-    assert head.status == "blocked"
-    got = cpdr.cpdr_reader(store, head)
-    assert (got.status, got.gaps, got.totals, got.unresolved) == ("blocked", (), None, ())
-    assert store.head_module(head).tables == ()
-    assert store.head_module(head).claims == ()
-
-
-# --- acceptance 5: the run-level refusals --------------------------------------------------------
-
-
-def test_submit_without_its_own_read_inputs_is_not_permitted(tmp_path: Path) -> None:
-    workflow, _ = runs.start(tmp_path)
-    with pytest.raises(WorkflowError) as caught:
-        workflow.submit_review(runs.literal("partial"))
-    assert caught.value.code == "not_permitted"
-
-
-def test_a_tool_outside_the_pack_tools_is_refused_not_permitted(tmp_path: Path) -> None:
-    workflow, _ = runs.start(tmp_path)
-    workflow.read_inputs()
-    refused = workflow.invoke("extract_statements", {"source_id": "financial"})
-    assert (refused["status"], refused["error_code"]) == ("refused", "not_permitted")
-
-
-def test_a_snapshot_change_between_read_and_submit_is_stale(tmp_path: Path) -> None:
-    workflow, _ = runs.start(tmp_path)
-    workflow.read_inputs()
-    Execution(tmp_path / "store").interrupt(
-        workflow._binding.ticket_id, "external change between read and submit"
-    )
-    with pytest.raises(WorkflowError) as caught:
-        workflow.submit_review(runs.literal("partial"))
-    assert caught.value.code == "stale_binding"
-
-
-# --- acceptance 8: the tamper recipe, at verifier level ------------------------------------------
-
-TARGET = "TDR.1.missing-ownership-transaction.status"
-
-
-def _forge(store_path: Path, receipt_path: Path) -> tuple[Execution, OwnerRunReceipt]:
-    """The recipe of `expected.tamper`: edit the settled status fact, rewrite every hash that names
-    it (blob, snapshot, head, attempt, receipt, the settling submission record, the seal)."""
-    store = Execution(store_path)
-    receipt = OwnerRunReceipt.model_validate_json(receipt_path.read_bytes())
-    snapshot = store.read()
-    old = _head(store)
-    module = store.head_module(old)
-    forged = module.model_copy(
-        update={
-            "facts": tuple(
-                f.model_copy(update={"text": "Resolved"}) if f.fact_id == TARGET else f
-                for f in module.facts
-            )
-        }
-    )
-    new_sha = store._store(forged.model_dump_json())
-    new_head = head_of(forged, cpdr.QUALIFICATION)
-    assert new_head.result_sha256 == new_sha
-    attempt = next(a for a in snapshot.attempts if a.result_sha256 == old.result_sha256)
-    new_attempt = attempt.model_copy(update={"result_sha256": new_sha})
-    new_snapshot = snapshot.model_copy(
-        update={
-            "heads": tuple(new_head if h.module_id == "CP-DR" else h for h in snapshot.heads),
-            "attempts": tuple(
-                new_attempt if a.ticket_id == attempt.ticket_id else a for a in snapshot.attempts
-            ),
-        }
-    )
-    store._write(new_snapshot)
-    digest = new_snapshot.content_hash()
-    settling = next(
-        s
-        for s in receipt.submissions
-        if s.binding.binding.module_id == "CP-DR"
-        and s.snapshot_after_sha256 == receipt.snapshot_sha256
-    )
-    edited = settling.model_copy(update={"snapshot_after_sha256": digest})
-    audit = store_path / owner.AUDIT / "submissions"
-    (audit / settling.content_hash()).unlink()
-    (audit / edited.content_hash()).write_bytes(edited.model_dump_json().encode())
-    forged_receipt = receipt.model_copy(
-        update={
-            "snapshot_sha256": digest,
-            "heads": tuple(
-                h.model_copy(update={"result_sha256": new_sha}) if h.module_id == "CP-DR" else h
-                for h in receipt.heads
-            ),
-            "submissions": tuple(edited if s is settling else s for s in receipt.submissions),
-        }
-    )
-    (store_path / owner.AUDIT / "receipt.sha256").write_text(forged_receipt.content_hash())
-    return store, forged_receipt
-
-
-def test_a_forged_status_fact_reaches_the_probe_and_is_refused_there(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_run_json_takes_the_three_hashes_from_the_record(
+    closed: Closed, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    runs.cpdr_closed("partial", tmp_path / "run")
-    shutil.copytree(tmp_path / "run" / "store", tmp_path / "forged")
-    store, receipt = _forge(tmp_path / "forged", tmp_path / "run" / "owner-receipt.json")
-    # everything upstream of the probe passes on the forged copy ...
-    owner._verify_audit(store, receipt)
-    reached: list[str] = []
+    """`run.json`'s `cp_dr_*` keys are the record's (the staged run is S1's case; the record is the
+    closed run's)."""
+    monkeypatch.setattr(evidence, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
+    case = ResearchCase(tmp_path)
+    checked = check_arguments(**case.arguments(tmp_path))
+    record = rp.write_dossier(closed.execution(), closed.root / "research")
+    keys = rp._cp_dr_keys(checked, record)
+    assert keys["cp_dr_dossier_sha256"] == sha(
+        (closed.root / "research" / "dossier.md").read_bytes()
+    )
+    assert keys["cp_dr_head_sha256"] == closed.head("CP-DR").result_sha256
+    assert keys["cp_dr_brief_sha256"] == record.brief_sha256
+    assert rp._cp_dr_keys(checked, None)["cp_dr_dossier_sha256"] is None
 
-    def spy(executed: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) -> None:
-        reached.append(attempt.module_id)
-        cpdr.probe(executed, snapshot, attempt)
 
-    monkeypatch.setitem(owner._PROBES, "CP-DR", spy)
-    # ... and the CP-DR probe is what refuses it
-    with pytest.raises(WorkflowError) as caught:
-        verify_owner_run_receipt(store, receipt)
-    assert caught.value.code == "identity_mismatch"
-    assert reached == ["CP-DR"]
+def test_the_delimiter_label_replaces_a_terminator_reason_in_the_dossier(
+    closed: Closed, key: dict[str, Any], tmp_path: Path
+) -> None:
+    """A dossier over a fence-terminator refusal shows the key's label; `rejected.json` keeps the
+    literal reason (`refusals/research/fence_terminator`)."""
+    terminator = key["refusals"]["research"]["fence_terminator"]
+    item = runs.oracle()["manifest"]["fence_terminator_item"]
+    reason = f"evidence item {item['locator']} {terminator['reason_suffix']}"
+    research = tmp_path / "research"
+    shutil.copytree(closed.root / "research", research)
+    refused = (
+        *runs.refused_items(),
+        RefusedItem(item["locator"], item["family"], None, reason),
+    )
+    write_rejected(research / evidence.REJECTED_FILE, refused)
+    rp.write_dossier(closed.execution(), research)
+    shown = (research / "dossier.md").read_text(encoding="utf-8")
+    assert terminator["dossier_shown_reason"] in shown and reason not in shown
+    assert reason in (research / evidence.REJECTED_FILE).read_text(encoding="utf-8")
+
+
+def test_the_receipt_needs_the_evidence_record_and_names_it_when_it_is_gone(
+    closed: Closed, tmp_path: Path
+) -> None:
+    """S1 review, item 14: the `ev-*` tool results take their retrieval times from
+    `research/evidence.json`, which is outside the sealed store. Verification reads it; without it
+    the verifier refuses with the named `identity_mismatch`, never skipping the `ev-*` calls."""
+    moved = tmp_path / "run"
+    shutil.copytree(closed.root, moved)
+    shutil.rmtree(moved / "research")
+    receipt = OwnerRunReceipt.model_validate_json((moved / "owner-receipt.json").read_bytes())
+    with pytest.raises(WorkflowError, match="identity_mismatch"):
+        verify_owner_run_receipt(Execution(moved / "store"), receipt)
+
+
+# --- anchors at begin (O7-R20) -------------------------------------------------------------------
+
+
+def test_a_blocked_cp0_head_is_not_anchored_and_nothing_is_written(
+    tmp_path: Path, key: dict[str, Any]
+) -> None:
+    """`refusals/anchors/blocked_cp0`: a CP-0 head blocked by two invalid reviews stops the walk
+    before CP-DR is begun, with the key's reason; no `brief.json`, no CP-DR attempt."""
+    refusal = key["refusals"]["anchors"]["blocked_cp0"]
+    workflow, pack = runs.start("positive", tmp_path)
+    review = json.loads(runs.cp0_text(pack, "positive"))
+    review["pack_sha256"] = "0" * 64  # a review that does not bind the pack is invalid, twice
+    payload = json.dumps(review)
+    runs.read_cited(workflow, payload)
+    assert workflow.submit_review(payload)["status"] == "invalid"
+    runs.read_cited(workflow, payload)
+    with pytest.raises(CpDrNotAnchored) as raised:
+        workflow.submit_review(payload)
+    assert str(raised.value) == refusal["reason"]
+    assert refusal["research_brief_json_written"] is False
+    assert not (tmp_path / "research" / "brief.json").exists()
+    assert all(a.module_id != "CP-DR" for a in Execution(tmp_path / "store").read().attempts)
+
+
+# --- the entry the prompt rules start from -------------------------------------------------------
+
+
+def test_each_steps_rule_entry_is_the_validator_the_entry_validator_dispatches_to() -> None:
+    """`prompts/rules.py` starts a CP-DR step's rule coverage at that step's validator (one
+    `ENTRY_VALIDATOR` serves both steps); this is the guard that the declared entries are what
+    `ENTRY_VALIDATOR` calls."""
+    tree = ast.parse((ROOT / "src/deploy_workflow/owners/cpdr.py").read_text(encoding="utf-8"))
+    entry = next(
+        n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "ENTRY_VALIDATOR"
+    )
+    called = {n.id for n in ast.walk(entry) if isinstance(n, ast.Name)}
+    for step, name in (("brief", "_validate_brief"), ("research", "_validate_research")):
+        assert rules.ENTRIES[step] == (rules.OWNERS + f"cpdr:{name}",)
+        assert name in called
+    assert cpdr.STEP_IDS == ("brief", "research")

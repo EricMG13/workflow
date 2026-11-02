@@ -1,137 +1,441 @@
-"""CP-DR run driver: pack assembly, literal submissions, run-time bindings, tool-call sequence.
+"""CP-DR LOCAL run driver: pack assembly, literal submissions, run-time bindings, tool calls.
 
-One CP-DR run (CP-0, CP-DR) over the pinned oracle in `cases/cpdr-owner`, driven through the
-public `OwnerWorkflow` API only. G2 imports `cpdr_closed`; `tests/test_owner_cpdr.py` imports the
-stage functions to fork a run at any point. Nothing here asserts expected values: the oracle
-files are read, never derived.
+One closed CP-DR run (CP-0, CP-1, CP-DR) over the pinned oracle in `cases/cpdr-research-owner`,
+driven through the public `OwnerWorkflow` API only. G2 imports `cpdr_closed`; the CP-DR tests
+import the stage functions to fork a run at any point. Nothing here asserts expected values: the
+oracle files are read, never derived or edited.
+
+The pack is the frozen financial pack (`manifest.json#financial_baseline`) plus the three accepted
+evidence items as `text/plain` sources with `line:N` spans, plus the run's `context` file, the one
+place the context questions live (`manifest.json#context`). The oracle's CP-0 and CP-1 source lists
+do not name the context file, so the driver adds its one row to each, built from the file's own
+first quoted line. The staging a `run_pathway` run writes under `<run>/research/` is written by
+`stage`: the evidence record and the rejected items from `expected.json#intake`.
 """
 
+import copy
 import hashlib
+import importlib
 import json
 import re
+from collections.abc import Iterable, Mapping
+from datetime import date
 from pathlib import Path
 from typing import Any
 
-import s1a_runs as s1a
-
-from deploy_vii.contracts import Run
-from deploy_vii.preparation import PreparedPack
+from deploy_vii.contracts import Fact, Module, Run, Source, Span
+from deploy_vii.execution import Execution
+from deploy_vii.live.tools import cited_locators
+from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.owner_workflow import OwnerWorkflow
+from deploy_workflow.owners import cpdr
+from deploy_workflow.research import evidence as record
+from deploy_workflow.research.intake import AcceptedItem, RefusedItem, write_rejected
 
 ROOT = Path(__file__).resolve().parents[1]
-CASE = ROOT / "cases/cpdr-owner"
-PINS_FILE = ROOT / "cases/PINS.json"
-PINNED = ("manifest.json", "submissions.json", "expected.json", "builder/build.py")
-PACK_PLACEHOLDER = s1a.PACK_PLACEHOLDER
-CASES = ("partial", "unresolved", "empty_agenda")
+CASE = ROOT / "cases" / "cpdr-research-owner"
+CASES = ("positive", "v2")
+RUN_KEY = {"positive": "run", "v2": "run_v2"}
+SUBMISSION_KEY = {"positive": "research_v1", "v2": "research_v2"}
+PACK_PLACEHOLDER = (
+    "<<PACK_SHA256: PreparedPack.content_hash() of the run's pack, bound at run time>>"
+)
+GAP_MARKER = "{{GAP_IDS}}"
+RETRIEVED = "2026-01-11T08:00:00Z"  # a UTC-second time the fence header accepts (Q4)
+BRIEF_MARKERS = ("{{CP0_RESULT_SHA256}}", "{{CP1_RESULT_SHA256}}")
+RUN_FIELDS = (
+    "run_id",
+    "issuer_id",
+    "issuer_name",
+    "as_of",
+    "method_version",
+    "case_kind",
+    "pathway",
+    "requested_modules",
+)
+CONTEXT_BASE = ROOT / "cases" / "context" / "research-minimal.json"
+
+
+def _driver(name: str) -> Any:
+    return importlib.import_module(name)
 
 
 def oracle() -> dict[str, Any]:
-    """The pinned oracle files; a drifted file fails (the pins are `cases/PINS.json`)."""
-    pins = json.loads(PINS_FILE.read_text(encoding="utf-8"))
-    for name in PINNED:
-        digest = hashlib.sha256((CASE / name).read_bytes()).hexdigest()
-        if digest != pins[f"cases/cpdr-owner/{name}"]:
-            raise RuntimeError(f"oracle drift: {name}")
+    """The three pinned oracle files (`cases/PINS.json`); a drifted file fails."""
+    pins = json.loads((ROOT / "cases" / "PINS.json").read_text(encoding="utf-8"))
+    out: dict[str, Any] = {}
+    for name in ("manifest", "submissions", "expected"):
+        path = CASE / f"{name}.json"
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != pins[f"cases/cpdr-research-owner/{name}.json"]:
+            raise RuntimeError(f"oracle drift: {name}.json")
+        out[name] = json.loads(path.read_text(encoding="utf-8"))
+    return out
+
+
+def run_of(case: str) -> Run:
+    manifest = oracle()["manifest"]
+    fields = {k: v for k, v in manifest[RUN_KEY[case]].items() if k in RUN_FIELDS}
+    return Run.model_validate_json(json.dumps(fields))
+
+
+def context_source(case: str) -> Source:
+    """The run's `context` source: the minimal research context with the case's identity and the
+    two context questions of `manifest.json#context`."""
+    manifest = oracle()["manifest"]
+    run = manifest[RUN_KEY[case]]
+    document = json.loads(CONTEXT_BASE.read_text(encoding="utf-8"))
+    document["run"].update(
+        pathway=run["pathway"],
+        case_kind=run["case_kind"],
+        as_of=run["as_of"],
+        reporting_currency="USD",
+    )
+    document["identity"].update(issuer_name=run["issuer_name"], issuer_id=run["issuer_id"])
+    document["attachments"]["legal_documents"] = (
+        "none"  # no legal document is declared for this run
+    )
+    document["research_questions"] = manifest["context"]["research_questions"]
+    raw = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+    return prepare_source(
+        SourceRequest(source_id="context", path="context.json", media_type="text/plain"), raw
+    )
+
+
+def evidence_sources() -> tuple[Source, ...]:
+    """The three accepted evidence items as prepared `text/plain` sources, spans `line:1..line:N`
+    (`manifest.json#evidence`, the item hash `page_join_sha256`)."""
+    built = []
+    for number, entry in enumerate(oracle()["manifest"]["evidence"][:3], 1):
+        lines = entry["pages"][0]["text"].split("\n")
+        built.append(
+            Source(
+                source_id=f"ev-{number}",
+                name=entry["path"],
+                status="ready",
+                sha256=entry["page_join_sha256"],
+                media_type="text/plain",
+                spans=tuple(Span(locator=f"line:{n}", text=t) for n, t in enumerate(lines, 1)),
+            )
+        )
+    return tuple(built)
+
+
+def make_pack(case: str) -> PreparedPack:
+    """Identity and financial (the financial slice's, hash-checked), `ev-1..3`, then `context`."""
+    if case not in CASES:
+        raise ValueError(f"unknown CP-DR case {case}")
+    held = _driver("test_financial_workflow").make_pack().sources
+    items = evidence_sources()
+    return PreparedPack(run=run_of(case), sources=(*held, *items, context_source(case)))
+
+
+# --- the staging a run_pathway run writes under <run>/research ------------------------------------
+
+
+def accepted_items() -> tuple[AcceptedItem, ...]:
+    """`expected.json#intake/accepted` with the text of `manifest.json#evidence`."""
+    material = oracle()
+    texts = {e["path"]: e["pages"][0]["text"] for e in material["manifest"]["evidence"]}
+    return tuple(
+        AcceptedItem(
+            item_id=a["item_id"],
+            path=a["path"],
+            family=a["family"],
+            published=date.fromisoformat(a["published"]),
+            locator=a["locator"],
+            sha256=a["sha256"],
+            text=texts[a["path"]],
+        )
+        for a in material["expected"]["intake"]["accepted"]
+    )
+
+
+def refused_items() -> tuple[RefusedItem, ...]:
+    entries = oracle()["expected"]["intake"]["rejected_json"]["entries"]
+    return tuple(
+        RefusedItem(
+            locator=e["locator"],
+            family=e["family"],
+            published=date.fromisoformat(e["published"]) if e["published"] else None,
+            reason=e["reason"],
+        )
+        for e in entries
+    )
+
+
+def stage(root: Path) -> None:
+    """`root/research/{evidence.json, rejected.json}` and `root/sources/ev-<n>.txt`, as staging
+    writes them."""
+    research = root / record.RESEARCH_DIR
+    research.mkdir(parents=True, exist_ok=True)
+    items = accepted_items()
+    record.write_evidence(research / record.EVIDENCE_FILE, items, RETRIEVED)
+    write_rejected(research / record.REJECTED_FILE, refused_items())
+    (root / "sources").mkdir(exist_ok=True)
+    for item in items:
+        (root / "sources" / f"{item.item_id}.txt").write_bytes(item.text.encode("utf-8"))
+
+
+# --- CP-0 and CP-1 ----------------------------------------------------------------------------------
+
+
+def _citation(pack: PreparedPack) -> dict[str, str]:
+    source = next(s for s in pack.sources if s.source_id == "context")
+    name = pack.run.issuer_name
+    span = next(s for s in source.spans if name in s.text)
     return {
-        "manifest": json.loads((CASE / "manifest.json").read_text()),
-        "submissions": json.loads((CASE / "submissions.json").read_text()),
-        "expected": json.loads((CASE / "expected.json").read_text()),
+        "source_id": "context",
+        "source_sha256": source.sha256 or "",
+        "locator": span.locator,
+        "quote": name,
     }
 
 
-def make_pack() -> PreparedPack:
-    """Identity, financial and the reduced business note (the snapshot gap case's sources, hash
-    checked against this manifest's pins) under the CP-DR run (`requested_modules = (CP-DR,)`)."""
-    manifest = oracle()["manifest"]
-    pinned = {s["source_id"]: s["sha256"] for s in manifest["sources"]}
-    held = s1a.make_pack("gap").sources
-    if {s.source_id: s.sha256 for s in held} != pinned:
-        raise RuntimeError("CP-DR source pins drift from the snapshot gap pack")
-    return PreparedPack(run=Run.model_validate_json(json.dumps(manifest["run"])), sources=held)
+def cp0_text(pack: PreparedPack, case: str) -> str:
+    """`submissions.json#cp0_readiness_review` with the pack hash bound and one row for the
+    context file."""
+    review = copy.deepcopy(oracle()["submissions"]["cp0_readiness_review"])
+    review["sources"].append(
+        {
+            "source_id": "context",
+            "document_family": "Run context",
+            "authority": "issuer",
+            "entity": pack.run.issuer_name,
+            "period": "January 2026",
+            "version_relationship": "Run context file of this run",
+            "fidelity": "verified",
+            "citations": [_citation(pack)],
+            "limitations": [],
+        }
+    )
+    return json.dumps(review, ensure_ascii=False).replace(PACK_PLACEHOLDER, pack.content_hash())
 
 
-def cp0_text(pack: PreparedPack, *, empty: bool = False) -> str:
-    """The CP-0 literal (three-part delta of `manifest.cp0_delta`) with the pack hash bound."""
-    key = "cp0_readiness_review_empty_agenda" if empty else "cp0_readiness_review"
-    text = json.dumps(oracle()["submissions"][key], ensure_ascii=False)
-    return text.replace(PACK_PLACEHOLDER, pack.content_hash())
+def cp1_context_text(pack: PreparedPack) -> str:
+    """`submissions.json#cp1_source_context` with the pack hash bound and one row for the
+    context file."""
+    stage_one = copy.deepcopy(oracle()["submissions"]["cp1_source_context"])
+    stage_one["sources"].append(
+        {
+            "source_id": "context",
+            "classification": "nonfinancial",
+            "document_type": "Run context file",
+            "published_on": pack.run.as_of.isoformat(),
+            "evidence_class": "internal",
+            "evidence_rationale": "The run's own context file",
+            "analytical_use": "Research questions and run identity",
+            "citations": [_citation(pack)],
+            "event_scan": "unassessed",
+            "event_scan_explanation": "A context file is not event evidence",
+        }
+    )
+    return json.dumps(stage_one, ensure_ascii=False).replace(PACK_PLACEHOLDER, pack.content_hash())
 
 
-def literal(case: str) -> str:
-    """One CP-DR submission literal as JSON text (`submissions.json#cpdr.<case>`)."""
-    return json.dumps(oracle()["submissions"]["cpdr"][case], ensure_ascii=False)
+def start(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+    """The workflow over `root/store`, the staging under `root`, nothing settled."""
+    pack = make_pack(case)
+    stage(root)
+    return OwnerWorkflow.create(root / "store", pack, publication_directory=None), pack
 
 
-def start(root: Path, *, empty: bool = False) -> tuple[OwnerWorkflow, PreparedPack]:
-    """Create the workflow and settle CP-0 (the cited pages read first); CP-DR is then active."""
-    pack = make_pack()
-    workflow = OwnerWorkflow.create(root / "store", pack)
-    payload = cp0_text(pack, empty=empty)
-    s1a.read_cited(workflow, payload)
-    s1a.submit_valid(workflow, payload)
+def read_cited(workflow: OwnerWorkflow, payload: str) -> None:
+    """One ok `read_pages` call per cited locator (`page:N` or `line:N`) of the payload."""
+    cited = sorted(cited_locators(payload))
+    for source, locator in cited:
+        number = int(locator.split(":")[1])
+        call = workflow.invoke(
+            "read_pages", {"source_id": source, "first_page": number, "last_page": number}
+        )
+        if call["status"] != "ok":
+            raise RuntimeError(f"read_pages {source} {locator}: {call['error_code']}")
+
+
+def drive_cp0(workflow: OwnerWorkflow, pack: PreparedPack, case: str) -> dict[str, Any]:
+    review = cp0_text(pack, case)
+    read_cited(workflow, review)
+    valid: dict[str, Any] = _driver("s1a_runs").submit_valid(workflow, review)
+    return valid
+
+
+def _bind(value: Any, rules: Mapping[str, str], inputs: Any, gaps: list[str]) -> Any:
+    """`value` with each `{{EVID:*}}` marker bound by its `run_time_bindings` predicate and the
+    `{{GAP_IDS}}` element by every narrative gap id; any other marker fails."""
+    if isinstance(value, dict):
+        return {key: _bind(item, rules, inputs, gaps) for key, item in value.items()}
+    if isinstance(value, list):
+        out: list[Any] = []
+        for item in value:
+            out.extend(gaps if item == GAP_MARKER else [_bind(item, rules, inputs, gaps)])
+        return out
+    if isinstance(value, str) and value.startswith("{{EVID:") and value in rules:
+        return _driver("cp1c_runs").evidence_id(inputs, value, rules[value])
+    if isinstance(value, str) and "{{" in value:
+        raise RuntimeError(f"unbound readiness marker {value}")
+    return value
+
+
+def readiness_literal(workflow: OwnerWorkflow) -> str:
+    """`submissions.json#cp1_readiness.payload` bound to the readiness step's inputs, exactly as
+    the CP-1C driver binds its own; `inputs_sha256` is prefilled by Python and left out."""
+    readiness = oracle()["submissions"]["cp1_readiness"]
+    inputs = _driver("cp1d_runs").downstream_inputs(workflow)
+    gaps = [gap.gap_id for gap in inputs.narrative.gaps]
+    document = copy.deepcopy(readiness["payload"])
+    document.pop("inputs_sha256")
+    return json.dumps(
+        _bind(document, readiness["run_time_bindings"], inputs, gaps), ensure_ascii=False
+    )
+
+
+def drive_cp1(workflow: OwnerWorkflow, pack: PreparedPack) -> None:
+    """CP-1 to its promotion (a genuine one, about two minutes): the source_context literal after
+    its cited reads and the no-event search, the financial slice's financials and narrative, the
+    bound readiness literal and the quality review built from the read inputs."""
+    fw, s1a = _driver("test_financial_workflow"), _driver("s1a_runs")
+    context = cp1_context_text(pack)
+    read_cited(workflow, context)
+    s1a.search(workflow, "financial", "subsequent")
+    s1a.submit_valid(workflow, context)
+    fw.financial_reads(workflow)
+    s1a.submit_valid(workflow, json.dumps(fw.financials(pack)))
+    read = workflow.read_inputs()
+    s1a.submit_valid(workflow, json.dumps(fw.narrative(read)))
+    workflow.read_inputs()
+    s1a.submit_valid(workflow, readiness_literal(workflow))
+    inputs = json.loads(workflow.read_inputs()["body"])
+    s1a.submit_valid(workflow, _driver("cp2g_runs")._quality_review(fw, read, inputs))
+
+
+def promoted(case: str, root: Path) -> tuple[OwnerWorkflow, PreparedPack]:
+    """CP-0 and CP-1 settled and CP-DR begun at its `brief` step."""
+    workflow, pack = start(case, root)
+    drive_cp0(workflow, pack, case)
+    drive_cp1(workflow, pack)
     return workflow, pack
 
 
-SOURCE_HEAD = re.compile(r"^<<<SOURCE id=(\S+) sha256=[0-9a-f]{64}>>>$")
-SPAN_HEAD = re.compile(r"^locator=(page:\d+) \| ")
+# --- a store with CP-0 and CP-1 seeded (fast) -------------------------------------------------------
 
 
-def spans_of(body: str) -> list[dict[str, str]]:
-    """The (source, locator) pairs a pack tool's body shows, in order."""
-    found: list[dict[str, str]] = []
-    source = ""
-    for line in body.split("\n"):
-        head = SOURCE_HEAD.match(line)
-        if head:
-            source = head[1]
-            continue
-        span = SPAN_HEAD.match(line)
-        if span:
-            found.append({"source_id": source, "locator": span[1]})
-    return found
+def _command(module_id: str) -> Fact:
+    """CP-0's T8 command that authorizes `module_id` to begin."""
+    return Fact(
+        fact_id=f"t8-{module_id.lower()}",
+        label="Command",
+        table_id="T8",
+        row_id=module_id,
+        field="exact_command",
+        text=f"Run {module_id}",
+    )
 
 
-def replay(workflow: OwnerWorkflow, calls: list[dict[str, Any]]) -> None:
-    """The recorded tool-call sequence: the one `read_inputs`, then each pack call, each ok,
-    carrying the oracle's header and the oracle's spans (`expect_spans`, `expect_matching_spans`)."""
+def seeded(case: str, root: Path) -> tuple[Execution, str]:
+    """CP-0 and CP-1 settled in a real store as hand-built modules (`begin` and `finish`), the
+    staging under `root`, then CP-DR begun after its anchor check. Returns the store and the CP-DR
+    ticket, at the brief step. No workflow journal: the connect tests and the defect classes run
+    the core's own `submit` over it."""
+    pack = make_pack(case)
+    stage(root)
+    store = Execution.create(root / "store", pack)
+    for module_id in ("CP-0", "CP-1"):
+        ticket = store.begin(module_id)
+        module = Module(
+            run_id=pack.run.run_id,
+            issuer_id=pack.run.issuer_id,
+            as_of=pack.run.as_of,
+            module_id=module_id,
+            status="candidate",
+            inputs=ticket.inputs,
+            facts=tuple(_command(m) for m in ("CP-1", cpdr.MODULE_ID))
+            if module_id == "CP-0"
+            else (),
+            limitations=(f"{module_id} note",),
+        )
+        store.finish(ticket.ticket_id, module.model_dump_json(), lambda _module: ())
+    cpdr.check_begin(store, store.read())
+    return store, store.begin(cpdr.MODULE_ID).ticket_id
+
+
+def locked(case: str, root: Path) -> tuple[Execution, str]:
+    """`seeded`, then the defaults-only brief submitted through the core and locked on disk: the
+    research step is next."""
+    store, ticket = seeded(case, root)
+    submitted = cpdr.submit(store, ticket, cpdr.BRIEF_STEP, defaults_only(case), None)
+    if submitted.journal.steps[-1].status != "valid":
+        raise RuntimeError(f"brief not valid: {submitted.journal.steps[-1].issues}")
+    return store, ticket
+
+
+# --- CP-DR ------------------------------------------------------------------------------------------
+
+
+def brief_payload(case: str, questions: list[dict[str, Any]] | None = None) -> str:
+    """The brief submission: `submissions.json#brief/model_tailored` (the 40 it tailors, or the
+    given list) wrapped with the run id."""
+    body = oracle()["submissions"]["brief"]["model_tailored"] if questions is None else questions
+    return json.dumps({"run_id": run_of(case).run_id, "questions": body}, ensure_ascii=False)
+
+
+def defaults_only(case: str) -> str:
+    body = oracle()["submissions"]["brief"]["model_tailored_defaults_only"]
+    return brief_payload(case, body)
+
+
+def research_payload(case: str) -> str:
+    return json.dumps(oracle()["submissions"][SUBMISSION_KEY[case]], ensure_ascii=False)
+
+
+def run_calls(workflow: OwnerWorkflow, calls: Iterable[Mapping[str, Any]]) -> None:
+    """A literal tool sequence (`tool_calls/research`): each call ok, each read returning every
+    `expect_spans` locator, each search its `expect_header`."""
     for call in calls:
         if call["tool"] == "read_inputs":
             workflow.read_inputs()
             continue
         outcome = workflow.invoke(call["tool"], call["arguments"])
         if outcome["status"] != "ok":
-            raise RuntimeError(f"{call['tool']}: {outcome['error_code']}")
+            raise RuntimeError(f"{call['tool']} {call['arguments']}: {outcome['error_code']}")
+        body = str(outcome["body"])
+        for span in call.get("expect_spans", ()):
+            if f"locator={span['locator']} | " not in body:
+                raise RuntimeError(f"{call['tool']}: no {span['source_id']} {span['locator']}")
         header = call.get("expect_header")
-        body = outcome["body"] or ""
-        if header is not None and header not in body:
+        if header is not None and not re.search(re.escape(header), body):
             raise RuntimeError(f"{call['tool']}: header {header!r} not in the body")
-        for key in ("expect_spans", "expect_matching_spans"):
-            if key in call and spans_of(body) != call[key]:
-                raise RuntimeError(f"{call['tool']}: {key} differ from the body")
 
 
-def calls_of(name: str | list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """A recorded sequence by name (`submissions.tool_calls.<name>`), or the list itself."""
-    if isinstance(name, str):
-        found: list[dict[str, Any]] = oracle()["submissions"]["tool_calls"][name]
-        return found
-    return name
+def drive_brief(workflow: OwnerWorkflow, case: str, payload: str | None = None) -> dict[str, Any]:
+    """The brief step's `read_inputs`, then the brief submission (default: the defaults only, the
+    brief both closed runs answer; `brief_payload` is the 40 tailored)."""
+    workflow.read_inputs()
+    outcome: dict[str, Any] = workflow.submit_review(
+        defaults_only(case) if payload is None else payload
+    )
+    return outcome
 
 
-def drive(workflow: OwnerWorkflow, payload: str, calls: list[dict[str, Any]]) -> dict[str, Any]:
-    """The recorded tool use, then the submission; returns the submit outcome."""
-    replay(workflow, calls)
-    return workflow.submit_review(payload)
+def drive_research(
+    workflow: OwnerWorkflow, case: str, payload: str | None = None
+) -> dict[str, Any]:
+    """The recorded research tool use (`tool_calls/research`), then the research submission."""
+    run_calls(workflow, oracle()["submissions"]["tool_calls"]["research"])
+    outcome: dict[str, Any] = workflow.submit_review(
+        research_payload(case) if payload is None else payload
+    )
+    return outcome
 
 
-def cpdr_closed(case: str, root: Path) -> tuple[Path, Path]:
-    """One closed CP-DR run of `case` under `root`: (store, sealed receipt)."""
-    if case not in CASES:
-        raise ValueError(f"unknown CP-DR case: {case}")
-    workflow, _ = start(root, empty=case == "empty_agenda")
-    outcome = drive(workflow, literal(case), calls_of(case))
-    if outcome["status"] != "valid":
-        raise RuntimeError(f"submission not valid: {outcome['status']} {outcome['issues']}")
-    workflow.write_receipt(root / "owner-receipt.json")
-    return root / "store", root / "owner-receipt.json"
+def cpdr_closed(case: str, root: Path) -> tuple[Path, Path, None]:
+    """One closed CP-DR run of `case` under `root`: (store, sealed receipt, no publication)."""
+    workflow, _ = promoted(case, root)
+    brief = drive_brief(workflow, case)
+    if brief["status"] != "valid":
+        raise RuntimeError(f"CP-DR brief not valid: {brief['issues']}")
+    research = drive_research(workflow, case)
+    if research["status"] != "valid":
+        raise RuntimeError(f"CP-DR research not valid: {research['issues']}")
+    receipt = root / "owner-receipt.json"
+    workflow.write_receipt(receipt)
+    return root / "store", receipt, None

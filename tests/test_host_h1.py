@@ -333,7 +333,7 @@ def test_fixed_rows_name_each_leased_step() -> None:
         "CP-4": ("legal_covenants",),
         "CP-3": ("relative_value",),
         "CP-3D": ("market_implied",),
-        "CP-DR": ("research",),
+        "CP-DR": ("brief", "research"),
         "CP-1D": ("earnings_quality",),
         "CP-1C": ("peer_benchmark",),
         "CP-2E": ("macro_fx",),
@@ -622,8 +622,9 @@ def _evidence_session(
     """A real `SourceSession` for CP-DR `research` over a pack that also holds `ev-1`: the store is
     a begun fake-core run, the session is built over the widened pack."""
     _register(monkeypatch, "CP-DR", "research")
-    pack = _requested(runs.make_pack("positive"), "CP-DR")
-    _begun(tmp_path, pack, _s1_review(pack, "CP-DR"))
+    pack = _requested(runs.make_pack("positive"), "CP-1", "CP-DR")
+    workflow = _begun(tmp_path, pack, _cp1_and_cpdr_review(pack))
+    runs.drive_cp1(workflow, pack, "positive")  # CP-DR begins only over CP-0 and CP-1 settled
     held = (
         Source(
             source_id="ev-1",

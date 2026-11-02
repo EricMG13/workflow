@@ -2008,7 +2008,7 @@
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
-   "src/deploy_workflow/owners/cpdr.py": "304179e659d839f65c8a1fc30e82fe2673c243920964e7528fc2d4a722efc48c",
+   "src/deploy_workflow/owners/cpdr.py": "f3460ed2474d885d5baa2ac0615df05e2a0ce7799738c5c8b468e3cfb79737e4",
    "src/deploy_workflow/owners/cpl10.py": "18ccda2b51554188483554e69b07dbbb75f65108beb2ec6613367ba05b16990e",
    "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
    "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b",
@@ -2030,7 +2030,7 @@
    "cases/cp4c-owner/expected.json": "40c6f382cb280e90353da2f041663c907119bfbe6540b0455ef0edc952a911ed",
    "cases/cp5-owner/expected.json": "48fcd8991b858b9b08fc12e965abfcde42d467dfce2aba04a98e9edba07e92d2",
    "cases/cp8-owner/expected.json": "84dc6072d8a1019a49aa0e93d6b6aaa3907f91aec3910820ccdb492bab95253a",
-   "cases/cpdr-research-owner/expected.json": "334b4a0fcda8909796d0303be8b712fbb6973e5b1a010d1fa2c138175dfd68f1",
+   "cases/cpdr-research-owner/expected.json": "c67b9864ac00e703f1b94fd782860f5837a82612256c27c9a00df0e9ffa7b72e",
    "cases/cpl10-owner/expected.json": "285915140dbd7722e406ce96bb11c20ab5f5ce370e6649748299f4809695ce45"
   }
  }

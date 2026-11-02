@@ -1,5 +1,6 @@
 """O7b-1c S1: the evidence record and the one research clock (``research/evidence.py``)."""
 
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
@@ -8,6 +9,7 @@ from typing import Any
 import pytest
 
 from deploy_workflow.research import evidence as ev
+from deploy_workflow.research import webfetch
 from deploy_workflow.research.intake import AcceptedItem
 
 RETRIEVED = "2026-11-02T05:40:00Z"
@@ -87,6 +89,8 @@ def test_the_record_is_json_with_the_documented_keys(
         "sha256",
         "retrieved",
         "path",
+        "origin",
+        "url",
     }
 
 
@@ -99,6 +103,8 @@ def _row(item_id: str = "ev-1", **over: Any) -> dict[str, Any]:
         "sha256": "a" * 64,
         "retrieved": RETRIEVED,
         "path": "a.txt",
+        "origin": "supplied",
+        "url": None,
         **over,
     }
 
@@ -125,3 +131,102 @@ def test_read_back_validates_values_and_ids(tmp_path: Path, rows: list[dict[str,
     (tmp_path / "research" / "evidence.json").write_text(json.dumps(rows), encoding="utf-8")
     with pytest.raises(ev.EvidenceRecordInvalid):
         ev.research_retrieved(tmp_path / "execution", ["ev-1"])
+
+
+KEY = json.loads(
+    (
+        Path(__file__).resolve().parents[2] / "cases" / "cpdr-web-retrieval" / "expected.json"
+    ).read_text(encoding="utf-8")
+)["records"]
+
+
+def test_rows_carry_origin_and_url(expected: dict[str, Any]) -> None:
+    supplied = accepted(expected)
+    assert {(r["origin"], r["url"]) for r in ev.evidence_rows(supplied, RETRIEVED)} == {
+        ("supplied", None)
+    }
+    web = AcceptedItem(
+        "ev-4",
+        None,
+        "f",
+        None,
+        "https://x.example/a",
+        "a" * 64,
+        "t",
+        "web",
+        "https://x.example/a?q=1",
+    )
+    (row,) = ev.evidence_rows([web], RETRIEVED)
+    assert (row["origin"], row["url"], row["path"]) == ("web", "https://x.example/a?q=1", None)
+
+
+def test_the_key_rows_round_trip_through_the_record(tmp_path: Path) -> None:
+    rows = KEY["evidence_json"]["rows"]
+    target = tmp_path / "evidence.json"
+    target.write_text(json.dumps(rows), encoding="utf-8")
+    assert [dict(r) for r in ev.read_evidence(target)] == rows
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"origin": "supplied", "url": "https://x.example/a"},
+        {"origin": "web", "path": None, "url": None},
+        {"origin": "web", "path": "a.txt", "url": "https://x.example/a"},
+        {"origin": "supplied", "path": None, "url": None},
+        {"origin": "elsewhere"},
+        {"origin": None},
+        {"url": 5},
+    ],
+)
+def test_read_evidence_rejects_a_row_with_both_or_neither(
+    tmp_path: Path, bad: dict[str, Any]
+) -> None:
+    target = tmp_path / "evidence.json"
+    target.write_text(json.dumps([_row(**bad)]), encoding="utf-8")
+    with pytest.raises(ev.EvidenceRecordInvalid):
+        ev.read_evidence(target)
+
+
+def _records() -> list[webfetch.FetchRecord]:
+    return [webfetch.FetchRecord(**e) for e in json.loads(KEY["fetches_json"]["file_bytes"])]
+
+
+def test_fetches_record_round_trips(tmp_path: Path) -> None:
+    records = _records()
+    target = tmp_path / ev.FETCHES_FILE
+    data = ev.write_fetches(target, records)
+    assert ev.FETCHES_FILE == "fetches.json"
+    assert data == KEY["fetches_json"]["file_bytes"].encode("utf-8")
+    assert hashlib.sha256(data).hexdigest() == KEY["fetches_json"]["file_sha256"]
+    assert ev.fetches_bytes(records) == data
+    assert list(ev.read_fetches(target)) == records
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda e: e.pop("hops"),
+        lambda e: e.update(extra=1),
+        lambda e: e.update(hops="0"),
+        lambda e: e.update(status="200"),
+        lambda e: e.update(status=True),
+        lambda e: e.update(bytes=1.5),
+        lambda e: e.update(url=None),
+        lambda e: e.update(reason=3),
+        lambda e: e.update(item_id=4),
+    ],
+)
+def test_read_fetches_is_strict(tmp_path: Path, mutate: Any) -> None:
+    entries = json.loads(KEY["fetches_json"]["file_bytes"])
+    mutate(entries[0])
+    target = tmp_path / ev.FETCHES_FILE
+    target.write_text(json.dumps(entries), encoding="utf-8")
+    with pytest.raises(ev.EvidenceRecordInvalid):
+        ev.read_fetches(target)
+    for body in ("not json", "{}"):
+        target.write_text(body, encoding="utf-8")
+        with pytest.raises(ev.EvidenceRecordInvalid):
+            ev.read_fetches(target)
+    with pytest.raises(ev.EvidenceRecordInvalid):
+        ev.read_fetches(tmp_path / "absent.json")

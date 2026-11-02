@@ -972,3 +972,72 @@ def test_the_tcp_connect_is_bounded_by_the_remaining_total(monkeypatch: pytest.M
     assert isinstance(pinned, webfetch.PinnedHTTPSConnection)
     pinned.connect()
     assert asked == [left]
+
+
+# ---- the ruling check (O7b-2 S3, D1): check_ruling("web-retrieval", ...) over the key's texts ----
+
+
+def _ruling_under(tmp_path: Path, text: str) -> tuple[Path, Path]:
+    root = tmp_path / "rulings"
+    root.mkdir(exist_ok=True)
+    path = root / "web.md"
+    path.write_text(text, encoding="utf-8")
+    return root, path
+
+
+def test_ruling_must_name_web_retrieval(tmp_path: Path) -> None:
+    from deploy_workflow.model.adapter import LivePauseInForce, check_ruling
+
+    root, path = _ruling_under(tmp_path, CASES["ruling_texts"]["configs_missing"])
+    case = KEY["gate"]["configs_missing"]
+    with pytest.raises(LivePauseInForce) as raised:
+        check_ruling("web-retrieval", path, rulings_root=root)
+    assert type(raised.value).__name__ == case["exception"]
+    assert str(raised.value) == case["text"]
+
+
+def test_ruling_good_passes(tmp_path: Path) -> None:
+    from deploy_workflow.model.adapter import check_ruling
+
+    root, path = _ruling_under(tmp_path, CASES["ruling_texts"]["good"])
+    result = check_ruling(KEY["gate"]["good"]["config_id"], path, rulings_root=root)
+    assert str(result.date) == KEY["run_json"]["ruling_date"]
+    assert result.sha256 == KEY["gate"]["good"]["sha256"]
+    assert result.path == path.resolve()
+
+
+def test_lifts_missing(tmp_path: Path) -> None:
+    from deploy_workflow.model.adapter import LivePauseInForce, check_ruling
+
+    root, path = _ruling_under(tmp_path, CASES["ruling_texts"]["lifts_missing"])
+    with pytest.raises(LivePauseInForce) as raised:
+        check_ruling("web-retrieval", path, rulings_root=root)
+    assert str(raised.value) == KEY["gate"]["lifts_missing"]["text"]
+
+
+def test_check_live_gate_delegates(tmp_path: Path) -> None:
+    from deploy_workflow.model.adapter import (
+        LivePauseInForce,
+        check_live_gate,
+        check_ruling,
+    )
+    from deploy_workflow.model.turn import CONFIG_MODELS, CONFIG_PROVIDERS, ModelSpec
+
+    spec = ModelSpec(
+        "sol-medium",
+        cast(Any, CONFIG_PROVIDERS["sol-medium"]),
+        CONFIG_MODELS["sol-medium"],
+        "medium",
+    )
+    good = "lifts: live-provider-pause\nby: user\ndate: 2026-11-02\nconfigs: sol-medium\n"
+    root, path = _ruling_under(tmp_path, good)
+    assert check_live_gate(spec, path, rulings_root=root) == check_ruling(
+        "sol-medium", path, rulings_root=root
+    )
+    for text in (CASES["ruling_texts"]["lifts_missing"], CASES["ruling_texts"]["configs_missing"]):
+        root, path = _ruling_under(tmp_path, text)
+        with pytest.raises(LivePauseInForce) as via_gate:
+            check_live_gate(spec, path, rulings_root=root)
+        with pytest.raises(LivePauseInForce) as via_ruling:
+            check_ruling("sol-medium", path, rulings_root=root)
+        assert str(via_gate.value) == str(via_ruling.value)

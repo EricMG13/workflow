@@ -39,9 +39,10 @@ from deploy_workflow.model.redact import Redactor
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
 from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts.factory import prompt_factory
+from deploy_workflow.replay import replay_module
 from deploy_workflow.research import evidence as record
 from deploy_workflow.research.intake import AcceptedItem, RefusedItem, write_rejected
-from deploy_workflow.run_inputs import check_arguments
+from deploy_workflow.run_inputs import RunOutcome, check_arguments
 
 ROOT = Path(__file__).resolve().parents[1]
 CASE = ROOT / "cases" / "cpdr-research-owner"
@@ -552,6 +553,37 @@ def closed_run(case: str, factory: pytest.TempPathFactory) -> ClosedRun:
     made = ClosedRun(root, seen["prompt"], seen["body"], sockets.opened)
     _CLOSED[case] = made
     return made
+
+
+def rerun_from(v1_root: Path, root: Path) -> RunOutcome:
+    """The same-evidence replacement of the closed `positive` run at `v1_root` (OD8), under the new
+    run directory `root`: the `v2` pack (the same sources, the key's `run_v2` id), CP-0 and CP-1
+    replayed from `v1_root` through `replay_module`, then CP-DR driven live with `research_v2` and
+    the run finished by `run_pathway._finish_run` with `replayed_from` the earlier run id. No model
+    is called, so the rerun writes no `calls.jsonl`. `v1_root` is only read."""
+    root.mkdir(parents=True)
+    earlier_id = run_of("positive").run_id
+    pack = make_pack("v2")
+    stage(root)
+    execution = root / "execution"
+    sockets = _Sockets()
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(socket, "socket", sockets)
+        patch.setattr(record, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
+        workflow = OwnerWorkflow.create(execution, pack, publication_directory=None)
+        for module_id in ("CP-0", "CP-1"):
+            replay_module(workflow, v1_root, module_id, execution=execution)
+        brief = drive_brief(workflow, "v2")
+        if brief["status"] != "valid":
+            raise RuntimeError(f"CP-DR brief not valid: {brief['issues']}")
+        research = drive_research(workflow, "v2")
+        if research["status"] != "valid":
+            raise RuntimeError(f"CP-DR research not valid: {research['issues']}")
+        base = root.parent / f"{root.name}-args"
+        base.mkdir()
+        checked = check_arguments(**ResearchCase(base).arguments(base, run_id=pack.run.run_id))
+        meta = rp._Meta(checked, (), False, Redactor(), replayed_from=earlier_id)
+        return rp._finish_run(workflow, root, meta, Budget(Decimal(1), execution))
 
 
 # --- shared checks of the key's rules ---------------------------------------------------------------

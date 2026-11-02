@@ -2473,8 +2473,8 @@
     {
       "destination": "src/deploy_vii/methods/cp1c.md",
       "prior_project_sha256": "7a409ea65998636e1e141dc5142ef8bf1c17c3ce865733d904056d7de4985321",
-      "project_commit": "5cfd79e179c8424eed89a0ac78a9da7b13a6f5d9",
-      "sha256": "8c0a5c29ac59ef8a47641d60bcb69140087f17429043514fb1203333894750fb",
+      "project_commit": "77e2650e818cc34dfd275fcff594294d4bb4c738",
+      "sha256": "838878d0cffb6513d6464064d4ee7940659c3972a03e73704de8bc81b4a055ad",
       "reason": "repo-authored (not in files[]): B9 (O7d D2 fix 1, O7-R65, B31a): wording only; the universe, no-peer-source, definition-restatement, one-adapter and source-quotes lines are true on the CP-DR peer-sheet path as well (no issuer line and not-applicable tie-out cells, the head's TDR.6 amount facts cited by their ev-* quotes, a held peers source beside TDR.6 is the named conflict) and the not-admitted candidates are Python rows in T1C.7. Chained after the O7d D2 record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
     }

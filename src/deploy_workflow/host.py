@@ -700,8 +700,9 @@ def _submission_producer_inputs(
 # In-process only, never persisted, as `_CP1_VERIFIED`: key (snapshot content hash, producer
 # result hash), value the blob digests a passing check read. One memo serves the one-step
 # `*-submission` rule and CP-DR's probe (their producers' result hashes differ, so their keys
-# never meet). Only a pass is kept; a hit re-reads and hash-checks each digest, so tampered or
-# missing bytes still refuse.
+# never meet). Only a pass is kept; a hit re-reads and hash-checks each store blob it read, so
+# tampered or missing blobs still refuse. Files outside the store (CP-DR's research records) are
+# not re-checked here; `_cpdr_producer_inputs_memoised` checks them before the memo.
 _SUBMISSION_VERIFIED: dict[tuple[str, str], frozenset[str]] = {}
 _SUBMISSION_VERIFIED_LIMIT = 16
 _SUBMISSION_VERIFIED_LOCK = Lock()
@@ -768,6 +769,13 @@ def _cpdr_producer_inputs(store: Execution, snapshot: ExecutionSnapshot, produce
 def _cpdr_producer_inputs_memoised(
     store: Execution, snapshot: ExecutionSnapshot, producer: Module
 ) -> bool:
+    from deploy_workflow.owners import cpdr  # imported here, as `_cpdr_producer_inputs` does
+    from deploy_workflow.workflow import WorkflowError
+
+    try:  # outside the memo: the records are files, which a warm memo never re-reads
+        cpdr.check_records(store, producer)
+    except WorkflowError:
+        return False
     return _verified_once(
         store,
         snapshot,

@@ -79,6 +79,8 @@ from deploy_workflow.research.review import (
 )
 from deploy_workflow.research.steps import (
     RESEARCH_BRIEF_INPUT,
+    RESEARCH_EVIDENCE_INPUT,
+    RESEARCH_REJECTED_INPUT,
     BriefSubmission,
     brief_issues,
     brief_view_body,
@@ -161,6 +163,19 @@ def _record_sha256(store: Execution, name: str) -> str:
         return hashlib.sha256((research_dir(store) / name).read_bytes()).hexdigest()
     except OSError:
         raise WorkflowError("evidence_unrecorded") from None
+
+
+def check_records(store: Execution, module: Module) -> None:
+    """O7 end batch 2 (L1, L2): the two staged records (``research_dir(store)``) must be the bytes the settled head bound
+    (its ``research-evidence`` and ``research-rejected`` inputs); ``identity_mismatch`` otherwise.
+    Every reader of the records calls this, so none renders an edit made after the head settled."""
+    bound = {i.input_id: i.sha256 for i in module.inputs}
+    for input_id, name in (
+        (RESEARCH_EVIDENCE_INPUT, record.EVIDENCE_FILE),
+        (RESEARCH_REJECTED_INPUT, record.REJECTED_FILE),
+    ):
+        if bound.get(input_id) != _record_sha256(store, name):
+            raise WorkflowError("identity_mismatch")
 
 
 def _items(rows: Sequence[Mapping[str, Any]]) -> tuple[EvidenceItem, ...]:
@@ -650,7 +665,8 @@ def _rejected(path: Path) -> tuple[RefusedItem, ...]:
 def dossier_input(store: Execution, head: Head, research: Path) -> DossierInput:
     """What ``render_dossier`` takes, from the settled CP-DR head (O7-R10): its facts and tables as
     settled, the locked brief read back from ``research/brief.json`` against the head's
-    ``research-brief`` input, the evidence record and the refused items. The head's own hash is
+    ``research-brief`` input, the evidence record and the refused items (both checked against the
+    head's inputs first, ``check_records``). The head's own hash is
     recorded, not compared."""
     if head.module_id != MODULE_ID or head.status == "blocked":
         raise WorkflowError("identity_mismatch")
@@ -662,6 +678,7 @@ def dossier_input(store: Execution, head: Head, research: Path) -> DossierInput:
     step = None if attempt is None else _valid_step(attempt, RESEARCH_STEP)
     if bound is None or step is None or step.output_sha256 is None:
         raise WorkflowError("identity_mismatch")
+    check_records(store, module)
     if not (research / BRIEF_FILE).exists():
         raise BriefInvalid(NOT_LOCKED)
     brief = load_locked_brief(research / BRIEF_FILE, bound)

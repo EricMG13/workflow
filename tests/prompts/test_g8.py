@@ -10,6 +10,7 @@ import pytest
 from b29_strip import undo_b29
 from b30_strip import undo_b30
 from b34_strip import undo_b34
+from invoke_strip import undo_invoke
 from merge_strip import MERGE_REV, MERGE_SPANS, PRE_MERGE_REV, SPAN_TOKENS, undo_merged_contract
 from p5_strip import undo_p5
 from p5t6_strip import undo_p5t6_context, undo_p5t6_wording
@@ -134,7 +135,8 @@ def test_the_tokens_and_the_g8_block_are_the_only_change_to_the_frozen_message(
     """T5-D: remove the ``[compose.<id>] `` tokens and, for CP-0, the G8 line, and (Phase 3 Task 4)
     put back CP-3's old evidence rule, and (M-R1) undo the merged restricted-cash change, and the message is the one the old frozen digest pins."""
     messages = compose(request_for(step_id, pack))
-    system = undo_p5t6_wording(step_id, messages[0].text)  # Phase 5 Task 6 (P5T6-R1): CP-4 wording
+    system = undo_invoke(step_id, messages[0].text)  # the pack-tools budget (32 back to 16)
+    system = undo_p5t6_wording(step_id, system)  # Phase 5 Task 6 (P5T6-R1): CP-4 wording
     if step_id == "source_readiness":
         system = undo_p5(step_id, system)  # Phase 5 Task 1 (P5T1-R6): the draft authority line
         system = system.replace(g8_line(system) + "\n", "")

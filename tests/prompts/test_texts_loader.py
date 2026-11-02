@@ -11,6 +11,7 @@ import pytest
 from b29_strip import B29_SPANS, undo_b29
 from b30_strip import B30_SPANS, undo_b30
 from b34_strip import B34_SPANS, undo_b34
+from invoke_strip import undo_invoke
 from merge_strip import undo_merged_contract
 from p5_strip import undo_p5
 from p5t6_strip import undo_p5t6_context, undo_p5t6_wording
@@ -115,6 +116,9 @@ def test_existing_is_the_contracts_plus_the_text_stems() -> None:
 # financials and narrative were re-frozen by the O6 merge integration (ruling M-R1: the merged
 # restricted-cash change in their contract text and schema); test_the_merged_restricted_cash_change_
 # is_the_only_change keeps their old digests and shows that undoing exactly it gives the old message.
+# Every step that offers pack tools was re-frozen by the invoke budget (the Limits line says 32,
+# not 16, for the pack tools); PRE_INVOKE_FROZEN keeps the digests before, and
+# test_the_invoke_budget_is_the_only_change_to_the_frozen_message undoes exactly it.
 def test_the_twelve_existing_steps_compose_byte_identically(pack: PreparedPack) -> None:
     got = {}
     for step in sorted(STEP_CONTRACTS):
@@ -139,7 +143,10 @@ def test_the_merged_restricted_cash_change_is_the_only_change_to_the_frozen_mess
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
     body = json.dumps(
-        [[system.role, undo_merged_contract(step, system.text)], [user.role, user.text]]
+        [
+            [system.role, undo_merged_contract(step, undo_invoke(step, system.text))],
+            [user.role, user.text],
+        ]
     )
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_MERGE_FROZEN[step]
 
@@ -157,7 +164,7 @@ def test_the_b29_wording_is_the_only_change_to_the_frozen_message(
 ) -> None:
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
-    text = undo_b29(step, undo_b30(step, undo_b34(step, system.text)))
+    text = undo_b29(step, undo_b30(step, undo_b34(step, undo_invoke(step, system.text))))
     body = json.dumps([[system.role, text], [user.role, user.text]])
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_B29_FROZEN[step]
 
@@ -183,7 +190,10 @@ def test_the_b30_wording_is_the_only_change_to_the_frozen_message(
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
     body = json.dumps(
-        [[system.role, undo_b30(step, undo_b34(step, system.text))], [user.role, user.text]]
+        [
+            [system.role, undo_b30(step, undo_b34(step, undo_invoke(step, system.text)))],
+            [user.role, user.text],
+        ]
     )
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_B30_FROZEN[step]
 
@@ -207,7 +217,9 @@ def test_the_b34_wording_is_the_only_change_to_the_frozen_message(
 ) -> None:
     messages = compose(request_for(step, pack))
     system, user = messages[0], messages[1]
-    body = json.dumps([[system.role, undo_b34(step, system.text)], [user.role, user.text]])
+    body = json.dumps(
+        [[system.role, undo_b34(step, undo_invoke(step, system.text))], [user.role, user.text]]
+    )
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_B34_FROZEN[step]
 
 
@@ -233,7 +245,9 @@ def test_the_p5_line_is_the_only_change_to_the_frozen_message(
     system, user = messages[0], messages[1]
     # Phase 5 Task 6 (P5T6-R3): undo CP-0's `attachments` key first, then the P5 line.
     user_text = undo_p5t6_context(step, user.text)
-    body = json.dumps([[system.role, undo_p5(step, system.text)], [user.role, user_text]])
+    body = json.dumps(
+        [[system.role, undo_p5(step, undo_invoke(step, system.text))], [user.role, user_text]]
+    )
     assert hashlib.sha256(body.encode()).hexdigest() == PRE_P5T1_FROZEN[step]
 
 
@@ -254,7 +268,7 @@ def test_the_p5t6_changes_are_the_only_change_to_the_frozen_message(
     system, user = messages[0], messages[1]
     body = json.dumps(
         [
-            [system.role, undo_p5t6_wording(step, system.text)],
+            [system.role, undo_p5t6_wording(step, undo_invoke(step, system.text))],
             [user.role, undo_p5t6_context(step, user.text)],
         ]
     )
@@ -295,6 +309,34 @@ FROZEN: dict[str, str] = {
     "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
     "source_readiness": ("bc8cd4d8611fe907bfad6bd8754b458730d1551cca98aec8822277f440d4658b"),
 }
+
+
+# The answer key (invoke budget): the FROZEN digests of every step before the pack-tools budget
+# said 32 calls. Never edited.
+PRE_INVOKE_FROZEN: dict[str, str] = {
+    "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
+    "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
+    "credit_synthesis": ("209914c5b5b6662bd897f2b92d9dc3ae90286be0f30153aa5f54ec235fa2320c"),
+    "financials": ("8d196274b78c7f5444f3a9e130618be05b74d5d800a703654abbc445926dd315"),
+    "integrity_review": ("1b71ce3d77e672011f2234c363def35ecd38e3f7a0bf2322a6ec38c876b2ffcf"),
+    "legal_covenants": ("22e7630bb28415fcd27aa005767f5767060fcfecff5dc1cde036a5e4401c7d39"),
+    "narrative": ("3e8d87b8f6e5085f539e94e7184db2e89feb7cc45b4e03e897925dca24d819f7"),
+    "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
+    "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
+    "relative_value": ("d9202926890f8f011bcbf97fc40334e2b576fd57959f460d75c27b204262cba0"),
+    "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
+    "source_readiness": ("bc8cd4d8611fe907bfad6bd8754b458730d1551cca98aec8822277f440d4658b"),
+}
+
+
+@pytest.mark.parametrize("step", sorted(PRE_INVOKE_FROZEN))
+def test_the_invoke_budget_is_the_only_change_to_the_frozen_message(
+    pack: PreparedPack, step: str
+) -> None:
+    messages = compose(request_for(step, pack))
+    system, user = messages[0], messages[1]
+    body = json.dumps([[system.role, undo_invoke(step, system.text)], [user.role, user.text]])
+    assert hashlib.sha256(body.encode()).hexdigest() == PRE_INVOKE_FROZEN[step]
 
 
 # The CP-3D rows block (O6-P24 ``context-rows``: id, kind, facility, date only) became Python's

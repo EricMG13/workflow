@@ -21,7 +21,6 @@ from deploy_workflow.model.transport import (
     https_transport,
 )
 
-
 LIMITS_KEY = Path(__file__).parents[2] / "cases" / "pilot-fixes" / "limits.json"
 OVERALL_S = float(json.loads(LIMITS_KEY.read_text(encoding="utf-8"))["overall_s"])
 
@@ -152,8 +151,8 @@ def test_slow_trickle_past_overall_limit() -> None:
     conn = FakeConnection(Trickle(200, iter([])))
     with pytest.raises(OverallTimeout) as info:
         https_transport(_req(stream=True), clock=clock, connection_factory=lambda *_: conn)
-    assert clock.now == 1000.0
-    assert len(info.value.partial) == 10
+    assert clock.now == OVERALL_S + 100.0  # the read that crosses the deadline is the last
+    assert len(info.value.partial) == int(OVERALL_S / 100.0) + 1
 
 
 def test_non_streaming_read_uses_overall_as_per_read_timeout() -> None:
@@ -236,13 +235,14 @@ def test_per_read_timeout_is_recomputed_before_each_socket_read() -> None:
 
     clock = Clock()
     seen: list[float] = []
+    step = (OVERALL_S - 100.0) / 2
 
     class Raw(io.RawIOBase):
         def readable(self) -> bool:
             return True
 
         def readinto(self, b: Any) -> int:
-            clock.now += 400.0
+            clock.now += step  # so the third read finds 100 s left of the overall limit
             b[0:1] = b"x"
             return 1
 

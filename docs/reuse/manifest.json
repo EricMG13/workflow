@@ -2452,7 +2452,7 @@
       "project_commit": "157255c696a8d562ce239a526215fb72e6fa90d4",
       "sha256": "7a409ea65998636e1e141dc5142ef8bf1c17c3ce865733d904056d7de4985321",
       "reason": "repo-authored (not in files[]): B9 (O7d D2, B31a): omission 5 (line 22) adds that, when CP-DR's peer pack is bound, its located peer figures are market data the pack carries; the O7d gap paragraph (line 59) now says cp_dr_public peers come from the bound CP-DR head's TDR.6 (a held peers source beside them is a named conflict), that those figures carry no enterprise value so T1C.9 to T1C.11 keep the gap with the amended wording, and that user_list still needs the lookup. Nothing else changes. Chained after the Release 3 end batch record.",
-      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-report.md"
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
     },
     {
       "destination": "src/deploy_vii/methods/cpdr.md",
@@ -2469,6 +2469,14 @@
       "sha256": "e9486d074ef14c987d70db2fda556a34dc129352d139b6d8681624e8fb22de9a",
       "reason": "repo-authored (not in files[]): B1: O7 end batch (D1b review I4): the docstring says the settled head is read by CP-1C and CP-2 (the dossier block; CP-1C also TDR.6), not through a Front Page block; no binding, block, slot or unit changes. Chained after the O7d D1b record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "prior_project_sha256": "7a409ea65998636e1e141dc5142ef8bf1c17c3ce865733d904056d7de4985321",
+      "project_commit": "5cfd79e179c8424eed89a0ac78a9da7b13a6f5d9",
+      "sha256": "8c0a5c29ac59ef8a47641d60bcb69140087f17429043514fb1203333894750fb",
+      "reason": "repo-authored (not in files[]): B9 (O7d D2 fix 1, O7-R65, B31a): wording only; the universe, no-peer-source, definition-restatement, one-adapter and source-quotes lines are true on the CP-DR peer-sheet path as well (no issuer line and not-applicable tie-out cells, the head's TDR.6 amount facts cited by their ev-* quotes, a held peers source beside TDR.6 is the named conflict) and the not-admitted candidates are Python rows in T1C.7. Chained after the O7d D2 record.",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7d-D2-review.md"
     }
   ],
   "local_patch_lineage": [

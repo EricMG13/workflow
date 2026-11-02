@@ -25,12 +25,15 @@ from deploy_workflow.research.intake import RefusedItem
 from deploy_workflow.research.review import (
     Answer,
     CitedContrary,
+    Claim,
     Counts,
     ResearchSubmission,
 )
 
 GAP_SHOWN: Final = "∅ G#"
 NOT_APPLICABLE_SHOWN: Final = "not applicable"
+PACK_LIMITATION: Final = "A pack source carries no publication date or family."
+EVIDENCE_PREFIX: Final = "ev-"
 FOCUS_LIMITATION: Final = "A default question carries no focus module."
 LOCAL_LIMITATION: Final = (
     "This research is LOCAL: it rests on the supplied evidence items and is not a full CP-OS run."
@@ -198,13 +201,47 @@ def _published(item: EvidenceItem) -> str:
     return UNDATED if item.published is None else item.published.isoformat()
 
 
-def _cited_items(
+def _check_cited(
     claim_id: str, citations: Sequence[Citation], items: Mapping[str, EvidenceItem]
-) -> list[EvidenceItem]:
-    unknown = [c.source_id for c in citations if c.source_id not in items]
+) -> None:
+    """An ``ev-*`` citation must be an accepted item; any other id is a pack source (O7-R24), whose
+    being held is review's check."""
+    unknown = [
+        c.source_id
+        for c in citations
+        if c.source_id.startswith(EVIDENCE_PREFIX) and c.source_id not in items
+    ]
     if unknown:
         raise TablesInvalid(f"claim {claim_id} cites {', '.join(unknown)}, not accepted evidence")
-    return [items[c.source_id] for c in citations]
+
+
+def _evidence_cells(row: str, claim: Claim, items: Mapping[str, EvidenceItem]) -> list[Fact]:
+    """evidence_id, locator, published, family. A claim citing a pack source has no publication
+    date or family: those two cells are not applicable (O7-R24)."""
+    cited = [items.get(c.source_id) for c in claim.citations]
+    put = partial(_text, "TDR.2", row)
+    pack = None in cited
+    return [
+        put("evidence_id", "; ".join(c.source_id for c in claim.citations), "source"),
+        put(
+            "locator",
+            "; ".join(
+                i.locator if i else c.locator for i, c in zip(cited, claim.citations, strict=True)
+            ),
+            "source",
+        ),
+        *(
+            [
+                _unsettled("TDR.2", row, f, "not_applicable", PACK_LIMITATION)
+                for f in ("published", "family")
+            ]
+            if pack
+            else [
+                put("published", "; ".join(_published(i) for i in cited if i), "source"),
+                put("family", "; ".join(i.family for i in cited if i), "source"),
+            ]
+        ),
+    ]
 
 
 def _tdr2(answers: Sequence[Answer], items: Mapping[str, EvidenceItem]) -> _Table:
@@ -212,17 +249,14 @@ def _tdr2(answers: Sequence[Answer], items: Mapping[str, EvidenceItem]) -> _Tabl
     for answer in answers:
         for claim in answer.claims:
             row = claim.claim_id
-            cited = _cited_items(row, claim.citations, items)
+            _check_cited(row, claim.citations, items)
             put = partial(_text, "TDR.2", row)
             table.add(
                 row,
                 [
                     put("question_id", answer.question_id),
                     put("claim", claim.text, "analyst_judgment", citations=claim.citations),
-                    put("evidence_id", "; ".join(i.item_id for i in cited), "source"),
-                    put("locator", "; ".join(i.locator for i in cited), "source"),
-                    put("published", "; ".join(map(_published, cited)), "source"),
-                    put("family", "; ".join(i.family for i in cited), "source"),
+                    *_evidence_cells(row, claim, items),
                 ],
             )
     return table

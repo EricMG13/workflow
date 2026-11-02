@@ -31,6 +31,7 @@ FACT_FIELDS = (
     "amount",
     "status",
     "unit",
+    "period",
 )
 SUBMISSION = {"positive": "research_v1", "v2": "research_v2"}
 
@@ -237,6 +238,52 @@ def test_two_not_found_questions_are_counted_and_named(
     )
     assert str(total["TDR.3.total.not_found"].amount) == "2"
     assert given.states[0] == "missing"
+
+
+def test_a_pack_citation_composes_with_a_not_applicable_date_and_family(
+    expected: dict[str, Any], submissions: dict[str, Any]
+) -> None:
+    body = copy.deepcopy(submissions["research_v1"])
+    claim = body["answers"][0]["claims"][0]
+    cite = {"source_id": "financial", "source_sha256": "a" * 64, "locator": "page:1", "quote": "q"}
+    claim["citations"].append(cite)
+    given = Run(expected, submissions, "positive", body)
+    composed = given.compose()
+    validate_tables(composed.tables, composed.facts)
+    key = expected["cases"]["positive"]
+    na = dict(key["tables"]["TDR.1"]["rows"])["competition"]["focus_module"]["shown"]
+    row = dict(given.dossier().tables["TDR.2"]["rows"])[claim["claim_id"]]
+    want = dict(key["tables"]["TDR.2"]["rows"])[claim["claim_id"]]
+    assert row["locator"]["shown"] == want["locator"]["shown"] + "; page:1"
+    assert row["evidence_id"]["shown"] == want["evidence_id"]["shown"] + "; financial"
+    assert [row[f]["shown"] for f in ("published", "family")] == [na, na]
+    ours = {f.fact_id: f for f in composed.facts}
+    assert [ours[row[f]["fact"]].status for f in ("published", "family")] == ["not_applicable"] * 2
+    qid = claim["claim_id"].split(".")[0]
+    touched = (f"TDR.2.{claim['claim_id']}.", f"TDR.3.{qid}.answer")
+    assert set(ours) == {f["fact_id"] for f in key["facts"]}
+    for want_fact in key["facts"]:
+        if not want_fact["fact_id"].startswith(touched):
+            got = {
+                n: None if (v := getattr(ours[want_fact["fact_id"]], n)) is None else str(v)
+                for n in FACT_FIELDS
+            }
+            assert got == {n: want_fact.get(n) for n in FACT_FIELDS}, want_fact["fact_id"]
+    mine = shown_cells(given.dossier().tables)["TDR.2"]
+    theirs = shown_cells(key["tables"])["TDR.2"]
+    assert [r for r in mine if r[0] != claim["claim_id"]] == [
+        r for r in theirs if r[0] != claim["claim_id"]
+    ]
+
+
+def test_a_claim_with_no_uncertainty_is_refused(
+    expected: dict[str, Any], submissions: dict[str, Any]
+) -> None:
+    body = copy.deepcopy(submissions["research_v1"])
+    body["answers"][0]["uncertainty"] = None
+    given = Run(expected, submissions, "positive", body)
+    with pytest.raises(t.TablesInvalid, match="no uncertainty"):
+        given.compose()
 
 
 @pytest.mark.parametrize(

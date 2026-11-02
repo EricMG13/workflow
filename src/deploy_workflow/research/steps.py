@@ -38,6 +38,8 @@ QUESTION_ID_MAX: Final = IDENTIFIER_MAX - max(
 RESERVED_ROW_ID: Final = "total"
 RESEARCH_BRIEF_INPUT: Final = "research-brief"
 RESEARCH_SUBMISSION_INPUT: Final = "research-submission"
+RESEARCH_EVIDENCE_INPUT: Final = "research-evidence"  # sha256 of the staged evidence.json bytes
+RESEARCH_REJECTED_INPUT: Final = "research-rejected"  # sha256 of the staged rejected.json bytes
 DEFAULTS_FIRST: Final = "the six default questions come first, in their fixed order"
 
 
@@ -166,7 +168,8 @@ def brief_view_body(
 ) -> str:
     """The brief step's ``read_inputs`` body as compact JSON: the fixed defaults, the run's
     context questions (ids as ``lock_brief`` assigns them), the bound, whether the run asks for
-    the peer pack (Python decides it; the brief carries no field for it) and the held sources."""
+    the peer pack (Python decides it: the locked brief carries ``peer_pack``, and the brief
+    submission carries no such field) and the held sources."""
     return _compact(
         {
             "default_questions": [
@@ -298,11 +301,20 @@ def research_rules(text: str, seen: Seen) -> tuple[str, ...]:
 
 
 def candidate_inputs(
-    attempt_inputs: Sequence[Input], *, brief_sha256: str, submission_sha256: str
+    attempt_inputs: Sequence[Input],
+    *,
+    brief_sha256: str,
+    submission_sha256: str,
+    evidence_sha256: str,
+    rejected_sha256: str,
 ) -> tuple[Input, ...]:
-    """The CP-DR head's inputs: the attempt's, then the locked brief and the research submission."""
+    """The CP-DR head's inputs: the attempt's, then the locked brief, the research submission and
+    the bytes of the two staged records the dossier shows (``evidence.json``, ``rejected.json``;
+    O7-R49 L-2), so an edit to either after the head settles is a head that does not re-derive."""
     return (
         *attempt_inputs,
         Input(input_id=RESEARCH_BRIEF_INPUT, sha256=brief_sha256),
         Input(input_id=RESEARCH_SUBMISSION_INPUT, sha256=submission_sha256),
+        Input(input_id=RESEARCH_EVIDENCE_INPUT, sha256=evidence_sha256),
+        Input(input_id=RESEARCH_REJECTED_INPUT, sha256=rejected_sha256),
     )

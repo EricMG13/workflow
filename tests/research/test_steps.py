@@ -252,13 +252,21 @@ def test_a_payload_that_is_not_an_object_has_no_rule_issues() -> None:
     assert s.research_rules("not json", Seen()) == ()
 
 
-def test_candidate_inputs_append_the_brief_and_submission_hashes() -> None:
+def test_candidate_inputs_append_the_brief_submission_and_record_hashes() -> None:
     base = (Input(input_id="CP-0", sha256="1" * 64),)
-    got = s.candidate_inputs(base, brief_sha256="2" * 64, submission_sha256="3" * 64)
+    got = s.candidate_inputs(
+        base,
+        brief_sha256="2" * 64,
+        submission_sha256="3" * 64,
+        evidence_sha256="4" * 64,
+        rejected_sha256="5" * 64,
+    )
     assert got == (
         *base,
         Input(input_id="research-brief", sha256="2" * 64),
         Input(input_id="research-submission", sha256="3" * 64),
+        Input(input_id="research-evidence", sha256="4" * 64),
+        Input(input_id="research-rejected", sha256="5" * 64),
     )
 
 

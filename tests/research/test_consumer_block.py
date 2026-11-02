@@ -31,6 +31,7 @@ from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts.factory import prompt_factory
 from deploy_workflow.research.dossier import render_dossier
 from deploy_workflow.tools.source import SourceError
+from deploy_workflow.workflow import WorkflowError
 
 CPDR = "CP-DR"
 REQUESTS = {
@@ -351,6 +352,47 @@ def test_a_removed_evidence_row_is_identity_mismatch_not_a_research_error(
     with pytest.raises(SourceError) as refused:
         host.session_sources(store, ticket.ticket_id, "peer_benchmark")
     assert refused.value.code == "identity_mismatch"
+
+
+def _probe_refuses(store: Execution) -> None:
+    """The settled CP-DR head no longer authenticates: `cpdr.probe` raises `identity_mismatch` and
+    `host._producer_inputs` returns False."""
+    snapshot = store.read()
+    head = cc.head(store, CPDR)
+    attempt = next(a for a in snapshot.attempts if a.result_sha256 == head.result_sha256)
+    with pytest.raises(WorkflowError) as refused:
+        cpdr.probe(store, snapshot, attempt)
+    assert refused.value.code == "identity_mismatch"
+    assert host._producer_inputs(store, snapshot, store.head_module(head)) is False
+
+
+def test_an_edited_rejected_json_after_settle_is_identity_mismatch(tmp_path: Path) -> None:
+    """O7-R49 L-2 (C3 review I-2, S4 review I-4): `rejected.json` is bound into the head, so a
+    refused item added after CP-DR settled is not an authentic head."""
+    store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
+    path = cpdr.research_dir(store) / "rejected.json"
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    rows.append(
+        {"locator": "https://example.test/x", "family": "other", "published": None, "reason": "r"}
+    )
+    path.write_text(json.dumps(rows), encoding="utf-8")
+    _probe_refuses(store)
+
+
+def test_an_edited_retrieved_time_after_settle_is_identity_mismatch(tmp_path: Path) -> None:
+    """O7-R49 L-2: `evidence.json`'s `retrieved` field is bound into the head too."""
+    store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
+    path = cpdr.research_dir(store) / "evidence.json"
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    rows[0]["retrieved"] = "2000-01-01T00:00:00Z"
+    path.write_text(json.dumps(rows), encoding="utf-8")
+    _probe_refuses(store)
+
+
+def test_untouched_research_files_still_authenticate_the_head(tmp_path: Path) -> None:
+    store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
+    head = cc.head(store, CPDR)
+    assert host._producer_inputs(store, store.read(), store.head_module(head)) is True
 
 
 # --- O7c C3 fix 1: `_finish_run` and the stop path (M-1, M-2) -----------------------------------

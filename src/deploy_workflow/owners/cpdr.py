@@ -37,6 +37,7 @@ from deploy_vii.execution import (
     StepValidation,
     bounded_issues,
     settle,
+    text_sha256,
 )
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.live.schema import json_object, normalise
@@ -153,6 +154,15 @@ def _evidence_rows(store: Execution) -> tuple[Mapping[str, Any], ...]:
         raise WorkflowError("evidence_unrecorded") from None
 
 
+def _record_sha256(store: Execution, name: str) -> str:
+    """The sha256 of a staged research record's bytes (``evidence.json``, ``rejected.json``); a
+    missing or unreadable one is the named ``evidence_unrecorded``."""
+    try:
+        return hashlib.sha256((research_dir(store) / name).read_bytes()).hexdigest()
+    except OSError:
+        raise WorkflowError("evidence_unrecorded") from None
+
+
 def _items(rows: Sequence[Mapping[str, Any]]) -> tuple[EvidenceItem, ...]:
     return tuple(
         EvidenceItem(
@@ -223,8 +233,9 @@ def _run_issues(submitted: str, run: Run) -> tuple[str, ...]:
 
 def _fence_issues(texts: Iterable[tuple[str, str]]) -> tuple[str, ...]:
     """O7-R33: a model-written text the dossier fence would refuse (a block delimiter or a
-    lookalike of one) or its table cell would refuse (a line break or a ``|``) is a step issue, so the model repairs it instead of the sealed run failing at
-    the dossier. The fence's own check (``data_block``), never a copy of it."""
+    lookalike of one) or its table cell would refuse (a line break or a ``|``) is a step issue,
+    so the model repairs it instead of the sealed run failing at the dossier. The fence's own
+    check (``data_block``), never a copy of it."""
     issues = []
     for where, text in texts:
         try:
@@ -385,6 +396,8 @@ def _candidate(store: Execution, attempt: Attempt, output: str) -> Module:
             attempt.inputs,
             brief_sha256=brief.brief_sha256,
             submission_sha256=submission.content_hash(),
+            evidence_sha256=_record_sha256(store, record.EVIDENCE_FILE),
+            rejected_sha256=_record_sha256(store, record.REJECTED_FILE),
         ),
         facts=composed.facts,
         tables=composed.tables,
@@ -524,10 +537,13 @@ def _rebuild(store: Execution, snapshot: ExecutionSnapshot, attempt: Attempt) ->
             raise WorkflowError("identity_mismatch")
         output = outcome.output
     candidate = _candidate(frozen, attempt, output)
+    payload = candidate.model_dump_json()
+    if text_sha256(payload) != attempt.payload_sha256:  # a record edited after the head settled
+        raise WorkflowError("identity_mismatch")
     finished, result = settle(
         snapshot,
         attempt,
-        candidate.model_dump_json(),
+        payload,
         lambda supplied: () if supplied == candidate else ("Candidate differs",),
         pack=pack,
         load=store.head_module,

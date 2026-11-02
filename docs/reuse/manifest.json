@@ -2080,6 +2080,15 @@
       "review": "work/context-plan/reviews/pf1-read-window-review.md"
     },
     {
+      "destination": "src/deploy_vii/live/tools.py",
+      "imported_sha256": "380c20ebf24cac8c5e891726607bd13c04707d1262a0a622b9e9732a68bd5924",
+      "prior_project_sha256": "ddc00150ae35a42d0307f3bf0eef91041d14dc756da307a7f67c9f1f4d97e98e",
+      "project_commit": "2c7eea57007229328f8cd1f4522197515db335ad",
+      "sha256": "dc5bda3e4d12547713eb4e7be23ff8b6c0fe812983f4e727cb901429447d731e",
+      "reason": "PF-R9 (B31a): a line-source read_pages call naming more than 5 lines names at most 200 before the byte measure",
+      "review": "work/context-plan/reviews/pf1-read-window-review.md"
+    },
+    {
       "destination": "src/deploy_vii/cp3_relative_value.py",
       "imported_sha256": "0abc723dfc39554d3f7c26b35d6ed6ad60dce836da5b8e79d9a20821e265924b",
       "prior_project_sha256": "6c80484307aef1d6c6d3b17d7432f642fdd4b11f0a3db2b26cdb3cbf8f5a9f7f",

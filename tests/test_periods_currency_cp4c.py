@@ -23,6 +23,7 @@ from collections.abc import Iterator
 from datetime import date
 from decimal import Decimal
 from functools import cache
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -31,7 +32,7 @@ import test_method_cp4c as m
 import test_period_basis as pb
 import view_tree
 
-from deploy_vii.contracts import Fact, Source, Span
+from deploy_vii.contracts import Fact, Module, Source, Span
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.report_view import fact_spelling, figure_unit
 from deploy_workflow.context import ContextRefused, RunContext
@@ -448,7 +449,13 @@ def test_the_view_offers_the_2026_facts_on_the_2026_basis(monkeypatch: pytest.Mo
     assert "context_issue" not in block
     assert {f["period"] for f in block["cp1_facts"]} == {EUR.ltm_period}
     assert [e["year"] for e in block["ebitda_offered"]][:3] == list(EUR.year_labels)
-    assert all(EUR.money_unit not in f["shown"] or "EUR" in f["shown"] for f in block["cp1_facts"])
+    offered = {
+        (f["label"].rsplit(" · ", 1)[-1] if f["ref"].startswith("interface-fact") else f["ref"]): f
+        for f in (*block["cp1_facts"], *block["cp2g_facts"])
+    }
+    for name, want in EUR_KEY["figures"].items():
+        got = offered[want.get("cp1_metric") or want["fact_id"]]
+        assert (got["shown"], got["unit"]) == (want["spelled"], want["unit_token"]), name
 
 
 def test_an_unsupported_period_is_one_issue_line_and_an_empty_view(
@@ -544,3 +551,133 @@ def test_a_blank_usd_base_keeps_the_default_basis(monkeypatch: pytest.MonkeyPatc
     ctx = m._context("positive")
     _with_context(monkeypatch, pb._context("", "USD"))
     assert cp4c._basis_of(ctx.pack, vc.upstream_of(None)) is DEFAULT_BASIS
+
+
+# --- fix round 1 (P8T6-R2): the validator and the view state the same refusal -----------------
+
+
+def _refusing(monkeypatch: pytest.MonkeyPatch) -> None:
+    def refuse(pack: PreparedPack) -> RunContext:
+        raise ContextRefused(["run.current_period: not a period"])
+
+    monkeypatch.setattr(cp4c, "context_facts", refuse)
+    monkeypatch.setattr(cp4c, "pins_of", lambda module, pack: refuse(pack))
+
+
+def test_a_refused_context_over_a_2026_cp1_is_one_line_in_validator_and_view(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ctx = eur_context()
+    upstream = _upstream(ctx)
+    _refusing(monkeypatch)
+    sub = m._submission(eur_payload())
+    line = "Context refused: run.current_period: not a period"
+    assert cp4c.validate_restructuring(pack=ctx.pack, submission=sub, upstream=upstream) == (line,)
+    assert cp4c._lines(ctx.pack, sub, upstream) == (line,)
+    assert cp4c.context_block(pack=ctx.pack, upstream=upstream)["context_issue"] == line
+    over_year = eur_payload()
+    over_year["valuation"][0]["ebitda_year"] = "FY2029"  # no 2025-basis year line beside it
+    assert cp4c._lines(ctx.pack, m._submission(over_year), upstream) == (line,)
+
+
+@pytest.mark.parametrize("context", [None, pb._context("", "USD")], ids=["none", "blank-usd"])
+def test_the_default_basis_over_a_2026_only_cp1_states_the_selection_failure(
+    monkeypatch: pytest.MonkeyPatch, context: RunContext | None
+) -> None:
+    """Ruling P8T6-R2: `select_cp1`'s own text, one line, from the validator and the view; the
+    view offers nothing; neither raises."""
+    ctx = eur_context()
+    upstream = _upstream(ctx)
+    _with_context(monkeypatch, context)
+    sub = m._submission(eur_payload())
+    want = f"CP-4C needs exactly one T4.10 fact labelled {DEFAULT_BASIS.ltm_column} · total_debt"
+    for issues in (
+        cp4c.validate_restructuring(pack=ctx.pack, submission=sub, upstream=upstream),
+        cp4c._lines(ctx.pack, sub, upstream),
+    ):
+        assert len(issues) == 1 and issues[0].startswith(want)
+    block: Any = cp4c.context_block(pack=ctx.pack, upstream=upstream)
+    assert set(block) == {"upstream", "context_issue", "inherited_limitations"}
+    assert block["context_issue"].startswith(want)
+
+
+# --- fix round 1: mutants of the basis paths, each against a key -----------------------------------
+
+
+def test_a_later_forecast_year_reads_its_own_cp2g_row() -> None:
+    """Row 26+n is year n+1 of the basis (cases/cp4c-owner rows b26-b28 for FY2026-FY2028)."""
+    payload = eur_payload()
+    labels = EXP["period_basis"]["EUR"]["year_labels"]
+    for v, label in zip(payload["valuation"][1:], labels[1:], strict=True):
+        v["ebitda_year"] = label
+        v["rationale"] = (
+            "The analyst applies the multiple to the forecast EBITDA of the chosen year."
+        )
+    result = cp4c.compute(cp4c.Cp4cInputs(context=eur_context(), submission=m._submission(payload)))
+    cells = {c.fact.fact_id: c.fact for c in result.cells}
+    for v, label in zip(payload["valuation"][1:], labels[1:], strict=True):
+        assert (cells[f"T4E.3.{v['case_id']}.ebitda"].period or "").split(":")[0] == label
+    read = {r.fact.fact_id for table in result.references for r in table.rows}
+    assert {"T2H.4.d27.ebitda", "T2H.4.d28.ebitda"} <= read
+
+
+def test_a_refused_period_under_a_pinned_context_is_the_one_line(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pack = vc.pack_of("pin-vs-selection")
+    _with_context(monkeypatch, pb._context("h2-2026", "USD"))
+    lines = cp4c._lines(
+        pack,
+        vc.submission_of("7.00", "7.00", "7.00"),
+        vc.upstream_of(vc.head_of("pin-vs-selection")),
+    )
+    assert len(lines) == 1 and R5["issue_contains"] in lines[0]
+
+
+def test_the_upstream_carries_the_bound_cp1_register(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`cp4c_upstream` fills `register` from the CP-1 head's T4.14 facts, so a q4-2026 EUR
+    context reads `#period_basis/EUR` through it (the store readers are stubbed: no fast store
+    path seeds a 2026 CP-1)."""
+    eur = eur_context()
+    register = tuple(pb._oracle_facts(T414["contexts"]["R2"]["rows"]))
+    module = Module.model_construct(module_id="CP-1", facts=(*eur.cp1.t410, *register))
+    stubs: dict[str, Any] = {
+        "_required_module": lambda store, head, mid: (module, "restricted"),
+        "cp1_of": lambda mod, status: eur.cp1,
+        "cp2a_reader": lambda store, head: eur.cp2a,
+        "cp4_reader": lambda store, head: eur.cp4,
+        "cp2g_of": lambda read: eur.cp2g,
+        "current_inputs": lambda snapshot, mid: (),
+        "inherited_limitations": lambda *args: (),
+        "_bound_cp1c": lambda store, attempt: None,
+        "_bound_head": lambda store, attempt, mid: None,
+    }
+    for name, stub in stubs.items():
+        monkeypatch.setattr(cp4c, name, stub)
+    monkeypatch.setattr(cp2g, "cp2g_reader", lambda store, head: None)
+    store = SimpleNamespace(read=lambda: None, head_module=None)
+    upstream = cp4c.cp4c_upstream(store=store, attempt=SimpleNamespace(inputs=()))  # type: ignore[arg-type]
+    assert set(upstream.register) == set(register)
+    _with_context(monkeypatch, _eur_pack_context())
+    basis = cp4c._basis_of(eur.pack, upstream)
+    key = EXP["period_basis"]["EUR"]
+    assert (basis.ltm_period, basis.bs_column) == (key["ltm_period"], key["bs_column"])
+
+
+def test_cp1_gap_reasons_name_the_run_ltm_period() -> None:
+    key = EXP["period_basis"]["EUR"]["ltm_period"]
+    eur = eur_context()
+    debt = next(f for f in eur.cp1.t410 if f.label.endswith("total_debt"))
+    gap = debt.model_copy(update={"status": "missing", "amount": None})
+    assert (cp4c._debt_claim(gap, EUR).reason or "").endswith(key)
+    for change in ({"status": "missing", "amount": None, "limitation": "Not stated"}, None):
+        facts = tuple(
+            f.model_copy(update=change or {"amount": -(f.amount or Decimal(0))})
+            if f.label.endswith("ebitda") and (change or f.amount)
+            else f
+            for f in eur.cp1.t410
+        )
+        ctx = dataclasses.replace(eur, cp1=dataclasses.replace(eur.cp1, t410=facts))
+        result = cp4c.compute(cp4c.Cp4cInputs(context=ctx, submission=m._submission(eur_payload())))
+        text = json.dumps([c.fact.limitation for c in result.cells] + list(result.own_limitations))
+        assert key in text and "2025-" not in text

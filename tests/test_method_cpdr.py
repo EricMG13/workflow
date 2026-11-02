@@ -216,3 +216,16 @@ def test_methodology_chain_runs_7d164d11_to_the_current_file() -> None:
     assert last["project_commit"].startswith("8b19c74b")
     assert last["imported_sha256"] == p7r4[0]["imported_sha256"]
     assert last["review"] == ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S3-review.md"
+
+
+def test_method_states_the_context_cutoff_and_the_web_retrieval_gate() -> None:
+    """O7b-2 S5 (B1): the method carries the two frozen sentences and not the lines they replace."""
+    key = json.loads(
+        (ROOT / "cases" / "cpdr-web-retrieval" / "expected.json").read_text(encoding="utf-8")
+    )
+    sentences = key["method"]["sentences"]
+    assert len(sentences) == 2
+    for sentence in sentences:
+        assert sentence in TEXT
+    assert "The cutoff is the as-of date." not in TEXT
+    assert "A URL row is refused while web retrieval is unavailable." not in TEXT

@@ -2201,7 +2201,7 @@
       "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "prior_project_sha256": "0932d9fbcd9272d62bcb7681e1dd16d9bc944319c64716b41dc79715699796e8",
       "project_commit": "9f32bbd3b182f669d4a8ef54e6a1d1c90b0679d4",
-      "sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
       "reason": "Phase 7 Task 1: CP-1C registers T1C.9-T1C.11 (EV/EBITDA admission, statistics, basis selection) after T1C.8; CP-4C optional gains CP-1C (not required: no new required edge).",
       "review": "docs/rulings/ruling P7-R4; .superpowers/sdd/2026-10-31-phase-7-valuation/task-1-repin-review.md"
     },
@@ -2336,6 +2336,31 @@
       "sha256": "c2675f0f3bc3d1843a4c4cf990e84bfc0d1029abe15ec29438e99e3c2241302c",
       "reason": "repo-authored (not in files[]): B9: wording only; cp1c.md omission 5 names the run context as the one source of market data (Release 3 end batch, methods fix 1 Low-1)",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/release3-end-batch-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methodology.json",
+      "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
+      "prior_project_sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
+      "project_commit": "8b19c74b426f82b6402c72dbf6929ec936ddc370",
+      "sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "reason": "O7b-1c S3 (M2): the CP-DR LOCAL registry row (required CP-0 and CP-1, purpose names cp-dr/2026-10-31, before CP-1C)",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S3-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cpdr.md",
+      "prior_project_sha256": "524a7542a73a2f6cb27504b5e1e7d9c52291e0eb04e85e3b28b85072b4051a9e",
+      "project_commit": "14fb0c328e028b30eb3ad330a2659ca933f6eb84",
+      "sha256": "bd5d5816e366a01bd55218a98bd09db823dfe020ad4704147fe685fee2109cf2",
+      "reason": "repo-authored (not in files[]): B1: O7b-1c S5 rewrites the CP-DR method as cp-dr/2026-10-31: LOCAL lineage, scope, the R7 tables TDR.1-3, intake caps (MAX_BYTES) and refused locator characters, brief lock, six default questions, rules, readiness ceiling. First D12 record for this file (no import baseline).",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/bindings/cpdr.py",
+      "prior_project_sha256": "c85a6433e4ebee9509704c8aa51c7bf097805b57ffe21d93bfedc59303e42aaa",
+      "project_commit": "14fb0c328e028b30eb3ad330a2659ca933f6eb84",
+      "sha256": "aca3194d336b5edeb0b9ae92d3778e8443faaee76a8bb35189f300a9e4df2ae7",
+      "reason": "repo-authored (not in files[]): B1: O7b-1c S5 relabels the three CP-DR bindings to the R7 table titles (Locked questions and recipients; Claims and located evidence; Answers, contrary evidence, uncertainty and downstream use) and updates the docstring; no binding, block, slot or unit changes. First D12 record for this file (no import baseline).",
+      "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S5-review.md"
     }
   ],
   "local_patch_lineage": [

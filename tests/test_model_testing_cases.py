@@ -130,9 +130,14 @@ def test_financial_gold_out_of_plan(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     # Every real pathway plans CP-1, so take it out of the plan the loader sees.
     plans = {k: tuple(m for m in v if m != "CP-1") for k, v in PATHWAY_MODULES.items()}
     monkeypatch.setattr("deploy_workflow.model_testing.cases.PATHWAY_MODULES", plans)
-    c = load_case(_copy_case(tmp_path, "shc-earnings-update"), CORPUS)
+    case_dir = _copy_case(tmp_path, "shc-earnings-update")
+    c = load_case(case_dir, CORPUS)
     ids = _gold_ids(c.financial_gold_path)
-    assert c.out_of_plan == {"CP-1": len(ids)}
+    # Since 6da4c9f1 (step 4) module_golden.json also carries CP-1 facts of its own (9 for
+    # shc); they are out of plan with the financial_gold ones. Count them from the file.
+    golden = json.loads((case_dir / "module_golden.json").read_text(encoding="utf-8"))
+    own = sum(1 for f in golden["facts"] if f["module"] == "CP-1")
+    assert c.out_of_plan == {"CP-1": len(ids) + own}
     assert not any(f["module"] == "CP-1" for f in c.facts.values())
 
 

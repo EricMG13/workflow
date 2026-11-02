@@ -73,6 +73,8 @@ LEGAL = load_pinned("cases/legal/manifest.json")
 EARN = load_pinned("cases/earnings/expected.json")
 EARN_OWNER = json.loads((ROOT / "cases/earnings/owner-expected.json").read_bytes())
 INPUT_SHAS["cases/earnings/owner-expected.json"] = hashlib.sha256((ROOT / "cases/earnings/owner-expected.json").read_bytes()).hexdigest()
+VAL = load_pinned("cases/valuation-context-owner/expected.json")  # Phase 7 key (ruling P7-R2); case auto-dr-public
+VAL_CASE = VAL["cases"]["auto-dr-public"]
 UP = {}
 for _c in ("cp1c", "cp1d", "cp2a", "cp2d", "cp2e", "cp2g", "cp2h", "cp3c", "cp4c", "cpl10"):
     UP[_c] = {n: owner(_c, n) for n in ("manifest", "submissions", "expected")}
@@ -461,6 +463,49 @@ FROZEN_CASE = {m: s[1] for m, s in SPECS.items()}
 EXPECTED_KEEP_DROP = frozenset({"cp1_readiness"}) | DROP  # readiness literals are submission-side, not module output
 
 
+EV_TABLES = ("T1C.9", "T1C.10", "T1C.11")
+
+
+def add_months_back(d, n):
+    return add_months(d, -n)
+
+
+def with_ev_tables(block, ccy):
+    """Ruling P7-R2: the CP-1C head of a context whose valuation is basis `auto`, peer_source `cp_dr_public` (the Design 8
+    gap) appends T1C.9-T1C.11 and one limitation. Everything comes from the frozen Phase 7 key, case auto-dr-public
+    (cases/valuation-context-owner/expected.json, cases.auto-dr-public.cp1c: tables, facts, own_limitations_new, and
+    rules.limitation_order: frozen own limitations, then the new lines, then the synthetic line), under the four mapping
+    rules. A period or currency in a cell follows the run's basis (checked below against period_basis)."""
+    t = TX[ccy]
+    src = VAL_CASE["cp1c"]
+    tables = t.obj([tb for tb in src["tables"] if tb["table_id"] in EV_TABLES])
+    facts = t.obj([f for f in src["facts"] if f["table_id"] in EV_TABLES], DROP)
+    assert [tb["table_id"] for tb in tables] == list(EV_TABLES) and [tb["table_id"] for tb in block["tables"]] == [f"T1C.{n}" for n in range(1, 9)]
+    new_lines = t.obj(src["own_limitations_new"])
+    base_own, base_settled = block["own_limitations"], block["settled_limitations"]
+    assert base_settled[:-1] == base_own and base_settled[-1] == "Synthetic case; not real issuer qualification"
+    own = base_own + [l for l in new_lines if l not in base_own]
+    settled = own + [base_settled[-1]]
+    b = BASIS[ccy]
+    by_id = {f["fact_id"]: f for f in facts}
+    for fid in ("T1C.11.selection.issuer_ebitda", "T1C.11.selection.implied_ev"):
+        assert by_id[fid]["period"] == b["ltm_period"], fid
+    assert by_id["T1C.11.selection.issuer_ebitda"]["currency"] == ccy and by_id["T1C.11.selection.issuer_ebitda"]["amount_exact"] == "30"
+    as_of = dt.date.fromisoformat(AS_OF)
+    window = f"Window {add_months_back(as_of, 12).isoformat()} to {as_of.isoformat()}"  # Phase 7 rules.window: 12 months for public comps, back from the run as-of
+    assert all(f["period"] == window for f in facts if f["table_id"] == "T1C.10"), window
+    # the citation of the requested basis is the line of the run's own context file (Phase 7 rules.citations)
+    cite = by_id["T1C.11.selection.requested_basis"]["citations"][0]
+    ctx_lines = dumps(context("research", "relative_value", "fy-2026", "fy-2025", ccy)).split("\n")
+    assert cite["source_id"] == "context" and ctx_lines[int(cite["locator"].split(":")[1]) - 1].strip() == cite["quote"], cite
+    meta = {"source": "cases/valuation-context-owner/expected.json#cases/auto-dr-public/cp1c", "rule": "P7-R2", "table_ids": list(EV_TABLES), "facts_added": len(facts), "own_limitations_added": [l for l in new_lines if l not in base_own], "selected_basis": src["selection"]["selected_basis"], "gap": t.text(src["selection"]["gap"]), "window": window}
+    EV_META[ccy] = meta
+    return {**block, "facts": block["facts"] + facts, "tables": block["tables"] + tables, "own_limitations": own, "settled_limitations": settled}
+
+
+EV_META = {}
+
+
 _ORACLE_CACHE = {}
 
 
@@ -489,6 +534,8 @@ def _module_oracle(module, ccy):
     sub = {name: t.obj(dig(UP[case]["submissions"], path), DROP) for name, path in sub_picks.items()}
     exp_block = t.obj(dig(UP[case]["expected"], list(exp_cases[0])), EXPECTED_KEEP_DROP)
     top = {"/".join(p): t.obj(dig(UP[case]["expected"], list(p)), DROP) for p in exp_top}
+    if module == "CP-1C":
+        exp_block = with_ev_tables(exp_block, ccy)
     return {
         "frozen_case": f"cases/{case}-owner (case {frozen_case})",
         **({"comparison_excludes": ["run", "pack_sources"], "comparison_excludes_note": "the frozen run block (slice-cp2e-positive, credit_snapshot) and its pack_sources are not mapped to R2 and are excluded from comparison against R2"} if module == "CP-2E" else {}),
@@ -724,6 +771,8 @@ def derive_stale():
     frozen = []
     for module, (case, _fc, _sp, exp_cases, exp_top) in SPECS.items():
         _strings(ident.obj(dig(UP[case]["expected"], list(exp_cases[0])), EXPECTED_KEEP_DROP), frozen)
+    _strings(ident.obj([f for f in VAL_CASE["cp1c"]["facts"] if f["table_id"] in EV_TABLES], DROP), frozen)
+    _strings(ident.obj(VAL_CASE["cp1c"]["own_limitations_new"]), frozen)
     _strings(ident.obj(EARN["positive"]["points"]), frozen)
     _strings(ident.obj(EARN_OWNER["assessments"]["E-QOQ-FLAT"], DROP), frozen)
     cands = set()
@@ -811,6 +860,8 @@ def build_expected_runs():
             mods["CP-1C"]["t410_column_selected"] = BASIS["USD"]["ltm_column"]
             mods["CP-1C"]["t410_facts_selected"] = 4
             mods["CP-1C"]["issuer_metrics"] = issuer_metrics("USD")
+            mods["CP-1C"]["ev_tables"] = (module_oracle("CP-1C", "USD"), EV_META["USD"])[1]
+            mods["CP-1C"]["limitation_counts"] = {"own": len(module_oracle("CP-1C", "USD")["expected"]["own_limitations"]), "settled": len(module_oracle("CP-1C", "USD")["expected"]["settled_limitations"])}
             for m in ("CP-2D", "CP-3C"):
                 mods[m]["bindings_carried_by_oracle"] = binding_check(m, "USD")
                 mods[m]["bindings"] = {"T4.5": BASIS["USD"]["t45_period"], "T4.6": BASIS["USD"]["t46_period"], "T4.10": BASIS["USD"]["ltm_period"], "SCHEDULE_PERIOD": BASIS["USD"]["schedule_period"]}
@@ -822,6 +873,8 @@ def build_expected_runs():
             mods["CP-1C"]["t410_column_selected"] = BASIS["EUR"]["ltm_column"]
             mods["CP-1C"]["t410_facts_selected"] = 4
             mods["CP-1C"]["issuer_metrics"] = issuer_metrics("EUR")
+            mods["CP-1C"]["ev_tables"] = (module_oracle("CP-1C", "EUR"), EV_META["EUR"])[1]
+            mods["CP-1C"]["limitation_counts"] = {"own": len(module_oracle("CP-1C", "EUR")["expected"]["own_limitations"]), "settled": len(module_oracle("CP-1C", "EUR")["expected"]["settled_limitations"])}
             for m in ("CP-2D", "CP-3C"):
                 mods[m]["bindings_carried_by_oracle"] = binding_check(m, "EUR")
                 mods[m]["bindings"] = {"T4.5": BASIS["EUR"]["t45_period"], "T4.6": BASIS["EUR"]["t46_period"], "T4.10": BASIS["EUR"]["ltm_period"], "SCHEDULE_PERIOD": BASIS["EUR"]["schedule_period"]}

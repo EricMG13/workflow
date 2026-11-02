@@ -442,9 +442,17 @@ def one_url_row(url: str = "https://sector-desk.example/notes/x", **over: Any) -
 def fixed_fetch(body: bytes, media: str | None, status: int = 200) -> it.Fetcher:
     def fetcher(url: str, hosts: frozenset[str]) -> Any:
         record = webfetch.FetchRecord(
-            url, "93.184.216.34", status, len(body), hashlib.sha256(body).hexdigest(),
-            None, None, 0, None, None,
-        )  # fmt: skip
+            url,
+            "93.184.216.34",
+            status,
+            len(body),
+            hashlib.sha256(body).hexdigest(),
+            None,
+            None,
+            0,
+            None,
+            None,
+        )
         return record, body, media
 
     return fetcher

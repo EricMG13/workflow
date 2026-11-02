@@ -51,7 +51,7 @@ from deploy_vii.prose import tokenize
 from deploy_vii.quotes import hyphen_wrapped, normalise, quoted, reading
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import fact_spelling, figure_unit
-from deploy_workflow.context import ContextRefused
+from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
@@ -378,6 +378,73 @@ class Assessment:
     limitation: str | None
 
 
+class PeriodRefused(ValueError):
+    """The run context names no fiscal year this module can date its statements by."""
+
+
+@dataclass(frozen=True)
+class Periods:
+    """CP-2E's own basis (Phase 8 P8-P18): the fiscal year of the financial statements and the run
+    date, from which every period string and the `FY YYYY` prose is written. CP-2E has no CP-1
+    input, so the year is the context's `current_period` (`fy-YYYY` or `q4-YYYY`), checked against
+    the statement's own `FY YYYY` header by `validate_macro_fx`; the year is a calendar year (the
+    header ends `FY YYYY` or `FY YYYY-12-31`)."""
+
+    year: int = 2025
+    as_of: str = "2026-01-10"
+
+    @property
+    def label(self) -> str:
+        return f"FY {self.year}"
+
+    @property
+    def flow(self) -> str:
+        return f"{self.label}: {self.year}-01-01 to {self.year}-12-31"
+
+    @property
+    def bal(self) -> str:
+        return f"Balance at {self.year}-12-31"
+
+    @property
+    def shock(self) -> str:
+        return f"{self.label} base with a shock"
+
+    @property
+    def run(self) -> str:
+        return f"Run as of {self.as_of}"
+
+    @property
+    def header(self) -> re.Pattern[str]:
+        return re.compile(rf"FY {self.year}(?:-12-31)?$")
+
+
+DEFAULT_PERIODS = Periods()
+_BASE = re.compile(r"(?:fy|q4)-([0-9]{4})")
+
+
+def periods_of(pack: PreparedPack) -> Periods:
+    """The basis of a pack: the defaults without a run context; with one, its `fy-YYYY` or
+    `q4-YYYY` base year. A blank base keeps the default year when the currency is USD (as the other
+    owners' `run_basis`) and refuses otherwise; any other base refuses. `ContextRefused` from a
+    refused context propagates for the caller to map."""
+    context = context_facts(pack)
+    as_of = str(pack.run.as_of)
+    if context is None:
+        return Periods(DEFAULT_PERIODS.year, as_of)
+    base = context.run.current_period
+    if not base:
+        if context.run.reporting_currency != "USD":
+            raise PeriodRefused(
+                f"run.current_period is blank and run.reporting_currency is "
+                f"{context.run.reporting_currency}: the statement year cannot be dated"
+            )
+        return Periods(DEFAULT_PERIODS.year, as_of)
+    match = _BASE.fullmatch(base)
+    if match is None:
+        raise PeriodRefused(f"run.current_period {base}: CP-2E needs an fy or q4 base")
+    return Periods(int(match[1]), as_of)
+
+
 @dataclass(frozen=True)
 class MacroFxInputs:
     """Every operand the CP-2E method reads, plus the analyst judgment fields.
@@ -412,6 +479,7 @@ class MacroFxInputs:
     # submitted values with the pins before `macro_fx` composes anything.
     pinned: bool = False
     hedge_pinned: bool = False
+    periods: Periods = DEFAULT_PERIODS
 
     def __post_init__(self) -> None:
         pairs = (
@@ -546,7 +614,6 @@ _SENTENCE_NUM = re.compile(r"[0-9]{1,3}(?:\.[0-9]{1,4})?")  # operand bound: at 
 _ROW_NUM = re.compile(r"[0-9]+(?:\.[0-9]+)?|\([0-9]+(?:\.[0-9]+)?\)")  # parentheses balanced
 _HEDGE_NUM = re.compile(r"[0-9]{1,3}(?:\.[0-9]{1,2})?")
 _RATE_PHRASE = re.compile(r"\b(floating|fixed)[\s-]+rate\b", re.IGNORECASE)
-_FY_HEADER = re.compile(r"FY 2025(?:-12-31)?$")
 _MAX_SHOCKS = 3
 _RATE_BP = (1, 1000)
 _FX_PERCENT = (1, 50)
@@ -620,8 +687,9 @@ _RUN_TEXT: TypeAdapter[str] = TypeAdapter(RunText)
 class _Check:
     """Accumulates the validator's issues in rule order over one pack's financial pages."""
 
-    def __init__(self, pages: Mapping[str, str]) -> None:
+    def __init__(self, pages: Mapping[str, str], header: re.Pattern[str]) -> None:
         self.pages = pages
+        self.header = header
         self.issues: list[str] = []
 
     def add(self, issue: str) -> None:
@@ -706,7 +774,7 @@ class _Check:
             self.add(f"{path}: the row is not {_ROW_LABELS[key]}")
             return None
         header = next((ln for ln in lines if ln.startswith("Period")), "")
-        if not _FY_HEADER.search(header):
+        if not self.header.search(header):
             self.add(f"{path}: the page header does not end in the FY column")
             return None
         v = ref["value_text"]
@@ -832,10 +900,11 @@ def _check_text(chk: _Check, sub: Mapping[str, Any]) -> None:
 
 
 def validate_macro_fx(
-    *, submission: Mapping[str, Any], pages: Mapping[str, str]
+    *, submission: Mapping[str, Any], pages: Mapping[str, str], periods: Periods = DEFAULT_PERIODS
 ) -> tuple[str, ...]:
-    """Issues of a macro_fx submission against the pack's financial pages (locator -> text)."""
-    sub, chk = submission, _Check(pages)
+    """Issues of a macro_fx submission against the pack's financial pages (locator -> text); the
+    statement rows must sit under the `periods` fiscal-year column."""
+    sub, chk = submission, _Check(pages, periods.header)
     chk.code(sub["reporting_currency"], "reporting_currency")
     r = sub.get("rate_exposure")
     chk.exactly_one(r, sub.get("rate_absence"), "rate_exposure", ("rate_exposure", "rate_absence"))
@@ -869,10 +938,6 @@ def validate_macro_fx(
 
 
 # --- cells, tables and claims ----------------------------------------------------------------
-PER_FLOW = "FY 2025: 2025-01-01 to 2025-12-31"
-PER_BAL = "Balance at 2025-12-31"
-PER_RUN = "Run as of 2026-01-10"
-PER_SHOCK = "FY 2025 base with a shock"
 MILLIONS_SCALE = Decimal(1000000)
 # An unsettled cell's G# is bound at render time (expected.json#cell_notation.gap).
 GAP_SHOWN = {"missing": "∅ G#", "not_applicable": "∅ G# n.m."}
@@ -1091,6 +1156,7 @@ class _Cites:
     balance: tuple[Cite, ...]
     debt_ccy: tuple[Cite, ...]
     share: tuple[Cite, ...]
+    per: Periods
 
 
 def _cites_of(i: MacroFxInputs) -> _Cites:
@@ -1105,6 +1171,7 @@ def _cites_of(i: MacroFxInputs) -> _Cites:
         balance=(f.balance.cite,) if f else (),
         debt_ccy=(i.debt_currency.cite,) if i.debt_currency else (),
         share=(i.foreign_ebitda_share.cite,) if i.foreign_ebitda_share else (),
+        per=i.periods,
     )
 
 
@@ -1128,7 +1195,7 @@ def _t2f1_facility(i: MacroFxInputs) -> list[tuple[str, str, Sequence[_Spec]]]:
             "r03",
             "Term loan balance",
             [
-                _src(f.balance, "MILLIONS", 2, PER_BAL),
+                _src(f.balance, "MILLIONS", 2, i.periods.bal),
                 _txt("Facility schedule, closing balance", (f.balance.cite,)),
             ],
         ),
@@ -1144,7 +1211,7 @@ def _t2f1_facility(i: MacroFxInputs) -> list[tuple[str, str, Sequence[_Spec]]]:
             "r05",
             "Spread",
             [
-                _src(f.spread_bp, "basis_points", None, PER_BAL),
+                _src(f.spread_bp, "basis_points", None, i.periods.bal),
                 _txt("Facility schedule", (f.spread_bp.cite,)),
             ],
         ),
@@ -1152,7 +1219,7 @@ def _t2f1_facility(i: MacroFxInputs) -> list[tuple[str, str, Sequence[_Spec]]]:
             "r06",
             "Floor",
             [
-                _src(f.floor_bp, "basis_points", None, PER_BAL),
+                _src(f.floor_bp, "basis_points", None, i.periods.bal),
                 _txt("Facility schedule", (f.floor_bp.cite,)),
             ],
         ),
@@ -1161,7 +1228,7 @@ def _t2f1_facility(i: MacroFxInputs) -> list[tuple[str, str, Sequence[_Spec]]]:
 
 def _t2f1(i: MacroFxInputs, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
     def flow(s: Sourced, basis: str) -> list[_Spec]:
-        return [_src(s, "MILLIONS", 2, PER_FLOW), _txt(basis, (s.cite,))]
+        return [_src(s, "MILLIONS", 2, c.per.flow), _txt(basis, (s.cite,))]
 
     debt_ccy = (
         [_txt(i.debt_currency.code, c.debt_ccy), _txt("Facility schedule header", c.debt_ccy)]
@@ -1170,7 +1237,7 @@ def _t2f1(i: MacroFxInputs, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]
     )
     share = (
         [
-            _src(i.foreign_ebitda_share, "PERCENT", 1, PER_FLOW),
+            _src(i.foreign_ebitda_share, "PERCENT", 1, c.per.flow),
             _txt("Source statement", c.share),
         ]
         if i.foreign_ebitda_share
@@ -1185,7 +1252,10 @@ def _t2f1(i: MacroFxInputs, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]
         (
             "r02",
             "Total debt",
-            [_src(i.total_debt, "MILLIONS", 2, PER_BAL), _txt("Balance sheet, FY column", c.debt)],
+            [
+                _src(i.total_debt, "MILLIONS", 2, c.per.bal),
+                _txt("Balance sheet, FY column", c.debt),
+            ],
         ),
         *_t2f1_facility(i),
         ("r07", "Reported EBITDA", flow(i.ebitda, "Income statement, FY column")),
@@ -1205,7 +1275,7 @@ def _t2f2(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
             "Floating-rate debt",
             [
                 _derived(s.floating, "MILLIONS", 2, rate2, "cp2e.floating",
-                         "facility balance if the rate is floating, else zero", PER_BAL),
+                         "facility balance if the rate is floating, else zero", c.per.bal),
                 _txt("Closing balance of a floating-rate facility"),
             ],
         ),
@@ -1214,7 +1284,7 @@ def _t2f2(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
             "Floating-rate debt share of total debt",
             [
                 _derived(s.floating_share, "PERCENT", 1, rate2 + c.debt, "cp2e.floating_share",
-                         "floating-rate debt / total debt", PER_BAL),
+                         "floating-rate debt / total debt", c.per.bal),
                 _txt("Share of total debt"),
             ],
         ),
@@ -1223,8 +1293,8 @@ def _t2f2(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
             "Interest coverage",
             [
                 _derived(s.cov_base, "MULTIPLE", 2, c.ebitda + c.interest, "cp2e.cov_base",
-                         "EBITDA / cash interest paid", PER_FLOW),
-                _txt("Reported EBITDA over cash interest, FY 2025"),
+                         "EBITDA / cash interest paid", c.per.flow),
+                _txt(f"Reported EBITDA over cash interest, {c.per.label}"),
             ],
         ),
         (
@@ -1232,8 +1302,8 @@ def _t2f2(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
             "Total leverage",
             [
                 _derived(s.lev_base, "MULTIPLE", 2, c.debt + c.ebitda, "cp2e.lev_base",
-                         "total debt / EBITDA", PER_FLOW),
-                _txt("Total debt over reported EBITDA, FY 2025"),
+                         "total debt / EBITDA", c.per.flow),
+                _txt(f"Total debt over reported EBITDA, {c.per.label}"),
             ],
         ),
         (
@@ -1243,7 +1313,7 @@ def _t2f2(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
                 _derived(s.foreign_debt, "MILLIONS", 2, c.balance + c.debt_ccy + c.ccy,
                          "cp2e.foreign_debt",
                          "term loan balance if its currency differs from the reporting currency,"
-                         " else zero", PER_BAL),
+                         " else zero", c.per.bal),
                 _txt("Debt denominated in a currency other than the reporting currency"),
             ],
         ),
@@ -1252,7 +1322,7 @@ def _t2f2(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
             "Foreign-currency debt share of total debt",
             [
                 _derived(s.foreign_debt_share, "PERCENT", 1, c.debt_ccy + c.ccy + c.debt,
-                         "cp2e.foreign_debt_share", "foreign-currency debt / total debt", PER_BAL),
+                         "cp2e.foreign_debt_share", "foreign-currency debt / total debt", c.per.bal),
                 _txt("Share of total debt"),
             ],
         ),
@@ -1278,22 +1348,22 @@ def _t2f3(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
         calc = f"cp2e.rate{n}"
         assert r.shock_bp.amount is not None
         rows.append((f"r{n:02d}", f"Reference rate up, {_ORD[n - 1]} shock", [
-            _num(r.shock_bp.amount, "basis_points", None, (), "analyst_judgment", PER_RUN),
+            _num(r.shock_bp.amount, "basis_points", None, (), "analyst_judgment", c.per.run),
             _derived(r.gross, "MILLIONS", 2, c.rate, f"{calc}.gross",
-                     "floating-rate debt x shock / 10000", PER_SHOCK),
+                     "floating-rate debt x shock / 10000", c.per.shock),
             _derived(r.net, "MILLIONS", 2, c.rate, f"{calc}.net",
-                     "added interest before hedges x (1 - hedge ratio)", PER_SHOCK),
+                     "added interest before hedges x (1 - hedge ratio)", c.per.shock),
             _derived(r.interest_after, "MILLIONS", 2, c.rate + c.interest,
                      f"{calc}.interest_after", "cash interest + added interest before hedges",
-                     PER_SHOCK),
+                     c.per.shock),
             _derived(r.cov_after, "MULTIPLE", 2, cov, f"{calc}.cov_after",
-                     "EBITDA / cash interest after the shock", PER_SHOCK),
+                     "EBITDA / cash interest after the shock", c.per.shock),
             _derived(r.cov_change, "MULTIPLE", 2, cov, f"{calc}.cov_change",
-                     "coverage after the shock - coverage before", PER_SHOCK),
+                     "coverage after the shock - coverage before", c.per.shock),
             _derived(r.fcf_after, "MILLIONS", 2, c.rate + c.fcf, f"{calc}.fcf_after",
-                     "free cash flow - added interest before hedges", PER_SHOCK),
+                     "free cash flow - added interest before hedges", c.per.shock),
             _derived(r.share_of_ebitda, "PERCENT", 1, c.rate + c.ebitda, f"{calc}.share",
-                     "added interest before hedges / EBITDA", PER_SHOCK),
+                     "added interest before hedges / EBITDA", c.per.shock),
         ]))  # fmt: skip
     return rows
 
@@ -1314,23 +1384,23 @@ def _t2f4(s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
         calc = f"cp2e.fx{n}"
         assert r.shock.amount is not None
         rows.append((f"r{n:02d}", f"Foreign currency strengthens, {_ORD[n - 1]} move", [
-            _num(r.shock.amount, "PERCENT", 0, (), "analyst_judgment", PER_RUN),
+            _num(r.shock.amount, "PERCENT", 0, (), "analyst_judgment", c.per.run),
             _derived(r.debt_change, "MILLIONS", 2, fc, f"{calc}.debt_change",
-                     "foreign-currency debt x move", PER_SHOCK),
+                     "foreign-currency debt x move", c.per.shock),
             _derived(r.debt_after, "MILLIONS", 2, fc + c.debt, f"{calc}.debt_after",
-                     "total debt + change in debt", PER_SHOCK),
+                     "total debt + change in debt", c.per.shock),
             _derived(r.ebitda_change, "MILLIONS", 2, c.share + c.ebitda, f"{calc}.ebitda_change",
-                     "EBITDA x share earned in other currencies x move", PER_SHOCK),
+                     "EBITDA x share earned in other currencies x move", c.per.shock),
             _derived(r.lev_after, "MULTIPLE", 2, fc + c.debt + c.share + c.ebitda,
                      f"{calc}.lev_after", "total debt after the move / EBITDA after the move",
-                     PER_SHOCK),
+                     c.per.shock),
         ]))  # fmt: skip
     return rows
 
 
 def _t2f5(i: MacroFxInputs, s: Sensitivity, c: _Cites) -> list[tuple[str, str, Sequence[_Spec]]]:
     hedge = (
-        _num(i.hedge_ratio, "PERCENT", 0, (), "analyst_judgment", PER_RUN)
+        _num(i.hedge_ratio, "PERCENT", 0, (), "analyst_judgment", c.per.run)
         if i.hedge_ratio is not None
         else _gap("Not stated: no hedge ratio is assumed or sourced", "PERCENT")
     )
@@ -1341,7 +1411,7 @@ def _t2f5(i: MacroFxInputs, s: Sensitivity, c: _Cites) -> list[tuple[str, str, S
         c.rate[:2],
         "cp2e.floating_after_hedge",
         "floating-rate debt x (1 - hedge ratio)",
-        PER_BAL,
+        c.per.bal,
     )
     return [
         (
@@ -1424,7 +1494,7 @@ def _t2f8(i: MacroFxInputs) -> list[tuple[str, str, Sequence[_Spec]]]:
 
 
 _LIM_STATIC = (
-    "Each shock is a static, parallel move applied once to the closing balances and the FY 2025 "
+    "Each shock is a static, parallel move applied once to the closing balances and the {fy} "
     "flows; no repricing date, no change in debt and no tax shield are modelled"
 )
 _LIM_CASH = (
@@ -1452,7 +1522,7 @@ _LIM_DEBT_CCY = (
 )
 _LIM_MACRO = (
     "Macro drivers other than the reference rate and currency, such as demand, input costs and "
-    "inflation, are not sourced and not assessed; the figures are unaudited FY 2025 statements"
+    "inflation, are not sourced and not assessed; the figures are unaudited {fy} statements"
 )
 
 
@@ -1478,7 +1548,7 @@ def _floor_limitation(facility: FacilityTerms) -> str | None:
 
 
 def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
-    out = [_LIM_STATIC, _LIM_CASH]
+    out = [_LIM_STATIC.format(fy=i.periods.label), _LIM_CASH]
     if i.facility is not None:
         floor_line = _floor_limitation(i.facility)
         if floor_line is not None:
@@ -1492,7 +1562,7 @@ def own_limitations(i: MacroFxInputs) -> tuple[str, ...]:
         out.append(_LIM_NO_SPLIT)
     if i.debt_currency is not None:
         out.append(_LIM_DEBT_CCY)
-    out.append(_LIM_MACRO)
+    out.append(_LIM_MACRO.format(fy=i.periods.label))
     if i.pinned:
         out.append(pinned_line(MODULE_ID, hedge_pinned=i.hedge_pinned))
     return tuple(out)
@@ -1828,9 +1898,12 @@ def _inputs(pack: PreparedPack, submission: MacroFxSubmission) -> MacroFxInputs:
     """The adapter: a validated submission and the pack's source names -> the Stage 1 input
     object. CP-2E reads no upstream operand (its binding source is the manifest `run` and
     `step_scope`: the pack and the financial scope), so nothing is read from a head."""
-    return inputs_from_submission(
-        submission.model_dump(mode="json"),
-        source_names={source.source_id: source.name for source in pack.sources},
+    return replace(
+        inputs_from_submission(
+            submission.model_dump(mode="json"),
+            source_names={source.source_id: source.name for source in pack.sources},
+        ),
+        periods=periods_of(pack),
     )
 
 
@@ -1942,9 +2015,24 @@ def _validate_step(store: Execution, pack: PreparedPack, attempt: Attempt) -> St
     submission, shape = _parsed(store.payload(attempt.steps[0].payload_sha256))
     if submission is None:
         return StepValidation(issues=shape)
+    try:
+        periods = periods_of(pack)
+        context = context_facts(pack)
+    except PeriodRefused as error:
+        return StepValidation(issues=(clipped(("Period refused: ", str(error))),))
+    except ContextRefused:
+        # `_pin_lines` reports this context as the one `Context refused: ...` issue below, and
+        # nothing is composed on an issue, so the periods read here are not used.
+        periods, context = DEFAULT_PERIODS, None
     content = validate_macro_fx(
-        submission=submission.model_dump(mode="json"), pages=_pages_of(pack)
+        submission=submission.model_dump(mode="json"), pages=_pages_of(pack), periods=periods
     )
+    stated = submission.reporting_currency.code_text
+    if context is not None and stated != context.run.reporting_currency:
+        wanted = context.run.reporting_currency
+        content += (
+            f"reporting_currency: the statements state {stated}, the run context states {wanted}",
+        )
     issues = tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
     if issues:
         return StepValidation(issues=issues)

@@ -67,10 +67,11 @@ from deploy_vii.model._cells import CONTEXT
 from deploy_vii.preparation import PreparedPack
 from deploy_vii.readiness import shape_issues
 from deploy_vii.report_view import figure_unit
-from deploy_workflow.context import ContextRefused
+from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
+from deploy_workflow.owners.period_basis import PeriodRefused, currency_basis, run_basis
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2A"
@@ -608,6 +609,7 @@ class Inputs:
     offered_periods: tuple[str, ...]
     names: tuple[str, ...]
     pinned: bool = False
+    currency: str = "USD"  # the run's reporting currency (`currency_basis`); USD without a context
 
 
 def _bad_name(text: str) -> bool:
@@ -869,8 +871,10 @@ class Result:
 
 
 class _Composer:
-    def __init__(self, base: BaseOperands) -> None:
+    def __init__(self, base: BaseOperands, currency: str = "USD") -> None:
         self.base = base
+        self.currency = currency
+        self.money_unit = "US$ m" if currency == "USD" else f"{currency} m"
         self.facts: list[Fact] = []
         self.rows: dict[str, list[TableRow]] = {t: [] for t in TABLES}
 
@@ -909,7 +913,7 @@ class _Composer:
                 field=field,
                 amount=value,
                 unit=_UNITS[unit_class],
-                currency="USD" if amount else None,
+                currency=self.currency if amount else None,
                 scale=Decimal(1000000) if amount else Decimal(1),
                 decimals=2 if amount else None,
                 period=self.base.period,
@@ -1347,9 +1351,9 @@ def _claims(
     for run in runs:
         r = run.row
         text = (
-            f"Under the {run.name} scenario, stressed EBITDA is {out.ref(f'T2B.3.{r}.ebitda', 'US$ m')} "
-            f"against {out.ref('T2B.3.s00.ebitda', 'US$ m')} at base, free cash flow is "
-            f"{out.ref(f'T2B.3.{r}.fcf', 'US$ m')}, net leverage is "
+            f"Under the {run.name} scenario, stressed EBITDA is {out.ref(f'T2B.3.{r}.ebitda', out.money_unit)} "
+            f"against {out.ref('T2B.3.s00.ebitda', out.money_unit)} at base, free cash flow is "
+            f"{out.ref(f'T2B.3.{r}.fcf', out.money_unit)}, net leverage is "
             f"{out.ref(f'T2B.4.{r}.net_leverage', 'x')} and interest coverage is "
             f"{out.ref(f'T2B.4.{r}.interest_coverage', 'x')}."
         )
@@ -1419,7 +1423,7 @@ def compute(inputs: Inputs) -> Result:
     sub = inputs.submission
     base = BaseOperands.from_cp1(inputs.cp1_facts, period=sub.base_period)
     bound = prose.bind(referencable(inputs.cp1_facts))
-    out = _Composer(base)
+    out = _Composer(base, inputs.currency)
     runs = [_Run("s00", BASE_ROW, _ZERO, _ZERO)] + [
         _Run(f"s{n:02d}", sc.name, Decimal(sc.ebitda_decline), Decimal(sc.interest_increase))
         for n, sc in enumerate(sub.scenarios, 1)
@@ -1530,20 +1534,20 @@ class OfferedBase:
     facts: tuple[Fact, ...]
 
 
-def _in_usd_millions(fact: Fact) -> bool:
-    """The core stamps every amount USD millions (lease, Facts), so a known operand in any other
-    unit, currency or scale would be stamped wrong. An unsettled one carries no amount."""
+def _in_millions(fact: Fact, currency: str) -> bool:
+    """The core stamps every amount `currency` millions (lease, Facts), so a known operand in any
+    other unit, currency or scale would be stamped wrong. An unsettled one carries no amount."""
     return fact.status != "known" or (
-        fact.unit == "MILLIONS" and fact.currency == "USD" and fact.scale == 1000000
+        fact.unit == "MILLIONS" and fact.currency == currency and fact.scale == 1000000
     )
 
 
-def offered_bases(cp1: Iterable[Fact]) -> tuple[OfferedBase, ...]:
+def offered_bases(cp1: Iterable[Fact], currency: str = "USD") -> tuple[OfferedBase, ...]:
     """The base periods of a CP-1 head, in the order the head first states them.
 
     A period is offered only if its label parses (`period_kind`, `_column`) and CP-1 holds exactly
     one T4.10 fact per operand and reported-ratio metric for it (`BaseOperands.from_cp1` raises
-    otherwise), and every known operand is in USD millions (Stage 2 round 5 item 1). Any other period is not offered, so the analyst cannot choose it and no core call
+    otherwise), and every known operand is in `currency` millions (Stage 2 round 5 item 1). Any other period is not offered, so the analyst cannot choose it and no core call
     can raise on it (fail closed; CP-1 head integrity is not this module's to repair). One
     derivation feeds the view's `kind` and the core's `offered_periods` (round 5-6 L6)."""
     facts = tuple(f for f in cp1 if f.table_id == CP1_TABLE)
@@ -1562,23 +1566,47 @@ def offered_bases(cp1: Iterable[Fact]) -> tuple[OfferedBase, ...]:
                 break
             chosen.append(found[0])
         else:
-            if all(_in_usd_millions(f) for f in chosen[: len(OPERAND_METRICS)]):
+            if all(_in_millions(f, currency) for f in chosen[: len(OPERAND_METRICS)]):
                 bases.append(OfferedBase(period=period, kind=kind, facts=tuple(chosen)))
     return tuple(bases)
 
 
-def _inputs(pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream) -> Inputs:
+def _stated_currency(cp1: Iterable[Fact]) -> str:
+    """The one currency the CP-1 T4.14 register states, else USD (only for a refused context)."""
+    stated = {
+        f.text
+        for f in cp1
+        if f.table_id == "T4.14" and f.field == "currency" and f.status == "known" and f.text
+    }
+    return stated.pop() if len(stated) == 1 else "USD"
+
+
+def _run_currency(pack: PreparedPack, cp1: Iterable[Fact]) -> str:
+    """The run's reporting currency: `USD` without a run context, else the context's, checked
+    against the CP-1 T4.14 register (`currency_basis`, whatever the base kind). A context with a
+    blank base is `run_basis`'s (ruling P8-R3: USD keeps the frozen 2025 default, any other
+    currency refuses). Raises `PeriodRefused` or `ContextRefused`."""
+    context = context_facts(pack)
+    if context is not None and not context.run.current_period:
+        return run_basis(context, cp1).currency
+    return currency_basis(context, cp1).currency
+
+
+def _inputs(
+    pack: PreparedPack, submission: DownsideSubmission, upstream: Upstream, currency: str = "USD"
+) -> Inputs:
     """The store adapter: the settled CP-1 head's offered T4.10 facts (in the head's order), the
     offered periods and the issuer name, as the Stage 1 `Inputs` the core reads. Submit, probe and
     the entry validator reach the core only through this. It reads no context: `downside_report`
     sets `Inputs.pinned` once `validate_downside` has accepted the context."""
-    bases = offered_bases(upstream.cp1)
+    bases = offered_bases(upstream.cp1, currency)
     chosen = {f.fact_id for base in bases for f in base.facts}
     return Inputs(
         submission=submission,
         cp1_facts=tuple(f for f in upstream.cp1 if f.fact_id in chosen),
         offered_periods=tuple(base.period for base in bases),
         names=(pack.run.issuer_name,),
+        currency=currency,
     )
 
 
@@ -1621,9 +1649,19 @@ def validate_downside(
     content issues in their order, then the pin lines (also after a base-period issue that
     `validate` returns alone); empty when it composes. The one issue set of the entry validator and
     the composer gate."""
+    try:
+        currency = _run_currency(pack, upstream.cp1)
+    except PeriodRefused as error:
+        return (clipped(("Currency refused: ", str(error))),)
+    except ContextRefused:
+        # `_pin_lines` reports this context as the one `Context refused: ...` line after the
+        # content issues (frozen: test_owner_cp2a_pins), and nothing is composed on an issue. The
+        # content issues are read in the one currency CP-1's register states, so that the refused
+        # context adds no spurious `base_period` line.
+        currency = _stated_currency(upstream.cp1)
     issues = [
         *_stale_issues(upstream),
-        *validate(_inputs(pack, submission, upstream)),
+        *validate(_inputs(pack, submission, upstream, currency)),
         *_pin_lines(pack, submission),
     ]
     return tuple(dict.fromkeys(issues))
@@ -1639,7 +1677,8 @@ def downside_report(
     # A refused context is a `Context refused: ...` issue, so `validate_downside` returned it and
     # this function raised above; `pins_of` cannot raise `ContextRefused` here.
     pinned = pins_of(MODULE_ID, pack) is not None
-    result = compute(replace(_inputs(pack, submission, upstream), pinned=pinned))
+    inputs = _inputs(pack, submission, upstream, _run_currency(pack, upstream.cp1))
+    result = compute(replace(inputs, pinned=pinned))
     return DownsideReport(
         run=pack.run,
         pack_sha256=pack.content_hash(),
@@ -1779,14 +1818,28 @@ def _cell(fact: Fact, referencable_ids: frozenset[str]) -> dict[str, object]:
     }
 
 
+def _issue_entry(issue: str | None) -> dict[str, str]:
+    return {} if issue is None else {"context_issue": issue}
+
+
+def _offered(pack: PreparedPack, upstream: Upstream) -> tuple[tuple[OfferedBase, ...], str | None]:
+    """The bases the view offers in the run's currency, or none and the refusal that says why."""
+    try:
+        currency = _run_currency(pack, upstream.cp1)
+    except PeriodRefused as error:
+        return (), clipped(("Currency refused: ", str(error)))
+    except ContextRefused as error:
+        return (), clipped(("Context refused: ", str(error)))
+    return offered_bases(upstream.cp1, currency), None
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """What `read_inputs` returns, all Python's (lease Tool use): the upstream statuses, the
     offered base periods with each operand and reported ratio, the CP-1 facts a figure reference
     may name, the shock bounds, the watch metrics and the limitations settlement will inherit.
     No quote, citation or record. `pack` is part of the lease signature; the view reads none of
-    it."""
-    del pack
-    bases = offered_bases(upstream.cp1)
+    it, except the run context's currency, which offers no base when it contradicts CP-1."""
+    bases, issue = _offered(pack, upstream)
     allowed = frozenset(f.fact_id for f in referencable(f for b in bases for f in b.facts))
     figures = [f for b in bases for f in b.facts if f.fact_id in allowed]
     return {
@@ -1831,6 +1884,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
         "scenario_bounds": {"decline": SCENARIO_BOUNDS, "increase": SCENARIO_BOUNDS},
         "threshold_metrics": list(get_args(Metric)),
         "inherited_limitations": list(upstream.inherited),
+        **_issue_entry(issue),
     }
 
 

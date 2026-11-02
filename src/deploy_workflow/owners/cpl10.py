@@ -10,7 +10,7 @@ import hashlib
 import json
 import re
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import (
     ROUND_HALF_EVEN,
@@ -61,10 +61,18 @@ from deploy_vii.prose import issues as prose_issues
 from deploy_vii.readiness import shape_issues
 from deploy_vii.registry import modules
 from deploy_vii.report_view import fact_spelling, status_display
-from deploy_workflow.context import ContextRefused, context_facts
+from deploy_workflow.context import ContextRefused, RunContext, context_facts
 from deploy_workflow.context_periods import quarters_ending_at, resolve
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_CURRENCY,
+    CurrencyBasis,
+    PeriodRefused,
+    currency_basis,
+    run_basis,
+)
+from deploy_workflow.owners.period_basis import _period_register as period_register
 from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-L10"
@@ -90,8 +98,7 @@ PROHIBITED = ("recommend", "recovery", "covenant")  # CP-1A's prohibited conclus
 BAD_PAYLOAD = "(root): not a JSON object within the payload bounds"
 INSUFFICIENT = "Insufficient Information"
 OVERALL = "overall"  # the gap target that is not a topic
-_USD, _MILLION = "USD", Decimal(1000000)
-_MONEY = {"currency": _USD, "scale": _MILLION}
+_MILLION = Decimal(1000000)
 _DIGIT = re.compile(r"\d")
 
 
@@ -153,6 +160,15 @@ TOPICS = (
         "CP-2A",
     ),
 )
+
+
+def topics_in(currency: CurrencyBasis) -> tuple[Topic, ...]:
+    """The topics with the money unit token of `currency` (`US$ m`, `EUR m`); the multiples keep `x`."""
+    return tuple(
+        replace(t, token=currency.money_unit) if t.unit == "MILLIONS" else t for t in TOPICS
+    )
+
+
 TOPIC_IDS = tuple(t.topic_id for t in TOPICS)
 OPERAND_LABELS = tuple(f"{q.column} · {t.cp1_metric}" for t in TOPICS for q in QUARTERS)
 
@@ -320,26 +336,9 @@ class ContextPeriodNotQuarter(UpstreamError):
     """The context's current period is not a quarter: the read offers no quarter list."""
 
 
-def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
-    """The CP-1 T4.14 rows by `period_id`, as `earnings._periods` reads them: a repeated field of
-    one row, a row without a known `period_id` and two rows sharing one `period_id` all refuse."""
-    rows: dict[str, dict[str, Fact]] = {}
-    for fact in facts:
-        if fact.table_id != "T4.14":
-            continue
-        row = rows.setdefault(fact.row_id, {})
-        if fact.field in row:
-            raise UpstreamError("CP-1 T4.14 register is unusable: ambiguous_coordinate")
-        row[fact.field] = fact
-    register: dict[str, dict[str, Fact]] = {}
-    for row in rows.values():
-        identity = row.get("period_id")
-        if identity is None or identity.status != "known" or not identity.text:
-            raise UpstreamError("CP-1 T4.14 register is unusable: incomplete_register")
-        if identity.text in register:
-            raise UpstreamError("CP-1 T4.14 register is unusable: ambiguous_coordinate")
-        register[identity.text] = row
-    return register
+# The CP-1 T4.14 rows by `period_id`: one reader for the owners (Phase 8 Task 1, P8-P17). It raises
+# `PeriodRefused`; `context_quarters` reports that as an `UpstreamError`.
+_period_register = period_register
 
 
 def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarter, ...]:
@@ -350,7 +349,10 @@ def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarte
         wanted = quarters_ending_at(current_period)
     except ValueError as error:
         raise ContextPeriodNotQuarter("context_period_not_quarter") from error
-    rows = _period_register(facts)
+    try:
+        rows = _period_register(facts)
+    except PeriodRefused as error:
+        raise UpstreamError(str(error)) from error
     quarters = []
     for period in wanted:
         key = resolve(period, rows)
@@ -394,6 +396,15 @@ class Upstream:
     context_issue: str | None = None  # a context fact that leaves no quarters to offer
 
     @property
+    def currency(self) -> CurrencyBasis:
+        """The run's reporting currency; USD unless this is a `RunUpstream`."""
+        return DEFAULT_CURRENCY
+
+    @property
+    def topics(self) -> tuple[Topic, ...]:
+        return topics_in(self.currency)
+
+    @property
     def periods(self) -> tuple[str, ...]:
         return tuple(q.period for q in self.quarters)
 
@@ -420,6 +431,28 @@ class Upstream:
     def operand(self, topic: Topic, period: str) -> Fact:
         column = self.quarters[self.periods.index(period)].column
         return self.cp1_facts[f"{column} · {topic.cp1_metric}"]
+
+
+@dataclass(frozen=True)
+class RunUpstream(Upstream):
+    """An `Upstream` read under a run context whose reporting currency is not USD, so that the
+    money tokens and cells state it. A USD run (or none) keeps the plain `Upstream`."""
+
+    run_currency: CurrencyBasis = DEFAULT_CURRENCY
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        for fact in self.cp1_facts.values():
+            known_money = fact.status == "known" and fact.unit == "MILLIONS"
+            if known_money and fact.currency != self.run_currency.currency:
+                raise UpstreamError(
+                    f"CP-1 operand currency {fact.currency} is not "
+                    f"{self.run_currency.currency}: {fact.label}"
+                )
+
+    @property
+    def currency(self) -> CurrencyBasis:
+        return self.run_currency
 
 
 # --- the screening rule -------------------------------------------------------------------------
@@ -502,7 +535,7 @@ class TopicResult:
 def screen_pair(upstream: Upstream, from_period: str, to_period: str) -> tuple[TopicResult, ...]:
     """Every topic rated for one ordered pair, in register order, each with its rank (1 to 7)."""
     rows = []
-    for topic in TOPICS:
+    for topic in upstream.topics:
         start = upstream.operand(topic, from_period)
         close = upstream.operand(topic, to_period)
         rows.append((topic, start, close, screen_topic(start=start.amount, close=close.amount)))
@@ -552,7 +585,7 @@ def view_topics(upstream: Upstream, *, gap_ref: str) -> tuple[ViewTopic, ...]:
     if not upstream.quarters:  # a context with no quarter offers none
         return ()
     out = []
-    for topic in TOPICS:
+    for topic in upstream.topics:
         unit_class: UnitClass = "amount" if topic.unit == "MILLIONS" else "multiple"
         values = []
         for period in upstream.periods:
@@ -632,10 +665,10 @@ class ScreenResult:
     status: Literal["restricted"] = "restricted"
 
 
-def _topic_unit(topic: Topic) -> tuple[str, str | None, Decimal]:
-    """The topic's unit, currency and scale: MILLIONS in USD at 1,000,000; MULTIPLE plain."""
+def _topic_unit(topic: Topic, currency: str) -> tuple[str, str | None, Decimal]:
+    """The topic's unit, currency and scale: MILLIONS in `currency` at 1,000,000; MULTIPLE plain."""
     if topic.unit == "MILLIONS":
-        return topic.unit, _USD, _MILLION
+        return topic.unit, currency, _MILLION
     return topic.unit, None, Decimal(1)
 
 
@@ -647,15 +680,18 @@ def _unique(citations: Iterable[Citation]) -> tuple[Citation, ...]:
 class _Cells:
     """Collects the cells of one table row, in column order."""
 
-    def __init__(self, table: str, row: str, cp1: Mapping[str, Fact]) -> None:
+    def __init__(
+        self, table: str, row: str, cp1: Mapping[str, Fact], currency: str = "USD"
+    ) -> None:
         self.table, self.row_id, self.cp1, self.cells = table, row, cp1, list[Cell]()
+        self.currency = currency
 
     def add(self, field: str, label: str, *, derives: tuple[str, ...] = (), **kw: object) -> None:
         coordinates = {"table_id": self.table, "row_id": self.row_id, "field": field}
         if kw.get("value_class") == "calculated" and kw.get("status", "known") == "known":
             kw.setdefault("calculation_id", f"calc:{self.table}.{self.row_id}.{field}")
         if kw.get("unit") == "MILLIONS":
-            kw.update(_MONEY)
+            kw.update(currency=self.currency, scale=_MILLION)
         # F5, round 3: a derived fact has one Citation per (source, page), the first input quote.
         cites = _unique(c for d in derives for c in self.cp1[d].citations)
         fact = Fact.model_validate(
@@ -691,7 +727,7 @@ class _Cells:
         if known:
             unit, currency, scale = cp1.unit, cp1.currency, cp1.scale
         else:
-            unit, currency, scale = _topic_unit(topic)
+            unit, currency, scale = _topic_unit(topic, self.currency)
         fact = Fact(
             fact_id=f"{self.table}.{self.row_id}.{field}",
             label=label,
@@ -731,10 +767,12 @@ def _cp1_limitation(r: TopicResult) -> str | None:
     return missing.limitation
 
 
-def _topic_row(r: TopicResult, pair_period: str, cp1: Mapping[str, Fact]) -> _Cells:
+def _topic_row(
+    r: TopicResult, pair_period: str, cp1: Mapping[str, Fact], currency: str = "USD"
+) -> _Cells:
     """TL10.2: the copied CP-1 cells, the exact change, its rating, rank and pointers."""
     t, s = r.topic, r.screen
-    cells = _Cells("TL10.2", t.topic_id, cp1)
+    cells = _Cells("TL10.2", t.topic_id, cp1, currency)
     cells.copied("from_value", f"{t.label} · Starting value", r.start, t)
     cells.copied("to_value", f"{t.label} · Closing value", r.close, t)
     derives = (r.start.label, r.close.label)
@@ -1060,7 +1098,13 @@ def _compose(upstream: Upstream, sub: ChangeScreenSubmission) -> _Composed:
     words = {q.period: q.words for q in upstream.quarters}
     tables = (
         ("TL10.1", _scope_rows(upstream, rows, pair_period)),
-        ("TL10.2", [(r.topic.label, _topic_row(r, pair_period, cp1)) for r in rows]),
+        (
+            "TL10.2",
+            [
+                (r.topic.label, _topic_row(r, pair_period, cp1, upstream.currency.currency))
+                for r in rows
+            ],
+        ),
         ("TL10.3", _item_rows(rows, sub, cp1)),
         ("TL10.4", _trigger_rows(rows, sub, cp1)),
         ("TL10.5", [("Total", _total_row(counts, pair_period, cp1))]),
@@ -1303,6 +1347,22 @@ def _bound(store: Execution, attempt: Attempt, module_id: str) -> tuple[Input, M
     return item, store.result(item.sha256)
 
 
+def _run_currency(context: RunContext | None, facts: Iterable[Fact]) -> CurrencyBasis:
+    """The run's currency: the context's, checked against the CP-1 T4.14 register. A blank base is
+    `run_basis`'s (ruling P8-R3). Ruling P8T7-R6: under a USD run a register with no `currency`
+    field at all keeps the parent's behaviour (quarters offered, USD applies; the frozen ctx-l10
+    pins have such a register); under any other currency the same register is refused."""
+    if context is None:
+        return DEFAULT_CURRENCY
+    if not context.run.current_period:
+        basis = run_basis(context, facts)
+        return CurrencyBasis(basis.currency, basis.money_unit)
+    stated = any(f.table_id == "T4.14" and f.field == "currency" for f in facts)
+    if not stated and context.run.reporting_currency == DEFAULT_CURRENCY.currency:
+        return DEFAULT_CURRENCY
+    return currency_basis(context, facts)
+
+
 def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
     """The CP-0 and CP-1 heads `attempt` binds, read from the store: the run identity, each
     head's status word and result hash, the 28 CP-1 T4.10 operands (zero or several matches
@@ -1321,8 +1381,19 @@ def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:
         quarters = context_quarters(current, cp1[1].facts) if current else QUARTERS
     except ContextPeriodNotQuarter as error:
         quarters, context_issue = (), str(error)
+    try:
+        currency = _run_currency(context, cp1[1].facts)
+    except PeriodRefused as error:
+        # P8-R5: a period or currency refusal is a view with nothing offered and the validator's
+        # `CP-L10: <text>`; a refusal of the not-a-quarter base above keeps its own issue.
+        currency = DEFAULT_CURRENCY
+        if context_issue is None:
+            quarters, context_issue = (), str(error)
     own = (*OWN_LIMITATIONS, *((_SYNTHETIC,) if snapshot.run.case_kind == "synthetic" else ()))
-    return Upstream(
+    made = RunUpstream if currency != DEFAULT_CURRENCY else Upstream
+    extra = {"run_currency": currency} if currency != DEFAULT_CURRENCY else {}
+    return made(
+        **extra,
         issuer_name=snapshot.run.issuer_name,
         as_of=snapshot.run.as_of,
         cp0_status_word=status_display(cp0[0].status)[1],

@@ -247,3 +247,27 @@ def test_docs_top_file_read_by_segment_literals_selects_reader(repo: pathlib.Pat
         },
     )
     assert select(repo, {"docs/L-NOTE.md": "o\n"}) == ["tests/test_note.py"]
+
+
+def test_checkpoint_lists_equal_heavy() -> None:
+    import importlib.util
+
+    root = pathlib.Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("affected_tests_heavy", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    heavy = list(module.HEAVY)
+    lines = (root / ".github" / "workflows" / "checkpoint.yml").read_text().splitlines()
+    matrix = [
+        line.strip()[2:]
+        for line in lines
+        if line.startswith("          - tests/") and line.strip().endswith(".py")
+    ]
+    grep = [
+        line.strip()[len("-e ") :].rstrip(" \\")
+        for line in lines
+        if line.strip().startswith("-e tests/")
+    ]
+    assert matrix == heavy
+    assert grep == heavy

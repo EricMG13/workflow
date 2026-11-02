@@ -25,6 +25,7 @@ from deploy_workflow.model.adapter import (
 from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.research import evidence, webfetch
 from deploy_workflow.research.contracts import EvidenceFetchRefused
+from deploy_workflow.research.intake import MAX_ITEM_BYTES, intake
 from deploy_workflow.run_inputs import (
     AdapterRefused,
     BadCap,
@@ -598,7 +599,7 @@ def test_the_production_fetcher_uses_the_monotonic_clock_and_the_real_connection
     assert seen["clock"] is time.monotonic
     assert seen["resolver"] is webfetch.system_resolver
     assert seen["connect"] is webfetch.pinned_connection
-    assert seen["cap"] == run_inputs.MAX_ITEM_BYTES
+    assert seen["cap"] == MAX_ITEM_BYTES
     assert seen["manifest_hosts"] == frozenset({"sector-desk.example"})
 
 
@@ -608,13 +609,13 @@ def test_intake_is_given_the_research_clocks_retrieval_time(
     """O7b-2 S4 review L-2: `intake`'s `retrieved` is the instant the research clock gave, the one
     every `#records/evidence_json/rows/*/retrieved` records (a mutant that dropped it survived)."""
     seen: list[str] = []
-    real = run_inputs.intake
+    real = intake
 
     def spy(*args: Any, **kwargs: Any) -> Any:
         seen.append(kwargs["retrieved"])
         return real(*args, **kwargs)
 
-    monkeypatch.setattr(run_inputs, "intake", spy)
+    monkeypatch.setattr("deploy_workflow.run_inputs.intake", spy)
     _case, arguments = web_arguments(tmp_path, monkeypatch)
     check_arguments(**arguments)
     rows = web_file("expected.json")["records"]["evidence_json"]["rows"]

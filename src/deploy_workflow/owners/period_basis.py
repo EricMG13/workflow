@@ -46,11 +46,12 @@ class CurrencyBasis:
     money_unit: str
 
 
-def _currency(code: str) -> CurrencyBasis:
+def currency_of(code: str) -> CurrencyBasis:
+    """The currency `code` with its money unit (`US$ m`, `EUR m`)."""
     return CurrencyBasis(code, "US$ m" if code == "USD" else f"{code} m")
 
 
-DEFAULT_CURRENCY = _currency("USD")
+DEFAULT_CURRENCY = currency_of("USD")
 
 
 def _long_date(day: date, with_year: bool) -> str:
@@ -126,8 +127,8 @@ DEFAULT_BASIS = _basis(
 )
 
 
-def _period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
-    """The CP-1 T4.14 rows by `period_id`, as `cpl10._period_register` reads them: a repeated
+def period_register(facts: Iterable[Fact]) -> dict[str, dict[str, Fact]]:
+    """The CP-1 T4.14 rows by `period_id`, as CP-L10 reads them: a repeated
     field of one row, a row without a known `period_id` and two rows sharing one `period_id` all
     refuse."""
     rows: dict[str, dict[str, Fact]] = {}
@@ -164,7 +165,7 @@ def _check_currency(
         raise PeriodRefused(
             f"run.reporting_currency {wanted}, but CP-1 reports {', '.join(sorted(reported))}"
         )
-    return _currency(wanted)
+    return currency_of(wanted)
 
 
 def _row_basis(wanted: str, year: str, period_id: str, row: Mapping[str, Fact]) -> None:
@@ -207,11 +208,20 @@ def currency_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Cur
     """The run's currency, checked against CP-1's T4.14 `currency`; any base kind, blank included."""
     if context is None:
         return DEFAULT_CURRENCY
-    register = _period_register(cp1_facts)
+    register = period_register(cp1_facts)
     currency = _check_currency(context, register)
     for period_id, row in register.items():
         _check_unit(period_id, row)
     return currency
+
+
+def run_currency(context: RunContext | None, cp1_facts: Iterable[Fact]) -> CurrencyBasis:
+    """The run's currency alone, for any base kind (ruling P8T7-R3): a blank base is `run_basis`'s
+    (ruling P8-R3), every other base is `currency_basis`'s."""
+    if context is not None and not context.run.current_period:
+        basis = run_basis(context, cp1_facts)
+        return CurrencyBasis(basis.currency, basis.money_unit)
+    return currency_basis(context, cp1_facts)
 
 
 def _row_dates(period_id: str, row: Mapping[str, Fact]) -> tuple[date, date]:
@@ -247,7 +257,7 @@ def period_basis(context: RunContext | None, cp1_facts: Iterable[Fact]) -> Perio
             f"run.current_period {context.run.current_period}: forecast years need an fy or q4 base"
         )
     year = base[2]
-    register = _period_register(cp1_facts)
+    register = period_register(cp1_facts)
     currency = _check_currency(context, register)
     fy_id, q4_id = _one(register, f"fy-{year}"), _one(register, f"q4-{year}")
     for period_id in (fy_id, q4_id):

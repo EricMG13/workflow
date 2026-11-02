@@ -33,7 +33,7 @@ KEY: dict[str, Any] = json.loads((ROOT / "cases/periods-currency-owner/expected.
 
 
 def test_cpl10_reads_the_register_with_the_period_basis_reader() -> None:
-    assert cpl10._period_register is period_basis._period_register
+    assert cpl10.period_register is period_basis.period_register
 
 
 # --- the report view's chart cell takes the run's currency (ruling P8-R2, B31a) ------------------
@@ -736,7 +736,7 @@ def _l10_upstream(currency: str = "EUR") -> cpl10.Upstream:
     )
     return cpl10.RunUpstream(
         **{f: getattr(base, f) for f in base.__dataclass_fields__},
-        run_currency=period_basis._currency(currency),
+        run_currency=period_basis.currency_of(currency),
     )
 
 

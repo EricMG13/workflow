@@ -69,10 +69,9 @@ from deploy_workflow.owners.period_basis import (
     DEFAULT_CURRENCY,
     CurrencyBasis,
     PeriodRefused,
-    currency_basis,
-    run_basis,
+    period_register,
+    run_currency,
 )
-from deploy_workflow.owners.period_basis import _period_register as period_register
 from deploy_workflow.workflow import WorkflowError
 
 MODULE_ID = "CP-L10"
@@ -336,9 +335,8 @@ class ContextPeriodNotQuarter(UpstreamError):
     """The context's current period is not a quarter: the read offers no quarter list."""
 
 
-# The CP-1 T4.14 rows by `period_id`: one reader for the owners (Phase 8 Task 1, P8-P17). It raises
+# `period_register` is the one T4.14 reader for the owners (Phase 8 Task 1, P8-P17). It raises
 # `PeriodRefused`; `context_quarters` reports that as an `UpstreamError`.
-_period_register = period_register
 
 
 def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarter, ...]:
@@ -350,7 +348,7 @@ def context_quarters(current_period: str, facts: Iterable[Fact]) -> tuple[Quarte
     except ValueError as error:
         raise ContextPeriodNotQuarter("context_period_not_quarter") from error
     try:
-        rows = _period_register(facts)
+        rows = period_register(facts)
     except PeriodRefused as error:
         raise UpstreamError(str(error)) from error
     quarters = []
@@ -1354,13 +1352,14 @@ def _run_currency(context: RunContext | None, facts: Iterable[Fact]) -> Currency
     pins have such a register); under any other currency the same register is refused."""
     if context is None:
         return DEFAULT_CURRENCY
-    if not context.run.current_period:
-        basis = run_basis(context, facts)
-        return CurrencyBasis(basis.currency, basis.money_unit)
     stated = any(f.table_id == "T4.14" and f.field == "currency" for f in facts)
-    if not stated and context.run.reporting_currency == DEFAULT_CURRENCY.currency:
+    if (
+        context.run.current_period
+        and not stated
+        and context.run.reporting_currency == DEFAULT_CURRENCY.currency
+    ):
         return DEFAULT_CURRENCY
-    return currency_basis(context, facts)
+    return run_currency(context, facts)
 
 
 def cpl10_upstream(store: Execution, attempt: Attempt) -> Upstream:

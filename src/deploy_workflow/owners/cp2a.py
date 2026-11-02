@@ -71,7 +71,7 @@ from deploy_workflow.context import ContextRefused, context_facts
 from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, pin_label_forged
-from deploy_workflow.owners.period_basis import PeriodRefused, currency_basis, run_basis
+from deploy_workflow.owners.period_basis import PeriodRefused, currency_of, run_currency
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-2A"
@@ -874,7 +874,7 @@ class _Composer:
     def __init__(self, base: BaseOperands, currency: str = "USD") -> None:
         self.base = base
         self.currency = currency
-        self.money_unit = "US$ m" if currency == "USD" else f"{currency} m"
+        self.money_unit = currency_of(currency).money_unit
         self.facts: list[Fact] = []
         self.rows: dict[str, list[TableRow]] = {t: [] for t in TABLES}
 
@@ -1583,13 +1583,10 @@ def _stated_currency(cp1: Iterable[Fact]) -> str:
 
 def _run_currency(pack: PreparedPack, cp1: Iterable[Fact]) -> str:
     """The run's reporting currency: `USD` without a run context, else the context's, checked
-    against the CP-1 T4.14 register (`currency_basis`, whatever the base kind). A context with a
-    blank base is `run_basis`'s (ruling P8-R3: USD keeps the frozen 2025 default, any other
-    currency refuses). Raises `PeriodRefused` or `ContextRefused`."""
-    context = context_facts(pack)
-    if context is not None and not context.run.current_period:
-        return run_basis(context, cp1).currency
-    return currency_basis(context, cp1).currency
+    against the CP-1 T4.14 register (`run_currency`, whatever the base kind; a blank base keeps
+    the frozen USD default and refuses any other currency, ruling P8-R3). Raises `PeriodRefused`
+    or `ContextRefused`."""
+    return run_currency(context_facts(pack), cp1).currency
 
 
 def _inputs(

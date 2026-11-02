@@ -84,3 +84,9 @@ def test_a_705k_sol_request_bounds_under_the_context_with_the_keys_ratio_and_not
 
 def test_the_overall_timeout_is_the_keys() -> None:
     assert transport.OVERALL_S == _key()["overall_s"]
+
+
+def test_only_the_configs_the_key_names_set_a_context_limit() -> None:
+    """Guards the key's context claim: ContextTooLong can fire only where a price sets one."""
+    limited = {c for c, price in PRICES.items() if price.max_input_tokens is not None}
+    assert limited == set(_key()["context_too_long_configs"])

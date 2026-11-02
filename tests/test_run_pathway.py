@@ -17,12 +17,13 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, NoReturn
 
+import o2_case
 import pytest
 
 from deploy_vii.execution import Execution
 from deploy_vii.live.prompts import PromptError
 from deploy_vii.preparation import prepare
-from deploy_workflow import prompts
+from deploy_workflow import host, prompts
 from deploy_workflow import run_inputs as run_inputs_module
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model import adapter as adapter_module
@@ -39,7 +40,6 @@ from deploy_workflow.model.loop import PromptFor, ToolLoop
 from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
-from deploy_workflow.prompts import tools as prompts_tools
 from deploy_workflow.run_inputs import (
     BadCap,
     CaseSource,
@@ -213,50 +213,82 @@ def test_the_default_composer_is_the_o6_composer(
     assert sent[0].messages == real_compose(composed[0])  # what the model got is O6's output
 
 
-def test_the_default_run_offers_the_tools_the_step_can_use(
-    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+def _o2_run(
+    tmp_path: Path, answers: tuple[str, ...], factory: Any, seen: list[Any]
+) -> tuple[Any, Path]:
+    """The O2 synthetic world, scripted for ``answers``; every request the adapter gets is kept."""
+    root = tmp_path / "o2"
+    (root / "recordings").mkdir(parents=True)
+    (root / "check").mkdir()
+    checked, run_dir = o2_case._prepare(root, recorded_adapter(o2_case.MODEL, root / "check"))
+
+    class Spying(o2_case.ScriptAdapter):
+        def complete(self, request: Any, **kw: Any) -> Any:
+            seen.append(request)
+            return super().complete(request, **kw)
+
+    script = Spying(root / "recordings", answers, run_dir / "execution", o2_case.MODEL)
+    return rp._run_pathway(checked, run_dir, script, factory), run_dir
+
+
+@pytest.mark.parametrize("composer", ["default", "caller"])
+def test_the_tools_the_adapter_receives_are_the_ones_each_step_can_use(
+    tmp_path: Path, composer: str
 ) -> None:
-    offered: list[tuple[str, tuple[str, ...]]] = []
-    real = prompts_tools.tools_for
-
-    def spy(binding: Any, spec: Any) -> Any:
-        tools = real(binding, spec)
-        offered.append((binding.step_id, tuple(t.name for t in tools)))
-        return tools
-
-    monkeypatch.setattr(rp, "tools_for", spy)
-    run_pathway(**args)
-    assert offered, "no step was offered tools"
+    seen: list[Any] = []
+    factory = None if composer == "default" else o2_case.test_prompt_for
+    _o2_run(
+        tmp_path, ("source_readiness", "source_context", "financials", "narrative"), factory, seen
+    )
     specs = {s.step_id: s for o in OWNER_SPECS.values() for s in o.steps}
-    for step_id, names in offered:
+    reached: set[str] = set()
+    for request in seen:
+        step_id = [t.name for t in request.tools if t.name.startswith("submit_")][-1][7:]
         spec = specs[step_id]
+        reached.add(step_id)
         expected = (
             *(("search_pack", "read_pages") if spec.sources else ()),
             *(("extract_statements",) if spec.extract else ()),
             f"submit_{step_id}",
+            *(("read_inputs",) if spec.inputs != "none" else ()),
         )
-        assert names == expected
+        assert tuple(t.name for t in request.tools) == expected, step_id
+    assert any(specs[s].sources for s in reached)
+    assert any(not specs[s].sources for s in reached)
 
 
-def test_the_default_composer_and_the_loop_share_one_execution(
-    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+def test_a_step_sees_the_head_settled_earlier_in_the_same_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    stores: list[Execution] = []
-    real_factory = prompts.prompt_factory
+    composed: list[Any] = []
+    stores: list[tuple[str, Path]] = []
+    sent: list[Any] = []
+    real_compose, real_sources = prompts.compose, host.session_sources
 
-    def factory(pack: Any, store: Execution, **kw: Any) -> Any:
-        stores.append(store)
-        return real_factory(pack, store, **kw)
+    def spy_compose(request: Any) -> Any:
+        out = real_compose(request)
+        composed.append((request, out))
+        return out
 
-    class Spy(ToolLoop):
-        def __init__(self, *a: Any, **k: Any) -> None:
-            super().__init__(*a, **k)
-            stores.append(k["execution"])
+    def spy_sources(store: Execution, ticket_id: str, step_id: str) -> Any:
+        stores.append((step_id, store.directory))
+        return real_sources(store, ticket_id, step_id)
 
-    monkeypatch.setattr(rp, "prompt_factory", factory)
-    monkeypatch.setattr(rp, "ToolLoop", Spy)
-    run_pathway(**args)
-    assert len(stores) == 2 and stores[0] is stores[1]
+    monkeypatch.setattr(prompts, "compose", spy_compose)
+    monkeypatch.setattr(host, "session_sources", spy_sources)
+    _, run_dir = _o2_run(tmp_path, ("source_readiness",), None, sent)
+    execution = run_dir / "execution"
+    request, out = next((r, o) for r, o in composed if r.step_id == "source_context")
+    assert {d for s, d in stores if s == "source_context"} == {execution}
+    snap = Execution(execution).read()
+    head = next(h for h in snap.heads if h.module_id == "CP-0")
+    attempt = next(a for a in snap.attempts if a.module_id == "CP-1")
+    assert {i.input_id: i.sha256 for i in attempt.inputs}["CP-0"] == head.result_sha256
+    fresh = real_sources(Execution(execution), attempt.ticket_id, "source_context")
+    assert request.readable is not None and request.readable == fresh
+    assert all(src in out[0].text or f"id={src}" in out[1].text for src in fresh)
+    first = next(q for q in sent if any(t.name == "submit_source_context" for t in q.tools))
+    assert first.messages == out
 
 
 def test_a_prompt_error_stops_the_run_and_sends_nothing(args: dict[str, Any]) -> None:

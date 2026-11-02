@@ -2138,12 +2138,17 @@ def _cp1_operands(
     return operands, facts
 
 
-def _check_amount_currency(operands: Cp1Operands, basis: PeriodBasis) -> None:
-    """The CP-1 money operands are in the run's currency (cp3c's rule, P8-P11); refuse at entry."""
-    stated = {f.currency for f in operands.ordered() if f.unit == "MILLIONS"}
+def _check_money_currency(figures: Iterable[tuple[str, str | None]], basis: PeriodBasis) -> None:
+    """The CP-1 money figures, as (unit, currency), are in the run's currency (cp3c's rule,
+    P8-P11); refuse at entry."""
+    stated = {currency for unit, currency in figures if unit == "MILLIONS"}
     if stated != {basis.currency}:
         found = ", ".join(sorted(str(c) for c in stated))
         raise PeriodRefused(f"run.reporting_currency {basis.currency}, but CP-1 reports {found}")
+
+
+def _check_amount_currency(operands: Cp1Operands, basis: PeriodBasis) -> None:
+    _check_money_currency(((f.unit, f.currency) for f in operands.ordered()), basis)
 
 
 def _basis_issue(error: ContextRefused | PeriodRefused) -> str:
@@ -2400,9 +2405,13 @@ def _cp1_fact_rows(facts: Mapping[str, Fact]) -> list[dict[str, object]]:
 
 def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
     """The run's basis for the view, or the issue line `_checked` returns for the same refusal
-    (P8-R5: `read_inputs` never raises on a context, period or currency refusal)."""
+    (P8-R5: `read_inputs` never raises on a context, period or currency refusal, the CP-1 amount
+    currency included)."""
     try:
-        return run_basis(context_facts(pack), upstream.cp1.facts), None
+        basis = run_basis(context_facts(pack), upstream.cp1.facts)
+        facts = _cp1_facts(upstream.cp1, basis)
+        _check_money_currency(((f.unit or "", f.currency) for f in facts.values()), basis)
+        return basis, None
     except (ContextRefused, PeriodRefused) as error:
         return None, _basis_issue(error)
 

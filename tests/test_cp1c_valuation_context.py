@@ -8,8 +8,10 @@ checked against the context file's own bytes) or a limitation comes from the key
 """
 
 import json
+from collections.abc import Callable
 from dataclasses import replace
 from decimal import Decimal
+from fractions import Fraction
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -556,3 +558,100 @@ def test_valuation_to_show() -> None:
         ({"peer_source": "user_comps", "basis": "public_comps"}, True),
     ):
         assert cp1c.shows_valuation(valuation.model_copy(update=update)) is shows, update
+
+
+# --- survivors of the Phase 7 Task 3 review (L3): derived contexts, expected from the key's rules ----------
+#
+# The key's rules (`expected.json#rules`): outlier = absolute relative deviation from the set median
+# strictly above 0.5, flag only; a median needs 3 admitted records; `t1c10_rows` shows a set's row
+# for its basis or when that set has records; the thin line stands under five admitted records.
+
+
+def derived_result(
+    name: str, edit: Callable[[dict[str, Any]], None], ebitda: Fact | None = None
+) -> cp1c.PeerBenchmarkResult:
+    """CP-1C over the pinned context `name` edited by `edit`, read as the oracle's builder writes it."""
+    document = json.loads(context_bytes(name))
+    edit(document)
+    raw = (json.dumps(document, indent=2, ensure_ascii=False) + "\n").encode()
+    inputs = replace(
+        stage1.inputs(base_case(name)),
+        context=load_context(raw),
+        context_source=context_source(name, raw),
+        cp1_ebitda=cp1_ebitda() if ebitda is None else ebitda,
+    )
+    return cp1c.compute(inputs)
+
+
+def thin_line() -> str:
+    """The key's thin-universe line, as auto-public (3 admitted) carries it."""
+    line = case_of("auto-public")["cp1c"]["own_limitations_new"][-1]
+    assert "fewer than five" in line
+    return str(line)
+
+
+def admit_all_peers(document: dict[str, Any], *, spare_last: bool = False) -> None:
+    """auto-public's peers D (stale) and E (EV zero) made admissible: 5 admitted, or 4 sparing E."""
+    peers = document["valuation"]["peers"]
+    peers[3]["as_of"] = "2025-12-01"
+    if not spare_last:
+        peers[4]["ev_m"] = "500"
+
+
+def test_thin_line_stands_below_five_admitted_and_not_at_five() -> None:
+    """M02: THIN_UNIVERSE is 5, so the line is for 3 and 4 admitted and absent at 5."""
+    assert cp1c.THIN_UNIVERSE == 5
+    five = derived_result("auto-public", admit_all_peers)
+    four = derived_result("auto-public", lambda d: admit_all_peers(d, spare_last=True))
+    assert by_id(five)["T1C.10.public_comps.n_admitted"].fact.amount == 5
+    assert by_id(four)["T1C.10.public_comps.n_admitted"].fact.amount == 4
+    assert thin_line() not in five.limitations
+    assert thin_line() in four.limitations
+    assert thin_line() in result_of("auto-public").limitations  # the key's own 3 admitted
+
+
+@pytest.mark.parametrize(
+    ("ev", "flag", "outliers"),
+    [("630", "Within range", 0), ("631", "Outlier", 1), ("3000", "Outlier", 1)],
+)
+def test_the_flag_follows_the_rule_strictly_above_one_half(
+    ev: str, flag: str, outliers: int
+) -> None:
+    """M11: peers A, B, C admitted with multiples EV/60, 6 and 7 (median 7 when A is above 7): A at
+    10.5 is exactly one half above the median (within), above that it is an outlier."""
+
+    def edit(document: dict[str, Any]) -> None:
+        document["valuation"]["peers"][0]["ev_m"] = ev
+
+    got = by_id(derived_result("auto-public", edit))
+    # independent model of the rule: multiples 6 and 7 are B and C (330/55, 700/100)
+    median = Fraction(7)
+    assert (abs(Fraction(int(ev), 60) - median) / median > Fraction(1, 2)) == (flag == "Outlier")
+    assert got["T1C.9.e01.flag"].fact.text == flag
+    assert got["T1C.9.e02.flag"].fact.text == "Within range"
+    assert got["T1C.10.public_comps.outliers"].fact.amount == outliers
+
+
+def test_public_comps_present_under_precedents_get_their_row() -> None:
+    """M08 (`t1c10_rows`: public_comps "when peer records exist"): the `precedents` basis with peer
+    records still shows the public comps row. (The mirror, precedents under another basis, cannot
+    be written: the context form refuses precedents unless the basis is precedents or blend.)"""
+    peers = json.loads(context_bytes("auto-public"))["valuation"]["peers"]
+
+    def with_peers(document: dict[str, Any]) -> None:
+        document["valuation"]["peer_source"] = "user_comps"
+        document["valuation"]["peers"] = peers
+
+    got = by_id(derived_result("precedents", with_peers))
+    assert got["T1C.10.public_comps.n_total"].fact.amount == len(peers)
+
+
+def test_cp1_ebitda_without_a_period_is_a_gap() -> None:
+    """M05: the EBITDA is usable only with an LTM period; without one it is the stated gap."""
+    got = by_id(
+        cp1c.compute(inputs_of("issuer-trading", cp1_ebitda().model_copy(update={"period": None})))
+    )
+    issuer = got["T1C.11.selection.issuer_ebitda"].fact
+    assert (issuer.status, issuer.amount) == ("missing", None)
+    assert issuer.limitation == "CP-1 LTM adjusted EBITDA is not a known positive amount"
+    assert got["T1C.11.selection.implied_ev"].fact.status == "missing"

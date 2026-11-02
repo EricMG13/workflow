@@ -128,15 +128,38 @@ def test_gate_refuses_a_directory(tmp_path: Path) -> None:
         check_live_gate(spec_for("sol-medium"), root, rulings_root=root)
 
 
-def test_every_real_ruling_refuses_every_config() -> None:
-    files = sorted((REPO / "docs" / "rulings").rglob("*"))
+# The answer key: the only real ruling that lifts the pause, and the configs it lifts. A new
+# lifting ruling fails the test below until someone updates this on purpose.
+LIFTING = {
+    "2026-11-02-model-testing-live.md": frozenset(
+        {"sol-medium", "sol-high", "opus-medium", "deepseek-max"}
+    )
+}
+
+
+def test_only_the_model_testing_ruling_lifts_the_pause() -> None:
+    root = REPO / "docs" / "rulings"
+    files = sorted(p for p in root.rglob("*") if p.is_file())
     assert files, "the real docs/rulings must exist"
+    assert set(LIFTING) <= {p.name for p in files}, "a pinned lifting ruling is missing"
     for path in files:
-        if not path.is_file():
-            continue
+        lifted = LIFTING.get(path.name, frozenset())
         for config_id in CONFIG_MODELS:
-            with pytest.raises(LivePauseInForce):
-                check_live_gate(spec_for(config_id), path)
+            if config_id in lifted:
+                result = check_live_gate(spec_for(config_id), path)
+                assert result.path == path.resolve()
+                assert str(result.date) == "2026-11-02"
+            else:
+                with pytest.raises(LivePauseInForce):
+                    check_live_gate(spec_for(config_id), path)
+    for name, lifted in LIFTING.items():
+        path = root / name
+        lines = [
+            x for x in path.read_text(encoding="utf-8").splitlines() if x.startswith("configs:")
+        ]
+        assert len(lines) == 1, "the ruling must have a single configs: line"
+        tokens = lines[0].split(":", 1)[1].split()
+        assert set(tokens) == lifted and len(tokens) == len(lifted)
 
 
 # ------------------------------------------------------------------ F11 trap

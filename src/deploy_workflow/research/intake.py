@@ -105,20 +105,20 @@ def _text_field(row: Mapping[str, Any], key: str) -> str:
     return value
 
 
-def _locator_text(row: Mapping[str, Any]) -> str:
-    """The row's locator, which the dossier shows in a table cell and a fence header: a text the
-    cell rule or the block-opener rule refuses is refused here, before any fetch (S3 I-3). The
-    reason names no locator text."""
+def _cell_text(row: Mapping[str, Any], key: str) -> str:
+    """The row's ``key`` text (``locator`` or ``family``), which the dossier shows in a table cell: a
+    text the cell rule or the block-opener rule refuses is refused here, before any fetch (S3 I-3,
+    O7-R69). The reason names no text."""
     from deploy_workflow.research.dossier import breaks_a_table_cell  # dossier imports this module
 
-    text = _text_field(row, "locator")
+    text = _text_field(row, key)
     if breaks_a_table_cell(text):
         raise IntakeError(
-            "manifest row locator contains a pipe character, a line feed or a carriage return, "
+            f"manifest row {key} contains a pipe character, a line feed or a carriage return, "
             "which a dossier table cell cannot hold"
         )
     if "<<<" in text:
-        raise IntakeError("manifest row locator contains <<<, which a dossier block cannot show")
+        raise IntakeError(f"manifest row {key} contains <<<, which a dossier block cannot show")
     return text
 
 
@@ -155,9 +155,9 @@ def parse_rows(rows: Sequence[Mapping[str, Any]]) -> tuple[ManifestRow, ...]:
             ManifestRow(
                 path=None if path is None else _text_field(row, "path"),
                 url=url_text,
-                family=_text_field(row, "family"),
+                family=_cell_text(row, "family"),
                 published=_published(row.get("published")),
-                locator=_locator_text(row),
+                locator=_cell_text(row, "locator"),
                 source_id=None if row.get("source_id") is None else str(row["source_id"]),
             )
         )

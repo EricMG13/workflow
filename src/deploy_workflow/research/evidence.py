@@ -143,12 +143,30 @@ def read_evidence(path: Path) -> tuple[Mapping[str, Any], ...]:
 
 def earlier_retrieved(run_dir: Path) -> dict[str, str]:
     """``{sha256: retrieved}`` of an earlier run's ``research/evidence.json`` (O7-R67): what a rerun
-    keeps for evidence whose bytes are unchanged. ``{}`` when the run has no such record (a run
-    without CP-DR keeps nothing); a record that is there and unreadable raises
-    ``EvidenceRecordInvalid`` rather than falling back to the clock."""
-    path = run_dir / RESEARCH_DIR / EVIDENCE_FILE
-    if not path.is_file():
+    keeps for evidence whose bytes are unchanged. The record is authenticated first (O7-R69 L2): the
+    earlier run must hold a settled CP-DR head (``accepted`` or ``restricted``) in its
+    ``execution/``, and the record must be the bytes that head bound (``cpdr.check_records``;
+    ``WorkflowError('identity_mismatch')`` otherwise, before anything is written). With no
+    ``execution/``, no readable journal or no settled CP-DR head, nothing is kept and every item
+    takes the clock (``check_replay`` refuses such an earlier run itself). A record that is there and
+    unreadable raises ``EvidenceRecordInvalid`` rather than falling back to the clock."""
+    # Imported here: this module is a leaf that the owners import.
+    from deploy_vii.execution import Execution
+    from deploy_workflow.owners import cpdr
+
+    execution = run_dir / "execution"
+    if not execution.is_dir():
         return {}
+    store = Execution(execution)
+    try:
+        heads = store.read().heads
+    except (OSError, ValueError):  # unreadable journal: check_replay refuses the rerun itself
+        return {}
+    head = next((h for h in heads if h.module_id == cpdr.MODULE_ID), None)
+    if head is None or head.status not in ("accepted", "restricted"):
+        return {}
+    cpdr.check_records(store, store.head_module(head))
+    path = run_dir / RESEARCH_DIR / EVIDENCE_FILE
     return {str(row["sha256"]): str(row["retrieved"]) for row in read_evidence(path)}
 
 

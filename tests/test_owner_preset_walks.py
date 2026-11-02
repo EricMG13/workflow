@@ -82,10 +82,16 @@ EXPECTED: dict[str, dict[str, Any]] = {
         "cp5_covered": False,
     },
     "distressed_restructuring": {
-        "sources": (*BASE, "business", "legal-covenants", "ratings"),
+        "sources": (*BASE, "business", "legal-covenants", "peers", "ratings"),
         "first_gap": "CP-0",
         "first_gap_basis": "measured",
-        "misfits": ("CP-1:readiness", "CP-1A:consumers", "CP-5:inputs"),
+        "misfits": (
+            "CP-1:readiness",
+            "CP-1A:consumers",
+            "CP-2:inputs",
+            "CP-4C:inputs",
+            "CP-5:inputs",
+        ),
         "cp5_covered": False,
     },
     "portfolio_decision": {

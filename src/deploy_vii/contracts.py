@@ -65,7 +65,8 @@ _PRESETS: dict[PathwayId, tuple[str, ...]] = {
         "CP-5",
     ),
     "distressed_restructuring": (
-        *("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4", "CP-4C", "CP-5"),
+        *("CP-0", "CP-1", "CP-1A", "CP-1C", "CP-2", "CP-2A", "CP-2G", "CP-2H", "CP-4", "CP-4C"),
+        "CP-5",
     ),
     "portfolio_decision": ("CP-0", "CP-1", "CP-MODEL", "CP-2", "CP-3", "CP-5", "CP-6", "CP-8"),
 }

@@ -77,6 +77,9 @@ from deploy_workflow.workflow import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE = "CP-1C"
+# Phase 7 Task 1 adds three Evidence tables to the registry and the bindings; the frozen oracle
+# (`cases/cp1c-owner`) still holds eight, so the two sets are asserted separately.
+EV_TABLES = ("T1C.9", "T1C.10", "T1C.11")
 STEP = "peer_benchmark"
 CASES = stage1.CASES
 SYNTHETIC = "Synthetic case; not real issuer qualification"
@@ -1224,13 +1227,15 @@ def test_bindings_place_every_fp03_table_exactly_once(case: str) -> None:
     assert [(e.fact_coord.table_id, e.label) for e in cp1c_map.entries if e.block_id == BLOCK] == [
         (t["table_id"], t["label"]) for t in tabs
     ]
-    assert [t for t, e in by_table.items() if e.block_id == "evidence"] == fp03[
-        "evidence_rail_tables"
-    ]
+    assert [t for t, e in by_table.items() if e.block_id == "evidence" and t not in EV_TABLES] == (
+        fp03["evidence_rail_tables"]
+    )
+    assert [t for t, e in by_table.items() if t in EV_TABLES] == list(EV_TABLES)
+    assert all(by_table[t].block_id == "evidence" for t in EV_TABLES)
     assert [t for t, e in by_table.items() if e.block_id == "limitations"] == fp03[
         "limitations_rail_tables"
     ]
-    assert set(by_table) == {t.table_id for t in module.tables}
+    assert set(by_table) - set(EV_TABLES) == {t.table_id for t in module.tables}
     assert all(e.cell_slot.startswith("cp1c-") for e in cp1c_map.entries)
     assert all(e.fact_coord.module_id == MODULE for e in cp1c_map.entries)
 
@@ -1245,6 +1250,9 @@ def test_binding_unit_class_is_the_one_class_its_table_displays(case: str) -> No
     cp1c_map = next(m for m in SHIPPED_MAPS if m.module_id == MODULE)
     for entry in cp1c_map.entries:
         assert entry.fact_coord.table_id is not None
+        if entry.fact_coord.table_id in EV_TABLES:  # no frozen case holds them: text by design
+            assert entry.unit_class == "text", entry.fact_coord.table_id
+            continue
         table = tables[entry.fact_coord.table_id]
         shown = {_unit_class(facts[f].unit) for row in table.rows for f in row.fact_ids}
         want = next(iter(shown)) if len(shown) == 1 and None not in shown else "text"
@@ -1388,15 +1396,16 @@ def test_reader_refuses_a_head_without_a_pinned_fact(fact_id: str, tmp_path: Pat
 
 
 def test_d3_stays_open_and_no_consumer_reads_cp1c() -> None:
-    """Lease D3: no consumer exists. The shipped CP-3 and CP-6 cores do not read CP-1C, no other
-    owner core calls the reader, and the oracle's consumption status is open."""
+    """Lease D3: no consumer exists. The shipped CP-3 and CP-6 cores do not read CP-1C, no owner
+    core but CP-1C itself and, from Phase 7 (lease D3 amended), CP-4C calls the reader, and the
+    oracle's consumption status is open."""
     from deploy_vii import cp3_relative_value, cp6_committee
 
     assert MODULE not in cp3_relative_value.READ_OPTIONAL
     assert MODULE not in cp6_committee.READ_OPTIONAL
     owners_dir = ROOT / "src" / "deploy_workflow" / "owners"
     readers = [p.name for p in owners_dir.glob("*.py") if "cp1c_reader" in p.read_text()]
-    assert readers == ["cp1c.py"]
+    assert "cp1c.py" in readers and set(readers) <= {"cp1c.py", "cp4c.py"}  # D3 (Phase 7)
     assert stage1.expected()["execution"]["consumption"]["status"].startswith("open")
 
 
@@ -1406,12 +1415,16 @@ def test_d3_stays_open_and_no_consumer_reads_cp1c() -> None:
 def test_d8_t1c_table_ids_are_registered_once_and_every_case_validates() -> None:
     ids = [t for m in registry.modules() for t in m.table_ids]
     mine = next(m for m in registry.modules() if m.module_id == MODULE).table_ids
-    assert sorted(mine) == stage1.expected()["d8_table_ids"]["proposed_ids"]
+    assert (
+        sorted(t for t in mine if t not in EV_TABLES)
+        == (stage1.expected()["d8_table_ids"]["proposed_ids"])
+    )
+    assert mine[-4:] == ("T1C.8", *EV_TABLES)  # the three Phase 7 EV tables follow the frozen eight
     assert all(ids.count(t) == 1 for t in mine)
     for case in CASES:
         module = _module(case)
         validate_tables(module.tables, module.facts)  # raises on a layout mismatch
-        assert {t.table_id for t in module.tables} <= set(mine)
+        assert {t.table_id for t in module.tables} <= set(mine) - set(EV_TABLES)
 
 
 # --- the run driver's non-promotion helpers (`tests/cp1c_runs.py`; its runs are Stage 5) ---------

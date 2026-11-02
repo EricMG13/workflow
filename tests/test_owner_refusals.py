@@ -26,7 +26,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from deploy_vii.contracts import Run
+from deploy_vii.contracts import PATHWAY_MODULES, Run
 from deploy_vii.execution import (
     Command,
     ExecutionSnapshot,
@@ -145,6 +145,7 @@ def _snapshot(
         as_of=date(2026, 1, 10),
         case_kind="synthetic",
         pathway="distressed_restructuring",
+        requested_modules=DISTRESSED,  # the frozen cp4c-owner plan; the preset adds CP-1C (Phase 7)
     )
     commands = tuple(Command(row_id=m, text=f"Run {m}") for m in runnable)
     heads = tuple(
@@ -194,6 +195,21 @@ def test_missing_inputs_are_in_plan_order_not_alphabetical() -> None:
     before = _snapshot(("CP-0",), DISTRESSED)
     error = _error(before, "CP-4C")
     assert owner._missing_inputs(before, "CP-4C", error) == (("CP-1", "CP-2A", "CP-4", "CP-2G"), ())
+
+
+def test_missing_inputs_include_cp1c_when_the_preset_default_plans_it() -> None:
+    """Phase 7: the distressed preset plans CP-1C (after CP-1A, before CP-2A). The same CP-4C
+    refusal as above, over the preset's own request, names CP-1C in plan order."""
+    before = _snapshot(("CP-0",), DISTRESSED)
+    run = before.run.model_copy(
+        update={"requested_modules": PATHWAY_MODULES["distressed_restructuring"]}
+    )
+    before = before.model_copy(update={"run": run})
+    error = _error(before, "CP-4C")
+    assert owner._missing_inputs(before, "CP-4C", error) == (
+        ("CP-1", "CP-1C", "CP-2A", "CP-4", "CP-2G"),
+        (),
+    )
 
 
 def test_missing_inputs_names_a_blocked_producer_without_a_restricted_edge() -> None:

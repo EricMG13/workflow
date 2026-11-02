@@ -4,9 +4,10 @@ FP 03 ("Relative Value") gives CP-1C ``peer-positioning`` (``docs/CP1C-OWNER-LEA
 peer universe (T1C.1), the universe totals (T1C.8), the normalised metrics (T1C.3), the peer
 statistics (T1C.4) and the outlier register (T1C.5) are its tabs in that order. The source figures
 (T1C.2) and the definition alignment and tie-out (T1C.6) go to Evidence; the gaps ledger (T1C.7)
-to Limitations. A table that mixes units (percent, multiple, pp, counts, text) is bound as
-``text``; every cell is still spelled from its own fact. The range strip (Fig. RV.3) is drawn by the
-CP-1C figure producer in report_view and binds no table. Data only: no
+to Limitations. The three EV/EBITDA tables (T1C.9 admission, T1C.10 statistics, T1C.11 basis
+selection and implied EV) are Evidence, as text. A table that mixes units (percent, multiple, pp,
+counts, text) is bound as ``text``; every cell is still spelled from its own fact. The range strip
+(Fig. RV.3) is drawn by the CP-1C figure producer in report_view and binds no table. Data only: no
 arithmetic, and no import of ``deploy_workflow``. Slots carry a ``cp1c-`` prefix: a slot is unique
 across all shipped maps.
 """
@@ -41,6 +42,10 @@ CP1C = BindingMap(
         # Evidence.
         _bind("T1C.2", "evidence", "Peer source figures", "amount"),
         _bind("T1C.6", "evidence", "Definition alignment and tie-out"),
+        # The EV/EBITDA valuation context (Phase 7): admission, statistics, basis selection.
+        _bind("T1C.9", "evidence", "EV/EBITDA admission"),
+        _bind("T1C.10", "evidence", "EV/EBITDA peer statistics"),
+        _bind("T1C.11", "evidence", "EV/EBITDA basis selection and implied EV"),
         # Limitations.
         _bind("T1C.7", "limitations", "CP-1C gaps ledger"),
     ),

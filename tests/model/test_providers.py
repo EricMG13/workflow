@@ -1077,10 +1077,10 @@ def test_decoded_tool_arguments_are_guarded_when_a_later_item_exits_early(provid
     assert isinstance(result, ProviderError) and result.error_class == "KeyReflected"
 
 
-def test_openai_body_omits_prompt_cache_options_so_the_default_30m_tier_prices_writes() -> None:
-    """cases/pricing/openai-sol-cache-write.json#sol/default_ttl_when_prompt_cache_options_omitted
-    holds only while the request omits the key; the table prices the 30m write rate."""
-    key = json.loads(KEY_FILE.read_text(encoding="utf-8"))["sol"]
-    assert key["default_ttl_when_prompt_cache_options_omitted"] == key["write_tier_priced"]
+def test_openai_body_pins_prompt_cache_options_to_the_priced_30m_tier() -> None:
+    """The request sends the cache option the key pins, and its ttl is the tier the table prices
+    (the key's #request_prompt_cache_options and #sol/write_tier_priced)."""
+    key = json.loads(KEY_FILE.read_text(encoding="utf-8"))
     body = _body(build(SOL, _request(), KEY))
-    assert "prompt_cache_options" not in body
+    assert body["prompt_cache_options"] == key["request_prompt_cache_options"]
+    assert body["prompt_cache_options"]["ttl"] == key["sol"]["write_tier_priced"]

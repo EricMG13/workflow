@@ -389,6 +389,42 @@ def test_an_edited_retrieved_time_after_settle_is_identity_mismatch(tmp_path: Pa
     _probe_refuses(store)
 
 
+def _edit_rejected(store: Execution) -> None:
+    path = cpdr.research_dir(store) / "rejected.json"
+    rows = json.loads(path.read_text(encoding="utf-8"))
+    rows.append(
+        {"locator": "https://example.test/x", "family": "other", "published": None, "reason": "r"}
+    )
+    path.write_text(json.dumps(rows), encoding="utf-8")
+
+
+def test_the_cp2_block_and_write_dossier_refuse_an_edited_record(tmp_path: Path) -> None:
+    """O7 end batch 2 (L1): every dossier reader compares the two records with the head's inputs."""
+    store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-2"])
+    _edit_rejected(store)
+    research = cpdr.research_dir(store)
+    attempt = store.begin("CP-2")
+    attempt = next(a for a in store.read().attempts if a.ticket_id == attempt.ticket_id)
+    with pytest.raises(WorkflowError) as block:
+        cpdr.dossier_item(store, attempt, research)
+    assert block.value.code == "identity_mismatch"
+    with pytest.raises(WorkflowError) as written:
+        rp.write_dossier(store, research)
+    assert written.value.code == "identity_mismatch"
+    assert not (research / cpdr.DOSSIER_FILE).exists()
+
+
+def test_a_warm_memo_does_not_hide_a_record_edit(tmp_path: Path) -> None:
+    """O7 end batch 2 (L2): a passing check is memoised, then `rejected.json` is edited; the next
+    `_producer_inputs` still returns False."""
+    store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
+    module = store.head_module(cc.head(store, CPDR))
+    assert host._producer_inputs(store, store.read(), module) is True
+    assert host._SUBMISSION_VERIFIED
+    _edit_rejected(store)
+    assert host._producer_inputs(store, store.read(), module) is False
+
+
 def test_untouched_research_files_still_authenticate_the_head(tmp_path: Path) -> None:
     store = cc.settled_through_cpdr(tmp_path, REQUESTS["CP-1C"])
     head = cc.head(store, CPDR)

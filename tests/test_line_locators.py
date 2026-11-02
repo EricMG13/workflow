@@ -432,3 +432,39 @@ def test_an_unbounded_last_page_on_a_line_source_is_refused_at_once() -> None:  
     with pytest.raises(ToolError, match=re.escape(key["line_refusal"])):
         tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": 10**12})
     assert tools.read == set()
+
+
+def test_a_line_read_of_exactly_the_line_cap_is_allowed() -> None:  # review L2 (mutant A)
+    key = _window()
+    count = key["max_lines_per_line_read"]
+    assert count <= key["max_line_read_bytes"]
+    tools = _window_tools(["a"] * count)
+    body = tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": count})
+    assert body.count("<<<SOURCE ") == count
+    assert len(tools.read) == count
+
+
+def test_a_line_read_totalling_exactly_the_byte_bound_is_allowed() -> None:  # review L2 (mutant C)
+    key = _window()
+    count = key["max_spans_per_read"] + 1
+    bound = key["max_line_read_bytes"]
+    lines = ["b" * (bound // count)] * (count - 1)
+    lines.append("b" * (bound - sum(len(line) for line in lines)))
+    assert count > key["max_spans_per_read"]
+    assert sum(len(line.encode("utf-8")) for line in lines) == bound
+    tools = _window_tools(lines)
+    body = tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": count})
+    assert body.count("<<<SOURCE ") == count
+
+
+def test_the_byte_bound_counts_utf8_bytes_not_characters() -> None:  # review L2 (mutant E)
+    key = _window()
+    count = key["max_spans_per_read"] + 1
+    per_line = key["max_line_read_bytes"] // count  # characters per line, all within the bound
+    lines = ["\u00e9" * per_line] * count  # two UTF-8 bytes per character
+    assert sum(len(line) for line in lines) <= key["max_line_read_bytes"]
+    assert sum(len(line.encode("utf-8")) for line in lines) > key["max_line_read_bytes"]
+    tools = _window_tools(lines)
+    with pytest.raises(ToolError, match=re.escape(key["line_refusal"])):
+        tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": count})
+    assert tools.read == set()

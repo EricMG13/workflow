@@ -1977,8 +1977,13 @@ REPLACEMENT = {
         "_source": "src/deploy_workflow/replay.py:267 (_Earlier.unusable)",
         "note": "over v1 CP-1A has no settled attempt, so it is live; CP-1C and CP-2 are live through CP-1A as well as CP-DR",
     },
-    "rebound": {"CP-0 source_readiness": ["pack_sha256"], "CP-1 financials": ["run_id"]},
-    "rebound_source": "src/deploy_workflow/replay.py:55-60 (REBOUND_FIELDS)",
+    "rebound": {
+        "CP-0 source_readiness": ["pack_sha256"],
+        "CP-1 financials": ["run_id"],
+        "CP-1 readiness": ["gap_ids"],
+    },
+    "rebound_source": "src/deploy_workflow/replay.py:55-60 (REBOUND_FIELDS) and replay.REBOUND_GAP_IDS "
+    "(the CP-1 readiness gap_ids, ruling O7-R62; .superpowers/sdd/2026-10-31-part-b-o7/c4-rootcause.md)",
     "supersedes": RUN_V1,
     "earlier_tree": "no file under the v1 run directory changes (tree hash equal)",
     "pack_changed_text": "the sources or the run differ from the earlier run's: use a fresh run",

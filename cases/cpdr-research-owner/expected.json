@@ -8386,9 +8386,12 @@
    ],
    "CP-1 financials": [
     "run_id"
+   ],
+   "CP-1 readiness": [
+    "gap_ids"
    ]
   },
-  "rebound_source": "src/deploy_workflow/replay.py:55-60 (REBOUND_FIELDS)",
+  "rebound_source": "src/deploy_workflow/replay.py:55-60 (REBOUND_FIELDS) and replay.REBOUND_GAP_IDS (the CP-1 readiness gap_ids, ruling O7-R62; .superpowers/sdd/2026-10-31-part-b-o7/c4-rootcause.md)",
   "supersedes": "cpdr-research-owner-positive",
   "earlier_tree": "no file under the v1 run directory changes (tree hash equal)",
   "pack_changed_text": "the sources or the run differ from the earlier run's: use a fresh run",

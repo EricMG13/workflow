@@ -2360,7 +2360,7 @@
       "imported_sha256": "e52360e409d159aac2943e668962c5afdd218fa3c0b0f22cec717a1f54e618c7",
       "prior_project_sha256": "7d164d11a6bc4589626081fa4d2cc66aad7354e530108b601a0b9ccdad0ec8eb",
       "project_commit": "8b19c74b426f82b6402c72dbf6929ec936ddc370",
-      "sha256": "e0255a7b0ecb5993e1ebc4f1aef11c59f2555d983d2c7c18b16d79fcb91d606f",
+      "sha256": "aea67de94e90d2c5ce513c5898d9b7afdd10c849a082bb1f61a31bb07baf347e",
       "reason": "O7b-1c S3 (M2): the CP-DR LOCAL registry row (required CP-0 and CP-1, purpose names cp-dr/2026-10-31, before CP-1C)",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7b-1c-S3-review.md"
     },

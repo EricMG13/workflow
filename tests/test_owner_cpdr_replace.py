@@ -13,10 +13,12 @@ modules and no submissions). So the two tests over it are slow and run in CI onl
 import hashlib
 import json
 import re
+from datetime import UTC, datetime
 from pathlib import Path
 
 import cpdr_runs as runs
 import pytest
+from cpdr_s1_support import ResearchCase
 
 from deploy_vii.registry import plan
 from deploy_workflow.owner_workflow import AUDIT, OwnerWorkflow
@@ -28,6 +30,8 @@ from deploy_workflow.replay import (
     plan_replay,
     replay_module,
 )
+from deploy_workflow.research import evidence
+from deploy_workflow.run_inputs import check_arguments, stage_sources
 
 
 def tree_hash(root: Path) -> str:
@@ -94,14 +98,26 @@ def test_replacement_rerun(v1: Path, tmp_path: Path) -> None:
     assert not calls.exists() or calls.read_text(encoding="utf-8") == ""
 
 
-def test_a_cp1c_repair_replays_cp_dr_over_the_closed_run(v1: Path, tmp_path: Path) -> None:
-    """O7 phase fix M-1 (CI only, O7-R57): repairing CP-1C replays CP-0, CP-1 and CP-DR, the research
-    step's retained `read_pages` calls included, and no call diverges. CP-1C and what follows run
-    live in a real rerun; this node stops after the replays."""
+def test_a_cp1c_repair_replays_cp_dr_over_the_closed_run(
+    v1: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O7 phase fix M-1 (CI only, O7-R57): the v2 research records are staged by
+    `check_arguments(replay_from=v1)` at a later clock than v1's, as a rerun stages them, so each
+    item keeps v1's `retrieved`. Repairing CP-1C then replays CP-0, CP-1 and CP-DR, the research
+    step's retained `read_pages` calls (whose bodies hold that instant) included, and no call
+    diverges. CP-1C and what follows run live in a real rerun; this node stops after the replays.
+    The pack is the helper's `v2` pack, not the staged one."""
+    monkeypatch.setattr(runs.record, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
     expected = runs.oracle()["expected"]["replacement"]["plan_with_consumers"]
     root = tmp_path / "v2"
-    root.mkdir()
-    runs.stage(root)
+    args = tmp_path / "args"
+    args.mkdir()
+    arguments = ResearchCase(args).arguments(
+        args, run_dir=root, run_id=runs.run_of("v2").run_id, replay_from=v1
+    )
+    stage_sources(check_arguments(**arguments), root)
+    kept = evidence.read_evidence(root / "research" / "evidence.json")
+    assert {row["retrieved"] for row in kept} == {runs.RETRIEVED}
     execution = root / "execution"
     workflow = OwnerWorkflow.create(execution, runs.make_pack("v2"), publication_directory=None)
     found = plan_replay(v1, plan(tuple(expected["requested"])), frozenset({"CP-1C"}))

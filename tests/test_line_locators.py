@@ -414,3 +414,21 @@ def test_the_read_tool_description_is_the_keys() -> None:  # (l)
     specs = live_tools.tool_specs("source_readiness", "pack")
     read = next(spec for spec in specs if spec["function"]["name"] == live_tools.READ)
     assert read["function"]["description"] == _window()["tool_description"]
+
+
+def test_a_line_read_naming_more_than_the_line_cap_is_refused_before_measuring() -> None:  # (m)
+    key = _window()
+    count = key["max_lines_per_line_read"] + 1
+    tools = _window_tools(["a"] * count)
+    assert count <= key["max_line_read_bytes"]  # the bytes alone would allow it
+    with pytest.raises(ToolError, match=re.escape(key["line_refusal"])):
+        tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": count})
+    assert tools.read == set()
+
+
+def test_an_unbounded_last_page_on_a_line_source_is_refused_at_once() -> None:  # (n)
+    key = _window()
+    tools = _window_tools(["a", "b"])
+    with pytest.raises(ToolError, match=re.escape(key["line_refusal"])):
+        tools.read_pages({"source_id": FIN, "first_page": 1, "last_page": 10**12})
+    assert tools.read == set()

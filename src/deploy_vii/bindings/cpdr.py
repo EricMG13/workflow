@@ -3,7 +3,9 @@
 No Front Page block shows CP-DR and no pathway lists it: the locked questions and recipients
 (TDR.1) and the claims with their located evidence (TDR.2) go to Evidence, the answers with their
 contrary evidence, uncertainty and downstream use (TDR.3) to Limitations. The labels are the R7
-table titles. Slots carry a ``cpdr-`` prefix: a slot is unique across all shipped maps.
+table titles. Slots carry a ``cpdr-`` prefix: a slot is unique across all shipped maps. The
+settled head is read by CP-1C and CP-2 (the dossier block in their prompts; CP-1C also reads the
+peer pack's TDR.6 figures), not through a Front Page block.
 Data only; it reads facts by table id and never imports ``deploy_workflow``.
 """
 

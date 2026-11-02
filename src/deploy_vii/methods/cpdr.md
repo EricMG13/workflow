@@ -6,7 +6,7 @@ Role: evidence analyst. Reader question: what do the supplied research items say
 
 ## Scope
 
-- Independent research that supports CP-1C and CP-2. A question names one or both of them as its receivers. No module reads CP-DR output until O7d.
+- Independent research that supports CP-1C and CP-2. A question names one or both of them as its receivers. CP-1C and CP-2 read the settled head: each prompt carries the dossier block, and CP-1C also reads the peer pack's TDR.6 figures when the run asks for it.
 - It excludes filling gaps in the subject borrower's own documents. CP-0 and CP-1 own those.
 - It never manufactures a replacement for a missing canonical input. A question the items cannot answer is reported as missing, with its limitation.
 - The module requires CP-0 and CP-1. Both heads must be settled and must carry the same issuer, run, period and method version, and CP-1 must record `Input CP-0` with the hash of the CP-0 head. Any miss refuses the run before a model call (`CpDrNotAnchored`).
@@ -61,7 +61,7 @@ TDR.4-6 exist only when the run asks for the peer pack (see The peer pack). TDR.
 - Python owns every count (questions, answered, partly, not found, contrary items) and the downstream-use text of each question.
 - Readiness comes from the claim states, one per brief question: empty, or any blocked, gives BLOCKED; any contrary or missing gives `RESEARCH_READY_WITH_LIMITATIONS`; otherwise `RESEARCH_READY`. It is never above `RESEARCH_READY`, because the lineage is `LOCAL`.
 - The module always carries the LOCAL limitation, and a pack source carries no publication date or family, which is also stated as a limitation.
-- Consumers: CP-1C and CP-2 are the named receivers of a question. No module reads CP-DR output until O7d. The dossier (`cp-dr-dossier`) is the rendered form of the settled tables.
+- Consumers: CP-1C and CP-2 are the named receivers of a question. Both read CP-DR output once it settles: each prompt carries the dossier block, and CP-1C also reads TDR.6 through its source session when the peer pack is bound. The dossier (`cp-dr-dossier`) is the rendered form of the settled tables.
 
 ## The peer pack
 

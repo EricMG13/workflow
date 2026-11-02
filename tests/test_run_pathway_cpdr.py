@@ -140,7 +140,7 @@ def test_a_manifest_error_writes_nothing(tmp_path: Path, monkeypatch: pytest.Mon
 
 def test_cp_dr_false_is_byte_identical(tmp_path: Path) -> None:
     """Plan 4 row 3: the same inputs as the fixture, run with this code, give the same run.json
-    and the same run_dir tree. The fixture was made by ``off_run_record`` on the 5d4710b1 code."""
+    and the same run_dir tree. The fixture was made by ``off_run_record`` on checkpoint 65d1a180 (O7-R44)."""
     pinned = json.loads(FIXTURE.read_text(encoding="utf-8"))
     got = off_run_record(tmp_path)
     assert got["run_json"] == pinned["run_json"]

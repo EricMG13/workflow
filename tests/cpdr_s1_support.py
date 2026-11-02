@@ -1,7 +1,7 @@
 """O7b-1c S1 test support: the cp_dr=False run record, and the research case materialised on disk.
 
-``off_run_record`` runs the same inputs ``tests/fixtures/cpdr_off_run_5d4710b1.json`` was made from
-(by this function, run on the 5d4710b1 code before any S1 edit) and returns the comparable record.
+``off_run_record`` runs the same inputs ``tests/fixtures/cpdr_off_run_65d1a180.json`` was made from
+(by this function, run on checkpoint 65d1a180; O7-R44) and returns the comparable record.
 Names and files the run makes differently every time (call ids, snapshot hashes, timestamps) are
 normalised to ``*`` and carry no hash; every other file is pinned by sha256.
 """
@@ -19,7 +19,10 @@ from deploy_workflow.run_inputs import CaseSource
 from deploy_workflow.run_pathway import run_pathway
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = ROOT / "tests" / "fixtures" / "cpdr_off_run_5d4710b1.json"
+FIXTURE = ROOT / "tests" / "fixtures" / "cpdr_off_run_65d1a180.json"
+# The first sol reservation is above 1 USD since the larger output cap and bytes-per-token bound
+# (PF-R14, O7-R43), so the fixtures run under this cap.
+CAP = Decimal(5)
 MODEL = ModelSpec("sol-medium", "openai", "gpt-6.1-sol", "medium")
 HTML = b"<html><body><table><tr><td>Revenue</td><td>1,234</td></tr></table></body></html>"
 _VOLATILE = (
@@ -69,7 +72,7 @@ def off_run_record(base: Path) -> dict[str, Any]:
         pathway="credit_snapshot",
         model=MODEL,
         adapter=recorded_adapter(MODEL, recordings),
-        cap_usd=Decimal(1),
+        cap_usd=CAP,
         run_dir=base / "run",
         run_id="run-1",
     )
@@ -134,7 +137,7 @@ class ResearchCase:
             "pathway": "credit_snapshot",
             "model": MODEL,
             "adapter": recorded_adapter(MODEL, recordings),
-            "cap_usd": Decimal(1),
+            "cap_usd": CAP,
             "run_dir": base / "run",
             "run_id": self.key["run"]["run_id"],
             "cp_dr": True,

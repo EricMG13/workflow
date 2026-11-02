@@ -296,18 +296,18 @@ def test_cp0_shows_legal_documents_on_a_repair_turn(pack: PreparedPack) -> None:
 # shows `attachments`; CP-4's method text names draft sources); PRE_P5T6_FROZEN keeps the digests
 # before, and test_the_p5t6_changes_are_the_only_change_to_the_frozen_message undoes exactly them.
 FROZEN: dict[str, str] = {
-    "business_context": ("82190163b19dd9c5f12985744fce16f94e0a94ef088115295a958829007b71e1"),
+    "business_context": ("10317b14453d5beed91bbf6c86bd1f319cbb61b975b15f98bd30101faa8dac46"),
     "committee_challenge": ("59ae66e95c779b7a4461705bf9e6e5a6e0755c9f0f639cd2f190bc0152f38896"),
     "credit_synthesis": ("209914c5b5b6662bd897f2b92d9dc3ae90286be0f30153aa5f54ec235fa2320c"),
-    "financials": ("8d196274b78c7f5444f3a9e130618be05b74d5d800a703654abbc445926dd315"),
+    "financials": ("e8dc001882753c5a59d3f00711a39ab2a84b8226a17fd30f253ce5c2c82d86e4"),
     "integrity_review": ("1b71ce3d77e672011f2234c363def35ecd38e3f7a0bf2322a6ec38c876b2ffcf"),
-    "legal_covenants": ("22e7630bb28415fcd27aa005767f5767060fcfecff5dc1cde036a5e4401c7d39"),
+    "legal_covenants": ("c945dec79ea0511f3718e8a20cf8a8af4797819d85180106a5027896f5f64ea3"),
     "narrative": ("3e8d87b8f6e5085f539e94e7184db2e89feb7cc45b4e03e897925dca24d819f7"),
     "quality": ("8a4d88522e09bdc0d58afc6e484e32455621e37d31c6abb07d6294586e6afb56"),
     "readiness": ("83baf9fa4a883bb73c92231802f52323129620bd8a9e0c81c0a215cd6fc5a492"),
-    "relative_value": ("d9202926890f8f011bcbf97fc40334e2b576fd57959f460d75c27b204262cba0"),
-    "source_context": ("6a57450bfd58fef779cc44b2da69e81f76ce150219ab26efb17e337f1807efee"),
-    "source_readiness": ("bc8cd4d8611fe907bfad6bd8754b458730d1551cca98aec8822277f440d4658b"),
+    "relative_value": ("82c71043f72d29d1ceeff24df7788a8bfdf6931b3764008f71ca77d04a1daa67"),
+    "source_context": ("4c79941bc54b53fdfe17128149a9f4e9db1b83bb6991b3e6e5d43fa78b1a2e91"),
+    "source_readiness": ("1d180b7c77977fbac7ea7080391b50858546887be16e4d0e554aa5c8e4bd7873"),
 }
 
 

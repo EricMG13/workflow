@@ -185,8 +185,9 @@ def test_the_dossier_is_the_key_template_and_its_hashes_are_recorded(
 
 def test_the_closed_run_renders_and_verifies(closed: Closed, key: dict[str, Any]) -> None:
     """`delivery/*`, `evidence_rail`, `limitations_rail`: the run renders under the CP-DR scope with
-    no section, one rail proof per destination over the key's tables, and re-derives from the store
-    byte for byte."""
+    no section, one rail proof per destination, and re-derives from the store byte for byte. The
+    key names CP-DR's own rail tables (O7-R74): each rail's CP-DR facts are compared with it. The
+    view also shows CP-0 and CP-1, so every rail fact must come from a module the run settled."""
     delivery = closed.root / "delivery"
     receipt = OwnerRenderReceipt.model_validate_json(
         (delivery / "render-receipt.json").read_bytes()
@@ -194,13 +195,17 @@ def test_the_closed_run_renders_and_verifies(closed: Closed, key: dict[str, Any]
     assert receipt.scope_id == key["delivery"]["scope"]["scope_id"]
     assert receipt.sections == tuple(key["delivery"]["scope"]["sections"])
     tables = {
-        proof.destination: sorted({fact.table_id for fact in proof.facts})
+        proof.destination: sorted(
+            {fact.table_id for fact in proof.facts if fact.module_id == "CP-DR"}
+        )
         for proof in receipt.rails
     }
     assert tables == {
         "evidence": sorted(key["evidence_rail"]),
         "limitations": sorted(key["limitations_rail"]),
     }
+    settled = {head.module_id for head in closed.execution().read().heads}
+    assert {fact.module_id for proof in receipt.rails for fact in proof.facts} <= settled
     verify_owner_rendered_slice(closed.store, closed.receipt, None, delivery)
     page = (delivery / "report.html").read_text(encoding="utf-8")
     assert escape(key["delivery"]["banner"]["complete"]) in page

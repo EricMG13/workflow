@@ -41,6 +41,54 @@ in the ledger.
    4), so they get no entry, no unmapped item and no `module_commits` key; `load_mapping` refuses
    them (ruling 2026-11-02, NATL CP-4).
 
+## Re-run (2026-11-02, after steps 2-4; base 6da4c9f1)
+
+Re-make every case's mapping against the new keys and locators. Use base `6da4c9f1` in place of
+9c018f76 for commits; the module code is unchanged since 9c018f76.
+
+6. **Re-tagged goldens (step 4).** Many facts now carry a new module and `fact_id` (mostly CP-1,
+   T4.18 Debt Facility Register), and many moved to `not_golden`. Load the current
+   `module_golden.json`; every fact in it is accounted once.
+7. **CP-1 financial facts (step 2).** `load_case` adds one golden fact per `financial_gold.json`
+   fact: `fact_id` `CP-1.fin.<financial fact id>`, `subject` and `field` = the metric, `period_end`
+   from the gold `periods`, value in the gold `canonical_unit` (see
+   `src/deploy_workflow/model_testing/cases.py` `financial_gold_facts`). Map each to the CP-1 result
+   fact holding that metric and period, the same way as any entry. If CP-1 writes no such metric or
+   period, use unmapped with the reason.
+8. **Row-key locator (step 3).** For a fact in a register whose `row_id` is chosen at run time
+   (`r01..`, `m01..`), use `locator: {"table_id", "row_id": null, "row_key": {"field": <key cell
+   field id in the same row>, "aliases": [...]}, "field", "period"}`. The scorer picks the row whose
+   key cell text equals the golden `subject` or an alias, both through `scoring._text`. Use it only
+   when that row's key cell is meant to name the fact's subject, such as an instrument, covenant,
+   agency or class name. Add aliases only for spellings the module would plausibly print: source
+   names, or context names it copies. The key text is often model-written, so be honest. A
+   `row_key` entry where the model will write its own wording still scores `missing_in_output` when
+   the wording differs, which is a fair result, not a mapping error. Rows keyed by nothing
+   meaningful stay unmapped.
+9. Set `preparer` to `mx-feature (Task 6 preparer, re-run)`. Keep `reviewer` as
+   `mx-precise (Task 6 review)`.
+10. **Period reference (step 2b, commit c92dc5c6).** When a register's `period` is a model-declared
+    id (CP-1 T4.15 and T4.18 carry `period_id`), set `"period": null` and
+    `"period_ref": {"table_id": "T4.14", "id_field": "period_id", "match": {"end_date": "<YYYY-MM-DD>", "period_type": "<value CP-1 writes>"}}`.
+    The scorer finds the T4.14 row whose cells equal every `match` value (through `_text`) and uses
+    that row's `period_id` as the period.
+    - Take `end_date` and the period kind from the golden fact. For `CP-1.fin.*` facts these come
+      from the financial_gold `periods` entry for its `period_id`.
+    - Write `period_type` exactly as CP-1 writes it: QUARTER, YTD, FY, LTM or PERIOD_END (src/deploy_vii/financial_contracts.py:122; read the T4.14 builder and the
+      book's period model).
+    - Use `start_date` too when end_date and period_type alone cannot tell two periods apart, such
+      as YTD or LTM.
+    - For T4.15, use `row_key` with field `metric_id`. Aliases are CP-1's code-fixed metric ids
+      (`ACCOUNT_FIELDS` and friends), which differ from the gold metric names; cite the mapping.
+    - For T4.18, use `row_key` with field `facility_name`. That text is model-written, so aliases are
+      only the source's facility names.
+    - A gold metric CP-1 has no metric id for stays unmapped, with the reason.
+    - Ruling (2026-11-02): balance-sheet and other instant values (cash, debt, assets,
+      liabilities, equity, T4.18 balances) sit on `PERIOD_END` periods
+      (src/deploy_vii/statement_validation.py:235); flows use QUARTER, YTD, FY or LTM by the gold
+      period kind. Never match on `end_date` alone: a QUARTER and a YTD period can share one end
+      date, so the entry would resolve two rows and always score a mismatch.
+
 ## Outputs
 
 - `cases/goldens/<case>/mapping.json`

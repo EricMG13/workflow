@@ -1,29 +1,44 @@
-# Mapping report: bgs-relative-value
+# Mapping report: bgs-relative-value (re-run with period_ref, base 6da4c9f1 + c92dc5c6)
 
-Preparer: mx-feature (Task 6 preparer). Base 9c018f76. Commits are `git log -1 --format=%H 9c018f76 -- <the module files listed>` (fix round 1: the first draft wrongly used the merge for all).
+Preparer: mx-feature (Task 6 preparer, re-run). Commits are `git log -1 --format=%H 6da4c9f1 -- <files>`.
 
 ## Per module
 
-| Module | Files read | Commit | Entries | Unmapped | Facts |
+| Module | Files read | Commit | Entries (all row-key unless noted) | Unmapped | Facts |
 |---|---|---|---|---|---|
-| CP-0 | src/deploy_vii/readiness.py (`build_readiness`), src/deploy_workflow/owner_workflow.py | 9abad5b6d071e6d297366d0d1777689bfa2ec82e | 1 | 1 | 2 |
-| CP-2 | src/deploy_vii/cp2_synthesis.py, src/deploy_workflow/owners/cp2.py | cffdf9f47dd4f6bab5269df290d2bcd9b1171618 | 0 | 55 | 55 |
-| CP-3 | src/deploy_vii/cp3_relative_value.py, src/deploy_workflow/owners/cp3.py | 68ebc369347121ce505488a8808661e643751d52 | 0 | 26 | 26 |
-| CP-3C | src/deploy_workflow/owners/cp3c.py | 0898948fe3e709c91d1137d7e232bffb4bd410cb | 0 | 13 | 13 |
-| CP-3D | src/deploy_workflow/owners/cp3d.py | 5e859cd137c662462c898c1b8311b2766e0d9fd2 | 0 | 12 | 12 |
+| CP-0 | src/deploy_vii/readiness.py, src/deploy_workflow/owner_workflow.py | 9abad5b6d071e6d297366d0d1777689bfa2ec82e | 1 (row-id) | 0 | 1 |
+| CP-1 | src/deploy_vii/model_interface.py, canonical_tables.py, statement_history.py, statement_validation.py (account ids), financial_contracts.py, financial_periods.py | d6ca9b631717913fed168d809de9343aeaa35fac | 65 (47 T4.15, 18 T4.18) | 60 | 125 |
+| CP-2 | src/deploy_vii/cp2_synthesis.py, src/deploy_workflow/owners/cp2.py | cffdf9f47dd4f6bab5269df290d2bcd9b1171618 | 0 | 15 | 15 |
+| CP-3 | src/deploy_vii/cp3_relative_value.py, src/deploy_workflow/owners/cp3.py | 68ebc369347121ce505488a8808661e643751d52 | 0 | 1 | 1 |
 
-Entry: `CP-0.identity.Registrant.legal_name` -> T1 / run / issuer / period null. `readiness.build_readiness` writes the fact from `pack.run.issuer_name`, which is the context `identity.issuer_name` ("B&G Foods, Inc."). The golden is "B&G FOODS, INC."; the scorer compares casefolded and normalised, so the case difference is the scorer's matter, not a locator matter.
+CP-1 entries: 47 T4.15 (key cell `metric_id`, field `value`) + 18 T4.18 (key cell `facility_name`). All use `period: null` and `period_ref` T4.14 (`id_field` period_id) matching `end_date` and `period_type`. Total: 66 entries, 76 unmapped, 142 facts.
+
+## Locator choices
+
+- Period kind from financial_gold `periods`: quarter -> QUARTER, annual -> FY, year_to_date_operand -> YTD plus `start_date`. CP-1's vocabulary is QUARTER, YTD, FY, LTM, PERIOD_END (FinancialPeriod.period_type). Balance metrics (cash, total_debt) and T4.18 facts at 2025-06-28 use QUARTER too, because T4.15 writes every account for every declared period; a model that books balances on a separate PERIOD_END period would score missing_in_output (fair result, noted as a risk).
+- T4.15 aliases are CP-1's code-fixed ids (ACCOUNT_FIELDS, model_interface.py): operating_profit -> ebit; reported_EBITDA (and the YTD operand) -> ebitda; adjusted_EBITDA (and operand) -> adjusted_ebitda; DA -> depreciation_amortization; CFO -> cfo_ncfo; capex_signed_cashflow -> capex_and_intangible_investment; cash -> cash_and_equivalents; revenue, total_debt same name.
+- T4.18: field map principal_outstanding -> principal, carrying_amount -> carrying_value, maturity_date, coupon_fixed -> fixed_rate (decimal_percent, a percentage-point unit), sofr_floor -> floor_bps (golden is a gap), commitment, drawn_balance -> drawn_amount. Aliases are source facility names only.
+- ebit and operating income are treated as the same account; the ytd-operand periods may not be declared by the model (then missing_in_output).
 
 ## Unmapped reasons (grouped)
 
-- CP-0 ticker_exchange (1): the readiness result has no exchange or ticker field.
-- CP-2 (55): the module is credit synthesis. It writes judged prose in T2.1, T2.7, T2.10, T2.11, T2.12 at model-chosen row ids, and CP-1 references at refNN rows numbered by citation order. It writes no debt-stack, revolver, liquidity, maturity-schedule or covenant fact at a fixed locator. The golden "CP-2" facts are filing data that CP-1 (financials) or the prose would carry.
-- CP-3 (26): relative-value judgment; T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids. No fair-value, hierarchy or repurchase fact is written at a fixed locator. The missing `observed_quotes` fact has no fixed output row (an empty register writes a placeholder row id `none`, shared by whatever register is empty, not an observed-quotes fact).
-- CP-3C (13): the module computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9). It writes no call, redemption, clawback, make-whole, change-of-control or prepayment-trigger terms.
-- CP-3D (12): market-implied risk from quotes (T3E.1-T3E.9). It writes no guarantor, collateral or priority text.
+- CP-1 (60): net income total/attributable (10: no net-income id in ACCOUNT_FIELDS); current/total assets, liabilities, equity (25: not in ACCOUNT_FIELDS); finance-lease liability and financing debt incl. leases (10: no id); aggregate principal (5: no id, no sum cell); capex_payment_amount (5: shares the capex account with capex_signed_cashflow, and T4.15 writes outflows negative); principal_component (4: identical subject text would collide row keys); margin_sofr (1: T4.18 holds spread_bps in basis points, golden is percent; scorer rejects the unit).
+- CP-2 (15): credit-synthesis prose at model-chosen rows; no cell keyed by item.
+- CP-3 (1): no quotes, so an Insufficient Information preference; no fixed observed-quotes row.
 
 ## Over 20% unmapped
 
-All of CP-2 (100%), CP-3 (100%), CP-3C (100%), CP-3D (100%), CP-0 (50%). The cause is structural: the golden facts are filing-derived data points, while these modules emit judgment tables or computed risk metrics, so no fixed locator exists. This is a golden-to-module mismatch the controller should look at (scoring will report these as unmapped).
+CP-1: 60 of 125 (48%), reasons above. CP-2 and CP-3: 100%, as before.
 
-Not verified: `load_mapping` was not run (no venv by rule); the CP-0 issuer_name path from context to `pack.run.issuer_name` was read in context.py (lines ~521, 767, 810) but not executed; no live module result was inspected for the actual T1/run/issuer period string (code sets none, so null).
+Not verified: `load_mapping` and the scorer were not run; period_type values and the QUARTER choice for balance items rest on reading FinancialPeriod and the T4.14/T4.15 builders, not on a live CP-1 result; whether the model declares YTD operand periods or names facilities as aliased is untested.
+
+## Fix round 1 (rulings in .superpowers/sdd/2026-10-31-model-testing-framework/mapping-rerun-fix-r1.md)
+
+- Balance items (`cash`, `total_debt`) and all 18 T4.18 entries now match `period_type` PERIOD_END (instants), replacing QUARTER. Flows stay QUARTER, FY or YTD (with start_date).
+- Five `DA` entries unmapped: CP-1 writes outflow metrics as -abs, the gold is positive.
+- `cash` and `total_debt` for FY2024 unmapped as "same locator as" the FY2024Q4 fact.
+- margin_sofr stays unmapped (bps cell vs percent golden). `sofr_floor` entries are kept: the golden is a gap and BGS's list does not unmap them.
+- reported_EBITDA_ytd_operand stays on `ebitda` (the table row "*_ytd_operand -> adjusted_ebitda" is read as adjusted_EBITDA's operand only; the reported operand is a reported-EBITDA value).
+- Counts now: CP-1 58 entries (40 T4.15, 18 T4.18) and 67 unmapped of 125; total 59 entries, 83 unmapped of 142.
+
+Not verified: `load_mapping` and the scorer were not run; PERIOD_END for instants is a model convention (financials.json rule i), not forced by code.

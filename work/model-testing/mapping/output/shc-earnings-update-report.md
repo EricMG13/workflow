@@ -1,41 +1,34 @@
-# Mapping report: shc-earnings-update
+# Mapping report: shc-earnings-update (re-run with period_ref, base 6da4c9f1 / scorer c92dc5c6)
 
-Preparer: mx-feature (Task 6 preparer). Base 9c018f76. Output: `cases/goldens/shc-earnings-update/mapping.json`.
+Preparer: mx-feature (Task 6 preparer, re-run). Output: `cases/goldens/shc-earnings-update/mapping.json`.
+222 in-plan facts, each once: 55 entries, 167 unmapped. Fix round 1 applied (mapping-rerun-fix-r1.md).
 
-## Per module
+| Module | Entries | of which row-key + period_ref | Unmapped | Facts | Unmapped % |
+|---|---|---|---|---|---|
+| CP-0 | 2 | 0 | 0 | 2 | 0 |
+| CP-1 | 46 | 46 | 119 | 165 | 72 |
+| CP-1B | 7 | 0 | 18 | 25 | 72 |
+| CP-1D | 0 | 0 | 30 | 30 | 100 |
 
-| Module | Entries | Unmapped | Facts | Unmapped % |
-|---|---|---|---|---|
-| CP-0 | 2 | 14 | 16 | 88 |
-| CP-1B | 7 | 44 | 51 | 86 |
-| CP-1D | 0 | 30 | 30 | 100 |
+## Files and commits
+- CP-0: `src/deploy_vii/readiness.py`, `cp0_workflow.py`; eeab0b8fecda6ee1a74b16c66711503e12928583.
+- CP-1: `src/deploy_vii/model_interface.py` (T4.14/T4.15/T4.18 rows; ACCOUNT_FIELDS; T4.18 columns), `financial_periods.py`, `bindings/cp1.py`, `src/deploy_workflow/financial_workflow.py`; 9a85a6942ca4a63bf4a6a1c49bf03efe1910f3d6.
+- CP-1B: `src/deploy_workflow/earnings_workflow.py` (`compose_delta`), `bindings/cp1b.py`, `owners/cp1b.py`; 438317d342f7e0f93808d3d8c769887182162be2.
+- CP-1D: `src/deploy_workflow/owners/cp1d.py`; 5d5b6861247f4165d23e46a05b935b1f16325d97.
 
-Total 9 entries, 88 unmapped, 97 facts.
-
-### CP-0
-- Files: `src/deploy_vii/readiness.py` (`build_readiness` sets every fact's table/row/field), `src/deploy_vii/cp0_workflow.py`. Commit eeab0b8fecda6ee1a74b16c66711503e12928583.
-- Entries: `legal_name` -> T1/run/issuer (the run's issuer name, fixed by the context file as "Sotera Health Company"; golden prints the cover capitalisation, a value comparison matter); 10-Q `period_end` -> T1/run/reporting_period (field fixed, content written by the model).
-
-### CP-1B
-- Files: `src/deploy_workflow/earnings_workflow.py` (`compose_delta` sets ids and periods), `src/deploy_vii/bindings/cp1b.py` (`_LAYOUT_TEMPLATES`: T1B.1 rows and fields), `src/deploy_workflow/owners/cp1b.py`. Commit 438317d342f7e0f93808d3d8c769887182162be2.
-- Periods: prior fact `q2-2024`, current fact `q2-2025` (context.json `prior_period`/`current_period`), delta and assessment facts `q2-2024->q2-2025`.
-- Entries: Consolidated net revenues (T1B.1/revenue prior, current, delta) and Adjusted EBITDA (T1B.1/adjusted_ebitda prior, current, delta); deltas depend on their two operands. Guidance -> T1B.3/guidance/assessment (the owner path always writes it as missing, GUIDANCE_NOT_SUPPLIED, matching the golden's missing fact).
-
-### CP-1D
-- Files: `src/deploy_workflow/owners/cp1d.py` (`_register`, `_bridge_rows`, `_Facts`). Commit 5d5b6861247f4165d23e46a05b935b1f16325d97.
-- No entries (see reasons).
+## CP-1 entries (fix round 1)
+- 38 T4.15 `CP-1.fin.*` facts, field `value`, row_key `metric_id`, period_ref on T4.14. Flows (QUARTER, or FY for FY2024): revenue, adjusted_EBITDA -> adjusted_ebitda, CFO -> cfo_ncfo, operating_profit -> ebit, reported_EBITDA -> ebitda, capex_signed_cashflow -> capex_and_intangible_investment (5 periods each, 30 facts). Instants (period_type PERIOD_END, never end_date alone): cash -> cash_and_equivalents and total_debt_carrying -> total_debt, 4 quarter-ends each (8 facts).
+- FY2024 cash and total_debt_carrying are unmapped as the Q4 twin: same locator as the FY2024Q4 fact.
+- DA (5) unmapped: CP-1 writes outflow metrics as -abs, the gold is positive.
+- 8 T4.18 facts (term loan principal, carrying value, maturity; secured notes principal, coupon, maturity; revolver drawn, maturity): row_key `facility_name` with source-name aliases, period_ref end_date 2025-06-30 plus period_type PERIOD_END. Period-less facts use that row.
+- Other modules unchanged.
 
 ## Unmapped reasons, grouped
-- CP-0 (14): the readiness module records only T1 run fields, per-source P3/P5/T2/T3/T6, per-consumer T4/T8, T5 gaps, T7; ticker, state, file number, filer category, shares, address, sponsors, borrower, parent, guarantors, segments, signature date, fiscal year end and reporting unit have no field.
-- CP-1B segment revenue and income (18): T1B.1 rows are consolidated only.
-- CP-1B consolidated net income (3): no net income row in T1B.1.
-- CP-1B debt context (23): T1B.2 holds only cash_closing, total_debt, net_debt (consolidated); no per-instrument, terms, rate, revolver or margin-tier field. `Total long-term debt` gross principal is not T1B.2 total_debt (CP-1 balance measure).
-- CP-1D reconciliation lines (28): bridge rows come from a management bridge attachment (row ids a01.. by source order); this case has none (management_bridge false), and the lines are 10-Q rows. No net income or adjusted net income cell exists. CP-1D writes one period only.
-- CP-1D Adjusted EBITDA (2): T1D.3/start/value is CP-1 `adjusted_ebitda_ltm`, a trailing-twelve-month figure, not the 3-month golden value.
+- CP-1 (119): no T4.15 metric id for debt, lease or liquidity components and totals (66); net income and balance-sheet totals are statement lines (35); DA sign (5); capex_payment_amount sign (5); total_debt gold recorded missing (5); FY2024 twins of cash and carrying debt (2); the T4.18 rate floor, basis points vs a percent golden (1).
+- CP-1B segment revenue and income (12): T1B.1 has consolidated rows only. CP-1B debt terms and revolver (6): no debt-terms table.
+- CP-1D (30): management-bridge rows (none in this case), 10-Q lines, one LTM period.
 
 ## Modules over 20% unmapped
-- CP-0 (88%): the golden facts are registrant identity details that the readiness module does not hold.
-- CP-1B (86%): the golden is built from segment, net income and debt-term facts outside the CP-1B T1B tables; only consolidated revenue, Adjusted EBITDA and guidance are held.
-- CP-1D (100%): the module restates a management bridge on an LTM basis; the golden holds 10-Q quarterly reconciliation lines and the case has no bridge.
+CP-1 (72%): most gold metrics have no CP-1 account id (see above). CP-1B (72%) and CP-1D (100%): outside the T1B/T1D tables.
 
-Not verified: `load_mapping` was not run (no venv by rule); the period strings q2-2025, q2-2024 and `q2-2024->q2-2025` were read from code and context.json, not from a live run; whether the case's run feeds CP-1B through `compose_delta` for a year-over-year quarter pair was not exercised; the T1/run/reporting_period value format was not checked against a result.
+Not verified: `load_mapping` was not run (no Python by rule); coverage (222, unique, none missing) checked with jq. Instants (cash, carrying debt, T4.18) assume the model declares PERIOD_END periods (a model convention, revisited after the pilot). Facility aliases are plausible source names, not seen in a result. Period-less facts are scored on the 2025-06-30 facility row.

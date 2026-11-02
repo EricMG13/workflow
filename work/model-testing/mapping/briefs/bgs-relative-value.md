@@ -1,16 +1,18 @@
-# Mapping brief: bgs-relative-value
+# Mapping brief: bgs-relative-value (re-run)
 
-Stage contract: `work/model-testing/mapping/CONTEXT.md` (read it first). Base: `codex/checkpoint` @ 9c018f76
-(Phases 2-8, O1, O3, O4 and O6 landed). One batch maps every module of this case.
+Stage contract: `work/model-testing/mapping/CONTEXT.md`, including the "Re-run" section. Base
+`6da4c9f1`: the step 4 goldens, the step 2 CP-1 financial facts and the step 3 row-key locator.
 
-- Case: `cases/goldens/bgs-relative-value/module_golden.json` (108 facts), pathway `relative_value`
-- Pathway plan (`deploy_vii.contracts.PATHWAY_MODULES`): CP-0, CP-1, CP-MODEL, CP-1C, CP-2, CP-2D, CP-3, CP-3C, CP-3D, CP-5
-- Output: `cases/goldens/bgs-relative-value/mapping.json`; report: `work/model-testing/mapping/output/bgs-relative-value-report.md`
+- Case: `cases/goldens/bgs-relative-value/module_golden.json`, pathway `relative_value`
+- Pathway plan: CP-0, CP-1, CP-MODEL, CP-1C, CP-2, CP-2D, CP-3, CP-3C, CP-3D, CP-5
+- In-plan golden facts after `load_case`: 142, of which 106 are CP-1 financial_gold
+  facts (`CP-1.fin.*`). Out of plan, not mapped: none
+- Output: `cases/goldens/bgs-relative-value/mapping.json` (replace the step 1 file); report
+  `work/model-testing/mapping/output/bgs-relative-value-report.md` (replace)
 
-| Golden module | Facts | In plan |
-|---|---|---|
-| CP-0 | 2 | yes |
-| CP-2 | 55 | yes |
-| CP-3 | 26 | yes |
-| CP-3C | 13 | yes |
-| CP-3D | 12 | yes |
+| Module | In-plan facts |
+|---|---|
+| CP-0 | 1 |
+| CP-1 | 125 |
+| CP-2 | 15 |
+| CP-3 | 1 |

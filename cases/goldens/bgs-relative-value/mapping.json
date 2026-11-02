@@ -1,14 +1,13 @@
 {
   "schema_version": "golden-mapping/1",
   "case_id": "bgs-relative-value",
-  "preparer": "mx-feature (Task 6 preparer)",
+  "preparer": "mx-feature (Task 6 preparer, re-run)",
   "reviewer": "mx-precise (Task 6 review)",
   "module_commits": {
     "CP-0": "9abad5b6d071e6d297366d0d1777689bfa2ec82e",
+    "CP-1": "d6ca9b631717913fed168d809de9343aeaa35fac",
     "CP-2": "cffdf9f47dd4f6bab5269df290d2bcd9b1171618",
-    "CP-3": "68ebc369347121ce505488a8808661e643751d52",
-    "CP-3C": "0898948fe3e709c91d1137d7e232bffb4bd410cb",
-    "CP-3D": "5e859cd137c662462c898c1b8311b2766e0d9fd2"
+    "CP-3": "68ebc369347121ce505488a8808661e643751d52"
   },
   "entries": [
     {
@@ -19,439 +18,1685 @@
         "row_id": "run",
         "field": "issuer",
         "period": null
-      },
-      "subject_aliases": [],
-      "depends_on": []
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:capex_signed_cashflow",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:total_debt",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:capex_signed_cashflow",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:total_debt",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:capex_signed_cashflow",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:total_debt",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-03-29",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:capex_signed_cashflow",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "QUARTER"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:cash",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cash_and_equivalents"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:total_debt",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "total_debt"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:revenue",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "revenue"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:operating_profit",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebit"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:reported_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:adjusted_EBITDA",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:CFO",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "cfo_ncfo"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:capex_signed_cashflow",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "capex_and_intangible_investment"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-12-28",
+            "period_type": "FY"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024YTD:reported_EBITDA_operand",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "YTD",
+            "start_date": "2023-12-31"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024YTD:adjusted_EBITDA_operand",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.15",
+        "row_key": {
+          "field": "metric_id",
+          "aliases": [
+            "adjusted_ebitda"
+          ]
+        },
+        "field": "value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2024-09-28",
+            "period_type": "YTD",
+            "start_date": "2023-12-31"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Revolving_credit_loans_due_2028.principal_outstanding.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Tranche_B_term_loans_due_2029.principal_outstanding.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Tranche B term loans",
+            "Tranche B Term Loan"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5.25_senior_notes_due_2027.principal_outstanding.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.25% senior notes"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.8.00_senior_secured_notes_due_2028.principal_outstanding.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "8.00% senior secured notes",
+            "8% senior secured notes due 2028"
+          ]
+        },
+        "field": "principal",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Revolving_credit_loans_due_2028.carrying_amount.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Tranche_B_term_loans_due_2029.carrying_amount.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Tranche B term loans",
+            "Tranche B Term Loan"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5.25_senior_notes_due_2027.carrying_amount.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.25% senior notes"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.8.00_senior_secured_notes_due_2028.carrying_amount.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "8.00% senior secured notes",
+            "8% senior secured notes due 2028"
+          ]
+        },
+        "field": "carrying_value",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Revolving_credit_loans_due_2028.maturity_date.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Tranche_B_term_loans_due_2029.maturity_date.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Tranche B term loans",
+            "Tranche B Term Loan"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5.25_senior_notes_due_2027.maturity_date.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.25% senior notes"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.8.00_senior_secured_notes_due_2028.maturity_date.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "8.00% senior secured notes",
+            "8% senior secured notes due 2028"
+          ]
+        },
+        "field": "maturity_date",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.5.25_senior_notes_due_2027.coupon_fixed.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "5.25% senior notes"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.8.00_senior_secured_notes_due_2028.coupon_fixed.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "8.00% senior secured notes",
+            "8% senior secured notes due 2028"
+          ]
+        },
+        "field": "fixed_rate",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Tranche_B_term_loans_due_2029.sofr_floor.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Tranche B term loans",
+            "Tranche B Term Loan"
+          ]
+        },
+        "field": "floor_bps",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Revolving_credit_loans_due_2028.sofr_floor.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "floor_bps",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.revolver.Revolving_credit_facility.commitment.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "commitment",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
+    },
+    {
+      "fact_id": "CP-1.revolver.Revolving_credit_facility.drawn_balance.2025-06-28",
+      "module": "CP-1",
+      "locator": {
+        "table_id": "T4.18",
+        "row_key": {
+          "field": "facility_name",
+          "aliases": [
+            "Revolving credit facility"
+          ]
+        },
+        "field": "drawn_amount",
+        "period": null,
+        "period_ref": {
+          "table_id": "T4.14",
+          "id_field": "period_id",
+          "match": {
+            "end_date": "2025-06-28",
+            "period_type": "PERIOD_END"
+          }
+        }
+      }
     }
   ],
   "unmapped": [
     {
-      "fact_id": "CP-0.identity.Registrant.ticker_exchange",
-      "reason": "CP-0 readiness result (readiness.build_readiness) writes only T1/run objective, issuer, reporting_period, identity_gate and per-source P3/P5/T2 rows; no exchange or ticker field, so no output can hold this text."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.principal_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.principal_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.principal_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.principal_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
       "fact_id": "CP-2.debt_stack.Unamortized_deferred_debt_financing_costs.amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.debt_stack.Unamortized_discount.amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Total_long-term_debt_net_of_costs_and_discount.carrying_amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.debt_stack.Current_portion_of_long-term_debt.amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Total_contractual_maturities_aggregate_principal_.principal_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Sum_of_four_instrument_principal_balances.principal_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Total_principal_less_unamortized_costs_and_discount.carrying_amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.carrying_amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.carrying_amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.carrying_amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.carrying_amount.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.maturity_date.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.maturity_date.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.maturity_date.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.maturity_date.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.coupon_fixed.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.coupon_fixed.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.margin_sofr.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.margin_base_rate.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.weighted_average_interest_rate.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.amortization_per_calendar_quarter_of_original_principal.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_sofr_low.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_sofr_high.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_base_rate_low.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.margin_base_rate_high.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.weighted_average_interest_rate.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.commitment_fee_on_unused.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.sofr_floor.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.sofr_floor.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Revolving_credit_loans_due_2028.ranking.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.Tranche_B_term_loans_due_2029.ranking.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.5.25_senior_notes_due_2027.ranking.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.debt_stack.8.00_senior_secured_notes_due_2028.ranking.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.revolver.Revolving_credit_facility.commitment.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.revolver.Revolving_credit_facility.commitment_after_2025-07-01_amendment.2025-07-01",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.revolver.Revolving_credit_facility.drawn_balance.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.revolver.Revolving_credit_facility.letters_of_credit_outstanding.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.revolver.Revolving_credit_facility.available_borrowing_capacity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.liquidity.Cash_and_cash_equivalents.balance.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-2.revolver.Revolving_credit_facility.letter_of_credit_sublimit.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.maturity_schedule.Fiscal_2025_remaining.aggregate_contractual_maturity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.maturity_schedule.Fiscal_2026.aggregate_contractual_maturity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.maturity_schedule.Fiscal_2027.aggregate_contractual_maturity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.maturity_schedule.Fiscal_2028.aggregate_contractual_maturity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.maturity_schedule.Fiscal_2029.aggregate_contractual_maturity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.maturity_schedule.Fiscal_2030_and_thereafter.aggregate_contractual_maturity.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarter_ending_2025-06-28_through_quarter_ending_2026-10-03_.maximum_ratio.2025-07-01",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarter_ending_2027-01-02.maximum_ratio.2027-01-02",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.covenants.Maximum_consolidated_leverage_ratio_quarters_ending_2027-04-03_and_thereafter.maximum_ratio.2027-04-03",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.covenants.Minimum_consolidated_interest_coverage_ratio.minimum_ratio.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-2.covenants.Maximum_senior_secured_leverage_ratio_for_incremental_facility.maximum_ratio.2025-06-28",
-      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 with model-chosen row ids plus CP-1 references at Python-numbered refNN rows chosen by citation order; it writes no debt-stack, revolver, liquidity, maturity or covenant fact at a fixed locator."
-    },
-    {
-      "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_principal_repurchased_open_market.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_cash_paid_for_repurchase.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.repurchase_transactions.5.25_senior_notes_due_2027.q2_2025_average_repurchase_price_pct_of_principal.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.fair_value.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.fair_value.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.fair_value.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.fair_value.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.hierarchy_level.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Revolving_credit_loans_due_2028.hierarchy_level.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.valuation_basis_as_disclosed.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.hierarchy_level.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.valuation_basis_as_disclosed.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.Tranche_B_term_loans_due_2029.hierarchy_level.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.valuation_basis_as_disclosed.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.hierarchy_level.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.valuation_basis_as_disclosed.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.5.25_senior_notes_due_2027.hierarchy_level.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.valuation_basis_as_disclosed.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.hierarchy_level.2025-06-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.valuation_basis_as_disclosed.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
-    },
-    {
-      "fact_id": "CP-3.fair_value.8.00_senior_secured_notes_due_2028.hierarchy_level.2024-12-28",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+      "reason": "CP-2 is the credit-synthesis module (cp2_synthesis.py): it writes judged prose rows in T2.1/T2.7/T2.10/T2.11/T2.12 at model-chosen row ids with no row key naming this item, plus CP-1 references at refNN rows numbered by citation order; no output cell holds this filing figure at a fixed locator."
     },
     {
       "fact_id": "CP-3.observed_quotes.All_instruments.observed_bid_ask_or_price",
-      "reason": "CP-3 is the relative-value judgment module (cp3_relative_value.py): T3.1/T3.3/T3.4/T3.9/T3.10 rows are model-submitted text with submission-order row ids (i01, c01 ...); it holds no fair-value, hierarchy or repurchase-transaction fact at a fixed locator, and an empty quote register is a placeholder row id none, not a fixed observed_quotes fact."
+      "reason": "CP-3 (cp3_relative_value.py) is a relative-value judgment module; with no quotes it writes an Insufficient Information preference at model-chosen row ids and a placeholder row id none, not a fixed observed-quotes fact; no output can hold this missing fact at a fixed locator."
     },
     {
-      "fact_id": "CP-3C.call_terms.5.25_senior_notes_due_2027.optional_redemption_price_pct_of_principal.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:net_income_total",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
     },
     {
-      "fact_id": "CP-3C.call_terms.5.25_senior_notes_due_2027.change_of_control_or_asset_sale_repurchase.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2025-09-15.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:capex_payment_amount",
+      "reason": "Shares CP-1 account capex_and_intangible_investment with capex_signed_cashflow, which holds the entry (two entries may not share a locator); T4.15 writes outflows negative, so the positive magnitude cannot match."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2026-09-15.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:principal",
+      "reason": "No T4.15 metric id for aggregate principal; principal is a per-facility T4.18 cell and CP-1 writes no sum cell."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.optional_redemption_price_pct_from_2027-09-15.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:current_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.equity_clawback_redemption_price_pct_before_2025-09-15.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:current_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.equity_clawback_max_share_of_principal.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:total_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.make_whole_before_2025-09-15.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:total_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.change_of_control_repurchase_price_pct.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:total_equity",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3C.call_terms.8.00_senior_secured_notes_due_2028.asset_disposition_offer_price_pct.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:net_income_total",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
     },
     {
-      "fact_id": "CP-3C.call_terms.Tranche_B_term_loans_due_2029.voluntary_prepayment_premium.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
     },
     {
-      "fact_id": "CP-3C.call_terms.Revolving_credit_loans_due_2028.voluntary_prepayment_premium.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:capex_payment_amount",
+      "reason": "Shares CP-1 account capex_and_intangible_investment with capex_signed_cashflow, which holds the entry (two entries may not share a locator); T4.15 writes outflows negative, so the positive magnitude cannot match."
     },
     {
-      "fact_id": "CP-3C.call_terms.Senior_secured_credit_agreement.mandatory_prepayment_triggers.2025-06-28",
-      "reason": "CP-3C (owners/cp3c.py) computes maturity burden, refinancing need, step-up cost, creditor position and LME capacity (T3D.1-T3D.9, rows r01..); it writes no redemption price, call schedule, clawback, make-whole, change-of-control or prepayment-trigger term."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:principal",
+      "reason": "No T4.15 metric id for aggregate principal; principal is a per-facility T4.18 cell and CP-1 writes no sum cell."
     },
     {
-      "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.guarantors.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:current_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.collateral.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:current_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.Tranche_B_term_loans_due_2029.priority.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:total_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.guarantors.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:total_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.collateral.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:total_equity",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.Revolving_credit_loans_due_2028.priority.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:net_income_total",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
     },
     {
-      "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.guarantors.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
     },
     {
-      "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.collateral.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:capex_payment_amount",
+      "reason": "Shares CP-1 account capex_and_intangible_investment with capex_signed_cashflow, which holds the entry (two entries may not share a locator); T4.15 writes outflows negative, so the positive magnitude cannot match."
     },
     {
-      "fact_id": "CP-3D.priority_structure.5.25_senior_notes_due_2027.priority.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:principal",
+      "reason": "No T4.15 metric id for aggregate principal; principal is a per-facility T4.18 cell and CP-1 writes no sum cell."
     },
     {
-      "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.guarantors.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:current_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.collateral.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:current_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
     },
     {
-      "fact_id": "CP-3D.priority_structure.8.00_senior_secured_notes_due_2028.priority.2025-06-28",
-      "reason": "CP-3D (owners/cp3d.py) is market-implied risk from quotes (T3E.1-T3E.9: levels, spread/yield, assumptions, implied default, technicals); it writes no guarantor, collateral or priority-structure text."
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:total_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:total_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:total_equity",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:net_income_total",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:capex_payment_amount",
+      "reason": "Shares CP-1 account capex_and_intangible_investment with capex_signed_cashflow, which holds the entry (two entries may not share a locator); T4.15 writes outflows negative, so the positive magnitude cannot match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:principal",
+      "reason": "No T4.15 metric id for aggregate principal; principal is a per-facility T4.18 cell and CP-1 writes no sum cell."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:current_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:current_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:total_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:total_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:total_equity",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:net_income_total",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:net_income_attributable_parent",
+      "reason": "CP-1 T4.15 (ACCOUNT_FIELDS in model_interface.py) has no net-income account: the file notes net_income stays a statement input, not an r14 interface id; no metric_id holds it."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:capex_payment_amount",
+      "reason": "Shares CP-1 account capex_and_intangible_investment with capex_signed_cashflow, which holds the entry (two entries may not share a locator); T4.15 writes outflows negative, so the positive magnitude cannot match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:principal",
+      "reason": "No T4.15 metric id for aggregate principal; principal is a per-facility T4.18 cell and CP-1 writes no sum cell."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:current_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:current_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:total_assets",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:total_liabilities",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:total_equity",
+      "reason": "These balance-sheet totals are not in ACCOUNT_FIELDS, so T4.15 has no metric_id for them (they live only in statement-line facts keyed by model item ids, outside this ruling)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:principal_component:revolver_2028",
+      "reason": "The four principal_component facts share one subject text, so their row_key locators would collide (load_mapping refuses); the facility is not fixed by the gold metric name."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:principal_component:tranche_B_2029",
+      "reason": "The four principal_component facts share one subject text, so their row_key locators would collide (load_mapping refuses); the facility is not fixed by the gold metric name."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:principal_component:senior_notes_2027",
+      "reason": "The four principal_component facts share one subject text, so their row_key locators would collide (load_mapping refuses); the facility is not fixed by the gold metric name."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:principal_component:senior_secured_notes_2028",
+      "reason": "The four principal_component facts share one subject text, so their row_key locators would collide (load_mapping refuses); the facility is not fixed by the gold metric name."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:finance_lease_liability_total",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:finance_lease_liability_total",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:finance_lease_liability_total",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:finance_lease_liability_total",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:finance_lease_liability_total",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:total_financing_debt_including_finance_leases",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:total_financing_debt_including_finance_leases",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:total_financing_debt_including_finance_leases",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:total_financing_debt_including_finance_leases",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:total_financing_debt_including_finance_leases",
+      "reason": "No T4.15 metric id for finance-lease liability or financing debt including finance leases; CP-1 ACCOUNT_FIELDS has neither."
+    },
+    {
+      "fact_id": "CP-1.debt_stack.Tranche_B_term_loans_due_2029.margin_sofr.2025-06-28",
+      "reason": "CP-1 T4.18 writes the margin only as spread_bps in basis points, while the golden is a percent value; the scorer accepts only fraction or percentage-point units for a percent golden (scoring._unit_problem), so the fact could never match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q3:DA",
+      "reason": "Sign: CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) while the gold depreciation_amortization is positive, so the value could never match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024Q4:DA",
+      "reason": "Sign: CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) while the gold depreciation_amortization is positive, so the value could never match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q1:DA",
+      "reason": "Sign: CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) while the gold depreciation_amortization is positive, so the value could never match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2025Q2:DA",
+      "reason": "Sign: CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) while the gold depreciation_amortization is positive, so the value could never match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:DA",
+      "reason": "Sign: CP-1 writes outflow-type metrics as -abs (history.py:143, model_interface.py:200) while the gold depreciation_amortization is positive, so the value could never match."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:cash",
+      "reason": "Same locator as CP-1.fin.BGS:FY2024Q4:cash (the FY2024 balance and its Q4 twin end 2024-12-28; the quarter fact holds the entry)."
+    },
+    {
+      "fact_id": "CP-1.fin.BGS:FY2024:total_debt",
+      "reason": "Same locator as CP-1.fin.BGS:FY2024Q4:total_debt (the FY2024 balance and its Q4 twin end 2024-12-28; the quarter fact holds the entry)."
     }
   ]
 }

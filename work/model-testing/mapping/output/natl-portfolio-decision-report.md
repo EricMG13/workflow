@@ -1,35 +1,35 @@
-# Mapping report: natl-portfolio-decision
+# Mapping report: natl-portfolio-decision (re-run, fix round 1)
 
-Base 9c018f76. Preparer: mx-feature (Task 6 preparer).
+Base 6da4c9f1, scorer c92dc5c6, rulings in .superpowers/sdd/2026-10-31-model-testing-framework/mapping-rerun-fix-r1.md. Preparer: mx-feature (Task 6 preparer, re-run). Module code unchanged since 9c018f76.
 
-## Per module (entries / unmapped / facts)
+## Per module
 
 | Module | Entries | Unmapped | Facts | Commit |
 |---|---|---|---|---|
-| CP-0 | 1 | 12 | 13 | 0c39637aeb31cdc31892c61878e29264411e79a7 |
-| CP-1 | 0 | 15 | 15 | 6c81d0bae47e515fec33f3c048f594b9e6de5e47 |
-| CP-2 | 0 | 53 | 53 | cffdf9f47dd4f6bab5269df290d2bcd9b1171618 |
-| CP-4 | not mapped (see below) | | 51 | none |
+| CP-0 | 1 (row-id) | 2 | 3 | 0c39637aeb31cdc31892c61878e29264411e79a7 |
+| CP-1 | 36 (row-key + period_ref) | 76 | 112 | 6c81d0bae47e515fec33f3c048f594b9e6de5e47 |
+| CP-2 | 0 | 33 | 33 | cffdf9f47dd4f6bab5269df290d2bcd9b1171618 |
 
-Files per module:
-- CP-0: src/deploy_vii/readiness.py (`build_readiness`), src/deploy_vii/cp0_workflow.py, src/deploy_workflow/context.py (`issuer_name` into `Run`).
-- CP-1: src/deploy_vii/cp1_workflow.py, src/deploy_vii/financial_contracts.py, src/deploy_workflow/financial_workflow.py, src/deploy_vii/financial_adapter.py.
-- CP-2: src/deploy_vii/cp2_synthesis.py, src/deploy_vii/bindings/cp2.py, src/deploy_workflow/owners/cp2.py.
+CP-4 (51) is out of plan: no entry, no unmapped item, no commit key.
 
-The one entry: CP-0 legal_name -> T1 / run / issuer / period null. `build_readiness` writes `pack.run.issuer_name`, which `context.py` copies from the context file's `identity.issuer_name` ("NCR Atleos Corporation"); the golden is "NCR ATLEOS CORPORATION", equal under the scorer's casefolded text compare.
+Files: CP-0: src/deploy_vii/readiness.py, cp0_workflow.py, src/deploy_workflow/context.py. CP-1: src/deploy_vii/model_interface.py (T4.14, T4.15, T4.18), canonical_tables.py, cp1_workflow.py, financial_contracts.py, financial_adapter.py, src/deploy_workflow/financial_workflow.py. CP-2: src/deploy_vii/cp2_synthesis.py, bindings/cp2.py, src/deploy_workflow/owners/cp2.py.
+
+## CP-1 entries (36)
+- 25 flow facts in T4.15 (row_key `metric_id`, period_ref T4.14 `end_date` + `period_type` QUARTER, or FY for FY2024): revenue, CFO (cfo_ncfo), adjusted_EBITDA (adjusted_ebitda), reported_EBITDA (ebitda; gold is missing), operating_profit (ebit).
+- 4 cash facts (cash_and_equivalents), period_type PERIOD_END: FY2025Q1-Q3 and FY2024Q4 (2024-12-31). Per the period rule this is a model convention (financials prompt, rule i); a model that puts balances on QUARTER periods scores missing for them, to be revisited after the pilot.
+- 7 T4.18 facts, row_key `facility_name` (aliases: source spellings), period_ref `end_date` 2025-09-30 + PERIOD_END. Undated terms (maturity, coupon) read the current-period row. Fields: principal, maturity_date, fixed_rate (decimal_percent; scorer converts), carrying_value.
 
 ## Unmapped reasons
-- CP-0 identity attributes (ticker, exchange, state, offices, file number, filer status, fiscal year end, business description, borrower entity; 9 facts): CP-0 holds no field for them.
-- CP-0 documents (3 facts): period is model free text at a P3 row keyed by the pack's source_id, which neither module code nor the golden fixes; the agreement date has no field.
-- CP-1 restatement narrative (15 facts): the CP-1 result holds financial statement and debt-schedule facts, not narrative text.
-- CP-2 (53 facts): `credit_synthesis` is judgments only; it stores no debt-stack, liquidity or obligor figures. It copies CP-1 facts into `cp1_references` at model-chosen indices (`ref{NN}`), so no fixed locator exists.
+- DA (5): CP-1 writes outflow metrics as -abs, the gold is positive.
+- total_debt (5): gold includes finance leases; CP-1 keeps lease_obligations separate.
+- capex_signed_cashflow (5): gold is capitalized software and IP purchases, which capex_and_intangible_investment includes.
+- FY2024:cash: same locator as FY2024Q4:cash.
+- capex_payment_amount, net income, balance-sheet totals, principal: no ACCOUNT_FIELDS id (or sign differs).
+- CP-1 restatement text (15): no CP-1 field for narrative.
+- CP-2 (33): `credit_synthesis` is judgments only; no figures.
+- CP-0 documents (2): period is free text at a P3 row keyed by the pack's source_id.
 
 ## Modules over 20% unmapped
-- CP-0: 12/13 (92%): the module is a source-readiness review, not an identity extractor.
-- CP-1: 15/15 (100%): golden holds only restatement text, which CP-1 does not write.
-- CP-2: 53/53 (100%): golden facts are debt/liquidity figures that CP-2 never writes. The golden's module tagging follows the Codex split, not this code's CP-2. These will score as unmapped regardless of model output; the controller may want to re-tag them (e.g. to CP-1) or accept.
+CP-0 2/3, CP-1 76/112 (68%), CP-2 33/33, for the reasons above.
 
-## CP-4 (out of plan)
-CP-4 facts are not in `GoldenCase.facts` (in-plan only, cases.py:69). `_check_against_case` rejects any entry or unmapped item for a fact outside that set, so adding CP-4 would make `load_mapping` fail. CP-4 is therefore omitted from mapping.json and module_commits, contrary to CONTEXT step 5; the scorer reports it as `out_of_plan` anyway.
-
-Not verified: `load_mapping` was not run (no Python by instruction); the T1/run/issuer locator was read from code, not from a real CP-0 result; casefold equality of the issuer text rests on reading `_text`, not a test; whether a model run's CP-0 pack source ids could be pinned to the golden source ids was not established.
+Not verified: `load_mapping` was not run (no Python); no real CP-1 result was read, so PERIOD_END as the period type of balances, facility_name wording and the T4.18 rows present at 2025-09-30 are inferred from code and the ruling; the T1/run/issuer locator was not exercised.

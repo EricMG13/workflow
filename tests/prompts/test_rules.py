@@ -614,6 +614,7 @@ LIMITS = {
     "fn:deploy_workflow.owners.cp2h:_own_limitations",
     "fn:deploy_workflow.owners.cp4c:_own_limitations",
     "fn:deploy_workflow.owners.cp4c:_selection_line",
+    "fn:deploy_workflow.owners.cp4c:_fixed_limitations",
     "fn:deploy_workflow.owners.cp2e:own_limitations",
     "fn:deploy_workflow.owners.cp2d:_claims",
     "fn:deploy_workflow.owners.cp2e:_fx_claim",

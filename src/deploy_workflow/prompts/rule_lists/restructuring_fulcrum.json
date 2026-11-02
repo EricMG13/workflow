@@ -2,7 +2,7 @@
  "rules": [
   {
    "id": "restructuring_fulcrum.1",
-   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, `ebitda_year`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries.",
+   "statement": "Submit every field of the schema (`limitation` null when there is none) and no other, as valid JSON. A valuation `multiple` is a decimal with at most two integer and two decimal digits, or `not assessed`; a claim `rank` is a single digit from 1 to 9; `class_id` has the form `c` and two digits (`equity` is also allowed in a fulcrum `class_ids`); `kind`, `amount_source`, plan `treatment` and `assessment.confidence` take only their listed values; `valuation` holds exactly three entries. `ebitda_year` is one of the three forecast years `read_inputs` offers as `ebitda_offered[].year` (the three fiscal years after the run's base year, written `FY` and four digits); any other year, the base year included, is refused.",
    "checks": [
     "oracle:cp4c:r01",
     "oracle:cp4c:r02",
@@ -16,7 +16,8 @@
     "oracle:cp4c:r10",
     "oracle:cp4c:r11",
     "oracle:cp4c:r12",
-    "oracle:cp4c:r13"
+    "oracle:cp4c:r13",
+    "fn:deploy_workflow.owners.cp4c:_year_issues"
    ]
   },
   {
@@ -26,7 +27,8 @@
     "oracle:cp4c:v01",
     "oracle:cp4c:v02",
     "oracle:cp4c:v06",
-    "fn:deploy_workflow.owners.cp4c:_claim_issues"
+    "fn:deploy_workflow.owners.cp4c:_claim_issues",
+    "fn:deploy_workflow.owners.cp4c:_secured_issues"
    ]
   },
   {

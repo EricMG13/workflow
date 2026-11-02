@@ -910,7 +910,7 @@ UNSOURCED_CURRENCY = (
 
 
 def _millions_read(cp1: Cp1Operands, cp2d: Cp2dOperands) -> list[tuple[str, Cp1Fact | Cp2dFact]]:
-    """Every US$ m fact CP-3C reads besides cash_closing, in reading order, by its name."""
+    """Every money fact CP-3C reads besides cash_closing, in reading order, by its name."""
     return [
         ("undrawn_rcf", cp1.undrawn_rcf),
         ("adjusted_ebitda", cp1.adjusted_ebitda),
@@ -932,8 +932,8 @@ def reporting_currency(
 ) -> str:
     """The currency every summed amount is in (round 13 item 5; Stage 2 round 5 item 7, Info 1):
     CP-1 T4.10 ``cash_closing``'s own currency when that fact is known (it must be set);
-    otherwise the currency the first known US$ m fact read states (``check_currency`` then holds
-    every other one to it). When cash_closing is not known and no known US$ m fact states a
+    otherwise the currency the first known money fact read states (``check_currency`` then holds
+    every other one to it). When cash_closing is not known and no known money fact states a
     currency (none is known, or every one is blank), the currency is unsourced: an invariant
     raise, never a stamped default."""
     if cp1.cash_closing.status == "known":
@@ -955,7 +955,7 @@ def check_currency(
     """Round 13 item 5 (R1 L2): the reporting currency is CP-1 T4.10 ``cash_closing``'s own
     currency, which must be set, and every known MILLIONS fact CP-3C reads states the same one.
     A cash_closing that is not known states none: the currency is then the one the known
-    US$ m facts state, and an unsourced one raises (``reporting_currency``)."""
+    money facts state, and an unsourced one raises (``reporting_currency``)."""
     cash = cp1.cash_closing
     if cash.status == "known":
         if _cash_currency(cash) != currency:
@@ -1245,7 +1245,7 @@ def _materialise(
         amount=spec.amount,
         text=spec.text,
         unit=spec.unit,
-        currency=currency if spec.unit == _MILLIONS else None,  # every US$ m cell, gap or not
+        currency=currency if spec.unit == _MILLIONS else None,  # every money cell, gap or not
         period=spec.period,
         formula=spec.formula,
         reason=spec.reason,
@@ -2642,7 +2642,7 @@ def _copied(cell: Cell, selection: Selection) -> Fact | None:
 
 def _cell_fact(cell: Cell, selection: Selection) -> Fact:
     """A cell as a Module fact (lease Composer; acceptance 1): a copy keeps its upstream fact's
-    citations and calculation id; a known computed cell names its calculation; a US$ m cell is
+    citations and calculation id; a known computed cell names its calculation; a money cell is
     at scale 1e6, as CP-1 and CP-2D write theirs."""
     extra: dict[str, Any] = {"scale": _SCALE} if cell.unit == _MILLIONS else {}
     source = _copied(cell, selection)

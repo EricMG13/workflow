@@ -40,6 +40,8 @@ from deploy_workflow.model.loop import PromptFor, ToolLoop
 from deploy_workflow.model.redact import Redactor
 from deploy_workflow.model.turn import ModelSpec
 from deploy_workflow.owner_workflow import OWNER_SPECS, OwnerWorkflow
+from deploy_workflow.prompts import factory as factory_module
+from deploy_workflow.prompts.factory import prompt_factory
 from deploy_workflow.run_inputs import (
     BadCap,
     CaseSource,
@@ -177,7 +179,7 @@ def test_a_step_with_no_prompt_stops_as_no_prompt(
 ) -> None:
     # Every step of OWNER_SPECS has a prompt now, so the seam is used: O6's own ``has_prompt``,
     # read by its factory, is patched to False for the first step.
-    monkeypatch.setattr(prompts, "has_prompt", lambda step_id: False)
+    monkeypatch.setattr(factory_module, "has_prompt", lambda step_id: False)
     outcome = run_pathway(**args)
     assert outcome.outcome == "stopped"
     assert outcome.stopped_reason == "NoPrompt: source_readiness"
@@ -206,7 +208,7 @@ def test_the_default_composer_is_the_o6_composer(
         sent.append(request)
         return real_complete(self, request, **kw)
 
-    monkeypatch.setattr(prompts, "compose", spy_compose)
+    monkeypatch.setattr(factory_module, "compose", spy_compose)
     monkeypatch.setattr(RecordedAdapter, "complete", spy_complete)
     run_pathway(**args)
     assert [r.step_id for r in composed] == ["source_readiness"] and len(sent) == 1
@@ -274,7 +276,7 @@ def test_a_step_sees_the_head_settled_earlier_in_the_same_run(
         stores.append((step_id, store.directory))
         return real_sources(store, ticket_id, step_id)
 
-    monkeypatch.setattr(prompts, "compose", spy_compose)
+    monkeypatch.setattr(factory_module, "compose", spy_compose)
     monkeypatch.setattr(host, "session_sources", spy_sources)
     _, run_dir = _o2_run(tmp_path, ("source_readiness",), None, sent)
     execution = run_dir / "execution"
@@ -438,7 +440,7 @@ def test_a_key_written_to_stderr_inside_the_loop_is_redacted(
     args: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     def factory(pack: Any) -> PromptFor:
-        inner = prompts.prompt_factory(pack, Execution(args["run_dir"] / "execution"))
+        inner = prompt_factory(pack, Execution(args["run_dir"] / "execution"))
 
         def prompt_for(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
             print(f"debug {SECRET}", file=sys.stderr)
@@ -811,7 +813,7 @@ def test_a_partial_stderr_line_with_a_key_is_redacted_when_the_run_ends(
     args: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     def factory(pack: Any) -> PromptFor:
-        inner = prompts.prompt_factory(pack, Execution(args["run_dir"] / "execution"))
+        inner = prompt_factory(pack, Execution(args["run_dir"] / "execution"))
 
         def prompt_for(binding: Any, spec: Any, issues: tuple[str, ...]) -> Any:
             print(f"tail {SECRET}", end="", file=sys.stderr)  # no newline

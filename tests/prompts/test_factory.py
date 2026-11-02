@@ -19,8 +19,9 @@ from deploy_vii.live.prompts import STEP_CONTRACTS, PromptError
 from deploy_vii.preparation import PreparedPack
 from deploy_workflow import host
 from deploy_workflow.owner_workflow import OwnerBinding, OwnerWorkflow, StepSpec
-from deploy_workflow.prompts import NoPrompt, inventory, prompt_factory
+from deploy_workflow.prompts import NoPrompt, inventory
 from deploy_workflow.prompts.compose import RunContextRefused
+from deploy_workflow.prompts.factory import prompt_factory
 from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.tools.source import SourceError
 

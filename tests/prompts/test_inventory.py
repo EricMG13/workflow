@@ -88,9 +88,7 @@ def test_compose_raises_no_prompt_for_a_step_outside_the_inventory(pack: Prepare
 
 
 def test_the_public_names_are_the_ruled_ones() -> None:
-    assert {"NoPrompt", "PromptRequest", "compose", "inventory", "prompt_factory"} <= set(
-        dir(prompts)
-    )
+    assert {"NoPrompt", "PromptRequest", "compose", "inventory"} <= set(dir(prompts))
 
 
 @pytest.mark.parametrize(

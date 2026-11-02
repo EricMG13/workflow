@@ -289,6 +289,46 @@ def test_the_seventeenth_call_is_refused_and_journaled_with_the_binding(tmp_path
 
 
 @pytest.mark.usefixtures("owner_world")
+def test_a_source_step_holds_thirty_two_invokes_and_faults_on_the_thirty_third(
+    tmp_path: Path,
+) -> None:
+    """Pack-tool calls have their own per-step budget (32); read_inputs and submit stay at 16."""
+    workflow = _source_context_world(tmp_path)
+    for _ in range(32):
+        call = workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
+        assert call["status"] == "ok"
+    assert _faults(workflow) == []
+    assert workflow.state().invokes_used == 32
+    with pytest.raises(WorkflowError) as caught:
+        workflow.invoke("search_pack", {"query": "subsequent", "source_id": "financial"})
+    assert caught.value.code == "not_permitted"
+    (fault,) = _faults(workflow)
+    assert (fault.code, fault.cap, fault.call_kind) == ("CallLimit", 32, "invoke")
+
+
+@pytest.mark.usefixtures("owner_world")
+def test_read_inputs_and_submit_still_fault_at_sixteen_with_cap_sixteen(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    reader = _narrative_world(tmp_path / "read")
+    _serve(monkeypatch, _body_of(10))
+    for _ in range(16):
+        reader.read_inputs()
+    with pytest.raises(WorkflowError):
+        reader.read_inputs()
+    (fault,) = _faults(reader)
+    assert (fault.code, fault.cap, fault.call_kind) == ("CallLimit", 16, "read_inputs")
+
+    workflow = financial.before_financials(tmp_path / "submit")[0]
+    for _ in range(16):
+        assert workflow.submit_review("{}")["status"] == "refused"
+    with pytest.raises(WorkflowError):
+        workflow.submit_review("{}")
+    (fault,) = _faults(workflow)
+    assert (fault.code, fault.cap, fault.call_kind) == ("CallLimit", 16, "submit_review")
+
+
+@pytest.mark.usefixtures("owner_world")
 def test_the_cap_binds_the_step_across_repair_epochs_and_a_new_attempt_starts_afresh(
     tmp_path: Path,
 ) -> None:

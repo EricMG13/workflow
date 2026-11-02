@@ -644,3 +644,17 @@ def test_all_prompts_have_no_orchestrator_rule_outside_the_ruled_set(pack: Prepa
             if ORCHESTRATOR.match(line)
         }
         assert found <= {"O1", "O2", "O3", "O4", "O5"}, (step_id, found)
+
+
+def test_the_pack_tools_budget_is_thirty_two_and_the_others_stay_sixteen(
+    pack: PreparedPack,
+) -> None:
+    from deploy_workflow.financial_workflow import MAX_INVOKES
+
+    assert MAX_INVOKES == 32
+    ready = system_of(compose(request_for("source_readiness", pack)))
+    limits = ready[ready.index("Limits:") :]
+    assert "share 32 calls" in limits
+    assert "submit_source_readiness at most 16 calls" in limits
+    narrative = rule5(system_of(compose(request_for("narrative", pack))))
+    assert "read_inputs at most 16 calls" in narrative

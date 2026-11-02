@@ -506,6 +506,16 @@ def test_the_seventeenth_call_of_a_kind_in_a_step_is_the_call_limit(tmp_path: Pa
     assert record["tool_calls"][16]["refusal_code"] == "CallLimit"
 
 
+def test_the_thirty_third_invoke_in_a_step_is_the_call_limit(tmp_path: Path) -> None:
+    searches = [tool_call("search_pack", query="identity") for _ in range(33)]
+    rig = make_rig(tmp_path, [ok(*searches)])
+    assert _stop(rig).reason == "CallLimit"
+    (record,) = rig.records()
+    assert record["error_class"] == "CallLimit" and len(record["tool_calls"]) == 33
+    assert record["tool_calls"][31]["refusal_code"] is None
+    assert record["tool_calls"][32]["refusal_code"] == "CallLimit"
+
+
 def test_a_not_permitted_read_inputs_is_returned_to_the_model(tmp_path: Path) -> None:
     rig = make_rig(
         tmp_path, [ok(tool_call("read_inputs")), ok(read_identity(), gap_submit())]

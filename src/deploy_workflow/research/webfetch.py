@@ -12,11 +12,9 @@ import hashlib
 import http.client
 import io
 import ipaddress
-import math
 import re
 import socket
 import ssl
-import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -37,6 +35,7 @@ SOURCE_HEADER = "header:last-modified"
 SOURCE_BODY = "body:published-line"
 
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+_CONTENT_LENGTH = re.compile(r"[0-9]+")
 _PUBLISHED_LINE = re.compile(r"^Published:[ \t]*(\d{4}-\d{2}-\d{2})", re.MULTILINE)
 # RFC 3986's URL characters; anything else (spaces, controls, `|`, `<`, non-ASCII) is not a URL here.
 _URL_CHARS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*")
@@ -69,8 +68,8 @@ class ConnectionTarget:
     ip: str
     port: int
     timeout: float
-    deadline: float = math.inf
-    clock: Callable[[], float] = time.monotonic
+    deadline: float
+    clock: Callable[[], float]
 
 
 @dataclass(frozen=True)
@@ -195,6 +194,8 @@ class _BudgetedSocket:
         self._timeout = timeout
         self._deadline = deadline
         self._clock = clock
+        self._io_refs = 0
+        self._closed = False
 
     def _arm(self) -> None:
         remaining = self._deadline - self._clock()
@@ -221,13 +222,21 @@ class _BudgetedSocket:
     def makefile(self, mode: str = "rb", buffering: int | None = None) -> io.BufferedReader:
         if mode != "rb":
             raise ValueError("only binary reads are supported")
+        self._io_refs += 1
         return io.BufferedReader(socket.SocketIO(cast(socket.socket, self), "rb"))
 
     def _decref_socketios(self) -> None:
-        return None
+        """A file made by ``makefile`` was closed; the raw socket closes with the last one."""
+        if self._io_refs > 0:
+            self._io_refs -= 1
+        if self._closed and self._io_refs == 0:
+            self._raw.close()
 
     def close(self) -> None:
-        self._raw.close()
+        """As ``socket.socket.close``: the raw socket stays open while a file made by ``makefile`` is."""
+        self._closed = True
+        if self._io_refs <= 0:
+            self._raw.close()
 
 
 class PinnedHTTPSConnection(http.client.HTTPSConnection):
@@ -244,18 +253,13 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
         port: int,
         timeout: float,
         context: ssl.SSLContext,
-        deadline: float = math.inf,
-        clock: Callable[[], float] = time.monotonic,
+        deadline: float,
+        clock: Callable[[], float],
     ) -> None:
         super().__init__(host, port=port, timeout=timeout, context=context)
         self._pinned_ip = ip
         self._tls = context
         self._op_timeout = timeout
-        self._deadline = deadline
-        self._clock = clock
-
-    def bound_by(self, deadline: float, clock: Callable[[], float]) -> None:
-        """Bound every later socket operation by what is left until ``deadline`` on ``clock``."""
         self._deadline = deadline
         self._clock = clock
 
@@ -299,11 +303,15 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
 
 
 def pinned_connection(target: ConnectionTarget) -> ConnectionLike:
-    connection = PinnedHTTPSConnection(
-        target.host, target.ip, port=target.port, timeout=target.timeout, context=tls_context()
+    return PinnedHTTPSConnection(
+        target.host,
+        target.ip,
+        port=target.port,
+        timeout=target.timeout,
+        context=tls_context(),
+        deadline=target.deadline,
+        clock=target.clock,
     )
-    connection.bound_by(target.deadline, target.clock)
-    return connection
 
 
 def locate_published(headers: Mapping[str, str], body: bytes) -> tuple[date | None, str | None]:
@@ -403,6 +411,7 @@ def _read_bounded(url: str, response: ResponseLike, limits: _Limits) -> bytes:
         chunks.append(chunk)
         got += len(chunk)
         _check_time(url, limits)
+    _check_time(url, limits)
     if got > limits.cap:
         raise FetchRefusal(f"{url} body is larger than the {limits.cap}-byte cap")
     return b"".join(chunks)
@@ -419,7 +428,7 @@ def _answer(
         raise FetchRefusal(f"{url} answered status {response.status}")
     body = _read_bounded(url, response, limits)
     declared = (response.getheader("Content-Length") or "").strip()
-    if declared.isdigit() and int(declared) != len(body):
+    if _CONTENT_LENGTH.fullmatch(declared) and int(declared) != len(body):
         raise FetchRefusal(f"{url} body ended after {len(body)} of {declared} bytes")
     modified = response.getheader("Last-Modified")
     return (

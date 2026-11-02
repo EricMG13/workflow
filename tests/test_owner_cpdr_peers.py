@@ -145,6 +145,34 @@ def _report(
     return cp1c.peer_benchmark(pack=pack, submission=_submission(body), upstream=upstream)
 
 
+def not_admitted_rows(by_id: dict[str, Fact]) -> list[tuple[str, str]]:
+    """(name, reason) of the T1C.7 rows Python wrote (row ids `n01`...), in order."""
+    ids = sorted(i for i in by_id if i.startswith("T1C.7.n") and i.endswith(".gap"))
+    prefix = cp1c.NOT_ADMITTED_PREFIX
+    return [
+        (
+            (by_id[i].text or "").removeprefix(prefix),
+            by_id[i.replace(".gap", ".why_it_matters")].text or "",
+        )
+        for i in ids
+    ]
+
+
+def assert_pack_surfaces(by_id: dict[str, Fact]) -> None:
+    """Row 22's surfaces on a composed or settled CP-1C head: T1C.6 per `#cp1c/t1c6`, the T1C.7
+    rows Python wrote per `#cp1c/not_admitted`, and an `ev-*` citation on every sheet figure."""
+    want = CP1C["t1c6"]
+    for metric in want["rows"]:
+        for cell in want["cells"]:
+            fact = by_id[f"T1C.6.{metric}.{cell}"]
+            assert (fact.status, fact.limitation) == (want["status"], want["limitation"]), fact
+        assert by_id[f"T1C.6.{metric}.result"].text == want["result"]
+    assert not_admitted_rows(by_id) == [(n["name"], n["reason"]) for n in CP1C["not_admitted"]]
+    cited = [f for i, f in by_id.items() if i.startswith(("T1C.1.p", "T1C.2.p", "T1C.3.p"))]
+    sourced = [f for f in cited if f.citations]
+    assert sourced and all(c.source_id.startswith("ev-") for f in sourced for c in f.citations)
+
+
 def _with_text(facts: list[Fact], fact_id: str, text: str) -> list[Fact]:
     return [f.model_copy(update={"text": text}) if f.fact_id == fact_id else f for f in facts]
 
@@ -176,9 +204,12 @@ def test_cp1c_admits_peers_from_tdr_pack() -> None:
                 assert fact.amount == Decimal(amount), fact.fact_id
     assert "issuer" not in rows["T1C.2"]
     module = cp1c.cp1c_module(report, inputs=up.bound, attempt=0)
-    assert "CP-DR" in {item.input_id for item in module.inputs}
-    cited = [f for f in report.facts if f.fact_id.startswith(("T1C.1.p", "T1C.2.p", "T1C.3.p"))]
-    assert cited and all(c.source_id.startswith("ev-") for f in cited for c in f.citations)
+    # the binding is read from the built module and compared with a head built apart from `up`
+    bound = [item for item in module.inputs if item.input_id == "CP-DR"]
+    assert [(i.sha256, i.status) for i in bound] == [
+        (_head_with_pack().content_hash(), "restricted")
+    ]
+    assert_pack_surfaces(by_id)
     figure = {f.fact_id: f for f in _key_facts()}["TDR.6.p01.revenue.amount"]
     assert by_id["T1C.2.p01.revenue"].citations == figure.citations
 
@@ -196,7 +227,7 @@ def test_cp1c_t1c6_and_the_eur_row_follow_the_key() -> None:
             assert (fact.status, fact.limitation) == (want["status"], want["limitation"]), fact
         assert by_id[f"T1C.6.{metric}.result"].text == want["result"]
         assert by_id[f"T1C.6.{metric}.cp1"].status == "known"
-    sheet = peers.peer_sheet(head, DEFAULT_BASIS)
+    sheet = peers.peer_sheet(head, DEFAULT_BASIS, issuer_name=_run().issuer_name)
     assert isinstance(sheet, cp1c.PeerSheet)
     assert [asdict(n) for n in sheet.not_admitted] == CP1C["not_admitted"]
     assert [row.label for row in sheet.peers] == [r["name"] for r in CP1C["sheet_rows"]]
@@ -345,8 +376,116 @@ def closed_peers_run(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def test_cp1c_over_the_closed_peers_run(closed_peers_run: Path) -> None:
     """Row 22 over the genuine run: CP-1C settles over a real CP-DR head and its facts are the
     key's. Deferred to CI: setup is one CP-1 promotion (about two minutes)."""
-    facts = cpdr_peers_runs.cp1c_facts(closed_peers_run)
+    module, dr_sha = cpdr_peers_runs.cp1c_head(closed_peers_run)
+    facts = {fact.fact_id: fact for fact in module.facts}
     assert facts["T1C.8.total.included"].amount == Decimal(CP1C["included_count"])
     for metric in METRICS:
         median = facts[f"T1C.4.{metric}.median"].amount
         assert median == Decimal(CP1C["medians"][metric]["median"]), metric
+    assert_pack_surfaces(facts)
+    bound = [item.sha256 for item in module.inputs if item.input_id == "CP-DR"]
+    assert bound == [dr_sha]
+
+
+# --- fix round 1: T1C.7 rows, admission mutants, the issuer-named candidate, missing cells -------------
+
+
+def _sheet_labels(facts: list[Fact]) -> list[str]:
+    sheet = peers.peer_sheet(_dr_module(facts), DEFAULT_BASIS, issuer_name=_run().issuer_name)
+    assert isinstance(sheet, cp1c.PeerSheet), sheet
+    return [row.label for row in sheet.peers]
+
+
+def _without(name: str) -> list[str]:
+    return [r["name"] for r in CP1C["sheet_rows"] if r["name"] != name]
+
+
+def test_the_head_lists_a_not_admitted_peer_the_analyst_did_not_report() -> None:
+    """O7-R64: Python writes one T1C.7 row per not-admitted peer (`#cp1c/not_admitted` name and
+    reason), whether or not the submission carries a gap for it."""
+    for gaps in (SUBS["cp1c_peers"]["gaps"], []):
+        body = {**SUBS["cp1c_peers"], "gaps": gaps}
+        report = _report(_peers_pack(), _upstream(_head_with_pack()), body)
+        by_id = {f.fact_id: f for f in report.facts}
+        assert not_admitted_rows(by_id) == [(n["name"], n["reason"]) for n in CP1C["not_admitted"]]
+        analyst = [i for i in by_id if i.startswith("T1C.7.g") and i.endswith(".gap")]
+        assert len(analyst) == len(gaps)
+
+
+@pytest.mark.parametrize(
+    ("fact_id", "text", "dropped"),
+    [
+        ("TDR.6.p02.revenue.unit", "thousands", "Brookmere Industries"),
+        ("TDR.6.p02.ebitda.period_end", "2025-06-30", "Brookmere Industries"),
+        ("TDR.6.p03.revenue.currency", "EUR", "Calder Vale Group"),
+    ],
+    ids=["unit", "period_end", "missing_figure_in_eur"],
+)
+def test_a_peer_with_one_off_basis_figure_leaves_the_sheet(
+    fact_id: str, text: str, dropped: str
+) -> None:
+    """Admission mutants: another unit, a second period end, or a missing figure in another
+    currency keeps the peer off the sheet; the others are `#cp1c/sheet_rows` unchanged."""
+    labels = _sheet_labels(_with_text(_key_facts(), fact_id, text))
+    assert labels == _without(dropped)
+
+
+@pytest.mark.parametrize("name", ["Alder|Ridge", "Alder\nRidge"], ids=["pipe", "newline"])
+def test_a_name_that_breaks_a_table_cell_makes_the_pack_unusable(name: str) -> None:
+    facts = _with_text(_key_facts(), "TDR.4.p01.name", name)
+    found = peers.peer_sheet(_dr_module(facts), DEFAULT_BASIS)
+    assert isinstance(found, peers.PackUnusable) and name not in found.reason
+
+
+def test_two_candidates_with_one_name_make_the_pack_unusable() -> None:
+    first = CP1C["sheet_rows"][0]["name"]
+    facts = _with_text(_key_facts(), "TDR.4.p02.name", first)
+    assert isinstance(peers.peer_sheet(_dr_module(facts), DEFAULT_BASIS), peers.PackUnusable)
+
+
+def test_a_repeated_tdr_cell_makes_the_pack_unusable() -> None:
+    """L4: a head cannot declare one (row, field) twice and have the sheet take the last."""
+    facts = _key_facts()
+    orig = next(f for f in facts if f.fact_id == "TDR.6.p01.revenue.amount")
+    twin = orig.model_copy(update={"fact_id": "TDR.6.p01.revenue.amount2", "amount": Decimal(999)})
+    assert isinstance(
+        peers.peer_sheet(_dr_module([*facts, twin]), DEFAULT_BASIS), peers.PackUnusable
+    )
+
+
+def _with_issuer_named_candidate() -> list[Fact]:
+    """The key facts plus a candidate `p07` that copies `p01`'s figures under the issuer's name."""
+    extra = []
+    for fact in _key_facts():
+        if fact.row_id is None or fact.row_id.split(".")[0] != "p01":
+            continue
+        update: dict[str, Any] = {
+            "fact_id": fact.fact_id.replace(".p01", ".p07"),
+            "row_id": fact.row_id.replace("p01", "p07"),
+        }
+        if fact.fact_id == "TDR.4.p01.name":
+            update["text"] = _run().issuer_name
+        extra.append(fact.model_copy(update=update))
+    return [*_key_facts(), *extra]
+
+
+def test_a_candidate_named_as_the_issuer_is_not_admitted() -> None:
+    """O7-R66: the issuer-named candidate is not on the sheet, in no median, and is a T1C.7 row;
+    the medians are `#cp1c/medians`."""
+    head = _dr_module(_with_issuer_named_candidate())
+    report = _report(_peers_pack(), _upstream(head))
+    by_id = {f.fact_id: f for f in report.facts}
+    for metric, want in CP1C["medians"].items():
+        assert by_id[f"T1C.4.{metric}.n"].amount == Decimal(want["n"]), metric
+        assert by_id[f"T1C.4.{metric}.median"].amount == Decimal(want["median"]), metric
+    named = [n for n, _ in not_admitted_rows(by_id)]
+    assert named == [*(n["name"] for n in CP1C["not_admitted"]), _run().issuer_name]
+
+
+@pytest.mark.parametrize("cell", ["p03.revenue", "p04.interest"])
+def test_a_missing_pack_figure_shows_the_tdr6_cell_limitation(cell: str) -> None:
+    """L3: the T1C.2 cell says why the TDR.6 cell is missing, not 'Not stated in the peer source'."""
+    held = {f.fact_id: f for f in _key_facts()}[f"TDR.6.{cell}.amount"]
+    report = _report(_peers_pack(), _upstream(_head_with_pack()))
+    got = {f.fact_id: f for f in report.facts}[f"T1C.2.{cell}"]
+    assert got.status == "missing" and got.limitation == held.limitation

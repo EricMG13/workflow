@@ -19,7 +19,7 @@ from typing import Any
 import cpdr_runs as runs
 import pytest
 
-from deploy_vii.contracts import Run, Source
+from deploy_vii.contracts import Module, Run, Source
 from deploy_vii.execution import Execution
 from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_workflow.research.intake import AcceptedItem
@@ -125,8 +125,8 @@ def closed_peers_run(factory: pytest.TempPathFactory) -> Path:
     return root
 
 
-def cp1c_facts(root: Path) -> dict[str, Any]:
-    """The settled CP-1C head's facts by fact id."""
+def cp1c_head(root: Path) -> tuple[Module, str]:
+    """The settled CP-1C head's module and the result hash of the settled CP-DR head."""
     store = Execution(root / "store")
-    head = next(h for h in store.read().heads if h.module_id == "CP-1C")
-    return {fact.fact_id: fact for fact in store.head_module(head).facts}
+    heads = {h.module_id: h for h in store.read().heads}
+    return store.head_module(heads["CP-1C"]), heads["CP-DR"].result_sha256

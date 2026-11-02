@@ -422,7 +422,7 @@ def _unsafe(where: str, text: str) -> str | None:
     except FenceError:
         return f"{where}: holds a block delimiter or a lookalike of one"
     if breaks_a_table_cell(text):
-        return f"{where}: holds a line break or a |"
+        return f"{where}: holds a line break or a pipe character"
     return None
 
 

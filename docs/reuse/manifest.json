@@ -2307,7 +2307,7 @@
       "prior_project_sha256": "331137e787f48576e2aaceddb1cfc977864b89660a8b8fdacadef1c1467084d4",
       "project_commit": "69d68664564503e3750750629deeb3d09684b6c5",
       "sha256": "1308cf6c421bd09eb11eb4988e0667f50fb5c2e8eb59492730a9f6fcedc22ae3",
-      "reason": "repo-authored (not in files[]): B9: wording only; methods fix 1 (P8T8-R1, P8T8-R2): figures date and period wording, the selected_multiple view key, omission 5, the CP-2D money-fact currency and the CP-4C reader claim",
+      "reason": "repo-authored (not in files[]): B9: wording only; methods fix 1 (P8T8-R1, P8T8-R2): figures date and period wording, omission 5 and the CP-4C reader claim",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-fix1-rereview.md"
     },
     {
@@ -2316,7 +2316,7 @@
       "prior_project_sha256": "aa95d40eaf162614370c8bcc394d7eecd39ef8edf267d2f24b29c2ebdc00d28d",
       "project_commit": "69d68664564503e3750750629deeb3d09684b6c5",
       "sha256": "5d8f43c53a062b875430d4eef5cfc806d9b32d4a2ebfc595b82e951837218432",
-      "reason": "repo-authored (not in files[]): B9: wording only; methods fix 1 (P8T8-R1, P8T8-R2): figures date and period wording, the selected_multiple view key, omission 5, the CP-2D money-fact currency and the CP-4C reader claim",
+      "reason": "repo-authored (not in files[]): B9: wording only; methods fix 1 (P8T8-R1, P8T8-R2): the selected_multiple view key in the CP-1C edge",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-fix1-rereview.md"
     },
     {
@@ -2327,6 +2327,15 @@
       "sha256": "df8ec4b240315b7837144143b10b4861faf47826612d48f4be0e24f2ea5edcdd",
       "reason": "B9: wording only; methods fix 1 (P8T8-R1): the adapter's money-fact rule names the run's reporting currency",
       "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/methods-fix1-rereview.md"
+    },
+    {
+      "destination": "src/deploy_vii/methods/cp1c.md",
+      "imported_sha256": "8c797c12c236c2e58efa5a4f6fea098866d9811c08798e561c19903a833511e3",
+      "prior_project_sha256": "1308cf6c421bd09eb11eb4988e0667f50fb5c2e8eb59492730a9f6fcedc22ae3",
+      "project_commit": "f7f252d98497dc767343eed3315628bff78de134",
+      "sha256": "c2675f0f3bc3d1843a4c4cf990e84bfc0d1029abe15ec29438e99e3c2241302c",
+      "reason": "repo-authored (not in files[]): B9: wording only; cp1c.md omission 5 names the run context as the one source of market data (Release 3 end batch, methods fix 1 Low-1)",
+      "review": ".superpowers/sdd/2026-10-31-phase-8-periods-currency/release3-end-batch-review.md"
     }
   ],
   "local_patch_lineage": [

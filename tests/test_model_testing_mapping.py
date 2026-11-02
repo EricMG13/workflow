@@ -293,3 +293,67 @@ def test_row_id_mapping_still_loads(tmp_path: Path) -> None:
     loc = m.entries[0].locator
     assert loc.row_id == "a0"
     assert loc.row_key is None
+
+
+def _ref_entry(
+    fid: str, module: str = "CP-0", end: str = "2024-12-28", **ref: Any
+) -> dict[str, Any]:
+    entry = _rk_entry(fid, module)
+    entry["locator"]["period"] = None
+    entry["locator"]["period_ref"] = {
+        "table_id": "T4.14",
+        "id_field": "period_id",
+        "match": {"end_date": end, "period_type": "QUARTER"},
+        **ref,
+    }
+    return entry
+
+
+def test_period_ref_excludes_literal_period(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Margin")
+    entry = _ref_entry("a0")
+    entry["locator"]["period"] = "P7"
+    with pytest.raises(MappingError, match="period.*period_ref"):
+        load_mapping(_write(tmp_path, _doc(entries=[entry], unmapped=[])), case)
+    ok = _ref_entry("a0")
+    assert (
+        load_mapping(_write(tmp_path, _doc(entries=[ok])), case).entries[0].locator.period is None
+    )
+
+
+def test_period_ref_entries_collide_on_same_match(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Revenue")
+    # same row key text, same ref (values normalised): collide
+    other = _ref_entry("a1", end="2024-12-28 ")
+    doc = _doc(entries=[_ref_entry("a0"), other], unmapped=[])
+    with pytest.raises(MappingError, match="collide"):
+        load_mapping(_write(tmp_path, doc), case)
+    # the same ref on row-id locators collides too
+    one, two = _ref_entry("a0"), _ref_entry("a1")
+    for e in (one, two):
+        del e["locator"]["row_key"]
+        e["locator"]["row_id"] = "r01"
+    with pytest.raises(MappingError, match="collide"):
+        load_mapping(_write(tmp_path, _doc(entries=[one, two], unmapped=[])), case)
+
+
+def test_period_ref_distinct_match_ok(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Revenue")
+    different = _ref_entry("a1", end="2024-09-28")
+    doc = _doc(entries=[_ref_entry("a0"), different], unmapped=[])
+    assert len(load_mapping(_write(tmp_path, doc), case).entries) == 2
+    # a literal-period entry never collides with a period_ref one
+    literal = _rk_entry("a1")
+    literal["locator"]["period"] = "P7"
+    doc = _doc(entries=[_ref_entry("a0"), literal], unmapped=[])
+    assert len(load_mapping(_write(tmp_path, doc), case).entries) == 2
+
+
+def test_zero_width_alias_and_blank_ref_refused(tmp_path: Path) -> None:
+    case = _rk_case("Revenue", "Margin")
+    bad_alias = _rk_entry("a0", aliases=["\u200b"])
+    with pytest.raises(MappingError, match="non-blank"):
+        load_mapping(_write(tmp_path, _doc(entries=[bad_alias], unmapped=[])), case)
+    blank_ref = _ref_entry("a0", match={"end_date": "\u200b"})
+    with pytest.raises(MappingError, match="non-blank"):
+        load_mapping(_write(tmp_path, _doc(entries=[blank_ref], unmapped=[])), case)

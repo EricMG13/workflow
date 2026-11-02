@@ -13,7 +13,7 @@ from pydantic import Field
 from deploy_vii.contracts import Contract, Fact, Module
 from deploy_vii.cp5_integrity import UNIT_SCALE
 from deploy_workflow.model_testing.cases import GoldenCase, checker
-from deploy_workflow.model_testing.mapping import Mapping, MappingEntry
+from deploy_workflow.model_testing.mapping import Locator, Mapping, MappingEntry
 
 Outcome = Literal[
     "match",
@@ -159,10 +159,39 @@ def _observed_text(fact: Fact | None, golden: Any) -> str | None:
     return fact.text
 
 
+def _resolve_periods(module: Module, loc: Locator) -> list[str | None]:
+    """The periods a locator names: its literal one, or the ``id_field`` text of every row of
+    the referenced register whose ``match`` cells all equal the reference (spec: model-declared
+    period ids, e.g. CP-1 T4.14/T4.15)."""
+    ref = loc.period_ref
+    if ref is None:
+        return [loc.period]
+    # ponytail: O(facts) per entry; index by table if scoring ever becomes slow.
+    in_table = [f for f in module.facts if f.table_id == ref.table_id]
+    periods: list[str | None] = []
+    for row in dict.fromkeys(f.row_id for f in in_table):
+        cells = [f for f in in_table if f.row_id == row and f.text is not None]
+        if all(
+            any(c.field == k and _text(str(c.text)) == _text(v) for c in cells)
+            for k, v in ref.match.items()
+        ):
+            periods.extend(c.text for c in cells if c.field == ref.id_field)
+    return periods
+
+
 def _locate(module: Module | None, entry: MappingEntry, golden: Any) -> list[Fact]:
     if module is None:
         return []
     loc = entry.locator
+    if loc.period_ref is None:
+        return _locate_at(module, loc, golden)
+    found: list[Fact] = []
+    for period in _resolve_periods(module, loc):
+        found.extend(_locate_at(module, loc.model_copy(update={"period": period}), golden))
+    return found
+
+
+def _locate_at(module: Module, loc: Locator, golden: Any) -> list[Fact]:
     rk = loc.row_key
     if rk is None:
         key = (loc.table_id, loc.row_id, loc.field, loc.period)

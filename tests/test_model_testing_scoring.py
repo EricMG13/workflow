@@ -16,6 +16,7 @@ from deploy_workflow.model_testing.mapping import (
     Locator,
     Mapping,
     MappingEntry,
+    PeriodRef,
     RowKey,
     Unmapped,
 )
@@ -844,3 +845,138 @@ def test_row_id_locator_unchanged() -> None:
     score, _, _ = _one(IHRT_BILLIONS, IHRT, amount=Decimal(IHRT_UNITS))
     assert score.facts[0].outcome == "match"
     assert score.unscored == 0
+
+
+def _cell(table: str, row: str, field: str, text: str, period: str | None = None) -> Fact:
+    return Fact(
+        fact_id=f"{table}-{row}-{field}",
+        label="x",
+        table_id=table,
+        row_id=row,
+        field=field,
+        period=period,
+        text=text,
+        citations=_cite(),
+    )
+
+
+def _period_row(row: str, pid: str, end: str, ptype: str = "QUARTER") -> list[Fact]:
+    return [
+        _cell("T4.14", row, "period_id", pid),
+        _cell("T4.14", row, "end_date", end),
+        _cell("T4.14", row, "period_type", ptype),
+    ]
+
+
+def _metric_row(row: str, metric: str, pid: str, value: Decimal | None = None) -> list[Fact]:
+    """A T4.15 row: metric_id and period_id key cells, the value cell at period ``pid``."""
+    facts = [_cell("T4.15", row, "metric_id", metric), _cell("T4.15", row, "period_id", pid)]
+    if value is not None:
+        facts.append(
+            Fact(
+                fact_id=f"T4.15-{row}-value",
+                label="x",
+                table_id="T4.15",
+                row_id=row,
+                field="value",
+                period=pid,
+                amount=value,
+                unit="USD",
+                citations=_cite(),
+            )
+        )
+    return facts
+
+
+def _ref_entry(
+    row_key: bool = True, end: str = "2024-12-28", ptype: str = "QUARTER"
+) -> MappingEntry:
+    return MappingEntry(
+        fact_id=IHRT_BILLIONS,
+        module="CP-2",
+        locator=Locator(
+            table_id="T4.15",
+            row_id=None if row_key else "r01",
+            row_key=RowKey(field="metric_id", aliases=("revenue",)) if row_key else None,
+            field="value",
+            period=None,
+            period_ref=PeriodRef(
+                table_id="T4.14",
+                id_field="period_id",
+                match={"end_date": end, "period_type": ptype},
+            ),
+        ),
+    )
+
+
+def _ref_score(facts: list[Fact], entry: MappingEntry | None = None) -> ModuleScore:
+    case = _case(IHRT, IHRT_BILLIONS)
+    return _score(_module(facts), case, _mapping(case, [entry or _ref_entry()]))
+
+
+def test_period_ref_resolves_model_period_id() -> None:
+    facts = (
+        _period_row("p1", "P3", "2024-09-28")
+        + _period_row("p2", "P7", "2024-12-28")
+        + _metric_row("r01", "revenue", "P3", Decimal(1))
+        + _metric_row("r02", "revenue", "P7", Decimal(IHRT_UNITS))
+    )
+    score = _ref_score(facts)
+    assert score.facts[0].outcome == "match"
+    assert score.passed
+
+
+def test_period_ref_quarter_vs_annual() -> None:
+    facts = (
+        _period_row("p1", "P7", "2024-12-28", "QUARTER")
+        + _period_row("p2", "P9", "2024-12-28", "ANNUAL")
+        + _metric_row("r01", "revenue", "P7", Decimal(1))
+        + _metric_row("r02", "revenue", "P9", Decimal(IHRT_UNITS))
+    )
+    assert _ref_score(facts, _ref_entry(ptype="ANNUAL")).facts[0].outcome == "match"
+    assert _ref_score(facts, _ref_entry(ptype="QUARTER")).facts[0].outcome == "mismatch"
+
+
+def test_period_ref_no_period_row_is_missing() -> None:
+    facts = _period_row("p1", "P3", "2024-09-28") + _metric_row(
+        "r01", "revenue", "P3", Decimal(IHRT_UNITS)
+    )
+    assert _ref_score(facts).facts[0].outcome == "missing_in_output"
+
+
+def test_period_ref_two_period_rows_is_mismatch() -> None:
+    facts = (
+        _period_row("p1", "P7", "2024-12-28")
+        + _period_row("p2", "P8", "2024-12-28")
+        + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+        + _metric_row("r02", "revenue", "P8", Decimal(IHRT_UNITS))
+    )
+    fs = _ref_score(facts).facts[0]
+    assert fs.outcome == "mismatch"
+    assert fs.observed == "2 facts at one locator"
+
+
+def test_period_ref_with_row_id_locator() -> None:
+    facts = _period_row("p2", "P7", "2024-12-28") + _metric_row(
+        "r01", "revenue", "P7", Decimal(IHRT_UNITS)
+    )
+    assert _ref_score(facts, _ref_entry(row_key=False)).facts[0].outcome == "match"
+
+
+def test_period_ref_fact_not_unscored() -> None:
+    facts = (
+        _period_row("p2", "P7", "2024-12-28")
+        + _metric_row("r01", "revenue", "P7", Decimal(IHRT_UNITS))
+        + _metric_row("r02", "margin", "P7", Decimal(5))
+    )
+    assert _ref_score(facts).unscored == 1  # only the margin value; revenue was located
+
+
+def test_row_key_ignores_same_key_text_in_another_table() -> None:
+    # table u holds the key text in row r09; table t has an r09 row whose key cell differs
+    facts = [
+        _cell("u", "r09", "name", _subject()),
+        *_row("r09", "Other", Decimal(IHRT_UNITS)),
+    ]
+    score, _ = _rk_score(facts)
+    assert score.facts[0].outcome == "missing_in_output"

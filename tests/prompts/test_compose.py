@@ -220,7 +220,8 @@ def test_rule_5_tells_the_model_what_a_verdict_means(pack: PreparedPack) -> None
 
 def test_rule_5_states_the_budgets_as_the_code_keys_them(pack: PreparedPack) -> None:
     """The workflow keys the pack tools on one ("invoke") counter and counts submits and
-    read_inputs separately, the pack tools bounded by MAX_INVOKES, submits and read_inputs by MAX_CALLS (owner_workflow ``_limits``, loop ``_kind``)."""
+    read_inputs separately: the pack tools are bounded by MAX_INVOKES, submits and read_inputs by
+    MAX_CALLS (owner_workflow ``_limits``, loop ``_kind``)."""
     financials = rule5(system_of(compose(request_for("financials", pack))))
     assert "calls of any one tool" not in financials
     assert MAX_CALLS == 16

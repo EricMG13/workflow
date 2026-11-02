@@ -616,19 +616,25 @@ def _evidence_session(
     *,
     record: bool,
     text: str = "Line one of the supplied note.",
+    rows: list[dict[str, Any]] | None = None,
+    status: str = "ready",
 ) -> SourceSession:
     """A real `SourceSession` for CP-DR `research` over a pack that also holds `ev-1`: the store is
     a begun fake-core run, the session is built over the widened pack."""
     _register(monkeypatch, "CP-DR", "research")
     pack = _requested(runs.make_pack("positive"), "CP-DR")
     _begun(tmp_path, pack, _s1_review(pack, "CP-DR"))
-    held = Source(
-        source_id="ev-1",
-        name="supplied",
-        status="ready",
-        sha256="b" * 64,
-        media_type="text/plain",
-        spans=(Span(locator="line:1", text=text),),
+    held = (
+        Source(
+            source_id="ev-1",
+            name="supplied",
+            status="ready",
+            sha256="b" * 64,
+            media_type="text/plain",
+            spans=(Span(locator="line:1", text=text),),
+        )
+        if status == "ready"
+        else Source(source_id="ev-1", name="supplied", status="missing", limitation="absent")
     )
     widened = PreparedPack(run=pack.run, sources=(*pack.sources, held))
     if record:
@@ -643,7 +649,8 @@ def _evidence_session(
             "retrieved": RETRIEVED,
             "path": "evidence/a.txt",
         }
-        (research / "evidence.json").write_text(json.dumps([record_row]), encoding="utf-8")
+        written = [record_row] if rows is None else rows
+        (research / "evidence.json").write_text(json.dumps(written), encoding="utf-8")
     store = Execution(tmp_path / "store")
     return SourceSession(
         store, store.read(), _pending(tmp_path), "research", widened, ("identity", "ev-1")
@@ -670,6 +677,43 @@ def test_session_refuses_at_construction_when_a_ready_evidence_source_has_no_tim
     with pytest.raises(SourceError) as refused:
         _evidence_session(monkeypatch, tmp_path, record=False)
     assert refused.value.code == "retrieval_unrecorded"
+
+
+def test_a_record_without_a_row_for_a_ready_evidence_source_refuses_construction(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """S1 fix 1, L-2: evidence.json is present but ev-1 has no row (kills p07's `and False`)."""
+    with pytest.raises(SourceError) as refused:
+        _evidence_session(monkeypatch, tmp_path, record=True, rows=[])
+    assert refused.value.code == "retrieval_unrecorded"
+
+
+def test_an_unreadable_record_refuses_even_when_the_evidence_source_is_not_ready(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """S1 fix 1, L-2: a missing evidence.json is its own refusal, not only a missing row (kills
+    p07's 'missing record maps to {}', which a not-ready source would otherwise let through)."""
+    with pytest.raises(SourceError) as refused:
+        _evidence_session(monkeypatch, tmp_path, record=False, status="missing")
+    assert refused.value.code == "retrieval_unrecorded"
+
+
+def test_a_record_for_other_bytes_refuses_construction(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """S1 fix 1, L-1 (p04): the record's sha256 is bound to the pack source's."""
+    row = {
+        "item_id": "ev-1",
+        "family": "f",
+        "published": None,
+        "locator": "l",
+        "sha256": "0" * 64,
+        "retrieved": RETRIEVED,
+        "path": "a.txt",
+    }
+    with pytest.raises(SourceError) as refused:
+        _evidence_session(monkeypatch, tmp_path, record=True, rows=[row])
+    assert refused.value.code == "evidence_mismatch"
 
 
 def test_a_fence_refusal_on_an_evidence_result_is_render_refused(

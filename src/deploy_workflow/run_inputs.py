@@ -294,7 +294,7 @@ def _research_staging(manifest: Path, context: RunContext) -> ResearchStaging:
     raw = read_capped(manifest)
     try:
         rows = json.loads(raw)
-    except ValueError:
+    except (ValueError, RecursionError):  # not JSON, or nested past the parser's depth
         raise ResearchManifestInvalid(f"{manifest}: not valid JSON") from None
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
         raise ResearchManifestInvalid(f"{manifest}: not a JSON list of rows")
@@ -443,6 +443,9 @@ def stage_sources(checked: CheckedRun, run_dir: Path) -> None:
             research / evidence.EVIDENCE_FILE, checked.research.accepted, checked.research.retrieved
         )
         write_rejected(research / evidence.REJECTED_FILE, checked.research.refused)
+        evidence.write_manifest_sha(
+            research / evidence.MANIFEST_SHA_FILE, checked.research.manifest_sha256
+        )
     os.mkdir(sources)
     for staged in checked.files:
         _write_new(sources, staged.filename, staged.data)

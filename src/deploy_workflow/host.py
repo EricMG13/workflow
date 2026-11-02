@@ -41,7 +41,7 @@ from deploy_vii.preparation import PreparedPack
 from deploy_vii.quality import QualityReview, assess_quality
 from deploy_vii.readiness import ReadinessReview, build_readiness
 from deploy_vii.registry import step_chain
-from deploy_workflow.research.evidence import research_retrieved
+from deploy_workflow.research.evidence import research_hashes, research_retrieved
 from deploy_workflow.tools.source import SourceError, SourceTools
 
 # The steps that may open a source session, per module. CP-0, CP-1, CP-1A, CP-3 and CP-4 have a
@@ -100,8 +100,9 @@ _OWNER_SCOPES: Mapping[tuple[str, str], Callable[[PreparedPack], tuple[str, ...]
             ("CP-1D", "earnings_quality"): _held("identity", "financial", "bridge"),
             # docs/CP3D-OWNER-LEASE.md:46, :87: market and financial only, never identity.
             ("CP-3D", "market_implied"): _held("market", "financial"),
-            # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
+            # O7-R26: the brief step reads every held source but the supplied evidence (`ev-*`).
             ("CP-DR", "brief"): _without_research,
+            # docs/CPDR-OWNER-LEASE.md D-B (amended, rulings round 10 item 5): every held source.
             ("CP-DR", "research"): _every_held,
             # docs/CP1C-OWNER-LEASE.md:31: identity, financial and, when the pack holds it, peers.
             ("CP-1C", "peer_benchmark"): _held("identity", "financial", "peers"),
@@ -997,9 +998,13 @@ def _retrieval_times(
     (O7-R8, `retrieval_unrecorded`): the fence needs a real time and none is invented."""
     try:
         retrieved = research_retrieved(store.directory, sources)
+        recorded = research_hashes(store.directory, sources)
     except ValueError:  # EvidenceRecordInvalid: the record is missing, unreadable or malformed
         raise SourceError("retrieval_unrecorded") from None
-    ready = {s.source_id for s in pack.sources if s.status == "ready"}
+    held = {s.source_id: s.sha256 for s in pack.sources if s.status == "ready"}
+    if any(i in held and i in recorded and recorded[i] != held[i] for i in sources):
+        raise SourceError("evidence_mismatch")  # the record is for other bytes than the pack's
+    ready = set(held)
     unrecorded = [i for i in sources if i.startswith("ev-") and i in ready and i not in retrieved]
     if unrecorded:
         raise SourceError("retrieval_unrecorded")

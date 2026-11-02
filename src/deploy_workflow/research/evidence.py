@@ -7,6 +7,7 @@ staging and read back by the host, so a resumed run shows the value it began wit
 """
 
 import json
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,7 +18,9 @@ from deploy_workflow.research.intake import AcceptedItem
 RESEARCH_DIR: Final = "research"
 EVIDENCE_FILE: Final = "evidence.json"
 REJECTED_FILE: Final = "rejected.json"
+MANIFEST_SHA_FILE: Final = "manifest.sha256"
 _KEYS: Final = ("item_id", "family", "published", "locator", "sha256", "retrieved", "path")
+_TIME: Final = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 
 
 class EvidenceRecordInvalid(ValueError):
@@ -34,9 +37,10 @@ def retrieved_text(moment: datetime) -> str:
     return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def evidence_bytes(accepted: Sequence[AcceptedItem], retrieved: str) -> bytes:
-    """``[{item_id, family, published, locator, sha256, retrieved, path}]`` sorted by ``item_id``."""
-    rows = [
+def evidence_rows(accepted: Sequence[AcceptedItem], retrieved: str) -> list[dict[str, Any]]:
+    """The records, sorted by ``item_id``: ``{item_id, family, published, locator, sha256,
+    retrieved, path}``."""
+    return [
         {
             "item_id": item.item_id,
             "family": item.family,
@@ -48,6 +52,10 @@ def evidence_bytes(accepted: Sequence[AcceptedItem], retrieved: str) -> bytes:
         }
         for item in sorted(accepted, key=lambda item: int(item.item_id.removeprefix("ev-")))
     ]
+
+
+def evidence_bytes(accepted: Sequence[AcceptedItem], retrieved: str) -> bytes:
+    rows = evidence_rows(accepted, retrieved)
     return (json.dumps(rows, indent=1, ensure_ascii=False) + "\n").encode("utf-8")
 
 
@@ -58,17 +66,52 @@ def write_evidence(path: Path, accepted: Sequence[AcceptedItem], retrieved: str)
     return data
 
 
+def _valid_time(value: object) -> bool:
+    if not isinstance(value, str) or not _TIME.fullmatch(value):
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False
+    return True
+
+
+def _valid_row(row: object) -> bool:
+    if not isinstance(row, dict) or set(row) != set(_KEYS):
+        return False
+    texts = all(isinstance(row[k], str) for k in _KEYS if k != "published")
+    return (
+        texts
+        and (row["published"] is None or isinstance(row["published"], str))
+        and _valid_time(row["retrieved"])
+    )
+
+
 def read_evidence(path: Path) -> tuple[Mapping[str, Any], ...]:
-    """The records of ``evidence.json``; any other shape raises ``EvidenceRecordInvalid``."""
+    """The records of ``evidence.json``; any other shape raises ``EvidenceRecordInvalid``: every
+    value a string (``published`` may be null), ``retrieved`` a full UTC-second time, and unique
+    ``item_id``s."""
     try:
         rows = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, RecursionError) as error:
+        raise EvidenceRecordInvalid(f"{path.name} cannot be read") from error
+    if not isinstance(rows, list) or not all(_valid_row(row) for row in rows):
+        raise EvidenceRecordInvalid(f"{path.name} is not a list of evidence records")
+    if len({row["item_id"] for row in rows}) != len(rows):
+        raise EvidenceRecordInvalid(f"{path.name} repeats an item_id")
+    return tuple(rows)
+
+
+def write_manifest_sha(path: Path, digest: str) -> None:
+    """Record the research manifest's sha256 at staging (``research/manifest.sha256``)."""
+    path.write_text(digest + "\n", encoding="ascii")
+
+
+def read_manifest_sha(path: Path) -> str:
+    try:
+        return path.read_text(encoding="ascii").strip()
     except (OSError, ValueError) as error:
         raise EvidenceRecordInvalid(f"{path.name} cannot be read") from error
-    if not isinstance(rows, list) or not all(
-        isinstance(row, dict) and set(row) == set(_KEYS) for row in rows
-    ):
-        raise EvidenceRecordInvalid(f"{path.name} is not a list of evidence records")
-    return tuple(rows)
 
 
 def research_retrieved(execution_directory: Path, source_ids: Iterable[str]) -> dict[str, str]:
@@ -80,3 +123,12 @@ def research_retrieved(execution_directory: Path, source_ids: Iterable[str]) -> 
         return {}
     rows = read_evidence(execution_directory.parent / RESEARCH_DIR / EVIDENCE_FILE)
     return {str(row["item_id"]): str(row["retrieved"]) for row in rows}
+
+
+def research_hashes(execution_directory: Path, source_ids: Iterable[str]) -> dict[str, str]:
+    """The recorded sha256 of each ``ev-*`` item (``{}`` when no source id is an ``ev-*``), read
+    from the same record as ``research_retrieved``."""
+    if not any(source_id.startswith("ev-") for source_id in source_ids):
+        return {}
+    rows = read_evidence(execution_directory.parent / RESEARCH_DIR / EVIDENCE_FILE)
+    return {str(row["item_id"]): str(row["sha256"]) for row in rows}

@@ -64,7 +64,9 @@ from deploy_workflow.replay import (
     journal_unreplayable,
     replay_module,
 )
+from deploy_workflow.research import evidence
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
+from deploy_workflow.research.intake import rejected_bytes
 from deploy_workflow.run_inputs import (
     HTML_MEDIA,
     CaseSource,
@@ -209,6 +211,33 @@ def _retained_configs(run_dir: Path, redactor: Redactor) -> tuple[set[tuple[str,
     return identities, configs
 
 
+def _check_research(checked: CheckedRun, run_dir: Path) -> None:
+    """N1 for the research arguments (reads only): the manifest, the accepted items and the refused
+    items must be those staged under ``research/``; a run staged without research has none."""
+    staged = run_dir / evidence.RESEARCH_DIR
+    research = checked.research
+    if research is None:
+        if staged.exists():
+            raise ResumeMismatch("the run was staged with a research manifest; none was given")
+        return
+    try:
+        recorded = evidence.read_evidence(staged / evidence.EVIDENCE_FILE)
+        manifest_sha = evidence.read_manifest_sha(staged / evidence.MANIFEST_SHA_FILE)
+        rejected = (staged / evidence.REJECTED_FILE).read_bytes()
+    except (OSError, ValueError):  # EvidenceRecordInvalid is a ValueError
+        raise ResumeRefused(f"{staged} is missing or unreadable") from None
+    wanted = [
+        {k: v for k, v in row.items() if k != "retrieved"}
+        for row in evidence.evidence_rows(research.accepted, "")
+    ]
+    if [{k: v for k, v in row.items() if k != "retrieved"} for row in recorded] != wanted:
+        raise ResumeMismatch("the research items are not the staged run's")
+    if rejected != rejected_bytes(research.refused):
+        raise ResumeMismatch("the refused research items are not the staged run's")
+    if manifest_sha != research.manifest_sha256:
+        raise ResumeMismatch("the research manifest is not the staged run's")
+
+
 def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> None:
     """N1: a resume is the run it continues. Reads only: refused here, nothing has been written.
     ``run_id``, ``pathway`` and the staged sources against the retained pack, ``config_id`` against
@@ -225,6 +254,9 @@ def _check_identity(checked: CheckedRun, run_dir: Path, redactor: Redactor) -> N
         item.source_id: item.sha256 for item in checked.files
     }:  # the same ids and the same files, no subset (R17)
         raise ResumeMismatch("the sources are not the staged run's")
+    if pack.run.requested_modules != checked.request.run.requested_modules:
+        raise ResumeMismatch("the requested modules (cp_dr) are not the staged run's")
+    _check_research(checked, run_dir)
     _check_cap_and_mode(checked, run_dir)
     try:
         identities, configs = _retained_configs(run_dir, redactor)

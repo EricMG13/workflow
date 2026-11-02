@@ -88,3 +88,40 @@ def test_the_record_is_json_with_the_documented_keys(
         "retrieved",
         "path",
     }
+
+
+def _row(item_id: str = "ev-1", **over: Any) -> dict[str, Any]:
+    return {
+        "item_id": item_id,
+        "family": "f",
+        "published": None,
+        "locator": "https://x.example/a",
+        "sha256": "a" * 64,
+        "retrieved": RETRIEVED,
+        "path": "a.txt",
+        **over,
+    }
+
+
+@pytest.mark.parametrize(
+    "rows",
+    [
+        [_row(retrieved=None)],
+        [_row(retrieved=123)],
+        [_row(retrieved="")],
+        [_row(retrieved="not-a-time")],
+        [_row(retrieved="2026-11-02T05:40:00Z\n")],
+        [_row(retrieved="2026-13-02T05:40:00Z")],
+        [_row(retrieved="2026-11-02T05:40:00.5Z")],
+        [_row(sha256=7)],
+        [_row(locator=None)],
+        [_row(published=5)],
+        [_row("ev-1"), _row("ev-1", retrieved="1999-01-01T00:00:00Z")],
+    ],
+)
+def test_read_back_validates_values_and_ids(tmp_path: Path, rows: list[dict[str, Any]]) -> None:
+    """S1 fix 1, L-1 (p04): string values, a full UTC-second time, unique item ids."""
+    (tmp_path / "research").mkdir()
+    (tmp_path / "research" / "evidence.json").write_text(json.dumps(rows), encoding="utf-8")
+    with pytest.raises(ev.EvidenceRecordInvalid):
+        ev.research_retrieved(tmp_path / "execution", ["ev-1"])

@@ -78,12 +78,6 @@ def off_run_record(base: Path) -> dict[str, Any]:
     return {"run_json": run_json, "tree": tree_record(base / "run")}
 
 
-def write_fixture(base: Path) -> None:
-    FIXTURE.write_text(
-        json.dumps(off_run_record(base), indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
-
-
 KEY = ROOT / "cases" / "cpdr-research-owner"
 
 

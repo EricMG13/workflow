@@ -28,7 +28,7 @@ from deploy_workflow.prompts.fence import UntrustedItem
 from deploy_workflow.research import evidence
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.research.intake import IntakeError
-from deploy_workflow.run_inputs import check_arguments, stage_sources
+from deploy_workflow.run_inputs import ResearchManifestInvalid, check_arguments, stage_sources
 from deploy_workflow.run_pathway import run_pathway
 
 AFTER_AS_OF = datetime(2026, 11, 2, 5, 40, 0, tzinfo=UTC)
@@ -70,9 +70,11 @@ def test_intake_refuses_before_prepare(tmp_path: Path, monkeypatch: pytest.Monke
     rejected = (run_dir / "research" / "rejected.json").read_bytes()
     assert rejected.decode("utf-8") == key["rejected_json"]["file_bytes"]
     assert hashlib.sha256(rejected).hexdigest() == key["rejected_json"]["file_sha256"]
-    reasons = {e["published"]: e["reason"] for e in json.loads(rejected)}
-    assert reasons["2026-02-01"] == key["refusal_texts"]["cutoff"]["text"]
-    assert reasons[None] == key["refusal_texts"]["undated"]["text"]
+    reasons = [e["reason"] for e in json.loads(rejected)]
+    assert reasons == [
+        key["refusal_texts"]["cutoff"]["text"],
+        key["refusal_texts"]["undated"]["text"],
+    ]
     assert pack_ids(run_dir) == key["pack_sources"]
     assert not any(p.name.startswith(("ev-4", "ev-5")) for p in (run_dir / "sources").iterdir())
 
@@ -98,6 +100,7 @@ def test_evidence_json_records_the_intake_instant_once(
         assert hashlib.sha256(staged).hexdigest() == item["sha256"]
     assert sorted(p.name for p in (tmp_path / "run" / "research").iterdir()) == [
         "evidence.json",
+        "manifest.sha256",
         "rejected.json",
     ]
 
@@ -111,7 +114,7 @@ def test_undated_item_is_taken_when_the_clock_is_not_after_as_of(
     key = key_file("expected.json")["intake"]
     assert pack_ids(tmp_path / "run") == [*key["pack_sources"], "ev-4"]
     refused = json.loads((tmp_path / "run" / "research" / "rejected.json").read_text("utf-8"))
-    assert [e["published"] for e in refused] == ["2026-02-01"]
+    assert [e["reason"] for e in refused] == [key["refusal_texts"]["cutoff"]["text"]]
 
 
 def test_a_manifest_error_writes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -211,3 +214,106 @@ def test_untrusted_hook_is_passed_only_for_cp_dr(
         stage_sources(checked, args["run_dir"])
         rp._run_pathway(checked, args["run_dir"], args["adapter"], untrusted_for=hook)
     assert seen == [hook, None]
+
+
+# --- resume identity (N1) covers the research arguments (S1 fix 1, M-1) -------------------------
+
+
+def killed_run(
+    base: Path, monkeypatch: pytest.MonkeyPatch, rows: list[dict[str, Any]] | None = None
+) -> tuple[ResearchCase, dict[str, Any]]:
+    """A cp_dr run that stopped at its first model call, with run.json removed (a killed run)."""
+    clock(monkeypatch, AFTER_AS_OF)
+    case = ResearchCase(base, rows)
+    args = case.arguments(base)
+    run_pathway(**args)
+    (args["run_dir"] / "run.json").unlink()
+    return case, args
+
+
+def test_resume_with_an_edited_manifest_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """p06 (a): accepted items keep their bytes, their metadata changes: not the staged run."""
+    case, args = killed_run(tmp_path, monkeypatch)
+    rows = json.loads(case.manifest_path.read_text("utf-8"))
+    rows[0]["locator"] = "https://edited.example/after-staging"
+    case.manifest_path.write_text(json.dumps(rows), encoding="utf-8")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+    assert not (args["run_dir"] / "run.json").exists()
+
+
+def test_resume_with_a_refused_items_metadata_edited_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case, args = killed_run(tmp_path, monkeypatch)
+    rows = json.loads(case.manifest_path.read_text("utf-8"))
+    for row in rows:
+        if row.get("published") == "2026-02-01":
+            row["family"] = "edited-family"
+    case.manifest_path.write_text(json.dumps(rows), encoding="utf-8")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+
+
+def test_resume_with_a_reformatted_manifest_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Same rows, other bytes: run.json would name a manifest hash that is not the staged one."""
+    case, args = killed_run(tmp_path, monkeypatch)
+    rows = json.loads(case.manifest_path.read_text("utf-8"))
+    case.manifest_path.write_text(json.dumps(rows, indent=4), encoding="utf-8")
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+
+
+def test_resume_without_cp_dr_of_a_cp_dr_run_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """p06 (b): a manifest that accepted nothing still makes the run a cp_dr run."""
+    rows = [
+        r
+        for r in key_file("manifest.json")["research_manifest"]["rows"]
+        if "published" not in r or r["published"] == "2026-02-01"
+    ]
+    _, args = killed_run(tmp_path, monkeypatch, rows)
+    off = {k: v for k, v in args.items() if k != "research_manifest"} | {"cp_dr": False}
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**off, resume=True)
+    assert not (args["run_dir"] / "run.json").exists()
+
+
+def test_resume_refuses_a_tampered_staged_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, args = killed_run(tmp_path, monkeypatch)
+    rejected = args["run_dir"] / "research" / "rejected.json"
+    rejected.write_bytes(rejected.read_bytes().replace(b"trade-press-archive", b"x", 1))
+    with pytest.raises(rp.ResumeMismatch):
+        run_pathway(**args, resume=True)
+
+
+def test_an_untouched_cp_dr_resume_proceeds_with_the_staged_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, args = killed_run(tmp_path, monkeypatch)
+    again = run_pathway(**args, resume=True)
+    assert again.outcome == "stopped"
+    body = run_json(args["run_dir"])
+    assert (
+        body["research_manifest_sha256"]
+        == (key_file("manifest.json")["research_manifest"]["file_sha256"])
+    )
+
+
+def test_a_deeply_nested_manifest_is_a_named_refusal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L-3: RecursionError from the JSON parse is ResearchManifestInvalid, nothing written."""
+    clock(monkeypatch, AFTER_AS_OF)
+    case = ResearchCase(tmp_path)
+    case.manifest_path.write_text("[" * 200_000 + "]" * 200_000, encoding="utf-8")
+    with pytest.raises(ResearchManifestInvalid):
+        run_pathway(**case.arguments(tmp_path))
+    assert not (tmp_path / "run").exists()

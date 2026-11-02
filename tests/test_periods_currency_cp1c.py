@@ -574,3 +574,68 @@ def test_view_of_a_blank_usd_run_over_a_2026_head_names_the_validators_line() ->
     assert len(issues) == 1 and issues[0].startswith("CP-1 facts unavailable: ")
     assert block["context_issue"] == issues[0]
     assert block["cp1_facts"] == []
+
+
+# --- the view states the validator's other refusals and offers nothing (P8T2-R4, L5, I11) ----------------
+
+
+def _unavailable_line(
+    pack: PreparedPack, up: cp1c.Upstream, sub: cp1c.PeerBenchmarkSubmission
+) -> str:
+    issues = cp1c.validate_peer_benchmark(pack=pack, submission=sub, upstream=up)
+    assert len(issues) == 1 and issues[0].startswith("CP-1 facts unavailable: ")
+    return issues[0]
+
+
+def test_view_of_a_refused_currency_over_a_2025_head_offers_nothing() -> None:
+    """L5 (a), P8-R5 and P8T2-R4: only a context refusal offers the default selection. A blank-base
+    EUR run over the 2025 head, where that selection would succeed, offers no fact and no row and
+    carries the validator's `Period basis:` line."""
+    document = json.loads(valuation.context_bytes("auto-public"))
+    document["run"]["reporting_currency"] = "EUR"
+    raw = (json.dumps(document, indent=2) + "\n").encode()
+    pack = valuation.pack_of("auto-public")
+    pack = PreparedPack(
+        run=pack.run, sources=(*pack.sources[:-1], valuation.context_source("auto-public", raw))
+    )
+    up = _valuation_upstream()
+    issues = cp1c.validate_peer_benchmark(
+        pack=pack, submission=_connect_submission("no_peers"), upstream=up
+    )
+    block = cp1c.context_block(pack=pack, upstream=up)
+    assert len(issues) == 1 and issues[0].startswith("Period basis: ")
+    assert block["context_issue"] == issues[0]
+    assert block["cp1_facts"] == []
+    peers = block["peers"]
+    assert isinstance(peers, dict) and peers["rows"] == []
+
+
+def test_view_of_a_valuation_context_without_cp1_ebitda_names_the_validators_line() -> None:
+    """L5 (b): the view runs the EBITDA selection the validator runs for a valuation context.
+    A 2025 head with no EBITDA fact offers nothing and carries `CP-1 facts unavailable`."""
+    pack, up = valuation.pack_of("auto-public"), _upstream()
+    line = _unavailable_line(pack, up, _connect_submission("no_peers"))
+    block = cp1c.context_block(pack=pack, upstream=up)
+    assert block["context_issue"] == line
+    assert block["cp1_facts"] == []
+
+
+def test_view_of_a_cp1_fact_breaking_the_stage_1_rules_names_the_validators_line() -> None:
+    """I11: a known T4.10 metric in the wrong unit is the validator's `CP-1 facts unavailable`
+    line; the view carries it and offers nothing (it offered the four facts, with no issue)."""
+    head = _cp1_head("R1")
+    broken = head.model_copy(
+        update={
+            "facts": tuple(
+                f.model_copy(update={"unit": "MULTIPLE"})
+                if f.table_id == "T4.10" and f.label.endswith("adjusted_ebitda_margin")
+                else f
+                for f in head.facts
+            )
+        }
+    )
+    pack, up = _pack("R1"), _upstream(broken)
+    line = _unavailable_line(pack, up, _submission("USD"))
+    block = cp1c.context_block(pack=pack, upstream=up)
+    assert block["context_issue"] == line
+    assert block["cp1_facts"] == []

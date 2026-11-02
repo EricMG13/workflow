@@ -73,12 +73,16 @@ class RunSettings(Contract):
     current_period: str
     prior_period: str
     reporting_currency: str
-    cutoff: str = ""  # absent = the as-of date (O7b-2 D9)
+    # Absent = the as-of date (O7b-2 D9). The empty string is the absent value: the serializer
+    # omits it, and a file without the field reads back as "", so an explicit "" and an absent
+    # field are one value and round-trip to a file without the field (O7b-2 S1 review).
+    cutoff: str = ""
 
     @model_serializer(mode="wrap")
     def _omit_absent_cutoff(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         """A file that never set ``cutoff`` dumps without it, so the context files and goldens
-        written before the field existed round-trip unchanged (O7b-2 Q12)."""
+        written before the field existed round-trip unchanged (O7b-2 Q12). An explicit ``""``
+        is omitted too; it is the same value as an absent field."""
         dumped: dict[str, Any] = handler(self)
         if self.cutoff == "":
             dumped.pop("cutoff", None)

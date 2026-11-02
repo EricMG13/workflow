@@ -86,6 +86,12 @@ from deploy_workflow.owners.blank import is_blank, one_per_page
 from deploy_workflow.owners.cp1a import probe_one_step
 from deploy_workflow.owners.cp1c import EV_READER_FACTS, Cp1cHead, cp1c_reader
 from deploy_workflow.owners.cp3d import PIN_LABEL_FORGED, _normalised, pin_label_forged
+from deploy_workflow.owners.period_basis import (
+    DEFAULT_BASIS,
+    PeriodBasis,
+    PeriodRefused,
+    run_basis,
+)
 from deploy_workflow.owners.pins import pin_issues, pinned_line, pins_of
 
 MODULE_ID = "CP-4C"
@@ -109,7 +115,10 @@ EQUITY = "equity"
 ClaimKind = Literal["secured_debt", "unsecured_trade", "other_liability", "administrative_priority"]
 AmountSource = Literal["cp1_total_debt", "source_row", "not_stated"]
 EbitdaCase = Literal["base", "down"]
-ForecastYear = Literal["FY2026", "FY2027", "FY2028"]
+# A forecast year label (`FY2027`): which labels a run accepts is its `PeriodBasis.year_labels`,
+# checked in `content_issues` (Phase 8; it was a Literal of the three default years).
+ForecastYear = str
+FORECAST_YEAR_PATTERN = r"^FY[0-9]{4}$"
 TreatmentKind = Literal[
     "Paid in full",
     "Receives reorganised equity",
@@ -137,7 +146,7 @@ class Valuation(Contract):
     case_id: Annotated[str, Field(pattern=CASE_ID_PATTERN)]
     label: str
     ebitda_case: EbitdaCase
-    ebitda_year: ForecastYear
+    ebitda_year: Annotated[str, Field(pattern=FORECAST_YEAR_PATTERN)]
     multiple: Annotated[str, Field(pattern=MULTIPLE_PATTERN)]
     rationale: str
     category: Category
@@ -416,10 +425,11 @@ def waterfall(*, classes: Sequence[ClassClaim], enterprise_value: Val) -> Waterf
 
 
 # --- the inputs (Stage 2 binds them from the settled heads and the pack) ----------------------
-LTM_COLUMN = "LTM Q4 25 (2025-01-01 to 2025-12-31)"
-LTM_PERIOD = "LTM Q4 25: 2025-01-01 to 2025-12-31"
+# The no-context basis (Phase 8): a run reads its own `PeriodBasis` through `Cp4cContext.basis`;
+# these names stay for readers of the default.
+LTM_COLUMN = DEFAULT_BASIS.ltm_column
+LTM_PERIOD = DEFAULT_BASIS.ltm_period
 CP1_METRICS = ("total_debt", "ebitda")
-YEARS: tuple[ForecastYear, ...] = ("FY2026", "FY2027", "FY2028")
 CASE_ROW: Mapping[EbitdaCase, str] = {"base": "b", "down": "d"}
 CASE_WORD: Mapping[EbitdaCase, str] = {"base": "base", "down": "downside"}
 SECURED, SENIOR = "SECURED", "SENIOR"
@@ -431,20 +441,20 @@ CP4_RATING = "T4.13.rating.rating"
 CP4_FACTS = (CP4_FACILITY_ID, CP4_FACILITY, CP4_PERMITS, CP4_CONDITIONS, CP4_RATING)
 
 
-def select_cp1(facts: Iterable[Fact]) -> dict[str, Fact]:
-    """metric -> the unique T4.10 fact labelled `<LTM column> · <metric>` (manifest
-    fact_selection_rule.cp1); zero or several fail, and so does another period."""
+def select_cp1(facts: Iterable[Fact], basis: PeriodBasis = DEFAULT_BASIS) -> dict[str, Fact]:
+    """metric -> the unique T4.10 fact labelled `<LTM column> · <metric>` of the run's basis
+    (manifest fact_selection_rule.cp1); zero or several fail, and so does another period."""
     facts = tuple(facts)
     out: dict[str, Fact] = {}
     for metric in CP1_METRICS:
-        label = f"{LTM_COLUMN} · {metric}"
+        label = f"{basis.ltm_column} · {metric}"
         found = [f for f in facts if f.table_id == "T4.10" and f.label == label]
         if len(found) != 1:
             raise ValueError(
                 f"CP-4C needs exactly one T4.10 fact labelled {label}, found {len(found)}"
             )
-        if found[0].period != LTM_PERIOD:
-            raise ValueError(f"CP-4C: CP-1 {metric} is not for {LTM_PERIOD}")
+        if found[0].period != basis.ltm_period:
+            raise ValueError(f"CP-4C: CP-1 {metric} is not for {basis.ltm_period}")
         out[metric] = found[0]
     return out
 
@@ -474,12 +484,14 @@ class Cp2gHead:
     down_ebitda_source: Fact  # T2H.3.d01.source: text "CP-2A T2B.1.<row>.ebitda_decline"
     down_interest_source: Fact  # T2H.3.d02.source: text "CP-2A T2B.1.<row>.interest_increase"
 
-    def of(self, case: EbitdaCase, year: ForecastYear) -> Cp2gEbitda:
+    def of(
+        self, case: EbitdaCase, year: ForecastYear, basis: PeriodBasis = DEFAULT_BASIS
+    ) -> Cp2gEbitda:
         found = [e for e in self.ebitda if e.case == case and e.year == year]
-        if len(found) != 1:
+        if len(found) != 1 or year not in basis.year_labels:
             raise ValueError(f"CP-4C needs exactly one CP-2G EBITDA for {case} {year}")
         e = found[0]
-        want = f"T2H.4.{CASE_ROW[case]}{26 + YEARS.index(year)}.ebitda"
+        want = f"T2H.4.{CASE_ROW[case]}{26 + basis.year_labels.index(year)}.ebitda"
         if e.fact.fact_id != want or not (e.fact.period or "").startswith(f"{year}:"):
             raise ValueError(f"CP-4C: the CP-2G EBITDA for {case} {year} is not {want} of {year}")
         return e
@@ -582,6 +594,8 @@ class Cp4cContext:
     # binds no CP-1C or carries no context, which is every frozen CP-4C case.
     cp1c: Cp1cHead | None = None
     context: RunContext | None = None
+    # The run's period and currency basis (Phase 8); every frozen case runs on the default.
+    basis: PeriodBasis = DEFAULT_BASIS
 
 
 @dataclass(frozen=True)
@@ -640,11 +654,11 @@ def _row_amount(page: str, quote: str, column: str) -> Decimal | None:
     return Decimal(cell) if _FIGURE.fullmatch(cell) else None
 
 
-def _debt_claim(debt: Fact) -> Val:
+def _debt_claim(debt: Fact, basis: PeriodBasis) -> Val:
     """CP-1 total debt as the secured class's claim (round 8 A-2 #6; round 11 B2)."""
     if debt.status != "known":
         state = _STATE_WORD[debt.status]
-        return Val(None, f"Not calculable: total debt is {state} in CP-1 for {LTM_PERIOD}")
+        return Val(None, f"Not calculable: total debt is {state} in CP-1 for {basis.ltm_period}")
     if debt.amount is None:
         raise ValueError(f"CP-4C: CP-1 total debt {debt.fact_id} is known without an amount")
     return _known(debt.amount)
@@ -664,11 +678,11 @@ def claim_classes(
     """Each class's claim: CP-1 total debt for the secured class, the cited row's amount for a
     source_row class, missing for a class no source states (lease: no amount is typed)."""
     pages = _pages(context.pack)
-    debt = select_cp1(context.cp1.t410)["total_debt"]
+    debt = select_cp1(context.cp1.t410, context.basis)["total_debt"]
     out: list[ClassClaim] = []
     for c in submission.claims:
         if c.amount_source == "cp1_total_debt":
-            claim = _debt_claim(debt)
+            claim = _debt_claim(debt, context.basis)
         elif c.amount_source == "source_row":
             q, column = c.amount_quote, c.period_column
             amount = None
@@ -702,8 +716,8 @@ class _Value:
     ev: Val
 
 
-def _valuation(v: Valuation, cp2g: Cp2gHead) -> _Value:
-    source = cp2g.of(v.ebitda_case, v.ebitda_year)
+def _valuation(v: Valuation, cp2g: Cp2gHead, basis: PeriodBasis) -> _Value:
+    source = cp2g.of(v.ebitda_case, v.ebitda_year, basis)
     f = source.fact
     if f.status != "known":  # missing, not applicable or conflicting: its own limitation (A-4)
         ebitda = Val(None, _upstream_reason(f))
@@ -826,7 +840,9 @@ def _term_loan_secured(cp1: Cp1Head) -> bool:
     )
 
 
-def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], str]) -> list[str]:
+def _source_row_issues(
+    i: int, c: ClaimClass, pages: Mapping[tuple[str, str], str], basis: PeriodBasis
+) -> list[str]:
     """A source_row class's cited row: v03, v04, v05, then round 8 A-2 #3, #11 and #7."""
     q = c.amount_quote
     if q is None:
@@ -841,11 +857,11 @@ def _source_row_issues(i: int, c: ClaimClass, pages: Mapping[tuple[str, str], st
     if column not in _header(page)[1:]:
         what = f"claims[{i}].period_column: not a column of the quoted statement: "
         return [clipped((what, str(column)))]
-    if column != _PINNED_COLUMN:
+    if column != basis.bs_column:
         return [
             (
-                f"claims[{i}].period_column: claims are the 31 December 2025 balances; use "
-                f"{_PINNED_COLUMN}"
+                f"claims[{i}].period_column: claims are the {basis.balance_date_text} balances; "
+                f"use {basis.bs_column}"
             )
         ]
     amount = _row_amount(page, q.quote, column)
@@ -879,14 +895,14 @@ def _claim_issues(
     if mismatch:
         pass
     elif c.amount_source == "source_row":
-        issues += _source_row_issues(i, c, pages)
+        issues += _source_row_issues(i, c, pages, ctx.basis)
     else:
         if c.amount_quote is not None:
             issues.append(f"claims[{i}].amount_quote: only a source_row class cites an amount row")
         if c.period_column is not None:
             issues.append(f"claims[{i}].period_column: only a source_row class names a column")
         if c.amount_source == "cp1_total_debt":
-            debt = select_cp1(ctx.cp1.t410)["total_debt"].amount
+            debt = select_cp1(ctx.cp1.t410, ctx.basis)["total_debt"].amount
             issues += [] if debt is None else _claim_above_zero(i, c, debt)
     for j, q in enumerate(c.support):
         if is_blank(q.quote):  # round 13 addendum 3: before the page-occurrence check
@@ -987,11 +1003,43 @@ def _reference_facts(sub: RestructuringSubmission, ctx: Cp4cContext) -> tuple[Fa
     return tuple(r.fact for table in _references(sub, ctx) for r in table.rows)
 
 
+def _secured_issues(sub: RestructuringSubmission) -> list[str]:
+    """Exactly one secured_debt class, ranked ahead of every other class."""
+    secured = [i for i, c in enumerate(sub.claims) if c.kind == "secured_debt"]
+    if len(secured) != 1:
+        return ["claims: exactly one secured_debt class is required"]
+    (k,) = secured
+    top = int(sub.claims[k].rank)
+    if any(int(c.rank) <= top for j, c in enumerate(sub.claims) if j != k):
+        return [f"claims[{k}].rank: the secured_debt class ranks first, ahead of every other class"]
+    return []
+
+
+def _year_issues(sub: RestructuringSubmission, basis: PeriodBasis) -> tuple[str, ...]:
+    """The valuations whose forecast year is not one of the basis's three, in order."""
+    return tuple(
+        _year_issue(i, basis)
+        for i, v in enumerate(sub.valuation)
+        if v.ebitda_year not in basis.year_labels
+    )
+
+
+def _year_issue(i: int, basis: PeriodBasis) -> str:
+    """A forecast year outside the run's three (the base year and earlier are not forecast), in
+    the frozen shape-issue wording of the default years (cases/cp4c-owner refusal r06)."""
+    *head, last = (f"'{label}'" for label in basis.year_labels)
+    return f"valuation.{i}.ebitda_year: Input should be {', '.join(head)} or {last}"
+
+
 def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
     """Content issues of a parsed submission, in the pinned order: claims, valuation case ids,
     fulcrum and plan case ids, fulcrum and plan against the waterfall (only when claims and
     valuation are structurally valid), assessment, then per text field prose and guard issues."""
     sub, ctx = inputs.submission, inputs.context
+    # A year outside the run's forecast years is a shape issue (the frozen r06 frame: it was a
+    # Literal of the default years), so it is returned alone, before any content check.
+    if years := _year_issues(sub, ctx.basis):
+        return years
     pages = _pages(ctx.pack)
     issues: list[str] = []
     ids: list[str] = []
@@ -1003,18 +1051,9 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
         ids.append(c.class_id)
         issues += _claim_issues(i, c, pages, ctx)
         structural = structural and len(issues) == before
-    secured = [i for i, c in enumerate(sub.claims) if c.kind == "secured_debt"]
-    if len(secured) != 1:
-        issues.append("claims: exactly one secured_debt class is required")
-        structural = False
-    else:
-        (k,) = secured
-        top = int(sub.claims[k].rank)
-        if any(int(c.rank) <= top for j, c in enumerate(sub.claims) if j != k):
-            issues.append(
-                f"claims[{k}].rank: the secured_debt class ranks first, ahead of every other class"
-            )
-            structural = False
+    secured = _secured_issues(sub)
+    issues += secured
+    structural = structural and not secured
     for i, v in enumerate(sub.valuation):
         if v.case_id != f"v{i + 1:02d}":
             issues.append(f"valuation[{i}].case_id: expected v{i + 1:02d}")
@@ -1030,7 +1069,9 @@ def content_issues(inputs: Cp4cInputs) -> tuple[str, ...]:
     if structural:
         classes = claim_classes(sub, ctx)
         falls = {
-            v.case_id: waterfall(classes=classes, enterprise_value=_valuation(v, ctx.cp2g).ev)
+            v.case_id: waterfall(
+                classes=classes, enterprise_value=_valuation(v, ctx.cp2g, ctx.basis).ev
+            )
             for v in sub.valuation
         }
         issues += _fulcrum_issues(sub, {*ids, EQUITY}, falls)
@@ -1285,6 +1326,7 @@ class _Draft:
 class _Book:
     """The module's cells in creation order, and each table's rows."""
 
+    currency: str  # the run's reporting currency, stated on every amount cell
     drafts: dict[str, _Draft] = field(default_factory=dict)
     rows: dict[str, list[Row]] = field(default_factory=lambda: {t: [] for t in TABLES})
 
@@ -1319,7 +1361,7 @@ class _Book:
             field=name,
             amount=_exact(value),
             unit=_UNIT[unit],
-            currency="USD" if amount_unit else None,
+            currency=self.currency if amount_unit else None,
             scale=_MILLIONS if amount_unit else Decimal(1),
             decimals=2 if amount_unit else None,
             period=period,
@@ -1506,9 +1548,11 @@ class _Run:
     selection: SelectedMultiple | None = None  # the CP-1C selection this run reads (Phase 7)
     pin: str | None = None  # the context's pinned multiple as typed; it governs the selection
 
+    @property
+    def basis(self) -> PeriodBasis:
+        return self.ctx.basis
 
-_PINNED_COLUMN = "Q4 2025-12-31"  # the column BS_PERIOD and the balance-date limitation state
-BS_PERIOD = "Q4 2025: 2025-12-31"
+
 _PINNED_RATING = "Insufficient Information"
 _PINNED_CONDITIONS = (
     "Prior written consent of every lender; no automatic additional debt basket is provided"
@@ -1564,10 +1608,10 @@ def _resolve(inputs: Cp4cInputs) -> _Run:
     found = content_issues(inputs)
     if found:
         raise ValueError("CP-4C submission has issues: " + "; ".join(bounded_issues(found)))
-    cp1 = select_cp1(ctx.cp1.t410)
+    cp1 = select_cp1(ctx.cp1.t410, ctx.basis)
     _check_cp4_head(ctx)
     classes = claim_classes(sub, ctx)
-    values = {v.case_id: _valuation(v, ctx.cp2g) for v in sub.valuation}
+    values = {v.case_id: _valuation(v, ctx.cp2g, ctx.basis) for v in sub.valuation}
     falls = {k: waterfall(classes=classes, enterprise_value=v.ev) for k, v in values.items()}
     return _Run(
         sub=sub,
@@ -1593,12 +1637,13 @@ CP3C_UNREAD = (
 
 def _t4e1(b: _Book, run: _Run) -> None:
     ctx = run.ctx
+    first_year, _, last_year = run.basis.year_labels
     rows = (
         (
             "u_cp1",
             "CP-1",
             ctx.cp1.status,
-            f"Base period {LTM_PERIOD}",
+            f"Base period {run.basis.ltm_period}",
             "T4.10 total debt and EBITDA; T4.18 term loan security and seniority",
             "Inherits CP-1's own limitations.",
         ),
@@ -1614,7 +1659,7 @@ def _t4e1(b: _Book, run: _Run) -> None:
             "u_cp2g",
             "CP-2G",
             ctx.cp2g.status,
-            "Forecast years FY2026 to FY2028 from the CP-1 twelve-month base",
+            f"Forecast years {first_year} to {last_year} from the CP-1 twelve-month base",
             "T2H.4 forecast EBITDA and T2H.7 first year the free cash flow test is reached",
             "Forecast on analyst-assumed drivers.",
         ),
@@ -1694,7 +1739,9 @@ def _t4e2(b: _Book, run: _Run) -> None:
             )
         if k.claim.amount is None:
             assert k.claim.reason is not None
-            b.gap(("T4E.2", r, "claim"), "Claim", "amount", k.claim.reason, period=BS_PERIOD)
+            b.gap(
+                ("T4E.2", r, "claim"), "Claim", "amount", k.claim.reason, period=run.basis.bs_period
+            )
         elif c.amount_source == "cp1_total_debt":
             b.num(
                 ("T4E.2", r, "claim"),
@@ -1702,7 +1749,7 @@ def _t4e2(b: _Book, run: _Run) -> None:
                 k.claim.amount,
                 "amount",
                 "CP-1 total debt",
-                period=LTM_PERIOD,
+                period=run.basis.ltm_period,
                 derives=("cp1:total_debt",),
             )
         else:
@@ -1713,12 +1760,12 @@ def _t4e2(b: _Book, run: _Run) -> None:
                 k.claim.amount,
                 "amount",
                 "quoted statement figure",
-                period=BS_PERIOD,
+                period=run.basis.bs_period,
                 value_class="source",
                 quoted=(_citation(pack, c.amount_quote),),
             )
         if c.amount_source == "cp1_total_debt":
-            basis = f"CP-1 T4.10 total debt · {LTM_PERIOD}"
+            basis = f"CP-1 T4.10 total debt · {run.basis.ltm_period}"
         elif c.amount_source == "source_row":
             assert c.amount_quote is not None
             q = c.amount_quote
@@ -1741,7 +1788,7 @@ def _t4e2(b: _Book, run: _Run) -> None:
         "Claim",
         "amount",
         "Equity is the residual claimant and has no claim amount",
-        period=BS_PERIOD,
+        period=run.basis.bs_period,
         status="not_applicable",
     )
     b.text(("T4E.2", "eq", "basis"), "Basis", "Residual after all claims")
@@ -1764,19 +1811,20 @@ _FIELDS_T4E3 = (
 NO_SCENARIO = "The base valuation uses no CP-2A scenario"
 
 
-def _cp1_ebitda(f: Fact) -> Val:
+def _cp1_ebitda(f: Fact, basis: PeriodBasis) -> Val:
     """CP-1 EBITDA as the implied multiple's denominator: a known positive amount, else missing
     with the round 8 A-2 #5 reason naming its state (round 11 B6; no own line)."""
     if f.status != "known":
         return Val(
-            None, f"Not calculable: EBITDA is {_STATE_WORD[f.status]} in CP-1 for {LTM_PERIOD}"
+            None,
+            f"Not calculable: EBITDA is {_STATE_WORD[f.status]} in CP-1 for {basis.ltm_period}",
         )
     if f.amount is None:  # an upstream contract break, as for total debt (fix 1 Q3)
         raise ValueError(f"CP-4C: CP-1 EBITDA {f.fact_id} is known without an amount; invariant")
     if f.amount <= 0:
         return Val(
             None,
-            f"Not calculable: EBITDA is zero or negative in CP-1 for {LTM_PERIOD} "
+            f"Not calculable: EBITDA is zero or negative in CP-1 for {basis.ltm_period} "
             "(ZERO_OR_NEGATIVE_DENOMINATOR)",
         )
     return _known(f.amount)
@@ -1796,7 +1844,7 @@ def _t4e3(b: _Book, run: _Run) -> None:
     row = run.scenario_row
     name = run.ctx.cp2a.fact(f"T2B.1.{row}.name")
     decline = run.ctx.cp2a.fact(f"T2B.1.{row}.ebitda_decline")
-    cp1_ebitda = _cp1_ebitda(run.cp1["ebitda"])
+    cp1_ebitda = _cp1_ebitda(run.cp1["ebitda"], run.basis)
     for v in run.sub.valuation:
         r, val = v.case_id, run.values[v.case_id]
         f = val.source.fact
@@ -1859,7 +1907,7 @@ def _t4e3(b: _Book, run: _Run) -> None:
             "multiple",
             "Enterprise value / CP-1 EBITDA",
             (f"T4E.3.{r}.ev", "cp1:ebitda"),
-            period=LTM_PERIOD,
+            period=run.basis.ltm_period,
         )
         first = run.ctx.cp2g.first(v.ebitda_case)
         b.copy_text(
@@ -1879,7 +1927,7 @@ def _t4e3(b: _Book, run: _Run) -> None:
                     decline.amount,
                     "percent",
                     f"Copy of CP-2A {decline.fact_id}",
-                    period=LTM_PERIOD,
+                    period=run.basis.ltm_period,
                     value_class=decline.value_class,
                     derives=(f"cp2a:{decline.fact_id}",),
                     keep_lineage=True,
@@ -1890,7 +1938,7 @@ def _t4e3(b: _Book, run: _Run) -> None:
                     "CP-2A EBITDA decline",
                     "percent",
                     _upstream_reason(decline),
-                    period=LTM_PERIOD,
+                    period=run.basis.ltm_period,
                     status=_copy_status(decline),
                 )
         else:
@@ -1902,7 +1950,7 @@ def _t4e3(b: _Book, run: _Run) -> None:
                 "CP-2A EBITDA decline",
                 "percent",
                 NO_SCENARIO,
-                period=LTM_PERIOD,
+                period=run.basis.ltm_period,
                 status="not_applicable",
             )
         b.row("T4E.3", r, v.label, _FIELDS_T4E3)
@@ -2024,13 +2072,13 @@ def _allocation(b: _Book, run: _Run) -> None:
                     change_label,
                     "pp",
                     FIRST_BASE,
-                    period=LTM_PERIOD,
+                    period=run.basis.ltm_period,
                     status="not_applicable",
                 )
             elif x.recovery.amount is None or base.amount is None:
                 reason = x.recovery.reason or base.reason
                 assert reason is not None
-                b.gap(change, change_label, "pp", reason, period=LTM_PERIOD)
+                b.gap(change, change_label, "pp", reason, period=run.basis.ltm_period)
             else:
                 b.num(
                     change,
@@ -2351,7 +2399,7 @@ def _references(
     sub: RestructuringSubmission, ctx: Cp4cContext
 ) -> tuple[RefTable, RefTable, RefTable, RefTable]:
     """The four reference tables: the upstream facts verbatim (expected.references_rule)."""
-    cp1 = select_cp1(ctx.cp1.t410)
+    cp1 = select_cp1(ctx.cp1.t410, ctx.basis)
     cp1_rows = [
         Reference(f"ref{n:02d}", f"{cp1[m].label} · {cp1[m].period}", cp1[m])
         for n, m in enumerate(CP1_METRICS, 1)
@@ -2361,7 +2409,7 @@ def _references(
         cp1_rows.append(Reference(f"ref{len(cp1_rows) + 1:02d}", label, f))
     used: dict[str, Fact] = {}
     for v in sub.valuation:
-        f = ctx.cp2g.of(v.ebitda_case, v.ebitda_year).fact
+        f = ctx.cp2g.of(v.ebitda_case, v.ebitda_year, ctx.basis).fact
         used.setdefault(f.fact_id, f)  # one row per distinct fact id
     cp2g_facts = [*used.values(), ctx.cp2g.base_first, ctx.cp2g.down_first]
     row = _scenario_row(ctx.cp2g)
@@ -2415,7 +2463,7 @@ def _claims(b: _Book, run: _Run, references: Sequence[RefTable]) -> tuple[Claim,
     def analyst(cid: str, text: str, limitation: str | None) -> Claim:
         return Claim(cid, text, limitation, tuple(f for f in _figures(text) if f in upstream))
 
-    sub = run.sub
+    sub, unit = run.sub, run.basis.money_unit
     out = [analyst(f"T4E.2.{c.class_id}.rationale", c.rationale, c.limitation) for c in sub.claims]
     out += [
         analyst(f"T4E.3.{v.case_id}.rationale", v.rationale, v.limitation) for v in sub.valuation
@@ -2425,8 +2473,8 @@ def _claims(b: _Book, run: _Run, references: Sequence[RefTable]) -> tuple[Claim,
         out.append(
             Claim(
                 f"T4E.3.{r}.ev",
-                f"In the {lab} valuation, enterprise value is {ref(f'T4E.3.{r}.ev', 'US$ m')} on "
-                f"EBITDA of {ref(f'T4E.3.{r}.ebitda', 'US$ m')}.",
+                f"In the {lab} valuation, enterprise value is {ref(f'T4E.3.{r}.ev', unit)} on "
+                f"EBITDA of {ref(f'T4E.3.{r}.ebitda', unit)}.",
                 VAL_LIMIT,
                 (),
             )
@@ -2471,49 +2519,53 @@ def _claims(b: _Book, run: _Run, references: Sequence[RefTable]) -> tuple[Claim,
     return tuple(out)
 
 
-_FIXED_LIMITATIONS = (
-    (
-        "Multiples, claim ranks and plan treatment are analyst assumptions without a source "
-        "citation; no market or restructuring-plan source is an input."
-    ),
-    (
-        "Value available to claims is the enterprise value only: balance-sheet cash is not added and "
-        "restructuring, administrative and financing costs are not deducted unless a claim class "
-        "states them."
-    ),
-    (
-        "The waterfall applies strict priority by the analyst's rank number; classes of one rank "
-        "share pro rata. Collateral value, guarantees, structural subordination and intercreditor "
-        "terms are not modelled."
-    ),
-    (
-        "Claims are the 31 December 2025 balances: accrued interest, fees, make-whole amounts, lease "
-        "and pension claims, contingent and rejection-damage claims are not stated in any source and "
-        "are not modelled; they are not zero."
-    ),
-    (
-        "New-money or priming debt is not modelled: the legal source requires the consent of every "
-        "lender for additional debt, so no debt-in-possession financing is assumed."
-    ),
-    (
-        "Enterprise value is the analyst's multiple applied to a CP-2G forecast EBITDA that rests on "
-        "analyst-assumed drivers; it is not a market or court valuation."
-    ),
-    (
-        "The fulcrum is the first rank whose recovery is below its claim; the analyst's named fulcrum "
-        "is checked against it. Plan treatment is checked for fit with the recovery, not for legal "
-        "feasibility."
-    ),
-    (
-        "Recoveries are not probability-weighted and the valuations are not scenarios of equal "
-        "likelihood."
-    ),
-    CP3C_UNREAD,
-    (
-        "The lender protection rating is read from CP-4 and stays Insufficient Information: security, "
-        "guarantee, default, cure and voting terms are not supplied."
-    ),
-)
+def _fixed_limitations(basis: PeriodBasis) -> tuple[str, ...]:
+    """The own limitations every run states; the claims one names the run's balance date."""
+    return (
+        (
+            "Multiples, claim ranks and plan treatment are analyst assumptions without a source "
+            "citation; no market or restructuring-plan source is an input."
+        ),
+        (
+            "Value available to claims is the enterprise value only: balance-sheet cash is not added and "
+            "restructuring, administrative and financing costs are not deducted unless a claim class "
+            "states them."
+        ),
+        (
+            "The waterfall applies strict priority by the analyst's rank number; classes of one rank "
+            "share pro rata. Collateral value, guarantees, structural subordination and intercreditor "
+            "terms are not modelled."
+        ),
+        (
+            f"Claims are the {basis.balance_date_text} balances: accrued interest, fees, make-whole "
+            "amounts, lease and pension claims, contingent and rejection-damage claims are not "
+            "stated in any source and are not modelled; they are not zero."
+        ),
+        (
+            "New-money or priming debt is not modelled: the legal source requires the consent of every "
+            "lender for additional debt, so no debt-in-possession financing is assumed."
+        ),
+        (
+            "Enterprise value is the analyst's multiple applied to a CP-2G forecast EBITDA that rests on "
+            "analyst-assumed drivers; it is not a market or court valuation."
+        ),
+        (
+            "The fulcrum is the first rank whose recovery is below its claim; the analyst's named fulcrum "
+            "is checked against it. Plan treatment is checked for fit with the recovery, not for legal "
+            "feasibility."
+        ),
+        (
+            "Recoveries are not probability-weighted and the valuations are not scenarios of equal "
+            "likelihood."
+        ),
+        CP3C_UNREAD,
+        (
+            "The lender protection rating is read from CP-4 and stays Insufficient Information: security, "
+            "guarantee, default, cure and voting terms are not supplied."
+        ),
+    )
+
+
 _NC = "Not calculable: "
 
 
@@ -2545,7 +2597,7 @@ def _selection_line(run: _Run) -> list[str]:
 
 
 def _own_limitations(run: _Run) -> tuple[str, ...]:
-    out = list(_FIXED_LIMITATIONS)
+    out = list(_fixed_limitations(run.basis))
     for k in run.classes:
         if k.claim.amount is None:
             reason = str(k.claim.reason).replace(_NC, "")
@@ -2579,7 +2631,7 @@ def compute(inputs: Cp4cInputs) -> RestructuringResult:
     fail-closed state (round 8 A-2 #4, #13, A-1 state 14) or a broken invariant, and
     AssertionError if T4E.9 does not balance exactly."""
     run = _resolve(inputs)
-    b = _Book()
+    b = _Book(currency=run.basis.currency)
     _t4e1(b, run)
     _t4e2(b, run)
     _t4e3(b, run)
@@ -2712,16 +2764,23 @@ def _facility_terms(module: Module) -> tuple[Fact, Fact]:
     return chosen["secured_status"], chosen["seniority"]
 
 
+def _ltm_facts(facts: Iterable[Fact]) -> tuple[Fact, ...]:
+    """The T4.10 LTM total debt and EBITDA facts of every LTM column, in `CP1_METRICS` order. The
+    run's column is chosen later (`select_cp1` on its `PeriodBasis`): the reader has no context,
+    so it cannot tell which year the run is on."""
+    ltm = [f for f in facts if f.table_id == "T4.10" and f.label.startswith("LTM ")]
+    return tuple(f for metric in CP1_METRICS for f in ltm if f.label.endswith(f" · {metric}"))
+
+
 def cp1_of(module: Module, status: InputStatus) -> Cp1Head:
-    """A settled CP-1 module as the core reads it: the T4.10 LTM total debt and EBITDA
-    (`select_cp1`, in `CP1_METRICS` order) and the secured facility's T4.18 terms."""
+    """A settled CP-1 module as the core reads it: its T4.10 LTM total debt and EBITDA facts
+    (`_ltm_facts`; `select_cp1` picks the run's column) and the secured facility's T4.18 terms."""
     if module.module_id != CP1:
         raise ValueError(f"CP-4C: not a CP-1 head: {module.module_id}")
-    selected = select_cp1(module.facts)
     secured, seniority = _facility_terms(module)
     return Cp1Head(
         status=status,
-        t410=tuple(selected[m] for m in CP1_METRICS),
+        t410=_ltm_facts(module.facts),
         facility_id=FACILITY_ID,
         secured_status=secured,
         seniority=seniority,
@@ -2748,6 +2807,19 @@ def cp4_of(module: Module, status: InputStatus) -> Cp4Head:
     return Cp4Head(status=status, facts=facts)
 
 
+_FORECAST_ROWS = (26, 27, 28)  # the T2H.4 row numbers of the three forecast years, by position
+_YEAR_PERIOD = re.compile(r"(FY[0-9]{4}):")
+
+
+def _year_of(fact: Fact) -> str:
+    """The forecast year a CP-2G EBITDA fact states in its period (`FY2027: 2027-01-01 to ...`).
+    The reader has no context; `Cp2gHead.of` checks the year against the run's basis."""
+    found = _YEAR_PERIOD.match(fact.period or "")
+    if found is None:
+        raise ValueError(f"CP-4C: the CP-2G EBITDA {fact.fact_id} states no forecast year period")
+    return found[1]
+
+
 def cp2g_of(read: cp2g.Cp2gHead) -> Cp2gHead:
     """The CP-2G reader's output selected into the core's type (rulings stage2 Q6): the six
     T2H.4 EBITDA facts, the T2H.7.b01 first years and the two T2H.3 source texts. A blocked head
@@ -2755,9 +2827,9 @@ def cp2g_of(read: cp2g.Cp2gHead) -> Cp2gHead:
     if read.status == "blocked":
         raise ValueError("CP-4C: the CP-2G head is blocked")
     ebitda = tuple(
-        Cp2gEbitda(case=case, year=year, fact=read.fact(f"T2H.4.{CASE_ROW[case]}{26 + n}.ebitda"))
+        Cp2gEbitda(case=case, year=_year_of(fact), fact=fact)
         for case in CASE_ROW
-        for n, year in enumerate(YEARS)
+        for fact in (read.fact(f"T2H.4.{CASE_ROW[case]}{n}.ebitda") for n in _FORECAST_ROWS)
     )
     return Cp2gHead(
         status=read.status,
@@ -2805,6 +2877,9 @@ class Upstream:
     cp4: Cp4Head
     inherited: tuple[str, ...] = ()
     cp1c: Cp1cHead | None = None  # read only when the attempt binds a CP-1C input
+    # The bound CP-1 head's T4.14 period register: what the run's `PeriodBasis` is dated from
+    # (`run_basis`). Empty for an upstream built without one, which only the default basis reads.
+    register: tuple[Fact, ...] = ()
 
     def status(self, input_id: str) -> InputStatus | None:
         return next((item.status for item in self.bound if item.input_id == input_id), None)
@@ -2861,6 +2936,7 @@ def cp4c_upstream(*, store: Execution, attempt: Attempt) -> Upstream:
         cp4=cp4_reader(store, head(CP4)),
         inherited=inherited_limitations(snapshot, attempt, (), store.head_module),
         cp1c=bound_cp1c,
+        register=tuple(f for f in cp1_module.facts if f.table_id == "T4.14"),
     )
 
 
@@ -2874,12 +2950,33 @@ def _frozen_context(pack: PreparedPack) -> RunContext | None:
         return None
 
 
+def _basis_of(pack: PreparedPack, upstream: Upstream) -> PeriodBasis:
+    """The run's period and currency basis: the pack's context read against the bound CP-1 head's
+    T4.14 register (`run_basis`; P8-R3, a blank base under USD keeps the default). A pack without
+    a context, or whose context the run refuses, reads the default basis: the refused context is
+    reported as the single `Context refused:` line (`_pin_lines`, and the view's `context_issue`),
+    never hidden. A period or currency the basis refuses, or a base year that is not a calendar
+    year (CP-2G refuses those too, ruling P8T6-R1), raises `PeriodRefused`."""
+    basis = run_basis(_frozen_context(pack), upstream.register)
+    cp2g.require_calendar(basis)
+    return basis
+
+
+def _period_refusal(pack: PreparedPack, upstream: Upstream) -> str | None:
+    """The one issue line a refused period or currency becomes, None when the basis is usable."""
+    try:
+        _basis_of(pack, upstream)
+    except PeriodRefused as refused:
+        return str(refused)
+    return None
+
+
 def _inputs(
     pack: PreparedPack, submission: RestructuringSubmission, upstream: Upstream
 ) -> Cp4cInputs:
     """The store adapter: the bound heads as the Stage 1 `Cp4cInputs` the core reads, with the
-    status of a bound optional CP-3C (never read). Submit, probe and view reach the core only
-    through this."""
+    status of a bound optional CP-3C (never read) and the run's basis. Submit, probe and view
+    reach the core only through this; callers have checked `_period_refusal` first."""
     context = Cp4cContext(
         pack=pack,
         cp1=upstream.cp1,
@@ -2889,6 +2986,7 @@ def _inputs(
         cp3c_status=upstream.status(CP3C),
         cp1c=upstream.cp1c,
         context=_frozen_context(pack),
+        basis=_basis_of(pack, upstream),
     )
     return Cp4cInputs(context=context, submission=submission)
 
@@ -2898,10 +2996,14 @@ def validate_restructuring(
 ) -> tuple[str, ...]:
     """Every issue of `submission` over the bound `upstream`: staleness alone when a bound
     upstream changed (no content check runs on a stale upstream), else the core's content issues
-    in their pinned order; empty when it composes."""
+    in their pinned order; empty when it composes. A period or currency the run's basis refuses is
+    the one issue line (P8-R5)."""
     stale = stale_issues(bound=upstream.bound, current=upstream.current)
     if stale:
         return stale
+    refusal = _period_refusal(pack, upstream)
+    if refusal is not None:
+        return (refusal,)
     return content_issues(_inputs(pack, submission, upstream))
 
 
@@ -2920,7 +3022,12 @@ def _pin_lines(pack: PreparedPack, submission: RestructuringSubmission) -> tuple
         submitted = {"valuation[*].multiple": [v.multiple for v in submission.valuation]}
         return pin_issues(MODULE_ID, pack, submitted)
     except ContextRefused as error:
-        return (clipped(("Context refused: ", str(error))),)
+        return (_context_line(error),)
+
+
+def _context_line(error: ContextRefused) -> str:
+    """The one issue line a refused context becomes."""
+    return clipped(("Context refused: ", str(error)))
 
 
 def _lines(
@@ -2929,6 +3036,8 @@ def _lines(
     """The content issues, then the pin lines (also after the stale-only return): the one issue
     set of the step validator and the composer gate."""
     content = validate_restructuring(pack=pack, submission=submission, upstream=upstream)
+    if _period_refusal(pack, upstream) is not None:
+        return content  # a refused period or currency is the one line, with no pin line beside it
     return tuple(dict.fromkeys((*content, *_pin_lines(pack, submission))))
 
 
@@ -3073,13 +3182,56 @@ def _statement_rows(pack: PreparedPack) -> list[dict[str, object]]:
     return out
 
 
+def _view_basis(pack: PreparedPack, upstream: Upstream) -> tuple[PeriodBasis | None, str | None]:
+    """The basis the view reads and the issue line the entry validator returns for the same
+    refusal (P8-R5: `read_inputs` never raises on a context, period or currency refusal). A
+    refused context offers what the default basis selects when that selection succeeds (the
+    frozen rendering) and nothing when it fails (ruling P8T4-R2); a refused period or currency
+    offers nothing."""
+    try:
+        context_facts(pack)
+    except ContextRefused as error:
+        try:
+            select_cp1(upstream.cp1.t410, DEFAULT_BASIS)
+        except ValueError:  # the CP-1 is not the default year: offer nothing, carry the issue
+            return None, _context_line(error)
+        return DEFAULT_BASIS, _context_line(error)
+    try:
+        return _basis_of(pack, upstream), None
+    except PeriodRefused as error:
+        return None, str(error)
+
+
 def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object]:
     """What `read_inputs` returns, all Python's (lease Tool use): the upstream statuses, the
     secured claim and the statement rows a class may read, the six CP-2G EBITDA facts, the CP-2A
     scenario CP-2G applied, the CP-4 terms, the judgment bounds, the figures a reference may name
     and the limitations settlement will inherit. Unsettled facts are offered with their status.
-    No quote, citation or record."""
-    cp1 = select_cp1(upstream.cp1.t410)
+    No quote, citation or record. A refused context, period or currency carries the validator's
+    line as `context_issue`; a refused period or currency, or a context whose default selection
+    fails, offers nothing else."""
+    basis, issue = _view_basis(pack, upstream)
+    if basis is None:
+        return {
+            "upstream": _upstream_rows(upstream),
+            "context_issue": issue,
+            "inherited_limitations": list(upstream.inherited),
+        }
+    block = _offered_block(pack, upstream, basis)
+    return block if issue is None else {**block, "context_issue": issue}
+
+
+def _upstream_rows(upstream: Upstream) -> list[dict[str, object]]:
+    return [
+        {"module_id": item.input_id, "status": item.status}
+        for item in upstream.bound
+        if item.input_id.startswith("CP-")
+    ]
+
+
+def _offered_block(pack: PreparedPack, upstream: Upstream, basis: PeriodBasis) -> dict[str, object]:
+    """The view's offered facts on `basis` (see `context_block`)."""
+    cp1 = select_cp1(upstream.cp1.t410, basis)
     debt = cp1["total_debt"]
     cp2g_head, cp2a_head, cp4_head = upstream.cp2g, upstream.cp2a, upstream.cp4
     row = _scenario_row(cp2g_head)
@@ -3087,11 +3239,7 @@ def context_block(*, pack: PreparedPack, upstream: Upstream) -> dict[str, object
     ebitda = tuple(e.fact for e in cp2g_head.ebitda)
     figures = frozenset(f.fact_id for f in referencable(ebitda))
     return {
-        "upstream": [
-            {"module_id": item.input_id, "status": item.status}
-            for item in upstream.bound
-            if item.input_id.startswith("CP-")
-        ],
+        "upstream": _upstream_rows(upstream),
         "claims_offered": {
             "secured": {
                 "ref": debt.fact_id if debt.fact_id in allowed else None,

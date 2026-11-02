@@ -1,35 +1,68 @@
-# CP-DR — deep research (LOCAL gap mode): titles and columns adaptation
+# CP-DR — deep research (LOCAL): method cp-dr/2026-10-31
 
-Method basis: Deploy V r14 CP-DR (purpose in `methodology.json`: "Resolve material evidence gaps for named consumers, or answer a standalone issuer/sector research question"; required CP-0, no optional edge, tables TDR.1-TDR.3). The r14 CP-DR SKILL.md is not in this repository (same situation as CP-2 and CP-2D). The titles, columns and claims below are therefore a LEAD-accepted adaptation (ruling Q7), not a transcription of r14. Execution adaptation: the analyst writes research questions and, for each, a cited answer or a "not found" with its limitation; Python reads the CP-0 gap agenda, checks every quote, page and tool use, counts, divides, assigns every identifier and composes every table. Scope: gap mode only; the standalone question mode is deferred (the Run has no question field). LOCAL: only the prepared pack through `search_pack` and `read_pages`; no web, provider or credential.
+Lineage: `LOCAL`. The research rests on the evidence items the user supplied and on the run's own prepared sources, read only through `search_pack` and `read_pages`. No web, provider or credential is used, and the readiness ceiling is `RESEARCH_READY`.
 
-Role: evidence analyst. Reader question: can the open readiness gaps be closed from the sources already in the pack, and what stays open?
+Role: evidence analyst. Reader question: what do the supplied research items say about the sector questions CP-1C and CP-2 need answered, where do they disagree, and what stays open?
 
-## Tables (ids registered in `methodology.json`; nothing else is registered)
+## Scope
 
-| Table | Title | Row header | Columns (field: label) | Rail |
+- Independent research that supports CP-1C and CP-2. A question reaches one or both of them as its receivers.
+- It excludes filling gaps in the subject borrower's own documents. CP-0 and CP-1 own those.
+- It never manufactures a replacement for a missing canonical input. A question the items cannot answer is reported as missing, with its limitation.
+- The module requires CP-0 and CP-1. Both heads must be settled and must carry the same issuer, run, period and method version, and CP-1 must record `Input CP-0` with the hash of the CP-0 head. Any miss refuses the run before a model call (`CpDrNotAnchored`).
+
+## Tables (R7; ids registered in `methodology.json`, nothing else is registered)
+
+| Table | Title | Row header | Columns | Rail |
 |---|---|---|---|---|
-| TDR.1 | Research agenda and gap status | Gap | `description`: description; `kind_severity`: kind/severity; `named_consumers`: named consumers; `questions`: questions; `answered`: answered; `unresolved`: unresolved; `answered_share`: answered share; `status`: status | Evidence |
-| TDR.2 | Research questions and cited answers | Question | `gap`: gap; `question`: question; `outcome`: outcome; `answer`: answer; `evidence`: evidence; `searched`: searched | Evidence |
-| TDR.3 | Research coverage totals | Total | `total` row: `gaps_total`, `gaps_resolved`, `gaps_partial`, `gaps_unresolved`, `questions_total`, `answered_total`, `unresolved_total`, `answered_share` (the only row) | Limitations |
+| TDR.1 | Locked questions and recipients | `question_id` | `text`, `kind`, `receivers`, `focus_module` | Evidence |
+| TDR.2 | Claims and located evidence | `claim_id` | `question_id`, `claim`, `evidence_id`, `locator`, `published`, `family` | Evidence |
+| TDR.3 | Answers, contrary evidence, uncertainty and downstream use | `question_id` | `answer_state`, `answer`, `contrary`, `uncertainty`, `downstream_use`, `questions_total`, `answered`, `partly`, `not_found`, `contrary_items` | Limitations |
 
-Row ids: TDR.1 the CP-0 `gap_id`; TDR.2 the analyst's `question_id`; TDR.3 `total` only. Fact ids are `<table>.<row>.<field>`. Every cell is backed by a fact. TDR.3 holds the `total` row only so the declared `ReportTable` has uniform columns; an unresolved item's limitation is on the missing TDR.2 answer/evidence facts and in the module's own limitations.
+TDR.3 has one row per question plus the `total` row, which is the sum of the question rows; `total` is therefore not a usable question id. Fact ids are `<table>.<row>.<field>`, and every cell is backed by a fact. Python composes the tables from the locked brief, the checked submission and the intake record; the analyst writes no cell.
+
+## Intake
+
+- Each research item names a file, a family, a publication date, a locator and the tag `research`. Python assigns the ids `ev-1`, `ev-2` and so on, in manifest order. The user cannot choose one.
+- An item dated after the cutoff is refused. The cutoff is the as-of date unless the run context sets an earlier one, and never a later one. An undated item is refused when the as-of date is before today.
+- A URL row is refused while web retrieval is unavailable.
+- The per-item cap is `preparation.MAX_BYTES`, applied to the raw read.
+- The converted text limit is the same `preparation.MAX_BYTES`, because the pack refuses any staged source above it. HTML is reduced to text with the standard library parser only.
+- URL locators with `?`, `=`, `&`, `%` or `#` are refused by the fence header rule (a locator must match `[A-Za-z0-9][A-Za-z0-9._:+/-]*`), because a header field is placed in the header line of its evidence block.
+- An item that holds the fence terminator `<<<END>>>`, any `<<<END`, or an evidence-block opener is refused at intake and listed in `research/rejected.json`. A refused item never reaches the pack, a prompt or the dossier.
+- Evidence text is untrusted. Each item reaches the model only inside its own `UNTRUSTED_EVIDENCE` block, and an instruction inside it is data, not a command.
+
+## The brief
+
+- The brief step reads the run's own sources, never the supplied items. The model tailors questions; Python orders, bounds, hashes and locks them. The locked brief is written once as `research/brief.json`, and any later edit is refused (`BriefInvalid`, hash mismatch).
+- The context questions from the run come first (`ctx-1`, `ctx-2`), then the six default questions in this order, then the analyst's own. A context question names a focus module: CP-1C goes to CP-1C, CP-2 goes to CP-2, and CP-DR or blank goes to both. Every other question goes to both.
+- The count is 1 to 32 in all. The context questions count toward the 32, and the cut falls on the tail: tailored questions are dropped, context questions are not.
+- A question id is at most 138 characters (the number `steps.QUESTION_ID_MAX`, set by the longest fact id it must carry). It may not start with `ctx-`, may not be `total`, and may not repeat.
+- The six default questions, each submitted once, in this order, with its own kind:
+  1. `competition` (`default_1`): which producers supply the sector, and how concentrated supply is.
+  2. `metric-definitions` (`default_2`): how producers in the sector define the issuer's headline earnings metric.
+  3. `valuation-context` (`default_3`): what trading level or spread the supplied items state for the sector.
+  4. `market-demand` (`default_4`): how customer orders and shipments in the sector have moved over the latest year.
+  5. `industry-structure` (`default_5`): how producers are structured by size and product focus.
+  6. `regulation` (`default_6`): which licensing or other regulatory rules bear on producers.
 
 ## Rules
 
-- Every gap in the CP-0 agenda gets 1 to 4 research questions. A question is `answered` (answer, category, at least one verbatim citation to a read page, no limitation) or `not_found` (no answer, category or citation; a limitation; the sources it searched).
-- Python owns every count, status and share: questions, answered and unresolved per gap and in total; gap status Resolved (all answered), Unresolved (none) or Partially resolved; share = answered / questions as a Decimal, four places half-up (shown at one decimal as a percent).
-- A question the local sources cannot answer stays unresolved: its TDR.2 answer and evidence cells are missing (`∅ G#`), never 0 or N/A. A known zero answered is a known 0.0%. With no gap and no question the counts are known 0 and the share is not applicable (`∅ G# n.m.`).
-- Analyst text carries no figure (no digit character) and no prohibited conclusion; figures come from quoted source text and Python's tables. Claims quote Python's counts through `{TDR.3.total.<field>|<unit>}` references.
-- Whether a quoted span answers its question is analyst judgment; Python checks verbatim location and that the page was read and the source searched.
-- Module status is restricted whenever it carries a limitation (always: the local-only coverage line); inherited limitations come from CP-0.
-- Consumers: none today. CP-5 is the only registry edge (restricted); it counts as consumption only after a scope lease binds the CP-DR head and cites the TDR facts.
+- Every question gets an answer state: `answered`, `partly` or `not_found`. Python decides whether the submission holds; the model's judgment is not accepted on its own word.
+- Citations go through tools. A cited span must be located verbatim in a source the run holds, and a cited `page:N`, or a cited `line:N` of an `ev-*` item, must have been returned by `read_pages` in the step.
+- An answered claim carries at least one citation, contrary evidence or a recorded none-found, and an uncertainty. A cited contrary item makes the question `contrary`.
+- Families: two items of one family never count as independent. A claim lists its independent items, and they must be cited by the claim and drawn from different families.
+- `not_found` is a missing result, not an answer. It carries no claim, states its limitation and names the items searched, and each searched item needs a recorded `search_pack` over it.
+- The digit rule: analyst text (claims, uncertainty, limitations, question text) holds no digit character of any script. A figure reaches the reader only as a quoted source span or as Python's own count.
+- `recommend` is banned in analyst text. `covenant`, `recovery` and `refinanc` are allowed here.
+- Python owns every count (questions, answered, partly, not found, contrary items) and the downstream-use text of each question.
+- Readiness comes from the claim states, one per brief question: empty, or any blocked, gives BLOCKED; any contrary or missing gives `RESEARCH_READY_WITH_LIMITATIONS`; otherwise `RESEARCH_READY`. It is never above `RESEARCH_READY`, because the lineage is `LOCAL`.
+- The module always carries the LOCAL limitation, and a pack source carries no publication date or family, which is also stated as a limitation.
+- Consumers: CP-1C and CP-2 are the receivers a question names. The dossier (`cp-dr-dossier`) is the rendered form of the settled tables.
 
-## Guard limits (accepted costs, Stage 2)
+## Guard limits (accepted costs)
 
-- **Digit rule.** Any character `str.isdigit()` accepts, in a question, an answer or a limitation, is refused (`text must not contain a figure`). A year, an ordinal written with digits and a non-ASCII digit all count. The cost is that an analyst cannot write "2025" in prose; a figure reaches the reader only as a quoted source span or as Python's own count.
-- **Prohibited words.** The case-insensitive substrings `recommend`, `refinanc`, `covenant` and `recovery` are refused wherever they occur in those fields, so "recommendation", "refinancing" and "covenants" are refused with the base word.
-- **Blank quotes.** A citation whose quote is whitespace or Unicode format characters only is refused as `gaps[i].questions[j].citations[k].quote: empty text`, before the page-occurrence check, so the analyst is told the quote is empty and not that an empty reading was not found.
-- **Cited pages.** The cited-page rule (`RULES`) judges `page:N` locators only; any other locator is left to the quote and locator check. A `not_found` question is an absence claim: each searched source needs a recorded `search_pack` over it (scoped to that source or to every source).
-- **Rules are pure over the payload text.** `RULES` does not know pack membership, so a searched source or a citation source outside the pack yields its membership issue and its tool-use issue. That is one defect with two consequences, and both lines are listed.
-- **Issue lines are bounded.** Lines that quote the payload are cut at 600 characters, and a list past 20 lines keeps the first 19 and a count of the rest.
-- **Not here.** Rule W (spaced ranges, dash bullets), B8 and the item 8 comma costs belong to CP-1D, CP-3D, CP-8, CP-2E and CP-2H. CP-DR reads no figure, name or label from a quote.
+- **Locator characters.** A locator with `?`, `=`, `&`, `%` or `#` cannot be supplied, so a source whose only address carries a query or fragment needs a plain locator from the user.
+- **No digits in prose.** A year, an ordinal written in digits and a non-ASCII digit are all refused in analyst text.
+- **Bounds.** Both byte limits are `MAX_BYTES`; a longer item is refused, not truncated.
+- **Issue lines are bounded.** Lines that quote the payload are cut, and a long list keeps its first lines and a count of the rest.

@@ -52,9 +52,8 @@ _SCALE_WORD = {"thousands": "thousand", "millions": "million", "billions": "bill
 
 def _gold_unit(fact: Mapping[str, Any]) -> tuple[str, str]:
     """(unit, scale) in the vocabulary of module_golden.json from ``canonical_unit``
-    ("USD millions") and ``currency``. ``unit_scale`` is deliberately not read: it is the
-    source filing's display scale (BGS: ``source_display_scale`` "USD thousands (x1,000 to base
-    USD)" beside value "461.073" millions), not the scale of ``value``, which is always in
+    ("USD millions") and ``currency``. ``unit_scale`` is deliberately not read (it does not
+    track the magnitude: NATL has 3 beside iXBRL scale 6); magnitude comes from
     ``canonical_unit``."""
     canonical = str(fact.get("canonical_unit"))
     currency = fact.get("currency")
@@ -74,8 +73,10 @@ def _gold_id(fact: Mapping[str, Any]) -> str:
 
 
 def _gold_evidence(fact: Mapping[str, Any], unit: str, scale: str) -> list[dict[str, Any]]:
-    """One evidence item per conflicting version, ``printed`` = its canonical value with the
-    scale word, which is what the scorer's printed-value check reads. Other statuses: none."""
+    """One evidence item per conflicting version that a source printed (its evidence names a
+    source id and a quote), ``printed`` = its canonical value with the scale word, which is what
+    the scorer's printed-value check reads. A derived version (empty evidence, such as H1 less
+    Q2) was never printed and gives none, so only a printed value can reach ``conflict_ok``."""
     versions = (fact.get("source_evidence") or {}).get("conflicting_versions") or ()
     word = _SCALE_WORD.get(scale)
     out: list[dict[str, Any]] = []
@@ -83,6 +84,8 @@ def _gold_evidence(fact: Mapping[str, Any], unit: str, scale: str) -> list[dict[
         if ver.get("value") is None:
             continue
         ev = ver.get("evidence") or {}
+        if not (ev.get("original_source_id") and ev.get("small_quote")):
+            continue
         out.append(
             {
                 "source_id": ev.get("original_source_id"),

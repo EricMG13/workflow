@@ -250,12 +250,16 @@ def test_financial_gold_status_carried() -> None:
     )
     conflict = facts["CP-1.fin.NATL:FY2025Q1:adjusted_EBITDA"]
     assert conflict["status"] == "conflicting"
-    assert [e["printed"] for e in conflict["evidence"]] == ["175 million", "172 million"]
+    assert [e["printed"] for e in conflict["evidence"]] == [
+        "175 million"
+    ]  # 172 is derived, never printed
     fid = "CP-1.fin.TDG:principal:FY2024Q2"
     assert _score_one(fid, status="missing", limitation="n/a") == "gap_ok"
     nat = "CP-1.fin.NATL:FY2025Q1:adjusted_EBITDA"
     both = {"amount": Decimal(175), "scale": Decimal(1000000), "unit": "USD", "limitation": "x"}
     assert _score_one(nat, **both) == "conflict_ok"
+    derived = {**both, "amount": Decimal(172)}
+    assert _score_one(nat, **derived) == "mismatch"
 
 
 @pytest.mark.parametrize(

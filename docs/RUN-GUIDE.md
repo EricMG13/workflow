@@ -159,6 +159,9 @@ one EV/EBITDA multiple; no model chooses it. Each basis reads these inputs:
   3 peers qualify; otherwise the precedent rows, again needing 3 qualifying; otherwise
   the result is Insufficient Information and no multiple is selected. It never blends.
 - **Public comps** reads the peer rows (EV, EBITDA, date, source) and takes their median.
+  Peer figures come only from `peer_source: user_comps`. With `user_list` (names only) or
+  `cp_dr_public` the public comps have no figures: `public_comps` is a fixed gap and
+  `auto` falls to the precedents.
 - **Precedents** reads the private-transaction rows and takes their median.
 - **Blend** takes the plain average of the public-comps median and the precedents
   median; each set needs 3 qualifying rows or the basis states a gap (no fallback).
@@ -180,8 +183,16 @@ with no date is excluded.
 CP-4C uses the selected multiple. A valuation case whose multiple differs from the
 selected one is refused (fail closed), the stress case included. A multiple you pin in
 the context assumptions for CP-4C wins over the selection; the selection is then
-recorded in CP-4C's limitation. A run with no valuation basis in the context produces
-the same pack as before.
+recorded in CP-4C's limitation.
+
+The comparison is at two decimals. The selected multiple is rounded half-even to 2
+decimal places, and CP-4C compares numerically, so `7` equals `7.00`.
+
+A context with no valuation to show produces the same pack as before (the eight CP-1C
+tables, no EV tables). A valuation is shown when any of these holds: the peer source is
+`user_comps`; precedents are listed; the basis is automatic, the issuer's own trading
+multiple or my own multiple; or the peer source is `user_list` or `cp_dr_public` and the
+basis is automatic, public comps or blend.
 
 ## Verify and deliver a sealed financial slice
 

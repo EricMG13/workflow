@@ -6,8 +6,8 @@ which creates the ``OwnerWorkflow``, drives it step by step through ``ToolLoop``
 (receipt, verify, render, verify the render, ``run.json`` last).
 
 A named fault ends the run as ``stopped``: ``StepStopped``, any ``BudgetError``, ``RecordingMissing``,
-``WorkflowError``, ``NoPrompt``, ``PromptError``, and a ``ValueError`` from prepare or from the
-render and its verify. ``run.json`` records the outcome and a redacted reason. Any other exception
+``WorkflowError``, ``NoPrompt``, ``PromptError``, ``CpDrNotAnchored``, ``BriefInvalid``, and a
+``ValueError`` from prepare or from the render and its verify. ``run.json`` records the outcome and a redacted reason. Any other exception
 propagates and leaves the run directory WITHOUT ``run.json``: a crashed run is detectable by that
 absence. Nothing here reads the environment or the network; the live adapter reads keys only inside
 its own ``complete``, and this module's text is redacted by the key pattern alone.
@@ -51,7 +51,7 @@ from deploy_workflow.owner_workflow import (
     verify_owner_run_receipt,
 )
 from deploy_workflow.prompts.compose import NoPrompt
-from deploy_workflow.prompts.factory import prompt_factory
+from deploy_workflow.prompts.factory import UntrustedFor, prompt_factory
 from deploy_workflow.prompts.tools import tools_for
 from deploy_workflow.replay import (
     ReplayDiverged,
@@ -64,6 +64,7 @@ from deploy_workflow.replay import (
     journal_unreplayable,
     replay_module,
 )
+from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
 from deploy_workflow.run_inputs import (
     HTML_MEDIA,
     CaseSource,
@@ -109,6 +110,7 @@ class CapExists(RunInputError):
 
 
 CAP_FILE = "cap.json"
+_CP_DR_LINEAGE = "LOCAL"
 _EXACT_ADD = Context(prec=120, traps=[Inexact, InvalidOperation]).add
 
 
@@ -244,6 +246,8 @@ _FAULTS = (
     ReplayRefused,
     ReplayError,
     ReplayPackChanged,
+    CpDrNotAnchored,  # O7-R20: a CP-DR run that is not anchored on CP-0 and CP-1 stops
+    BriefInvalid,  # a locked brief that was changed is not repairable by the model
 )
 
 
@@ -256,6 +260,7 @@ class _Meta:
     live: bool
     redactor: Redactor
     replayed_from: str | None = None  # the earlier run's run_id, for a rerun after repair
+    untrusted_for: UntrustedFor | None = None  # CP-DR's evidence hook; used only when cp_dr
 
 
 def _source_entries(
@@ -276,6 +281,7 @@ def _source_entries(
         }
         for item in sources
     ]
+    entries.extend(_research_entries(checked))
     entries.append(
         {
             "source_id": staged["context"].source_id,
@@ -286,6 +292,36 @@ def _source_entries(
         }
     )
     return tuple(entries)
+
+
+def _research_entries(checked: CheckedRun) -> list[dict[str, Any]]:
+    """One entry per accepted ``ev-<n>`` item: its manifest-relative path, always ``text/plain``."""
+    if checked.research is None:
+        return []
+    return [
+        {
+            "source_id": item.item_id,
+            "path": item.path,
+            "sha256": item.sha256,
+            "media_type": "text/plain",
+            "converted_sha256": None,
+        }
+        for item in checked.research.accepted
+    ]
+
+
+def _cp_dr_keys(checked: CheckedRun) -> dict[str, Any]:
+    """The ``run.json`` keys that exist only for a CP-DR run (a ``cp_dr=False`` file is unchanged).
+    The brief, dossier and head hashes are null until the core that writes them records them."""
+    if not checked.cp_dr or checked.research is None:
+        return {}
+    return {
+        "cp_dr_lineage": _CP_DR_LINEAGE,
+        "research_manifest_sha256": checked.research.manifest_sha256,
+        "cp_dr_brief_sha256": None,
+        "cp_dr_dossier_sha256": None,
+        "cp_dr_head_sha256": None,
+    }
 
 
 def _staged_entries(checked: CheckedRun, run_dir: Path) -> tuple[dict[str, Any], ...]:
@@ -322,7 +358,8 @@ def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: st
         "mode": "live" if meta.live else "offline",
         "cap_usd": money_text(checked.cap_usd),
         "sources": list(meta.entries),
-        "cp_dr_invoked": False,
+        "cp_dr_invoked": checked.cp_dr,
+        **_cp_dr_keys(checked),
         "replayed_from_run": meta.replayed_from,
         "outcome": outcome,
         "stopped_reason": stopped_reason,
@@ -572,7 +609,11 @@ def _drive_and_finish(
         if replay is not None:
             journal_unreplayable(replay, execution)
         store = Execution(execution)
-        composer = prompt_factory(pack, store) if prompt_for is None else prompt_for(pack)
+        composer = (
+            prompt_factory(pack, store, untrusted_for=meta.untrusted_for if checked.cp_dr else None)
+            if prompt_for is None
+            else prompt_for(pack)
+        )
         loop = ToolLoop(
             workflow,
             adapter,
@@ -662,6 +703,7 @@ def _run_pathway(
     entries: tuple[dict[str, Any], ...] | None = None,
     resume: bool = False,
     replay: ReplayPlan | None = None,
+    untrusted_for: UntrustedFor | None = None,
 ) -> RunOutcome:
     """Run the walk over a staged ``run_dir``; ``resume`` reopens the killed run's workflow
     instead of creating one; ``replay`` (from ``check_replay``) makes it a rerun after repair. No adapter-type check here (``check_arguments``
@@ -674,6 +716,7 @@ def _run_pathway(
         type(adapter) is LiveAdapter,
         redactor,
         None if replay is None else replay.earlier_run_id,
+        untrusted_for,
     )
     with _redacted_stderr(redactor):
         return _walk(checked, run_dir, adapter, prompt_for, meta, resume, replay)
@@ -713,6 +756,7 @@ def run_pathway(
     run_dir: Path,
     run_id: str,
     cp_dr: bool = False,
+    research_manifest: Path | None = None,
     resume: bool = False,
     replay_from: Path | None = None,
     repaired: frozenset[str] = frozenset(),
@@ -730,7 +774,10 @@ def run_pathway(
     every other analytical module is replayed from the earlier run's retained submissions (no model
     request), and the deterministic publisher runs again. It needs a new ``run_id`` and the earlier
     run's pack in everything but ``run_id``; every refusal comes before anything is written.
-    ``run.json.replayed_from_run`` is the earlier ``run_id``. A rerun is a fresh run: not a resume."""
+    ``run.json.replayed_from_run`` is the earlier ``run_id``. A rerun is a fresh run: not a resume.
+    ``cp_dr=True`` takes a ``research_manifest`` (and a manifest takes ``cp_dr=True``); intake runs
+    in ``check_arguments``, so a refused manifest raises before anything is written, and the staged
+    run holds ``research/evidence.json`` and ``research/rejected.json``."""
     redactor = Redactor()
     with _redacted_stderr(redactor):
         checked = check_arguments(
@@ -744,6 +791,7 @@ def run_pathway(
             run_dir=run_dir,
             run_id=run_id,
             cp_dr=cp_dr,
+            research_manifest=research_manifest,
             resume=resume,
         )
         entries = _source_entries(checked, sources, context)

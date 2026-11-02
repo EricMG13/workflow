@@ -41,6 +41,8 @@ PATTERNS = (
     "cases/valuation-context-owner/contexts/*.json",
     "cases/cpdr-context-cutoff/*.json",
     "cases/cpdr-context-cutoff/builder/build.py",
+    "cases/cpdr-web-retrieval/*.json",
+    "cases/cpdr-web-retrieval/builder/build.py",
     "cases/goldens/*/module_golden.json",
     "cases/goldens/*/mapping.json",
     "src/deploy_vii/methodology.json",

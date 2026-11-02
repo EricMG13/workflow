@@ -816,13 +816,17 @@ class _Cp1Cell:
 
 
 def _cp1_facts(inputs: PeerBenchmarkInputs) -> dict[str, _Cp1Cell]:
+    return _cp1_cells(inputs.cp1_metrics)
+
+
+def _cp1_cells(metrics: Mapping[str, Fact]) -> dict[str, _Cp1Cell]:
     """The CP-1 T4.10 fact per metric. A known one is numeric, in the metric's unit, with a
     period. A missing, not_applicable or conflicting one is carried with CP-1's limitation and
     takes the metric's unit, currency and scale (round 6 B1, round 6g). An absent fact, or a
     known one breaking those rules, is an invariant."""
     found: dict[str, _Cp1Cell] = {}
     for metric in METRICS:
-        fact = inputs.cp1_metrics.get(metric.key)
+        fact = metrics.get(metric.key)
         if fact is None:
             raise ValueError(f"CP-1 fact unavailable for {metric.key}")
         if fact.status != "known" and fact.limitation:
@@ -2892,13 +2896,17 @@ def _view_default(upstream: Upstream) -> tuple[PeriodBasis | None, dict[str, Fac
         return None, {}
 
 
-def _view_context_use(pack: PreparedPack, upstream: Upstream, basis: PeriodBasis) -> None:
-    """The checks `_with_context` makes of a context with a valuation: citable by line, and one
-    EBITDA fact in CP-1's column."""
+def _view_context_use(
+    pack: PreparedPack, upstream: Upstream, basis: PeriodBasis, facts: Mapping[str, Fact]
+) -> None:
+    """The checks the validator makes of the selection after `_cp1_metrics`: a context with a
+    valuation is citable by line and CP-1 holds one EBITDA fact in the column (`_with_context`),
+    then the four facts meet the Stage 1 rules (`_cp1_facts`)."""
     context = context_facts(pack)
     if context is not None and shows_valuation(context.valuation):
         _citable_context_source(pack)
         select_cp1(upstream.cp1.facts, basis)
+    _cp1_cells(facts)
 
 
 def _view_selection(
@@ -2911,7 +2919,7 @@ def _view_selection(
     try:
         basis = run_basis(context_facts(pack), upstream.cp1.facts)
         facts = _cp1_metrics(upstream.cp1, basis)
-        _view_context_use(pack, upstream, basis)
+        _view_context_use(pack, upstream, basis, facts)
     except ContextRefused as error:
         return *_view_default(upstream), _basis_issue(error)
     except PeriodRefused as error:

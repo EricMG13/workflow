@@ -373,6 +373,23 @@ def test_closed_run_json_records_cp_dr(closed: runs.ClosedRun) -> None:
     )
     assert body["cp_dr_head_sha256"] == heads["CP-DR"].result_sha256
     assert body["cp_dr_head_sha256"] != body["cp_dr_dossier_sha256"]
+    assert body["cp_dr_state"] == expected["run_json"]["cp_dr_state"]["positive"]
+
+
+def test_attachments_json_is_written_after_the_dossier(closed: runs.ClosedRun) -> None:
+    """Row 13 on the closed run `_finish_run` finished: `research/attachments.json` has the key's
+    keys and layout, the positive values, and the hashes `run.json` records."""
+    want = key_file("expected.json")["attachments"]
+    data = (closed.root / "research/attachments.json").read_bytes()
+    parsed = json.loads(data)
+    assert sorted(parsed) == want["keys"]
+    assert data == (json.dumps(parsed, indent=2, sort_keys=True) + "\n").encode()
+    for name, value in want["positive"].items():
+        assert parsed[name] == value
+    body = run_json(closed.root)
+    assert parsed["dossier_sha256"] == body["cp_dr_dossier_sha256"]
+    assert parsed["brief_sha256"] == body["cp_dr_brief_sha256"]
+    assert parsed["run_id"] == body["run_id"]
 
 
 class BadCp0:
@@ -463,6 +480,8 @@ def test_anchor_fault_stops_the_run(tmp_path: Path) -> None:
     outcome = rp._stop(tmp_path, meta, result.reason, result.spent)
     assert outcome.outcome == "stopped"
     assert run_json(tmp_path)["stopped_reason"] == want["fault_record"]
+    state = key_file("expected.json")["run_json"]["cp_dr_state"]
+    assert run_json(tmp_path)["cp_dr_state"] == state["blocked_cp0"]
     assert not (tmp_path / "research" / "brief.json").exists()
     lines = (tmp_path / "calls.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(lines) - adapter.calls == want["calls_jsonl_lines_added"]

@@ -1,8 +1,10 @@
 """F9 transport limits with an injected clock and fake connection. No network."""
 
 import http.client
+import json
 import socket
 from collections.abc import Callable, Iterator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -18,6 +20,10 @@ from deploy_workflow.model.transport import (
     TransportError,
     https_transport,
 )
+
+
+LIMITS_KEY = Path(__file__).parents[2] / "cases" / "pilot-fixes" / "limits.json"
+OVERALL_S = float(json.loads(LIMITS_KEY.read_text(encoding="utf-8"))["overall_s"])
 
 
 @pytest.fixture(autouse=True)
@@ -153,7 +159,7 @@ def test_slow_trickle_past_overall_limit() -> None:
 def test_non_streaming_read_uses_overall_as_per_read_timeout() -> None:
     conn = FakeConnection(FakeReply(200, iter([b'{"ok":1}'])))
     out = https_transport(_req(), clock=Clock(), connection_factory=lambda *_: conn)
-    assert conn.raw_sock.timeouts == [900.0]
+    assert conn.raw_sock.timeouts == [OVERALL_S]
     assert out.status == 200 and out.body == b'{"ok":1}'
     assert conn.sent == [("POST", "/v1/x")]
 
@@ -207,7 +213,7 @@ def test_watchdog_shuts_the_socket_at_the_deadline_and_is_an_overall_timeout() -
             connection_factory=lambda *_: conn,
             timer_factory=factory,
         )
-    assert timers[0].interval == 900.0 and timers[0].started and timers[0].cancelled
+    assert timers[0].interval == OVERALL_S and timers[0].started and timers[0].cancelled
     assert conn.raw_sock.shut
 
 

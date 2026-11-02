@@ -217,6 +217,25 @@ def test_the_default_composer_is_the_o6_composer(
     assert sent[0].messages == real_compose(composed[0])  # what the model got is O6's output
 
 
+def test_the_loop_gets_the_providers_bytes_per_token_bound(
+    args: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The seam is ToolLoop's constructor keyword, spied on the class ``run_pathway`` builds."""
+    key = json.loads(
+        (ROOT / "cases" / "pilot-fixes" / "limits.json").read_text(encoding="utf-8")
+    )["bytes_per_token_lower_bound"]
+    given: list[Decimal] = []
+
+    class Spy(ToolLoop):
+        def __init__(self, *a: Any, **kw: Any) -> None:
+            given.append(kw["bytes_per_token"])
+            super().__init__(*a, **kw)
+
+    monkeypatch.setattr(rp, "ToolLoop", Spy)
+    run_pathway(**args)  # MODEL is a sol configuration: provider openai
+    assert given == [Decimal(key["openai"])]
+
+
 def _o2_run(
     tmp_path: Path, answers: tuple[str, ...], factory: Any, seen: list[Any]
 ) -> tuple[Any, Path]:

@@ -4,8 +4,7 @@
    "id": "research.1",
    "statement": "Submit one `answers` entry for every question of the locked brief (`questions` of the research inputs), by its `question_id`: none twice, none for an id the brief does not list, and none left out.",
    "checks": [
-    "fn:deploy_workflow.research.review:research_issues",
-    "fn:deploy_workflow.owners.cpdr:validate_research"
+    "fn:deploy_workflow.research.review:research_issues"
    ]
   },
   {
@@ -19,8 +18,7 @@
    "id": "research.3",
    "statement": "An `answered` or `partly` answer has at least one claim, each claim with at least one citation; at least one `contrary` entry; and a nonblank `uncertainty`. A `partly` answer also has a nonblank `limitation`.",
    "checks": [
-    "fn:deploy_workflow.research.review:research_issues",
-    "fn:deploy_workflow.owners.cpdr:_question_issues"
+    "fn:deploy_workflow.research.review:research_issues"
    ]
   },
   {
@@ -39,7 +37,7 @@
   },
   {
    "id": "research.6",
-   "statement": "Cite only a held source (an `ev-*` evidence item or a pack source), under a locator that source has, with a quote that is verbatim under that locator; a cited `page:N` that `read_pages` did not return in this step is refused as not read. An evidence block in this prompt is orientation, never a citation.",
+   "statement": "Cite only a held source (an `ev-*` evidence item or a pack source), under a locator that source has, with a quote that is verbatim under that locator; a cited `page:N`, or a cited `line:N` of an `ev-*` item, that `read_pages` did not return in this step is refused as not read. An evidence block in this prompt is orientation, never a citation.",
    "checks": [
     "fn:deploy_workflow.research.review:research_issues",
     "fn:deploy_workflow.research.steps:research_rules"
@@ -62,11 +60,17 @@
   },
   {
    "id": "research.9",
-   "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend; quotes are source text and are not held to this.",
+   "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this.",
    "checks": [
     "fn:deploy_workflow.research.review:research_issues",
-    "fn:deploy_workflow.owners.cpdr:_model_text_issues",
     "oracle:cpdr-research:research"
+   ]
+  },
+  {
+   "id": "research.10",
+   "statement": "`run_id` is the run's id.",
+   "checks": [
+    "fn:deploy_workflow.owners.cpdr:_run_issues"
    ]
   }
  ]

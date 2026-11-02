@@ -242,7 +242,8 @@ _PROBES: dict[str, Callable[[Execution, ExecutionSnapshot, Attempt], None]] = {
 # `_VIEWS[step](historical, attempt)`.
 _VIEWS: dict[str, Callable[[Execution, Attempt], tuple[str, str]]] = {
     "credit_synthesis": cp2.view,
-    "research": cpdr.view,
+    "brief": cpdr.brief_view,
+    "research": cpdr.research_view,
     "integrity_review": cp5.view,
     "downside_pathway": cp2a.view,
     "liquidity_bridge": cp2d.view,
@@ -281,6 +282,12 @@ _ENTRY_VALIDATORS: dict[str, Callable[[Execution, PreparedPack, Attempt], StepVa
     "CP-4C": cp4c.ENTRY_VALIDATOR,
     "CP-6": cp6.ENTRY_VALIDATOR,
     "CP-1B": cp1b.ENTRY_VALIDATOR,
+}
+# A check run on the journal's snapshot before a module's attempt is begun; its exception is not a
+# `ValueError`, so `_begin` does not swallow it: CP-DR stops before `current_inputs` names a
+# generic missing input (O7-R20, `research/anchors.py`).
+_PRE_BEGIN: dict[str, Callable[[Execution, ExecutionSnapshot], object]] = {
+    "CP-DR": cpdr.check_begin,
 }
 # CP-0 and CP-1 keep the reused financial helpers, which are bound to their 11-field binding.
 _FINANCIAL_MODULES = frozenset({"CP-0", "CP-1"})
@@ -361,8 +368,9 @@ def _default_specs() -> dict[str, OwnerSpec]:
     from deploy_workflow.owners.cp2d import LiquidityBridgeSubmission
     from deploy_workflow.owners.cp2e import MacroFxSubmission
     from deploy_workflow.owners.cp8 import DecisionLedgerSubmission
-    from deploy_workflow.owners.cpdr import ResearchSubmission
     from deploy_workflow.owners.cpl10 import ChangeScreenSubmission
+    from deploy_workflow.research.review import ResearchSubmission
+    from deploy_workflow.research.steps import BriefSubmission
 
     def step(
         step_id: str,
@@ -438,11 +446,20 @@ def _default_specs() -> dict[str, OwnerSpec]:
             kind="deterministic",
             publish=publish_cp_model,
         ),
-        # G1-X owner-only module (docs/CPDR-OWNER-LEASE.md Public API): the agenda is its
-        # `module_context` view, the pack tools its evidence; every issue is a journaled step.
+        # G1-X owner-only module, CP-DR LOCAL (O7b-1c): the `brief` step tailors the locked
+        # question list (its checks are the core's, no tool-use rule), the `research` step answers
+        # it from every held source; each reads its `module_context` view and every issue is a
+        # journaled step.
         "CP-DR": OwnerSpec(
             module_id="CP-DR",
             steps=(
+                step(
+                    "brief",
+                    BriefSubmission,
+                    sources=True,
+                    inputs="module_context",
+                    rules="none",
+                ),
                 step(
                     "research",
                     ResearchSubmission,
@@ -2089,6 +2106,9 @@ class OwnerWorkflow:
         continues through `_advance` (G3), so the CP-MODEL stop and the end of the plan still
         apply."""
         before = self._store.read()
+        pre_begin = _PRE_BEGIN.get(module_id)
+        if pre_begin is not None:  # O7-R20: a refusal here is a fault that stops the run
+            pre_begin(self._store, before)
         kind: Literal["not_authorized", "blocked"]
         try:
             attempt = self._store.begin(module_id)

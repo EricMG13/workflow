@@ -15,6 +15,7 @@ its own ``complete``, and this module's text is redacted by the key pattern alon
 
 import contextlib
 import fcntl
+import hashlib
 import json
 import os
 import sys
@@ -50,6 +51,7 @@ from deploy_workflow.owner_workflow import (
     TornAudit,
     verify_owner_run_receipt,
 )
+from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts.compose import NoPrompt
 from deploy_workflow.prompts.factory import UntrustedFor, prompt_factory
 from deploy_workflow.prompts.tools import tools_for
@@ -66,6 +68,7 @@ from deploy_workflow.replay import (
 )
 from deploy_workflow.research import evidence
 from deploy_workflow.research.contracts import BriefInvalid, CpDrNotAnchored
+from deploy_workflow.research.dossier import DossierInvalid, DossierMismatch, render_dossier
 from deploy_workflow.research.intake import rejected_bytes
 from deploy_workflow.run_inputs import (
     HTML_MEDIA,
@@ -280,6 +283,9 @@ _FAULTS = (
     ReplayPackChanged,
     CpDrNotAnchored,  # O7-R20: a CP-DR run that is not anchored on CP-0 and CP-1 stops
     BriefInvalid,  # a locked brief that was changed is not repairable by the model
+    DossierInvalid,  # the settled head cannot be written as the dossier layout
+    DossierMismatch,  # the dossier is not bound to the brief the head recorded
+    evidence.EvidenceRecordInvalid,  # the staged evidence record or an item's text changed
 )
 
 
@@ -342,18 +348,51 @@ def _research_entries(checked: CheckedRun) -> list[dict[str, Any]]:
     ]
 
 
-def _cp_dr_keys(checked: CheckedRun) -> dict[str, Any]:
+@dataclass(frozen=True)
+class CpDrRecord:
+    """What a CP-DR run records of its head: the locked brief's hash, the sha256 of
+    ``research/dossier.md`` and the head's ``result_sha256``. Each is ``None`` until it exists."""
+
+    brief_sha256: str | None = None
+    dossier_sha256: str | None = None
+    head_sha256: str | None = None
+
+
+def _cp_dr_keys(checked: CheckedRun, record: CpDrRecord | None) -> dict[str, Any]:
     """The ``run.json`` keys that exist only for a CP-DR run (a ``cp_dr=False`` file is unchanged).
-    The brief, dossier and head hashes are null until the core that writes them records them."""
+    The brief, dossier and head hashes are null until the walk has settled the head."""
     if not checked.cp_dr or checked.research is None:
         return {}
+    held = CpDrRecord() if record is None else record
     return {
         "cp_dr_lineage": _CP_DR_LINEAGE,
         "research_manifest_sha256": checked.research.manifest_sha256,
-        "cp_dr_brief_sha256": None,
-        "cp_dr_dossier_sha256": None,
-        "cp_dr_head_sha256": None,
+        "cp_dr_brief_sha256": held.brief_sha256,
+        "cp_dr_dossier_sha256": held.dossier_sha256,
+        "cp_dr_head_sha256": held.head_sha256,
     }
+
+
+def write_dossier(store: Execution, research: Path) -> CpDrRecord:
+    """After the walk: ``research/dossier.md`` from the settled CP-DR head (O7-R10), and the hashes
+    ``run.json`` records. No CP-DR head records nothing; a blocked head records its hash only. The
+    locked ``brief.json`` must be the bytes the dossier renders as the brief (1a M-4)."""
+    head = next((h for h in store.read().heads if h.module_id == cpdr.MODULE_ID), None)
+    if head is None:
+        return CpDrRecord()
+    if head.status == "blocked":
+        return CpDrRecord(head_sha256=head.result_sha256)
+    given = cpdr.dossier_input(store, head, research)
+    rendered = render_dossier(given)
+    if (research / cpdr.BRIEF_FILE).read_bytes() != rendered.brief_json.encode("utf-8"):
+        raise BriefInvalid("brief.json is not the bytes of the locked brief")
+    dossier = rendered.markdown.encode("utf-8")
+    (research / cpdr.DOSSIER_FILE).write_bytes(dossier)
+    return CpDrRecord(
+        brief_sha256=given.brief.brief_sha256,
+        dossier_sha256=hashlib.sha256(dossier).hexdigest(),
+        head_sha256=head.result_sha256,
+    )
 
 
 def _staged_entries(checked: CheckedRun, run_dir: Path) -> tuple[dict[str, Any], ...]:
@@ -379,7 +418,13 @@ def _fsync_directory(directory: Path) -> None:
         os.close(fd)
 
 
-def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: str | None) -> None:
+def _write_run_json(
+    run_dir: Path,
+    meta: _Meta,
+    outcome: str,
+    stopped_reason: str | None,
+    record: CpDrRecord | None = None,
+) -> None:
     """Write ``run.json`` last: a temp file in ``run_dir``, fsync, ``os.replace``."""
     checked = meta.checked
     body: dict[str, Any] = {
@@ -391,7 +436,7 @@ def _write_run_json(run_dir: Path, meta: _Meta, outcome: str, stopped_reason: st
         "cap_usd": money_text(checked.cap_usd),
         "sources": list(meta.entries),
         "cp_dr_invoked": checked.cp_dr,
-        **_cp_dr_keys(checked),
+        **_cp_dr_keys(checked, record),
         "replayed_from_run": meta.replayed_from,
         "outcome": outcome,
         "stopped_reason": stopped_reason,
@@ -461,7 +506,12 @@ def _finish_run(workflow: OwnerWorkflow, run_dir: Path, meta: _Meta, budget: Bud
     failure = _render(workflow, run_dir, shown)
     if failure is not None:
         return _stop(run_dir, meta, failure, budget.spent)
-    _write_run_json(run_dir, meta, "settled", None)
+    record = (
+        write_dossier(Execution(run_dir / "execution"), run_dir / evidence.RESEARCH_DIR)
+        if meta.checked.cp_dr
+        else None
+    )
+    _write_run_json(run_dir, meta, "settled", None, record)
     return RunOutcome(meta.checked.run_id, run_dir, "settled", None, budget.spent)
 
 
@@ -842,7 +892,22 @@ def run_pathway(
                 _mode_of(adapter),
                 None if replay is None else replay.earlier_run_id,
             )
-            return _run_pathway(checked, run_dir, adapter, entries=entries, replay=replay)
+            return _run_pathway(
+                checked,
+                run_dir,
+                adapter,
+                entries=entries,
+                replay=replay,
+                untrusted_for=_untrusted(checked, run_dir),
+            )
+
+
+def _untrusted(checked: CheckedRun, run_dir: Path) -> UntrustedFor | None:
+    """O7-R14: a CP-DR run's research step carries the staged evidence items' full text; every
+    other run, and every other step, carries none."""
+    if not checked.cp_dr:
+        return None
+    return cpdr.untrusted_items(run_dir / evidence.RESEARCH_DIR)
 
 
 def _checked_replay(
@@ -875,7 +940,14 @@ def _resume_pathway(
     with _single_writer(run_dir):
         _refuse_rerun(run_dir)
         _check_identity(checked, run_dir, redactor)
-        return _run_pathway(checked, run_dir, adapter, entries=entries, resume=True)
+        return _run_pathway(
+            checked,
+            run_dir,
+            adapter,
+            entries=entries,
+            resume=True,
+            untrusted_for=_untrusted(checked, run_dir),
+        )
 
 
 __all__ = [

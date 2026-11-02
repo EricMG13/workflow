@@ -161,7 +161,10 @@ ENTRIES: Mapping[str, tuple[str, ...]] = {
     "integrity_review": (VII + "cp5_integrity:_validate_step", OWNERS + "cp5:_entry_validator"),
     "legal_covenants": (VII + "cp4_legal:_validate_step", OWNERS + "cp4:semantic_issues"),
     "committee_challenge": (VII + "cp6_committee:_validate_step",),
-    "research": (OWNERS + "cpdr:ENTRY_VALIDATOR",),
+    # CP-DR's one `ENTRY_VALIDATOR` dispatches on the attempt's latest step; each step's entry is
+    # the validator it dispatches to, so a step's rules cover that step's sites only.
+    "brief": (OWNERS + "cpdr:_validate_brief",),
+    "research": (OWNERS + "cpdr:_validate_research",),
     "market_implied": (OWNERS + "cp3d:_validate_step",),
     "macro_fx": (OWNERS + "cp2e:_validate_step",),
     "decision_ledger": (OWNERS + "cp8:_validate_step",),
@@ -185,7 +188,6 @@ OWNER_MODULE: Mapping[str, str] = {
     "integrity_review": OWNERS + "cp5",
     "legal_covenants": OWNERS + "cp4",
     "committee_challenge": OWNERS + "cp6",
-    "research": OWNERS + "cpdr",
     "market_implied": OWNERS + "cp3d",
     "macro_fx": OWNERS + "cp2e",
     "decision_ledger": OWNERS + "cp8",

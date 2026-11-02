@@ -107,6 +107,50 @@
     ]
    }
   ],
+  "brief": [
+   {
+    "id": "brief.1",
+    "statement": "`run_id` is the run's id.",
+    "checks": [
+     "fn:deploy_workflow.owners.cpdr:_run_issues"
+    ]
+   },
+   {
+    "id": "brief.2",
+    "statement": "Submit each of the six default questions once, with the ids `competition`, `metric-definitions`, `valuation-context`, `market-demand`, `industry-structure` and `regulation`, and put them first, in that order, before any question of your own.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_default_issues"
+    ]
+   },
+   {
+    "id": "brief.3",
+    "statement": "A default question carries its own kind: `competition` is `default_1`, `metric-definitions` `default_2`, `valuation-context` `default_3`, `market-demand` `default_4`, `industry-structure` `default_5` and `regulation` `default_6`. Every other question is of kind `custom`.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_kind_issues"
+    ]
+   },
+   {
+    "id": "brief.4",
+    "statement": "The `question_id` of a question of your own does not start with `ctx-`, is not `total`, is different from every other `question_id` of the list, and is at most 138 characters, since fact ids are composed from it.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_id_issues"
+    ]
+   },
+   {
+    "id": "brief.5",
+    "statement": "A question's `text` contains no digit or figure and, in any case, not the word recommend; a word that contains it, such as recommendation, is refused too.",
+    "checks": [
+     "fn:deploy_workflow.research.steps:_language"
+    ]
+   },
+   {
+    "id": "brief.6",
+    "statement": "When an earlier attempt of this run locked a brief, submit the same questions as that attempt: a lock is written once and is not changed.",
+    "checks": [
+     "fn:deploy_workflow.owners.cpdr:_relock_issues"
+    ]
+   }
+  ],
   "business_context": [
    {
     "id": "business_context.a",
@@ -1624,8 +1668,7 @@
     "id": "research.1",
     "statement": "Submit one `answers` entry for every question of the locked brief (`questions` of the research inputs), by its `question_id`: none twice, none for an id the brief does not list, and none left out.",
     "checks": [
-     "fn:deploy_workflow.research.review:research_issues",
-     "fn:deploy_workflow.owners.cpdr:validate_research"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
@@ -1639,8 +1682,7 @@
     "id": "research.3",
     "statement": "An `answered` or `partly` answer has at least one claim, each claim with at least one citation; at least one `contrary` entry; and a nonblank `uncertainty`. A `partly` answer also has a nonblank `limitation`.",
     "checks": [
-     "fn:deploy_workflow.research.review:research_issues",
-     "fn:deploy_workflow.owners.cpdr:_question_issues"
+     "fn:deploy_workflow.research.review:research_issues"
     ]
    },
    {
@@ -1659,7 +1701,7 @@
    },
    {
     "id": "research.6",
-    "statement": "Cite only a held source (an `ev-*` evidence item or a pack source), under a locator that source has, with a quote that is verbatim under that locator; a cited `page:N` that `read_pages` did not return in this step is refused as not read. An evidence block in this prompt is orientation, never a citation.",
+    "statement": "Cite only a held source (an `ev-*` evidence item or a pack source), under a locator that source has, with a quote that is verbatim under that locator; a cited `page:N`, or a cited `line:N` of an `ev-*` item, that `read_pages` did not return in this step is refused as not read. An evidence block in this prompt is orientation, never a citation.",
     "checks": [
      "fn:deploy_workflow.research.review:research_issues",
      "fn:deploy_workflow.research.steps:research_rules"
@@ -1682,11 +1724,17 @@
    },
    {
     "id": "research.9",
-    "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend; quotes are source text and are not held to this.",
+    "statement": "A claim's `text`, an `uncertainty`, a `limitation` and a cited contrary entry's `text` contain no digit or figure and, in any case, not the word recommend: a word that contains it, such as recommendation, is refused too. Quotes are source text and are not held to this.",
     "checks": [
      "fn:deploy_workflow.research.review:research_issues",
-     "fn:deploy_workflow.owners.cpdr:_model_text_issues",
      "oracle:cpdr-research:research"
+    ]
+   },
+   {
+    "id": "research.10",
+    "statement": "`run_id` is the run's id.",
+    "checks": [
+     "fn:deploy_workflow.owners.cpdr:_run_issues"
     ]
    }
   ],
@@ -1939,7 +1987,7 @@
    "src/deploy_vii/source_context.py": "8e866afc0d21116bd2dcb863e6e897b6c076b791223a1816d95084d908bf7371",
    "src/deploy_vii/statement_validation.py": "7976f45253e5618c0c39e59f17255fe44285a4b85e89064ac3b24d73e23bfc76",
    "src/deploy_workflow/financial_workflow.py": "53eb629c2feacfaf973f0049c405e00c72cd81d00cd476972e242b4fe0c690ab",
-   "src/deploy_workflow/owner_workflow.py": "b450da7f97628b0a9fe1b3fbe67ac322db214d35eb424e930ab54b293c999f99",
+   "src/deploy_workflow/owner_workflow.py": "cc0d79b3a66a07164fde84240ef29f8ab33a972b353b783c686342cdc68cb0dc",
    "src/deploy_workflow/owners/cp1a.py": "25e0918995eb887da6ea487a0d9463ccac3a29887c83f818ce038397cf9ee4b2",
    "src/deploy_workflow/owners/cp1b.py": "db6d9307bb2f39abab7809a1a1660db0a9b2ec01a3523936d912500dd78b982d",
    "src/deploy_workflow/owners/cp1c.py": "e4c6003dffaae5f0e58a665d11b38318a00242aaeacb76f62a9b7f5e08de4d99",
@@ -1958,12 +2006,12 @@
    "src/deploy_workflow/owners/cp5.py": "8de8e36d045aed056c372e13891722db348a44f5acdca3fdd56e5b379402a93b",
    "src/deploy_workflow/owners/cp6.py": "3212ec05142d5c62e749aca5edf2d83c22b5902d33c7e55cb343c66535fd489d",
    "src/deploy_workflow/owners/cp8.py": "b79e969584902c189fba220c1b26f676bfe001abe38db35e6750444ceb729c6a",
-   "src/deploy_workflow/owners/cpdr.py": "844516fc229f72447f33d40481133f684c0340f87a480aaa69945aad560da2d9",
+   "src/deploy_workflow/owners/cpdr.py": "2d6b31fdae26487cb0f379e5c7aa5fc58027b8ec37809943ddc8129ad3fcb952",
    "src/deploy_workflow/owners/cpl10.py": "18ccda2b51554188483554e69b07dbbb75f65108beb2ec6613367ba05b16990e",
    "src/deploy_workflow/owners/pins.py": "6aaaa0a748722b171fb8ffd5c590c9a885003b722ef1a551a8d8af30d1866cd1",
    "src/deploy_workflow/prompts/fence.py": "7132c1c12e44ca7df3713331967d89ae33659d3dc28f995d773500ee453b7f7b",
    "src/deploy_workflow/research/review.py": "ab6d7e9b0964540eb64eefbe60a27791a5f82dff4ba33cb3a47f706c3add9bb7",
-   "src/deploy_workflow/research/steps.py": "6a7f25292766c84fa30b378c89653063af83c73e81d63856ae15334d51247a8a"
+   "src/deploy_workflow/research/steps.py": "a0ccb98bd90335883bd44030edaac978077cafaab40130aeeed3e7a85ccd2dc1"
   },
   "oracles": {
    "cases/cp1c-owner/expected.json": "daccb5832d816e70e9893152980b3f56564c5eeb9305273564a2c1ba173452df",

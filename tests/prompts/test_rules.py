@@ -213,7 +213,7 @@ def test_the_declared_entry_is_the_entry_validator(step_id: str) -> None:
 
 def test_there_is_one_list_per_inventory_step_and_one_for_the_composer() -> None:
     assert rules.step_ids() == STEPS
-    assert len(STEPS) == 26
+    assert len(STEPS) == 27
     assert [r.id for r in rules.load_rules(rules.COMPOSE)][:4] == [
         "compose.O1",
         "compose.O2",

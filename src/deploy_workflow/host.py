@@ -57,7 +57,7 @@ _SOURCE_STEPS = {
     "CP-4": ("legal_covenants",),
     "CP-1D": ("earnings_quality",),
     "CP-3D": ("market_implied",),
-    "CP-DR": ("research",),
+    "CP-DR": ("brief", "research"),
     "CP-1C": ("peer_benchmark",),
     "CP-2E": ("macro_fx",),
     "CP-2H": ("rating_triggers",),

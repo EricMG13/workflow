@@ -444,6 +444,9 @@ def check_arguments(
 ) -> CheckedRun:
     """Every call-shape check, in order, before any write. Raises a ``RunInputError``
     subclass, ``ContextRefused``, ``UndecodableHtml`` or a CP-DR ``ResearchError``; never writes.
+    With ``replay_from`` it also raises ``WorkflowError("identity_mismatch")`` for an edited earlier
+    record (``evidence.earlier_retrieved`` calls ``cpdr.check_records``) and ``EvidenceRecordInvalid``
+    for an earlier record that is present but unreadable.
     A ``research_ruling`` is read only when the research manifest has a url row.
     ``resume`` skips the check that ``run_dir`` is new: ``run_pathway`` checks a run directory it
     resumes itself. ``replay_from`` (the earlier run of a rerun) lets the research staging keep that

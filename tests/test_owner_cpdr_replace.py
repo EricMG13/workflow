@@ -7,7 +7,7 @@ The plan and the rerun are tested through `replay.plan_replay` and `replay.repla
 
 The earlier run is `cpdr_runs.closed_run("positive")`: the promotion of CP-1 alone takes minutes, and
 no fast producer yields the retained submissions replay reads (`settled_pair` stores hand-built
-modules and no submissions). So the two tests over it are slow and run in CI only (O7-R57).
+modules and no submissions). So the three tests over it are slow and run in CI only (O7-R57).
 """
 
 import hashlib

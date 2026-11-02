@@ -36,10 +36,10 @@ Pre-code, not frozen. Registers CP-5 as a G1 owner spec on top of the CP-3/CP-6 
 
 | File | sha256 |
 |---|---|
-| `cases/cp5-owner/manifest.json` | `223133a0889450d896c5d3f1843fce8c21fa15062f1d79fbc97a470f17e14232` |
+| `cases/cp5-owner/manifest.json` | `c413a9eddfa0c819a3857a6d2ef988e22a54564cd6ddab06c57ef7dd61f84463` |
 | `cases/cp5-owner/submissions.json` | `9effec68a97a450ae87ee7d203b36e80ee9b315e052dce9db66b2d17c6a2b8a4` |
 | `cases/cp5-owner/expected.json` | `48fcd8991b858b9b08fc12e965abfcde42d467dfce2aba04a98e9edba07e92d2` |
-| `cases/cp3-cp6-owner/manifest.json` (amended R6; pinned by the builder) | `7a5528188ce8a4d6702d960de032ef46e793d7150757a0d328ca9a64abb0a1fe` |
+| `cases/cp3-cp6-owner/manifest.json` (amended R6; pinned by the builder) | `e5c3f77e8988ab882ccef284e7c154e6150ea18a209730d2a1f75a92f3e26219` |
 | `cases/cp3-cp6-owner/submissions.json` (amended R6) | `9f8c10e9e31e88f15f797c89102c6cf2d938b25a1878d2b5aafe5354786dde38` |
 | `cases/cp3-cp6-owner/expected.json` (amended R6) | `8d9cd9522eefe8d6918a551613cd475d9231cd3b0269448dcdef40fdb464118f` |
 | `src/deploy_vii/methodology.json` | `1bb6c0bc6fa13b8e668266cb1aa76dcc8ffe6178bcf403958ce761b94dbb89a6` |

@@ -107,3 +107,21 @@ def test_a_missing_table_is_refused(expected: dict[str, Any]) -> None:
     bad, _ = build(expected, "positive", tables=tables)
     with pytest.raises(d.DossierInvalid, match="TDR.2"):
         d.dossier_markdown(bad)
+
+
+def test_a_reason_holding_the_terminator_is_refused_not_rendered(
+    expected: dict[str, Any], manifest: dict[str, Any]
+) -> None:
+    suffix = expected["refusals"]["research"]["fence_terminator"]["reason_suffix"]
+    item = manifest["fence_terminator_item"]
+    reason = f"evidence item {item['locator']} {suffix}"
+    refused = RefusedItem(
+        locator=item["locator"],
+        family=item["family"],
+        published=date.fromisoformat(item["published"]),
+        reason=reason,
+    )
+    given, _ = build(expected, "positive")
+    bad, _ = build(expected, "positive", rejected=(*given.rejected, refused))
+    with pytest.raises(d.DossierInvalid, match="block delimiter"):
+        d.dossier_markdown(bad)

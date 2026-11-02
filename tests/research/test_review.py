@@ -147,3 +147,154 @@ def test_readiness_property(states: list[c.ClaimState]) -> None:
         assert got == "RESEARCH_READY_WITH_LIMITATIONS"
     else:
         assert got == "RESEARCH_READY"
+
+
+def edit_answer(sub: dict[str, Any], qid: str, **fields: Any) -> dict[str, Any]:
+    out = copy.deepcopy(sub)
+    answer(out, qid).update(fields)
+    return out
+
+
+def texts(sub: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]) -> list[str]:
+    return [i.text for i in check(sub, manifest, expected)]
+
+
+def test_none_found_contrary_must_name_an_item_searched(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    # Every none_found of the key's cases names its search (checked, not assumed).
+    for name in ("research_v1", "research_v2"):
+        for a in submissions[name]["answers"]:
+            assert all(c["searched"] for c in a["contrary"] if c["kind"] == "none_found")
+    empty = [{"kind": "none_found", "searched": [], "limitation": "Only supplied items."}]
+    sub = edit_answer(submissions["research_v1"], "regulation", contrary=empty)
+    assert texts(sub, manifest, expected) == ["a none_found contrary names the items searched"]
+
+
+def test_none_found_search_must_name_held_items(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    answer(sub, "regulation")["contrary"][0]["searched"] = ["ev-9"]
+    assert texts(sub, manifest, expected) == ["searched item ev-9 is not a held source"]
+
+
+def test_not_found_rules_each_refuse_alone(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    base = submissions["research_v1"]
+    claims = copy.deepcopy(answer(base, "ctx-1")["claims"])
+    cases = {
+        "a not_found question names the items searched": {"searched": []},
+        "a not_found question carries no claim": {"claims": claims},
+        "searched item ev-9 is not a held source": {"searched": ["ev-1", "ev-9"]},
+    }
+    for want, fields in cases.items():
+        sub = edit_answer(base, "valuation-context", **fields)
+        assert want in texts(sub, manifest, expected), want
+
+
+def test_partly_needs_its_limitation(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = edit_answer(submissions["research_v2"], "valuation-context", limitation=None)
+    assert texts(sub, manifest, expected) == ["a partly question states its limitation"]
+
+
+def test_claim_needs_a_citation(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    answer(sub, "regulation")["claims"][0]["citations"] = []
+    assert texts(sub, manifest, expected) == ["claim regulation.c1 needs a citation"]
+
+
+def test_cited_contrary_item_is_its_citation(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    answer(sub, "market-demand")["contrary"][0]["item"] = "ev-1"
+    assert texts(sub, manifest, expected) == ["contrary item ev-1 is not its citation"]
+
+
+def test_independent_item_must_be_cited(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    answer(sub, "competition")["claims"][0]["independent_items"] = ["ev-1", "ev-2"]
+    answer(sub, "competition")["claims"][0]["citations"].pop()
+    got = texts(sub, manifest, expected)
+    assert "independent item ev-2 is not cited by competition.c1" in got
+
+
+def test_independent_items_are_distinct_and_ev_only(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    key = expected["refusals"]["research"]["families_not_independent"]["text"]
+    sub = copy.deepcopy(submissions["research_v1"])
+    claim = answer(sub, "competition")["claims"][0]
+    claim["independent_items"] = ["ev-1", "ev-1"]
+    got = texts(sub, manifest, expected)
+    assert got == ["independent items of competition.c1 repeat an item"]
+    assert not any("share family" in t or key in t for t in got)
+    claim["independent_items"] = ["ev-1", "identity"]
+    claim["citations"].append(
+        {"source_id": "identity", "source_sha256": "a" * 64, "locator": "page:1", "quote": "x"}
+    )
+    got = texts(sub, manifest, expected)
+    assert "independent item identity of competition.c1 is not an ev-* item" in got
+    assert not any("share family" in t for t in got)
+
+
+def test_claim_id_is_unique_across_the_submission(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    answer(sub, "regulation")["claims"][0]["claim_id"] = "ctx-1.c1"
+    assert [(i.question_id, i.text) for i in check(sub, manifest, expected)] == [
+        ("regulation", "claim_id ctx-1.c1 appears twice")
+    ]
+
+
+def test_question_not_in_brief_and_repeated_answer(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    answer(sub, "regulation")["question_id"] = "invented"
+    got = texts(sub, manifest, expected)
+    assert "question is not in the locked brief" in got
+    again = copy.deepcopy(submissions["research_v1"])
+    again["answers"].append(copy.deepcopy(answer(again, "ctx-1")))
+    assert "question_id appears twice" in texts(again, manifest, expected)
+
+
+def test_unanswered_brief_question_is_blocked(
+    submissions: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    sub = copy.deepcopy(submissions["research_v1"])
+    sub["answers"] = sub["answers"][1:]
+    states = r.claim_states(r.ResearchSubmission.parse(sub), brief(expected))
+    assert states[0] == "blocked" and c.assign_readiness(states) == "BLOCKED"
+
+
+def test_every_prose_field_is_held_to_the_language_rules(
+    submissions: dict[str, Any], manifest: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    word = expected["refusals"]["research"]["banned_word"]["refused_text"]
+    base = submissions["research_v1"]
+
+    def contrary_limitation(sub: dict[str, Any], text: str) -> None:
+        answer(sub, "regulation")["contrary"][0]["limitation"] = text
+
+    def cited_text(sub: dict[str, Any], text: str) -> None:
+        answer(sub, "market-demand")["contrary"][0]["text"] = text
+
+    def not_found_limitation(sub: dict[str, Any], text: str) -> None:
+        answer(sub, "valuation-context")["limitation"] = text
+
+    for edit in (contrary_limitation, cited_text, not_found_limitation):
+        for bad, issue in ((word, word), ("About 12 of them.", r.FIGURE_ISSUE)):
+            sub = copy.deepcopy(base)
+            edit(sub, bad)
+            want = "banned word: recommend" if bad == word else issue
+            assert want in texts(sub, manifest, expected), (edit.__name__, bad)

@@ -76,6 +76,8 @@ def _cell(where: str, value: object) -> str:
     text = str(value)
     if "|" in text or "\n" in text or "\r" in text:
         raise DossierInvalid(f"{where} cannot be written in a table cell")
+    if "<<<" in text:  # CP-2 reads the dossier through fences that refuse any block opener
+        raise DossierInvalid(f"{where} holds a block delimiter and cannot be shown")
     return text
 
 

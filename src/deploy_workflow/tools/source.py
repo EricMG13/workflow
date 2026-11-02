@@ -11,11 +11,13 @@ from deploy_workflow.prompts.fence import FenceError, UntrustedItem, untrusted_e
 
 # A SOURCE block as PackTools writes it (`block("SOURCE", id, sha256, "locator=<loc> ... ")`). A
 # source body cannot hold `<<<END>>>` or `<<<SOURCE` (block() refuses both), so the first closing
-# line ends the block and no body can forge a second one.
+# line ends the block and no body can forge a second one. The body is lazy, so a match ends at the
+# first `<<<END>>>` and never runs on into the next block.
 _RESEARCH_BLOCK = re.compile(
-    r"<<<SOURCE id=(ev-\S+) sha256=([0-9a-f]{64})>>>\n(locator=(\S+)[^\n]*(?:\n.*?)?)\n<<<END>>>",
+    r"<<<SOURCE id=(ev-\S+) sha256=([0-9a-f]{64})>>>\n(locator=(\S+).*?)\n<<<END>>>",
     re.DOTALL,
 )
+_RESEARCH_HEADER = "<<<SOURCE id=ev-"
 
 
 class SourceError(ValueError):
@@ -101,7 +103,10 @@ class SourceTools:
             return untrusted_evidence_block([item])
 
         try:
-            return _RESEARCH_BLOCK.sub(fence, body)
+            fenced = _RESEARCH_BLOCK.sub(fence, body)
+            if _RESEARCH_HEADER in fenced:  # a header the match did not recognise stays unfenced
+                raise FenceError("a research block was left outside the fence")
+            return fenced
         except FenceError:
             raise SourceError("unavailable") from None
 

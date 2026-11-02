@@ -15,7 +15,12 @@ from pydantic import Field
 
 from deploy_vii.contracts import Citation, Contract, Identifier, Source, Text
 from deploy_vii.readiness import citation_issues
-from deploy_workflow.research.contracts import ClaimState, EvidenceItem, ResearchBrief
+from deploy_workflow.research.contracts import (
+    RESERVED_PREFIX,
+    ClaimState,
+    EvidenceItem,
+    ResearchBrief,
+)
 
 AnswerState = Literal["answered", "partly", "not_found"]
 # OD11/L3: the owners/cpdr.py PROHIBITED list minus covenant, recovery and refinanc; nothing added.
@@ -140,6 +145,19 @@ def _language_issues(answer: Answer) -> list[ReviewIssue]:
     return issues
 
 
+def _independent_list_issues(qid: str, claim: Claim) -> list[ReviewIssue]:
+    """O7-R7: the list is distinct and names ``ev-*`` items only (pack sources have no family)."""
+    issues = []
+    if len(set(claim.independent_items)) != len(claim.independent_items):
+        issues.append(ReviewIssue(qid, f"independent items of {claim.claim_id} repeat an item"))
+    issues += [
+        ReviewIssue(qid, f"independent item {item} of {claim.claim_id} is not an ev-* item")
+        for item in dict.fromkeys(claim.independent_items)
+        if not item.startswith(RESERVED_PREFIX)
+    ]
+    return issues
+
+
 def _independence_issues(answer: Answer, family_of: Mapping[str, str]) -> list[ReviewIssue]:
     issues: list[ReviewIssue] = []
     for claim in answer.claims:
@@ -153,6 +171,9 @@ def _independence_issues(answer: Answer, family_of: Mapping[str, str]) -> list[R
             if item not in cited
         ]
         items = claim.independent_items
+        issues += _independent_list_issues(answer.question_id, claim)
+        if len(set(items)) != len(items):
+            continue
         for i, first in enumerate(items):
             for second in items[i + 1 :]:
                 family = family_of.get(first)
@@ -206,6 +227,10 @@ def _citation_issues(answer: Answer, sources: tuple[Source, ...]) -> list[Review
             issues.append(
                 ReviewIssue(answer.question_id, f"contrary item {entry.item} is not its citation")
             )
+        if isinstance(entry, NoneFound) and not entry.searched:
+            issues.append(
+                ReviewIssue(answer.question_id, "a none_found contrary names the items searched")
+            )
         if isinstance(entry, NoneFound):
             issues += [
                 ReviewIssue(answer.question_id, f"searched item {item} is not a held source")
@@ -218,6 +243,13 @@ def _citation_issues(answer: Answer, sources: tuple[Source, ...]) -> list[Review
         if item not in held
     ]
     return issues
+
+
+def _owner_of(submission: ResearchSubmission, claim_id: str) -> str:
+    """The question that holds the last use of ``claim_id`` (the repeat, not the first)."""
+    return [
+        a.question_id for a in submission.answers if any(c.claim_id == claim_id for c in a.claims)
+    ][-1]
 
 
 def research_issues(
@@ -245,6 +277,12 @@ def research_issues(
         issues += _citation_issues(answer, held)
         issues += _independence_issues(answer, family_of)
         issues += _language_issues(answer)
+    claim_ids = [claim.claim_id for answer in submission.answers for claim in answer.claims]
+    issues += [
+        ReviewIssue(_owner_of(submission, claim_id), f"claim_id {claim_id} appears twice")
+        for claim_id in dict.fromkeys(claim_ids)
+        if claim_ids.count(claim_id) > 1
+    ]
     issues += [
         ReviewIssue(qid, "brief question has no answer") for qid in wanted if qid not in seen
     ]

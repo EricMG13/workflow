@@ -12,6 +12,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from deploy_workflow.research.contracts import (
     MAX_QUESTIONS,
     Anchor,
@@ -48,6 +50,12 @@ def _check_tailored(tailored: Sequence[TailoredQuestion]) -> None:
     """Refuse a malformed tailored question wherever it sits, not only inside the kept 32."""
     seen: set[str] = set()
     for item in tailored:
+        try:
+            _tailored(item)
+        except ValidationError as error:
+            raise BriefInvalid(
+                f"tailored question {item.question_id!r} is invalid: {error}"
+            ) from error
         if item.kind == "context":
             raise BriefInvalid(f"tailored question {item.question_id} cannot have kind context")
         if item.question_id.startswith(CONTEXT_PREFIX):

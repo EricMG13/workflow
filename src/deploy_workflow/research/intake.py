@@ -15,7 +15,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from deploy_vii.preparation import MAX_BYTES, MAX_EXPANDED_BYTES
+from deploy_vii.preparation import MAX_BYTES
 from deploy_workflow.html_text import UndecodableHtml, convert_html
 from deploy_workflow.prompts.fence import FenceError, UntrustedItem, untrusted_evidence_block
 from deploy_workflow.research.contracts import (
@@ -26,7 +26,8 @@ from deploy_workflow.research.contracts import (
     refuse_reserved,
 )
 
-# The per-item cap is prepare's own read limit (O7-R3), so an accepted item never fails at prepare.
+# The per-item cap is prepare's own limit (O7-R3, O7-R3a): it bounds the raw read here and the
+# converted text below, because prepare refuses any staged source over MAX_BYTES.
 MAX_ITEM_BYTES = MAX_BYTES
 ROW_KEYS = ("path", "url", "family", "published", "locator", "tag", "source_id")
 _HTML_SUFFIXES = frozenset({".html", ".htm"})
@@ -149,7 +150,7 @@ def _read_capped(source: Path, cap: int) -> bytes:
     """Mirror of ``run_inputs.read_capped`` with the caller's cap: one descriptor, opened without
     blocking, ``fstat`` for a regular file (FIFO, directory, device refused), at most cap + 1 bytes."""
     try:
-        fd = os.open(source, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+        fd = os.open(source, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC | os.O_NOFOLLOW)
     except (OSError, ValueError) as error:
         raise _ItemRefused(
             f"cannot be opened ({getattr(error, 'strerror', None) or error})"
@@ -180,8 +181,8 @@ def _text(source: Path, max_bytes: int) -> str:
         text = raw.decode("utf-8-sig")
         if "\x00" in text:
             raise _ItemRefused("holds NUL bytes, which prepare does not accept")
-    if len(text.encode("utf-8")) > MAX_EXPANDED_BYTES:
-        raise _ItemRefused(f"expands beyond {MAX_EXPANDED_BYTES} bytes")
+    if len(text.encode("utf-8")) > MAX_BYTES:
+        raise _ItemRefused(f"expands beyond {MAX_BYTES} bytes")
     return text
 
 

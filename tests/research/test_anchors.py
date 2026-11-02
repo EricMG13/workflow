@@ -73,8 +73,9 @@ def key_reason(expected: dict[str, Any], case: str) -> str:
 
 def test_settled_pair_anchors(manifest: dict[str, Any], expected: dict[str, Any]) -> None:
     run = run_of(manifest)
-    cp0, cp1 = pair(run)
-    assert set(expected["cp0_cp1_pair"]["statuses"].values()) <= {"accepted", "restricted"}
+    statuses = expected["cp0_cp1_pair"]["statuses"]
+    cp0, cp1 = pair(run, {"status": statuses["CP-0"]}, {"status": statuses["CP-1"]})
+    assert (cp0.head.status, cp1.head.status) == (statuses["CP-0"], statuses["CP-1"])
     anchor = a.check_anchors(cp0, cp1, run)
     assert anchor == c.Anchor(cp0_sha256=cp0.head.result_sha256, cp1_sha256=cp1.head.result_sha256)
     cp0, cp1 = pair(run, {"status": "accepted"}, {"status": "accepted"})

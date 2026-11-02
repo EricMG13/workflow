@@ -4,7 +4,7 @@ import hashlib
 import json
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -199,6 +199,9 @@ def test_thirty_two_context_questions_keep_every_one(
         b.TailoredQuestion("x", "t", "context"),
         b.TailoredQuestion("ctx-9", "t", "custom"),
         b.TailoredQuestion("t0", "t", "custom"),
+        b.TailoredQuestion("bad id", "t", "custom"),
+        b.TailoredQuestion("x1", "", "custom"),
+        b.TailoredQuestion("x2", "t", cast(Any, "default_9")),
     ],
 )
 def test_a_malformed_question_past_the_cut_is_refused_not_dropped(

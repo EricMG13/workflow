@@ -235,7 +235,7 @@ def test_expanded_text_is_bounded(
     tmp_path: Path, manifest: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     put(tmp_path, "a.txt", b"x" * 10)
-    monkeypatch.setattr(it, "MAX_EXPANDED_BYTES", 5)
+    monkeypatch.setattr(it, "MAX_BYTES", 5)
     result = call(tmp_path, manifest, [row_of(manifest, path="a.txt")])
     assert "expands beyond 5 bytes" in result.refused[0].reason
 
@@ -308,3 +308,21 @@ def test_accepted_item_yields_the_o7a_evidence_item(
         item.sha256,
         item.family,
     )
+
+
+def test_symlink_swapped_in_after_resolve_is_not_followed(
+    tmp_path: Path, manifest: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    put(tmp_path, "a.txt", b"inside")
+    (tmp_path / "secret.txt").write_bytes(b"outside the manifest folder")
+    real = it._resolve
+
+    def swap(base_dir: Path, relative: str) -> Path:
+        target = real(base_dir, relative)
+        target.unlink()
+        target.symlink_to(tmp_path / "secret.txt")
+        return target
+
+    monkeypatch.setattr(it, "_resolve", swap)
+    result = call(tmp_path, manifest, [row_of(manifest, path="a.txt")])
+    assert result.accepted == () and "cannot be opened" in result.refused[0].reason

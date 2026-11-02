@@ -929,3 +929,28 @@ def test_a_redirect_that_arrives_after_the_total_is_not_followed() -> None:
     assert body is None
     assert record.reason == f"{url} took longer than {KEY['timeout']['total_seconds']} seconds"
     assert world.resolved == ["redirect-a.example"]
+
+
+def test_the_tcp_connect_is_bounded_by_the_remaining_total(monkeypatch: pytest.MonkeyPatch) -> None:
+    conn = KEY["connection"]
+    world = World()
+    left = CONNECT_S - 7
+    asked: list[float] = []
+
+    def create_connection(address: tuple[str, int], timeout: float) -> object:
+        asked.append(timeout)
+        return object()
+
+    class Context:
+        def wrap_socket(self, sock: object, *, server_hostname: str) -> object:
+            return sock
+
+    monkeypatch.setattr(socket, "create_connection", create_connection)
+    target = webfetch.ConnectionTarget(
+        conn["host"], conn["ip"], conn["port"], CONNECT_S, world.now + left, world.clock
+    )
+    monkeypatch.setattr(webfetch, "tls_context", lambda: Context())
+    pinned = webfetch.pinned_connection(target)
+    assert isinstance(pinned, webfetch.PinnedHTTPSConnection)
+    pinned.connect()
+    assert asked == [left]

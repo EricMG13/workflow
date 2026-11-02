@@ -180,7 +180,7 @@ def _with_text(facts: list[Fact], fact_id: str, text: str) -> list[Fact]:
 # --- the acceptance (hand-built heads) -------------------------------------------------------------
 
 
-def test_cp1c_admits_peers_from_tdr_pack() -> None:
+def test_cp1c_admits_peers_from_tdr_pack(tmp_path: Path) -> None:
     """Row 22: the sheet is TDR.4 names with TDR.6 amounts; the count, the medians, the EUR row and
     T1C.6 are the key's; the head binds `Input CP-DR`; every sheet citation is an `ev-*` quote."""
     up = _upstream(_head_with_pack())
@@ -203,12 +203,16 @@ def test_cp1c_admits_peers_from_tdr_pack() -> None:
             else:
                 assert fact.amount == Decimal(amount), fact.fact_id
     assert "issuer" not in rows["T1C.2"]
-    module = cp1c.cp1c_module(report, inputs=up.bound, attempt=0)
-    # the binding is read from the built module and compared with a head built apart from `up`
-    bound = [item for item in module.inputs if item.input_id == "CP-DR"]
-    assert [(i.sha256, i.status) for i in bound] == [
-        (_head_with_pack().content_hash(), "restricted")
-    ]
+    # the binding is read from a real attempt: CP-1C begun on a store whose CP-DR head is settled
+    store = _settled_store(tmp_path, ("CP-1", "CP-DR", "CP-1C"), "CP-1C")
+    attempt = store.begin("CP-1C")
+    head = cpdr_consumers.head(store, "CP-DR")
+    bound = [item for item in attempt.inputs if item.input_id == "CP-DR"]
+    assert [(i.sha256, i.status) for i in bound] == [(head.result_sha256, head.status)]
+    real = cp1c.cp1c_upstream(store, attempt).cpdr
+    assert real is not None and any(f.table_id == "TDR.6" for f in real.facts)
+    module = cp1c.cp1c_module(report, inputs=attempt.inputs, attempt=0)
+    assert [i.sha256 for i in module.inputs if i.input_id == "CP-DR"] == [head.result_sha256]
     assert_pack_surfaces(by_id)
     figure = {f.fact_id: f for f in _key_facts()}["TDR.6.p01.revenue.amount"]
     assert by_id["T1C.2.p01.revenue"].citations == figure.citations
@@ -315,17 +319,16 @@ def test_dossier_not_authority() -> None:
 # --- CP-2 and the T1C.9-11 gap -----------------------------------------------------------------------
 
 
-def test_cp2_gets_no_peer_facts(tmp_path: Path) -> None:
-    """Row 26: CP-2's `module_context` body over a store whose CP-DR head carries TDR.4-6 holds no
-    TDR fact id and no TDR.4 peer name; the same facts do reach CP-1C's view (the control)."""
-    requested = ("CP-1", "CP-1A", "CP-DR", "CP-2")
+def _settled_store(tmp_path: Path, requested: tuple[str, ...], stop: str) -> Execution:
+    """A real store over the peers pack: every module before `stop` hand-settled, CP-DR with the
+    key's TDR.4-6 facts."""
     base = _peers_pack()
     pack = PreparedPack(
         run=base.run.model_copy(update={"requested_modules": requested}), sources=base.sources
     )
     store = Execution.create(tmp_path / "store", pack)
     for module_id in registry.plan(requested):
-        if module_id == "CP-2":
+        if module_id == stop:
             break
         if module_id != "CP-DR":
             cpdr_consumers.hand_settle(store, module_id)
@@ -343,6 +346,13 @@ def test_cp2_gets_no_peer_facts(tmp_path: Path) -> None:
         )
         done = store.finish(ticket.ticket_id, head.model_dump_json(), lambda _module: ())
         assert not done.issues, done.issues
+    return store
+
+
+def test_cp2_gets_no_peer_facts(tmp_path: Path) -> None:
+    """Row 26: CP-2's `module_context` body over a store whose CP-DR head carries TDR.4-6 holds no
+    TDR fact id and no TDR.4 peer name; the same facts do reach CP-1C's view (the control)."""
+    store = _settled_store(tmp_path, ("CP-1", "CP-1A", "CP-DR", "CP-2"), "CP-2")
     settled = store.head_module(cpdr_consumers.head(store, "CP-DR"))
     assert any(f.table_id == "TDR.6" for f in settled.facts)
     attempt = store.begin("CP-2")
@@ -490,3 +500,31 @@ def test_a_missing_pack_figure_shows_the_tdr6_cell_limitation(cell: str) -> None
     report = _report(_peers_pack(), _upstream(_head_with_pack()))
     got = {f.fact_id: f for f in report.facts}[f"T1C.2.{cell}"]
     assert got.status == "missing" and got.limitation == held.limitation
+
+
+@pytest.mark.parametrize(
+    ("cell", "ratio"),
+    [("p03.revenue", "adjusted_ebitda_margin"), ("p04.interest", "interest_coverage_adjusted")],
+)
+def test_a_missing_pack_figure_gives_its_reason_to_the_ratio_and_the_limitation(
+    cell: str, ratio: str
+) -> None:
+    """L3 residual: the T1C.3 cell and the module limitation line carry the TDR.6 cell's own
+    limitation, never 'not stated'."""
+    held = {f.fact_id: f for f in _key_facts()}[f"TDR.6.{cell}.amount"]
+    report = _report(_peers_pack(), _upstream(_head_with_pack()))
+    peer, operand = cell.split(".")
+    got = {f.fact_id: f for f in report.facts}[f"T1C.3.{peer}.{ratio}"]
+    assert got.status == "missing" and held.limitation in (got.limitation or "")
+    assert "not stated" not in (got.limitation or "")
+    lines = [
+        line for line in report.limitations if operand in line.lower() or "interest" in line.lower()
+    ]
+    named = [line for line in lines if held.limitation in line]
+    assert named and not any("not stated" in line for line in named)
+
+
+def test_t1c7_not_admitted_action_names_the_peer_sheet() -> None:
+    report = _report(_peers_pack(), _upstream(_head_with_pack()))
+    action = {f.fact_id: f for f in report.facts}["T1C.7.n01.action"].text or ""
+    assert "peer pack decides" not in action and "peer sheet" in action

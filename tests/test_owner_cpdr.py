@@ -22,6 +22,7 @@ import shutil
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from html import escape
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -38,6 +39,7 @@ from deploy_workflow import owner_workflow
 from deploy_workflow import run_pathway as rp
 from deploy_workflow.model.loop import StepStopped
 from deploy_workflow.model.redact import Redactor
+from deploy_workflow.owner_rendering import OwnerRenderReceipt, verify_owner_rendered_slice
 from deploy_workflow.owner_workflow import OwnerRunReceipt, verify_owner_run_receipt
 from deploy_workflow.owners import cpdr
 from deploy_workflow.prompts import rules
@@ -177,6 +179,29 @@ def test_the_dossier_is_the_key_template_and_its_hashes_are_recorded(
     assert record.brief_sha256 == digest
     assert record.head_sha256 == closed.head("CP-DR").result_sha256
     assert record.head_sha256 != record.dossier_sha256
+
+
+def test_the_closed_run_renders_and_verifies(closed: Closed, key: dict[str, Any]) -> None:
+    """`delivery/*`, `evidence_rail`, `limitations_rail`: the run renders under the CP-DR scope with
+    no section, one rail proof per destination over the key's tables, and re-derives from the store
+    byte for byte."""
+    delivery = closed.root / "delivery"
+    receipt = OwnerRenderReceipt.model_validate_json(
+        (delivery / "render-receipt.json").read_bytes()
+    )
+    assert receipt.scope_id == key["delivery"]["scope"]["scope_id"]
+    assert receipt.sections == ()
+    tables = {
+        proof.destination: sorted({fact.table_id for fact in proof.facts})
+        for proof in receipt.rails
+    }
+    assert tables == {
+        "evidence": sorted(key["evidence_rail"]),
+        "limitations": sorted(key["limitations_rail"]),
+    }
+    verify_owner_rendered_slice(closed.store, closed.receipt, None, delivery)
+    page = (delivery / "report.html").read_text(encoding="utf-8")
+    assert escape(key["delivery"]["banner"]["complete"]) in page
 
 
 def test_run_json_takes_the_three_hashes_from_the_record(

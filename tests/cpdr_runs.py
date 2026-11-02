@@ -539,10 +539,6 @@ def closed_run(case: str, factory: pytest.TempPathFactory) -> ClosedRun:
     sockets = _Sockets()
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(socket, "socket", sockets)
-        # `owner_rendering._scope_of` has no `DELIVERY_SCOPES` entry for a CP-DR run, so the render
-        # refuses `owner_render_scope`; O7c registers the scope and removes this seam. Every other
-        # stage of `_finish_run` (receipt, its verify, dossier, run.json) runs.
-        patch.setattr(rp, "_render", lambda *_: None)
         patch.setattr(record, "research_clock", lambda: datetime(2026, 11, 2, tzinfo=UTC))
         workflow = closed_walk(case, root, "execution", between)
         base = factory.mktemp(f"cpdr-{case}-args")
@@ -551,6 +547,8 @@ def closed_run(case: str, factory: pytest.TempPathFactory) -> ClosedRun:
         outcome = rp._finish_run(workflow, root, meta, Budget(Decimal(1), root / "execution"))
     if outcome.outcome != "settled":
         raise RuntimeError(f"the closed run did not settle: {outcome.stopped_reason}")
+    if not (root / "delivery" / "render-receipt.json").is_file():
+        raise RuntimeError("the closed run settled without a render receipt")
     made = ClosedRun(root, seen["prompt"], seen["body"], sockets.opened)
     _CLOSED[case] = made
     return made

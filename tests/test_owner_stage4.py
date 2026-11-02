@@ -111,6 +111,7 @@ def test_the_oracle_sections_are_found() -> None:
         "cp4-owner",
         "cp5-owner",
         "cp8-owner",
+        "cpdr-research-owner",
         "cpl10-owner",
     }
 

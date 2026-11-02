@@ -303,6 +303,7 @@ def test_the_research_view_serves_the_locked_brief_and_the_evidence_list(
     assert [q["question_id"] for q in body["questions"]] == expected["brief"]["question_ids"]
     assert body["brief_sha256"] == brief.brief_sha256
     assert body["peer_pack"] is brief.peer_pack is False
+    assert body["cutoff"] == brief.cutoff.isoformat()
     assert body["evidence"] == [
         {
             "item_id": "ev-1",

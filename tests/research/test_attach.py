@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any, get_args
 
+import cpdr_consumers
 import cpdr_runs
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -323,7 +324,7 @@ def bound_cpdr_store(tmp_path_factory: pytest.TempPathFactory) -> Execution:
     """Genuine CP-0 and CP-1 (the CP-1 promotion, about two minutes) and a core-settled CP-DR over
     a run that also requests CP-1C; the store is left at the CP-1C step."""
     root = tmp_path_factory.mktemp("bound")
-    pack = cpdr_runs.make_pack("positive")
+    pack = cpdr_consumers.without_peer_pack(cpdr_runs.make_pack("positive"))
     pack = PreparedPack(
         run=pack.run.model_copy(update={"requested_modules": ("CP-1", CPDR, "CP-1C")}),
         sources=pack.sources,

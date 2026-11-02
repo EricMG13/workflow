@@ -3,13 +3,14 @@ requested set. CP-0 and CP-1 (and CP-1A) are hand-built as `cpdr_runs.settled_pa
 settled through its own core (the brief, then research: two journaled steps), never hand-built.
 No model and no socket."""
 
+import json
 from pathlib import Path
 
 import cpdr_runs as runs
 
 from deploy_vii.contracts import Fact, Module
 from deploy_vii.execution import Execution, Head
-from deploy_vii.preparation import PreparedPack
+from deploy_vii.preparation import PreparedPack, SourceRequest, prepare_source
 from deploy_vii.registry import plan
 from deploy_workflow.owners import cpdr
 
@@ -28,12 +29,27 @@ def command(module_id: str) -> Fact:
 def store_with(root: Path, requested: tuple[str, ...], name: str = "store") -> Execution:
     """The store `root/<name>` (`execution` is the run layout) and the staging `root/research` over the positive pack, whose
     requested modules are `requested`."""
-    pack = runs.make_pack("positive")
+    pack = without_peer_pack(runs.make_pack("positive"))
     pack = PreparedPack(
         run=pack.run.model_copy(update={"requested_modules": requested}), sources=pack.sources
     )
     runs.stage(root)
     return Execution.create(root / name, pack)
+
+
+def without_peer_pack(pack: PreparedPack) -> PreparedPack:
+    """`pack` with its pinned context's `valuation.peer_source` set to `none`. The C3 runs request
+    CP-1C, and under the research-minimal context's `cp_dr_public` the brief would ask for the peer
+    pack (O7-R47 Q4), which these tests do not submit."""
+    context = next(s for s in pack.sources if s.source_id == "context")
+    document = json.loads("\n".join(span.text for span in context.spans))
+    document["valuation"]["peer_source"] = "none"
+    raw = (json.dumps(document, indent=2) + "\n").encode("utf-8")
+    variant = prepare_source(
+        SourceRequest(source_id="context", path="context.json", media_type="text/plain"), raw
+    )
+    sources = tuple(variant if s.source_id == "context" else s for s in pack.sources)
+    return PreparedPack(run=pack.run, sources=sources)
 
 
 def hand_settle(store: Execution, module_id: str) -> Module:

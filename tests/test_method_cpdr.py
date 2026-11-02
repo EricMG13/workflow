@@ -224,8 +224,10 @@ def test_method_states_the_context_cutoff_and_the_web_retrieval_gate() -> None:
         (ROOT / "cases" / "cpdr-web-retrieval" / "expected.json").read_text(encoding="utf-8")
     )
     sentences = key["method"]["sentences"]
-    assert len(sentences) == 2
+    assert len(sentences) == 4
     for sentence in sentences:
         assert sentence in TEXT
     assert "The cutoff is the as-of date." not in TEXT
     assert "A URL row is refused while web retrieval is unavailable." not in TEXT
+    assert "No web, provider or credential is used" not in TEXT
+    assert "Each research item names a file, a family" not in TEXT

@@ -78,8 +78,10 @@ from deploy_workflow.run_inputs import (
 from deploy_workflow.workflow import WorkflowError
 
 # The longest reply the loop will reserve for. The reservation is sized from this, so a larger
-# value needs a larger cap; 128k is the most O5 accepts (spec section 8).
-MAX_OUTPUT_TOKENS = 32_768
+# value needs a larger cap. 98,304 is within every model's documented maximum (sol 128,000;
+# Opus 5.5 128K; deepseek's lowest endpoint 131,072) and at most `providers.MAX_OUTPUT_TOKENS`
+# (PF-R11; cases/pilot-fixes/limits.json).
+MAX_OUTPUT_TOKENS = 98_304
 
 PromptFactory = Callable[[PreparedPack], PromptFor]
 

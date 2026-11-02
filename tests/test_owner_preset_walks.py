@@ -273,9 +273,16 @@ def test_walk_earnings_update(earnings_at_stop: Any) -> None:
         workflow._begins[3].snapshot_before_sha256
         == workflow._publications[0].snapshot_after_sha256
     )
+    # publish takes the snapshot CP-1B's settled submission left, not the one its begin left
+    assert workflow._submissions[-1].binding.binding.module_id == "CP-1B"
+    assert (
+        workflow._submissions[-1].snapshot_after_sha256
+        == workflow._publications[0].snapshot_before_sha256
+    )
+    # CP-1B is a single-step module bound at its begin's snapshot
     assert (
         workflow._begins[2].snapshot_after_sha256
-        == workflow._publications[0].snapshot_before_sha256
+        == workflow._submissions[-1].binding.binding.snapshot_sha256
     )
     # CP-5's bound set is the registry's and holds no CP-MODEL input (ruling B1)
     assert "CP-MODEL" not in dependencies(plan(pw.pathway_modules("earnings_update")))["CP-5"]

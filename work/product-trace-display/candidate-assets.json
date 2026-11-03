@@ -1,12 +1,12 @@
 {
   "schema": "offline-ui-candidate-assets/v1",
-  "revision": "08ea888540f9ea140ab849829446bb03941cc4ef",
+  "revision": "3506833847b0ade3ec20cfe787d7c5edc24eacc4",
   "repository": "/Users/ericguei/.codex/worktrees/product-trace-display/Deploy Workflow",
   "assets": {
     "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
     "src/deploy_vii/assets/tokens.css": "b7ab135a4bb33247117b65e915eec9d7ebd48fbfb6cdc61e42dbd13ab2bfbc9b",
     "src/deploy_vii/assets/app.css": "14aa4a822ef30a8827a0152b4b7470883967e558dff409aacea4dcc8c0a5cfd4",
-    "src/deploy_vii/assets/app.js": "397f20c822140925387b927712015a3263c88952c15be78844855877d7545040",
+    "src/deploy_vii/assets/app.js": "3edba23c732cfe6e9aec41fca6300b3f81f5a299d38a1e6bc46ece453bad8fff",
     "src/deploy_vii/assets/fonts/RedHatDisplay-SemiBold.woff2": "5ed4d4d4aa40abda2e2aafd0083e3ee109290c3e86392778e934755a4db67332",
     "src/deploy_vii/assets/fonts/RedHatDisplay-Bold.woff2": "a28973642bc0dc1404138a6b32031b5f1bbc131d1b5a92a0214d16cfe8091793",
     "src/deploy_vii/assets/fonts/RedHatText-Regular.woff2": "8b6c947032e889935aeef9d3a987fe4760b5bb029af531f2511e5824602a550a",

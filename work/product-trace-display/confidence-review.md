@@ -1,41 +1,36 @@
-## Confidence review — TRACE front display
+## Confidence review — TRACE correction 1
 
-Scope: `src/deploy_vii/assets/app.js` diff from `51590329c06aaa09853bb41ed514702d12683875`.
+Scope: current `app.js` correction from source commit `08ea888540f9ea140ab849829446bb03941cc4ef`; shared ordinary fix round 1 for TRACE-SRC-01/02 and related Low.
 
 Least confident about (ranked):
 
-1. A passport alias could resolve to the wrong fact, causing unrelated front text to be compacted.
-   investigated → `compactTracePercent` searches only `front.index.facts[].ref_ids`, requires exactly one matching entry, requires the coordinate row to equal the visible row, then requires exactly one module and one fact matching module/table/row/fact IDs and the selected `period_0` or `period_3` field. The fact must also be `known` and native `%`. No visible value or label participates in lookup.
-   adversarial case → duplicate index hits, coordinate for another row, duplicate module/fact, wrong field, absent coordinates, or another unit each returns the original text.
-   verdict → fine by fail-closed guards; runtime cases remain Pre-Testing-owned and unexecuted here.
+1. Removing the fact.module_id predicate could weaken cross-module identity and compact a fact from another module.
+   investigated → The frozen payload shape places `module_id` on the containing module, while serialized facts carry `table_id`, `row_id`, `fact_id`, `field`, `status`, and `unit`; a pinned CP-1 TRACE fact has `module_id: null`. The helper still requires exactly one matching parent module for the coordinate's module_id and exactly one fact in that module matching coordinate table/row/fact, then requires expected field, known status, and native `%`.
+   adversarial case → If two modules share an otherwise identical fact, only the coordinate's uniquely selected module's facts are inspected; duplicate matching facts within that module fail closed. A fact with mismatched table/row/fact fails closed.
+   verdict → CONFIRMED bug in prior predicate; this correction removes only the nonexistent child identity test and retains the actual parent/fact identity chain.
+   patch → removed `fact.module_id === coord.module_id`.
+
+2. A coherent foreign table coordinate could pass the identity and unit checks.
+   investigated → Product behavior is specifically TRACE; exact fact matching alone accepts any coordinate table. The coordinate now must have `table_id === "trace"` before module lookup; fact table must still match coordinate.
+   adversarial case → a coordinate and fact both labeled `other-table`, with matching row/fact/field/status/unit, return original text. A TRACE table coordinate continues only through exact matching.
+   verdict → CONFIRMED bug in prior guard.
+   patch → require literal TRACE table ID.
+
+3. The regex `$` might accept a valid decimal followed by a final line terminator, violating strict ASCII decimal grammar.
+   investigated → Independent review cites ECMAScript CompileAssertion semantics; without multiline mode `$` asserts actual input end. The grammar already requires ASCII digits/dot and is unchanged in this correction.
+   adversarial case → a final newline cannot satisfy the assertion under this regex mode.
+   verdict → fine; do not change grammar.
    patch → n/a.
 
-2. The lexical trim could change non-decimal spellings, sign, or significant digits.
-   investigated → the regex accepts only ASCII `-?[0-9]+\\.[0-9]+`; only trailing fractional zeroes and a resulting final period are removed. It does not parse, round, scale, or normalize negative zero.
-   adversarial case → `-0.000` becomes `-0`; `7.000000` becomes `7`; integer `7`, `+7.00`, `(7.00)`, `7e0`, `.50`, `7.`, Unicode digits, and text are unchanged by the guard.
-   verdict → fine by code inspection; independent comparator owns executable expectations.
+4. Cell copy, route opt-in, or passport binding may be affected by the guard correction.
+   investigated → The change remains inside the identity helper. The helper's return is still used only in a copied display cell. `renderBlock` still opts in only for Relative Value `instrument-levels`; twin/Inspector/Model call sites omit opt-in.
+   adversarial case → every non-TRACE route and non-front caller sees the default false; identity ambiguity continues to return the original text.
+   verdict → fine by caller tracing; DOM behavior remains unverified.
    patch → n/a.
 
-3. Canonical source/cell identity or Inspector text could be mutated while preparing the shortened display.
-   investigated → the only altered value is a shallow display copy with a new `text` property. Existing renderer receives the original `owner` block; source/passport lookup remains bound to the unchanged `ref_id`. `twinPanel`, chart twins, and tab panels omit the opt-in. `renderBlock` opts in only for `front.pathway.id === "relative_value"` and `block.block_id === "instrument-levels"`.
-   adversarial case → calls from Inspector and chart twin use the default `false`; all Front Page column headings and visible accessibility labels also use the opt-in-derived labels, while other headings use original labels.
-   verdict → fine by caller tracing; browser behavior is unverified.
-   patch → n/a.
+Fixed: TRACE-SRC-01 / TA-01 phantom child module predicate; TRACE-SRC-02 foreign-table acceptance.
+Verified fine: exact parent module uniqueness plus actual serialized fact identity; strict TRACE table requirement; decimal grammar; copied-cell/display-only boundary.
+By-design: any missing, duplicate, ambiguous or inconsistent identity preserves the original text.
+Still open: scoped independent re-review; Pre-Testing comparator/guard execution and native browser/runtime acceptance. No runtime observations are claimed.
 
-4. Malformed index/module entries might throw instead of preserving the canonical spelling.
-   investigated → null/non-object entries are filtered before property access; absent/non-array index, modules, or facts return the original cell. The JSON payload itself is parsed by existing startup code and remains outside this patch.
-   adversarial case → null index entries, null module entries and null fact entries cannot be selected as matches; missing arrays fail closed.
-   verdict → fine within this helper; malformed top-level report JSON remains existing behavior and is outside scope.
-   patch → added object guards at each indexed collection boundary.
-
-5. Selected heading and cell accessible name could disagree.
-   investigated → the same `columnLabel` function supplies both the table header and `cellNode` label; override is limited to indices 0 and 3 when opted in.
-   verdict → fine by call-path inspection; screen-reader verification remains unperformed.
-   patch → n/a.
-
-Fixed: object guards for malformed coordinate collections.
-Verified fine: identity/unit/field guards, lexical-only shortening, non-mutating cell copy, narrow render opt-in, and shared visible/accessibility column labels as traced above.
-By-design: source display does not infer facts from values; any ambiguity preserves the raw front cell text.
-Still open: independent Pre-Testing comparator/guard execution and native browser observation/acceptance; independent product review. Those remain with their designated owners.
-
-Checks: `git diff --check` passed; `node --check src/deploy_vii/assets/app.js` exited 0 (syntax only). No product tests, fixtures, comparators, compiler, browser, or workflow gates were run. Workflow gates are deferred to Pre-Testing.
+Checks: `git diff --check` passed; `node --check src/deploy_vii/assets/app.js` exited 0 (syntax only). No tests, probes, comparator, compiler, browser or workflow gate was run.

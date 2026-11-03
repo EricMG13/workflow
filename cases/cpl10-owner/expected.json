@@ -7078,6 +7078,7 @@
         "footer_every_state": {
           "Not in this Pathway": [
             "CP-1B",
+            "CP-DR",
             "CP-1C",
             "CP-1D",
             "CP-2A",
@@ -7086,7 +7087,6 @@
             "CP-2H",
             "CP-4C",
             "CP-8",
-            "CP-DR",
             "CP-MEMO",
             "CP-OS",
             "CP-2D",
@@ -7137,6 +7137,7 @@
               ],
               "Not in this Pathway": [
                 "CP-1B",
+                "CP-DR",
                 "CP-1C",
                 "CP-1D",
                 "CP-2A",
@@ -7145,7 +7146,6 @@
                 "CP-2H",
                 "CP-4C",
                 "CP-8",
-                "CP-DR",
                 "CP-MEMO",
                 "CP-OS",
                 "CP-2D",
@@ -7168,6 +7168,7 @@
               ],
               "Not in this Pathway": [
                 "CP-1B",
+                "CP-DR",
                 "CP-1C",
                 "CP-1D",
                 "CP-2A",
@@ -7176,7 +7177,6 @@
                 "CP-2H",
                 "CP-4C",
                 "CP-8",
-                "CP-DR",
                 "CP-MEMO",
                 "CP-OS",
                 "CP-2D",
@@ -7227,6 +7227,7 @@
               ],
               "Not in this Pathway": [
                 "CP-1B",
+                "CP-DR",
                 "CP-1C",
                 "CP-1D",
                 "CP-2A",
@@ -7235,7 +7236,6 @@
                 "CP-2H",
                 "CP-4C",
                 "CP-8",
-                "CP-DR",
                 "CP-MEMO",
                 "CP-OS",
                 "CP-2D",
@@ -7258,6 +7258,7 @@
               ],
               "Not in this Pathway": [
                 "CP-1B",
+                "CP-DR",
                 "CP-1C",
                 "CP-1D",
                 "CP-2A",
@@ -7266,7 +7267,6 @@
                 "CP-2H",
                 "CP-4C",
                 "CP-8",
-                "CP-DR",
                 "CP-MEMO",
                 "CP-OS",
                 "CP-2D",
@@ -7317,6 +7317,7 @@
               ],
               "Not in this Pathway": [
                 "CP-1B",
+                "CP-DR",
                 "CP-1C",
                 "CP-1D",
                 "CP-2A",
@@ -7325,7 +7326,6 @@
                 "CP-2H",
                 "CP-4C",
                 "CP-8",
-                "CP-DR",
                 "CP-MEMO",
                 "CP-OS",
                 "CP-2D",
@@ -7350,6 +7350,7 @@
               ],
               "Not in this Pathway": [
                 "CP-1B",
+                "CP-DR",
                 "CP-1C",
                 "CP-1D",
                 "CP-2A",
@@ -7358,7 +7359,6 @@
                 "CP-2H",
                 "CP-4C",
                 "CP-8",
-                "CP-DR",
                 "CP-MEMO",
                 "CP-OS",
                 "CP-2D",

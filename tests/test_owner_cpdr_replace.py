@@ -82,7 +82,7 @@ def test_replacement_rerun(v1: Path, tmp_path: Path) -> None:
         written = json.loads(path.read_text(encoding="utf-8"))
         if written["schema_version"] != "replay/1":
             continue
-        replayed = ReplayRecord.model_validate(written)
+        replayed = ReplayRecord.model_validate_json(path.read_bytes())
         assert replayed.earlier_run_id == replacement["supersedes"]
         if replayed.rebound:
             names = [item.path.rsplit(".", 1)[-1] for item in replayed.rebound]

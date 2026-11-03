@@ -1533,6 +1533,7 @@ GREP_LOCATE = "locate by grep for the hash 348fbc4b...8d45 at build time (untrac
 # construction; written here as literals (no product import). Registry order, as report_view.navigator yields it.
 NAV_OUTSIDE_CLOSURE = [
     "CP-1B",
+    "CP-DR",
     "CP-1C",
     "CP-1D",
     "CP-2A",
@@ -1541,7 +1542,6 @@ NAV_OUTSIDE_CLOSURE = [
     "CP-2H",
     "CP-4C",
     "CP-8",
-    "CP-DR",
     "CP-MEMO",
     "CP-OS",
     "CP-2D",

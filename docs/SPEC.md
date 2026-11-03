@@ -37,15 +37,37 @@ credentials, old runtime environment or active staged WIP is imported.
 
 ## Constraints
 
-Financial/stateful coding and sensitive oracles: GPT-6.1 Sol/high. Fully specified
-mechanics: GPT-6 Luna/medium. Small exclusive tasks; independent expected results
-first. Preserve all scoped permissions and Python-owned Decimal arithmetic.
-Live/paid/provider testing stays paused. One heavy local job; active implementation has no numerical lane cap following
-the user's2026-10-27 override. Exact exclusive leases and disjoint ownership remain.
-Confidence review follows code changes; non-trivial changed functions also receive
-the user's rewrite-tournament workflow. The bootstrap adds no provider or publication
-authority. Internal offline host-agent tool use can qualify with actual invocation
-and submission lineage; developer tools used for coding do not count.
+Current coding-agent routing is defined in [AGENTS.md](../AGENTS.md): mx-feature handles
+financial semantics, provenance/permissions, state, persistence, recovery and consequential
+parser behavior; mx-scaffold handles fully specified mechanical changes and PR mechanics.
+Small exclusive tasks require independent expected results first. Preserve all scoped
+permissions and Python-owned Decimal arithmetic.
+
+The Oct 28 heavy-job lock was removed: tests need no lock or per-run LEAD admission record.
+Active implementation has no numerical lane cap under the user's 2026-10-27 override;
+exact exclusive leases and disjoint ownership remain. The user resumed Product Completion
+on 2026-11-03 and reported that Pre-Testing had resumed its proof goal (recorded in the
+[Product Completion ledger](../work/product-completion/ledger.md#2026-11-03-resume--execution-batch-1)).
+The [Nov 2 ruling](rulings/2026-11-02-model-testing-live.md) supplies the existing scoped
+model-testing authority; the [Nov 3 Product Completion plan](superpowers/plans/2026-11-03-product-completion.md)
+and [Pre-Testing plan](superpowers/plans/2026-11-03-project-completion.md) define scope and
+safeguards, not provider authority. Product Completion has no provider authority; testing
+authorization does not grant product tools authority.
+
+Confidence-review and applicable independent/scoped reviews continue. No rewrite-tournament,
+rewrite-tournament-sweep or any other tournament workflow, substitute or exemption. Offline
+host-agent tool use qualifies only with actual permitted invocation and submission lineage;
+developer tools used for coding do not count.
+
+The bootstrap adds no provider or publication authority.
+
+Completion evidence has distinct levels: **implementation-ready** means reviewed source
+with known testing dependencies; **offline-qualified** and **live-qualified** require
+Pre-Testing's exact accepted evidence. No module or pathway status is upgraded here. The
+checkpoint closes only with accurate, fully populated required deliverables and their
+actual tool use, validated/settled outputs, downstream consumption, rendered sections and
+independent comparisons; see the [Product Completion plan](superpowers/plans/2026-11-03-product-completion.md)
+and [Pre-Testing plan](superpowers/plans/2026-11-03-project-completion.md).
 
 ## Deferred
 

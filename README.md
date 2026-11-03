@@ -4,6 +4,19 @@ A focused project for analytical tools, executable modules and rendered delivera
 The checkpoint is actual analytical tool use → validated output → downstream
 consumption → rendered section. Production rollout is a later project phase.
 
+## Current work
+
+Product Completion coordinates product implementation, product fixes, design, integration
+preparation and non-testing documentation. Pre-Testing owns keys, fixtures, verifiers,
+harness/scoring changes, offline/live runs, CI verification, failure diagnosis and
+acceptance. On 2026-11-03 the user resumed Product Completion and reported that
+Pre-Testing had resumed its proof goal; this does not grant Product Completion provider
+authority. See the [Product Completion plan](docs/superpowers/plans/2026-11-03-product-completion.md),
+[Pre-Testing plan](docs/superpowers/plans/2026-11-03-project-completion.md) for scope and
+safeguards, and the [Nov 2 model-testing ruling](docs/rulings/2026-11-02-model-testing-live.md).
+The reported resumption is recorded in the Product Completion
+[ledger](work/product-completion/ledger.md#2026-11-03-resume--execution-batch-1).
+
 ## Start here
 
 1. [Agent instructions](AGENTS.md)
@@ -33,8 +46,9 @@ actual tool/output/consumer/render record. The full 26-owner/six-pathway plan is
 open. CP1B's projection and owner work is separately leased.
 
 The imported core excludes the old network/provider drivers, spend ledgers,
-launchers, CI apparatus and unrelated planning history. Paid/provider/live tests
-remain paused. Source integration/push is separate from Model publication and
+launchers, CI apparatus and unrelated planning history. The Nov 2 ruling authorizes
+scoped model-testing live calls as recorded there; it does not grant Product Completion
+provider authority. Source integration/push is separate from Model publication and
 production deployment.
 
 Python 3.13.15, uv 0.12.5 and the pinned dependencies in pyproject.toml are the
@@ -51,7 +65,8 @@ separate .venv without changing the old project environment. Source imports use
 `python -m deploy_workflow.financial_workflow`; it requires an exact prepared
 pack and actual stage participation. See the run guide before starting it.
 
-The five chats use independent local clones recorded in docs/TEAM.json. PR MANAGER
+The original five-chat arrangement used independent local clones, recorded in
+docs/TEAM.json; preserve that provenance as historical session context. PR MANAGER
 owns the integration checkout. Its source remote is
 [EricMG13/workflow](https://github.com/EricMG13/workflow); source commits are pushed
 under the existing authorization. No production deployment or provider activation

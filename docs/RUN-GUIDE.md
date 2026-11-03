@@ -13,16 +13,23 @@ Dependencies and uv version are pinned in pyproject.toml/uv.lock. A matching
 installed environment may be reused read-only; do not sync another project.
 The integration checkout has its own `.venv`. For a new local environment with
 cached dependencies, the documented setup is `uv sync --locked --offline`.
-Do not add provider keys or enable live tests. Paid/provider/live execution is
-paused. Product tool permission is independent of coding-agent shell access.
+Product Completion coordinates product implementation, product fixes, design, integration
+preparation and non-testing documentation. Pre-Testing owns keys, fixtures, verifiers,
+harness/scoring changes, offline/live runs, CI verification, failure diagnosis and
+acceptance. On 2026-11-03 the user resumed Product Completion and reported that
+Pre-Testing had resumed its proof goal; this does not grant Product Completion provider
+authority. The [Nov 2 model-testing ruling](rulings/2026-11-02-model-testing-live.md) is
+the existing scoped testing authority. See the [Product Completion plan](superpowers/plans/2026-11-03-product-completion.md)
+and [Pre-Testing plan](superpowers/plans/2026-11-03-project-completion.md) for scope and
+safeguards, and the reported resumption in the Product Completion
+[ledger](../work/product-completion/ledger.md#2026-11-03-resume--execution-batch-1).
+Testing authorization does not confer product tool permission.
 
-The five chats/clones are in TEAM.json. LEAD freezes exact interfaces/cases/files;
-coordinators write only their leased files; PR MANAGER integrates admitted exact
-commits. Preserve old branches, work evidence and sealed case directories.
-Only one heavy local job runs at a time. Before a test/engine/server/browser job,
-use the exact queue admission, current source/runtime/case pins and actual process
-check. Freeze that clone's source through real EOF/exit and retain PID, UTC, exit,
-full log and before/after hashes. A quiet process is not a stopped process.
+Current coding-agent routing and lane duties are in [AGENTS.md](../AGENTS.md). PR MANAGER
+integrates admitted exact commits. Preserve old branches, work evidence and sealed case
+directories. The Oct 28 heavy-job lock was removed; tests need no lock or per-run LEAD
+admission record. Retain applicable exact source/runtime/case pins and actual process
+evidence for runs.
 
 ## Inspect the qualified outputs
 

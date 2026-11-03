@@ -203,10 +203,10 @@
       Array.isArray(entry.ref_ids) && entry.ref_ids.includes(cell.ref_id));
     if (coordinates.length !== 1) return original;
     const coord = coordinates[0].coord;
-    if (!coord || coord.row_id !== row.row_id || !coord.module_id || !coord.table_id || !coord.fact_id) return original;
+    if (!coord || coord.row_id !== row.row_id || !coord.module_id || coord.table_id !== "trace" || !coord.fact_id) return original;
     const modules = report.modules.filter(module => module && typeof module === "object" && module.module_id === coord.module_id);
     if (modules.length !== 1 || !Array.isArray(modules[0].facts)) return original;
-    const facts = modules[0].facts.filter(fact => fact && typeof fact === "object" && fact.module_id === coord.module_id &&
+    const facts = modules[0].facts.filter(fact => fact && typeof fact === "object" &&
       fact.table_id === coord.table_id && fact.row_id === coord.row_id && fact.fact_id === coord.fact_id);
     if (facts.length !== 1) return original;
     const fact = facts[0];

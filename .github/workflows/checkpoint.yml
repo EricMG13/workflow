@@ -59,6 +59,13 @@ jobs:
           - tests/test_owner_cp4.py
           - tests/test_owner_cp4c.py
           - tests/test_cp1_absent_input.py
+          - tests/test_earnings_workflow.py
+          - tests/test_owner_cp1d.py
+          - tests/test_owner_cp2a.py
+          - tests/test_owner_cp2g.py
+          - tests/test_owner_cp2h.py
+          - tests/test_owner_cpl10.py
+          - tests/test_model_testing_pathway.py
     steps:
       - uses: actions/checkout@v5
         with:
@@ -77,7 +84,7 @@ jobs:
           set -euo pipefail
           echo "$TEST_FILE"
           rc=0
-          uv run --frozen pytest "$TEST_FILE" -m "not live" --durations=25 || rc=$?
+          uv run --frozen pytest -v "$TEST_FILE" -m "not live" --durations=25 || rc=$?
           if [ "$rc" -eq 5 ]; then
             echo "all selected tests deselected by -m 'not live'"
           elif [ "$rc" -ne 0 ]; then
@@ -130,6 +137,13 @@ jobs:
               -e tests/test_owner_cp4.py \
               -e tests/test_owner_cp4c.py \
               -e tests/test_cp1_absent_input.py \
+              -e tests/test_earnings_workflow.py \
+              -e tests/test_owner_cp1d.py \
+              -e tests/test_owner_cp2a.py \
+              -e tests/test_owner_cp2g.py \
+              -e tests/test_owner_cp2h.py \
+              -e tests/test_owner_cpl10.py \
+              -e tests/test_model_testing_pathway.py \
             | awk -v s="$SHARD" '(NR-1) % 8 == s' > "$RUNNER_TEMP/shard.txt"
           echo "shard $SHARD files:"
           cat "$RUNNER_TEMP/shard.txt"

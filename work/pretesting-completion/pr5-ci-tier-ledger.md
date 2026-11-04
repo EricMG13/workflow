@@ -1,0 +1,1 @@
+2026-11-04T00:17:02.255913+00:00 | selector-partition-focused | `PYTHONDONTWRITEBYTECODE=1 /Users/ericguei/Documents/Deploy Workflow/.venv/bin/python -B -m pytest tests/test_prove_affected.py -q` | exit=0 | pass=23 fail=0 | agent=mx-scaffold fix-rounds=0 gates-first-pass=n

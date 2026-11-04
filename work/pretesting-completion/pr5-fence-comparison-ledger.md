@@ -1,0 +1,3 @@
+# PR5 prompt-fence same-base comparison ledger
+
+- 2026-11-04T02:08:56Z | same-pr-base prompt fence marker comparison | `PYTHONPATH=src:tests:tests/prompts:root /Users/ericguei/Documents/Deploy\ Workflow/.venv/bin/python -B -m pytest -o pythonpath= -p no:cacheprovider -q tests/prompts/test_fence.py::test_a_research_question_with_a_marker_is_refused` | exit 0; 8 passed in 0.09s (1.14s wall); Ruff check/format pass on changed test; exact `be9fc49a4a6340ade8165f8ae85b1d8315059619` base plus reviewed `3883b5d2` hunk; expected file SHA matched; diff check clean; no source pin changes | agent=candidate_pr_mechanics fix-rounds=0 gates-first-pass=n/a

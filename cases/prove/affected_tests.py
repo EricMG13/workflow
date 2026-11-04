@@ -60,6 +60,13 @@ HEAVY = (
     "tests/test_owner_cp4.py",
     "tests/test_owner_cp4c.py",
     "tests/test_cp1_absent_input.py",
+    "tests/test_earnings_workflow.py",
+    "tests/test_owner_cp1d.py",
+    "tests/test_owner_cp2a.py",
+    "tests/test_owner_cp2g.py",
+    "tests/test_owner_cp2h.py",
+    "tests/test_owner_cpl10.py",
+    "tests/test_model_testing_pathway.py",
 )
 ALL_NAMES = ("pyproject.toml", "uv.lock", ".python-version")
 IGNORED_PREFIXES = ("docs/", "work/", ".claude/")

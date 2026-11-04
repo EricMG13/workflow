@@ -1,0 +1,20 @@
+{
+  "schema": "offline-ui-candidate-assets/v1",
+  "revision": "3506833847b0ade3ec20cfe787d7c5edc24eacc4",
+  "repository": "/Users/ericguei/.codex/worktrees/product-trace-display/Deploy Workflow",
+  "assets": {
+    "src/deploy_vii/assets/shell.html": "c3f441e14855ff5e5a3a2361f5c1d97c1ef1e0db168f2286cbc1615b4ac76792",
+    "src/deploy_vii/assets/tokens.css": "b7ab135a4bb33247117b65e915eec9d7ebd48fbfb6cdc61e42dbd13ab2bfbc9b",
+    "src/deploy_vii/assets/app.css": "14aa4a822ef30a8827a0152b4b7470883967e558dff409aacea4dcc8c0a5cfd4",
+    "src/deploy_vii/assets/app.js": "3edba23c732cfe6e9aec41fca6300b3f81f5a299d38a1e6bc46ece453bad8fff",
+    "src/deploy_vii/assets/fonts/RedHatDisplay-SemiBold.woff2": "5ed4d4d4aa40abda2e2aafd0083e3ee109290c3e86392778e934755a4db67332",
+    "src/deploy_vii/assets/fonts/RedHatDisplay-Bold.woff2": "a28973642bc0dc1404138a6b32031b5f1bbc131d1b5a92a0214d16cfe8091793",
+    "src/deploy_vii/assets/fonts/RedHatText-Regular.woff2": "8b6c947032e889935aeef9d3a987fe4760b5bb029af531f2511e5824602a550a",
+    "src/deploy_vii/assets/fonts/RedHatText-Medium.woff2": "abfc3d5ff9e975d487ec295895efdc2e5848f804d0982bee87ce0d8f55c9a3d1",
+    "src/deploy_vii/assets/fonts/RedHatText-SemiBold.woff2": "3f3c8935bd6bf319b0b1f3d80b7247646fefa6dd77aca88347d0ab16e7c1e9aa",
+    "src/deploy_vii/assets/fonts/RedHatMono-Medium.woff2": "ab9f475ace2c1e5ed9ee31d964bbadd72dd84b6ab65e71445be80f1fe95c7a0d",
+    "src/deploy_vii/assets/fonts/RedHatMono-SemiBold.woff2": "d3c80dda632cbceb3419ef8c6a54af6bf5139b50b83300f467c3c24cdc8e794c",
+    "src/deploy_vii/assets/fonts/OFL.txt": "98eac4800faf2b800dfb11f82e38b779ebe473e05e343c18aeb65eabb74442ae",
+    "src/deploy_vii/assets/brand/ssim-logo-stacked-black-trim.png": "50eecd12d25638558e3b8b398bd02118569980d99b126d98cb4ec71be6d3bd32"
+  }
+}

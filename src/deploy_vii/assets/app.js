@@ -193,7 +193,30 @@
     }
     return holder;
   };
-  const dataTable = (block, interactive, owner) => {
+  const compactTracePercent = (cell, row, index) => {
+    const field = index === 0 ? "period_0" : index === 3 ? "period_3" : null;
+    const original = cell.text;
+    if (!field || cell.state !== "known" || !cell.ref_id || !row.row_id) return original;
+    const refs = front.index?.facts;
+    if (!Array.isArray(refs) || !Array.isArray(report.modules)) return original;
+    const coordinates = refs.filter(entry => entry && typeof entry === "object" &&
+      Array.isArray(entry.ref_ids) && entry.ref_ids.includes(cell.ref_id));
+    if (coordinates.length !== 1) return original;
+    const coord = coordinates[0].coord;
+    if (!coord || coord.row_id !== row.row_id || !coord.module_id || coord.table_id !== "trace" || !coord.fact_id) return original;
+    const modules = report.modules.filter(module => module && typeof module === "object" && module.module_id === coord.module_id);
+    if (modules.length !== 1 || !Array.isArray(modules[0].facts)) return original;
+    const facts = modules[0].facts.filter(fact => fact && typeof fact === "object" &&
+      fact.table_id === coord.table_id && fact.row_id === coord.row_id && fact.fact_id === coord.fact_id);
+    if (facts.length !== 1) return original;
+    const fact = facts[0];
+    if (fact.field !== field || fact.status !== "known" || fact.unit !== "%") return original;
+    if (typeof original !== "string" || !/^-?[0-9]+\.[0-9]+$/.test(original)) return original;
+    return original.replace(/0+$/, "").replace(/\.$/, "");
+  };
+  const dataTable = (block, interactive, owner, traceDisplay = false) => {
+    const columnLabel = (label, index) => traceDisplay && index === 0 ? "Coupon (%)"
+      : traceDisplay && index === 3 ? "Yield (%)" : label;
     const result = node("table", null, block.kind === "keyvalue" ? "keyvalue" : "dense");
     result.append(node("caption", block.title, "sr-only"));
     const grid = block.kind === "period_grid";
@@ -216,6 +239,7 @@
       if (grid && block.groups.length) first.append(node("span", block.scale || block.row_header || "Item", "sr-only"));
       row.append(first);
       block.columns.forEach((label, index) => {
+        label = columnLabel(label, index);
         const th = node("th", label, "fig-col"); th.scope = "col"; shade(th, index);
         if (absent.has(index)) th.append(node("span", ` (absent: ${absent.get(index)})`, "sr-only"));
         row.append(th);
@@ -234,7 +258,9 @@
         item.cells.forEach((cell, index) => {
           const td = node("td", null, cell.unit_class === "text" ? "" : "fig-cell");
           shade(td, index);
-          td.append(cellNode(cell, owner, `${item.label}, ${block.columns[index]}`, interactive)); tr.append(td);
+          const visibleCell = traceDisplay && (index === 0 || index === 3)
+            ? Object.assign({}, cell, {text: compactTracePercent(cell, item, index)}) : cell;
+          td.append(cellNode(visibleCell, owner, `${item.label}, ${columnLabel(block.columns[index], index)}`, interactive)); tr.append(td);
         });
       }
       body.append(tr);
@@ -434,7 +460,8 @@
         const holder = node("div", null, "block-body");
         const at = (place) => block.figures.filter(item => item.placement === place);
         if (at("above").length) holder.append(figureStrip(at("above")));
-        const main = tabs ? tabs.panel : dataTable(block, true, block);
+        const traceDisplay = front.pathway.id === "relative_value" && block.block_id === "instrument-levels";
+        const main = tabs ? tabs.panel : dataTable(block, true, block, traceDisplay);
         if (at("beside").length) {
           const row = node("div", null, "beside"); row.append(main, figureStrip(at("beside"))); holder.append(row);
         } else holder.append(main);

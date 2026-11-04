@@ -2501,6 +2501,24 @@
       "sha256": "8836094d4ce388c36941d8a1c7e34f6e01e53121e127c3c2c5c077af89a0d1b0",
       "reason": "repo-authored (not in files[]): B9 (O7 end batch 2, D2 re-review L-a, B31a): line 29 says the scope holds every held ev-* research item, which the analyst and the pack figures may cite, instead of only the items the pack figures cite (cp1c.in_scope and host._OWNER_SCOPES hold every held ev-* item). Nothing else changes. Chained after the O7d D2 fix 2 record.",
       "review": ".superpowers/sdd/2026-10-31-part-b-o7/task-O7-end-batch-2-review.md"
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.js",
+      "imported_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "prior_project_sha256": "d31738e4f7e5f0c80e6a24357e16f0febe2e90ab8d0a5190dbaa4f3b6b0a8549",
+      "project_commit": "08ea888540f9ea140ab849829446bb03941cc4ef",
+      "sha256": "397f20c822140925387b927712015a3263c88952c15be78844855877d7545040",
+      "reason": "Lossless native-percent string compaction for uniquely identified known TRACE cells in the Relative Value instrument-levels front display; canonical facts and other views remain unchanged.",
+      "review": "Confidence review: work/product-trace-display/confidence-review.md; independent mx-precise review pending."
+    },
+    {
+      "destination": "src/deploy_vii/assets/app.js",
+      "imported_sha256": "0a8da6637b8da73a048ac828a1485d0a3227507b89252d9aabe5e8446813779b",
+      "prior_project_sha256": "397f20c822140925387b927712015a3263c88952c15be78844855877d7545040",
+      "project_commit": "3506833847b0ade3ec20cfe787d7c5edc24eacc4",
+      "sha256": "3edba23c732cfe6e9aec41fca6300b3f81f5a299d38a1e6bc46ece453bad8fff",
+      "reason": "Correction 1: require the TRACE table and use the uniquely selected parent module identity with the serialized fact table/row/fact identity; preserves the scoped display-only behavior.",
+      "review": "Confidence review: work/product-trace-display/confidence-review.md; scoped mx-precise re-review pending."
     }
   ],
   "local_patch_lineage": [

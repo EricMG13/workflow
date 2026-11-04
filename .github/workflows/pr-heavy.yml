@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [labeled, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -13,14 +17,41 @@ jobs:
       (github.event.action == 'labeled' && github.event.label.name == 'heavy-tests') ||
       (github.event.action != 'labeled' &&
       contains(github.event.pull_request.labels.*.name, 'heavy-tests'))
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        file:
+          - tests/test_owner_rendering.py
+          - tests/test_owner_workflow.py
+          - tests/test_owner_s1a.py
+          - tests/test_financial_workflow.py
+          - tests/test_financial_render.py
+          - tests/test_owner_cpdr.py
+          - tests/test_run_pathway_cpdr.py
+          - tests/test_host_h1.py
+          - tests/research/test_attach.py
+          - tests/test_owner_cp1c.py
+          - tests/test_owner_cpdr_replace.py
+          - tests/test_owner_cpdr_peers.py
+          - tests/test_owner_cpos.py
+          - tests/test_source_tools.py
+          - tests/test_owner_cp3.py
+          - tests/test_owner_cp4.py
+          - tests/test_owner_cp4c.py
+          - tests/test_cp1_absent_input.py
+          - tests/test_earnings_workflow.py
+          - tests/test_owner_cp1d.py
+          - tests/test_owner_cp2a.py
+          - tests/test_owner_cp2g.py
+          - tests/test_owner_cp2h.py
+          - tests/test_owner_cpl10.py
+          - tests/test_model_testing_pathway.py
     env:
       BASE: origin/${{ github.base_ref }}
       PYTHONPATH: tests
+      TEST_FILE: ${{ matrix.file }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -40,11 +71,25 @@ jobs:
             echo "no affected heavy tests"
             exit 0
           fi
+          case "$TEST_FILE" in
+            tests/test_owner_rendering.py|tests/test_owner_workflow.py|tests/test_owner_s1a.py|tests/test_financial_workflow.py|tests/test_financial_render.py|tests/test_owner_cpdr.py|tests/test_run_pathway_cpdr.py|tests/test_host_h1.py|tests/research/test_attach.py|tests/test_owner_cp1c.py|tests/test_owner_cpdr_replace.py|tests/test_owner_cpdr_peers.py|tests/test_owner_cpos.py|tests/test_source_tools.py|tests/test_owner_cp3.py|tests/test_owner_cp4.py|tests/test_owner_cp4c.py|tests/test_cp1_absent_input.py|tests/test_earnings_workflow.py|tests/test_owner_cp1d.py|tests/test_owner_cp2a.py|tests/test_owner_cp2g.py|tests/test_owner_cp2h.py|tests/test_owner_cpl10.py|tests/test_model_testing_pathway.py) ;;
+            *) echo "matrix file is not a heavy test: $TEST_FILE" >&2; exit 0 ;;
+          esac
+          if printf '%s\n' "$files" | grep -Fxq -- "$TEST_FILE"; then
+            :
+          else
+            rc=$?
+            if [ "$rc" -eq 1 ]; then
+              echo "no affected heavy tests in matrix file $TEST_FILE"
+              exit 0
+            fi
+            exit "$rc"
+          fi
+          echo "selected heavy file: $TEST_FILE"
           rc=0
-          # shellcheck disable=SC2086
-          uv run --frozen pytest $files -m "not live" --durations=25 || rc=$?
+          uv run --frozen pytest -v "$TEST_FILE" -m "not live" --durations=25 || rc=$?
           if [ "$rc" -eq 5 ]; then
-            echo "all selected tests deselected by -m 'not live'"
+            echo "all selected tests deselected by -m 'not live' in $TEST_FILE"
           elif [ "$rc" -ne 0 ]; then
             exit "$rc"
           fi

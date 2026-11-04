@@ -58,6 +58,10 @@ jobs:
     env:
       BASE: origin/${{ github.base_ref }}
       PYTHONPATH: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -70,6 +74,8 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - name: Affected fast tests
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
           files=$(uv run --frozen python -I cases/prove/affected_tests.py --tier fast "$BASE" HEAD)
@@ -77,9 +83,14 @@ jobs:
             echo "no affected fast tests"
             exit 0
           fi
+          files=$(printf '%s\n' "$files" | sort | awk -v s="$SHARD" '(NR - 1) % 8 == s')
+          if [ -z "$files" ]; then
+            echo "no affected fast tests in shard $SHARD"
+            exit 0
+          fi
           rc=0
           # shellcheck disable=SC2086
-          uv run --frozen pytest $files -m "not live" --durations=25 || rc=$?
+          uv run --frozen pytest -v $files -m "not live" --durations=25 || rc=$?
           if [ "$rc" -eq 5 ]; then
             echo "all selected tests deselected by -m 'not live'"
           elif [ "$rc" -ne 0 ]; then

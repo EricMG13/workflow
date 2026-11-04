@@ -83,11 +83,7 @@ jobs:
             echo "no affected fast tests"
             exit 0
           fi
-          mapfile -t selected < <(printf '%s\n' "$files" | sort)
-          files=""
-          for ((i=SHARD; i<${#selected[@]}; i+=8)); do
-            files+="${selected[i]} "
-          done
+          files=$(printf '%s\n' "$files" | sort | awk -v s="$SHARD" '(NR - 1) % 8 == s')
           if [ -z "$files" ]; then
             echo "no affected fast tests in shard $SHARD"
             exit 0

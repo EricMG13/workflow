@@ -60,6 +60,12 @@ jobs:
           - tests/test_owner_cp4c.py
           - tests/test_cp1_absent_input.py
           - tests/test_earnings_workflow.py
+          - tests/test_owner_cp1d.py
+          - tests/test_owner_cp2a.py
+          - tests/test_owner_cp2g.py
+          - tests/test_owner_cp2h.py
+          - tests/test_owner_cpl10.py
+          - tests/test_model_testing_pathway.py
     steps:
       - uses: actions/checkout@v5
         with:
@@ -132,6 +138,12 @@ jobs:
               -e tests/test_owner_cp4c.py \
               -e tests/test_cp1_absent_input.py \
               -e tests/test_earnings_workflow.py \
+              -e tests/test_owner_cp1d.py \
+              -e tests/test_owner_cp2a.py \
+              -e tests/test_owner_cp2g.py \
+              -e tests/test_owner_cp2h.py \
+              -e tests/test_owner_cpl10.py \
+              -e tests/test_model_testing_pathway.py \
             | awk -v s="$SHARD" '(NR-1) % 8 == s' > "$RUNNER_TEMP/shard.txt"
           echo "shard $SHARD files:"
           cat "$RUNNER_TEMP/shard.txt"

@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [labeled, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -13,9 +17,6 @@ jobs:
       (github.event.action == 'labeled' && github.event.label.name == 'heavy-tests') ||
       (github.event.action != 'labeled' &&
       contains(github.event.pull_request.labels.*.name, 'heavy-tests'))
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
@@ -40,11 +41,14 @@ jobs:
             echo "no affected heavy tests"
             exit 0
           fi
-          rc=0
-          # shellcheck disable=SC2086
-          uv run --frozen pytest -v $files -m "not live" --durations=25 || rc=$?
-          if [ "$rc" -eq 5 ]; then
-            echo "all selected tests deselected by -m 'not live'"
-          elif [ "$rc" -ne 0 ]; then
-            exit "$rc"
-          fi
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            echo "selected heavy file: $file"
+            rc=0
+            uv run --frozen pytest -v "$file" -m "not live" --durations=25 || rc=$?
+            if [ "$rc" -eq 5 ]; then
+              echo "all selected tests deselected by -m 'not live' in $file"
+            elif [ "$rc" -ne 0 ]; then
+              exit "$rc"
+            fi
+          done <<< "$files"

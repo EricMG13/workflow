@@ -109,6 +109,13 @@ def test_bad_ref_exits_2(repo: pathlib.Path) -> None:
     assert done.stdout == ""
 
 
+def test_empty_diff_selects_no_files(repo: pathlib.Path) -> None:
+    for tier in ("fast", "heavy"):
+        done = run_script(repo, tier, "HEAD")
+        assert done.returncode == 0, done.stderr
+        assert done.stdout == ""
+
+
 def add_base(repo: pathlib.Path, files: dict[str, str]) -> None:
     """Add files to the base commit and move the `base` tag onto it."""
     write(repo, files)
@@ -305,3 +312,68 @@ def test_direct_earnings_change_selects_heavy_only(repo: pathlib.Path) -> None:
     assert heavy.returncode == 0, heavy.stderr
     assert fast.stdout.split() == []
     assert heavy.stdout.split() == ["tests/test_earnings_workflow.py"]
+
+
+def test_heavy_cp1_routes_exist_and_heavy_matrix_is_per_file() -> None:
+    root = pathlib.Path(__file__).resolve().parents[1]
+    names = {
+        "tests/test_owner_cp1d.py",
+        "tests/test_owner_cp2a.py",
+        "tests/test_owner_cp2g.py",
+        "tests/test_owner_cp2h.py",
+        "tests/test_owner_cpl10.py",
+        "tests/test_model_testing_pathway.py",
+    }
+    spec = __import__("importlib.util", fromlist=["spec_from_file_location"])
+    loaded = spec.spec_from_file_location("affected_tests_routes", SCRIPT)
+    assert loaded is not None and loaded.loader is not None
+    module = spec.module_from_spec(loaded)
+    loaded.loader.exec_module(module)
+    assert names <= set(module.HEAVY)
+    assert all((root / name).is_file() for name in names)
+    workflow = (root / ".github/workflows/pr-heavy.yml").read_text()
+    assert "for file in" not in workflow
+    assert 'pytest -v "$file" -m "not live" --durations=25' in workflow
+    assert workflow.index("concurrency:") < workflow.index("jobs:")
+    assert "cancel-in-progress: true" in workflow
+
+
+def test_each_new_cp1_promotion_file_routes_directly_to_heavy(repo: pathlib.Path) -> None:
+    paths = (
+        "tests/test_owner_cp1d.py",
+        "tests/test_owner_cp2a.py",
+        "tests/test_owner_cp2g.py",
+        "tests/test_owner_cp2h.py",
+        "tests/test_owner_cpl10.py",
+        "tests/test_model_testing_pathway.py",
+    )
+    for path in paths:
+        write(repo, {path: "def test_direct_route():\n    assert True\n"})
+    run_git(repo, "add", "-A")
+    run_git(repo, "commit", "-q", "-m", "add CP1 promotion routes")
+    fast = run_script(repo, "fast", "base")
+    heavy = run_script(repo, "heavy", "base")
+    assert fast.returncode == 0, fast.stderr
+    assert heavy.returncode == 0, heavy.stderr
+    assert fast.stdout.split() == []
+    assert set(heavy.stdout.split()) == set(paths)
+
+
+def test_fast_shard_allocation_is_disjoint_and_complete() -> None:
+    files = sorted(f"tests/test_{i}.py" for i in range(241))
+    shards = [files[i::8] for i in range(8)]
+    assert len({path for shard in shards for path in shard}) == len(files)
+    assert set().union(*(set(shard) for shard in shards)) == set(files)
+    assert all(set(shards[i]).isdisjoint(shards[j]) for i in range(8) for j in range(i + 1, 8))
+
+
+def test_workflow_gates_keep_timeout_events_and_checked_selector() -> None:
+    root = pathlib.Path(__file__).resolve().parents[1]
+    fast = (root / ".github/workflows/pr.yml").read_text()
+    heavy = (root / ".github/workflows/pr-heavy.yml").read_text()
+    assert "timeout-minutes: 30" in fast
+    assert "types: [labeled, synchronize, reopened]" in heavy
+    assert "heavy-tests" in heavy
+    assert 'files=$(uv run --frozen python -I cases/prove/affected_tests.py --tier fast "$BASE" HEAD)' in fast
+    assert 'files=$(uv run --frozen python -I cases/prove/affected_tests.py --tier heavy "$BASE" HEAD)' in heavy
+    assert "set -euo pipefail" in fast and "set -euo pipefail" in heavy

@@ -164,8 +164,9 @@ def test_the_research_question_is_a_json_string_never_a_bare_line() -> None:
 # The form itself refuses U+2028, so that probe never reaches the fence as a question.
 @pytest.mark.parametrize("name", sorted(set(MARKER_BODIES) - {"unicode-separator-header"}))
 def test_a_research_question_with_a_marker_is_refused(name: str) -> None:
-    ctx = context_with([{"text": MARKER_BODIES[name], "focus_module": "CP-1C"}])
-    with pytest.raises(FenceError):
+    # The context form may refuse this text before it reaches the prompt fence.
+    with pytest.raises((ContextRefused, FenceError)):
+        ctx = context_with([{"text": MARKER_BODIES[name], "focus_module": "CP-1C"}])
         run_context_block(ctx)
 
 

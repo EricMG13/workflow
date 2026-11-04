@@ -270,14 +270,21 @@ def test_tamper_and_foreign_store_refuse(tmp_path: Path, cases: dict[str, Any]) 
         )
 
     verify()
-    call = next((root / "store/owner-run-audit/calls").iterdir())
+    selected = next((call for call in receipt.calls if call.status == "ok"), None)
+    assert selected is not None
+    call = root / "store/owner-run-audit/calls" / selected.content_hash()
     original = call.read_bytes()
-    call.write_bytes(original.replace(b'"status":"ok"', b'"status":"error"', 1))
-    assert call.read_bytes() != original
+    assert original == selected.model_dump_json().encode()
+    changed = selected.model_copy(update={"status": "error"}).model_dump_json().encode()
+    assert changed != original
+    assert json.loads(changed) == {**json.loads(original), "status": "error"}
+    call.write_bytes(changed)
+    assert call.read_bytes() == changed
     with pytest.raises(WorkflowError) as tampered:
         verify()
     assert tampered.value.code == "identity_mismatch"
     call.write_bytes(original)
+    assert call.read_bytes() == original
     verify()
     changed = receipt.model_copy(update={"participant": "someone-else"})
     with pytest.raises(WorkflowError) as relabelled:

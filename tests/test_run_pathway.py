@@ -1296,7 +1296,14 @@ def fresh_reason_dies_before_run_json(monkeypatch: pytest.MonkeyPatch) -> list[A
     fresh run was about to write."""
     wrote: list[Any] = []
 
-    def die(run_dir: Path, meta: object, outcome: str, reason: str | None) -> NoReturn:
+    def die(
+        run_dir: Path,
+        meta: object,
+        outcome: str,
+        reason: str | None,
+        record: object | None = None,
+        head_state: str | None = None,
+    ) -> NoReturn:
         wrote.append((outcome, reason))
         raise Kill("run.json")
 

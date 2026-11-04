@@ -24,6 +24,7 @@ BASE_FILES = {
     "tests/test_a.py": "from pkg import mid\n",
     "tests/test_b.py": "def test_b():\n    from pkg import other\n",
     "tests/test_owner_rendering.py": "from pkg import core\n",
+    "tests/test_earnings_workflow.py": "from pkg import mid\n",
     "cases/x-owner/expected.json": "{}\n",
     "tests/test_x.py": 'NAME = "x-owner"\n',
     "docs/a.md": "a\n",
@@ -97,7 +98,8 @@ def test_docs_only_selects_none(repo: pathlib.Path) -> None:
 
 def test_heavy_file_only_in_heavy_tier(repo: pathlib.Path) -> None:
     assert select(repo, {"src/pkg/core.py": "X = 3\n"}, "heavy") == [
-        "tests/test_owner_rendering.py"
+        "tests/test_earnings_workflow.py",
+        "tests/test_owner_rendering.py",
     ]
 
 
@@ -271,3 +273,35 @@ def test_checkpoint_lists_equal_heavy() -> None:
     ]
     assert matrix == heavy
     assert grep == heavy
+
+
+def test_fast_heavy_partition_preserves_shared_change_union(repo: pathlib.Path) -> None:
+    write(repo, {"src/pkg/core.py": "X = 2\n"})
+    run_git(repo, "add", "-A")
+    run_git(repo, "commit", "-q", "-m", "shared source change")
+    fast = run_script(repo, "fast", "base")
+    heavy = run_script(repo, "heavy", "base")
+    assert fast.returncode == 0, fast.stderr
+    assert heavy.returncode == 0, heavy.stderr
+    fast_files = set(fast.stdout.split())
+    heavy_files = set(heavy.stdout.split())
+    assert fast_files.isdisjoint(heavy_files)
+    assert "tests/test_earnings_workflow.py" in heavy_files
+    assert "tests/test_earnings_workflow.py" not in fast_files
+    assert fast_files | heavy_files == {
+        "tests/test_a.py",
+        "tests/test_owner_rendering.py",
+        "tests/test_earnings_workflow.py",
+    }
+
+
+def test_direct_earnings_change_selects_heavy_only(repo: pathlib.Path) -> None:
+    write(repo, {"tests/test_earnings_workflow.py": "from pkg import other\n"})
+    run_git(repo, "add", "-A")
+    run_git(repo, "commit", "-q", "-m", "earnings test change")
+    fast = run_script(repo, "fast", "base")
+    heavy = run_script(repo, "heavy", "base")
+    assert fast.returncode == 0, fast.stderr
+    assert heavy.returncode == 0, heavy.stderr
+    assert fast.stdout.split() == []
+    assert heavy.stdout.split() == ["tests/test_earnings_workflow.py"]
